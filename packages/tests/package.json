@@ -1,0 +1,21 @@
+{
+  "name": "@studiometa/ui-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "NODE_NO_WARNINGS=1 NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
+  "license": "MIT",
+  "dependencies": {
+    "@jest/globals": "^27.2.4",
+    "@studiometa/ui": "file:../ui",
+    "babel-jest": "^27.2.4",
+    "htl": "^0.3.1",
+    "jest": "^27.2.4"
+  },
+  "devDependencies": {
+    "html-loader-jest": "^0.2.1"
+  }
+}
