@@ -1,19 +1,8 @@
-import styler from 'stylefire';
+import { animate } from 'motion';
 import { Base, withDrag } from '@studiometa/js-toolkit';
 
 /**
- * @typedef {import('stylefire').Styler} Styler
- * @typedef {import('@studiometa/js-toolkit/services/drag.js').DragServiceProps} DragServiceProps
- */
-
-/**
- * @typedef {Draggable} DraggableInterface
- */
-
-/**
  * Draggable class.
- *
- * @link https://jsfiddle.net/soulwire/znj683b9/
  */
 export default class Draggable extends withDrag(Base) {
   static config = {
@@ -21,50 +10,52 @@ export default class Draggable extends withDrag(Base) {
   };
 
   /**
-   * The origin of the element.
-   * @type {{ x: number, y: number }}
+   * Options for the animate function.
+   * @type {import('motion').AnimationListOptions}
    */
-  elementOrigin = {
-    x: 0,
-    y: 0,
+  static animateOptions = {
+    easing: 'linear',
+    duration: 0,
   };
 
   /**
-   * The element styler for performant style update.
-   * @type {Styler}
+   * Horizontal transformation.
+   * @type {Number}
    */
-  styler;
+  x = 0;
 
   /**
-   * Mounted hook.
-   * @return {void}
+   * Vertical transformation.
+   * @type {Number}
    */
-  mounted() {
-    this.styler = styler(this.$el);
-  }
+  y = 0;
 
   /**
-   * Destroyed hook.
-   * @return {void}
+   * Horizontal position origin.
+   * @type {Number}
    */
-  destroyed() {
-    this.styler = undefined;
-  }
+  originX = 0;
+
+  /**
+   * Vertical position origin.
+   * @type {Number}
+   */
+  originY = 0;
 
   /**
    * Drag service hook.
-   * @param {DragServiceProps} props
+   * @param {import('@studiometa/js-toolkit/services/drag.js').DragServiceProps} props
    */
   dragged(props) {
     if (props.mode === 'start') {
-      this.elementOrigin.x = this.styler.get('x');
-      this.elementOrigin.y = this.styler.get('y');
+      this.originX = this.x;
+      this.originY = this.y;
       return;
     }
 
-    this.styler.set({
-      x: this.elementOrigin.x + props.x - props.origin.x,
-      y: this.elementOrigin.y + props.y - props.origin.y,
-    });
+    this.x = this.originX + props.x - props.origin.x;
+    this.y = this.originY + props.y - props.origin.y;
+
+    animate(this.$el, { x: this.x, y: this.y }, Draggable.animateOptions);
   }
 }
