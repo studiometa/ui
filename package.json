@@ -8,6 +8,10 @@
   "type": "module",
   "scripts": {
     "test": "npm run test --workspace=@studiometa/ui-tests",
+    "build": "npm run build:babel && npm run build:types && npm run build:cp-files",
+    "build:cp-files": "cp packages/ui/package.json dist/ && cp LICENSE dist/ && cp README.md dist/",
+    "build:types": "tsc --build tsconfig.build.json",
+    "build:babel": "babel --no-comments --delete-dir-on-start --out-dir dist/ packages/ui",
     "lint": "npm run lint:eslint && npm run lint:types",
     "lint:eslint": "eslint packages/ui",
     "lint:types": "tsc --build tsconfig.lint.json"
