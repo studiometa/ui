@@ -97,7 +97,7 @@ export default class Tabs extends Base {
    *
    * @this {TabsInterface}
    * @param  {Event}  event The click event object.
-   * @param  {Number} index The index of the clicked button.
+   * @param  {number} index The index of the clicked button.
    * @return {void}
    */
   onBtnClick(event, index) {

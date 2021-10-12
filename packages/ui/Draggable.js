@@ -20,25 +20,25 @@ export default class Draggable extends withDrag(Base) {
 
   /**
    * Horizontal transformation.
-   * @type {Number}
+   * @type {number}
    */
   x = 0;
 
   /**
    * Vertical transformation.
-   * @type {Number}
+   * @type {number}
    */
   y = 0;
 
   /**
    * Horizontal position origin.
-   * @type {Number}
+   * @type {number}
    */
   originX = 0;
 
   /**
    * Vertical position origin.
-   * @type {Number}
+   * @type {number}
    */
   originY = 0;
 
