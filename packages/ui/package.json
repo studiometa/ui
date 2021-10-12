@@ -31,6 +31,6 @@
   "dependencies": {
     "@studiometa/js-toolkit": "^2.0.0-alpha.8",
     "deepmerge": "^4.2.2",
-    "stylefire": "^7.0.3"
+    "motion": "^10.2.1"
   }
 }

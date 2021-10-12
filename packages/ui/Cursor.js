@@ -69,32 +69,32 @@ export default class Cursor extends Base {
   };
 
   /**
-   * @type {Number}
+   * @type {number}
    */
   x = 0;
 
   /**
-   * @type {Number}
+   * @type {number}
    */
   y = 0;
 
   /**
-   * @type {Number}
+   * @type {number}
    */
   scale = 0;
 
   /**
-   * @type {Number}
+   * @type {number}
    */
   pointerX = 0;
 
   /**
-   * @type {Number}
+   * @type {number}
    */
   pointerY = 0;
 
   /**
-   * @type {Number}
+   * @type {number}
    */
   pointerScale = 0;
 
@@ -181,9 +181,9 @@ export default class Cursor extends Base {
    * Render the cursor.
    *
    * @param  {Object} options
-   * @param  {Number} options.x
-   * @param  {Number} options.y
-   * @param  {Number} options.scale
+   * @param  {number} options.x
+   * @param  {number} options.y
+   * @param  {number} options.scale
    * @return {void}
    */
   render({ x, y, scale }) {
