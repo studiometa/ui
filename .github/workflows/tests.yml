@@ -1,0 +1,57 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+
+jobs:
+
+  Build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 16
+    - name: Install modules
+      run: npm install
+    - name: Build the package
+      run: npm run build
+
+  Code-Quality:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 16
+    - name: Install modules
+      run: npm install
+    - name: Run code quality tests
+      run: npm run lint:eslint -- --format=compact
+    - name: Run types tests
+      run: npm run lint:types
+
+  Unit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 16
+    - name: Install modules
+      run: npm install
+    - name: Run tests
+      run: npm run test -- -- --coverage --runInBand --ci || npm run test -- -- --coverage --runInBand --ci
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        directory: ./packages/coverage
+        flags: unittests
+        fail_ci_if_error: false
+        path_to_write_report: ./codecov_report.txt
+        verbose: true
