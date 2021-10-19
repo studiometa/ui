@@ -1,0 +1,10 @@
+title: Figure
+stories:
+  - name: Figure
+    parameters:
+      server:
+        id: Figure/Figure.twig
+        params:
+          src: https://placekitten.com/300/400
+          width: 300
+          height: 400

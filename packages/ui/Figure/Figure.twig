@@ -1,0 +1,89 @@
+{#
+/**
+ * @file
+ * Figure component.
+ *
+ * @param string $src
+ * @param string $srcset
+ * @param string $sizes
+ * @param number $width
+ * @param number $height
+ * @param string $alt
+ * @param string $caption
+ * @param 'cover'|'contain'|'fill'|'none' $fit
+ *   Define how the image will fit.
+ * @param boolean $absolute
+ *   Use absolute position on the image holder instead of relative.
+ * @param boolean $inline
+ *   Wether to enable the display of the figure inline or not. When `inline`, the root element
+ *   will have a max-width set corresponding to the `width` given. Use with caution.
+ *
+ * @todo
+ *  - twicpics: use TwicPics to serve image at the right size
+ *  - loading: display a loader while loading, the fallback image if there was an error
+ *  - mode: img | background → is it really necessary with `object-fit-...`?
+ */
+#}
+
+{% set generic_placeholder =
+  '%s/static/svg/placeholder.svg'|format('/dede')
+%}
+
+{% set absolute = absolute|default(false) %}
+{% set inline = inline|default(false) %}
+{% set fit = fit|default('none') %}
+{% set height = height|default(100) %}
+{% set width = width|default(100) %}
+{% set caption = caption|default('Aenean fringilla mollis duis dolor euismod suscipit molestie curae litora dui') %}
+
+{% set attributes = {
+  data_component: 'Figure',
+  class: ['figure', 'w-full'],
+  style: {
+    height: absolute ? '100%' : '',
+    maxWidth: inline ? width ~ 'px' : ''
+  }
+} %}
+
+{% set img_attributes = {
+  class: [
+    'figure__img',
+    'absolute inset-0 w-full max-w-none h-full',
+    {
+      'object-cover': fit == 'cover' or not fit,
+      'object-contain': fit == 'contain',
+      'object-fill': fit == 'fill',
+      'object-none': fit == 'none'
+    }
+  ],
+  src: placeholder|default(generic_placeholder),
+  data_src: src|default(generic_placeholder),
+  alt: alt|default(''),
+  width: width|default(false),
+  height: height|default(false),
+  srcset: srcset|default(false),
+  sizes: sizes|default(false),
+  data_ref: 'img'
+} %}
+
+<figure {{ html_attributes(attributes) }}>
+  <div class="{{
+    html_classes(
+      absolute ? ['absolute', 'inset-0'] : ['relative', 'w-full', 'h-0']
+    )
+    }}"
+    style="{{
+    html_styles({
+      paddingTop: absolute ? '' : height * 100 / width ~ '%'
+    })
+    }}">
+    <img {{ html_attributes(img_attributes) }} />
+  </div>
+  {% if caption %}
+    {% block caption %}
+      <figcaption class="figure__caption">
+        {{ caption|raw }}
+      </figcaption>
+    {% endblock %}
+  {% endif %}
+</figure>

@@ -1,0 +1,25 @@
+{
+  "name": "@studiometa/ui-docs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "start-storybook -p 6006",
+    "build": "build-storybook"
+  },
+  "devDependencies": {
+    "@storybook/addon-actions": "^6.3.12",
+    "@storybook/addon-essentials": "^6.3.12",
+    "@storybook/addon-links": "^6.3.12",
+    "@storybook/server": "^6.3.12",
+    "babel-loader": "^8.2.2",
+    "@studiometa/ui": "file:../ui"
+  },
+  "dependencies": {
+    "@babel/plugin-syntax-class-static-block": "^7.14.5",
+    "@babel/plugin-syntax-export-namespace-from": "^7.8.3",
+    "@babel/preset-env": "^7.15.8",
+    "@storybook/addons": "^6.3.12",
+    "@storybook/channel-postmessage": "^6.3.12",
+    "@studiometa/js-toolkit": "next"
+  }
+}
