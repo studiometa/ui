@@ -23,8 +23,16 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    studiometa.twig_extensions:
+    studiometa.twig_toolkit_extension:
         class: Studiometa\TwigToolkit\Extension
         public: false
         tags:
             - { name: twig.extension }
+
+    studiometa.twig_string_loader:
+        class: Twig\Extension\StringLoaderExtension
+        public: true
+        tags:
+            - { name: twig.extension }
+
+

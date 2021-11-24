@@ -3,7 +3,7 @@ stories:
   - name: Accordion
     parameters:
       server:
-        id: packages/ui/Accordion/Accordion.twig
+        id: Accordion
         params:
           accordions:
             accordion1:

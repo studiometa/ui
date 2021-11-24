@@ -1,69 +1,45 @@
-import useApp from './app.js';
-
 import addons from '@storybook/addons';
 import createChannel from '@storybook/channel-postmessage';
-import { objectToURLSearchParams } from '@studiometa/js-toolkit/utils/history';
-import nextFrame from '@studiometa/js-toolkit/utils/nextFrame';
+import {
+  objectToURLSearchParams,
+  nextFrame,
+  withoutTrailingSlash,
+} from '@studiometa/js-toolkit/utils';
+import { withLinks } from '@storybook/addon-links';
 
-const withoutTrailingSlash = (string) => string.replace(/\/$/, '');
+import useApp from '../assets/js/app.js';
 
-const { APP_SSL, APP_HOST, STORYBOOK_SERVER_URL } = process.env;
-const origin = 'http://127.0.0.1:8000';
+const origin = process.env.APP_URL ?? 'http://127.0.0.1:8000';
+
+console.log(process.env.APP_URL);
+
+export const decorators = [withLinks];
 
 export const parameters = {
   server: {
     url: `${withoutTrailingSlash(origin)}/api`,
-    async fetchStoryHtml(url, path, params, context) {
-      // Add local origin if none provided.
-      if (!url.startsWith('http')) {
-        url = `${window.location.origin}${url}`;
-      }
-
+    async fetchStoryHtml(url, id, params, context) {
       const fetchUrl = new URL(url);
 
       fetchUrl.search = objectToURLSearchParams({
         ...context.globals,
         ...params,
-        path,
+        id,
       }).toString();
       const finalUrl = fetchUrl.toString();
 
-      // Do not cache request in dev mode
-      if (process.env.NODE_ENV === 'development') {
-        const response = await fetch(finalUrl, {mode: 'no-cors'});
+      const response = await fetch(finalUrl);
 
-        // if (app) {
-        nextFrame(async () => {
-          const app = await useApp();
-          app.$update();
-        })
-        // }
-        console.log(await response.text());
-        return response.text();
-      }
+      nextFrame(async () => {
+        const app = await useApp();
+        app.$update();
+      });
 
-      if (!cache[finalUrl]) {
-        const response = await fetch(finalUrl);
-
-        // if (app) {
-        //   nextFrame(() => {
-        //     app.$update();
-        //   })
-        // }
-
-        nextFrame(async () => {
-          const app = await useApp();
-          app.$update();
-        })
-
-        cache[finalUrl] = response.text();
-      }
-
-      return cache[finalUrl];
+      return response.text();
     },
   },
 };
-
+/*
 // if (process.env.NODE_ENV === 'development') {
   const ws = new WebSocket('ws://localhost:40510');
   const isBrowser =
@@ -105,3 +81,4 @@ export const parameters = {
     });
   }
 // };
+*/

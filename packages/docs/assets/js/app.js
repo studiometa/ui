@@ -1,6 +1,6 @@
-import {Base, createApp} from '@studiometa/js-toolkit';
+import { Base, createApp } from '@studiometa/js-toolkit';
 import * as components from '@studiometa/ui';
-
+import '../css/app.css';
 
 /**
  * Main App class.

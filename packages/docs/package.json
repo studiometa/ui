@@ -7,19 +7,25 @@
     "build": "build-storybook"
   },
   "devDependencies": {
-    "@storybook/addon-actions": "^6.3.12",
-    "@storybook/addon-essentials": "^6.3.12",
-    "@storybook/addon-links": "^6.3.12",
-    "@storybook/server": "^6.3.12",
-    "babel-loader": "^8.2.2",
-    "@studiometa/ui": "file:../ui"
+    "@babel/preset-env": "^7.16.4",
+    "@storybook/addon-a11y": "6.4.0-rc.7",
+    "@storybook/addon-actions": "6.4.0-rc.7",
+    "@storybook/addon-backgrounds": "6.4.0-rc.7",
+    "@storybook/addon-controls": "6.4.0-rc.7",
+    "@storybook/addon-docs": "6.4.0-rc.7",
+    "@storybook/addon-links": "6.4.0-rc.7",
+    "@storybook/addon-postcss": "^2.0.0",
+    "@storybook/builder-webpack5": "6.4.0-rc.7",
+    "@storybook/manager-webpack5": "6.4.0-rc.7",
+    "@storybook/node-logger": "6.4.0-rc.7",
+    "@storybook/server": "6.4.0-rc.7",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^2.2.19"
   },
   "dependencies": {
-    "@babel/plugin-syntax-class-static-block": "^7.14.5",
-    "@babel/plugin-syntax-export-namespace-from": "^7.8.3",
-    "@babel/preset-env": "^7.15.8",
     "@storybook/addons": "^6.3.12",
     "@storybook/channel-postmessage": "^6.3.12",
-    "@studiometa/js-toolkit": "next"
+    "@studiometa/js-toolkit": "next",
+    "@studiometa/ui": "file:../ui"
   }
 }

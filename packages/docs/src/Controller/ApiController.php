@@ -6,7 +6,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use function PHPUnit\Framework\throwException;
 
 final class ApiController extends AbstractController
 {
@@ -15,15 +14,18 @@ final class ApiController extends AbstractController
      */
     public function index(Request $request): Response
     {
-        $parameters = $request->query->all();
+        $query = $request->query;
 
-        if (empty($parameters['id'])) {
-            throwException('dede');
+        if (empty($query->get('id'))) {
+            die('Nothing to display.');
         }
 
-        $template = ucfirst(explode('-', $parameters['id'])[0]);
+        if (!empty($query->get('tpl'))) {
+            return $this->render("@private/render-from-tpl.html.twig", $query->all());
+        }
 
-        return $this->render("{$template}/{$template}.twig", $request->query->all());
+        $template = $query->get('id');
+        return $this->render("{$template}/{$template}.twig", $query->all());
     }
 
 }
