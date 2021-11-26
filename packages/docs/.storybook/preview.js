@@ -31,7 +31,11 @@ export const parameters = {
       const response = await fetch(finalUrl);
 
       nextFrame(async () => {
+        await nextFrame();
+        await nextFrame();
+        console.log(document.body.innerHTML);
         const app = await useApp();
+        console.log({ app });
         app.$update();
       });
 

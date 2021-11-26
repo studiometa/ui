@@ -26,12 +26,12 @@
 #}
 
 {%- set generic_placeholder -%}
-data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewbox='0 0 100 100' width='100' height='100'%3E%3Crect x='0' y='0' width='100' height='100' fill='red' /%3E%3C/svg%3E
+data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewbox='0 0 100 100' width='100' height='100'%3E%3Crect x='0' y='0' width='100' height='100' fill='white' /%3E%3C/svg%3E
 {%- endset -%}
 
 {% set absolute = absolute|default(false) %}
 {% set inline = inline|default(false) %}
-{% set fit = fit|default('none') %}
+{% set fit = fit|default('cover') %}
 {% set height = height|default(100) %}
 {% set width = width|default(100) %}
 {% set caption = caption|default('Aenean fringilla mollis duis dolor euismod suscipit molestie curae litora dui') %}

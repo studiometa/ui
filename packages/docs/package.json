@@ -19,7 +19,7 @@
     "@storybook/manager-webpack5": "6.4.0-rc.7",
     "@storybook/node-logger": "6.4.0-rc.7",
     "@storybook/server": "6.4.0-rc.7",
-    "postcss": "^8.4.0",
+    "postcss": "^8.4.1",
     "tailwindcss": "^2.2.19"
   },
   "dependencies": {
