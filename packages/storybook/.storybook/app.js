@@ -1,6 +1,7 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
+import { nextFrame } from '@studiometa/js-toolkit/utils';
 import * as components from '@studiometa/ui';
-import '../css/app.css';
+import './app.css';
 
 window.__DEV__ = true;
 
@@ -9,9 +10,6 @@ window.__DEV__ = true;
  *
  * @todo
  *   Update app with MutationObserver instead of `nextFrame` in preview.js
- * @todo
- *   Fix TailwindCSS path to load the lib/index.js file instead of the
- *   lib/cli.js file
  */
 class App extends Base {
   /**
@@ -36,7 +34,17 @@ class App extends Base {
    */
   mounted() {
     this.$log('mounted 🎉');
+    const observer = new MutationObserver(([mutation]) => {
+      console.log(this.$children);
+      if (mutation.type === 'childList') {
+        nextFrame(() => {
+          this.$update();
+        });
+      }
+    });
+
+    observer.observe(this.$el, { childList: true, subtree: true });
   }
 }
 
-export default createApp(App, document.documentElement);
+export default createApp(App, document.querySelector('#root'));

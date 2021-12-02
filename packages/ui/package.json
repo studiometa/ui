@@ -31,6 +31,6 @@
   "dependencies": {
     "@studiometa/js-toolkit": "next",
     "deepmerge": "^4.2.2",
-    "motion": "^10.2.1"
+    "motion": "^10.4.0"
   }
 }

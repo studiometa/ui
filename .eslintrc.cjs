@@ -6,8 +6,8 @@ module.exports = {
   },
   overrides: [
     {
-      files: [ '**/*.spec.js', '**/spec.js', 'packages/tests/**/*.js' ],
-      extends: [ 'plugin:jest/recommended', 'plugin:jest/style' ],
+      files: ['**/*.spec.js', '**/spec.js', 'packages/tests/**/*.js'],
+      extends: ['plugin:jest/recommended', 'plugin:jest/style'],
       rules: {
         'max-classes-per-file': 'off',
         'jest/no-test-callback': 'off',
@@ -15,10 +15,10 @@ module.exports = {
       },
     },
     {
-      files: [ '**/*.ts' ],
+      files: ['**/*.ts'],
       parser: '@typescript-eslint/parser',
-      plugins: [ '@typescript-eslint' ],
-      extends: [ 'eslint:recommended', 'plugin:@typescript-eslint/recommended' ],
+      plugins: ['@typescript-eslint'],
+      extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
     },
   ],
 };
