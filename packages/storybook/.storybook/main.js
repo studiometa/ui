@@ -3,7 +3,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 function alterPublicPath(config) {
   if (process.env.NODE_ENV === 'production') {
-    config.output.publicPath = '/.storybook/';
+    config.output.publicPath = '/-/';
   }
 
   return config;

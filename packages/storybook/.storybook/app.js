@@ -21,7 +21,7 @@ class App extends Base {
     debug: true,
     name: 'App',
     components: Object.entries(components).reduce((acc, [key, value]) => {
-      value.config.debug = true;
+      // value.config.debug = true;
       acc[key] = value;
       return acc;
     }, {}),

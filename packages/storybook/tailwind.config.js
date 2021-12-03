@@ -9,5 +9,5 @@ const folders = fs
 
 module.exports = {
   mode: 'jit',
-  purge: folders,
+  purge: [...folders, './**/*.stories.js'],
 };

@@ -12,14 +12,8 @@ final class IndexController extends AbstractController
     /**
      * @Route("/", methods={"GET"})
      */
-    public function index(Request $request): Response
+    public function index(): Response
     {
-        $storybookEntrypoint = __DIR__ . '/../../public/.storybook/index.html';
-
-        if (!file_exists($storybookEntrypoint)) {
-            return new Response('Missing Storybook files. Did you forgot to build Storybook?');
-        }
-
-        return new Response(file_get_contents($storybookEntrypoint));
+        return $this->redirect('/-/', 301);
     }
 }

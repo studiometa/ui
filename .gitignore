@@ -107,5 +107,7 @@ packages/*/package-lock.json
 
 /vendor/
 storybook-static/
-packages/web-/
 .idea/
+
+# Build files
+packages/docs/public/-/

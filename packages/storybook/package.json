@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "start-storybook -p 6006 --no-open",
-    "build": "build-storybook --output-dir=../docs/public/.storybook --modern"
+    "build": "build-storybook --output-dir=../docs/public/-/ --modern"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.16.4",
