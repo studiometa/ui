@@ -45,11 +45,19 @@ export const Accordion = {
     await wait();
     const canvas = within(canvasElement);
     const buttons = canvas.getAllByRole('button');
-    // const contents = buttons.map((button) =>
-    //   canvasElement.querySelector(`#${button.getAttribute('aria-controls')}`)
-    // );
+    const contents = buttons.map((button) =>
+      canvasElement.querySelector(`#${button.getAttribute('aria-controls')}`)
+    );
 
     await userEvent.click(buttons[0]);
-    await expect(contents[0]).toBeVisible();
+    await expect(contents[0].getAttribute('aria-hidden')).toBe('false');
+    await expect(contents[1].getAttribute('aria-hidden')).toBe('true');
+    await userEvent.click(buttons[1]);
+    await expect(contents[0].getAttribute('aria-hidden')).toBe('false');
+    await expect(contents[1].getAttribute('aria-hidden')).toBe('false');
+    await userEvent.click(buttons[0]);
+    await wait();
+    await expect(contents[0].getAttribute('aria-hidden')).toBe('true');
+    await expect(contents[1].getAttribute('aria-hidden')).toBe('false');
   },
 };
