@@ -1,6 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
-import transition from '@studiometa/js-toolkit/utils/css/transition.js';
-import { trap, untrap, saveActiveElement } from '@studiometa/js-toolkit/utils/focusTrap.js';
+import { transition, focusTrap } from '@studiometa/js-toolkit/utils/index.js';
+
+const { trap, untrap, saveActiveElement } = focusTrap();
 
 /**
  * @typedef {Object} ModalRefs

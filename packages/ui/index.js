@@ -1,7 +1,8 @@
-import Accordion from './Accordion/index.js';
-import Cursor from './Cursor.js';
-import Draggable from './Draggable.js';
-import Modal from './Modal.js';
-import Tabs from './Tabs.js';
+import Accordion from './Accordion/Accordion.js';
+import Cursor from './Cursor/Cursor.js';
+import Draggable from './Draggable/Draggable.js';
+import Figure from './Figure/Figure.js';
+import Modal from './Modal/Modal.js';
+import Tabs from './Tabs/Tabs.js';
 
-export { Accordion, Cursor, Draggable, Modal, Tabs };
+export { Accordion, Cursor, Draggable, Figure, Modal, Tabs };

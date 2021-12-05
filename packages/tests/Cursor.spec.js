@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
-import Cursor from '@studiometa/ui/Cursor';
+import { Cursor } from '@studiometa/ui';
 
 /**
- * @typedef {import('@studiometa/ui/Cursor.js').CursorInterface} CursorInterface
+ * @typedef {import('@studiometa/ui/Cursor/Cursor.js').CursorInterface} CursorInterface
  */
 
 const root = document.createElement('div');

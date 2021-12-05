@@ -104,3 +104,10 @@ dist
 .tern-port
 
 packages/*/package-lock.json
+
+/vendor/
+storybook-static/
+.idea/
+
+# Build files
+packages/docs/public/-/

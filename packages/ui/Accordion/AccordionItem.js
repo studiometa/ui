@@ -2,11 +2,11 @@ import deepmerge from 'deepmerge';
 import { Base } from '@studiometa/js-toolkit';
 import * as styles from '@studiometa/js-toolkit/utils/css/styles.js';
 import transition from '@studiometa/js-toolkit/utils/css/transition.js';
-import Accordion from './Accordion.js';
+import Accordion from './AccordionCore.js';
 
 /**
  * @typedef {import('@studiometa/js-toolkit/Base').BaseOptions} BaseOptions
- * @typedef {import('./Accordion.js').AccordionInterface} AccordionInterface
+ * @typedef {import('./AccordionCore.js').AccordionInterface} AccordionInterface
  */
 
 /**

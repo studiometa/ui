@@ -1,0 +1,14 @@
+<div data-component="Accordion">
+  {% for item in items %}
+    <div data-component="AccordionItem">
+      <button data-ref="btn" class="block font-bold">
+        {{ item.title }}
+      </button>
+      <div data-ref="container" class="relative overflow-hidden">
+        <div data-ref="content">
+          {{ item.content }}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>

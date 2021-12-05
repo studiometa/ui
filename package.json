@@ -5,16 +5,17 @@
   "workspaces": [
     "packages/*"
   ],
-  "type": "module",
   "scripts": {
-    "test": "npm run test --workspace=@studiometa/ui-tests",
+    "test": "npm run test -w @studiometa/ui-tests",
     "build": "npm run build:babel && npm run build:types && npm run build:cp-files",
     "build:cp-files": "cp packages/ui/package.json dist/ && cp LICENSE dist/ && cp README.md dist/",
     "build:types": "tsc --build tsconfig.build.json",
-    "build:babel": "babel --no-comments --delete-dir-on-start --out-dir dist/ packages/ui",
+    "build:babel": "babel --ignore '**/node_modules/**/*.js' --no-comments --delete-dir-on-start --out-dir dist/ packages/ui",
     "lint": "npm run lint:eslint && npm run lint:types",
     "lint:eslint": "eslint packages/ui",
-    "lint:types": "tsc --build tsconfig.lint.json"
+    "lint:types": "tsc --build tsconfig.lint.json",
+    "docs:dev": "npm run dev -w @studiometa/ui-storybook",
+    "docs:build": "npm run build -w @studiometa/ui-storybook"
   },
   "devDependencies": {
     "@babel/cli": "^7.15.7",
@@ -27,6 +28,7 @@
     "eslint": "^7.32.0",
     "eslint-plugin-jest": "^24.5.0",
     "prettier": "^2.4.1",
-    "typescript": "^4.4.3"
+    "typescript": "^4.4.3",
+    "vue": "^2.6.14"
   }
 }

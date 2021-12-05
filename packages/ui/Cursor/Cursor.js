@@ -1,6 +1,5 @@
 import { Base } from '@studiometa/js-toolkit';
-import damp from '@studiometa/js-toolkit/utils/math/damp.js';
-import matrix from '@studiometa/js-toolkit/utils/css/matrix.js';
+import { damp, matrix } from '@studiometa/js-toolkit/utils/index.js';
 
 /**
  * @typedef {import('@studiometa/js-toolkit/services/pointer').PointerServiceProps} PointerServiceProps

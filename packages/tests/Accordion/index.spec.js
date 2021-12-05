@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import Accordion from '@studiometa/ui/Accordion';
+import { Accordion } from '@studiometa/ui';
 import wait from '../__utils__/wait';
 
 describe('Accordion component', () => {

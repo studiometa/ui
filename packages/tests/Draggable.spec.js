@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import Draggable from '@studiometa/ui/Draggable.js';
+import { Draggable } from '@studiometa/ui';
 
 describe('The Draggable component', () => {
   it('should move its root element', () => {

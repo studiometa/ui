@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import AccordionItem from '@studiometa/ui/Accordion/AccordionItem';
+import AccordionItem from '@studiometa/ui/Accordion/AccordionItem.js';
 import wait from '../__utils__/wait';
 
 let consoleSpy;
