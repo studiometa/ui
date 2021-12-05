@@ -1,4 +1,4 @@
-import {Base, withMountWhenInView} from '@studiometa/js-toolkit';
+import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
 
 /**
  * @typedef {Object} FigureRefs
