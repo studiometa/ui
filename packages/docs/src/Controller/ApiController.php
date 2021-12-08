@@ -16,7 +16,7 @@ final class ApiController extends AbstractController
     {
         $query = $request->query;
 
-        if (empty($query->get('id'))) {
+        if (empty($query->get('path'))) {
             die('Nothing to display.');
         }
 
@@ -24,8 +24,7 @@ final class ApiController extends AbstractController
             return $this->render("@private/render-from-tpl.html.twig", $query->all());
         }
 
-        $template = $query->get('id');
-        return $this->render("{$template}/{$template}.twig", $query->all());
+        return $this->render($query->get('path'), $query->all());
     }
 
 }
