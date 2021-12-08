@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createElement } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import parse from 'html-react-parser';
 import { withoutTrailingSlash, objectToURLSearchParams } from '@studiometa/js-toolkit/utils';
 import { Loader } from '@storybook/components';
@@ -8,11 +8,18 @@ const TWIG_SOURCE_ENDPOINT = `${withoutTrailingSlash(process.env.APP_URL)}/api/s
 
 /**
  * Fetch a rendered Twig template.
- * @param  {string} id                  The template name.
- * @param  {Record<string, any>} params Additional parameters.
- * @return {string}                     The rendered template.
+ *
+ * @param {string} id
+ *   The template name.
+ * @param {Record<string, any>} params
+ *   Additional parameters.
+ * @param {AbortController} controller
+ *   An AbortController instance to be able to cancel the request.
+ *
+ * @return {string}
+ *   The rendered template.
  */
-async function fetchRenderedTwig(id, params = {}) {
+async function fetchRenderedTwig(id, params = {}, controller = new AbortController()) {
   const fetchUrl = new URL(TWIG_RENDER_ENDPOINT);
 
   fetchUrl.search = objectToURLSearchParams({
@@ -20,8 +27,7 @@ async function fetchRenderedTwig(id, params = {}) {
     id,
   }).toString();
 
-  const response = await fetch(fetchUrl.toString());
-
+  const response = await fetch(fetchUrl.toString(), { signal: controller.signal });
   return response.text();
 }
 
@@ -36,12 +42,13 @@ async function fetchTwigSource(id) {
 }
 
 /**
- * Render a Twig template
- * @param {{ id: string, params?: Record<string, any> }} props
+ * Normalize props to params for the RenderTwig component.
+ *
+ * @param  {{ id: string } & Record<string, any>} props
+ * @return {Record<string, any>}
  */
-export function RenderTwig(props) {
-  const [content, setContent] = useState(null);
-  const params = Object.entries(props).reduce((acc, [key, value]) => {
+function normalizeParams(props) {
+  return Object.entries(props).reduce((acc, [key, value]) => {
     // Exclude internal props
     if (['className'].includes(key)) {
       return acc;
@@ -57,15 +64,36 @@ export function RenderTwig(props) {
 
     return acc;
   }, {});
+}
 
-  useEffect(async () => {
-    const data = await fetchRenderedTwig(props.id, params);
-    setContent(data);
+/**
+ * Render a Twig template
+ * @param {{ id: string } & Record<string, any>} props
+ */
+export function RenderTwig(props) {
+  const [content, setContent] = useState(null);
+  const params = normalizeParams(props);
+
+  const fetchHtml = useCallback(async (controller) => {
+    try {
+      const data = await fetchRenderedTwig(props.id, params, controller);
+      setContent(data);
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('Request aborted.');
+      } else {
+        console.error(error)
+      }
+    }
   }, []);
 
-  return (
-    <div className={props.className ?? ''}>{content ? parse(content) : <Loader />}</div>
-  );
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchHtml(controller);
+    return () => controller.abort();
+  }, []);
+
+  return <div className={props.className ?? ''}>{content ? parse(content) : <Loader />}</div>;
 }
 
 /**
@@ -80,5 +108,5 @@ export function TwigSource(props) {
     setContent(data);
   });
 
-  return createElement('div', null, content ?? Loader());
+  return <div>{content ?? Loader()}</div>;
 }
