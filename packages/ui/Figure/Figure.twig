@@ -34,7 +34,6 @@ data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewbox='0 0 100 10
 {% set fit = fit|default('cover') %}
 {% set height = height|default(100) %}
 {% set width = width|default(100) %}
-{% set caption = caption|default('Aenean fringilla mollis duis dolor euismod suscipit molestie curae litora dui') %}
 
 {% set attributes = {
   data_component: 'Figure',
@@ -79,7 +78,7 @@ data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewbox='0 0 100 10
     }}">
     <img {{ html_attributes(img_attributes) }} />
   </div>
-  {% if caption %}
+  {% if caption is defined %}
     {% block caption %}
       <figcaption class="figure__caption">
         {{ caption|raw }}
