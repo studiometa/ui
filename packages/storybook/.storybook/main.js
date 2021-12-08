@@ -1,6 +1,3 @@
-const path = require('path');
-const TerserPlugin = require('terser-webpack-plugin');
-
 function alterPublicPath(config) {
   if (process.env.NODE_ENV === 'production') {
     config.output.publicPath = '/-/';
@@ -10,12 +7,7 @@ function alterPublicPath(config) {
 }
 
 module.exports = {
-  stories: [
-    '../**/*.stories.mdx',
-    '../**/*.stories.@(json)',
-    '../**/*.stories.yml',
-    '../**/*.stories.js',
-  ],
+  stories: ['../**/*.stories.mdx'],
   logLevel: 'debug',
   core: {
     builder: 'webpack5',
@@ -24,7 +16,12 @@ module.exports = {
   webpackFinal: alterPublicPath,
   managerWebpack: alterPublicPath,
   addons: [
-    '@storybook/addon-docs',
+    {
+      name: '@storybook/addon-docs',
+      options: {
+        configureJSX: true,
+      },
+    },
     '@storybook/addon-a11y',
     '@storybook/addon-actions',
     '@storybook/addon-backgrounds',
