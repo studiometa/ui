@@ -1,7 +1,6 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
 import { nextFrame } from '@studiometa/js-toolkit/utils';
 import * as components from '@studiometa/ui';
-import './app.css';
 
 window.__DEV__ = true;
 

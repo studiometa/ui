@@ -1,0 +1,20 @@
+import { Canvas, Meta, Story } from '@storybook/addon-docs';
+
+<Meta title="Atoms/Cursor" />
+
+# Cursor
+
+<Canvas>
+  <Story name="Cursor">
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      Move your mouse or touch your screen
+    </div>
+    <div
+      data-component="Cursor"
+      className="
+        absolute top-0 left-0 w-12 h-12 -mt-6 -ml-6
+        rounded-full bg-black transform -translate-x-full -translate-y-full
+      "
+    ></div>
+  </Story>
+</Canvas>

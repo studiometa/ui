@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.16.4",
+    "@babel/preset-react": "^7.16.0",
     "@storybook/addon-a11y": "6.4.4",
     "@storybook/addon-actions": "6.4.4",
     "@storybook/addon-backgrounds": "6.4.4",
@@ -18,9 +19,11 @@
     "@storybook/builder-webpack5": "6.4.4",
     "@storybook/manager-webpack5": "6.4.4",
     "@storybook/node-logger": "6.4.4",
-    "@storybook/server": "6.4.4",
+    "@storybook/react": "6.4.4",
+    "html-react-parser": "^1.4.2",
     "postcss": "^8.4.4",
-    "tailwindcss": "^2.2.19"
+    "tailwindcss": "^2.2.19",
+    "webpack": "^5.65.0"
   },
   "dependencies": {
     "@storybook/addon-interactions": "^6.4.4",
