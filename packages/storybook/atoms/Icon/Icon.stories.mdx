@@ -1,5 +1,4 @@
 import { Canvas, Meta, Story, Source } from '@storybook/addon-docs';
-import { SyntaxHighlighter } from '@storybook/components';
 import { RenderTwig } from '../../.storybook/components/RenderTwig';
 
 <Meta title="Atoms/Icon" />
@@ -23,15 +22,27 @@ import { RenderTwig } from '../../.storybook/components/RenderTwig';
     <RenderTwig path="atoms/Icon/Icon.twig" name="facebook" />
   </Story>
   <Story name="Chevron Top">
-    <RenderTwig path="atoms/Icon/Icon.twig" name="chevron" classes="inline-block transform rotate-180" />
+    <RenderTwig
+      path="atoms/Icon/Icon.twig"
+      name="chevron"
+      classes="inline-block transform rotate-180"
+    />
   </Story>
   <Story name="Chevron Right">
-    <RenderTwig path="atoms/Icon/Icon.twig" name="chevron" classes="inline-block transform rotate-90" />
+    <RenderTwig
+      path="atoms/Icon/Icon.twig"
+      name="chevron"
+      classes="inline-block transform rotate-90"
+    />
   </Story>
   <Story name="Chevron Bottom">
     <RenderTwig path="atoms/Icon/Icon.twig" name="chevron" />
   </Story>
   <Story name="Chevron Left">
-    <RenderTwig path="atoms/Icon/Icon.twig" name="chevron" classes="inline-block transform -rotate-90" />
+    <RenderTwig
+      path="atoms/Icon/Icon.twig"
+      name="chevron"
+      classes="inline-block transform -rotate-90"
+    />
   </Story>
 </Canvas>

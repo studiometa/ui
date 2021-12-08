@@ -15,12 +15,14 @@ final class ApiController extends AbstractController
     public function index(Request $request): Response
     {
         $query = $request->query;
+        $path = $query->get('path');
+        $tpl = $query->get('tpl');
 
-        if (empty($query->get('path'))) {
+        if (empty($path) && empty($tpl)) {
             die('Nothing to display.');
         }
 
-        if (!empty($query->get('tpl'))) {
+        if (!empty($tpl)) {
             return $this->render("@private/render-from-tpl.html.twig", $query->all());
         }
 

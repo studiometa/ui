@@ -3,6 +3,8 @@ function alterPublicPath(config) {
     config.output.publicPath = '/-/';
   }
 
+  config.cache = true;
+
   return config;
 }
 
@@ -12,6 +14,9 @@ module.exports = {
   core: {
     builder: 'webpack5',
     manager: 'webpack5',
+  },
+  reactOptions: {
+    fastRefresh: true,
   },
   webpackFinal: alterPublicPath,
   managerWebpack: alterPublicPath,

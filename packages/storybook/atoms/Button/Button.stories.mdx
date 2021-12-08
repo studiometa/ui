@@ -1,0 +1,36 @@
+import { Canvas, Meta, Story, Source } from '@storybook/addon-docs';
+import { RenderTwig } from '../../.storybook/components/RenderTwig';
+
+<Meta title="Atoms/Button" />
+
+# Button
+
+## Usage
+
+## Examples
+
+<Canvas>
+  <Story name="Primary">
+    <div className="space-y-4">
+      <RenderTwig path="atoms/Button/Button.twig" label="Primary" />
+      <RenderTwig path="atoms/Button/Button.twig" label="Primary" attr={{ disabled: true }} />
+      <RenderTwig path="atoms/Button/Button.twig" label="Primary" icon="globe" />
+      <RenderTwig path="atoms/Button/Button.twig" label="Primary" icon="globe" iconPosition="before" />
+      <RenderTwig path="atoms/Button/Button.twig" label="Primary" icon="globe" iconPosition="after" />
+      <RenderTwig path="atoms/Button/Button.twig" label="Primary" icon="globe" iconOnly />
+    </div>
+  </Story>
+</Canvas>
+
+<Canvas>
+  <Story name="Secondary">
+    <div className="space-y-4">
+      <RenderTwig path="atoms/Button/Button.twig" label="Secondary" type="secondary" />
+      <RenderTwig path="atoms/Button/Button.twig" label="Secondary" type="secondary" attr={{ disabled: true }} />
+      <RenderTwig path="atoms/Button/Button.twig" label="Secondary" type="secondary" icon="globe" />
+      <RenderTwig path="atoms/Button/Button.twig" label="Secondary" type="secondary" icon="globe" iconPosition="before" />
+      <RenderTwig path="atoms/Button/Button.twig" label="Secondary" type="secondary" icon="globe" iconPosition="after" />
+      <RenderTwig path="atoms/Button/Button.twig" label="Secondary" type="secondary" icon="globe" iconOnly />
+    </div>
+  </Story>
+</Canvas>

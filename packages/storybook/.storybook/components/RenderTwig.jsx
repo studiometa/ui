@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import parse from 'html-react-parser';
+import { snakeCase } from 'snake-case'
 import { withoutTrailingSlash, objectToURLSearchParams } from '@studiometa/js-toolkit/utils';
 import { Loader } from '@storybook/components';
 
@@ -22,10 +23,19 @@ const TWIG_SOURCE_ENDPOINT = `${withoutTrailingSlash(process.env.APP_URL)}/api/s
 async function fetchRenderedTwig(id, params = {}, controller = new AbortController()) {
   const fetchUrl = new URL(TWIG_RENDER_ENDPOINT);
 
-  fetchUrl.search = objectToURLSearchParams({
-    ...params,
+  const search = objectToURLSearchParams({
+    ...Object.entries(params).reduce((acc, [key, value]) => {
+      acc[snakeCase(key)] = value;
+      return acc;
+    }, {}),
     id,
-  }).toString();
+  });
+
+  if (process.env.NODE_ENV === 'development') {
+    search.set('__t', performance.now());
+  }
+
+  fetchUrl.search = search.toString();
 
   const response = await fetch(fetchUrl.toString(), { signal: controller.signal });
   return response.text();
