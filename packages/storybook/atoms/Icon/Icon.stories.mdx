@@ -1,0 +1,37 @@
+import { Canvas, Meta, Story, Source } from '@storybook/addon-docs';
+import { SyntaxHighlighter } from '@storybook/components';
+import { RenderTwig } from '../../.storybook/components/RenderTwig';
+
+<Meta title="Atoms/Icon" />
+
+# Icon
+
+## Usage
+
+<Source code="{% include '@ui/atoms/Icon/Icon.twig' with { name: 'twitter' } %}" language="twig" />
+
+## Examples
+
+<Canvas>
+  <Story name="Signature Studio Meta">
+    <RenderTwig path="atoms/Icon/Icon.twig" name="logo-studiometa" />
+  </Story>
+  <Story name="Twitter">
+    <RenderTwig path="atoms/Icon/Icon.twig" name="twitter" />
+  </Story>
+  <Story name="Facebook">
+    <RenderTwig path="atoms/Icon/Icon.twig" name="facebook" />
+  </Story>
+  <Story name="Chevron Top">
+    <RenderTwig path="atoms/Icon/Icon.twig" name="chevron" classes="inline-block transform rotate-180" />
+  </Story>
+  <Story name="Chevron Right">
+    <RenderTwig path="atoms/Icon/Icon.twig" name="chevron" classes="inline-block transform rotate-90" />
+  </Story>
+  <Story name="Chevron Bottom">
+    <RenderTwig path="atoms/Icon/Icon.twig" name="chevron" />
+  </Story>
+  <Story name="Chevron Left">
+    <RenderTwig path="atoms/Icon/Icon.twig" name="chevron" classes="inline-block transform -rotate-90" />
+  </Story>
+</Canvas>
