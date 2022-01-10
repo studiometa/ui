@@ -50,6 +50,7 @@ export default class Tabs extends Base {
   static config = {
     name: 'Tabs',
     refs: ['btn[]', 'content[]'],
+    emits: ['enable', 'disable'],
     options: {
       styles: {
         type: Object,

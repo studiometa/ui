@@ -50,6 +50,7 @@ export default class Modal extends Base {
   static config = {
     name: 'Modal',
     refs: ['close', 'container', 'content', 'modal', 'open', 'overlay'],
+    emits: ['open', 'close'],
     options: {
       move: String,
       autofocus: { type: String, default: '[autofocus]' },
@@ -109,30 +110,35 @@ export default class Modal extends Base {
 
     if (this.$options.move) {
       const target = document.querySelector(this.$options.move) || document.body;
-      const refsBackup = this.$refs;
 
-      this.refModalPlaceholder = document.createComment('');
-      this.refModalParentBackup = this.$refs.modal.parentElement || this.$el;
-      this.refModalParentBackup.insertBefore(this.refModalPlaceholder, this.$refs.modal);
+      this.__refsBackup = this.$refs;
+      this.__refModalPlaceholder = document.createComment('');
+      this.__refModalParentBackup = this.$refs.modal.parentElement || this.$el;
+      this.__refModalParentBackup.insertBefore(this.__refModalPlaceholder, this.$refs.modal);
 
-      this.refModalUnbindGetRefFilter = this.$on(
-        'get:refs',
-        /**
-         * @param {ModalRefs} refs
-         */
-        // @ts-ignore
-        (refs) => {
-          Object.entries(refsBackup).forEach(([key, ref]) => {
-            if (!refs[key]) {
-              refs[key] = ref;
-            }
-          });
-        }
-      );
       target.appendChild(this.$refs.modal);
     }
 
     return this;
+  }
+
+  /**
+   * Add the moved refs to `this.$refs` when using the `move` options.
+   *
+   * @this {ModalInterface}
+   */
+  get $refs() {
+    const $refs = super.$refs;
+
+    if (this.$options.move && this.__refsBackup) {
+      Object.entries(this.__refsBackup).forEach(([key, ref]) => {
+        if (!$refs[key]) {
+          $refs[key] = ref;
+        }
+      });
+    }
+
+    return $refs;
   }
 
   /**
@@ -144,13 +150,11 @@ export default class Modal extends Base {
   destroyed() {
     this.close();
 
-    if (this.$options.move && this.refModalParentBackup) {
-      this.refModalParentBackup.insertBefore(this.$refs.modal, this.refModalPlaceholder);
-      this.refModalUnbindGetRefFilter();
-      this.refModalPlaceholder.remove();
-      delete this.refModalPlaceholder;
-      delete this.refModalParentBackup;
-      delete this.refModalUnbindGetRefFilter;
+    if (this.$options.move && this.__refModalParentBackup) {
+      this.__refModalParentBackup.insertBefore(this.$refs.modal, this.__refModalPlaceholder);
+      this.__refModalPlaceholder.remove();
+      delete this.__refModalPlaceholder;
+      delete this.__refModalParentBackup;
     }
 
     return this;
