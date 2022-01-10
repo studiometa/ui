@@ -49,6 +49,7 @@ export default class Modal extends Base {
   static config = {
     name: 'Modal',
     refs: ['close', 'container', 'content', 'modal', 'open', 'overlay'],
+    emits: ['open', 'close'],
     options: {
       move: String,
       autofocus: { type: String, default: '[autofocus]' },
