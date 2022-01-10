@@ -122,6 +122,27 @@ export default class Modal extends Base {
     return this;
   }
 
+  refsBackup;
+
+  /**
+   * @todo delete `on:refs` event with overwriting the `$refs` getter
+   * @returns {Base['$refs'] & ModalRefs}
+   */
+  get $refs() {
+    const $refs = super.$refs;
+
+    if (this.$options.move && this.refsBackup) {
+      Object.entries(this.refsBackup).forEach(([key, ref]) => {
+        if (!$refs[key]) {
+          $refs[key] = ref;
+        }
+      });
+    }
+
+    // @ts-ignore
+    return $refs;
+  }
+
   /**
    * Add the moved refs to `this.$refs` when using the `move` options.
    *
