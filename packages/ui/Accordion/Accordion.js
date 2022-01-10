@@ -42,6 +42,7 @@ export default class Accordion extends Base {
    */
   static config = {
     name: 'Accordion',
+    emits: ['open', 'close'],
     options: {
       autoclose: Boolean,
       item: {

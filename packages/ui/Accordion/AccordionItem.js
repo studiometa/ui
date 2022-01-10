@@ -57,6 +57,7 @@ export default class AccordionItem extends Base {
   static config = {
     name: 'AccordionItem',
     refs: ['btn', 'content', 'container'],
+    emits: ['open', 'close'],
     options: {
       isOpen: Boolean,
       styles: {
