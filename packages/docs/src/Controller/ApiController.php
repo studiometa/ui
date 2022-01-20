@@ -29,4 +29,24 @@ final class ApiController extends AbstractController
         return $this->render($query->get('path'), $query->all());
     }
 
+    /**
+     * @Route("/api/source", name="api-source", methods={"GET"})
+     */
+    public function source(Request $request): Response
+    {
+        $query = $request->query;
+        $path = $query->get('path');
+
+        if (empty($path)) {
+            die('Nothing to display.');
+        }
+
+        $file_path =  __DIR__ . '/../../../ui/' . $path;
+
+        if (!file_exists($file_path)) {
+            die('No file found for "' . $path . '".');
+        }
+
+        return new Response(file_get_contents($file_path));
+    }
 }
