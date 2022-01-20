@@ -1,20 +1,25 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import Icons from 'unplugin-icons/vite';
+import IconsResolver from 'unplugin-icons/resolver';
+import Components from 'unplugin-vue-components/vite';
 
-export default defineConfig({
+const config = defineConfig({
+  plugins: [
+    Components({
+      resolvers: IconsResolver(),
+    }),
+    Icons({ autoInstall: true }),
+  ],
   optimizeDeps: {
-    include: ['@studiometa/ui', '@studiometa/js-toolkit'],
+    include: ['@studiometa/ui'],
   },
   resolve: {
     alias: {
       './NavBarTitle.vue': resolve('.vitepress/theme/components/NavBarTitle.vue'),
     },
   },
-  server: {
-    fs: {
-      // Allow serving files from one level up to the project root
-      allow: ['../..'],
-    },
-  },
 });
+
+export default config;

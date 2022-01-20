@@ -7,15 +7,12 @@ import glob from 'fast-glob';
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
 
-const srcDir = './docs';
-
 export default defineConfig({
   lang: 'en-US',
   title: `📦 @studiometa/ui`,
   description: 'A set of opiniated, unstyled and accessible components 🗃',
   base: '/-/',
-  outDir: './public/-',
-  srcDir,
+  outDir: './.symfony/public/-',
   themeConfig: {
     version: pkg.version,
     repo: 'studiometa/ui',
@@ -80,7 +77,7 @@ function getComponentsSidebar() {
 }
 
 function generateSidebarLinksFromPath(globs: string | string[]) {
-  return glob.sync(globs, { cwd: join(process.cwd(), srcDir) }).map((entry) => ({
+  return glob.sync(globs).map((entry) => ({
     link: withLeadingSlash(withTrailingSlash(dirname(entry))),
     text: basename(dirname(entry)),
   }));

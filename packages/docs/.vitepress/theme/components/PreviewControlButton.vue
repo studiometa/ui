@@ -6,7 +6,7 @@
 </script>
 
 <template>
-  <component :is="tag" class="inline-block p-1 rounded bg-brand text-white">
+  <component :is="tag" class="inline-block p-2 rounded bg-brand text-white">
     <slot />
   </component>
 </template>

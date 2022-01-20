@@ -12,6 +12,6 @@
   ];
 </script>
 
-<PreviewIframe class="block-full-width" height="400px" src="./story.html" />
+<PreviewIframe class="block-full-width" src="./story.html" />
 
 <Tabs :items="tabs" />

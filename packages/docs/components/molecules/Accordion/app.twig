@@ -1,0 +1,49 @@
+{% set items = [
+  {
+    title: 'Item #1',
+    content: '
+      Pellentesque et ridiculus vel fringilla gravida etiam libero duis,
+      cubilia lobortis potenti erat sollicitudin.
+    ',
+    attr: {
+      data_option_is_open: true
+    }
+  },
+  {
+    title: 'Item #2',
+    content: '
+      Actus ornare dapibus vivamus odio quam parturient sociosqu pellen
+      tesque lectus, tristique hac sem cubilia mus tempor.
+    '
+  },
+  {
+    title: 'Item #3',
+    content: '
+      Erat justo nisi euismod senectus ornare dapibus vivamus odio quam
+      sociosqu pellentesque lectus.
+    '
+  }
+] %}
+
+<div class="p-10 max-w-2xl mx-auto">
+  {% embed '@ui/Accordion/Accordion.twig' with { items: items } %}
+    {% block title %}
+      <div
+        class="
+          p-4 text-left font-bold border border-gray-300 bg-white
+          {{ html_classes({ 'border-b-0': not loop.last }) }}
+        ">
+        {{ item.title }}
+      </div>
+    {% endblock %}
+    {% block content %}
+      <div
+        class="
+          p-4 border border-gray-300 bg-white
+          {{ html_classes({ 'border-t-0': loop.last, 'border-b-0': not loop.last }) }}
+        ">
+        {{ item.content }}
+      </div>
+    {% endblock %}
+  {% endembed %}
+</div>

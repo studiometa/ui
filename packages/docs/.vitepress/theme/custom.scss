@@ -72,6 +72,14 @@ button {
   --tw-ring-opacity: 1;
 }
 
+.disabled\:cursor-not-allowed:disabled {
+  cursor: not-allowed
+}
+
+.disabled\:bg-opacity-50:disabled {
+  opacity: 0.5;
+}
+
 body {
   scroll-behavior: smooth;
 }
