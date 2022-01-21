@@ -14,7 +14,7 @@ export default defineConfig({
   base: '/-/',
   outDir: './.symfony/public/-',
   head: [
-    ['link', { rel: 'icon', type: 'image/x-icon', href: '/logo.png' }],
+    ['link', { rel: 'icon', type: 'image/x-icon', href: '/-/logo.png' }],
   ],
   themeConfig: {
     version: pkg.version,

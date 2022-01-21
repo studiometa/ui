@@ -1,9 +1,6 @@
 import { snakeCase } from 'snake-case'
 import { withoutTrailingSlash, objectToURLSearchParams } from '@studiometa/js-toolkit/utils';
 
-const APP_URL = 'https://ui.ddev.site';
-const TWIG_RENDER_ENDPOINT = `${withoutTrailingSlash(APP_URL)}/api`;
-
 const cache = new Map();
 
 /**
@@ -20,6 +17,12 @@ const cache = new Map();
  *   The rendered template.
  */
 export async function fetchRenderedTwig(path, params = {}, controller = new AbortController()) {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const APP_URL = import.meta.env.DEV ? 'https://ui.ddev.site' : window.location.origin;
+  const TWIG_RENDER_ENDPOINT = `${withoutTrailingSlash(APP_URL)}/api`;
   const fetchUrl = new URL(TWIG_RENDER_ENDPOINT);
 
   const search = objectToURLSearchParams({
