@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
-import AccordionItem from '@studiometa/ui/Accordion/AccordionItem.js';
-import wait from '../__utils__/wait';
+import { AccordionItem } from '@studiometa/ui';
+import wait from '@studiometa/ui-tests/__utils__/wait';
 
 let consoleSpy;
 

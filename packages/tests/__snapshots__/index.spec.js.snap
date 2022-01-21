@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`components exports 1`] = `
+Array [
+  "Accordion",
+  "AccordionItem",
+  "Cursor",
+  "Draggable",
+  "Figure",
+  "Modal",
+  "Tabs",
+]
+`;

@@ -12,6 +12,8 @@ module.exports = {
         'max-classes-per-file': 'off',
         'jest/no-test-callback': 'off',
         'require-jsdoc': 'off',
+        'no-new': 'off',
+        'import/no-extraneous-dependencies': 'off',
       },
     },
     {
