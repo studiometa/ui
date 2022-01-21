@@ -1,3 +1,46 @@
-<div class="p-10">
-  {% include '@ui/molecules/Tabs/Tabs.twig' %}
+{% set items = [
+  {
+    title: 'Item #1',
+    content: '
+      Pellentesque et ridiculus vel fringilla gravida etiam libero duis,
+      cubilia lobortis potenti erat sollicitudin.
+    ',
+    attr: {
+      data_option_is_open: true
+    }
+  },
+  {
+    title: 'Item #2',
+    content: '
+      Actus ornare dapibus vivamus odio quam parturient sociosqu pellen
+      tesque lectus, tristique hac sem cubilia mus tempor.
+    '
+  },
+  {
+    title: 'Item #3',
+    content: '
+      Erat justo nisi euismod senectus ornare dapibus vivamus odio quam
+      sociosqu pellentesque lectus.
+    '
+  }
+] %}
+
+<div class="p-10 max-w-2xl mx-auto">
+  {% embed '@ui/molecules/Tabs/Tabs.twig' with { items: items } %}
+    {% block title_wrapper %}
+      <div class="relative flex px-10">
+        {{ parent() }}
+      </div>
+    {% endblock %}
+    {% block title %}
+      <span class="block -mb-px -ml-px p-4 bg-white border border-b-0 border-gray-300 font-bold">
+        {{ item.title }}
+      </span>
+    {% endblock %}
+    {% block content %}
+      <div class="p-10 bg-white border border-gray-300">
+        {{ item.content }}
+      </div>
+    {% endblock %}
+  {% endembed %}
 </div>

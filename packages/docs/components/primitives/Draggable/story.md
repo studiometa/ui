@@ -8,8 +8,6 @@ customLayout: true
   import { ref, onMounted } from 'vue';
   import AppTwigRaw from './app.twig?raw';
 
-  console.log({AppTwigRaw})
-
   if (typeof window !== 'undefined') {
     document.documentElement.classList.add('story');
   }
