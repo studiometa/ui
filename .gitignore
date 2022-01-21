@@ -109,5 +109,5 @@ packages/*/package-lock.json
 storybook-static/
 .idea/
 
-# Build files
-packages/docs/public/-/
+# Symbolic docroot
+/web
