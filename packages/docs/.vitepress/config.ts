@@ -1,7 +1,7 @@
 import { createRequire } from 'module';
 import { defineConfig } from 'vitepress';
 import { basename, dirname, resolve, join } from 'path';
-import { withLeadingSlash, withTrailingSlash } from '@studiometa/js-toolkit';
+import { withLeadingSlash, withTrailingSlash } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
 
 const require = createRequire(import.meta.url);

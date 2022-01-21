@@ -1,5 +1,5 @@
 import { Base } from '@studiometa/js-toolkit';
-import { transition, focusTrap } from '@studiometa/js-toolkit/utils/index.js';
+import { transition, focusTrap } from '@studiometa/js-toolkit/utils';
 
 const { trap, untrap, saveActiveElement } = focusTrap();
 

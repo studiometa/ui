@@ -1,5 +1,5 @@
 import { snakeCase } from 'snake-case'
-import { withoutTrailingSlash, objectToURLSearchParams } from '@studiometa/js-toolkit';
+import { withoutTrailingSlash, objectToURLSearchParams } from '@studiometa/js-toolkit/utils';
 
 const APP_URL = 'https://ui.ddev.site';
 const TWIG_RENDER_ENDPOINT = `${withoutTrailingSlash(APP_URL)}/api`;

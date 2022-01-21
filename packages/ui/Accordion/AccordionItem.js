@@ -1,7 +1,6 @@
 import deepmerge from 'deepmerge';
 import { Base } from '@studiometa/js-toolkit';
-import * as styles from '@studiometa/js-toolkit/utils/css/styles.js';
-import transition from '@studiometa/js-toolkit/utils/css/transition.js';
+import { transition } from '@studiometa/js-toolkit/utils';
 import Accordion from './AccordionCore.js';
 
 /**
@@ -102,10 +101,6 @@ export default class AccordionItem extends Base {
     const { isOpen } = this.$options;
     this.updateAttributes(isOpen);
 
-    if (!isOpen) {
-      styles.add(this.$refs.container, { visibility: 'invisible', height: '0' });
-    }
-
     // Update refs styles on mount
     const { container, ...otherStyles } = this.$options.styles;
     /** @type {AccordionItemRefs} */
@@ -122,7 +117,8 @@ export default class AccordionItem extends Base {
    * @this {AccordionItemInterface}
    */
   destroyed() {
-    styles.remove(this.$refs.container, { visibility: '', height: '' });
+    this.$refs.container.style.visibility = '';
+    this.$refs.container.style.height = '';
   }
 
   /**
@@ -152,6 +148,8 @@ export default class AccordionItem extends Base {
    * @param  {Boolean} isOpen The state of the item.
    */
   updateAttributes(isOpen) {
+    this.$refs.container.style.visibility = isOpen ? '' : 'invisible';
+    this.$refs.container.style.height = isOpen ? '' : '0';
     this.$refs.content.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
     this.$refs.btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   }
@@ -171,7 +169,7 @@ export default class AccordionItem extends Base {
     this.$options.isOpen = true;
     this.updateAttributes(this.$options.isOpen);
 
-    styles.remove(this.$refs.container, { visibility: 'invisible' });
+    this.$refs.container.style.visibility = '';
     const { container, ...otherStyles } = this.$options.styles;
 
     /** @type {AccordionItemRefs} */
@@ -185,7 +183,7 @@ export default class AccordionItem extends Base {
       }).then(() => {
         // Remove style only if the item has not been closed before the end
         if (this.$options.isOpen) {
-          styles.remove(refs.content, { position: 'absolute' });
+          refs.content.style.position = '';
         }
 
         return Promise.resolve();
@@ -221,7 +219,7 @@ export default class AccordionItem extends Base {
     this.$options.isOpen = false;
 
     const height = this.$refs.container.offsetHeight;
-    styles.add(this.$refs.content, { position: 'absolute' });
+    this.$refs.content.style.position = 'absolute';
     const { container, ...otherStyles } = this.$options.styles;
 
     /** @type {AccordionItemRefs} */
@@ -235,7 +233,8 @@ export default class AccordionItem extends Base {
       }).then(() => {
         // Add end styles only if the item has not been re-opened before the end
         if (!this.$options.isOpen) {
-          styles.add(refs.container, { height: '0', visibility: 'invisible' });
+          refs.container.style.height = '0';
+          refs.container.style.visibility = 'invisible';
           this.updateAttributes(this.$options.isOpen);
         }
         return Promise.resolve();

@@ -1,5 +1,5 @@
 import { Base } from '@studiometa/js-toolkit';
-import { transition } from '@studiometa/js-toolkit/utils/index.js';
+import { transition } from '@studiometa/js-toolkit/utils';
 
 /**
  * @typedef {import('@studiometa/js-toolkit/Base').BaseOptions} BaseOptions

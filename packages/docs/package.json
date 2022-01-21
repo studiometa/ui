@@ -2,13 +2,14 @@
   "name": "@studiometa/ui-docs",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vitepress dev .",
     "build": "NODE_ENV=production vitepress build ."
   },
   "dependencies": {
     "@bytebase/vue-kbar": "^0.1.5",
-    "@studiometa/js-toolkit": "next"
+    "@studiometa/js-toolkit": "^2.0.0-beta.13"
   },
   "devDependencies": {
     "@iconify-json/octicon": "^1.0.7",
