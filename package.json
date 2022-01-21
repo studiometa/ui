@@ -15,7 +15,7 @@
     "lint:eslint": "eslint packages/ui",
     "lint:types": "tsc --build tsconfig.lint.json",
     "docs:dev": "npm run dev -w @studiometa/ui-docs",
-    "docs:build": "npm run build -w @studiometa/ui-docs"
+    "docs:build": "cd packages/docs && npm install && npm run build"
   },
   "devDependencies": {
     "@babel/cli": "^7.15.7",

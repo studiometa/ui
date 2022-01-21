@@ -1,6 +1,7 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import { writeFileSync } from 'fs';
+import { resolve, join } from 'path';
 import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import Components from 'unplugin-vue-components/vite';
@@ -11,9 +12,17 @@ const config = defineConfig({
       resolvers: IconsResolver(),
     }),
     Icons({ autoInstall: true }),
+    {
+      name: 'add-common-js-package-plugin',
+      writeBundle(viteConfig) {
+        if (viteConfig.format === 'cjs' && viteConfig.esModule) {
+          writeFileSync(join(viteConfig.dir, 'package.json'), JSON.stringify({ type: 'commonjs' }));
+        }
+      },
+    },
   ],
   optimizeDeps: {
-    include: ['@studiometa/ui'],
+    include: ['@studiometa/ui', '@studiometa/js-toolkit'],
   },
   resolve: {
     alias: {
