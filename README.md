@@ -5,7 +5,7 @@
 [![Dependency Status](https://img.shields.io/librariesio/release/npm/@studiometa/ui?style=flat-square)](https://david-dm.org/studiometa/js-toolkit)
 ![Codecov](https://img.shields.io/codecov/c/github/studiometa/js-toolkit?style=flat-square)
 
-> 🗃 A set of opiniated, unstyled and accessible components based on [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit)
+> 📦 A set of opiniated, unstyled and accessible components based on [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit)
 
 ## Installation
 
@@ -34,3 +34,5 @@ class App extends Base {
 
 export default createApp(App, document.body);
 ```
+
+Heads up to [ui.studiometa.dev](https://ui.studiometa.dev) for more informations.
