@@ -8,6 +8,7 @@
  * @param array $attr
  * @param string $icon
  * @param string $icon_position
+ * @param boolean $icon_only
  * @param 'primary'|'secondary'|'transparent' $type
  */
 #}
@@ -25,6 +26,7 @@
   title: label,
   type: tag == 'button' ? 'button' : false,
   href: tag == 'a' and url is defined ? url : false,
+  aria_label: icon_only ? label : null,
 } %}
 
 {% set theme_shared = [
