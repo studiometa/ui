@@ -1,0 +1,69 @@
+<div class="grid grid-cols-3 gap-10 p-20 text-center">
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with { label: 'Primary' } %}
+  </div>
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with { label: 'Primary', attr: { disabled: true } } %}
+  </div>
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with { label: 'Primary', icon: 'globe' } %}
+  </div>
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with {
+      label: 'Primary',
+      icon: 'globe',
+      icon_position: 'before'
+    } %}
+  </div>
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with {
+      label: 'Primary',
+      icon: 'globe',
+      icon_position: 'after'
+    } %}
+  </div>
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with {
+      label: 'Primary',
+      icon: 'globe',
+      icon_only: true
+    } %}
+  </div>
+</div>
+
+
+<div class="grid grid-cols-3 gap-10 p-20 pt-0 text-center">
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with { label: 'Secondary', type: 'secondary' } %}
+  </div>
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with { label: 'Secondary', type: 'secondary', attr: { disabled: true } } %}
+  </div>
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with { label: 'Secondary', type: 'secondary', icon: 'globe' } %}
+  </div>
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with {
+      label: 'Secondary',
+      type: 'secondary',
+      icon: 'globe',
+      icon_position: 'before'
+    } %}
+  </div>
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with {
+      label: 'Secondary',
+      type: 'secondary',
+      icon: 'globe',
+      icon_position: 'after'
+    } %}
+  </div>
+  <div>
+    {% include '@ui/atoms/Button/Button.twig' with {
+      label: 'Secondary',
+      type: 'secondary',
+      icon: 'globe',
+      icon_only: true
+    } %}
+  </div>
+</div>

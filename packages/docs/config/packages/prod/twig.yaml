@@ -1,9 +1,0 @@
-twig:
-    default_path: '%kernel.project_dir%/templates/ui/'
-    paths:
-        '%kernel.project_dir%/templates': private
-        '%kernel.project_dir%/templates/ui/': ui
-
-when@test:
-    twig:
-        strict_variables: true

@@ -1,0 +1,20 @@
+<div data-component="Tabs" data-option-styles='{ "btn": { "open": { "borderBottomColor": "#fff" } } }'>
+  {% block title_wrapper %}
+    {% for item in items %}
+      <button data-ref="btn[]" style="border-bottom: 1px solid transparent;">
+        {% block title %}
+          {{ item.title }}
+        {% endblock %}
+      </button>
+    {% endfor %}
+  {% endblock %}
+  {% block content_wrapper %}
+      {% for item in items %}
+        <div data-ref="content[]" aria-hidden="false">
+          {% block content %}
+            {{ item.content }}
+          {% endblock %}
+        </div>
+      {% endfor %}
+  {% endblock %}
+</div>

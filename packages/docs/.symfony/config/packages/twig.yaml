@@ -1,0 +1,11 @@
+twig:
+    default_path: '%kernel.project_dir%/../ui/'
+    paths:
+        '%kernel.project_dir%/templates': private
+        '%kernel.project_dir%/../../ui/svg': svg
+        '%kernel.project_dir%/../../ui': ui
+        '%kernel.project_dir%/../../ui/': theme
+
+when@test:
+    twig:
+        strict_variables: true
