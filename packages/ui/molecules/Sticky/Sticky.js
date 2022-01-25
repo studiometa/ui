@@ -124,13 +124,13 @@ export default class Sticky extends Base {
   }
 
   /**
-   * Listen to the sentinel's `sticky-change` event to set the `isSticky` value.
+   * Listen to the sentinel's `intersected` event to set the `isSticky` value.
    *
-   * @param   {boolean} isSticky
+   * @param   {IntersectionObserverEntry[]} entries
    * @returns {void}
    */
-  onSentinelStickyChange(isSticky) {
-    this.isSticky = isSticky;
+  onSentinelIntersected([entry]) {
+    this.isSticky = entry.isIntersecting && entry.boundingClientRect.y < 0;
     this.setPosition();
   }
 

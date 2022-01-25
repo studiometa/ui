@@ -9,16 +9,5 @@ export default class Sentinel extends withIntersectionObserver(Base, { threshold
    */
   static config = {
     name: 'Sentinel',
-    emits: ['sticky-change'],
   };
-
-  /**
-   * Emit events based on the root element visibility.
-   *
-   * @param   {IntersectionObserverEntry[]} entries
-   * @returns {void}
-   */
-  intersected([entry]) {
-    this.$emit('sticky-change', entry.isIntersecting && entry.boundingClientRect.y < 0);
-  }
 }
