@@ -1,4 +1,5 @@
 {
   "name": "@studiometa/ui-tabs",
+  "type": "module",
   "version": "0.0.0"
 }
