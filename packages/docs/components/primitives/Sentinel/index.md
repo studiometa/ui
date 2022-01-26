@@ -1,4 +1,10 @@
-# Sentinel <Badges texts="JS" />
+# Sentinel <Badges :texts="badges" />
+
+<script setup>
+  import pkg from '@studiometa/ui/primitives/Sentinel/package.json';
+
+  const badges = [`v${pkg.version}`, 'JS'];
+</script>
 
 The `Sentinel` primitive — whose name is inspired by a [Google Developer article](https://developers.google.com/web/updates/2017/09/sticky-headers) — will help you react to an element's visbility.
 

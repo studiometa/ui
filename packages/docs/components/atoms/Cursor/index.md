@@ -1,8 +1,11 @@
-# Cursor <Badges texts="Twig,JS" />
+# Cursor <Badges :texts="badges" />
 
 <script setup>
+  import pkg from '@studiometa/ui/atoms/Cursor/package.json';
   import appJsRaw from './app.js?raw';
   import AppTwigRaw from './app.twig?raw';
+
+  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
 
   const tabs = [
     {

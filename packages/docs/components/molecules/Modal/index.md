@@ -1,8 +1,11 @@
-# Modal <Badges texts="Twig,JS" />
+# Modal <Badges :texts="badges" />
 
 <script setup>
+  import pkg from '@studiometa/ui/molecules/Modal/package.json';
   import appJsRaw from './app.js?raw';
   import AppTwigRaw from './app.twig?raw';
+
+  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
 
   const tabs = [
     {
