@@ -8,6 +8,8 @@ Array [
   "Draggable",
   "Figure",
   "Modal",
+  "Sentinel",
+  "Sticky",
   "Tabs",
 ]
 `;
