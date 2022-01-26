@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = {
   extends: '@studiometa/eslint-config',
   rules: {
@@ -21,6 +23,15 @@ module.exports = {
       parser: '@typescript-eslint/parser',
       plugins: ['@typescript-eslint'],
       extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
+    },
+    {
+      files: ['packages/ui/**/*.js'],
+      rules: {
+        'import/no-extraneous-dependencies': [
+          'error',
+          { packageDir: path.join(__dirname, 'packages/ui') },
+        ],
+      },
     },
   ],
 };
