@@ -1,0 +1,26 @@
+{#
+/**
+ * @file
+ *   Sticky component.
+ *
+ * @param object $attr Custom attributes for the root element.
+ * @param object $innner_attr Custom attributes for the inner element.
+ */
+#}
+
+{% set default_attributes = { data_component: 'Sticky', class: 'z-10 sticky top-0 w-full' } %}
+{% set attributes = attr|default({})|merge_html_attributes(default_attributes) %}
+
+{% set default_inner_attributes = { data_ref: 'inner', class:'transition duration-500 ease-out-expo' } %}
+{% set inner_attributes = inner_attr|default({})|merge_html_attributes(default_inner_attributes) %}
+
+<div {{ html_attributes(attributes) }}>
+  <div data-ref="sentinelRef"
+    data-component="Sentinel"
+    class="absolute bottom-full w-full h-px pointer-events-none"></div>
+  <div {{ html_attributes(inner_attributes) }}>
+    {% block content %}
+      {{ content ?? '' }}
+    {% endblock %}
+  </div>
+</div>

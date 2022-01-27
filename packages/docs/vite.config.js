@@ -21,8 +21,17 @@ const config = defineConfig({
       },
     },
   ],
+  server: {
+    watch: {
+      ignored: ['!**/node_modules/@studiometa/ui/**'],
+    },
+    fs: {
+      allow: ['../../..']
+    }
+  },
   optimizeDeps: {
-    include: ['@studiometa/ui', '@studiometa/js-toolkit'],
+    include: ['@studiometa/js-toolkit'],
+    exclude: ['@studiometa/ui'],
   },
   resolve: {
     alias: {

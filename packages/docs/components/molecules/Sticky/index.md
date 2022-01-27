@@ -1,11 +1,11 @@
-# Draggable <Badges :texts="badges" />
+# Sticky <Badges :texts="badges" />
 
 <script setup>
-  import pkg from '@studiometa/ui/primitives/Draggable/package.json';
+  import pkg from '@studiometa/ui/molecules/Sticky/package.json';
   import appJsRaw from './app.js?raw';
   import AppTwigRaw from './app.twig?raw';
 
-  const badges = [`v${pkg.version}`, 'JS'];
+  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
 
   const tabs = [
     {
