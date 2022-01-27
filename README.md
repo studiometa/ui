@@ -42,3 +42,31 @@ export default createApp(App, document.body);
 ```
 
 Heads up to [ui.studiometa.dev](https://ui.studiometa.dev) for more informations.
+
+## Contributing
+
+Clone the project and install the required dependencies. The back-end can be run with [ddev](https://github.com/drud/ddev) which is preconfigured.
+
+```bash
+git clone https://github.com:studiometa/ui.git
+cd ui/
+
+# Install root dependencies
+npm install
+composer install
+ddev start
+
+# Install back-end dependencies
+cd packages/docs/.symfony
+composer install
+
+# Launch the dev environment
+cd ..
+npm run dev
+```
+
+You can also [open the repository in GitPod](https://gitpod.io/#https://github.com/studiometa/ui) and start the dev server with the following command in the root of the project:
+
+```
+npm run docs:dev
+```
