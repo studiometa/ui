@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<ruleset name="studiometa-twig-toolkit">
+  <!-- Don't check composer dependencies -->
+  <exclude-pattern>/vendor/</exclude-pattern>
+
+  <file>packages/twig-extension</file>
+
+  <!--
+    Ending tags '?>' can be really painful to debug.
+    Just disallow them in the end of the file
+  -->
+  <rule ref="PSR2.Files.ClosingTag.NotAllowed"/>
+  <rule ref="PSR2"/>
+</ruleset>

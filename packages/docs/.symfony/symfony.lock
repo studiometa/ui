@@ -89,7 +89,7 @@
         "version": "v1.0.5"
     },
     "jawira/case-converter": {
-        "version": "v3.4.2"
+        "version": "v3.4.6"
     },
     "laminas/laminas-code": {
         "version": "3.4.1"
@@ -245,6 +245,9 @@
     },
     "studiometa/twig-toolkit": {
         "version": "1.1.0"
+    },
+    "studiometa/ui": {
+        "version": "0.1.0"
     },
     "symfony/asset": {
         "version": "v5.3.4"
