@@ -15,6 +15,12 @@ Install the latest version via NPM:
 npm install @studiometa/ui
 ```
 
+If you need the Twig template as well, install the Twig extension via Composer and load it in your application:
+
+```bash
+composer require studiometa/ui
+```
+
 ## Usage
 
 Import the components from the package as needed:

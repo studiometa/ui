@@ -23,9 +23,13 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    studiometa.twig_toolkit_extension:
-        class: Studiometa\TwigToolkit\Extension
+    studiometa.ui_extension:
+        class: Studiometa\Ui\Extension
         public: false
+        arguments:
+            - '@twig.loader'
+            - '%kernel.project_dir%/../../ui/'
+            - '%kernel.project_dir%/../../ui/svg'
         tags:
             - { name: twig.extension }
 
