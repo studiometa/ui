@@ -3,7 +3,7 @@
     Modal opening trigger.
     This ref will be used to open the modal on click.
   -->
-  {% include '@theme/atoms/Button/Button.twig' with {
+  {% include '@ui/atoms/Button/Button.twig' with {
     label: 'Open',
     attr: {
       data_ref: 'open'
@@ -28,7 +28,7 @@
           This will be used to close the modal on click.
         -->
         <div class="absolute top-0 right-0 m-2">
-          {% include '@theme/atoms/Button/Button.twig' with {
+          {% include '@ui/atoms/Button/Button.twig' with {
             label: 'Close',
             attr: {
               data_ref: 'close'

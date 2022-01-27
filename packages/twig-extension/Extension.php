@@ -20,20 +20,27 @@ class Extension extends TwigToolkitExtension
 {
     /**
      * Constructor.
-     * @param FilesystemLoader|null $loader     A filesystem loader instance to register the namespaces.
-     * @param string                $theme_path The path to your projects templates.
-     * @param string                $svg_path   The path to your projects SVG files.
+     * @param FilesystemLoader|null $loader        A filesystem loader instance to register the namespaces.
+     * @param string                $template_path The path to your projects templates.
+     * @param string                $svg_path      The path to your projects SVG files.
      */
     public function __construct(
         FilesystemLoader $loader = null,
-        string $theme_path,
+        string $template_path,
         string $svg_path
     ) {
         if ($loader) {
             $pkg_path = dirname(__DIR__);
+
+            // Add custom paths first
+            if ($template_path) {
+                $loader->addPath($template_path, 'ui');
+                $loader->addPath($svg_path, 'svg');
+            }
+
+            // Add package paths last as fallbacks
             $loader->addPath($pkg_path . '/ui', 'ui');
-            $loader->addPath($theme_path ?? $pkg_path . '/ui', 'theme');
-            $loader->addPath($svg_path ?? $pkg_path . '/ui/svg', 'svg');
+            $loader->addPath($pkg_path . '/ui/svg', 'svg');
         }
     }
 }
