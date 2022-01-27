@@ -13,6 +13,7 @@ export default defineConfig({
   description: 'A set of opiniated, unstyled and accessible components',
   base: '/-/',
   outDir: './.symfony/public/-',
+  srcExclude: ['**/.symfony/**'],
   head: [
     ['link', { rel: 'icon', type: 'image/x-icon', href: '/-/logo.png' }],
   ],

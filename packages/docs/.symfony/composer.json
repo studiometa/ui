@@ -9,7 +9,7 @@
     "ext-iconv": "*",
     "nelmio/cors-bundle": "^2.1",
     "sensio/framework-extra-bundle": "^6.1",
-    "studiometa/ui": "*",
+    "studiometa/twig-toolkit": "^1.1",
     "symfony/console": "5.3.*",
     "symfony/dotenv": "5.3.*",
     "symfony/flex": "^1.3.1",
@@ -39,7 +39,8 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "App\\Tests\\": "tests/"
+      "App\\Tests\\": "tests/",
+      "Studiometa\\Ui\\": "../../twig-extension/"
     }
   },
   "replace": {
@@ -67,11 +68,5 @@
       "allow-contrib": false,
       "require": "5.3.*"
     }
-  },
-  "repositories": [
-    {
-      "type": "path",
-      "url": "../../../"
-    }
-  ]
+  }
 }
