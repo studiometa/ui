@@ -18,6 +18,9 @@
  *   Wether to enable the display of the figure inline or not. When `inline`, the root element
  *   will have a max-width set corresponding to the `width` given. Use with caution.
  *
+ * @block $caption
+ *   Use this block to customize the image's caption.
+ *
  * @todo
  *  - twicpics: use TwicPics to serve image at the right size
  *  - loading: display a loader while loading, the fallback image if there was an error
@@ -44,10 +47,7 @@
 {% set attributes = {
   data_component: 'Figure',
   class: ['figure', 'w-full'],
-  style: {
-    height: absolute ? '100%' : '',
-    maxWidth: inline ? width ~ 'px' : ''
-  }
+  style: { height: absolute ? '100%' : '', maxWidth: inline ? width ~ 'px' : '' }
 } %}
 
 {% set img_attributes = {
@@ -71,17 +71,13 @@
   data_ref: 'img'
 } %}
 
+{% set inner_attributes = {
+  class: ['figure__inner', absolute ? ['absolute', 'inset-0'] : ['relative', 'w-full', 'h-0']],
+  style: { paddingTop: absolute ? '' : height * 100 / width ~ '%' }
+} %}
+
 <figure {{ html_attributes(attributes) }}>
-  <div class="{{
-    html_classes(
-      absolute ? ['absolute', 'inset-0'] : ['relative', 'w-full', 'h-0']
-    )
-    }}"
-    style="{{
-    html_styles({
-      paddingTop: absolute ? '' : height * 100 / width ~ '%'
-    })
-    }}">
+  <div {{ html_attributes(inner_attributes) }}>
     <img {{ html_attributes(img_attributes) }} />
   </div>
   {% if caption is defined %}
