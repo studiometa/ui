@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-tests",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,11 +9,11 @@
   "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
   "license": "MIT",
   "dependencies": {
-    "@jest/globals": "^27.2.4",
+    "@jest/globals": "^27.3.1",
     "@studiometa/ui": "file:../ui",
-    "babel-jest": "^27.2.4",
+    "babel-jest": "^27.3.1",
     "htl": "^0.3.1",
-    "jest": "^27.2.4"
+    "jest": "^27.3.1"
   },
   "devDependencies": {
     "html-loader-jest": "^0.2.1"

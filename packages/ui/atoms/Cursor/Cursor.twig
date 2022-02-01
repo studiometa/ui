@@ -1,0 +1,28 @@
+{#
+/**
+ * @file
+ *   Cursor component.
+ *
+ * @param array $attr
+ *   Custom attributes for the root element.
+ *
+ * @block $content
+ *   Custom content for the root element, defaults to `''`.
+ */
+#}
+
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    {
+      data_component: 'Cursor',
+      class: 'fixed top-0 left-0 w-12 h-12 -mt-6 -ml-6 rounded-full bg-black'
+    },
+    { class: 'pointer-events-none' }
+  )
+%}
+
+<div {{ html_attributes(attributes) }}>
+  {% block content %}
+  {% endblock %}
+</div>

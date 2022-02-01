@@ -1,0 +1,18 @@
+<div class="p-10">
+  {% embed '@ui/molecules/Modal/Modal.twig' %}
+    {% block content %}
+      <p>
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt
+        ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+        laboris nisi ut aliquip ex <a href="#">ea commodo consequat</a>. Duis aute irure dolor in reprehenderit in
+        voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
+        cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+      </p>
+
+      {% include '@ui/atoms/Button/Button.twig' with {
+        label: 'Custom close trigger',
+        attr: { data_ref: 'close' }
+      } %}
+    {% endblock %}
+  {% endembed %}
+</div>

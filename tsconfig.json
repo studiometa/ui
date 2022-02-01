@@ -13,7 +13,6 @@
     "baseUrl": "./packages/ui/"
   },
   "include": [
-    "packages/global.d.ts",
     "packages/ui/**/*.js"
   ]
 }

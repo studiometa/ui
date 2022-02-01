@@ -1,7 +1,4 @@
-import Accordion from './Accordion/index.js';
-import Cursor from './Cursor.js';
-import Draggable from './Draggable.js';
-import Modal from './Modal.js';
-import Tabs from './Tabs.js';
-
-export { Accordion, Cursor, Draggable, Modal, Tabs };
+export * from './primitives/index.js';
+export * from './atoms/index.js';
+export * from './molecules/index.js';
+// export * from './organisms/index.js';

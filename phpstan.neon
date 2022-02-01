@@ -1,0 +1,12 @@
+#$ vendor/bin/phpstan analyze
+parameters:
+  level: max
+  paths:
+    - packages/twig-extension
+    - packages/docs/.symfony/src
+  checkMissingIterableValueType: false
+  scanDirectories:
+    - ./packages/docs/.symfony/vendor/
+  ignoreErrors: []
+    # - message: '#^If condition is always true\.#'
+    #   path: ./src/TokenParser/ElementTokenParser.php

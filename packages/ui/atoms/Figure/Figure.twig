@@ -1,0 +1,90 @@
+{#
+/**
+ * @file
+ * Figure component.
+ *
+ * @param string $src
+ * @param string $srcset
+ * @param string $sizes
+ * @param number $width
+ * @param number $height
+ * @param string $alt
+ * @param string $caption
+ * @param 'cover'|'contain'|'fill'|'none' $fit
+ *   Define how the image will fit.
+ * @param boolean $absolute
+ *   Use absolute position on the image holder instead of relative.
+ * @param boolean $inline
+ *   Wether to enable the display of the figure inline or not. When `inline`, the root element
+ *   will have a max-width set corresponding to the `width` given. Use with caution.
+ *
+ * @block $caption
+ *   Use this block to customize the image's caption.
+ *
+ * @todo
+ *  - twicpics: use TwicPics to serve image at the right size
+ *  - loading: display a loader while loading, the fallback image if there was an error
+ *  - mode: img | background → is it really necessary with `object-fit-...`?
+ */
+#}
+
+{% set absolute = absolute|default(false) %}
+{% set inline = inline|default(false) %}
+{% set fit = fit|default('cover') %}
+{% set height = height|default(100) %}
+{% set width = width|default(100) %}
+
+{%- set placeholder_markup -%}
+  <svg xmlns="http://www.w3.org/2000/svg"
+    viewbox="0 0 {{ width }} {{ height }}"
+    width="{{ width }}"
+    height="{{ height }}">
+    <rect x="0" y="0" width="{{ width }}" height="{{ height }}" fill="#eee" />
+  </svg>
+{%- endset -%}
+{% set generic_placeholder = 'data:image/svg+xml,%s'|format(placeholder_markup|url_encode) %}
+
+{% set attributes = {
+  data_component: 'Figure',
+  class: ['figure', 'w-full'],
+  style: { height: absolute ? '100%' : '', maxWidth: inline ? width ~ 'px' : '' }
+} %}
+
+{% set img_attributes = {
+  class: [
+    'figure__img',
+    'absolute inset-0 w-full max-w-none h-full',
+    {
+      'object-cover': fit == 'cover' or not fit,
+      'object-contain': fit == 'contain',
+      'object-fill': fit == 'fill',
+      'object-none': fit == 'none'
+    }
+  ],
+  src: placeholder|default(generic_placeholder),
+  data_src: src|default(generic_placeholder),
+  alt: alt|default(''),
+  width: width|default(false),
+  height: height|default(false),
+  srcset: srcset|default(false),
+  sizes: sizes|default(false),
+  data_ref: 'img'
+} %}
+
+{% set inner_attributes = {
+  class: ['figure__inner', absolute ? ['absolute', 'inset-0'] : ['relative', 'w-full', 'h-0']],
+  style: { paddingTop: absolute ? '' : height * 100 / width ~ '%' }
+} %}
+
+<figure {{ html_attributes(attributes) }}>
+  <div {{ html_attributes(inner_attributes) }}>
+    <img {{ html_attributes(img_attributes) }} />
+  </div>
+  {% if caption is defined %}
+    {% block caption %}
+      <figcaption class="figure__caption">
+        {{ caption|raw }}
+      </figcaption>
+    {% endblock %}
+  {% endif %}
+</figure>
