@@ -31,17 +31,8 @@ export default defineConfig({
       { text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' },
     ],
     sidebar: {
-      '/': [
-        {
-          text: 'Guide',
-          link: '/guide/concepts/',
-          children: getGuideSidebar(),
-        },
-        {
-          text: 'Components',
-          children: getComponentsSidebar(),
-        }
-      ],
+      '/guide/': getGuideSidebar(),
+      '/components/':getComponentsSidebar(),
     },
   },
 });
