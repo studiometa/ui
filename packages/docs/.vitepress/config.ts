@@ -1,4 +1,5 @@
 import { createRequire } from 'module';
+import { readFileSync } from 'fs';
 import { defineConfig } from 'vitepress';
 import { basename, dirname, resolve, join } from 'path';
 import { withLeadingSlash, withTrailingSlash } from '@studiometa/js-toolkit/utils';
@@ -14,9 +15,7 @@ export default defineConfig({
   base: '/-/',
   outDir: './.symfony/public/-',
   srcExclude: ['**/.symfony/**'],
-  head: [
-    ['link', { rel: 'icon', type: 'image/x-icon', href: '/-/logo.png' }],
-  ],
+  head: [['link', { rel: 'icon', type: 'image/x-icon', href: '/-/logo.png' }]],
   themeConfig: {
     version: pkg.version,
     repo: 'studiometa/ui',
@@ -31,18 +30,29 @@ export default defineConfig({
       { text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' },
     ],
     sidebar: {
-      '/guide/': getGuideSidebar(),
-      '/components/':getComponentsSidebar(),
+      '/components/': getComponentsSidebar(),
+      '/': getGuideSidebar(),
     },
   },
 });
 
 function getGuideSidebar() {
   return [
-    { text: 'Concepts', link: '/guide/concepts/' },
-    { text: 'Installation', link: '/guide/installation/' },
-    { text: 'Usage', link: '/guide/usage/' },
-    { text: 'Migration guide', link: '/guide/migration/' },
+    {
+      text: 'Guide',
+      children: [
+        { text: 'Concepts', link: '/guide/concepts/' },
+        { text: 'Installation', link: '/guide/installation/' },
+        { text: 'Usage', link: '/guide/usage/' },
+      ],
+    },
+    {
+      text: 'Migration guides',
+      link: '/migration-guides/',
+      children: generateSidebarLinksFromPath('migration-guides/*/index.md', {
+        extractTitle: true,
+      }),
+    },
   ];
 }
 
@@ -71,9 +81,16 @@ function getComponentsSidebar() {
   ];
 }
 
-function generateSidebarLinksFromPath(globs: string | string[]) {
+function generateSidebarLinksFromPath(globs: string | string[], { extractTitle = false } = {}) {
   return glob.sync(globs).map((entry) => ({
     link: withLeadingSlash(withTrailingSlash(dirname(entry))),
-    text: basename(dirname(entry)),
+    text: extractTitle ? getEntryTitle(entry) : basename(dirname(entry)),
   }));
+}
+
+function getEntryTitle(entry) {
+  const content = readFileSync(entry, { encoding: 'UTF-8' });
+  const [title] = content.match(/^#\s+.*$/m);
+
+  return title ? title.replace(/^#\s?/, '') : basename(dirname(entry));
 }

@@ -36,6 +36,11 @@
       margin-left: 0.5rem;
     }
 
+    &.gray,
+    &.grey {
+      @apply bg-gray-400;
+    }
+
     &.green {
       background-color: var(--c-brand);
     }
