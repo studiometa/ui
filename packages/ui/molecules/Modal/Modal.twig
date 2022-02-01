@@ -1,47 +1,92 @@
-<div data-component="Modal">
-  <!--
-    Modal opening trigger.
-    This ref will be used to open the modal on click.
-  -->
-  {% include '@ui/atoms/Button/Button.twig' with {
-    label: 'Open',
-    attr: {
-      data_ref: 'open'
+{#
+/**
+ * @file
+ * Modal component.
+ *
+ * @param array $attr
+ *   Use it to customize the root element attributes.
+ * @param array $modal_attr
+ *   Use it to customize the modal element attributes.
+ * @param array $overlay_attr
+ *   Use it to customize the overlay element attributes.
+ * @param array $container_atrr
+ *   Use it to customize the container element attributes.
+ * @param array $content_atrr
+ *   Use it to customize the content element attributes.
+ *
+ * @block $open
+ *   Use this block to customize the open trigger button.
+ * @block $close
+ *   Use this block to customize the close trigger button.
+ * @block $content
+ *   Use this block to set the modal's content.
+ */
+#}
+
+{# Root attributes #}
+{% set attributes = merge_html_attributes(attr ?? null, { data_component: 'Modal' }) %}
+
+{# Modal attributes #}
+{% set modal_attributes =
+  merge_html_attributes(
+    modal_attr ?? null,
+    { class: 'z-goku fixed inset-0' },
+    {
+      data_ref: 'modal',
+      role: 'dialog',
+      aria_modal: true,
+      aria_hidden: true,
+      style: { opacity: '0', pointer_events: 'none', visibility: 'hidden' }
     }
-  } %}
-  <!-- Modal element -->
-  <div data-ref="modal" role="dialog" aria-modal="true" aria-hidden="true" style="opacity: 0; pointer-events: none; visibility: hidden;" class="z-goku fixed inset-0">
-    <!--
-      Modal overlay
-      The `tabindex="-"` attribute is required.
-    -->
-    <div data-ref="overlay" tabindex="-1" class="z-under absolute inset-0 bg-black opacity-75"></div>
+  )
+%}
+
+{# Overlay attributes #}
+{% set overlay_attributes =
+  merge_html_attributes(
+    overlay_attr ?? null,
+    { class: 'z-under absolute inset-0 bg-black opacity-75' },
+    { data_ref: 'overlay', tabindex: '-1' }
+  )
+%}
+
+{# Container attributes #}
+{% set container_attributes =
+  merge_html_attributes(
+    container_attr ?? null,
+    { class: 'bg-white rounded shadow-l' },
+    {
+      data_ref: 'container',
+      class: 'z-above relative max-h-full overflow-x-hidden overflow-y-auto pointer-events-auto'
+    }
+  )
+%}
+
+{# Content attributes #}
+{% set content_attributes =
+  merge_html_attributes(content_attr ?? null, { class: 'max-w-3xl p-16 pt-20' }, { data_ref: 'content' })
+%}
+
+<div {{ html_attributes(attributes) }}>
+  {% block open %}
+    {% include '@ui/atoms/Button/Button.twig' with { label: 'Open', attr: { data_ref: 'open' } } %}
+  {% endblock %}
+  <div {{ html_attributes(modal_attributes) }}>
+    <div {{ html_attributes(overlay_attributes) }}></div>
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <!--
-        Modal container
-        This is the element in which the user can scroll
-        if the content of the modal is too long.
-      -->
-      <div data-ref="container" class="z-above relative max-h-full overflox-x-hidden overflow-y-auto bg-white rounded shadow-l pointer-events-auto">
-        <!--
-          Modal close button
-          This will be used to close the modal on click.
-        -->
-        <div class="absolute top-0 right-0 m-2">
-          {% include '@ui/atoms/Button/Button.twig' with {
-            label: 'Close',
-            attr: {
-              data_ref: 'close'
-            }
-          } %}
-        </div>
-        <!--
-          Modal content
-          The content displayed in the modal.
-          The `max-w-3xl` class defines the modal width.
-        -->
-        <div class="max-w-3xl p-16 pt-20" data-ref="content">
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Beatae laudantium sint culpa sequi enim <a href="#" class="border-b">quaerat</a> itaque possimus at <a autofocus href="#" class="border-b">voluptatem</a> voluptates voluptatum velit illum nulla, optio porro ea. Doloremque, aut, beatae!
+      <div {{ html_attributes(container_attributes) }}>
+        {% block close %}
+          <div class="absolute top-0 right-0 m-2">
+            {% include '@ui/atoms/Button/Button.twig' with {
+              label: 'Close',
+              attr: { data_ref: 'close' }
+            } %}
+          </div>
+        {% endblock %}
+        <div {{ html_attributes(content_attributes) }}>
+          {% block content %}
+            No content.
+          {% endblock %}
         </div>
       </div>
     </div>

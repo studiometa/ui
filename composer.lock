@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "314cb493756ce58af4c5ad48c63a45b3",
+    "content-hash": "1651068190cc8174da89a4fc8e2c84c9",
     "packages": [
         {
             "name": "jawira/case-converter",
@@ -75,16 +75,16 @@
         },
         {
             "name": "studiometa/twig-toolkit",
-            "version": "1.1.0",
+            "version": "1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/studiometa/twig-toolkit.git",
-                "reference": "d21aa8d5c8cc563b13d43ba18e05b8d281c670b2"
+                "reference": "b4bbe1d1aeab96dd1dc71d63c7bf74d07e5e9f4b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/studiometa/twig-toolkit/zipball/d21aa8d5c8cc563b13d43ba18e05b8d281c670b2",
-                "reference": "d21aa8d5c8cc563b13d43ba18e05b8d281c670b2",
+                "url": "https://api.github.com/repos/studiometa/twig-toolkit/zipball/b4bbe1d1aeab96dd1dc71d63c7bf74d07e5e9f4b",
+                "reference": "b4bbe1d1aeab96dd1dc71d63c7bf74d07e5e9f4b",
                 "shasum": ""
             },
             "require": {
@@ -111,9 +111,9 @@
             "description": "A set of useful extension and components for Twig.",
             "support": {
                 "issues": "https://github.com/studiometa/twig-toolkit/issues",
-                "source": "https://github.com/studiometa/twig-toolkit/tree/1.1.0"
+                "source": "https://github.com/studiometa/twig-toolkit/tree/1.2.0"
             },
-            "time": "2021-06-15T13:36:09+00:00"
+            "time": "2022-02-01T09:16:21+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
