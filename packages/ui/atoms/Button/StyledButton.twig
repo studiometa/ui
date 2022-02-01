@@ -1,0 +1,47 @@
+{#
+/**
+ * @file
+ *   Styled button.
+ *
+ * @param 'primary'|'secondary'|'tertiary' $theme
+ */
+#}
+
+{% extends '@ui/atoms/Button/Button.twig' %}
+
+{% set icon_only = icon_only|default(false) %}
+
+{% set theme = theme|default('primary') %}
+
+{% set theme_shared = [
+  'rounded cursor-pointer transition',
+  'disabled:cursor-not-allowed',
+  {
+    'inline-block': icon is not defined,
+    'inline-flex items-center': icon is defined,
+    'px-6 py-4': not icon_only,
+    'p-4': icon_only
+  }
+] %}
+
+{% set theme_primary = ['text-white bg-black', 'hover:bg-opacity-75 disabled:bg-opacity-50'] %}
+
+{% set theme_secondary = [
+  'ring ring-inset ring-2 ring-black ring-opacity-25',
+  {
+    'hover:ring-opacity-100': (attr is defined and attr.disabled is not defined)
+      or attr is not defined
+  }
+] %}
+
+{% set attr =
+  attr
+    |default({})
+    |merge({
+      class: [
+        theme_shared,
+        theme == 'primary' ? theme_primary : '',
+        theme == 'secondary' ? theme_secondary : ''
+      ]
+    })
+%}

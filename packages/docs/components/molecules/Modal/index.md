@@ -27,4 +27,23 @@
 
 ## Parameters
 
-## Slots
+- `$attr` (`array`): Customize the root element attributes.
+- `$modal_attr` (`array`): Customize the modal element attributes.
+- `$overlay_attr` (`array`): Customize the overlay element attributes.
+- `$container_atrr` (`array`): Customize the container element attributes.
+- `$content_atrr` (`array`): Customize the content element attributes.
+
+## Blocks
+
+### `open`
+
+Customize the open trigger button.
+
+### `close`
+
+Customize the close trigger button.
+
+### `content`
+
+Set the modal's content.
+
