@@ -1,16 +1,46 @@
-<div data-component="Accordion">
+{#
+/**
+ * @file
+ * Accordion component.
+ *
+ * @param array $attr
+ *   Use it to customize the root element attributes.
+ * @param array $item_attr
+ *   Use it to customize each item element attributes.
+ * @param array $item_container_attr
+ *   Use it to customize each item container element attributes.
+ *
+ * @block $title
+ *   Use it to customize each item's title.
+ * @block $content
+ *   Use it to customize each item's content.
+ */
+#}
+
+{% set attributes = merge_html_attributes(attr ?? null, { data_component: 'Accordion' }) %}
+
+<div {{ html_attributes(attributes) }}>
   {% for item in items %}
     {% set is_open = item.attr.data_option_is_open ?? false %}
-    <div data-component="AccordionItem" {{ html_attributes(item.attr ?? {}) }}>
+    {% set item_attributes = merge_html_attributes(item_attr ?? null, { data_component: 'AccordionItem' }, item.attr ?? null) %}
+    <div {{ html_attributes(item_attributes) }}>
       <button data-ref="btn" class="block w-full" aria-expanded="{{ is_open ? 'true' : 'false' }}">
         {% block title %}
           {{ item.title }}
         {% endblock %}
       </button>
-      <div
-        data-ref="container"
-        style="{{ html_styles({ visibility: is_open ? '' : 'hidden', height: is_open ? '' : '0' }) }}"
-        class="relative overflow-hidden">
+      {% set item_container_attributes =
+        merge_html_attributes(
+          item_container_attr ?? null,
+          {},
+          {
+            data_ref: 'container',
+            style: { visibility: is_open ? '' : 'hidden', height: is_open ? '' : '0' },
+            class: 'relative overflow-hidden'
+          }
+        )
+      %}
+      <div {{ html_attributes(item_container_attributes) }}>
         <div data-ref="content" aria-hidden="true">
           {% block content %}
             {{ item.content }}
