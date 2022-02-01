@@ -11,7 +11,7 @@ The following components have been updated:
 | [Figure](/components/atoms/Figure/)           | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
 | [Accordion](/components/molecules/Accordion/) | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
 | [Modal](/components/molecules/Modal/)         | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| [Figure](/components/molecules/Figure/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Sticky](/components/molecules/Sticky/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
 
 ## Install the Twig extension
 
@@ -31,6 +31,6 @@ Before this release, the Twig templates were not ready for inclusion in your pro
 - [Figure](/components/atoms/Figure/)
 - [Accordion](/components/molecules/Accordion/)
 - [Modal](/components/molecules/Modal/)
-- [Figure](/components/molecules/Figure/)
+- [Sticky](/components/molecules/Sticky/)
 
 These components have seen their version number increased from `0.0.0` to `0.1.0` to indicate this change.
