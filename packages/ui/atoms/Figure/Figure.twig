@@ -17,6 +17,14 @@
  * @param boolean $inline
  *   Wether to enable the display of the figure inline or not. When `inline`, the root element
  *   will have a max-width set corresponding to the `width` given. Use with caution.
+ * @param array $attr
+ *   Custom attributes for the root element.
+ * @param array $inner_attr
+ *   Custom attributes for the inner element.
+ * @param array $img_attr
+ *   Custom attributes for the image element.
+ * @param array $caption_attr
+ *   Custom attributes for the caption element.
  *
  * @block $caption
  *   Use this block to customize the image's caption.
@@ -44,37 +52,54 @@
 {%- endset -%}
 {% set generic_placeholder = 'data:image/svg+xml,%s'|format(placeholder_markup|url_encode) %}
 
-{% set attributes = {
-  data_component: 'Figure',
-  class: ['figure', 'w-full'],
-  style: { height: absolute ? '100%' : '', maxWidth: inline ? width ~ 'px' : '' }
-} %}
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    { data_component: 'Figure', class: ['figure', 'w-full'] },
+    { style: { height: absolute ? '100%' : '', maxWidth: inline ? width ~ 'px' : '' } }
+  )
+%}
 
-{% set img_attributes = {
-  class: [
-    'figure__img',
-    'absolute inset-0 w-full max-w-none h-full',
+{% set img_attributes =
+  merge_html_attributes(
+    img_attr ?? null,
+    { class: 'figure__img' },
     {
-      'object-cover': fit == 'cover' or not fit,
-      'object-contain': fit == 'contain',
-      'object-fill': fit == 'fill',
-      'object-none': fit == 'none'
+      class: [
+        'absolute inset-0 w-full max-w-none h-full',
+        {
+          'object-cover': fit == 'cover',
+          'object-contain': fit == 'contain',
+          'object-fill': fit == 'fill',
+          'object-none': fit == 'none'
+        }
+      ],
+      src: placeholder|default(generic_placeholder),
+      data_src: src|default(generic_placeholder),
+      alt: alt|default(''),
+      width: width|default(false),
+      height: height|default(false),
+      srcset: srcset|default(false),
+      sizes: sizes|default(false),
+      data_ref: 'img'
     }
-  ],
-  src: placeholder|default(generic_placeholder),
-  data_src: src|default(generic_placeholder),
-  alt: alt|default(''),
-  width: width|default(false),
-  height: height|default(false),
-  srcset: srcset|default(false),
-  sizes: sizes|default(false),
-  data_ref: 'img'
-} %}
+  )
+%}
 
-{% set inner_attributes = {
-  class: ['figure__inner', absolute ? ['absolute', 'inset-0'] : ['relative', 'w-full', 'h-0']],
-  style: { paddingTop: absolute ? '' : height * 100 / width ~ '%' }
-} %}
+{% set inner_attributes =
+  merge_html_attributes(
+    inner_attr ?? null,
+    { class: ['figure__inner'] },
+    {
+      class: absolute ? ['absolute', 'inset-0'] : ['relative', 'w-full', 'h-0'],
+      style: { paddingTop: absolute ? '' : height * 100 / width ~ '%' }
+    }
+  )
+%}
+
+{% set caption_attributes =
+  merge_html_attributes(caption_attr ?? null, { class: 'figure__caption' })
+%}
 
 <figure {{ html_attributes(attributes) }}>
   <div {{ html_attributes(inner_attributes) }}>
@@ -82,8 +107,8 @@
   </div>
   {% if caption is defined %}
     {% block caption %}
-      <figcaption class="figure__caption">
-        {{ caption|raw }}
+      <figcaption {{ html_attributes(caption_attributes) }}>
+        {{ caption }}
       </figcaption>
     {% endblock %}
   {% endif %}
