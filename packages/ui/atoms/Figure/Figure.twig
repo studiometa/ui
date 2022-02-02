@@ -38,7 +38,7 @@
 
 {% set absolute = absolute|default(false) %}
 {% set inline = inline|default(false) %}
-{% set fit = fit|default('cover') %}
+{% set fit = fit ?? null %}
 {% set height = height|default(100) %}
 {% set width = width|default(100) %}
 
