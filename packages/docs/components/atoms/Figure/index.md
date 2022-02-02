@@ -73,6 +73,31 @@ Use absolute position on the image holder instead of relative.
 
 Wether to enable the display of the figure inline or not. When `inline`, the root element will have a max-width set corresponding to the `width` given. Use with caution.
 
+### `attr`
+
+- Type: `array`
+
+Custom attributes for the root element.
+
+### `inner_attr`
+
+- Type: `array`
+
+Custom attributes for the inner element.
+
+### `img_attr`
+
+- Type: `array`
+
+Custom attributes for the image element.
+
+### `caption_attr`
+
+- Type: `array`
+
+Custom attributes for the caption element.
+
+
 ## Blocks
 
 ### `caption`
