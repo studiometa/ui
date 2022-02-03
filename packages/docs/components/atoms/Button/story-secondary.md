@@ -5,7 +5,7 @@ customLayout: true
 ---
 
 <script setup>
-  import AppTwigRaw from './app.twig?raw';
+  import AppTwigRaw from './app-secondary.twig?raw';
 
   if (typeof window !== 'undefined') {
     document.documentElement.classList.add('story');
