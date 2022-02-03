@@ -1,0 +1,9 @@
+{% set images = [
+  { src: 'https://picsum.photos/500/400', width: '500', height: '400' },
+  { src: 'https://picsum.photos/600/400', width: '600', height: '400' },
+  { src: 'https://picsum.photos/500/400', width: '500', height: '400' }
+] %}
+
+<div class="p-20 max-w-2xl l:max-w-5xl mx-auto">
+  {% include '@ui/organisms/ImageGrid/ImageGrid.twig' with { images: images } %}
+</div>
