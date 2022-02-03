@@ -22,7 +22,7 @@
 </script>
 
 <template>
-  <div class="my-4 rounded-md overflow-hidden">
+  <div class="flex flex-col my-4 overflow-hidden">
     <div class="flex bg-code-bg border-0 border-b-2 border-solid border-white border-opacity-20">
       <div v-for="(item, index) in items" :key="item.label">
         <button
@@ -44,8 +44,8 @@
         </button>
       </div>
     </div>
-    <div :class="`language-${selectedItem.lang}`">
-      <pre><code v-html="renderedContent"></code></pre>
+    <div :key="selectedItem.label" class="flex-grow overflow-auto overscroll-contain" :class="`language-${selectedItem.lang}`">
+      <pre style="overflow: visible;"><code v-html="renderedContent"></code></pre>
     </div>
   </div>
 </template>
