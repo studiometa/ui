@@ -3,25 +3,48 @@
 <script setup>
   import pkg from '@studiometa/ui/molecules/Modal/package.json';
   import appJsRaw from './app.js?raw';
+  import appTransitionJsRaw from './app-transition.js?raw';
   import AppTwigRaw from './app.twig?raw';
 
   const badges = [`v${pkg.version}`, 'Twig', 'JS'];
 
-  const files = [
+  const stories = [
     {
-      label: 'app.twig',
-      lang: 'twig',
-      content: AppTwigRaw,
+      name: 'Simple',
+      src: './story.html',
+      files: [
+        {
+          label: 'app.twig',
+          lang: 'twig',
+          content: AppTwigRaw,
+        },
+        {
+          label: 'app.js',
+          lang: 'js',
+          content: appJsRaw,
+        }
+      ],
     },
     {
-      label: 'app.js',
-      lang: 'js',
-      content: appJsRaw,
-    }
+      name: 'Transition',
+      src: './story-transition.html',
+      files: [
+        {
+          label: 'app.js',
+          lang: 'js',
+          content: appTransitionJsRaw,
+        },
+        {
+          label: 'app.twig',
+          lang: 'twig',
+          content: AppTwigRaw,
+        },
+      ],
+    },
   ];
 </script>
 
-<Story src="./story.html" :files="files" />
+<Stories :stories="stories" />
 
 ## Parameters
 
@@ -45,4 +68,3 @@ Customize the close trigger button.
 ### `content`
 
 Set the modal's content.
-
