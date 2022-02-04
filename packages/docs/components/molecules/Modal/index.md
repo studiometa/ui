@@ -9,14 +9,14 @@
 
   const files = [
     {
-      label: 'app.js',
-      lang: 'js',
-      content: appJsRaw,
-    },
-    {
       label: 'app.twig',
       lang: 'twig',
       content: AppTwigRaw,
+    },
+    {
+      label: 'app.js',
+      lang: 'js',
+      content: appJsRaw,
     }
   ];
 </script>
@@ -28,6 +28,7 @@
 - `$attr` (`array`): Customize the root element attributes.
 - `$modal_attr` (`array`): Customize the modal element attributes.
 - `$overlay_attr` (`array`): Customize the overlay element attributes.
+- `$wrapper_atrr` (`array`): Customize the wrapper element attributes.
 - `$container_atrr` (`array`): Customize the container element attributes.
 - `$content_atrr` (`array`): Customize the content element attributes.
 

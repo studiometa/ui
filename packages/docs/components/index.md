@@ -1,17 +1,17 @@
 # Components
 
 <script setup>
-  import { useData } from 'vitepress';
+  import { useData, withBase } from 'vitepress';
   const { theme: { value: {sidebar } } } = useData();
 
   const components = sidebar['/components/'];
 </script>
 
 <template v-for="type in components" :key="type.link">
-  <h2><a class :href="type.link">{{ type.text }}</a></h2>
+  <h2><a class :href="withBase(type.link)">{{ type.text }}</a></h2>
   <ul v-if="type.children">
     <li v-for="child in type.children" :key="child.link">
-      <a :href="child.link">{{ child.text }}</a>
+      <a :href="withBase(child.link)">{{ child.text }}</a>
     </li>
   </ul>
 </template>
