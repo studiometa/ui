@@ -4,23 +4,4 @@ navbar: false
 customLayout: true
 ---
 
-<script setup>
-  import { ref, onMounted } from 'vue';
-  import AppTwigRaw from './app-5-images.twig?raw';
-
-  if (typeof window !== 'undefined') {
-    document.documentElement.classList.add('story');
-  }
-
-  async function updateApp() {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const { default: useApp } = await import('./app.js');
-    const app = await useApp();
-    app.$update();
-  }
-</script>
-
-<RenderTwig @rendered="updateApp">{{ AppTwigRaw }}</RenderTwig>
+<RenderTwig :js-importer="() => import('./app.js')" :tpl-importer="() => import('./app-5-images.twig?raw')" />
