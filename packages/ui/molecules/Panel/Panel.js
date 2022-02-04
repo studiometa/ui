@@ -4,12 +4,18 @@ import Modal from '../Modal/Modal.js';
 /**
  * @typedef {import('../Modal/Modal.js').ModalInterface} ModalInterface
  * @typedef {Panel & ModalInterface} PanelInterface
+ * @typedef {typeof Modal} ModalConstructor
  */
 
 /**
  * Panel class.
  */
+// @ts-ignore
+// eslint-disable-next-line require-jsdoc
 export default class Panel extends Modal {
+  /**
+   * Config.
+   */
   static config = {
     name: 'Panel',
     options: {
@@ -64,22 +70,28 @@ export default class Panel extends Modal {
 
   /**
    * Animate before opening.
+   *
    * @this {PanelInterface}
+   * @returns {Promise<void>}
    */
   async open() {
     if (this.isOpen) {
-      return;
+      return Promise.resolve();
     }
 
     this.$refs.modal.classList.remove('pointer-events-none');
-    transition(this.$refs.container, {
-      from: {
-        transform: this.containerOffset,
+    transition(
+      this.$refs.container,
+      {
+        from: {
+          transform: this.containerOffset,
+        },
+        to: {
+          transform: 'none',
+        },
       },
-      to: {
-        transform: 'none',
-      },
-    }, 'keep');
+      'keep'
+    );
     transition(this.$refs.overlay, {
       from: 'opacity-0',
     });
@@ -88,16 +100,14 @@ export default class Panel extends Modal {
   }
 
   /**
-   * Animate before closing
+   * Animate before closing.
+   *
    * @this {PanelInterface}
+   * @returns {Promise<void>}
    */
   async close() {
-    if (!this.isOpen) {
-      return;
-    }
-
-    if (this.isClosing) {
-      return;
+    if (!this.isOpen || this.isClosing) {
+      return Promise.resolve();
     }
 
     this.isClosing = true;

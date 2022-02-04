@@ -1,42 +1,46 @@
-import { withExtraConfig } from '@studiometa/js-toolkit';
 import Modal from './Modal.js';
 
 /**
  * @typedef {import('./Modal.js').ModalInterface} ModalInterface
+ * @typedef {import('./Modal.js').ModalStylesOption} ModalStylesOption
  * @typedef {ModalInterface & ModalWithTransition} ModalWithTransitionInterface
  */
 /**
  * ModalWithTransition class.
  */
-export default class ModalWithTransition extends withExtraConfig(Modal, {
-  options: {
-    styles: {
-      type: Object,
-      default: () => ({
-        modal: {
-          closed: {
-            opacity: '0',
-            pointerEvents: 'none',
-          },
-          active: 'transition duration-500 ease-out-expo',
-        },
-        overlay: {
-          closed: 'opacity-0',
-          active: 'transition duration-500 ease-out-expo',
-        },
-        container: {
-          closed: 'transform scale-95 opacity-0',
-          active: 'transition duration-500 ease-out-expo',
-        },
-      }),
-    },
-  },
-}) {
+// @ts-ignore
+// eslint-disable-next-line require-jsdoc
+export default class ModalWithTransition extends Modal {
   /**
    * Modal options.
    */
   static config = {
     name: 'ModalWithTransition',
+    options: {
+      styles: {
+        type: Object,
+        /**
+         * @return {ModalStylesOption}
+         */
+        default: () => ({
+          modal: {
+            closed: {
+              opacity: '0',
+              pointerEvents: 'none',
+            },
+            active: 'transition duration-500 ease-out-expo',
+          },
+          overlay: {
+            closed: 'opacity-0',
+            active: 'transition duration-500 ease-out-expo',
+          },
+          container: {
+            closed: 'transform scale-95 opacity-0',
+            active: 'transition duration-500 ease-out-expo',
+          },
+        }),
+      },
+    },
   };
 
   /**
@@ -53,6 +57,6 @@ export default class ModalWithTransition extends withExtraConfig(Modal, {
   async close() {
     await super.close();
     this.$refs.modal.style.visibility = 'hidden';
-    return Promise.resolve(this);
+    return Promise.resolve();
   }
 }
