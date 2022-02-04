@@ -118,8 +118,6 @@ export default class Modal extends Base {
 
       target.appendChild(this.$refs.modal);
     }
-
-    return this;
   }
 
   /**

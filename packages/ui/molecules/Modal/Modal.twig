@@ -9,6 +9,8 @@
  *   Use it to customize the modal element attributes.
  * @param array $overlay_attr
  *   Use it to customize the overlay element attributes.
+ * @param array $wrapper_attr
+ *   Use it to customize the wrapper element attributes.
  * @param array $container_atrr
  *   Use it to customize the container element attributes.
  * @param array $content_atrr
@@ -45,8 +47,16 @@
 {% set overlay_attributes =
   merge_html_attributes(
     overlay_attr ?? null,
-    { class: 'z-under absolute inset-0 bg-black opacity-75' },
+    { class: 'z-under absolute inset-0 bg-black bg-opacity-75' },
     { data_ref: 'overlay', tabindex: '-1' }
+  )
+%}
+
+{% set wrapper_attributes =
+  merge_html_attributes(
+    wrapper_attr ?? null,
+    { class: 'absolute inset-0 flex items-center justify-center' },
+    { class: 'pointer-events-none' }
   )
 %}
 
@@ -64,7 +74,11 @@
 
 {# Content attributes #}
 {% set content_attributes =
-  merge_html_attributes(content_attr ?? null, { class: 'max-w-3xl p-16 pt-20' }, { data_ref: 'content' })
+  merge_html_attributes(
+    content_attr ?? null,
+    { class: 'max-w-3xl p-16 pt-20' },
+    { data_ref: 'content' }
+  )
 %}
 
 <div {{ html_attributes(attributes) }}>
@@ -73,7 +87,7 @@
   {% endblock %}
   <div {{ html_attributes(modal_attributes) }}>
     <div {{ html_attributes(overlay_attributes) }}></div>
-    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+    <div {{ html_attributes(wrapper_attributes) }}>
       <div {{ html_attributes(container_attributes) }}>
         {% block close %}
           <div class="absolute top-0 right-0 m-2">
