@@ -8,7 +8,7 @@
   const badges = [`v${pkg.version}`, 'Twig', 'JS'];
 
   async function createStory(name, variant) {
-    const { default: tpl } = await import(`./app-${variant}.twig?raw`);
+    const { default: tpl } = await import(`./app-${variant}.twig`);
     return {
       name,
       src: `./story-${variant}.html`,
@@ -40,7 +40,7 @@
   });
 </script>
 
-<Stories v-if="stories.length" :stories="stories" />
+<Stories :key="stories.length" :stories="stories" />
 
 ## Parameters
 

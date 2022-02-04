@@ -22,7 +22,7 @@
 </script>
 
 <template>
-  <div class="flex flex-col my-4 overflow-hidden">
+  <div class="flex flex-col overflow-hidden">
     <div class="flex bg-code-bg border-0 border-b-2 border-solid border-white border-opacity-20">
       <div v-for="(item, index) in items" :key="item.label">
         <button

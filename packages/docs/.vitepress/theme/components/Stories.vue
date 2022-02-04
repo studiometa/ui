@@ -18,12 +18,12 @@
 </script>
 
 <template>
-  <div class="block-full-width my-6 mb-12 flex items-stretch" :style="{ height }">
-    <div class="w-2/5" v-show="withCode">
-      <Tabs :key="story.src" :items="story.files" class="h-full" />
+  <div class="block-full-width my-6 mb-12 flex items-stretch bg-gray-100" :style="{ height }">
+    <div class="w-2/5 bg-code-bg" v-show="withCode">
+      <Tabs v-if="story" :key="story.src" :items="story.files" class="h-full" />
     </div>
     <div class="w-3/5 flex-grow">
-      <PreviewIframe :key="story.src" :src="story.src" class="h-full" height="100%">
+      <PreviewIframe v-if="story" :key="story.src" :src="story.src" class="h-full" height="100%">
         <template #controls-top-left>
           <ControlButton @click="withCode = !withCode" title="Toggle code">
             <span class="sr-only">Toggle code</span>

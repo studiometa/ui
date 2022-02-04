@@ -32,7 +32,7 @@
 </script>
 
 <template>
-  <div class="relative my-4 bg-gray-100 overflow-hidden resize-x">
+  <div class="relative bg-gray-100 overflow-hidden resize-x">
     <div class="z-above absolute flex gap-1 top-0 left-0 p-2">
       <slot name="controls-top-left" />
     </div>
