@@ -1,3 +1,4 @@
+export * from './TableOfContent/index.js';
 export { default as Accordion } from './Accordion/Accordion.js';
 export { default as AccordionItem } from './Accordion/AccordionItem.js';
 export { default as Modal } from './Modal/Modal.js';
