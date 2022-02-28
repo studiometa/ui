@@ -10,9 +10,13 @@ import { Base } from '@studiometa/js-toolkit';
  * LazyInclude class.
  */
 export default class LazyInclude extends Base {
+  /**
+   * Config.
+   */
   static config = {
     name: 'LazyInclude',
     refs: ['loading', 'error'],
+    emits: ['content', 'error', 'always'],
     options: {
       src: String,
       terminateOnLoad: Boolean,
