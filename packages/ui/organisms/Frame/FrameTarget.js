@@ -9,9 +9,11 @@ export default class FrameTarget extends Transition {
    * Config.
    */
   static config = {
+    ...Transition.config,
     name: 'FrameTarget',
     log: true,
     options: {
+      ...Transition.config.options,
       mode: {
         type: String,
         default: 'replace', // or 'prepend' or 'append'
@@ -54,12 +56,7 @@ export default class FrameTarget extends Transition {
   async enter() {
     this.$log('enter');
 
-    const {
-      enterFrom: from,
-      enterActive: active,
-      enterTo: to,
-      leaveTo,
-    } = this.$options;
+    const { enterFrom: from, enterActive: active, enterTo: to, leaveTo } = this.$options;
     const transitionStyles = { from, active, to };
 
     switch (this.$options.mode) {
@@ -68,20 +65,16 @@ export default class FrameTarget extends Transition {
         await Promise.all(
           Array.from(this.$el.children)
             .filter((child) =>
-              from
-                .split(' ')
-                .every((className) => child.classList.contains(className))
+              from.split(' ').every((className) => child.classList.contains(className))
             )
             .map((child) => {
-              return transition(child, transitionStyles);
+              return transition(/** @type {HTMLElement} */ (child), transitionStyles);
             })
         );
         break;
       case 'replace':
       default:
-        transitionStyles.from = Array.from(
-          new Set([from, leaveTo].flat())
-        ).join(' ');
+        transitionStyles.from = Array.from(new Set([from, leaveTo].flat())).join(' ');
         await transition(this.$el, transitionStyles);
     }
   }
@@ -89,7 +82,7 @@ export default class FrameTarget extends Transition {
   /**
    * Update the content from the new target.
    *
-   * @param   {Target} newTarget The instance of the new target.
+   * @param   {FrameTarget} newTarget The instance of the new target.
    * @returns {void}
    */
   updateContent(newTarget) {
@@ -100,10 +93,9 @@ export default class FrameTarget extends Transition {
     switch (this.$options.mode) {
       case 'prepend':
       case 'append':
-        // eslint-disable-next-line no-restricted-syntax
-        for (const child of newTarget.$el.children) {
+        Array.from(newTarget.$el.children).forEach((child) => {
           child.classList.add(...this.$options.enterFrom.split(' '));
-        }
+        });
         this.$el.insertAdjacentHTML(
           FrameTarget.__INSERT_MODES[this.$options.mode],
           newTarget.$el.innerHTML

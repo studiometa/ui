@@ -95,11 +95,21 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
     }
   }
 
-  enable() {
+  /**
+   * Enable the SliderItem.
+   *
+   * @returns {void}
+   */
+  activate() {
     this.$el.classList.add('is-active');
   }
 
-  disable() {
+  /**
+   * Disable the SliderItem.
+   *
+   * @returns {void}
+   */
+  disactivate() {
     this.$el.classList.remove('is-active');
   }
 

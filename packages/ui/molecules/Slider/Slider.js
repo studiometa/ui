@@ -81,10 +81,10 @@ export default class Slider extends Base {
    * @returns {void}
    */
   set currentIndex(value) {
-    this.currentSliderItem.disable();
+    this.currentSliderItem.disactivate();
     this.$emit('index', value);
     this.__currentIndex = value;
-    this.currentSliderItem.enable();
+    this.currentSliderItem.activate();
   }
 
   /**
@@ -295,7 +295,7 @@ export default class Slider extends Base {
   /**
    * Listen to the Draggable `drag` event.
    *
-   * @param   {import('@studiometa/js-toolkit').DragServiceProps} props
+   * @param   {import('@studiometa/js-toolkit/services/drag').DragServiceProps} props
    * @returns {void}
    */
   onSliderDragDrag(props) {
@@ -314,7 +314,7 @@ export default class Slider extends Base {
    * Listen to the Draggable `drop` event and find the new active slide.
    *
    * @this    {SliderInterface}
-   * @param   {import('@studiometa/js-toolkit').DragServiceProps} props
+   * @param   {import('@studiometa/js-toolkit/services/drag').DragServiceProps} props
    * @returns {void}
    */
   onSliderDragDrop(props) {

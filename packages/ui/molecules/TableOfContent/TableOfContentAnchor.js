@@ -37,7 +37,9 @@ export default class TableOfContentAnchor extends AnchorScrollTo {
 
     this.observer = new IntersectionObserver(([entry]) => {
       const shouldActivate =
-        entry.isIntersecting && entry.boundingClientRect.y < 100 && entry.boundingClientRect > 100;
+        entry.isIntersecting &&
+        entry.boundingClientRect.y < 100 &&
+        entry.boundingClientRect.y > 100;
       this.$el.classList.toggle(this.$options.activeClass, shouldActivate);
       this.$emit('should-activate', shouldActivate);
     });

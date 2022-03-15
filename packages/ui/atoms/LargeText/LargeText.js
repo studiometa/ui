@@ -2,29 +2,51 @@ import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
 import { damp, matrix, clamp, nextFrame } from '@studiometa/js-toolkit/utils';
 
 /**
+ * @typedef {LargeText & { $refs: { target: HTMLElement } }} LargeTextInterface
+ */
+
+/**
  * Large text class.
  */
 export default class LargeText extends withMountWhenInView(Base, { rootMargin: '50%' }) {
+  /**
+   * Config.
+   */
   static config = {
     name: 'LargeText',
     refs: ['target'],
   };
 
+  /**
+   * Translate X.
+   * @type {number}
+   */
   translateX = 0;
 
-  t = performance.now();
+  /**
+   * Scroll delta Y.
+   * @type {number}
+   */
+  deltaY = 0;
 
+  /**
+   * Transform values.
+   */
   transform = {
     skewX: 0,
     translateX: 0,
   };
 
-  deltaY = 0;
-
+  /**
+   * Target width.
+   * @type {number}
+   */
   width = 0;
 
   /**
    * Set width on mount.
+   *
+   * @this    {LargeTextInterface}
    * @returns {void}
    */
   mounted() {
@@ -33,6 +55,8 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
 
   /**
    * Set width on resize.
+   *
+   * @this    {LargeTextInterface}
    * @returns {void}
    */
   resized() {
@@ -42,7 +66,7 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
   /**
    * Update delta scroll on scroll.
    *
-   * @param   {import('@studiometa/js-toolkit').ScrollServiceProps} props
+   * @param   {import('@studiometa/js-toolkit/services/scroll').ScrollServiceProps} props
    * @returns {void}
    */
   scrolled(props) {
@@ -52,10 +76,10 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
   /**
    * Update values on raf.
    *
-   * @param   {import('@studiometa/js-toolkit').RafServiceProps} props
+   * @this    {LargeTextInterface}
    * @returns {void}
    */
-  ticked(props) {
+  ticked() {
     this.translateX -= Math.abs(this.deltaY) + 1;
 
     this.transform.translateX = damp(this.translateX, this.transform.translateX, 0.25);
@@ -70,8 +94,6 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
       this.translateX = 0;
       this.transform.translateX = 0;
     }
-
-    this.t = props.time;
 
     // Defer DOM update to the next frame
     nextFrame(() => {

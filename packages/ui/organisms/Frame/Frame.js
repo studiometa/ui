@@ -6,7 +6,7 @@ import FrameTarget from './FrameTarget.js';
 
 /**
  * The fetch cache.
- * @type {Map<string, { promise: Promise<any>, status: 'pending', result: any }}
+ * @type {Map<string, { promise: Promise<any>, status: 'pending'|'resolved'|'error', content: any }>}
  */
 const cache = new Map();
 
@@ -15,6 +15,17 @@ const cache = new Map();
  * @property {boolean} history
  * @property {'replace'|'prepend'|'append'} position
  * @property {string} target
+ */
+
+/**
+ * @typedef {Frame & {
+ *   $children: {
+ *     FrameAnchor: FrameAnchor[],
+ *     FrameForm: FrameForm[],
+ *     FrameTarget: FrameTarget[],
+ *     Frame: Frame[],
+ *   }
+ * }} FrameInterface
  */
 
 /**
@@ -37,10 +48,9 @@ export default class Frame extends Base {
       'after-enter',
     ],
     log: true,
-    emits: [],
     components: {
-      a: FrameAnchor,
-      form: FrameForm,
+      FrameAnchor,
+      FrameForm,
       FrameTarget,
       Frame,
     },
@@ -59,8 +69,10 @@ export default class Frame extends Base {
 
   /**
    * Get direct children.
+   *
+   * @this    {FrameInterface}
    * @param   {string} name
-   * @returns {Partial<this['$refs']['$children']}
+   * @returns {any[]}
    */
   getDirectChild(name) {
     if (!this.$children[name]) {
@@ -82,15 +94,15 @@ export default class Frame extends Base {
    * Get direct `FrameAnchor` children.
    * @returns {FrameAnchor[]}
    */
-  get directChildA() {
-    return this.getDirectChild('a');
+  get directChildFrameAnchor() {
+    return this.getDirectChild('FrameAnchor');
   }
 
   /**
    * Get direct `FrameForm` children.
    * @returns {FrameForm[]}
    */
-  get directChildForm() {
+  get directChildFrameForm() {
     return this.getDirectChild('form');
   }
 
@@ -104,19 +116,21 @@ export default class Frame extends Base {
 
   /**
    * Prevent click on `FrameAnchor`.
+   *
+   * @this    {FrameInterface}
    * @param   {MouseEvent} event
    * @param   {number} index
    * @returns {void}
    */
-  onAFrameClick(event, index) {
+  onFrameAnchorFrameClick(event, index) {
     // Prevent propagation of nested frames
-    if (!this.directChildA.includes(this.$children.a[index])) {
+    if (!this.directChildFrameAnchor.includes(this.$children.FrameAnchor[index])) {
       return;
     }
 
     this.$log('onAFrameClick', event, index);
     event.preventDefault();
-    const anchor = this.$children.a[index];
+    const anchor = this.$children.FrameAnchor[index];
 
     // Do nothing when clicking links on the same page
     // @todo handle hash change
@@ -129,26 +143,28 @@ export default class Frame extends Base {
 
   /**
    * Prevent submit on forms.
-   * @param   {FormEvent} event
+   *
+   * @this    {FrameInterface}
+   * @param   {SubmitEvent} event
    * @param   {number} index
    * @returns {void}
    */
-  onFormFrameSubmit(event, index) {
+  onFrameFormFrameSubmit(event, index) {
     // Prevent propagation of nested frames
-    if (!this.directChildForm.includes(this.$children.form[index])) {
+    if (!this.directChildFrameForm.includes(this.$children.FrameForm[index])) {
       return;
     }
 
-    this.$log('onFormFrameSubmit', event);
+    this.$log('onFrameFormFrameSubmit', event);
     event.preventDefault();
-    const form = this.$children.form[index];
+    const form = this.$children.FrameForm[index];
     this.goTo(form.action);
   }
 
   /**
    * Parge an HTML string into a DOM object.
    * @param   {string} string
-   * @returns {HTMLElement}
+   * @returns {Document}
    */
   parseHTML(string = '') {
     return new DOMParser().parseFromString(string, 'text/html');
@@ -173,14 +189,14 @@ export default class Frame extends Base {
     const content = await this.fetch(url);
     const doc = this.parseHTML(content);
     const el = doc.querySelector(`#${this.id}`);
-    const newFrame = new Frame(el);
+    const newFrame = new Frame(/** @type {HTMLElement} */ (el));
     newFrame.$children.registerAll();
 
     this.$emit('after-fetch', url, content);
 
     this.$emit('before-leave');
     // Leave all
-    await Promise.all(this.directChildFrameTarget.map((target, index) => target.leave()));
+    await Promise.all(this.directChildFrameTarget.map((target) => target.leave()));
 
     this.$emit('after-leave');
     this.$emit('before-content');
@@ -194,7 +210,7 @@ export default class Frame extends Base {
     // Push history
     if (this.$options.history) {
       document.title = doc.title;
-      historyPush({ path: parsedUrl.pathname, search: parsedUrl.search });
+      historyPush({ path: parsedUrl.pathname, search: parsedUrl.searchParams });
     }
 
     // Update components
@@ -206,7 +222,7 @@ export default class Frame extends Base {
     this.$emit('before-enter');
 
     // Enter all
-    await Promise.all(this.directChildFrameTarget.map((target, index) => target.enter()));
+    await Promise.all(this.directChildFrameTarget.map((target) => target.enter()));
 
     this.$emit('after-enter');
   }

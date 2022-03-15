@@ -5,6 +5,12 @@ import { Base } from '@studiometa/js-toolkit';
  */
 
 /**
+ * @typedef {AbstractPrefetch & {
+ *   $options: PrefetchOptions
+ * }} AbstractPrefetchInterface
+ */
+
+/**
  * AbstractPrefetch class.
  */
 export default class AbstractPrefetch extends Base {
@@ -30,7 +36,7 @@ export default class AbstractPrefetch extends Base {
   /**
    * Is the given anchor prefetchable?
    * @param   {URL}  url
-   * @param   {AnchorPrefetchOptions} options
+   * @param   {PrefetchOptions} options
    * @returns {boolean}
    */
   isPrefetchable(url, options) {
@@ -67,6 +73,7 @@ export default class AbstractPrefetch extends Base {
   /**
    * Prefetch the given URL and terminate the component.
    *
+   * @this  {AbstractPrefetchInterface}
    * @param {URL} url
    * @returns {void}
    */

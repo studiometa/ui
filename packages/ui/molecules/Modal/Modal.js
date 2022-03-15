@@ -14,8 +14,7 @@ const { trap, untrap, saveActiveElement } = focusTrap();
  */
 
 /**
- * @typedef {import('@studiometa/js-toolkit/utils/css/styles.js').CssStyleObject} CssStyleObject
- * @typedef {Partial<Record<'open'|'active'|'closed', string|CssStyleObject>>} ModalStates
+ * @typedef {Partial<Record<'open'|'active'|'closed', string|Partial<CSSStyleDeclaration>>>} ModalStates
  * @typedef {Partial<Record<keyof ModalRefs, ModalStates>>} ModalStylesOption
  */
 

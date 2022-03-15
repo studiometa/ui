@@ -11,7 +11,7 @@ export default class SliderDrag extends withDrag(Base) {
 
   /**
    * Emit drag events.
-   * @param   {import('@studiometa/js-toolkit').DragServiceProps} props
+   * @param   {import('@studiometa/js-toolkit/services/drag').DragServiceProps} props
    * @returns {void}
    */
   dragged(props) {
