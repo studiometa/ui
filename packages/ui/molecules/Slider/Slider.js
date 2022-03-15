@@ -1,7 +1,36 @@
 import { Base } from '@studiometa/js-toolkit';
 import { clamp, inertiaFinalValue, nextFrame } from '@studiometa/js-toolkit/utils';
-import Draggable from '../../primitives/Draggable/Draggable.js';
+import SliderDrag from './SliderDrag.js';
 import SliderItem from './SliderItem.js';
+
+/**
+ * @typedef {'left'|'center'|'right'} SliderModes
+ * @typedef {{ x: Record<SliderModes, number> }} SliderState
+ */
+
+/**
+ * @typedef {Object} SliderChildren
+ * @property {SliderItem[]} SliderItem
+ * @property {SliderDrag[]} SliderDrag
+ */
+
+/**
+ * @typedef {Object} SliderOptions
+ * @property {SliderModes} mode
+ * @property {boolean} fitBounds
+ * @property {number} sensitivity
+ */
+
+/**
+ * @typedef {Object} SliderPrivateInterface
+ * @property {{ wrapper: HTMLElement }} $refs
+ * @property {SliderChildren} $children
+ * @property {SliderOptions} $options
+ */
+
+/**
+ * @typedef {Slider & SliderPrivateInterface} SliderInterface
+ */
 
 /**
  * Orchestrate the slider items state transition.
@@ -9,16 +38,21 @@ import SliderItem from './SliderItem.js';
  * @todo better state management with `mode` option
  */
 export default class Slider extends Base {
+  /**
+   * Config.
+   */
   static config = {
     name: 'Slider',
     refs: ['wrapper'],
+    emits: ['goto', 'index'],
     components: {
       SliderItem,
-      Draggable,
+      SliderDrag,
     },
     options: {
       mode: { type: String, default: 'left' },
       fitBounds: Boolean,
+      contain: Boolean,
       sensitivity: { type: Number, default: 1 },
     },
   };
@@ -27,38 +61,108 @@ export default class Slider extends Base {
 
   __initialX = 0;
 
-  currentIndex = 0;
+  /**
+   * Index of the current active slide.
+   * @type {number}
+   */
+  __currentIndex = 0;
 
+  /**
+   * Get the current index.
+   * @returns {number}
+   */
+  get currentIndex() {
+    return this.__currentIndex;
+  }
+
+  /**
+   * Set the current index and emit the `index` event.
+   * @param   {number} value
+   * @returns {void}
+   */
+  set currentIndex(value) {
+    this.currentSliderItem.disable();
+    this.$emit('index', value);
+    this.__currentIndex = value;
+    this.currentSliderItem.enable();
+  }
+
+  /**
+   * Store all the states.
+   * @type {SliderState[]}
+   */
   states = [];
 
+  /**
+   * Get the current state.
+   * @returns {SliderState}
+   */
   get currentState() {
     return this.states[this.currentIndex];
   }
 
+  /**
+   * Get the first state.
+   * @returns {SliderState}
+   */
   get firstState() {
     return this.states[0];
   }
 
+  /**
+   * Get the last state.
+   * @returns {SliderState}
+   */
   get lastState() {
     return this.states[this.states.length - 1];
   }
 
+  /**
+   * Get the minimal contain state value.
+   * @returns {number} [description]
+   */
+  get containMinState() {
+    return this.getStateValueByMode(this.firstState.x, 'left');
+  }
+
+  /**
+   * Get the maximal contain state value.
+   * @returns {number} [description]
+   */
+  get containMaxState() {
+    return this.getStateValueByMode(this.lastState.x, 'right');
+  }
+
+  /**
+   * Get the last index.
+   *
+   * @this    {SliderInterface}
+   * @returns {number}
+   */
   get indexMax() {
     return this.$children.SliderItem.length - 1;
   }
 
+  /**
+   * Get the current SliderItem
+   *
+   * @this    {SliderInterface}
+   * @returns {SliderItem}
+   */
   get currentSliderItem() {
     return this.$children.SliderItem[this.currentIndex];
   }
 
   /**
+   * Get the states for each SliderItem.
+   *
    * @todo save value for every available modes to avoid recalculation when switching
+   * @this {SliderInterface}
    */
   getStates() {
     const { wrapper } = this.$refs;
     const originRect = wrapper.getBoundingClientRect();
 
-    let origin = originRect.left;
     const origins = {
       left: originRect.left,
       center: originRect.x + originRect.width / 2,
@@ -76,29 +180,52 @@ export default class Slider extends Base {
     });
   }
 
+  /**
+   * Get a state value according to the given mode.
+   *
+   * @this    {SliderInterface}
+   * @param   {SliderState['x']} state
+   * @param   {SliderOptions['mode']} [mode]
+   * @returns {number}
+   */
   getStateValueByMode(state, mode) {
     return state[mode ?? this.$options.mode];
   }
 
+  /**
+   * Mounted hook.
+   *
+   * @returns {void}
+   */
   mounted() {
     this.states = this.getStates();
     this.prepareInvisibleItems();
     this.goTo(this.currentIndex);
   }
 
+  /**
+   * Resized hook.
+   * @returns {void}
+   */
   resized() {
     nextFrame(() => {
       this.states = this.getStates();
       nextFrame(() => {
-        const state = this.states[this.currentIndex];
-        this.getVisibleItems(this.getStateValueByMode(state)).forEach((item) => {
-          item.moveInstantly(state.x);
-        });
         this.prepareInvisibleItems();
+        this.goTo(this.currentIndex);
+        // const stateValue = this.getStateValueByMode(this.states[this.currentIndex].x);
+        // this.getVisibleItems(stateValue).forEach((item) => {
+        //   item.moveInstantly(stateValue);
+        // });
       });
     });
   }
 
+  /**
+   * Go to the next slide.
+   *
+   * @returns {void}
+   */
   goNext() {
     if (this.currentIndex + 1 > this.indexMax) {
       return;
@@ -107,6 +234,11 @@ export default class Slider extends Base {
     this.goTo(this.currentIndex + 1);
   }
 
+  /**
+   * Go to the previous slide.
+   *
+   * @returns {void}
+   */
   goPrev() {
     if (this.currentIndex - 1 < 0) {
       return;
@@ -116,15 +248,27 @@ export default class Slider extends Base {
   }
 
   /**
-   * Go to
+   * Go to the given index.
+   *
+   * @this  {SliderInterface}
    * @param {number} index
+   * @returns {void}
    */
   goTo(index) {
     if (index < 0 || index > this.indexMax) {
       throw new Error('Index out of bound.');
     }
 
-    const state = this.getStateValueByMode(this.states[index].x);
+    let state = this.getStateValueByMode(this.states[index].x);
+
+    if (this.$options.contain) {
+      if (this.$children.SliderItem[this.indexMax].willBeFullyVisible(state)) {
+        state = this.getStateValueByMode(this.lastState.x, 'right');
+      } else if (this.$children.SliderItem[0].willBeFullyVisible(state)) {
+        state = this.getStateValueByMode(this.firstState.x, 'left');
+      }
+    }
+
     const itemsToMove = this.getVisibleItems(state);
 
     if (index < this.currentIndex) {
@@ -139,11 +283,22 @@ export default class Slider extends Base {
     this.$emit('goto', index);
   }
 
-  onDraggableStart() {
+  /**
+   * Listen to the Draggable `start` event.
+   *
+   * @returns {void}
+   */
+  onSliderDragStart() {
     this.__initialX = this.currentSliderItem ? this.currentSliderItem.x : 0;
   }
 
-  onDraggableDrag(props) {
+  /**
+   * Listen to the Draggable `drag` event.
+   *
+   * @param   {import('@studiometa/js-toolkit').DragServiceProps} props
+   * @returns {void}
+   */
+  onSliderDragDrag(props) {
     if (Math.abs(props.delta.y) > Math.abs(props.delta.x)) {
       return;
     }
@@ -155,15 +310,22 @@ export default class Slider extends Base {
     });
   }
 
-  onDraggableDrop(props) {
+  /**
+   * Listen to the Draggable `drop` event and find the new active slide.
+   *
+   * @this    {SliderInterface}
+   * @param   {import('@studiometa/js-toolkit').DragServiceProps} props
+   * @returns {void}
+   */
+  onSliderDragDrop(props) {
     if (Math.abs(props.delta.y) > Math.abs(props.delta.x)) {
       return;
     }
 
-    const finalX = clamp(
+    let finalX = clamp(
       inertiaFinalValue(this.__distanceX, props.delta.x * this.$options.sensitivity),
       0,
-      this.lastState.x
+      this.getStateValueByMode(this.lastState.x)
     );
 
     const absoluteDifferencesBetweenDistanceAndState = this.states.map((state) =>
@@ -177,7 +339,11 @@ export default class Slider extends Base {
     if (this.$options.fitBounds) {
       this.goTo(closestIndex);
     } else {
-      this.$children.SliderItem.forEach((item, i) => {
+      if (this.$options.contain) {
+        finalX = Math.min(this.containMinState, finalX);
+        finalX = Math.max(this.containMaxState, finalX);
+      }
+      this.$children.SliderItem.forEach((item) => {
         item.move(finalX);
       });
       this.currentIndex = closestIndex;
@@ -193,7 +359,7 @@ export default class Slider extends Base {
     const nextItemsToPrepare = [];
     const previousItemsToPrepare = [];
 
-    this.getInvisibleItems(this.getStateValueByMode(state)).forEach((item, i) => {
+    this.getInvisibleItems(this.getStateValueByMode(state.x)).forEach((item, i) => {
       if (i > this.currentIndex) {
         nextItemsToPrepare.push(item);
         return;
@@ -207,14 +373,14 @@ export default class Slider extends Base {
     nextItemsToPrepare.forEach((item) => {
       const invisibleState = this.getStateWhereItemWillBeInvisible(item);
       if (invisibleState) {
-        item.moveInstantly(invisibleState.x);
+        item.moveInstantly(this.getStateValueByMode(invisibleState.x));
       }
     });
 
     previousItemsToPrepare.forEach((item) => {
       const invisibleState = this.getStateWhereItemWillBeInvisible(item, { reversed: true });
       if (invisibleState) {
-        item.moveInstantly(invisibleState.x);
+        item.moveInstantly(this.getStateValueByMode(invisibleState.x));
       }
     });
   }
@@ -223,10 +389,12 @@ export default class Slider extends Base {
    * Get the state where the given item will be visible.
    *
    * @param   {SliderItem} item
-   * @returns {{ x: number }}
+   * @returns {SliderState}
    */
   getStateWhereItemWillBeInvisible(item, { reversed = false } = {}) {
-    const visibleStates = this.states.filter((state) => item.willBeVisible(state.x));
+    const visibleStates = this.states.filter((state) =>
+      item.willBeVisible(this.getStateValueByMode(state.x))
+    );
     const firstVisibleState = visibleStates[0];
     const lastVisibleState = visibleStates[visibleStates.length - 1];
     const firstVisibleStateIndex = this.states.findIndex(
@@ -239,11 +407,27 @@ export default class Slider extends Base {
       : this.states[firstVisibleStateIndex - 1];
   }
 
+  /**
+   * Get the visible slides for the given position.
+   *
+   * @this    {SliderInterface}
+   * @param   {number} target
+   * @returns {SliderItem[]}
+   */
   getVisibleItems(target) {
     return this.$children.SliderItem.filter((item) => item.isVisible || item.willBeVisible(target));
   }
 
+  /**
+   * Get the invisible slides for the given position.
+   *
+   * @this    {SliderInterface}
+   * @param   {number} target
+   * @returns {SliderItem[]}
+   */
   getInvisibleItems(target) {
-    return this.$children.SliderItem.filter(item => !item.isVisible && !item.willBeVisible(target));
+    return this.$children.SliderItem.filter(
+      (item) => !item.isVisible && !item.willBeVisible(target)
+    );
   }
 }
