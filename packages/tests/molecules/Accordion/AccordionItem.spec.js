@@ -64,10 +64,10 @@ describe('AccordionItem component', () => {
     const spy = jest.spyOn(icon.classList, 'add');
     await item.open();
     expect(content.getAttribute('aria-hidden')).toBe('false');
-    expect(spy).toHaveBeenLastCalledWith('rotate-180');
+    expect(spy).toHaveBeenLastCalledWith('transform', 'rotate-180');
     await item.close();
     expect(content.getAttribute('aria-hidden')).toBe('true');
-    expect(spy).toHaveBeenLastCalledWith('rotate-0');
+    expect(spy).toHaveBeenLastCalledWith('transform', 'rotate-0');
     btn.click();
     await wait(200);
     expect(content.getAttribute('aria-hidden')).toBe('false');
@@ -77,11 +77,11 @@ describe('AccordionItem component', () => {
 
     item.open();
     item.close();
-    expect(spy).toHaveBeenLastCalledWith('rotate-180');
+    expect(spy).toHaveBeenLastCalledWith('transform', 'rotate-180');
     await item.open();
     item.close();
     item.open();
-    expect(spy).toHaveBeenLastCalledWith('rotate-0');
+    expect(spy).toHaveBeenLastCalledWith('transform', 'rotate-0');
   });
 
   it('should emit open and close events', async () => {
