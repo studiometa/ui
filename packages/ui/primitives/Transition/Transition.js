@@ -33,6 +33,15 @@ export default class Transition extends Base {
   };
 
   /**
+   * Get the transition target.
+   *
+   * @returns {HTMLElement}
+   */
+  get target() {
+    return this.$el;
+  }
+
+  /**
    * Trigger the enter transition.
    *
    * @todo merge leaveTo and enterFrom classes when leaveKeep is active
@@ -43,7 +52,7 @@ export default class Transition extends Base {
     const { enterFrom, enterActive, enterTo, enterKeep } = this.$options;
 
     return transition(
-      this.$el,
+      this.target,
       {
         from: enterFrom,
         active: enterActive,
@@ -64,7 +73,7 @@ export default class Transition extends Base {
     const { leaveFrom, leaveActive, leaveTo, leaveKeep } = this.$options;
 
     return transition(
-      this.$el,
+      this.target,
       {
         from: leaveFrom,
         active: leaveActive,
