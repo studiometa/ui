@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { Accordion } from '@studiometa/ui';
+import { Accordion, AccordionItem } from '@studiometa/ui';
 import wait from '@studiometa/ui-tests/__utils__/wait';
 
 describe('Accordion component', () => {
@@ -44,12 +44,13 @@ describe('Accordion component', () => {
 
   it('should merge parent options with item option', () => {
     const accordionItem = document.querySelector('[data-component="AccordionItem"]');
-    expect(accordionItem.__base__.$options.styles).toMatchObject({ test: true });
-    expect(accordionItem.__base__.$options.isOpen).toBe(false);
-    accordionItem.__base__.$options.isOpen = true;
-    accordionItem.__base__.$options.styles.test = false;
-    expect(accordionItem.__base__.$options.styles).toMatchObject({ test: false });
-    expect(accordionItem.__base__.$options.isOpen).toBe(true);
+    const options = accordionItem.__base__.get(AccordionItem).$options;
+    expect(options.styles).toMatchObject({ test: true });
+    expect(options.isOpen).toBe(false);
+    options.isOpen = true;
+    options.styles.test = false;
+    expect(options.styles).toMatchObject({ test: false });
+    expect(options.isOpen).toBe(true);
   });
 
   it('should not autoclose items by default', () => {

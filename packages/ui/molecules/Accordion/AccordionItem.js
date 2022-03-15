@@ -17,14 +17,13 @@ import Accordion from './AccordionCore.js';
 
 /**
  * @typedef {Object} StylesOption
- * @property {String|CssStyleObject} open
- * @property {String|CssStyleObject} active
- * @property {String|CssStyleObject} closed
+ * @property {String|Partial<CSSStyleDeclaration>} open
+ * @property {String|Partial<CSSStyleDeclaration>} active
+ * @property {String|Partial<CSSStyleDeclaration>} closed
  */
 
 /**
- * @typedef {import('@studiometa/js-toolkit/utils/css/styles.js').CssStyleObject} CssStyleObject
- * @typedef {Partial<Record<'open'|'active'|'closed', string|CssStyleObject>>} AccordionItemStates
+ * @typedef {Partial<Record<'open'|'active'|'closed', string|Partial<CSSStyleDeclaration>>>} AccordionItemStates
  * @typedef {Partial<Record<keyof AccordionItemRefs, AccordionItemStates>>} AccordionItemStylesOption
  */
 
@@ -177,7 +176,7 @@ export default class AccordionItem extends Base {
 
     await Promise.all([
       transition(refs.container, {
-        from: { height: 0 },
+        from: { height: '0' },
         active: container.active,
         to: { height: `${refs.content.offsetHeight}px` },
       }).then(() => {

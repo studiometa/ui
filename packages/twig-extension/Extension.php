@@ -26,8 +26,8 @@ class Extension extends TwigToolkitExtension
      */
     public function __construct(
         FilesystemLoader $loader = null,
-        string $template_path,
-        string $svg_path
+        string $template_path = '',
+        string $svg_path = ''
     ) {
         if ($loader) {
             $pkg_path = dirname(__DIR__);
@@ -35,6 +35,9 @@ class Extension extends TwigToolkitExtension
             // Add custom paths first
             if ($template_path) {
                 $loader->addPath($template_path, 'ui');
+            }
+
+            if ($svg_path) {
                 $loader->addPath($svg_path, 'svg');
             }
 

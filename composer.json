@@ -1,6 +1,6 @@
 {
   "name": "studiometa/ui",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A set of opiniated, unstyled and accessible components.",
   "license": "MIT",
   "require": {
@@ -10,15 +10,23 @@
   },
   "require-dev": {
     "phpstan/phpstan": "^0.12.88",
-    "squizlabs/php_codesniffer": "^3.6"
+    "squizlabs/php_codesniffer": "^3.6",
+    "pestphp/pest": "^1.21",
+    "spatie/pest-plugin-snapshots": "^1.1"
   },
   "scripts": {
     "phpcs": "phpcs",
-    "phpstan": "phpstan analyse"
+    "phpstan": "phpstan analyse",
+    "test": "pest"
   },
   "autoload": {
     "psr-4": {
       "Studiometa\\Ui\\": "packages/twig-extension"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
     }
   }
 }

@@ -19,8 +19,7 @@ import { transition } from '@studiometa/js-toolkit/utils';
  */
 
 /**
- * @typedef {import('@studiometa/js-toolkit/utils/css/styles.js').CssStyleObject} CssStyleObject
- * @typedef {Partial<Record<'open'|'active'|'closed', string|CssStyleObject>>} TabsStates
+ * @typedef {Partial<Record<'open'|'active'|'closed', string|Partial<CSSStyleDeclaration>>>} TabsStates
  * @typedef {Partial<Record<keyof TabsRefs, TabsStates>>} TabsStylesOption
  */
 

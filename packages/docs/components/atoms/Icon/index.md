@@ -6,7 +6,7 @@
 
   const badges = [`v${pkg.version}`, 'Twig'];
 
-  const tabs = [
+  const files = [
     {
       label: 'app.twig',
       lang: 'twig',
@@ -15,6 +15,4 @@
   ];
 </script>
 
-<PreviewIframe class="block-full-width" height="400px" src="./story.html" />
-
-<Tabs :items="tabs" />
+<Story src="./story.html" :files="files" />
