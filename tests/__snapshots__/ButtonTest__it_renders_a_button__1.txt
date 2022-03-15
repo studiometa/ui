@@ -4,6 +4,6 @@
 
 
 
-<button title="Label" type="button" class="py-4&#x20;btn&#x20;py-4">
+<button title="Label" type="button" class="py-4&#x20;btn">
                         Label
                 </button>    

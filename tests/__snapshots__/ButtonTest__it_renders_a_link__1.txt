@@ -4,6 +4,6 @@
 
 
 
-<a title="Label" href="&#x23;" class="btn&#x20;">
+<a title="Label" href="&#x23;" class="btn">
                         Label
                 </a>    

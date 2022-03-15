@@ -28,3 +28,12 @@ test('it renders a button with type submit', function () {
 } %}
     ");
 });
+
+test('it renders a button without duplicate classes', function() {
+    assertTwigMatchesSnapshot("
+{% set attr = {
+  class: ['py-4']
+} %}
+{% extends '@ui/atoms/Button/Button.twig' %}
+    ");
+});
