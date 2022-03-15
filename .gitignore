@@ -111,3 +111,4 @@ storybook-static/
 
 # Symbolic docroot
 /web
+.phpunit.result.cache

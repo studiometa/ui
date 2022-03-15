@@ -2,14 +2,33 @@
 
 exports[`components exports 1`] = `
 Array [
+  "AbstractPrefetch",
+  "AbstractSliderChild",
   "Accordion",
   "AccordionItem",
+  "AnchorScrollTo",
   "Cursor",
   "Draggable",
   "Figure",
+  "LargeText",
+  "LazyInclude",
   "Modal",
+  "ModalWithTransition",
+  "Panel",
+  "PrefetchWhenOver",
+  "PrefetchWhenVisible",
   "Sentinel",
+  "Slider",
+  "SliderBtn",
+  "SliderCount",
+  "SliderDots",
+  "SliderDrag",
+  "SliderItem",
+  "SliderProgress",
   "Sticky",
+  "TableOfContent",
+  "TableOfContentAnchor",
   "Tabs",
+  "Transition",
 ]
 `;

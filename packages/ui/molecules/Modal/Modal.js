@@ -14,8 +14,7 @@ const { trap, untrap, saveActiveElement } = focusTrap();
  */
 
 /**
- * @typedef {import('@studiometa/js-toolkit/utils/css/styles.js').CssStyleObject} CssStyleObject
- * @typedef {Partial<Record<'open'|'active'|'closed', string|CssStyleObject>>} ModalStates
+ * @typedef {Partial<Record<'open'|'active'|'closed', string|Partial<CSSStyleDeclaration>>>} ModalStates
  * @typedef {Partial<Record<keyof ModalRefs, ModalStates>>} ModalStylesOption
  */
 
@@ -38,6 +37,7 @@ const { trap, untrap, saveActiveElement } = focusTrap();
 
 /**
  * @typedef {Modal & ModalPrivateInterface} ModalInterface
+ * @typedef {typeof Modal} ModalConstructor
  */
 
 /**
@@ -118,8 +118,6 @@ export default class Modal extends Base {
 
       target.appendChild(this.$refs.modal);
     }
-
-    return this;
   }
 
   /**
@@ -188,11 +186,11 @@ export default class Modal extends Base {
    * Open the modal.
    *
    * @this {ModalInterface}
-   * @return {Promise<ModalInterface>} The Modal instance.
+   * @return {Promise<void>} The Modal instance.
    */
   async open() {
     if (this.isOpen) {
-      return Promise.resolve(this);
+      return Promise.resolve();
     }
 
     this.$refs.modal.setAttribute('aria-hidden', 'false');
@@ -224,7 +222,7 @@ export default class Modal extends Base {
         const autofocusElement = this.$refs.modal.querySelector(this.$options.autofocus);
         autofocusElement.focus();
       }
-      return Promise.resolve(this);
+      return Promise.resolve();
     });
   }
 
@@ -232,11 +230,11 @@ export default class Modal extends Base {
    * Close the modal.
    *
    * @this {ModalInterface}
-   * @return {Promise<ModalInterface>} The Modal instance.
+   * @return {Promise<void>} The Modal instance.
    */
   async close() {
     if (!this.isOpen) {
-      return Promise.resolve(this);
+      return Promise.resolve();
     }
 
     this.$refs.modal.setAttribute('aria-hidden', 'true');
@@ -262,6 +260,6 @@ export default class Modal extends Base {
             'keep'
           )
       )
-    ).then(() => Promise.resolve(this));
+    ).then(() => Promise.resolve());
   }
 }

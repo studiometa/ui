@@ -7,7 +7,7 @@
 
   const badges = [`v${pkg.version}`, 'JS'];
 
-  const tabs = [
+  const files = [
     {
       label: 'app.js',
       lang: 'js',
@@ -21,6 +21,4 @@
   ];
 </script>
 
-<PreviewIframe class="block-full-width" src="./story.html" />
-
-<Tabs :items="tabs" />
+<Story src="./story.html" :files="files" />

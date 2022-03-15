@@ -1,5 +1,5 @@
-<div class="p-10">
-  {% embed '@ui/molecules/Modal/Modal.twig' %}
+<div class="w-full h-screen flex items-center justify-center p-10">
+  {% embed '@ui/molecules/Modal/StyledModal.twig' %}
     {% block content %}
       <p>
         Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt
@@ -9,7 +9,7 @@
         cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
       </p>
 
-      {% include '@ui/atoms/Button/Button.twig' with {
+      {% include '@ui/atoms/Button/StyledButton.twig' with {
         label: 'Custom close trigger',
         attr: { data_ref: 'close' }
       } %}

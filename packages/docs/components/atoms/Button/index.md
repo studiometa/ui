@@ -2,22 +2,38 @@
 
 <script setup>
   import pkg from '@studiometa/ui/atoms/Button/package.json';
-  import AppTwigRaw from './app.twig?raw';
+  import AppPrimaryTwigRaw from './app-primary.twig?raw';
+  import AppSecondaryTwigRaw from './app-secondary.twig?raw';
 
   const badges = [`v${pkg.version}`, 'Twig'];
 
-  const tabs = [
+  const stories = [
     {
-      label: 'app.twig',
-      lang: 'twig',
-      content: AppTwigRaw,
-    }
+      src: './story-primary.html',
+      name: 'Primary',
+      files: [
+        {
+          label: 'app.twig',
+          lang: 'twig',
+          content: AppPrimaryTwigRaw,
+        },
+      ],
+    },
+    {
+      src: './story-secondary.html',
+      name: 'Secondary',
+      files: [
+        {
+          label: 'app.twig',
+          lang: 'twig',
+          content: AppSecondaryTwigRaw,
+        },
+      ],
+    },
   ];
 </script>
 
-<PreviewIframe class="block-full-width" src="./story.html" />
-
-<Tabs :items="tabs" />
+<Stories :stories="stories" />
 
 ## Parameters
 

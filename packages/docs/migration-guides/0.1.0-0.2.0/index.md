@@ -17,7 +17,7 @@ The following components have been updated:
 
 A Composer package has been added to easily setup the [`studiometa/twig-toolkit` Twig extension](https://github.com/studiometa/twig-toolkit) and the required namespaces for this project. This packages extends the `studiometa/twig-toolkit` extension, so you can safely replace it with `studiometa/ui` in your project's `composer.json` file.
 
-```sh
+```bash
 composer remove studiometa/twig-toolkit
 composer require studiometa/ui
 ```

@@ -2,11 +2,12 @@
   import { ref, useEffect, onMounted, onUnmounted, getCurrentInstance, nextTick } from 'vue';
   import { fetchRenderedTwig } from '../utils/index.js';
 
-  const props = defineProps({
-    path: String,
-  });
-
   const emit = defineEmits(['rendered']);
+  const props = defineProps<{
+    path?:string;
+    tplImporter?:() => Promise<string>;
+    jsImporter?: () => Promise<any>;
+  }>();
 
   const code = ref(null);
   const content = ref(null);
@@ -14,18 +15,37 @@
 
   onUnmounted(() => controller.abort());
 
-  onMounted(() => {
+  onMounted(async () => {
     const { slots, ctx } = getCurrentInstance();
     const params = { ...ctx.$attrs };
 
-    if (typeof slots.default === 'function') {
-      const [renderedSlot] = slots.default();
-      params.tpl = renderedSlot.children;
+    // This is a story
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.add('story');
     }
 
-    fetchRenderedTwig(props.path ?? '', params, controller).then((response) => {
+    // Import template from importer
+    if (props.tplImporter) {
+      const { default: tpl } = await props.tplImporter();
+      params.tpl = tpl;
+    } else if (typeof slots.default === 'function') {
+      const [renderedSlot] = slots.default();
+      params.tpl = renderedSlot.children;
+    } else if (!params.tpl) {
+      throw new Error('The `tpl` is not defined. Use the `tplImporter` prop or the default slot.');
+    }
+
+    fetchRenderedTwig(params, controller).then((response) => {
       content.value = response;
-      nextTick(() => emit('rendered'));
+
+      nextTick(async () => {
+        emit('rendered');
+        if (props.jsImporter) {
+          const { default: useApp } = await props.jsImporter();
+          const app = await useApp();
+          app.$update();
+        }
+      });
     });
   });
 </script>
