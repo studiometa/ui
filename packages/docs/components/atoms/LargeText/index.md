@@ -5,7 +5,7 @@
   import appJsRaw from './app.js?raw';
   import AppTwigRaw from './app.twig?raw';
 
-  const badges = [`v${pkg.version}`, 'JS'];
+  const badges = [`v${pkg.version}`, 'JS', 'Twig'];
 
   const story = {
     src: './story.html',
