@@ -1,0 +1,49 @@
+{#
+/**
+ * @file
+ *   LargeText component.
+ *
+ * @param string $content
+ *   The text content.
+ * @param number $repeat
+ *   The number of times the content should be repeated, defaults to 2.
+ * @param array $attr
+ *   Custom attributes for the root element.
+ * @param array $target_attr
+ *   Custom attributes for the target element.
+ */
+#}
+
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    { data_component: 'LargeText' },
+    { class: 'overflow-x-hidden pointer-events-none' }
+  )
+%}
+
+{% set target_attributes =
+  merge_html_attributes(
+    target_attr ?? null,
+    { class: 'text-9xl font-bold' },
+    { data_ref: 'target', class: 'relative inline-block whitespace-nowrap' }
+  )
+%}
+
+{% set position_factor = attributes.data_option_sensitivity is defined
+  and attributes.data_option_sensitivity < 0
+  ? - 100
+  : 100
+%}
+
+<div {{ html_attributes(attributes) }}>
+  <span {{ html_attributes(target_attributes) }}>
+    {% for count in 1..repeat ?? 2 %}
+      {% set content_attributes = {
+        style: { left: loop.first ? '' : loop.index0 * position_factor ~ '%' },
+        class: { 'absolute top-0': not loop.first }
+      } %}
+      <span {{ html_attributes(content_attributes) }}>&nbsp;{{ content }}</span>
+    {% endfor %}
+  </span>
+</div>
