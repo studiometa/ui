@@ -2,7 +2,14 @@ import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
 import { damp, matrix, clamp, nextFrame } from '@studiometa/js-toolkit/utils';
 
 /**
- * @typedef {LargeText & { $refs: { target: HTMLElement } }} LargeTextInterface
+ * @typedef {LargeText & {
+ *   $refs: { target: HTMLElement },
+ *   $options: {
+ *     skew: boolean,
+ *     sensitivity: number,
+ *     skewSensitivity: number,
+ *   }
+ * }} LargeTextInterface
  */
 
 /**
@@ -15,6 +22,17 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
   static config = {
     name: 'LargeText',
     refs: ['target'],
+    options: {
+      skew: Boolean,
+      sensitivity: {
+        type: Number,
+        default: 1,
+      },
+      skewSensitivity: {
+        type: Number,
+        default: 1,
+      },
+    },
   };
 
   /**
@@ -80,19 +98,24 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
    * @returns {void}
    */
   ticked() {
-    this.translateX -= Math.abs(this.deltaY) + 1;
+    this.translateX -= (Math.abs(this.deltaY) + 1) * this.$options.sensitivity;
 
     this.transform.translateX = damp(this.translateX, this.transform.translateX, 0.25);
 
-    this.transform.skewX = damp(
-      clamp((this.deltaY / 20) * -1, -0.5, 0.5),
-      this.transform.skewX,
-      0.25
-    );
+    if (this.$options.skew) {
+      this.transform.skewX = damp(
+        clamp((this.deltaY / 20) * -1, -0.5, 0.5) * this.$options.skewSensitivity,
+        this.transform.skewX,
+        0.25
+      );
+    }
 
-    if (Math.abs(this.transform.translateX) >= this.width) {
+    if (this.translateX <= this.width * -1) {
       this.translateX = 0;
-      this.transform.translateX = 0;
+      this.transform.translateX += this.width;
+    } else if (this.$options.sensitivity < 0 && this.translateX >= this.width) {
+      this.translateX = 0;
+      this.transform.translateX -= this.width;
     }
 
     // Defer DOM update to the next frame
