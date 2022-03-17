@@ -3,6 +3,7 @@
 exports[`components exports 1`] = `
 Array [
   "AbstractPrefetch",
+  "AbstractScrollAnimation",
   "AbstractSliderChild",
   "Accordion",
   "AccordionItem",
@@ -20,6 +21,9 @@ Array [
   "Panel",
   "PrefetchWhenOver",
   "PrefetchWhenVisible",
+  "ScrollAnimation",
+  "ScrollAnimationChild",
+  "ScrollAnimationParent",
   "Sentinel",
   "Slider",
   "SliderBtn",
