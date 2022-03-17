@@ -13,6 +13,7 @@ export default class ScrollAnimation extends withScrolledInView(AbstractScrollAn
    * Config.
    */
   static config = {
+    ...AbstractScrollAnimation.config,
     name: 'ScrollAnimation',
     refs: ['target'],
   };
