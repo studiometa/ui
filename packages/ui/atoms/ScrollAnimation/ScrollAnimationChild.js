@@ -28,14 +28,14 @@ export default class ScrollAnimationChild extends AbstractScrollAnimation {
     this.dampedProgress.y = damp(
       props.progress.y,
       this.dampedProgress.y,
-      this.freezedOptions.dampFactor,
-      this.freezedOptions.dampPrecision
+      this.$options.dampFactor,
+      this.$options.dampPrecision
     );
     this.dampedProgress.x = damp(
       props.progress.x,
       this.dampedProgress.x,
-      this.freezedOptions.dampFactor,
-      this.freezedOptions.dampPrecision
+      this.$options.dampFactor,
+      this.$options.dampPrecision
     );
 
     props.dampedProgress = this.dampedProgress;

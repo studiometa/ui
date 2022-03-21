@@ -1,4 +1,4 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base, withFreezedOptions } from '@studiometa/js-toolkit';
 import { matrix, lerp, map, clamp } from '@studiometa/js-toolkit/utils';
 
 /**
@@ -15,6 +15,25 @@ import { matrix, lerp, map, clamp } from '@studiometa/js-toolkit/utils';
  *   opacity?: number;
  * }} AnimationOptions
  */
+
+/**
+ * Get animation configuration defaults.
+ * @returns {AnimationOptions}
+ */
+function getDefaults() {
+  return {
+    x: 0,
+    y: 0,
+    z: 0,
+    scale: 1,
+    scaleX: 1,
+    scaleY: 1,
+    rotate: 0,
+    skewX: 0,
+    skewY: 0,
+    opacity: 1,
+  };
+}
 
 /**
  * @typedef {AbstractScrollAnimation & {
@@ -50,7 +69,7 @@ import { matrix, lerp, map, clamp } from '@studiometa/js-toolkit/utils';
  * data-option-to="{ x: 100%, y: innerWidth / 2 }"
  * ```
  */
-export default class AbstractScrollAnimation extends Base {
+export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
   /**
    * Config.
    */
@@ -58,8 +77,8 @@ export default class AbstractScrollAnimation extends Base {
     name: 'AbstractScrollAnimation',
     options: {
       playRange: {
-        type: String,
-        default: '0,1',
+        type: Array,
+        default: () => [0, 1],
       },
       dampFactor: {
         type: Number,
@@ -69,8 +88,16 @@ export default class AbstractScrollAnimation extends Base {
         type: Number,
         default: 0.001,
       },
-      from: Object,
-      to: Object,
+      from: {
+        type: Object,
+        default: getDefaults,
+        merge: true,
+      },
+      to: {
+        type: Object,
+        default: getDefaults,
+        merge: true,
+      },
     },
   };
 
@@ -84,47 +111,14 @@ export default class AbstractScrollAnimation extends Base {
   }
 
   /**
-   * Implement freezed options for better performances.
-   *
-   * @this {ScrollAnimationChildInterface}
-   */
-  get freezedOptions() {
-    const withDefaults = (config) => ({
-      x: config.x ?? 0,
-      y: config.y ?? 0,
-      z: config.z ?? 0,
-      scaleX: config.scaleX ?? config.scale ?? 1,
-      scaleY: config.scaleY ?? config.scale ?? 1,
-      rotate: config.rotate ?? 0,
-      skewX: config.skewX ?? 0,
-      skewY: config.skewY ?? 0,
-      opacity: config.opacity ?? 1,
-    });
-
-    const freezedOptions = Object.freeze({
-      playRange: this.$options.playRange.split(',').map(Number),
-      dampFactor: this.$options.dampFactor,
-      dampPrecision: this.$options.dampPrecision,
-      from: withDefaults(this.$options.from),
-      to: withDefaults(this.$options.to),
-    });
-
-    Object.defineProperty(this, 'freezedOptions', {
-      value: freezedOptions,
-    });
-
-    return freezedOptions;
-  }
-
-  /**
    * Flags for style detection.
    */
   get has() {
-    const { freezedOptions } = this;
     const has = {
       x: false,
       y: false,
       z: false,
+      scale: false,
       scaleX: false,
       scaleY: false,
       rotate: false,
@@ -134,8 +128,8 @@ export default class AbstractScrollAnimation extends Base {
       transform: false,
     };
 
-    Object.keys(freezedOptions.from).forEach((key) => {
-      has[key] = freezedOptions.from[key] !== freezedOptions.to[key];
+    Object.keys(this.$options.from).forEach((key) => {
+      has[key] = this.$options.from[key] !== this.$options.to[key];
     });
 
     has.transform = Object.keys(has)
@@ -156,13 +150,9 @@ export default class AbstractScrollAnimation extends Base {
     }
 
     const progress = map(
-      clamp(
-        props.dampedProgress.y,
-        this.freezedOptions.playRange[0],
-        this.freezedOptions.playRange[1]
-      ),
-      this.freezedOptions.playRange[0],
-      this.freezedOptions.playRange[1],
+      clamp(props.dampedProgress.y, this.$options.playRange[0], this.$options.playRange[1]),
+      this.$options.playRange[0],
+      this.$options.playRange[1],
       0,
       1
     );
@@ -173,8 +163,8 @@ export default class AbstractScrollAnimation extends Base {
         progress,
         0,
         1,
-        this.freezedOptions.from.opacity,
-        this.freezedOptions.to.opacity
+        this.$options.from.opacity,
+        this.$options.to.opacity
       );
     }
 
@@ -182,32 +172,36 @@ export default class AbstractScrollAnimation extends Base {
       this.target.style.transform = `
         ${matrix({
           translateX: this.has.x
-            ? lerp(this.freezedOptions.from.x, this.freezedOptions.to.x, progress)
+            ? lerp(this.$options.from.x, this.$options.to.x, progress)
             : undefined,
           translateY: this.has.y
-            ? lerp(this.freezedOptions.from.y, this.freezedOptions.to.y, progress)
+            ? lerp(this.$options.from.y, this.$options.to.y, progress)
             : undefined,
-          scaleX: this.has.scaleX
-            ? lerp(this.freezedOptions.from.scaleX, this.freezedOptions.to.scaleX, progress)
+          // eslint-disable-next-line no-nested-ternary
+          scaleX: this.has.scale
+            ? lerp(this.$options.from.scale, this.$options.to.scale, progress)
+            : this.has.scaleX
+            ? lerp(this.$options.from.scaleX, this.$options.to.scaleX, progress)
             : undefined,
-          scaleY: this.has.scaleY
-            ? lerp(this.freezedOptions.from.scaleY, this.freezedOptions.to.scaleY, progress)
+          // eslint-disable-next-line no-nested-ternary
+          scaleY: this.has.scale
+            ? lerp(this.$options.from.scale, this.$options.to.scale, progress)
+            : this.has.scaleY
+            ? lerp(this.$options.from.scaleY, this.$options.to.scaleY, progress)
             : undefined,
           skewX: this.has.skewX
-            ? lerp(this.freezedOptions.from.skewX, this.freezedOptions.to.skewX, progress)
+            ? lerp(this.$options.from.skewX, this.$options.to.skewX, progress)
             : undefined,
           skewY: this.has.skewY
-            ? lerp(this.freezedOptions.from.skewY, this.freezedOptions.to.skewY, progress)
+            ? lerp(this.$options.from.skewY, this.$options.to.skewY, progress)
             : undefined,
         })}
-        rotate(${
+        ${
           this.has.rotate
-            ? lerp(this.freezedOptions.from.rotate, this.freezedOptions.to.rotate, progress)
-            : 0
-        }deg)
-        translateZ(${
-          this.has.z ? lerp(this.freezedOptions.from.z, this.freezedOptions.to.z, progress) : 0
-        })
+            ? `rotate(${lerp(this.$options.from.rotate, this.$options.to.rotate, progress)}deg)`
+            : ''
+        }
+        translateZ(${this.has.z ? lerp(this.$options.from.z, this.$options.to.z, progress) : 0})
       `;
     }
   }

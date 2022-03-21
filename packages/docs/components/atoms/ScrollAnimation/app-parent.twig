@@ -59,22 +59,22 @@
   class="relative bg-gray-200"
   style="height: 300vh;">
   <div class="sticky top-0 left-0 flex items-center justify-center w-full h-screen text-center overflow-hidden">
-    <p class="text-4xl font-extrabold text-gray-800">
+    <p class="z-above relative text-4xl font-extrabold text-gray-800">
       Lorem ipsum dolor sit amet
     </p>
-    <div class="absolute top-full left-1/2 w-2 h-2 -mt-1 -ml-1">
+    <div class="absolute top-full left-1/2 w-2 h-2 -mt-1 -ml-1 pointer-events-none">
       <div data-component="ScrollAnimationChild"
         data-option-damp-factor="0.1"
         data-option-from="{{ { scale: 0 }|json_encode }}"
         data-option-to="{{ { scale: 2 }|json_encode }}"
-        class="absolute top-1/2 left-1/2 bg-blue-600 rounded-full mix-blend-darken transform scale-0"
+        class="absolute top-1/2 left-1/2 bg-blue-600 rounded-full transform scale-0"
         style="width: 250vmax; height: 250vmax; margin-top: -125vmax; margin-left: -125vmax;"></div>
       <div data-component="ScrollAnimationChild"
         data-option-damp-factor="0.1"
-        data-option-play-range="0.4,1"
+        data-option-play-range="[0.4, 1]"
         data-option-from="{{ { scale: 0 }|json_encode }}"
-        data-option-to="{{ { scale: 2 }|json_encode }}"
-        class="absolute top-1/2 left-1/2 bg-gray-200 rounded-full mix-blend-exclusion transform scale-0"
+        data-option-to="{{ { scale: 1 }|json_encode }}"
+        class="absolute top-1/2 left-1/2 bg-gray-200 rounded-full transform scale-0"
         style="width: 250vmax; height: 250vmax; margin-top: -125vmax; margin-left: -125vmax;"></div>
     </div>
   </div>

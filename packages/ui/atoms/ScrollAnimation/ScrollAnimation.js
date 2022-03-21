@@ -33,7 +33,7 @@ export default class ScrollAnimation extends withScrolledInView(AbstractScrollAn
    * @returns {number}
    */
   get dampFactor() {
-    return this.freezedOptions.dampFactor;
+    return this.$options.dampFactor;
   }
 
   /**
@@ -41,6 +41,6 @@ export default class ScrollAnimation extends withScrolledInView(AbstractScrollAn
    * @returns {number}
    */
   get dampPrecision() {
-    return this.freezedOptions.dampPrecision;
+    return this.$options.dampPrecision;
   }
 }
