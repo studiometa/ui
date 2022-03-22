@@ -34,7 +34,10 @@ export default class Figure extends withMountWhenInView(Base, { threshold: [0, 1
       throw new Error('[Figure] The `img` ref must be an `<img>` element.');
     }
 
-    if (this.$refs.img.hasAttribute('data-src')) {
+    if (
+      this.$refs.img.hasAttribute('data-src') &&
+      this.$refs.img.getAttribute('data-src') !== this.$refs.img.src
+    ) {
       this.$refs.img.src = this.$refs.img.getAttribute('data-src');
     }
   }
