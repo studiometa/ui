@@ -23,8 +23,8 @@
 
 <div {{ html_attributes(attributes) }}>
   {% for item in items %}
-    {% set is_open = item.attr.data_option_is_open ?? false %}
     {% set item_attributes = merge_html_attributes(item_attr ?? null, { data_component: 'AccordionItem' }, item.attr ?? null) %}
+    {% set is_open = item_attributes.data_option_is_open ?? false %}
     <div {{ html_attributes(item_attributes) }}>
       <button data-ref="btn" class="block w-full" aria-expanded="{{ is_open ? 'true' : 'false' }}">
         {% block title %}
