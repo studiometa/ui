@@ -102,6 +102,16 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
   };
 
   /**
+   * Terminate the class when Web Animation API is not supported.
+   * @returns {void}
+   */
+  mounted() {
+    if (typeof this.target.animate !== 'function') {
+      this.$terminate();
+    }
+  }
+
+  /**
    * Get the target element for the animation.
    *
    * @returns {HTMLElement}
@@ -157,19 +167,14 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
       1
     );
 
-    if (this.has.opacity) {
-      // @ts-ignore
-      this.target.style.opacity = map(
-        progress,
-        0,
-        1,
-        this.$options.from.opacity,
-        this.$options.to.opacity
-      );
-    }
-
-    if (this.has.transform) {
-      this.target.style.transform = `
+    this.target.animate(
+      [
+        {
+          opacity: this.has.opacity
+            ? map(progress, 0, 1, this.$options.from.opacity, this.$options.to.opacity)
+            : undefined,
+          transform: this.has.transform
+            ? `
         ${matrix({
           translateX: this.has.x
             ? lerp(this.$options.from.x, this.$options.to.x, progress)
@@ -202,7 +207,11 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
             : ''
         }
         translateZ(${this.has.z ? lerp(this.$options.from.z, this.$options.to.z, progress) : 0})
-      `;
-    }
+      `
+            : undefined,
+        },
+      ],
+      { duration: 0, fill: 'forwards' }
+    );
   }
 }
