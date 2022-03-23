@@ -44,17 +44,17 @@ export default class Transition extends Base {
   /**
    * Trigger the enter transition.
    *
-   * @todo merge leaveTo and enterFrom classes when leaveKeep is active
    * @this {TransitionInterface}
    * @returns {Promise<void>}
    */
   enter() {
-    const { enterFrom, enterActive, enterTo, enterKeep } = this.$options;
+    const { enterFrom, enterActive, enterTo, enterKeep, leaveTo } = this.$options;
 
     return transition(
       this.target,
       {
-        from: enterFrom,
+        // eslint-disable-next-line prefer-template
+        from: (leaveTo + ' ' + enterFrom).trim(),
         active: enterActive,
         to: enterTo,
       },
@@ -65,17 +65,17 @@ export default class Transition extends Base {
   /**
    * Trigger the leave transition.
    *
-   * @todo merge enterTo and leaveTo classes when enterKeep is active
    * @this {TransitionInterface}
    * @returns {Promise<void>}
    */
   leave() {
-    const { leaveFrom, leaveActive, leaveTo, leaveKeep } = this.$options;
+    const { leaveFrom, leaveActive, leaveTo, leaveKeep, enterTo } = this.$options;
 
     return transition(
       this.target,
       {
-        from: leaveFrom,
+        // eslint-disable-next-line prefer-template
+        from: (enterTo + ' ' + leaveFrom).trim(),
         active: leaveActive,
         to: leaveTo,
       },
