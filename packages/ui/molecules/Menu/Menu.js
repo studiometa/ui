@@ -117,30 +117,30 @@ export default class Menu extends Base {
    * @param   {import('@studiometa/js-toolkit/services/key').KeyServiceProps} options
    * @returns {void}
    */
-  keyed({ TAB, ESC, ENTER }) {
-    const hasFocusElementWithin = this.$el.contains(document.activeElement);
+  // keyed({ TAB, ESC, ENTER }) {
+  //   const hasFocusElementWithin = this.$el.contains(document.activeElement);
 
-    if (ESC) {
-      this.close();
-      if (hasFocusElementWithin) {
-        document.activeElement.blur();
-      }
-    }
+  //   if (ESC) {
+  //     this.close();
+  //     if (hasFocusElementWithin) {
+  //       document.activeElement.blur();
+  //     }
+  //   }
 
-    if (this.$parent.shouldReactOnClick) {
-      if (ENTER && hasFocusElementWithin) {
-        this.open();
-      } else if (ENTER && !hasFocusElementWithin) {
-        this.close();
-      }
-    } else {
-      if (TAB && hasFocusElementWithin) {
-        this.open();
-      } else if (TAB && !hasFocusElementWithin) {
-        this.close();
-      }
-    }
-  }
+  //   if (this.$parent.shouldReactOnClick) {
+  //     if (ENTER && hasFocusElementWithin) {
+  //       this.open();
+  //     } else if (ENTER && !hasFocusElementWithin) {
+  //       this.close();
+  //     }
+  //   } else {
+  //     if (TAB && hasFocusElementWithin) {
+  //       this.open();
+  //     } else if (TAB && !hasFocusElementWithin) {
+  //       this.close();
+  //     }
+  //   }
+  // }
 
   /**
    * Toggle menu items on button click;
