@@ -1,5 +1,5 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { Menu } from '@studiometa/ui';
+import Menu from './Menu.js';
 
 class App extends Base {
   static config = {

@@ -53,11 +53,6 @@ export default class MenuItems extends Transition {
     options.leaveKeep = true;
     options.enterKeep = true;
 
-    options.enterTo = 'is-open';
-    options.enterActive = 'transition duration-500 ease-out-expo';
-    options.leaveActive = 'transition duration-500 ease-out-expo';
-    options.leaveTo = 'transform -translate-x-full pointer-events-none';
-
     return options;
   }
 
