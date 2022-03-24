@@ -1,0 +1,207 @@
+<style>
+  a { color: inherit; text-decoration: none; }
+  ul { list-style-type: none; padding: 0; }
+</style>
+
+<nav data-component="Menu" data-option-type="click" class="inline-block p-10">
+  <button data-component="MenuBtn"
+    type="button"
+    class="inline-block p-4 bg-gray-200 hover:bg-blue-200 text-center focus:ring-2 ring-inset">
+    Burger
+  </button>
+  <div data-component="MenuItems"
+    class="z-10 fixed top-0 left-0 h-full w-1/3 py-4 transform -translate-x-full pointer-events-none">
+    <div class="absolute inset-0 bg-blue-200"></div>
+    <ul class="w-full">
+      <li data-component="Menu">
+        <a data-component="MenuBtn"
+          class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+          href="#">
+          Subitem #1
+        </a>
+        <div data-component="MenuItems"
+          class="z-under absolute top-0 left-full w-full h-full py-4 transform -translate-x-full pointer-events-none">
+          <div class="absolute inset-0 bg-green-200"></div>
+          <ul>
+            <li data-component="Menu">
+              <a href="#"
+                data-component="MenuBtn"
+                class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset">
+                Subitem #1.1
+              </a>
+              <div data-component="MenuItems"
+                class="z-under absolute top-0 left-full w-full h-full py-4 bg-red-300 transform -translate-x-full pointer-events-none">
+                <ul>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #1.1.1
+                    </a>
+                  </li>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #1.1.2
+                    </a>
+                  </li>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #1.1.3
+                    </a>
+                  </li>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #1.1.4
+                    </a>
+                  </li>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #1.1.5
+                    </a>
+                  </li>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #1.1.6
+                    </a>
+                  </li>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #1.1.7
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </li>
+            <li>
+              <a href="#"
+                class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset">
+                Subitem #1.2
+              </a>
+            </li>
+            <li>
+              <a href="#"
+                class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset">
+                Subitem #1.3
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      <li data-component="Menu">
+        <a data-component="MenuBtn"
+          class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+          href="#">
+          Subitem #2
+        </a>
+        <div data-component="MenuItems"
+          class="z-under absolute top-0 left-full w-full h-full py-4 transform -translate-x-full pointer-events-none">
+          <div class="absolute inset-0 bg-green-200"></div>
+          <ul>
+            <li data-component="Menu">
+              <a href="#"
+                data-component="MenuBtn"
+                class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset">
+                Subitem #2.1
+              </a>
+              <div data-component="MenuItems"
+                class="z-under absolute top-0 left-full w-full h-full py-4 bg-red-300 transform -translate-x-full pointer-events-none">
+                <ul>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #2.1.1
+                    </a>
+                  </li>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #2.1.2
+                    </a>
+                  </li>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #2.1.3
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </li>
+            <li>
+              <a href="#"
+                class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset">
+                Subitem #2.2
+              </a>
+            </li>
+            <li>
+              <a href="#"
+                class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset">
+                Subitem #2.3
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      <li data-component="Menu">
+        <a data-component="MenuBtn"
+          class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+          href="#">
+          Subitem #3
+        </a>
+        <div data-component="MenuItems"
+          class="z-under absolute top-0 left-full w-full h-full py-4 transform -translate-x-full pointer-events-none">
+          <div class="absolute inset-0 bg-green-200"></div>
+          <ul>
+            <li data-component="Menu">
+              <a href="#"
+                data-component="MenuBtn"
+                class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset">
+                Subitem #3.1
+              </a>
+              <div data-component="MenuItems"
+                class="z-under absolute top-0 left-full w-full h-full py-4 bg-red-300 transform -translate-x-full pointer-events-none">
+                <ul>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #3.1.1
+                    </a>
+                  </li>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #3.1.2
+                    </a>
+                  </li>
+                  <li>
+                    <a class="block p-4 hover:bg-blue-300 focus:ring-2 ring-inset"
+                      href="#">
+                      Subitem #3.1.3
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </li>
+            <li>
+              <a href="#"
+                class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset">
+                Subitem #3.2
+              </a>
+            </li>
+            <li>
+              <a href="#"
+                class="relative block p-4 hover:bg-blue-300 focus:ring-2 ring-inset">
+                Subitem #3.3
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+    </ul>
+  </div>
+</nav>
