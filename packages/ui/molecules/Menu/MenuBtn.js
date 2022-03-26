@@ -14,6 +14,12 @@ export default class MenuBtn extends Base {
   };
 
   /**
+   * Wether the button is hovered or not.
+   * @type {boolean}
+   */
+  isHover = false;
+
+  /**
    * Dispatch the click event.
    *
    * @param   {MouseEvent} event
@@ -31,6 +37,7 @@ export default class MenuBtn extends Base {
    * @returns {void}
    */
   onMouseenter(event) {
+    this.isHover = true;
     event.stopPropagation();
     this.$emit('btn-mouseenter', event);
   }
@@ -41,6 +48,7 @@ export default class MenuBtn extends Base {
    * @returns {void}
    */
   onMouseleave(event) {
+    this.isHover = false;
     event.stopPropagation();
     this.$emit('btn-mouseleave', event);
   }

@@ -32,7 +32,7 @@ export default class MenuItems extends Transition {
   static config = {
     ...Transition.config,
     name: 'MenuItems',
-    emits: ['items-open', 'items-close'],
+    emits: ['items-open', 'items-close', 'items-mouseleave'],
     components: {
       MenuItems,
     },
@@ -43,6 +43,12 @@ export default class MenuItems extends Transition {
    * @type {boolean}
    */
   isOpen = false;
+
+  /**
+   * Wether the component is hovered.
+   * @type {boolean}
+   */
+  isHover = false;
 
   /**
    * Override `Transition` options.
@@ -66,7 +72,28 @@ export default class MenuItems extends Transition {
   }
 
   /**
+   * Set hover state.
+   *
+   * @returns {void}
+   */
+  onMouseenter() {
+    this.isHover = true;
+  }
+
+  /**
+   * Unset hover state.
+   *
+   * @param   {MouseEvent} event
+   * @returns {void}
+   */
+  onMouseleave(event) {
+    this.isHover = false;
+    this.$emit('items-mouseleave', event);
+  }
+
+  /**
    * Display the menu items.
+   *
    * @returns {void}
    */
   open() {

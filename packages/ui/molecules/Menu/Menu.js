@@ -1,4 +1,5 @@
 import { Base } from '@studiometa/js-toolkit';
+import { nextTick } from '@studiometa/js-toolkit/utils';
 import MenuBtn from './MenuBtn.js';
 import MenuItems from './MenuItems.js';
 
@@ -86,6 +87,15 @@ export default class Menu extends Base {
   }
 
   /**
+   * Wether the button or the items are hovered.
+   *
+   * @returns {boolean}
+   */
+  get isHover() {
+    return this.menuBtn.isHover || this.menuItems.isHover;
+  }
+
+  /**
    * Set attributes on mounted, destroy the component if it is missing required
    * child components.
    *
@@ -103,13 +113,7 @@ export default class Menu extends Base {
   }
 
   /**
-   * @todo Implement keyboard management.
-   *
-   * - ESC = close
-   *
-   * !shouldReactOnClick
-   * - focus on link = open
-   * - focus out link = close
+   * Keyboard management.
    *
    * @param   {import('@studiometa/js-toolkit/services/key').KeyServiceProps} options
    * @returns {void}
@@ -150,7 +154,6 @@ export default class Menu extends Base {
   /**
    * Open menu items on button mouse enter.
    *
-   * @todo check if MenuBtn is direct child
    * @this    {MenuInterface}
    * @returns {void}
    */
@@ -163,20 +166,42 @@ export default class Menu extends Base {
   /**
    * Close menu items on button mouse leave.
    *
-   * @todo check if MenuBtn is direct child
    * @this    {MenuInterface}
    * @returns {void}
    */
-  onMenuBtnBtnMouseleave(event, index) {
-    if (this.$children.MenuBtn[index] === this.menuBtn && !this.shouldReactOnClick) {
-      this.close();
+  onMenuBtnBtnMouseleave() {
+    if (this.shouldReactOnClick) {
+      return;
     }
+
+    nextTick(() => {
+      if (!this.isHover) {
+        this.close();
+      }
+    });
+  }
+
+  /**
+   * Close menu items on button mouse leave.
+   *
+   * @this    {MenuInterface}
+   * @returns {void}
+   */
+  onMenuItemsItemsMouseleave() {
+    if (this.shouldReactOnClick) {
+      return;
+    }
+
+    nextTick(() => {
+      if (!this.isHover) {
+        this.close();
+      }
+    });
   }
 
   /**
    * Close other non-parent menu items on menu items open.
    *
-   * @todo check if MenuBtn is direct child
    * @this    {MenuInterface}
    * @param   {number} index
    * @returns {void}
@@ -190,14 +215,26 @@ export default class Menu extends Base {
     });
   }
 
+  /**
+   * Close the menu.
+   * @returns {void}
+   */
   close() {
     this.menuItems.close();
   }
 
+  /**
+   * Open the menu.
+   * @returns {void}
+   */
   open() {
     this.menuItems.open();
   }
 
+  /**
+   * Toggle the menu.
+   * @returns {void}
+   */
   toggle() {
     this.menuItems.toggle();
   }
