@@ -14,30 +14,6 @@ export default class MenuBtn extends Base {
   };
 
   /**
-   * Wether the button has focus or not.
-   * @type {boolean}
-   */
-  hasFocus = false;
-
-  /**
-   * Set `hasFocus` flag.
-   *
-   * @returns {void}
-   */
-  onFocusin() {
-    this.hasFocus = true;
-  }
-
-  /**
-   * Set `hasFocus` flag.
-   *
-   * @returns {void}
-   */
-  onFocusout() {
-    this.hasFocus = false;
-  }
-
-  /**
    * Dispatch the click event.
    *
    * @param   {MouseEvent} event
@@ -55,6 +31,7 @@ export default class MenuBtn extends Base {
    * @returns {void}
    */
   onMouseenter(event) {
+    event.stopPropagation();
     this.$emit('btn-mouseenter', event);
   }
 
@@ -64,6 +41,7 @@ export default class MenuBtn extends Base {
    * @returns {void}
    */
   onMouseleave(event) {
+    event.stopPropagation();
     this.$emit('btn-mouseleave', event);
   }
 }

@@ -30,7 +30,7 @@ export default class Menu extends Base {
     options: {
       type: {
         type: String,
-        default: 'click', // or 'hover'
+        default: 'hover', // or 'hover'
       },
     },
   };
@@ -107,9 +107,6 @@ export default class Menu extends Base {
    *
    * - ESC = close
    *
-   * shouldReactOnClick
-   * - focus on link + ENTER = toggle
-   *
    * !shouldReactOnClick
    * - focus on link = open
    * - focus out link = close
@@ -117,30 +114,24 @@ export default class Menu extends Base {
    * @param   {import('@studiometa/js-toolkit/services/key').KeyServiceProps} options
    * @returns {void}
    */
-  // keyed({ TAB, ESC, ENTER }) {
-  //   const hasFocusElementWithin = this.$el.contains(document.activeElement);
+  keyed({ ENTER, ESC, isUp }) {
+    if (!isUp) {
+      return;
+    }
 
-  //   if (ESC) {
-  //     this.close();
-  //     if (hasFocusElementWithin) {
-  //       document.activeElement.blur();
-  //     }
-  //   }
+    if (ESC) {
+      this.close();
+      return;
+    }
 
-  //   if (this.$parent.shouldReactOnClick) {
-  //     if (ENTER && hasFocusElementWithin) {
-  //       this.open();
-  //     } else if (ENTER && !hasFocusElementWithin) {
-  //       this.close();
-  //     }
-  //   } else {
-  //     if (TAB && hasFocusElementWithin) {
-  //       this.open();
-  //     } else if (TAB && !hasFocusElementWithin) {
-  //       this.close();
-  //     }
-  //   }
-  // }
+    if (!this.shouldReactOnClick) {
+      const hasFocusElementWithin = document.activeElement === this.menuBtn.$el;
+
+      if (ENTER && hasFocusElementWithin) {
+        this.toggle();
+      }
+    }
+  }
 
   /**
    * Toggle menu items on button click;
@@ -152,35 +143,40 @@ export default class Menu extends Base {
   onMenuBtnBtnClick(event, index) {
     if (this.$children.MenuBtn[index] === this.menuBtn && this.shouldReactOnClick) {
       event.preventDefault();
-      this.menuItems.toggle();
+      this.toggle();
     }
   }
 
   /**
    * Open menu items on button mouse enter.
    *
+   * @todo check if MenuBtn is direct child
+   * @this    {MenuInterface}
    * @returns {void}
    */
-  onMenuBtnBtnMouseenter() {
-    if (!this.shouldReactOnClick) {
-      this.menuItems.open();
+  onMenuBtnBtnMouseenter(event, index) {
+    if (this.$children.MenuBtn[index] === this.menuBtn && !this.shouldReactOnClick) {
+      this.open();
     }
   }
 
   /**
    * Close menu items on button mouse leave.
    *
+   * @todo check if MenuBtn is direct child
+   * @this    {MenuInterface}
    * @returns {void}
    */
-  onMenuBtnBtnMouseleave() {
-    if (!this.shouldReactOnClick) {
-      this.menuItems.close();
+  onMenuBtnBtnMouseleave(event, index) {
+    if (this.$children.MenuBtn[index] === this.menuBtn && !this.shouldReactOnClick) {
+      this.close();
     }
   }
 
   /**
    * Close other non-parent menu items on menu items open.
    *
+   * @todo check if MenuBtn is direct child
    * @this    {MenuInterface}
    * @param   {number} index
    * @returns {void}
@@ -192,5 +188,17 @@ export default class Menu extends Base {
         menuItem.close();
       }
     });
+  }
+
+  close() {
+    this.menuItems.close();
+  }
+
+  open() {
+    this.menuItems.open();
+  }
+
+  toggle() {
+    this.menuItems.toggle();
   }
 }

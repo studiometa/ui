@@ -105,6 +105,13 @@ export default class MenuItems extends Transition {
       menuItem.close();
     });
 
+    if (
+      document.activeElement instanceof HTMLElement &&
+      this.$el.contains(document.activeElement)
+    ) {
+      document.activeElement.blur();
+    }
+
     this.$el.setAttribute('aria-hidden', 'true');
     this.__updateTabIndexes('close');
     this.isOpen = false;
