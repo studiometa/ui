@@ -54,9 +54,11 @@
       });
     }
 
-    import.meta.hot.on('vite:beforeUpdate', () => {
-      fetchContent();
-    });
+    if (import.meta.hot) {
+      import.meta.hot.on('vite:beforeUpdate', () => {
+        fetchContent();
+      });
+    }
 
     fetchContent();
   });
