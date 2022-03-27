@@ -29,9 +29,9 @@ export default class Menu extends Base {
       Menu,
     },
     options: {
-      type: {
+      mode: {
         type: String,
-        default: 'hover', // or 'hover'
+        default: 'click', // or 'hover'
       },
     },
   };
@@ -83,7 +83,7 @@ export default class Menu extends Base {
    * @todo test breakpoint to switch between click and hover.
    */
   get shouldReactOnClick() {
-    return this.$options.type === 'click';
+    return this.$options.mode === 'click';
   }
 
   /**

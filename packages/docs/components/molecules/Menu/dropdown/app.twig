@@ -1,0 +1,45 @@
+<style>
+  a { color: inherit; text-decoration: none; }
+  a:focus, button:focus { outline: none; }
+  ul { list-style-type: none; padding: 0; }
+</style>
+
+<nav data-component="Menu" class="relative inline-block mx-10 my-20">
+  {% include '@ui/atoms/Button/StyledButton.twig' with {
+    label: 'Dropdown',
+    attr: {
+      data_component: 'MenuBtn',
+    }
+  } %}
+  <div data-component="MenuItems"
+    data-option-enter-to="is-open"
+    data-option-enter-active="transition duration-200 ease-out-expo"
+    data-option-leave-active="transition duration-200 ease-out-expo"
+    data-option-leave-to="transform scale-95 opacity-0 pointer-events-none"
+    class="z-10 absolute top-full left-0 origin-top-left transform scale-95 opacity-0 pointer-events-none">
+    <ul class="mt-2 whitespace-nowrap shadow-md rounded bg-gray-100 overflow-hidden">
+      <li data-component="Menu">
+        <a data-component="MenuBtn"
+          class="relative block p-4 bg-white hover:bg-blue-300 focus:ring-2 ring-inset"
+          href="#">
+          Action #1 Edit
+        </a>
+
+      </li>
+      <li data-component="Menu">
+        <a data-component="MenuBtn"
+          class="relative block p-4 bg-white hover:bg-blue-300 focus:ring-2 ring-inset"
+          href="#">
+          Action #2 Duplicate
+        </a>
+      </li>
+      <li data-component="Menu">
+        <a data-component="MenuBtn"
+          class="relative block p-4 bg-white hover:bg-blue-300 focus:ring-2 ring-inset"
+          href="#">
+          Action #3 Delete
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
