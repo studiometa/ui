@@ -2,7 +2,7 @@ import appJsRaw from './app.js?raw';
 import AppTwigRaw from './app.twig?raw';
 
 export default {
-  src: new URL('./story.html', import.meta.url).pathname,
+  src: './dropdown/story.html',
   name: 'Dropdown',
   files: [
     {

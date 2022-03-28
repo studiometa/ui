@@ -4,7 +4,7 @@ import MenuJsRaw from './Menu.js?raw';
 import MenuItemsJsRaw from './MenuItems.js?raw';
 
 export default {
-  src: new URL('./story.html', import.meta.url).pathname,
+  src: './burger/story.html',
   name: 'Burger',
   files: [
     {
