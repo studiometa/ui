@@ -24,6 +24,10 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
     refs: ['target'],
     options: {
       skew: Boolean,
+      speed: {
+        type: Number,
+        default: 1,
+      },
       sensitivity: {
         type: Number,
         default: 1,
@@ -98,7 +102,7 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
    * @returns {void}
    */
   ticked() {
-    this.translateX -= (Math.abs(this.deltaY) + 1) * this.$options.sensitivity;
+    this.translateX -= (Math.abs(this.deltaY) + this.$options.speed) * this.$options.sensitivity;
 
     this.transform.translateX = damp(this.translateX, this.transform.translateX, 0.25);
 
