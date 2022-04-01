@@ -70,6 +70,7 @@ export default class AccordionItem extends Base {
             closed: '',
           },
         }),
+        merge: true,
       },
     },
   };

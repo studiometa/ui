@@ -11,7 +11,7 @@ describe('The Draggable component', () => {
     document.dispatchEvent(new MouseEvent('mousemove', { clientX: 10, clientY: 10 }));
     jest.runAllTimers();
     expect(div.style.transform).toBe(
-      'translateX(var(--motion-translateX)) translateY(var(--motion-translateY))'
+      'matrix(1, 0, 0, 1, -3336.0587899333364, -2482.8804530579046)'
     );
   });
 });
