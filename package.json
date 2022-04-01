@@ -1,16 +1,17 @@
 {
   "name": "@studiometa/ui-workspace",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "test": "npm run test -w @studiometa/ui-tests",
-    "build": "rm -rf dist && npm run build:pkg && npm run build:types && npm run build:cp-files",
+    "build": "rm -rf dist && npm run build:pkg && npm run build:sizes && npm run build:types && npm run build:cp-files",
     "build:cp-files": "cp packages/ui/package.json dist/ && cp LICENSE dist/ && cp README.md dist/",
     "build:types": "tsc --build tsconfig.build.json",
-    "build:pkg": "node scripts/build.js",
+    "build:pkg": "node scripts/build.mjs",
+    "build:sizes": "node scripts/sizes.mjs",
     "lint": "npm run lint:eslint && npm run lint:types",
     "lint:eslint": "eslint packages/ui",
     "lint:types": "tsc --build tsconfig.lint.json",
@@ -18,20 +19,18 @@
     "docs:build": "cd packages/docs && npm install && npm run build"
   },
   "devDependencies": {
-    "@babel/cli": "^7.15.7",
-    "@babel/core": "^7.15.5",
-    "@babel/preset-env": "^7.15.6",
     "@studiometa/eslint-config": "^2.1.3",
-    "@studiometa/prettier-config": "^2.0.1",
-    "@typescript-eslint/eslint-plugin": "^4.32.0",
-    "@typescript-eslint/parser": "^4.32.0",
-    "esbuild": "^0.14.14",
+    "@studiometa/prettier-config": "^2.1.1",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "esbuild": "^0.14.29",
     "eslint": "^7.32.0",
-    "eslint-plugin-jest": "^24.5.0",
+    "eslint-plugin-jest": "^24.7.0",
     "fast-glob": "^3.2.11",
-    "prettier": "^2.4.1",
+    "gzip-size": "^7.0.0",
+    "prettier": "^2.6.1",
     "prettier-plugin-twig-melody": "^0.4.6",
-    "typescript": "^4.4.3",
+    "typescript": "^4.6.3",
     "vue": "^2.6.14"
   }
 }

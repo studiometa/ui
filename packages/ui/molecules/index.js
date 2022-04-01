@@ -1,3 +1,4 @@
+export * from './Menu/index.js';
 export * from './Slider/index.js';
 export * from './TableOfContent/index.js';
 export { default as Accordion } from './Accordion/Accordion.js';

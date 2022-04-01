@@ -35,18 +35,32 @@
       throw new Error('The `tpl` is not defined. Use the `tplImporter` prop or the default slot.');
     }
 
-    fetchRenderedTwig(params, controller).then((response) => {
-      content.value = response;
+    function fetchContent() {
+      fetchRenderedTwig(params, controller).then((response) => {
+        content.value = response;
 
-      nextTick(async () => {
-        emit('rendered');
-        if (props.jsImporter) {
-          const { default: useApp } = await props.jsImporter();
-          const app = await useApp();
-          app.$update();
+        nextTick(async () => {
+          emit('rendered');
+          if (props.jsImporter) {
+            const { default: useApp } = await props.jsImporter();
+            const app = await useApp();
+            app.$update();
+          }
+        });
+      }).catch((error) => {
+        if (!error.message.includes('aborted')) {
+          content.value = error.toString();
         }
       });
-    });
+    }
+
+    if (import.meta.hot) {
+      import.meta.hot.on('vite:beforeUpdate', () => {
+        fetchContent();
+      });
+    }
+
+    fetchContent();
   });
 </script>
 

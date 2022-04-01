@@ -38,7 +38,7 @@ export async function fetchRenderedTwig(params = {}, controller = new AbortContr
   fetchUrl.search = search.toString();
 
   const cacheKey = fetchUrl.toString();
-  if (cache.has(cacheKey)) {
+  if (cache.has(cacheKey) && !import.meta.env.DEV) {
     return cache.get(cacheKey);
   }
 

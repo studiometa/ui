@@ -66,6 +66,7 @@ export default class Tabs extends Base {
             },
           },
         }),
+        merge: true,
       },
     },
   };
