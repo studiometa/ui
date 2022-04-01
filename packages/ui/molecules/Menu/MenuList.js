@@ -15,26 +15,26 @@ const FOCUSABLE_ELEMENTS = [
 ].join(',');
 
 /**
- * @typedef {MenuItems & {
+ * @typedef {MenuList & {
  *   $children: {
- *     MenuItems: MenuItems[]
+ *     MenuList: MenuList[]
  *   }
- * }} MenuItemsInterface
+ * }} MenuListInterface
  */
 
 /**
- * MenuItems class.
+ * MenuList class.
  */
-export default class MenuItems extends Transition {
+export default class MenuList extends Transition {
   /**
    * Config.
    */
   static config = {
     ...Transition.config,
-    name: 'MenuItems',
+    name: 'MenuList',
     emits: ['items-open', 'items-close', 'items-mouseleave'],
     components: {
-      MenuItems,
+      MenuList,
     },
   };
 
@@ -119,7 +119,7 @@ export default class MenuItems extends Transition {
   /**
    * Hide the menu items.
    *
-   * @this    {MenuItemsInterface}
+   * @this    {MenuListInterface}
    * @returns {void}
    */
   close() {
@@ -128,7 +128,7 @@ export default class MenuItems extends Transition {
     }
 
     // Close child menu items.
-    this.$children.MenuItems.forEach((menuItem) => {
+    this.$children.MenuList.forEach((menuItem) => {
       menuItem.close();
     });
 
@@ -181,7 +181,7 @@ export default class MenuItems extends Transition {
   }
 
   /**
-   * Filter out items which are inside a child `MenuItems` instance.
+   * Filter out items which are inside a child `MenuList` instance.
    *
    * @private
    * @param   {HTMLElement} item

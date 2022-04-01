@@ -1,10 +1,10 @@
-import { MenuItems as MenuItemsCore } from '@studiometa/ui';
+import { MenuList as MenuListCore } from '@studiometa/ui';
 
-export default class MenuItems extends MenuItemsCore {
+export default class MenuList extends MenuListCore {
   static config = {
-    name: 'MenuItems',
+    name: 'MenuList',
     components: {
-      MenuItems,
+      MenuList,
     },
   };
 

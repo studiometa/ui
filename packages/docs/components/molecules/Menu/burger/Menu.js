@@ -1,5 +1,5 @@
 import { Menu as MenuCore, MenuBtn } from '@studiometa/ui';
-import MenuItems from './MenuItems.js';
+import MenuList from './MenuList.js';
 
 export default class Menu extends MenuCore {
   static config = {
@@ -7,7 +7,7 @@ export default class Menu extends MenuCore {
     components: {
       Menu,
       MenuBtn,
-      MenuItems,
+      MenuList,
     },
   };
 }

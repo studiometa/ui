@@ -1,14 +1,14 @@
 import { Base } from '@studiometa/js-toolkit';
 import { nextTick } from '@studiometa/js-toolkit/utils';
 import MenuBtn from './MenuBtn.js';
-import MenuItems from './MenuItems.js';
+import MenuList from './MenuList.js';
 
 /**
  * @typedef {Menu & {
  *   $children: {
  *     Menu: Menu[],
  *     MenuBtn: MenuBtn[],
- *     MenuItems: MenuItems[],
+ *     MenuList: MenuList[],
  *   }
  * }} MenuInterface
  */
@@ -25,7 +25,7 @@ export default class Menu extends Base {
     debug: true,
     components: {
       MenuBtn,
-      MenuItems,
+      MenuList,
       Menu,
     },
     options: {
@@ -60,13 +60,13 @@ export default class Menu extends Base {
   }
 
   /**
-   * Get the first `MenuItems` instance.
+   * Get the first `MenuList` instance.
    *
    * @this    {MenuInterface}
-   * @returns {MenuItems}
+   * @returns {MenuList}
    */
-  get menuItems() {
-    return this.getDirectChildren('MenuItems')[0];
+  get menuList() {
+    return this.getDirectChildren('MenuList')[0];
   }
 
   /**
@@ -92,7 +92,7 @@ export default class Menu extends Base {
    * @returns {boolean}
    */
   get isHover() {
-    return this.menuBtn.isHover || this.menuItems.isHover;
+    return this.menuBtn.isHover || this.menuList.isHover;
   }
 
   /**
@@ -102,14 +102,14 @@ export default class Menu extends Base {
    * @returns {void}
    */
   mounted() {
-    if (!this.menuBtn || !this.menuItems) {
+    if (!this.menuBtn || !this.menuList) {
       this.$destroy();
       return;
     }
 
     this.menuBtn.$el.setAttribute('aria-controls', this.$id);
-    this.menuItems.$el.setAttribute('id', this.$id);
-    this.menuItems.close();
+    this.menuList.$el.setAttribute('id', this.$id);
+    this.menuList.close();
   }
 
   /**
@@ -187,7 +187,7 @@ export default class Menu extends Base {
    * @this    {MenuInterface}
    * @returns {void}
    */
-  onMenuItemsItemsMouseleave() {
+  onMenuListItemsMouseleave() {
     if (this.shouldReactOnClick) {
       return;
     }
@@ -206,9 +206,9 @@ export default class Menu extends Base {
    * @param   {number} index
    * @returns {void}
    */
-  onMenuItemsItemsOpen(index) {
-    const targetMenu = this.$children.MenuItems[index];
-    this.$children.MenuItems.forEach((menuItem) => {
+  onMenuListItemsOpen(index) {
+    const targetMenu = this.$children.MenuList[index];
+    this.$children.MenuList.forEach((menuItem) => {
       if (!menuItem.$el.contains(targetMenu.$el)) {
         menuItem.close();
       }
@@ -220,7 +220,7 @@ export default class Menu extends Base {
    * @returns {void}
    */
   close() {
-    this.menuItems.close();
+    this.menuList.close();
   }
 
   /**
@@ -228,7 +228,7 @@ export default class Menu extends Base {
    * @returns {void}
    */
   open() {
-    this.menuItems.open();
+    this.menuList.open();
   }
 
   /**
@@ -236,6 +236,6 @@ export default class Menu extends Base {
    * @returns {void}
    */
   toggle() {
-    this.menuItems.toggle();
+    this.menuList.toggle();
   }
 }

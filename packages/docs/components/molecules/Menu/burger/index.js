@@ -1,7 +1,7 @@
 import appJsRaw from './app.js?raw';
 import AppTwigRaw from './app.twig?raw';
 import MenuJsRaw from './Menu.js?raw';
-import MenuItemsJsRaw from './MenuItems.js?raw';
+import MenuListJsRaw from './MenuList.js?raw';
 
 export default {
   src: './burger/story.html',
@@ -18,9 +18,9 @@ export default {
       content: MenuJsRaw,
     },
     {
-      label: 'MenuItems.js',
+      label: 'MenuList.js',
       lang: 'js',
-      content: MenuItemsJsRaw,
+      content: MenuListJsRaw,
     },
     {
       label: 'app.twig',
