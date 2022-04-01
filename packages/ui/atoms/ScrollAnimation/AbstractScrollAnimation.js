@@ -102,16 +102,6 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
   };
 
   /**
-   * Terminate the class when Web Animation API is not supported.
-   * @returns {void}
-   */
-  mounted() {
-    if (typeof this.target.animate !== 'function') {
-      this.$terminate();
-    }
-  }
-
-  /**
    * Get the target element for the animation.
    *
    * @returns {HTMLElement}
@@ -167,51 +157,50 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
       1
     );
 
-    this.target.animate(
-      [
-        {
-          opacity: this.has.opacity
-            ? map(progress, 0, 1, this.$options.from.opacity, this.$options.to.opacity)
-            : undefined,
-          transform: this.has.transform
-            ? `
-        ${matrix({
-          translateX: this.has.x
-            ? lerp(this.$options.from.x, this.$options.to.x, progress)
-            : undefined,
-          translateY: this.has.y
-            ? lerp(this.$options.from.y, this.$options.to.y, progress)
-            : undefined,
-          // eslint-disable-next-line no-nested-ternary
-          scaleX: this.has.scale
-            ? lerp(this.$options.from.scale, this.$options.to.scale, progress)
-            : this.has.scaleX
-            ? lerp(this.$options.from.scaleX, this.$options.to.scaleX, progress)
-            : undefined,
-          // eslint-disable-next-line no-nested-ternary
-          scaleY: this.has.scale
-            ? lerp(this.$options.from.scale, this.$options.to.scale, progress)
-            : this.has.scaleY
-            ? lerp(this.$options.from.scaleY, this.$options.to.scaleY, progress)
-            : undefined,
-          skewX: this.has.skewX
-            ? lerp(this.$options.from.skewX, this.$options.to.skewX, progress)
-            : undefined,
-          skewY: this.has.skewY
-            ? lerp(this.$options.from.skewY, this.$options.to.skewY, progress)
-            : undefined,
-        })}
-        ${
-          this.has.rotate
-            ? `rotate(${lerp(this.$options.from.rotate, this.$options.to.rotate, progress)}deg)`
-            : ''
-        }
-        translateZ(${this.has.z ? lerp(this.$options.from.z, this.$options.to.z, progress) : 0})
-      `
-            : undefined,
-        },
-      ],
-      { duration: 0, fill: 'forwards' }
-    );
+    if (this.has.opacity) {
+      this.target.style.opacity = map(
+        progress,
+        0,
+        1,
+        this.$options.from.opacity,
+        this.$options.to.opacity
+      );
+    }
+
+    if (this.has.transform) {
+      let transform = matrix({
+        translateX: this.has.x
+          ? lerp(this.$options.from.x, this.$options.to.x, progress)
+          : undefined,
+        translateY: this.has.y
+          ? lerp(this.$options.from.y, this.$options.to.y, progress)
+          : undefined,
+        // eslint-disable-next-line no-nested-ternary
+        scaleX: this.has.scale
+          ? lerp(this.$options.from.scale, this.$options.to.scale, progress)
+          : this.has.scaleX
+          ? lerp(this.$options.from.scaleX, this.$options.to.scaleX, progress)
+          : undefined,
+        // eslint-disable-next-line no-nested-ternary
+        scaleY: this.has.scale
+          ? lerp(this.$options.from.scale, this.$options.to.scale, progress)
+          : this.has.scaleY
+          ? lerp(this.$options.from.scaleY, this.$options.to.scaleY, progress)
+          : undefined,
+        skewX: this.has.skewX
+          ? lerp(this.$options.from.skewX, this.$options.to.skewX, progress)
+          : undefined,
+        skewY: this.has.skewY
+          ? lerp(this.$options.from.skewY, this.$options.to.skewY, progress)
+          : undefined,
+      });
+
+      if (this.has.rotate) {
+        transform += ` rotate(${lerp(this.$options.from.rotate, this.$options.to.rotate, progress)}deg)`;
+      }
+
+      transform += `translateZ(${this.has.z ? lerp(this.$options.from.z, this.$options.to.z, progress) : 0})`;
+      this.target.style.transform = transform;
+    }
   }
 }
