@@ -23,7 +23,9 @@ Array [
   "PrefetchWhenVisible",
   "ScrollAnimation",
   "ScrollAnimationChild",
+  "ScrollAnimationChildWithEase",
   "ScrollAnimationParent",
+  "ScrollAnimationWithEase",
   "Sentinel",
   "Slider",
   "SliderBtn",
@@ -37,5 +39,6 @@ Array [
   "TableOfContentAnchor",
   "Tabs",
   "Transition",
+  "animationScrollWithEase",
 ]
 `;
