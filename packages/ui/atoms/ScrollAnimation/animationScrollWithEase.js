@@ -90,5 +90,5 @@ export default function animationScrollWithEase(ScrollAnimation) {
 
       super.render(progress);
     }
-  }
+  };
 }
