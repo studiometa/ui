@@ -2,6 +2,7 @@ import { Base, withFreezedOptions } from '@studiometa/js-toolkit';
 import { matrix, lerp, map, clamp } from '@studiometa/js-toolkit/utils';
 
 /**
+ * @typedef {typeof AbstractScrollAnimation} AbstractScrollAnimationConstructor
  * @typedef {{
  *   x?: number;
  *   y?: number;
@@ -157,13 +158,19 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
       1
     );
 
+    this.render(progress);
+  }
+
+  /**
+   * Render the animation for the given progress.
+   *
+   * @param   {number} progress
+   * @returns {void}
+   */
+  render(progress) {
     if (this.has.opacity) {
-      this.target.style.opacity = map(
-        progress,
-        0,
-        1,
-        this.$options.from.opacity,
-        this.$options.to.opacity
+      this.target.style.opacity = String(
+        map(progress, 0, 1, this.$options.from.opacity, this.$options.to.opacity)
       );
     }
 
@@ -196,10 +203,16 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
       });
 
       if (this.has.rotate) {
-        transform += ` rotate(${lerp(this.$options.from.rotate, this.$options.to.rotate, progress)}deg)`;
+        transform += ` rotate(${lerp(
+          this.$options.from.rotate,
+          this.$options.to.rotate,
+          progress
+        )}deg)`;
       }
 
-      transform += `translateZ(${this.has.z ? lerp(this.$options.from.z, this.$options.to.z, progress) : 0})`;
+      transform += `translateZ(${
+        this.has.z ? lerp(this.$options.from.z, this.$options.to.z, progress) : 0
+      })`;
       this.target.style.transform = transform;
     }
   }
