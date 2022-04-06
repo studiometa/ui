@@ -25,6 +25,27 @@ export default class Figure extends withMountWhenInView(Base, { threshold: [0, 1
   };
 
   /**
+   * Get the image source.
+   *
+   * @this {Figure & FigureInterface}
+   * @returns {string}
+   */
+  get src() {
+    return this.$refs.img.src;
+  }
+
+  /**
+   * Set the image source.
+   *
+   * @this {Figure & FigureInterface}
+   * @param   {string} value
+   * @returns {void}
+   */
+  set src(value) {
+    this.$refs.img.src = value;
+  }
+
+  /**
    * Load on mount.
    * @this {Figure & FigureInterface}
    */
@@ -38,10 +59,11 @@ export default class Figure extends withMountWhenInView(Base, { threshold: [0, 1
     }
 
     if (
+      this.$options.lazy &&
       this.$refs.img.hasAttribute('data-src') &&
-      this.$refs.img.getAttribute('data-src') !== this.$refs.img.src
+      this.$refs.img.getAttribute('data-src') !== this.src
     ) {
-      this.$refs.img.src = this.$refs.img.getAttribute('data-src');
+      this.src = this.$refs.img.getAttribute('data-src');
     }
   }
 }
