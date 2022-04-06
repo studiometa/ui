@@ -19,6 +19,9 @@ export default class Figure extends withMountWhenInView(Base, { threshold: [0, 1
   static config = {
     name: 'Figure',
     refs: ['img'],
+    options: {
+      lazy: Boolean,
+    },
   };
 
   /**
