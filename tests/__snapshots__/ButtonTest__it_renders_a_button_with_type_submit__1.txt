@@ -1,9 +1,1 @@
-
-
-
-
-
-
-<button title="Label" type="submit" class="btn">
-                        Label
-                </button>    
+<button title="Label" type="submit" class="btn">Label</button>
