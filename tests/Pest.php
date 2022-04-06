@@ -1,6 +1,7 @@
 <?php
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
+use MallardDuck\PrettierPhp\PrettierHtml;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,7 +66,7 @@ class TwigRenderer {
 
 function renderTwig(string $template):string
 {
-    return TwigRenderer::render($template);
+    return PrettierHtml::format(TwigRenderer::render($template));
 }
 
 

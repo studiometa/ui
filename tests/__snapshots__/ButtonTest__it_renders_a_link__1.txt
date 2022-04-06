@@ -1,9 +1,1 @@
-
-        
-
-
-
-
-<a title="Label" href="&#x23;" class="btn">
-                        Label
-                </a>    
+<a title="Label" href="&#x23;" class="btn">Label</a>

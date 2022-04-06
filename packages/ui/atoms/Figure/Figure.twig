@@ -10,6 +10,7 @@
  * @param number $height
  * @param string $alt
  * @param string $caption
+ * @param boolean $lazy
  * @param 'cover'|'contain'|'fill'|'none' $fit
  *   Define how the image will fit.
  * @param boolean $absolute
@@ -41,6 +42,7 @@
 {% set fit = fit ?? null %}
 {% set height = height|default(100) %}
 {% set width = width|default(100) %}
+{% set lazy = lazy ?? true %}
 
 {%- set placeholder_markup -%}
   <svg xmlns="http://www.w3.org/2000/svg"
@@ -56,7 +58,10 @@
   merge_html_attributes(
     attr ?? null,
     { data_component: 'Figure', class: ['figure', 'w-full'] },
-    { style: { height: absolute ? '100%' : '', maxWidth: inline ? width ~ 'px' : '' } }
+    {
+      style: { height: absolute ? '100%' : '', maxWidth: inline ? width ~ 'px' : '' },
+      data_option_lazy: lazy
+    }
   )
 %}
 
@@ -74,8 +79,8 @@
           'object-none': fit == 'none'
         }
       ],
-      src: placeholder|default(generic_placeholder),
-      data_src: src|default(generic_placeholder),
+      src: lazy ? placeholder|default(generic_placeholder) : src,
+      data_src: lazy ? src|default(generic_placeholder) : src,
       alt: alt|default(''),
       width: width|default(false),
       height: height|default(false),
