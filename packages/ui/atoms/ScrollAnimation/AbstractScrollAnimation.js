@@ -51,15 +51,6 @@ function getDefaults() {
 /**
  * AbstractScrollAnimation class.
  *
- * @todo Add an option to define start and end offset to allow animation to be mapped
- * between custom values: start at 0.1 and end at 0.9 for example.
- *
- * ```js
- * offset.x = { start: 0.1, end: 0.5 }
- *
- * translateX: lerp(from.x, to.x, map(props.progress.y, offset.x.start, offset.x.end, 0, 1))
- * ```
- *
  * @todo add support for magic values in options to access key values:
  * - viewport size
  * - target size
