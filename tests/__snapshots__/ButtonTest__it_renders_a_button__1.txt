@@ -1,9 +1,1 @@
-
-        
-
-
-
-
-<button title="Label" type="button" class="py-4&#x20;btn">
-                        Label
-                </button>    
+<button title="Label" type="button" class="py-4 btn">Label</button>

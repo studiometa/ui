@@ -2,30 +2,15 @@
 
 <script setup>
   import pkg from '@studiometa/ui/atoms/Figure/package.json';
-  import appJsRaw from './app.js?raw';
-  import AppTwigRaw from './app.twig?raw';
+  import { story as figureStory } from './Figure/story.md';
+  import { story as figureTwicPicsStory } from './FigureTwicPics/story.md';
 
   const badges = [`v${pkg.version}`, 'Twig', 'JS'];
 
-  const story = {
-    src: './story.html',
-    name: 'Figure',
-    files: [
-      {
-        label: 'app.js',
-        lang: 'js',
-        content: appJsRaw,
-      },
-      {
-        label: 'app.twig',
-        lang: 'twig',
-        content: AppTwigRaw,
-      },
-    ],
-  };
+  const stories = [figureStory, figureTwicPicsStory];
 </script>
 
-<Story v-bind="story" />
+<Stories :stories="stories" />
 
 ## Parameters
 

@@ -1,0 +1,82 @@
+<style>
+  html {
+    overflow-x: hidden;
+  }
+</style>
+
+<div class="h-screen p-10 space-y-4 text-center text-gray-800">
+  Scroll down
+</div>
+<div data-component="ScrollAnimationParent"
+  class="relative h-screen pointer-events-none">
+  <div class="absolute top-0 left-1/2 w-96 h-96 transform -translate-x-1/2">
+    <div data-component="ScrollAnimationChild"
+      data-option-debug
+      data-option-to="{{ {
+        x: - 500,
+        y: - 500,
+        scale: 0.2,
+        rotate: - 50
+      }|json_encode }}"
+      class="w-full h-full rounded-2xl bg-blue-400"
+      style="will-change: transform;"></div>
+  </div>
+  <div class="absolute top-0 left-1/2 w-96 h-96 mt-16 ml-16 transform -translate-x-1/2 rotate-3">
+    <div data-component="ScrollAnimationChild"
+      data-option-to="{{ {
+        x: - 400,
+        y: - 400,
+        scale: 0.3,
+        rotate: - 40
+      }|json_encode }}"
+      class="w-full h-full rounded-2xl bg-green-400"
+      style="will-change: transform;"></div>
+  </div>
+  <div class="absolute top-0 left-1/2 w-96 h-96 mt-32 ml-32 transform -translate-x-1/2 rotate-6">
+    <div data-component="ScrollAnimationChild"
+      data-option-to="{{ {
+        x: - 300,
+        y: - 300,
+        scale: 0.4,
+        rotate: - 30
+      }|json_encode }}"
+      class="w-full h-full rounded-2xl bg-red-400"
+      style="will-change: transform;"></div>
+  </div>
+  <div class="absolute top-0 left-1/2 w-96 h-96 mt-48 ml-48 transform -translate-x-1/2 rotate-12">
+    <div data-component="ScrollAnimationChild"
+      data-option-to="{{ {
+        x: - 200,
+        y: - 200,
+        scale: 0.5,
+        rotate: - 20
+      }|json_encode }}"
+      class="w-full h-full rounded-2xl bg-purple-400"
+      style="will-change: transform;"></div>
+  </div>
+</div>
+<div data-component="ScrollAnimationParent"
+  class="relative bg-gray-200"
+  style="height: 300vh;">
+  <div class="sticky top-0 left-0 flex items-center justify-center w-full h-screen text-center overflow-hidden">
+    <p class="z-above relative text-4xl font-extrabold text-gray-800">
+      Lorem ipsum dolor sit amet
+    </p>
+    <div class="absolute top-full left-1/2 w-2 h-2 -mt-1 -ml-1 pointer-events-none">
+      <div data-component="ScrollAnimationChild"
+        data-option-damp-factor="0.1"
+        data-option-from="{{ { scale: 0 }|json_encode }}"
+        data-option-to="{{ { scale: 2 }|json_encode }}"
+        class="absolute top-1/2 left-1/2 bg-blue-600 rounded-full transform scale-0"
+        style="width: 250vmax; height: 250vmax; margin-top: -125vmax; margin-left: -125vmax;"></div>
+      <div data-component="ScrollAnimationChild"
+        data-option-damp-factor="0.1"
+        data-option-play-range="[0.4, 1]"
+        data-option-from="{{ { scale: 0 }|json_encode }}"
+        data-option-to="{{ { scale: 1 }|json_encode }}"
+        class="absolute top-1/2 left-1/2 bg-gray-200 rounded-full transform scale-0"
+        style="width: 250vmax; height: 250vmax; margin-top: -125vmax; margin-left: -125vmax;"></div>
+    </div>
+  </div>
+</div>
+<div class="h-screen"></div>
