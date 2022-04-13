@@ -18,17 +18,20 @@ import { transition } from '@studiometa/js-toolkit/utils';
  * @typedef {Transition & { $options: TransitionOptions }} TransitionInterface
  */
 export default class Transition extends Base {
+  /**
+   * Config.
+   */
   static config = {
     name: 'Transition',
     options: {
       enterFrom: String,
       enterActive: String,
       enterTo: String,
-      enterKeep: Boolean,
+      enterKeep: { type: Boolean, default: false },
       leaveFrom: String,
       leaveActive: String,
       leaveTo: String,
-      leaveKeep: Boolean,
+      leaveKeep: { type: Boolean, default: false },
     },
   };
 
