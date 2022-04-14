@@ -5,6 +5,17 @@ import FrameForm from './FrameForm.js';
 import FrameTarget from './FrameTarget.js';
 
 /**
+ * Get the scroll position.
+ * @returns {{ left: number, top: number }}
+ */
+function getScrollPosition() {
+  return {
+    left: window.pageXOffset,
+    top: window.pageYOffset,
+  };
+}
+
+/**
  * The fetch cache.
  * @type {Map<string, { promise: Promise<any>, status: 'pending'|'resolved'|'error', content: any }>}
  */
@@ -115,6 +126,70 @@ export default class Frame extends Base {
   }
 
   /**
+   * Mounted hook.
+   * @returns {void}
+   */
+  mounted() {
+    if (this.$options.history) {
+      window.addEventListener('popstate', this);
+    }
+  }
+
+  /**
+   * Destroyed hook.
+   * @returns {void}
+   */
+  destroyed() {
+    window.removeEventListener('popstate', this);
+  }
+
+  /**
+   * Dispatch events.
+   * @param   {PopStateEvent} event
+   * @returns {void}
+   */
+  handleEvent(event) {
+    if (event.type === 'popstate') {
+      this.onWindowPopstate(event);
+    }
+
+    if (event.type === 'beforeunload') {
+      this.onWindowUnload();
+    }
+  }
+
+  /**
+   * Prevent scroll top on unload.
+   *
+   * @returns {void}
+   */
+  onWindowUnload() {
+    const { history } = window;
+
+    if (!history.state) {
+      return;
+    }
+
+    history.replaceState(
+      {
+        ...history.state,
+        scroll: getScrollPosition(),
+      },
+      ''
+    );
+  }
+
+  /**
+   * Go to the previous URL on `popstate` event.
+   *
+   * @param   {PopStateEvent} event
+   * @returns {void}
+   */
+  onWindowPopstate(event) {
+    this.goTo(window.location.href, event.state);
+  }
+
+  /**
    * Prevent click on `FrameAnchor`.
    *
    * @this    {FrameInterface}
@@ -173,9 +248,10 @@ export default class Frame extends Base {
   /**
    * Go to the given url.
    * @param   {string} url
+   * @param   {null|{ top: number, left: number }} [scroll]
    * @returns {Promise<void>}
    */
-  async goTo(url) {
+  async goTo(url, scroll = null) {
     this.$log('goTo', url);
     const parsedUrl = new URL(url);
 
@@ -211,6 +287,11 @@ export default class Frame extends Base {
     if (this.$options.history) {
       document.title = doc.title;
       historyPush({ path: parsedUrl.pathname, search: parsedUrl.searchParams });
+    }
+
+    if (scroll) {
+      document.scrollingElement.scrollTop = scroll.top;
+      document.scrollingElement.scrollLeft = scroll.left;
     }
 
     // Update components
