@@ -10,4 +10,24 @@ class App extends Base {
   };
 }
 
+class FakeLink extends HTMLElement {
+  constructor() {
+    super();
+
+    this.link = document.createElement('a');
+  }
+
+  get href() {
+    const href = this.getAttribute('href');
+    this.link.setAttribute('href', href);
+
+    return this.link.href;
+  }
+}
+try {
+  customElements.define('fake-link', FakeLink);
+} catch (err) {
+  // silence is golden.
+}
+
 export default createApp(App, document.body);
