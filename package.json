@@ -17,7 +17,8 @@
     "lint:eslint": "eslint packages/ui",
     "lint:types": "tsc --build tsconfig.lint.json",
     "docs:dev": "cd packages/docs && npm install && npm run dev",
-    "docs:build": "cd packages/docs && npm install && npm run build"
+    "docs:build": "cd packages/docs && npm install && npm run build",
+    "postversion": "node scripts/update-composer-version.mjs"
   },
   "devDependencies": {
     "@studiometa/eslint-config": "^2.1.3",
