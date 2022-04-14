@@ -56,7 +56,7 @@ export default class FrameTarget extends Transition {
   async enter() {
     this.$log('enter');
 
-    const { enterFrom: from, enterActive: active, enterTo: to, leaveTo } = this.$options;
+    const { enterFrom: from, enterActive: active, enterTo: to, leaveTo, enterKeep } = this.$options;
     const transitionStyles = { from, active, to };
 
     switch (this.$options.mode) {
@@ -68,14 +68,18 @@ export default class FrameTarget extends Transition {
               from.split(' ').every((className) => child.classList.contains(className))
             )
             .map((child) => {
-              return transition(/** @type {HTMLElement} */ (child), transitionStyles);
+              return transition(
+                /** @type {HTMLElement} */ (child),
+                transitionStyles,
+                enterKeep && 'keep'
+              );
             })
         );
         break;
       case 'replace':
       default:
         transitionStyles.from = Array.from(new Set([from, leaveTo].flat())).join(' ');
-        await transition(this.$el, transitionStyles);
+        await transition(this.$el, transitionStyles, enterKeep && 'keep');
     }
   }
 
