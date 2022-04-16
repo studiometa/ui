@@ -86,9 +86,7 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
    */
   ticked() {
     this.dampedX = damp(this.x, this.dampedX, 0.2, 0.00001);
-    this.$el.style.transform = `${matrix({
-      translateX: this.dampedX,
-    })} translateZ(0px)`;
+    this.render();
 
     if (this.dampedX === this.x) {
       this.$services.disable('ticked');
@@ -136,8 +134,16 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
   moveInstantly(targetPosition) {
     this.x = targetPosition;
     this.dampedX = targetPosition;
+    this.render();
+  }
+
+  /**
+   * Render the transform.
+   * @returns {void}
+   */
+  render() {
     this.$el.style.transform = `${matrix({
-      translateX: targetPosition,
+      translateX: this.dampedX,
     })} translateZ(0px)`;
   }
 
