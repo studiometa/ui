@@ -94,6 +94,16 @@ export default class Slider extends Base {
   states = [];
 
   /**
+   * Origins for the different modes.
+   * @type {Record<SliderModes, number>}
+   */
+  origins = {
+    left: 0,
+    center: 0,
+    right: 0,
+  };
+
+  /**
    * Get the current state.
    * @returns {SliderState}
    */
@@ -163,7 +173,7 @@ export default class Slider extends Base {
     const { wrapper } = this.$refs;
     const originRect = wrapper.getBoundingClientRect();
 
-    const origins = {
+    this.origins = {
       left: originRect.left,
       center: originRect.x + originRect.width / 2,
       right: originRect.x + originRect.width,
@@ -172,12 +182,21 @@ export default class Slider extends Base {
     return this.$children.SliderItem.map((item) => {
       return {
         x: {
-          left: (item.rect.x - origins.left) * -1,
-          center: (item.rect.x + item.rect.width / 2 - origins.center) * -1,
-          right: (item.rect.x + item.rect.width - origins.right) * -1,
+          left: (item.rect.x - this.origins.left) * -1,
+          center: (item.rect.x + item.rect.width / 2 - this.origins.center) * -1,
+          right: (item.rect.x + item.rect.width - this.origins.right) * -1,
         },
       };
     });
+  }
+
+  /**
+   * Get an origin by mode.
+   * @param   {SliderOptions['mode']} [mode]
+   * @returns {number}
+   */
+  getOriginByMode(mode) {
+    return this.origins[mode ?? this.$options.mode];
   }
 
   /**
