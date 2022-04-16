@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "A set of opiniated, unstyled and accessible components",
   "publishConfig": {
     "access": "public"
