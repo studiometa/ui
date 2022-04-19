@@ -20,9 +20,10 @@ const { trap, untrap, saveActiveElement } = focusTrap();
 
 /**
  * @typedef {Object} ModalOptions
- * @property {String}            move      A selector where to move the modal to.
- * @property {String}            autofocus A selector for the element to set the focus to when the modal opens.
- * @property {ModalStylesOption} styles    The styles for the different state of the modal.
+ * @property {String}            move       A selector where to move the modal to.
+ * @property {String}            autofocus  A selector for the element to set the focus to when the modal opens.
+ * @property {Boolean}           scrollLock Lock or allow scroll in the documentElement.
+ * @property {ModalStylesOption} styles     The styles for the different state of the modal.
  */
 
 /**
@@ -68,6 +69,13 @@ export default class Modal extends Base {
             },
           },
         }),
+      },
+      /**
+       * @return {ModalScrollLockOption}
+       */
+      scrollLock: {
+        type: Boolean,
+        default: () => true,
       },
     },
   };
@@ -194,7 +202,10 @@ export default class Modal extends Base {
     }
 
     this.$refs.modal.setAttribute('aria-hidden', 'false');
-    document.documentElement.style.overflow = 'hidden';
+
+    if (this.$options.scrollLock) {
+      document.documentElement.style.overflow = 'hidden';
+    }
 
     this.isOpen = true;
     this.$emit('open');
@@ -238,7 +249,10 @@ export default class Modal extends Base {
     }
 
     this.$refs.modal.setAttribute('aria-hidden', 'true');
-    document.documentElement.style.overflow = '';
+
+    if (this.$options.scrollLock) {
+      document.documentElement.style.overflow = '';
+    }
 
     this.isOpen = false;
     untrap();
