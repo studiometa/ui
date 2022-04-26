@@ -19,7 +19,7 @@ export default defineConfig({
   themeConfig: {
     version: pkg.version,
     repo: 'studiometa/ui',
-    docsDir: 'packages/vitepress',
+    docsDir: 'packages/docs',
     lastUpdated: 'Last updated',
     editLinks: true,
     editLinkText: 'Edit this page on GitHub',
