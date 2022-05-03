@@ -75,7 +75,7 @@ export default class Modal extends Base {
        */
       scrollLock: {
         type: Boolean,
-        default: () => true,
+        default: true,
       },
     },
   };
