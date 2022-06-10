@@ -1,50 +1,11 @@
-import {
-  easeOutQuad,
-  easeInQuad,
-  easeInOutQuad,
-  easeOutCubic,
-  easeInCubic,
-  easeInOutCubic,
-  easeOutQuart,
-  easeInQuart,
-  easeInOutQuart,
-  easeOutQuint,
-  easeInQuint,
-  easeInOutQuint,
-  easeOutSine,
-  easeInSine,
-  easeInOutSine,
-  easeOutCirc,
-  easeInCirc,
-  easeInOutCirc,
-  easeOutExpo,
-  easeInExpo,
-  easeInOutExpo,
-} from '@studiometa/js-toolkit/utils';
+import { ease } from '@studiometa/js-toolkit/utils';
 
-const eases = {
-  outQuad: easeOutQuad,
-  inQuad: easeInQuad,
-  inOutQuad: easeInOutQuad,
-  outCubic: easeOutCubic,
-  inCubic: easeInCubic,
-  inOutCubic: easeInOutCubic,
-  outQuart: easeOutQuart,
-  inQuart: easeInQuart,
-  inOutQuart: easeInOutQuart,
-  outQuint: easeOutQuint,
-  inQuint: easeInQuint,
-  inOutQuint: easeInOutQuint,
-  outSine: easeOutSine,
-  inSine: easeInSine,
-  inOutSine: easeInOutSine,
-  outCirc: easeOutCirc,
-  inCirc: easeInCirc,
-  inOutCirc: easeInOutCirc,
-  outExpo: easeOutExpo,
-  inExpo: easeInExpo,
-  inOutExpo: easeInOutExpo,
-};
+const regex = /ease([A-Z])/;
+const eases = Object.fromEntries(
+  Object.entries(ease)
+    .filter(([name]) => name.startsWith('ease'))
+    .map(([name, value]) => [name.replace(regex, (match, $1) => $1.toLowerCase()), value])
+);
 
 /**
  * @typedef {import('./AbstractScrollAnimation.js').AbstractScrollAnimationConstructor} AbstractScrollAnimationConstructor
