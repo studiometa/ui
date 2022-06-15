@@ -4,6 +4,23 @@
   .text-9xl { font-size: 18rem; }
 </style>
 
+{% macro animated_image(width, height) %}
+  <div data-component="ScrollAnimationWithEase"
+    data-option-ease="outExpo"
+    data-option-play-range="[0.1,0.6]"
+    data-option-from="{{ {
+      y: 500,
+      scale: 0.5,
+      opacity: 0
+    }|json_encode }}">
+    <img data-ref="target"
+      src="https://picsum.photos/{{ width }}/{{ height }}"
+      alt=""
+      width="{{ width }}"
+      height="{{ height }}" />
+  </div>
+{% endmacro %}
+
 <div class="h-96 p-10 space-y-4 text-center text-gray-800">
   Scroll down
 </div>
@@ -11,252 +28,44 @@
   <div class="grid gap-10 grid-cols-5">
     <div>
       <div data-ref="target" class="space-y-10">
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/600"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/500"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/600"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
+        {{ _self.animated_image(400, 600) }}
+        {{ _self.animated_image(400, 500) }}
+        {{ _self.animated_image(400, 550) }}
       </div>
     </div>
     <div data-component="ScrollAnimation"
       data-option-from="{{ { y: 160 }|json_encode }}"
       data-option-to="{{ { y: -160 }|json_encode }}">
       <div data-ref="target" class="space-y-10">
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/400"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/450"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/600"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
+        {{ _self.animated_image(400, 400) }}
+        {{ _self.animated_image(400, 450) }}
+        {{ _self.animated_image(400, 580) }}
       </div>
     </div>
     <div data-component="ScrollAnimation"
       data-option-from="{{ { y: 320 }|json_encode }}"
       data-option-to="{{ { y: -320 }|json_encode }}">
       <div data-ref="target" class="space-y-10">
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/440"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/460"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/600"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/615"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
+        {{ _self.animated_image(400, 440) }}
+        {{ _self.animated_image(400, 460) }}
+        {{ _self.animated_image(400, 560) }}
+        {{ _self.animated_image(400, 610) }}
       </div>
     </div>
     <div data-component="ScrollAnimation"
       data-option-from="{{ { y: 160 }|json_encode }}"
       data-option-to="{{ { y: -160 }|json_encode }}">
       <div data-ref="target" class="space-y-10">
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/650"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/520"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/600"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
+        {{ _self.animated_image(400, 530) }}
+        {{ _self.animated_image(400, 520) }}
+        {{ _self.animated_image(400, 620) }}
       </div>
     </div>
     <div>
       <div data-ref="target" class="space-y-10">
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/480"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/540"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
-        <div data-component="ScrollAnimationWithEase"
-          data-option-ease="outExpo"
-          data-option-play-range="[0.1,0.6]"
-          data-option-from="{{ {
-            y: 500,
-            scale: 0.5,
-            opacity: 0
-          }|json_encode }}">
-          <img data-ref="target"
-            src="https://picsum.photos/400/600"
-            alt=""
-            width="400"
-            height="600" />
-        </div>
+        {{ _self.animated_image(400, 480) }}
+        {{ _self.animated_image(400, 540) }}
+        {{ _self.animated_image(400, 590) }}
       </div>
     </div>
   </div>
