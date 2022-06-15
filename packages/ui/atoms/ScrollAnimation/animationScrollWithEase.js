@@ -44,7 +44,7 @@ export default function animationScrollWithEase(ScrollAnimation) {
      * @returns {void}
      */
     render(progress) {
-      if (eases[this.$options.ease]) {
+      if (typeof eases[this.$options.ease] === 'function') {
         // eslint-disable-next-line no-param-reassign
         progress = eases[this.$options.ease](progress);
       }
