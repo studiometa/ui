@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 import { Cursor } from '@studiometa/ui';
+import wait from '../__utils__/wait.js';
 
 /**
  * @typedef {import('@studiometa/ui/Cursor/Cursor.js').CursorInterface} CursorInterface
@@ -26,14 +27,6 @@ function moveMouse({ event = { target: document }, x, y }) {
 describe('The Cursor component', () => {
   let renderSpy;
 
-  beforeAll(() => {
-    jest.useFakeTimers();
-  });
-
-  afterAll(() => {
-    jest.useRealTimers();
-  });
-
   beforeEach(() => {
     renderSpy = jest.spyOn(cursor, 'render');
   });
@@ -47,9 +40,9 @@ describe('The Cursor component', () => {
     expect(renderSpy).toHaveBeenLastCalledWith({ x: 0, y: 0, scale: 0 });
   });
 
-  it('should render on mousemove', () => {
+  it('should render on mousemove', async () => {
     moveMouse({ x: 100, y: 100 });
-    jest.runAllTimers();
+    await wait(16);
     expect(renderSpy).toHaveBeenLastCalledWith({
       x: 100,
       y: 100,
@@ -57,18 +50,18 @@ describe('The Cursor component', () => {
     });
   });
 
-  it('should disable the `ticked` service when not moving', () => {
+  it('should disable the `ticked` service when not moving', async () => {
     const serviceSpy = jest.spyOn(cursor.$services, 'disable');
     moveMouse({ x: 100, y: 100 });
-    jest.runAllTimers();
+    await wait(16);
     expect(serviceSpy).toHaveBeenNthCalledWith(1, 'ticked');
   });
 
-  it('should grow when hovering on grow selectors', () => {
+  it('should grow when hovering on grow selectors', async () => {
     const div = document.createElement('div');
     div.setAttribute('data-cursor-grow', '');
     moveMouse({ x: 100, y: 100, event: { target: div } });
-    jest.runAllTimers();
+    await wait(16);
     expect(renderSpy).toHaveBeenCalledWith({
       x: 100,
       y: 100,
@@ -76,11 +69,11 @@ describe('The Cursor component', () => {
     });
   });
 
-  it('should shrink when hovering on shrink selectors', () => {
+  it('should shrink when hovering on shrink selectors', async () => {
     const div = document.createElement('div');
     div.setAttribute('data-cursor-shrink', '');
     moveMouse({ x: 100, y: 100, event: { target: div } });
-    jest.runAllTimers();
+    await wait(16);
 
     expect(renderSpy).toHaveBeenCalledWith({
       x: 100,
@@ -89,9 +82,9 @@ describe('The Cursor component', () => {
     });
   });
 
-  it('should scale back to the original size when hovering on nothing', () => {
+  it('should scale back to the original size when hovering on nothing', async () => {
     moveMouse({ event: null, x: 100, y: 100 });
-    jest.runAllTimers();
+    await wait(16);
 
     expect(renderSpy).toHaveBeenCalledWith({
       x: 100,
