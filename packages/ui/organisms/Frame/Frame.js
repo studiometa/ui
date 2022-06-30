@@ -234,6 +234,7 @@ export default class Frame extends Base {
     event.preventDefault();
     const form = this.$children.FrameForm[index];
     const url = new URL(form.action);
+    // @ts-ignore
     url.search = new URLSearchParams(new FormData(form.$el)).toString();
     // @todo handle post request
     this.goTo(url.toString());
