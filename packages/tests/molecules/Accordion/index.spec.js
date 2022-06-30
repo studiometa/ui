@@ -72,7 +72,7 @@ describe('Accordion component', () => {
     btn[1].click();
 
     expect(content[1].getAttribute('aria-hidden')).toBe('false');
-    await wait(150);
+    await wait(500);
     expect(content[0].getAttribute('aria-hidden')).toBe('true');
   });
 });
