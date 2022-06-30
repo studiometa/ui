@@ -1,5 +1,5 @@
 import { Base, withIntersectionObserver } from '@studiometa/js-toolkit';
-import { matrix, damp } from '@studiometa/js-toolkit/utils';
+import { damp, domScheduler, transform } from '@studiometa/js-toolkit/utils';
 
 /**
  * Manage a slider item and its state transition.
@@ -82,6 +82,9 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
   /**
    * Ticked hook.
    *
+   * @todo create AbstractSliderItem with `render` method
+   * @todo add state to SliderItem
+   * @todo add origin to SliderItem
    * @returns {void}
    */
   ticked() {
@@ -138,13 +141,14 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
   }
 
   /**
-   * Render the transform.
+   * Render the component.
+   *
    * @returns {void}
    */
   render() {
-    this.$el.style.transform = `${matrix({
-      translateX: this.dampedX,
-    })} translateZ(0px)`;
+    domScheduler.write(() => {
+      transform(this.$el, { x: this.dampedX });
+    });
   }
 
   /**

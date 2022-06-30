@@ -1,5 +1,5 @@
 import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
-import { damp, matrix, clamp, nextFrame } from '@studiometa/js-toolkit/utils';
+import { damp, clamp, transform } from '@studiometa/js-toolkit/utils';
 
 /**
  * @typedef {LargeText & {
@@ -95,7 +95,6 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
    * Update values on raf.
    *
    * @this    {LargeTextInterface}
-   * @returns {void}
    */
   ticked() {
     this.translateX -= (Math.abs(this.deltaY) + 1) * this.$options.sensitivity;
@@ -118,10 +117,8 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
       this.transform.translateX -= this.width;
     }
 
-    // Defer DOM update to the next frame
-    nextFrame(() => {
-      // eslint-disable-next-line prefer-template
-      this.$refs.target.style.transform = matrix(this.transform) + ' translateZ(0px)';
-    });
+    return () => {
+      transform(this.$refs.target, this.transform);
+    };
   }
 }

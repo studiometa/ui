@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-docs",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,17 +8,17 @@
     "build": "NODE_ENV=production vitepress build ."
   },
   "dependencies": {
-    "@bytebase/vue-kbar": "^0.1.5",
-    "@studiometa/js-toolkit": "^2.0.0"
+    "@bytebase/vue-kbar": "^0.1.7",
+    "@studiometa/js-toolkit": "^2.2.2"
   },
   "devDependencies": {
-    "@iconify-json/octicon": "^1.0.7",
-    "@studiometa/tailwind-config": "^1.0.4",
-    "sass": "^1.49.0",
+    "@iconify-json/octicon": "^1.1.11",
+    "@studiometa/tailwind-config": "^1.1.0",
+    "sass": "^1.52.3",
     "snake-case": "^3.0.4",
     "tailwindcss": "^2.2.19",
-    "unplugin-icons": "^0.13.0",
-    "unplugin-vue-components": "^0.17.13",
-    "vitepress": "^0.21.4"
+    "unplugin-icons": "^0.14.3",
+    "unplugin-vue-components": "^0.19.6",
+    "vitepress": "^0.22.4"
   }
 }

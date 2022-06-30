@@ -114,7 +114,7 @@ export default class Frame extends Base {
    * @returns {FrameForm[]}
    */
   get directChildFrameForm() {
-    return this.getDirectChild('form');
+    return this.getDirectChild('FrameForm');
   }
 
   /**
@@ -233,7 +233,11 @@ export default class Frame extends Base {
     this.$log('onFrameFormFrameSubmit', event);
     event.preventDefault();
     const form = this.$children.FrameForm[index];
-    this.goTo(form.action);
+    const url = new URL(form.action);
+    // @ts-ignore
+    url.search = new URLSearchParams(new FormData(form.$el)).toString();
+    // @todo handle post request
+    this.goTo(url.toString());
   }
 
   /**

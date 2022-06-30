@@ -1,4 +1,4 @@
-import { matrix, map } from '@studiometa/js-toolkit/utils';
+import { matrix, map, domScheduler } from '@studiometa/js-toolkit/utils';
 import AbstractSliderChild from './AbstractSliderChild.js';
 
 /**
@@ -30,16 +30,20 @@ export default class SliderProgress extends AbstractSliderChild {
    * @returns {void}
    */
   update(index) {
-    const unit = this.$refs.progress.clientWidth / this.$parent.indexMax;
+    domScheduler.read(() => {
+      const unit = this.$refs.progress.clientWidth / (this.$parent.indexMax + 1);
 
-    this.$refs.progress.style.transform = matrix({
-      translateX: map(
-        index,
-        0,
-        this.$parent.indexMax,
-        (this.$refs.progress.clientWidth - unit) * -1,
-        0
-      ),
+      domScheduler.write(() => {
+        this.$refs.progress.style.transform = matrix({
+          translateX: map(
+            index,
+            0,
+            this.$parent.indexMax,
+            (this.$refs.progress.clientWidth - unit) * -1,
+            0
+          ),
+        });
+      });
     });
   }
 }
