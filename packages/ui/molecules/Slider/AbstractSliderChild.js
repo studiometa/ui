@@ -1,5 +1,5 @@
 import { Base } from '@studiometa/js-toolkit';
-import { nextFrame } from '@studiometa/js-toolkit/utils';
+import { nextFrame, domScheduler, isFunction } from '@studiometa/js-toolkit/utils';
 import Slider from './Slider.js';
 
 /**
@@ -66,7 +66,14 @@ export default class AbstractSliderChild extends Base {
    */
   handleEvent(event) {
     if (event.type === 'index') {
-      this.update(event.detail[0]);
+      domScheduler.read(() => {
+        const callback = this.update(event.detail[0]);
+        if (isFunction(callback)) {
+          domScheduler.write(() => {
+            callback();
+          });
+        }
+      });
     }
   }
 
@@ -75,7 +82,7 @@ export default class AbstractSliderChild extends Base {
    *
    * @this    {AbstractSliderChildInterface}
    * @param   {number} index The new active index.
-   * @returns {void}
+   * @returns {void|(()=>void)}
    */
   update(index) {
     throw new Error(`The \`AbstractSliderChild.update(${index})\` method must be implemented.`);
