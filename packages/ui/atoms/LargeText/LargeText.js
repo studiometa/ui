@@ -1,5 +1,5 @@
 import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
-import { damp, matrix, clamp, transform } from '@studiometa/js-toolkit/utils';
+import { damp, clamp, transform } from '@studiometa/js-toolkit/utils';
 
 /**
  * @typedef {LargeText & {

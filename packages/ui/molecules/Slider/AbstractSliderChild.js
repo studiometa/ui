@@ -70,6 +70,7 @@ export default class AbstractSliderChild extends Base {
         const callback = this.update(event.detail[0]);
         if (isFunction(callback)) {
           domScheduler.write(() => {
+            // @ts-ignore
             callback();
           });
         }
