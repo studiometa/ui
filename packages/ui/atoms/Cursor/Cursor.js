@@ -10,6 +10,7 @@ import { damp, matrix } from '@studiometa/js-toolkit/utils';
  * @typedef {Object} CursorOptions
  * @property {string} growSelectors
  * @property {string} shrinkSelectors
+ * @property {number} scale
  * @property {number} growTo
  * @property {number} shrinkTo
  * @property {number} translateDampFactor
@@ -43,6 +44,10 @@ export default class Cursor extends Base {
       shrinkSelectors: {
         type: String,
         default: '[data-cursor-shrink], [data-cursor-shrink] *',
+      },
+      scale: {
+        type: Number,
+        default: 1,
       },
       growTo: {
         type: Number,
@@ -127,7 +132,7 @@ export default class Cursor extends Base {
     this.pointerX = x;
     this.pointerY = y;
 
-    let scale = 1;
+    let { scale } = this.$options;
 
     if (!event) {
       this.pointerScale = scale;
