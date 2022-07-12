@@ -32,7 +32,6 @@
     "gzip-size": "^7.0.0",
     "prettier": "^2.6.1",
     "prettier-plugin-twig-melody": "^0.4.6",
-    "typescript": "^4.6.3",
-    "vue": "^2.6.14"
+    "typescript": "^4.6.3"
   }
 }
