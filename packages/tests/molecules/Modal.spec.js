@@ -64,8 +64,8 @@ describe('The Modal component', () => {
 
   it('should trap the focus when open.', async () => {
     const tabKeydown = new KeyboardEvent('keydown', { keyCode: 9, bubbles: true });
-    const closeButton = modal.$refs.modal.querySelector('[data-ref="close"]');
-    const openButton = modal.$el.querySelector('[data-ref="open"]');
+    const closeButton = modal.$refs.modal.querySelector('[data-ref="close[]"]');
+    const openButton = modal.$el.querySelector('[data-ref="open[]"]');
     openButton.focus();
 
     jest.spyOn(closeButton, 'focus');
@@ -85,7 +85,7 @@ describe('The Modal component', () => {
   });
 
   it('should open when clicking the open button.', async () => {
-    const btn = document.querySelector('[data-ref="open"]');
+    const btn = document.querySelector('[data-ref="open[]"]');
     await modal.close();
     expect(modal.isOpen).toBe(false);
     btn.click();
@@ -112,7 +112,7 @@ describe('The Modal component', () => {
   });
 
   it('should close when clicking the close button.', async () => {
-    const btn = document.querySelector('[data-ref="close"]');
+    const btn = document.querySelector('[data-ref="close[]"]');
 
     await modal.open();
     expect(modal.isOpen).toBe(true);
