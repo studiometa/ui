@@ -5,11 +5,11 @@ const { trap, untrap, saveActiveElement } = focusTrap();
 
 /**
  * @typedef {Object} ModalRefs
- * @property {HTMLElement} close
+ * @property {HTMLElement} close[]
  * @property {HTMLElement} container
  * @property {HTMLElement} content
  * @property {HTMLElement} modal
- * @property {HTMLElement} open
+ * @property {HTMLElement} open[]
  * @property {HTMLElement} overlay
  */
 
@@ -49,7 +49,7 @@ export default class Modal extends Base {
    */
   static config = {
     name: 'Modal',
-    refs: ['close', 'container', 'content', 'modal', 'open', 'overlay'],
+    refs: ['close[]', 'container', 'content', 'modal', 'open[]', 'overlay'],
     emits: ['open', 'close'],
     options: {
       move: String,
