@@ -146,7 +146,10 @@ export default class Menu extends Base {
    * @returns {void}
    */
   onMenuBtnClick(index, event) {
-    if (this.$children.MenuBtn[index] === this.menuBtn && this.shouldReactOnClick) {
+    if (
+      this.getDirectChildren('MenuBtn').includes(this.$children.MenuBtn[index]) &&
+      this.shouldReactOnClick
+    ) {
       event.preventDefault();
       this.toggle();
     }
