@@ -197,7 +197,7 @@ export default class Frame extends Base {
    * @param   {number} index
    * @returns {void}
    */
-  onFrameAnchorFrameClick(event, index) {
+  onFrameAnchorClick(event, index) {
     // Prevent propagation of nested frames
     if (!this.directChildFrameAnchor.includes(this.$children.FrameAnchor[index])) {
       return;
@@ -224,7 +224,7 @@ export default class Frame extends Base {
    * @param   {number} index
    * @returns {void}
    */
-  onFrameFormFrameSubmit(event, index) {
+  onFrameFormSubmit(event, index) {
     // Prevent propagation of nested frames
     if (!this.directChildFrameForm.includes(this.$children.FrameForm[index])) {
       return;

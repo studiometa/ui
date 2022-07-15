@@ -15,7 +15,6 @@ export default class FrameAnchor extends Base {
    */
   static config = {
     name: 'FrameAnchor',
-    emits: ['frame-click'],
   };
 
   /**
@@ -26,15 +25,5 @@ export default class FrameAnchor extends Base {
    */
   get href() {
     return this.$el.href;
-  }
-
-  /**
-   * Dispatch the link click event.
-   *
-   * @param   {MouseEvent} event
-   * @returns {void}
-   */
-  onClick(event) {
-    this.$emit('frame-click', event);
   }
 }
