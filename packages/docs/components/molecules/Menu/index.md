@@ -5,6 +5,7 @@
   import burger from './burger/index.js';
   import dropdown from './dropdown/index.js';
   import megaMenu from './mega-menu/index.js';
+  import megaMenuResponsive from './mega-menu-responsive/index.js';
 
   const badges = [`v${pkg.version}`, 'JS'];
 
@@ -12,6 +13,7 @@
     burger,
     dropdown,
     megaMenu,
+    megaMenuResponsive
   ];
 </script>
 

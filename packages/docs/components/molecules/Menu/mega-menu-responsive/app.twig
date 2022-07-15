@@ -1,0 +1,55 @@
+<style>
+  a { color: inherit; text-decoration: none; } a:focus { z-index: 1; position:
+  relative; } ul { list-style-type: none; padding: 0; margin: 0; }
+</style>
+
+<nav class="mx-10 my-20" data-component="Menu" data-breakpoint>
+  <div class="m:hidden">
+    {% include '@ui/atoms/Button/StyledButton.twig' with {
+      label: 'Burger',
+      attr: {
+        data_component: 'MenuBtn',
+        data_option_mode: 'click',
+      }
+    } %}
+  </div>
+  <ul class="relative w-full block items-center justify-around hidden m:flex"
+    data-component="MenuList"
+    data-option-enter-from="hidden m:flex"
+    data-option-leave-to="hidden m:flex">
+    {% for item in 1..5 %}
+      <li data-component="Menu" data-option-mode="hover" data-option-mode:xxs:xs:s="click" class="relative m:static flex-grow">
+        <a data-component="MenuBtn"
+          class="block p-4 m:text-center bg-gray-300 hover:bg-gray-400"
+          href="#">
+          Item #{{ item }}
+        </a>
+        <div data-component="MenuList"
+          data-option-enter-active="m:transition m:duration-200 ease-out-expo"
+          data-option-leave-active="m:transition m:duration-200 ease-out-expo"
+          data-option-leave-to="hidden transform scale-y-95 opacity-0 pointer-events-none"
+          class="m:absolute m:top-full left-0 hidden m:block w-full bg-gray-200 origin-top transform scale-y-95 opacity-0 pointer-events-none">
+          <div class="absolute top-0 left-1/3 hidden m:block w-2/3 h-full bg-gray-400"></div>
+          <ul class="w-full m:w-1/3">
+            {% for subitem in 1..3 %}
+              <li data-component="Menu" data-option-mode="hover" data-option-mode:xxs:xs:s="click">
+                <a data-component="MenuBtn"
+                  class="block p-4 pl-8 m:pl-4 bg-gray-200 hover:bg-gray-300"
+                  href="#">
+                  SubItem #{{ item }}.{{ subitem }}
+                </a>
+                <div data-component="MenuList"
+                  data-option-enter-active="m:transition duration-200 ease-out-expo"
+                  data-option-leave-active="m:transition duration-200 ease-out-expo"
+                  data-option-leave-to="hidden opacity-0 pointer-events-none"
+                  class="m:absolute m:top-0 m:left-1/3 hidden m:flex items-center justify-center m:w-2/3 h-full p-4 pl-12 m:pl-4 bg-green-300 opacity-0 pointer-events-none">
+                  SubSubItem #{{ item }}.{{ subitem }}.1
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+</nav>
