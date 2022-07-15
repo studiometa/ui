@@ -141,10 +141,11 @@ export default class Menu extends Base {
    * Toggle menu items on button click;
    *
    * @this    {MenuInterface}
+   * @param   {number} index
    * @param   {MouseEvent} event
    * @returns {void}
    */
-  onMenuBtnBtnClick(event, index) {
+  onMenuBtnClick(index, event) {
     if (this.$children.MenuBtn[index] === this.menuBtn && this.shouldReactOnClick) {
       event.preventDefault();
       this.toggle();
@@ -155,9 +156,10 @@ export default class Menu extends Base {
    * Open menu items on button mouse enter.
    *
    * @this    {MenuInterface}
+   * @param   {number} index
    * @returns {void}
    */
-  onMenuBtnBtnMouseenter(event, index) {
+  onMenuBtnMouseenter(index) {
     if (this.$children.MenuBtn[index] === this.menuBtn && !this.shouldReactOnClick) {
       this.open();
     }
@@ -169,7 +171,7 @@ export default class Menu extends Base {
    * @this    {MenuInterface}
    * @returns {void}
    */
-  onMenuBtnBtnMouseleave() {
+  onMenuBtnMouseleave() {
     if (this.shouldReactOnClick) {
       return;
     }
@@ -187,7 +189,7 @@ export default class Menu extends Base {
    * @this    {MenuInterface}
    * @returns {void}
    */
-  onMenuListItemsMouseleave() {
+  onMenuListMouseleave() {
     if (this.shouldReactOnClick) {
       return;
     }
