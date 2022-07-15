@@ -13,8 +13,7 @@ const folders = fs
 
 module.exports = {
   presets: [defaultConfig, tailwindConfig],
-  // mode: 'jit',
-  purge: [
+  content: [
     ...folders.map((folder) => path.resolve(folder, '**/*.js')),
     ...folders.map((folder) => path.resolve(folder, '**/*.vue')),
     ...folders.map((folder) => path.resolve(folder, '**/*.twig')),
@@ -27,10 +26,6 @@ module.exports = {
     './**/*.html',
     './**/*.twig',
   ],
-  future: {
-    removeDeprecatedGapUtilities: true,
-    purgeLayersByDefault: true,
-  },
   theme: {
     extend: {
       cursor: {
@@ -53,9 +48,9 @@ module.exports = {
     },
   },
   variants: {
-    opacity: ['disabled', ...defaultConfig.variants.cursor],
+    opacity: ['disabled', ...(defaultConfig?.variants?.cursor ?? [])],
     extend: {
-      cursor: ['active', ...defaultConfig.variants.cursor],
+      cursor: ['active', ...(defaultConfig?.variants?.cursor ?? [])],
       ringOpacity: ['hover', 'active', 'focus'],
     },
   },
