@@ -1,4 +1,4 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base, isDirectChild, getDirectChildren } from '@studiometa/js-toolkit';
 import { nextTick } from '@studiometa/js-toolkit/utils';
 import MenuBtn from './MenuBtn.js';
 import MenuList from './MenuList.js';
@@ -9,6 +9,9 @@ import MenuList from './MenuList.js';
  *     Menu: Menu[],
  *     MenuBtn: MenuBtn[],
  *     MenuList: MenuList[],
+ *   },
+ *   $options: {
+ *     mode: 'click'|'hover'
  *   }
  * }} MenuInterface
  */
@@ -37,36 +40,13 @@ export default class Menu extends Base {
   };
 
   /**
-   * Get direct children.
-   *
-   * @this    {MenuInterface}
-   * @param   {string} name
-   * @returns {any[]}
-   */
-  getDirectChildren(name) {
-    if (!this.$children[name]) {
-      return [];
-    }
-
-    if (!this.$children.Menu) {
-      return this.$children[name];
-    }
-
-    return this.$children[name].filter((child) =>
-      this.$children.Menu.every((menu) =>
-        menu.$children[name] ? !menu.$children[name].includes(child) : true
-      )
-    );
-  }
-
-  /**
    * Get the first `MenuList` instance.
    *
    * @this    {MenuInterface}
    * @returns {MenuList}
    */
   get menuList() {
-    return this.getDirectChildren('MenuList')[0];
+    return getDirectChildren(this, 'Menu', 'MenuList')[0];
   }
 
   /**
@@ -76,7 +56,7 @@ export default class Menu extends Base {
    * @returns {MenuBtn}
    */
   get menuBtn() {
-    return this.getDirectChildren('MenuBtn')[0];
+    return getDirectChildren(this, 'Menu', 'MenuBtn')[0];
   }
 
   /**
@@ -147,7 +127,7 @@ export default class Menu extends Base {
    */
   onMenuBtnClick(index, event) {
     if (
-      this.getDirectChildren('MenuBtn').includes(this.$children.MenuBtn[index]) &&
+      isDirectChild(this, 'Menu', 'MenuBtn', this.$children.MenuBtn[index]) &&
       this.shouldReactOnClick
     ) {
       event.preventDefault();
