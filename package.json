@@ -13,6 +13,7 @@
     "build:types": "tsc --build tsconfig.build.json",
     "build:pkg": "node scripts/build.mjs",
     "build:sizes": "node scripts/sizes.mjs",
+    "build-for-export-size": "node scripts/update-exports-for-export-size.js && npm run build:pkg && npm run build:cp-files",
     "lint": "npm run lint:eslint && npm run lint:types",
     "lint:eslint": "eslint packages/ui",
     "lint:types": "tsc --build tsconfig.lint.json",
