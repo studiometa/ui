@@ -39,7 +39,7 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
    * Translate X.
    * @type {number}
    */
-  translateX = 0;
+  x = 0;
 
   /**
    * Scroll delta Y.
@@ -52,7 +52,7 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
    */
   transform = {
     skewX: 0,
-    translateX: 0,
+    x: 0,
   };
 
   /**
@@ -97,24 +97,24 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
    * @this    {LargeTextInterface}
    */
   ticked() {
-    this.translateX -= (Math.abs(this.deltaY) + 1) * this.$options.sensitivity;
+    this.x -= (Math.abs(this.deltaY) + 1) * this.$options.sensitivity;
 
-    this.transform.translateX = damp(this.translateX, this.transform.translateX, 0.25);
+    this.transform.x = damp(this.x, this.transform.x, 0.25);
 
     if (this.$options.skew) {
       this.transform.skewX = damp(
-        clamp((this.deltaY / 20) * -1, -0.5, 0.5) * this.$options.skewSensitivity,
+        clamp(this.deltaY * -1, -50, 50) * this.$options.skewSensitivity,
         this.transform.skewX,
         0.25
       );
     }
 
-    if (this.translateX <= this.width * -1) {
-      this.translateX = 0;
-      this.transform.translateX += this.width;
-    } else if (this.$options.sensitivity < 0 && this.translateX >= this.width) {
-      this.translateX = 0;
-      this.transform.translateX -= this.width;
+    if (this.x <= this.width * -1) {
+      this.x = 0;
+      this.transform.x += this.width;
+    } else if (this.$options.sensitivity < 0 && this.x >= this.width) {
+      this.x = 0;
+      this.transform.x -= this.width;
     }
 
     return () => {

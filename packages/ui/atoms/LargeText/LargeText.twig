@@ -18,7 +18,7 @@
   merge_html_attributes(
     attr ?? null,
     { data_component: 'LargeText' },
-    { class: 'overflow-x-hidden pointer-events-none' }
+    { class: 'overflow-x-hidden pointer-events-none', style: { contain: 'content' } }
   )
 %}
 
