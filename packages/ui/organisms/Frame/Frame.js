@@ -1,4 +1,4 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base, isDirectChild, getDirectChildren } from '@studiometa/js-toolkit';
 import { nextFrame, historyPush } from '@studiometa/js-toolkit/utils';
 import FrameAnchor from './FrameAnchor.js';
 import FrameForm from './FrameForm.js';
@@ -102,27 +102,11 @@ export default class Frame extends Base {
   }
 
   /**
-   * Get direct `FrameAnchor` children.
-   * @returns {FrameAnchor[]}
-   */
-  get directChildFrameAnchor() {
-    return this.getDirectChild('FrameAnchor');
-  }
-
-  /**
-   * Get direct `FrameForm` children.
-   * @returns {FrameForm[]}
-   */
-  get directChildFrameForm() {
-    return this.getDirectChild('FrameForm');
-  }
-
-  /**
    * Get direct `FrameTarget` children.
    * @returns {FrameTarget[]}
    */
-  get directChildFrameTarget() {
-    return this.getDirectChild('FrameTarget');
+  get directChildrenFrameTarget() {
+    return getDirectChildren(this, 'Frame', 'FrameTarget');
   }
 
   /**
@@ -197,9 +181,9 @@ export default class Frame extends Base {
    * @param   {number} index
    * @returns {void}
    */
-  onFrameAnchorFrameClick(event, index) {
+  onFrameAnchorClick(event, index) {
     // Prevent propagation of nested frames
-    if (!this.directChildFrameAnchor.includes(this.$children.FrameAnchor[index])) {
+    if (!isDirectChild(this, 'Frame', 'FrameAnchor', this.$children.FrameAnchor[index])) {
       return;
     }
 
@@ -224,9 +208,9 @@ export default class Frame extends Base {
    * @param   {number} index
    * @returns {void}
    */
-  onFrameFormFrameSubmit(event, index) {
+  onFrameFormSubmit(event, index) {
     // Prevent propagation of nested frames
-    if (!this.directChildFrameForm.includes(this.$children.FrameForm[index])) {
+    if (!isDirectChild(this, 'Frame', 'FrameForm', this.$children.FrameForm[index])) {
       return;
     }
 
@@ -276,15 +260,15 @@ export default class Frame extends Base {
 
     this.$emit('before-leave');
     // Leave all
-    await Promise.all(this.directChildFrameTarget.map((target) => target.leave()));
+    await Promise.all(this.directChildrenFrameTarget.map((target) => target.leave()));
 
     this.$emit('after-leave');
     this.$emit('before-content');
 
     // Update content
     // @todo insert non existing FrameTarget as well
-    this.directChildFrameTarget.map((target, index) =>
-      target.updateContent(newFrame.directChildFrameTarget[index])
+    this.directChildrenFrameTarget.map((target, index) =>
+      target.updateContent(newFrame.directChildrenFrameTarget[index])
     );
 
     // Push history
@@ -307,7 +291,7 @@ export default class Frame extends Base {
     this.$emit('before-enter');
 
     // Enter all
-    await Promise.all(this.directChildFrameTarget.map((target) => target.enter()));
+    await Promise.all(this.directChildrenFrameTarget.map((target) => target.enter()));
 
     this.$emit('after-enter');
   }

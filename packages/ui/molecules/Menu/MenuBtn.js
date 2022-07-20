@@ -10,7 +10,6 @@ export default class MenuBtn extends Base {
   static config = {
     name: 'MenuBtn',
     debug: true,
-    emits: ['btn-click', 'btn-mouseenter', 'btn-mouseleave'],
   };
 
   /**
@@ -27,7 +26,6 @@ export default class MenuBtn extends Base {
    */
   onClick(event) {
     event.stopPropagation();
-    this.$emit('btn-click', event);
   }
 
   /**
@@ -39,7 +37,6 @@ export default class MenuBtn extends Base {
   onMouseenter(event) {
     this.isHover = true;
     event.stopPropagation();
-    this.$emit('btn-mouseenter', event);
   }
 
   /**
@@ -50,6 +47,5 @@ export default class MenuBtn extends Base {
   onMouseleave(event) {
     this.isHover = false;
     event.stopPropagation();
-    this.$emit('btn-mouseleave', event);
   }
 }

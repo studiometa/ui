@@ -83,12 +83,10 @@ export default class MenuList extends Transition {
   /**
    * Unset hover state.
    *
-   * @param   {MouseEvent} event
    * @returns {void}
    */
-  onMouseleave(event) {
+  onMouseleave() {
     this.isHover = false;
-    this.$emit('items-mouseleave', event);
   }
 
   /**

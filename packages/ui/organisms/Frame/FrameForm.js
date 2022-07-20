@@ -12,7 +12,6 @@ import { Base } from '@studiometa/js-toolkit';
 export default class FrameForm extends Base {
   static config = {
     name: 'FrameForm',
-    emits: ['frame-submit'],
   };
 
   /**
@@ -23,15 +22,5 @@ export default class FrameForm extends Base {
    */
   get action() {
     return this.$el.action;
-  }
-
-  /**
-   * Dispatch the form `submit` event.
-   *
-   * @param   {SubmitEvent} event
-   * @returns {void}
-   */
-  onSubmit(event) {
-    this.$emit('frame-submit', event);
   }
 }
