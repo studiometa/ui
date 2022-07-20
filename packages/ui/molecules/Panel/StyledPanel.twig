@@ -12,17 +12,22 @@
 
 {% extends '@ui/molecules/Panel/Panel.twig' %}
 
-{% set container_attr = merge_html_attributes(container_attr ?? null, required={ class: 'bg-white' }) %}
+{% set container_attr =
+  merge_html_attributes(container_attr ?? null, required = { class: 'bg-white' })
+%}
 
 {% block open %}
-  {% include '@ui/atoms/Button/StyledButton.twig' with { label: 'Open', attr: { data_ref: 'open' } } %}
+  {% include '@ui/atoms/Button/StyledButton.twig' with {
+    label: 'Open',
+    attr: { data_ref: 'open[]' }
+  } %}
 {% endblock %}
 
 {% block close %}
   <div class="absolute top-0 right-0 m-2">
     {% include '@ui/atoms/Button/StyledButton.twig' with {
       label: 'Close',
-      attr: { data_ref: 'close' }
+      attr: { data_ref: 'close[]' }
     } %}
   </div>
 {% endblock %}
