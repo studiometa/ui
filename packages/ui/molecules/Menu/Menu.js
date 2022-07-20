@@ -46,7 +46,7 @@ export default class Menu extends Base {
    * @returns {MenuList}
    */
   get menuList() {
-    return getDirectChildren(this, 'Menu', 'MenuList')[0];
+    return /** @type {MenuList[]} */ (getDirectChildren(this, 'Menu', 'MenuList'))[0];
   }
 
   /**
@@ -56,7 +56,7 @@ export default class Menu extends Base {
    * @returns {MenuBtn}
    */
   get menuBtn() {
-    return getDirectChildren(this, 'Menu', 'MenuBtn')[0];
+    return /** @type {MenuBtn[]} */ (getDirectChildren(this, 'Menu', 'MenuBtn'))[0];
   }
 
   /**
