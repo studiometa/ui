@@ -149,7 +149,6 @@ export default class MenuList extends Transition {
    * @returns {void}
    */
   toggle() {
-    console.log(this.$id, 'toggle', this.isOpen);
     if (this.isOpen) {
       this.close();
     } else {
