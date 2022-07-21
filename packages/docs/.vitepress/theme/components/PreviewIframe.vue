@@ -22,13 +22,12 @@
     iframeKey.value = src + performance.now();
   }
 
+  /**
+   * Change the iframe zoom.
+   * @param {number} value The iframe zoom value.
+   */
   function setIframeZoom(value) {
     zoom.value = value;
-    try {
-      iframe.value.contentDocument.body.classList.add('transition');
-      iframe.value.contentDocument.body.style.transform = `scale(${value})`;
-      iframe.value.contentDocument.body.style.transformOrigin = `top left`;
-    } catch (err) {}
   }
 
   onMounted(() => {
@@ -49,7 +48,8 @@
 </script>
 
 <template>
-  <div class="relative my-4 bg-vp-bg-soft ring ring-1 ring-vp-c-divider-light ring-inset rounded-lg overflow-hidden resize-x">
+  <div class="z-above relative my-4 bg-vp-bg-soft ring ring-1 ring-vp-c-divider-light ring-inset rounded-lg overflow-hidden resize-x"
+    :style="{ height }">
     <div class="z-above absolute flex gap-1 top-0 left-0 p-2">
       <slot name="controls-top-left" />
     </div>
@@ -92,11 +92,17 @@
       ref="iframe"
       :key="iframeKey"
       @load="isLoading = false"
-      class="block border-0 transition duration-300"
+      class="block border-0 transform origin-top-left  duration-300"
       :class="{ 'opacity-0': isLoading }"
       :src="src"
       width="100%"
-      :style="{ height }"
+      :style="{
+        '--zoom': zoom,
+        '--tw-scale-x': 'var(--zoom)',
+        '--tw-scale-y': 'var(--zoom)',
+        width: `calc(1 / var(--zoom) * 100%)`,
+        height: `calc(1 / var(--zoom) * ${height})`,
+      }"
     />
   </div>
 </template>
