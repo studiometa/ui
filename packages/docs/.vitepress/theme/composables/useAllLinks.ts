@@ -13,7 +13,7 @@ interface Link {
 interface VitepressLink {
   text: string;
   link?: string;
-  children?: VitepressLink[];
+  items?: VitepressLink[];
 }
 
 /**
@@ -55,8 +55,8 @@ function addLinks(
     }
   }
 
-  if (Array.isArray(item.children)) {
-    item.children.forEach((child) => addLinks(links, linksSet, child, item, parent));
+  if (Array.isArray(item.items)) {
+    item.items.forEach((child) => addLinks(links, linksSet, child, item, parent));
   }
 }
 

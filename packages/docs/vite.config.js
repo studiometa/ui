@@ -1,7 +1,7 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { defineConfig } from 'vite';
-import { writeFileSync } from 'fs';
-import { resolve, join } from 'path';
+import { writeFileSync } from 'node:fs';
+import { resolve, join } from 'node:path';
 import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import Components from 'unplugin-vue-components/vite';
@@ -58,7 +58,8 @@ const config = defineConfig({
   },
   resolve: {
     alias: {
-      './NavBarTitle.vue': resolve('.vitepress/theme/components/NavBarTitle.vue'),
+      './VPNavBarTitle.vue': resolve('.vitepress/theme/components/NavBarTitle.vue'),
+      './VPNavBarSearch.vue': resolve('.vitepress/theme/components/SearchBtn.vue'),
     },
   },
 });

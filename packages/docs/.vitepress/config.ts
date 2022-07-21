@@ -4,14 +4,17 @@ import { defineConfig } from 'vitepress';
 import { basename, dirname, resolve, join } from 'path';
 import { withLeadingSlash, withTrailingSlash } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
+import fs from 'node:fs';
 
-const require = createRequire(import.meta.url);
-const pkg = require('../package.json');
+const pkg = JSON.parse(
+  fs.readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' })
+);
 
 export default defineConfig({
   lang: 'en-US',
   title: '@studiometa/ui',
   description: 'A set of opiniated, unstyled and accessible components',
+  lastUpdated: true,
   base: '/-/',
   outDir: './.symfony/public/-',
   srcExclude: ['**/.symfony/**'],
@@ -24,13 +27,47 @@ export default defineConfig({
     editLinks: true,
     editLinkText: 'Edit this page on GitHub',
     sidebarDepth: 4,
+    footer: {
+      message: 'MIT Licensed',
+      copyright: 'Copyright © 2020–present Studio Meta',
+    },
+    socialLinks: [{ icon: 'github', link: 'https://github.com/studiometa/ui' }],
+
     nav: [
       { text: 'Guide', link: '/guide/concepts/' },
-      { text: 'Components', link: '/components/' },
-      { text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' },
+      {
+        text: 'Components',
+        items: [
+          {
+            text: 'Primitives',
+            link: '/components/primitives/',
+          },
+          {
+            text: 'Atoms',
+            link: '/components/atoms/',
+          },
+          {
+            text: 'Molecules',
+            link: '/components/molecules/',
+          },
+          {
+            text: 'Organisms',
+            link: '/components/organisms/',
+          },
+        ],
+      },
+      {
+        text: `v${pkg.version}`,
+        items: [
+          { text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' },
+        ]
+      }
     ],
     sidebar: {
-      '/components/': getComponentsSidebar(),
+      '/components/primitives/': generateSidebarLinksFromPath('components/primitives/*/index.md'),
+      '/components/atoms/': generateSidebarLinksFromPath('components/atoms/*/index.md'),
+      '/components/molecules/': generateSidebarLinksFromPath('components/molecules/*/index.md'),
+      '/components/organisms/': generateSidebarLinksFromPath('components/organisms/*/index.md'),
       '/': getGuideSidebar(),
     },
   },
@@ -40,7 +77,7 @@ function getGuideSidebar() {
   return [
     {
       text: 'Guide',
-      children: [
+      items: [
         { text: 'Concepts', link: '/guide/concepts/' },
         { text: 'Installation', link: '/guide/installation/' },
         { text: 'Usage', link: '/guide/usage/' },
@@ -49,8 +86,9 @@ function getGuideSidebar() {
     {
       text: 'Migration guides',
       link: '/migration-guides/',
-      children: generateSidebarLinksFromPath('migration-guides/*/index.md', {
+      items: generateSidebarLinksFromPath('migration-guides/*/index.md', {
         extractTitle: true,
+        collapsible: false,
       }),
     },
   ];
@@ -61,36 +99,50 @@ function getComponentsSidebar() {
     {
       text: 'Primitives',
       link: '/components/primitives/',
-      children: generateSidebarLinksFromPath('components/primitives/*/index.md'),
+      items: generateSidebarLinksFromPath('components/primitives/*/index.md'),
     },
     {
       text: 'Atoms',
       link: '/components/atoms/',
-      children: generateSidebarLinksFromPath('components/atoms/*/index.md'),
+      items: generateSidebarLinksFromPath('components/atoms/*/index.md'),
     },
     {
       text: 'Molecules',
       link: '/components/molecules/',
-      children: generateSidebarLinksFromPath('components/molecules/*/index.md'),
+      items: generateSidebarLinksFromPath('components/molecules/*/index.md'),
     },
     {
       text: 'Organisms',
       link: '/components/organisms/',
-      children: generateSidebarLinksFromPath('components/organisms/*/index.md'),
+      items: generateSidebarLinksFromPath('components/organisms/*/index.md'),
     },
   ];
 }
 
-function generateSidebarLinksFromPath(globs: string | string[], { extractTitle = false } = {}) {
+function generateSidebarLinksFromPath(globs: string | string[], { extractTitle = false, collapsible = true, collapsed = true } = {}) {
   return glob.sync(globs).map((entry) => ({
-    link: withLeadingSlash(withTrailingSlash(dirname(entry))),
     text: extractTitle ? getEntryTitle(entry) : basename(dirname(entry)),
+    link: withLeadingSlash(entry.replace(/\/index\.md$/, '/').replace(/\.md$/, '.html')),
+    items: [
+      {
+        link: withLeadingSlash(entry.replace(/\/index\.md$/, '/').replace(/\.md$/, '.html')),
+        text: 'Introduction',
+      },
+      ...(entry.endsWith('/index.md') ? generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*[!index]*.md'), { extractTitle: true }) : []),
+    ],
+    collapsible,
+    collapsed,
   }));
 }
 
 function getEntryTitle(entry) {
+  console.log('getEntryTitle', entry);
   const content = readFileSync(entry, { encoding: 'UTF-8' });
-  const [title] = content.match(/^#\s+.*$/m);
+  console.log({ content, entry })
+  const [title] = content.match(/^#\s+.*$/m) ?? [];
 
   return title ? title.replace(/^#\s?/, '') : basename(dirname(entry));
 }
+
+
+console.log(...generateSidebarLinksFromPath('components/atoms/*/index.md'))

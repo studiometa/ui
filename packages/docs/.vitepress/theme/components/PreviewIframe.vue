@@ -1,7 +1,8 @@
 <script setup lang="ts">
-  import { ref, watch } from 'vue';
+  import { ref, watch, onMounted, onUnmounted } from 'vue';
   import Loader from './Loader.vue';
   import ControlButton from './PreviewControlButton.vue';
+  import useObserver from '../composables/useObserver.js';
 
   const { src, height } = defineProps({
     src: String,
@@ -29,10 +30,26 @@
       iframe.value.contentDocument.body.style.transformOrigin = `top left`;
     } catch (err) {}
   }
+
+  onMounted(() => {
+    const { observe, cleanup } = useObserver((mutations) => {
+      mutations.filter(mutation => {
+        return mutation.target === document.documentElement && mutation.type === 'attributes' && mutation.attributeName === 'class';
+      }).forEach((mutation) => {
+        iframe.value.contentDocument.documentElement.classList.toggle('dark', mutation.oldValue !== 'dark');
+      });
+    });
+
+    observe(document.documentElement, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
+
+    onUnmounted(() => {
+      cleanup();
+    })
+  });
 </script>
 
 <template>
-  <div class="relative bg-gray-100 overflow-hidden resize-x">
+  <div class="relative my-4 bg-vp-bg-soft ring ring-1 ring-vp-c-divider-light ring-inset rounded-lg overflow-hidden resize-x">
     <div class="z-above absolute flex gap-1 top-0 left-0 p-2">
       <slot name="controls-top-left" />
     </div>
@@ -75,7 +92,7 @@
       ref="iframe"
       :key="iframeKey"
       @load="isLoading = false"
-      class="block border-0 bg-gray-100 transition duration-300"
+      class="block border-0 transition duration-300"
       :class="{ 'opacity-0': isLoading }"
       :src="src"
       width="100%"

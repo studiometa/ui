@@ -33,6 +33,15 @@ module.exports = {
         grabbing: 'grabbing',
       },
       colors: {
+        vp: {
+          'text-1': 'var(--vp-c-text-1)',
+          bg: 'var(--vp-c-bg)',
+          'bg-alt': 'var(--vp-c-bg-alt)',
+          'bg-soft': 'var(--vp-c-bg-soft)',
+          'code-block-bg': 'var(--vp-code-block-bg)',
+          'c-indigo': 'var(--vp-c-indigo)',
+          'c-divider-light': 'var(--vp-c-divider-light)',
+        },
         brand: {
           DEFAULT: '#3eaf7c',
           light: '#42d392',
