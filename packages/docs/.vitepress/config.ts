@@ -58,16 +58,11 @@ export default defineConfig({
       },
       {
         text: `v${pkg.version}`,
-        items: [
-          { text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' },
-        ]
-      }
+        items: [{ text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' }],
+      },
     ],
     sidebar: {
-      '/components/primitives/': generateSidebarLinksFromPath('components/primitives/*/index.md'),
-      '/components/atoms/': generateSidebarLinksFromPath('components/atoms/*/index.md'),
-      '/components/molecules/': generateSidebarLinksFromPath('components/molecules/*/index.md'),
-      '/components/organisms/': generateSidebarLinksFromPath('components/organisms/*/index.md'),
+      '/components/': getComponentsSidebar(),
       '/': getGuideSidebar(),
     },
   },
@@ -119,17 +114,20 @@ function getComponentsSidebar() {
   ];
 }
 
-function generateSidebarLinksFromPath(globs: string | string[], { extractTitle = false, collapsible = true, collapsed = true } = {}) {
+function generateSidebarLinksFromPath(
+  globs: string | string[],
+  { extractTitle = false, collapsible = false, collapsed = false } = {}
+) {
   return glob.sync(globs).map((entry) => ({
     text: extractTitle ? getEntryTitle(entry) : basename(dirname(entry)),
     link: withLeadingSlash(entry.replace(/\/index\.md$/, '/').replace(/\.md$/, '.html')),
-    items: [
-      {
-        link: withLeadingSlash(entry.replace(/\/index\.md$/, '/').replace(/\.md$/, '.html')),
-        text: 'Introduction',
-      },
-      ...(entry.endsWith('/index.md') ? generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*[!index]*.md'), { extractTitle: true }) : []),
-    ],
+    items: entry.endsWith('/index.md')
+      ? [
+          ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*[!index]*.md'), {
+            extractTitle: true,
+          }),
+        ]
+      : [],
     collapsible,
     collapsed,
   }));
