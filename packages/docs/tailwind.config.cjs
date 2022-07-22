@@ -14,9 +14,9 @@ const folders = fs
 module.exports = {
   presets: [defaultConfig, tailwindConfig],
   content: [
-    ...folders.map((folder) => path.resolve(folder, '**/*.js')),
-    ...folders.map((folder) => path.resolve(folder, '**/*.vue')),
-    ...folders.map((folder) => path.resolve(folder, '**/*.twig')),
+    ...folders.map((folder) => path.relative(__dirname, path.resolve(folder, '**/*.js'))),
+    ...folders.map((folder) => path.relative(__dirname, path.resolve(folder, '**/*.vue'))),
+    ...folders.map((folder) => path.relative(__dirname, path.resolve(folder, '**/*.twig'))),
     './.vitepress/**/*.js',
     './.vitepress/**/*.vue',
     './.vitepress/**/*.ts',
