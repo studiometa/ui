@@ -50,7 +50,7 @@
         <KBarPositioner class="z-goku">
           <div class="z-under absolute inset-0 bg-vp-text-1 dark:bg-vp-bg-soft opacity-80"></div>
           <KBarAnimator
-            class="bg-vp-bg shadow-lg rounded-lg w-full h-full max-w-lg max-h-lg overflow-hidden divide-y"
+            class="flex flex-col w-full h-full max-w-lg max-h-lg bg-vp-bg shadow-lg rounded-lg overflow-hidden"
           >
             <KBarSearch class="p-4 text-lg w-full box-border outline-none border-none" />
             <SearchResults />

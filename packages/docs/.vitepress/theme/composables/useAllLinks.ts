@@ -65,13 +65,13 @@ export function useAllLinks() {
   const { nav, sidebar } = unref(theme);
 
   const links = ref([]);
-  const linkSet = new Set();
+  const linkSet = new Set<string>();
 
   nav.forEach((item) => addLinks(links, linkSet, item));
 
-  Object.entries(sidebar).forEach(([name, item]) => {
-    const parent = nav.find(item => name.startsWith(item.link));
-    item.forEach((link) => addLinks(links, linkSet, link, parent));
+  Object.entries(sidebar).forEach(([name, items]) => {
+    const parent = nav.find(navItem => name.startsWith(navItem.link));
+    items.forEach((link) => addLinks(links, linkSet, link, parent));
   });
 
   return {
