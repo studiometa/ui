@@ -1,15 +1,25 @@
 let callbacks = [];
-const observer = new MutationObserver((mutations) => {
-    callbacks.forEach(callback => {
-      callback(mutations, observer)
-    });
-});
+let observer;
+
+function mainCallback(mutations, obs) {
+  callbacks.forEach((callback) => {
+    callback(mutations, observer);
+  });
+}
 
 export default function useObserver(callback: MutationCallback) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (!observer) {
+    observer = new MutationObserver(mainCallback);
+  }
+
   callbacks.push(callback);
 
   function cleanup() {
-    callbacks = callbacks.filter(cb => cb !== callback);
+    callbacks = callbacks.filter((cb) => cb !== callback);
   }
 
   function observe(element, options) {
@@ -24,5 +34,5 @@ export default function useObserver(callback: MutationCallback) {
     observe,
     cleanup,
     disconnect,
-  }
-};
+  };
+}
