@@ -6,14 +6,14 @@ title: Button examples
 
 ## Primary
 
-<PreviewIframe src="./stories/story-primary.html" />
+<PreviewIframe src="./stories/primary/story.html" />
 
 :::details Code
 
 <SimpleTabs :items="['app.twig']">
   <template #content-1>
 
-<<< ./components/atoms/Button/stories/app-primary.twig
+<<< ./components/atoms/Button/stories/primary/app.twig
 
   </template>
 </SimpleTabs>
@@ -22,14 +22,14 @@ title: Button examples
 
 ## Secondary
 
-<PreviewIframe src="./stories/story-secondary.html" />
+<PreviewIframe src="./stories/secondary/story.html" />
 
 :::details Code
 
 <SimpleTabs :items="['app.twig']">
   <template #content-1>
 
-<<< ./components/atoms/Button/stories/app-secondary.twig
+<<< ./components/atoms/Button/stories/secondary/app.twig
 
   </template>
 </SimpleTabs>

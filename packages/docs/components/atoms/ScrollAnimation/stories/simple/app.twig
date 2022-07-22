@@ -24,7 +24,7 @@
 <div class="h-96 p-10 space-y-4 text-center text-gray-800">
   Scroll down
 </div>
-<div class="h-screen p-10">
+<div class="h-screen p-10" style="contain: content;">
   <div class="grid gap-10 grid-cols-5">
     <div>
       <div data-ref="target" class="space-y-10">
@@ -74,7 +74,8 @@
   html_attributes({
     data_component: 'ScrollAnimation',
     data_option_to: { scale: 1.1 },
-    class: 'z-10 relative bg-gray-200'
+    class: 'z-10 relative bg-gray-200',
+    style: { contain: 'content' },
   })
   }}>
   <div data-ref="target"
