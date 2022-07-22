@@ -136,13 +136,8 @@ function generateSidebarLinksFromPath(globs: string | string[], { extractTitle =
 }
 
 function getEntryTitle(entry) {
-  console.log('getEntryTitle', entry);
   const content = readFileSync(entry, { encoding: 'UTF-8' });
-  console.log({ content, entry })
   const [title] = content.match(/^#\s+.*$/m) ?? [];
 
   return title ? title.replace(/^#\s?/, '') : basename(dirname(entry));
 }
-
-
-console.log(...generateSidebarLinksFromPath('components/atoms/*/index.md'))
