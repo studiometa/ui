@@ -20,3 +20,7 @@ html.story body {
   @apply px-10 py-20;
   background-color: var(--vp-bg-alt);
 }
+
+.VPHomeHero .text {
+  max-width: 12em;
+}

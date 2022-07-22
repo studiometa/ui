@@ -1,0 +1,34 @@
+<div data-component="Frame" id="frame" data-option-history>
+  <nav
+    class="flex align-center gap-4"
+    data-component="FrameTarget"
+    data-option-enter-from="opacity-0"
+    data-option-enter-active="transition"
+    data-option-leave-active="transition"
+    data-option-leave-to="opacity-0"
+  >
+    <fake-link
+      data-component="FrameAnchor"
+      href="./story.html"
+      class="inline-block px-2 py-1 rounded bg-green-300 cursor-pointer"
+    >
+      A
+    </fake-link>
+    <fake-link
+      data-component="FrameAnchor"
+      href="./story-b.html"
+      class="inline-block px-2 py-1 rounded bg-gray-300 cursor-pointer"
+    >
+      B
+    </fake-link>
+  </nav>
+  <h1
+    data-component="FrameTarget"
+    data-option-enter-from="transform translate-y-4 opacity-0"
+    data-option-enter-active="transition"
+    data-option-leave-active="transition"
+    data-option-leave-to="transform translate-y-4 opacity-0"
+  >
+    Page A
+  </h1>
+</div>

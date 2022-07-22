@@ -3,8 +3,8 @@ layout: home
 sidebar: false
 hero:
   name: '@studiometa/ui'
-  text: Hello world
-  tagline: A set of opiniated, unstyled and accessible components
+  text: A library of unstyled and accessible components
+  tagline: A feature-rich library of primitives and components built with ♥️ by Studio Meta
   actions:
     - theme: brand
       text: Get Started →

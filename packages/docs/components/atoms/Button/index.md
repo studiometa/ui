@@ -18,5 +18,5 @@ Use this component to create robust buttons.
 Once the [package installed](/guide/installation/), simply include the template in your project:
 
 ```twig
-{% include '@ui-pkg/atoms/Button/Button.twig' }
+{% include '@ui-pkg/atoms/Button/Button.twig' %}
 ```

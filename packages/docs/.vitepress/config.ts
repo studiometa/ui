@@ -95,21 +95,25 @@ function getComponentsSidebar() {
       text: 'Primitives',
       link: '/components/primitives/',
       items: generateSidebarLinksFromPath('components/primitives/*/index.md'),
+      collapsible: true,
     },
     {
       text: 'Atoms',
       link: '/components/atoms/',
       items: generateSidebarLinksFromPath('components/atoms/*/index.md'),
+      collapsible: true,
     },
     {
       text: 'Molecules',
       link: '/components/molecules/',
       items: generateSidebarLinksFromPath('components/molecules/*/index.md'),
+      collapsible: true,
     },
     {
       text: 'Organisms',
       link: '/components/organisms/',
       items: generateSidebarLinksFromPath('components/organisms/*/index.md'),
+      collapsible: true,
     },
   ];
 }
