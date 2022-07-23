@@ -1,4 +1,4 @@
-# ScrollAnimation <Badges :texts="badges" />
+# ScrollAnimation (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/atoms/ScrollAnimation/package.json';

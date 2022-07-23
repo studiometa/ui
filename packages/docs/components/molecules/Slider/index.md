@@ -1,4 +1,4 @@
-# Slider <Badges :texts="badges" />
+# Slider (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/molecules/Slider/package.json';

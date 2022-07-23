@@ -1,5 +1,5 @@
 ---
-title: Cursor JS API
+title: Sticky JS API
 ---
 
 # JS API (todo)

@@ -1,4 +1,4 @@
-# TableOfContent <Badges :texts="badges" />
+# TableOfContent (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/molecules/TableOfContent/package.json';
@@ -6,5 +6,7 @@
   const badges = [`v${pkg.version}`, 'JS'];
 </script>
 
+## Table of content
 
-- [ ] todo
+- [Examples](./examples)
+- [JS API](./js-api)

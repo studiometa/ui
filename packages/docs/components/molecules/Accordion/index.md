@@ -1,4 +1,4 @@
-# Accordion <Badges :texts="badges" />
+# Accordion (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/molecules/Accordion/package.json';

@@ -1,4 +1,4 @@
-# Draggable <Badges :texts="badges" />
+# Draggable (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/primitives/Draggable/package.json';
@@ -8,3 +8,4 @@
 ## Table of content
 
 - [Examples](./examples)
+- [JS API](./js-api)

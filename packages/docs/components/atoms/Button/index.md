@@ -1,3 +1,7 @@
+---
+outline: deep
+---
+
 # Button <Badges :texts="badges" />
 
 <script setup>
@@ -20,3 +24,4 @@ Once the [package installed](/guide/installation/), simply include the template 
 ```twig
 {% include '@ui-pkg/atoms/Button/Button.twig' %}
 ```
+

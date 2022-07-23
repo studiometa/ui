@@ -1,5 +1,5 @@
 ---
-title: Cursor JS API
+title: Sentinel JS API
 ---
 
 # JS API (todo)

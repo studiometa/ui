@@ -1,4 +1,4 @@
-# ImageGrid <Badges :texts="badges" />
+# ImageGrid (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/organisms/ImageGrid/package.json';
@@ -8,3 +8,4 @@
 ## Table of content
 
 - [Examples](./examples)
+- [Twig API](./twig-api)

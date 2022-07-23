@@ -1,4 +1,4 @@
-# Tabs <Badges :texts="badges" />
+# Tabs (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/molecules/Tabs/package.json';
@@ -8,4 +8,5 @@
 ## Table of content
 
 - [Examples](./examples)
+- [JS API](./js-api)
 - [Twig API](./twig-api)

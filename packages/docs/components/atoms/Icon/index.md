@@ -1,4 +1,4 @@
-# Icon <Badges :texts="badges" />
+# Icon (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/atoms/Icon/package.json';

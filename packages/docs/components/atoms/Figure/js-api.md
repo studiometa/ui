@@ -1,5 +1,5 @@
 ---
-title: Cursor JS API
+title: Figure JS API
 ---
 
 # JS API (todo)

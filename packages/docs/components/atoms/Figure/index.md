@@ -1,4 +1,4 @@
-# Figure <Badges :texts="badges" />
+# Figure (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/atoms/Figure/package.json';
@@ -8,4 +8,5 @@
 ## Table of content
 
 - [Examples](./examples.html)
+- [JS API](./js-api.html)
 - [Twig API](./twig-api.html)

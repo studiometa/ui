@@ -1,5 +1,5 @@
 ---
-title: Cursor JS API
+title: Draggable JS API
 ---
 
 # JS API (todo)

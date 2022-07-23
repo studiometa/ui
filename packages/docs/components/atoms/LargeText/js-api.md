@@ -1,5 +1,5 @@
 ---
-title: Cursor JS API
+title: LargeText JS API
 ---
 
 # JS API (todo)

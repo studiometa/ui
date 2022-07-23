@@ -1,5 +1,5 @@
 ---
-title: Slider Twig API
+title: LargeText Twig API
 ---
 
 # Twig API (todo)

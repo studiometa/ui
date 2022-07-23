@@ -1,4 +1,4 @@
-# Menu <Badges :texts="badges" />
+# Menu (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/molecules/Menu/package.json';
@@ -7,4 +7,5 @@
 
 ## Table of content
 
-- [Examples](./examples.html)
+- [Examples](./examples)
+- [JS API](./js-api)

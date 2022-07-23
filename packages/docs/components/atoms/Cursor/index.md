@@ -1,4 +1,4 @@
-# Cursor <Badges :texts="badges" />
+# Cursor (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/atoms/Cursor/package.json';
@@ -10,5 +10,5 @@ Use the cursor component to easily add a custom cursor to your project.
 ## Table of content
 
 - [Examples](./examples.html)
-- [Twig API](./twig-api.html)
 - [JS API](./js-api.html)
+- [Twig API](./twig-api.html)

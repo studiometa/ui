@@ -1,5 +1,5 @@
 ---
-title: Cursor JS API
+title: Modal JS API
 ---
 
 # JS API (todo)

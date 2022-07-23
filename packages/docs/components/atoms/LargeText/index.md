@@ -1,4 +1,4 @@
-# LargeText <Badges :texts="badges" />
+# LargeText (todo) <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/atoms/LargeText/package.json';
@@ -8,4 +8,6 @@
 ## Table of content
 
 - [Examples](./examples.md)
+- [JS API](./js-api.md)
+- [Twig API](./twig-api.md)
 

@@ -37,24 +37,7 @@ export default defineConfig({
       { text: 'Guide', link: '/guide/concepts/' },
       {
         text: 'Components',
-        items: [
-          {
-            text: 'Primitives',
-            link: '/components/primitives/',
-          },
-          {
-            text: 'Atoms',
-            link: '/components/atoms/',
-          },
-          {
-            text: 'Molecules',
-            link: '/components/molecules/',
-          },
-          {
-            text: 'Organisms',
-            link: '/components/organisms/',
-          },
-        ],
+        link: '/components/',
       },
       {
         text: `v${pkg.version}`,
@@ -94,25 +77,25 @@ function getComponentsSidebar() {
     {
       text: 'Primitives',
       link: '/components/primitives/',
-      items: generateSidebarLinksFromPath('components/primitives/*/index.md'),
+      items: generateSidebarLinksFromPath('components/primitives/*/index.md', { extractTitle: true }),
       collapsible: true,
     },
     {
       text: 'Atoms',
       link: '/components/atoms/',
-      items: generateSidebarLinksFromPath('components/atoms/*/index.md'),
+      items: generateSidebarLinksFromPath('components/atoms/*/index.md', { extractTitle: true }),
       collapsible: true,
     },
     {
       text: 'Molecules',
       link: '/components/molecules/',
-      items: generateSidebarLinksFromPath('components/molecules/*/index.md'),
+      items: generateSidebarLinksFromPath('components/molecules/*/index.md', { extractTitle: true }),
       collapsible: true,
     },
     {
       text: 'Organisms',
       link: '/components/organisms/',
-      items: generateSidebarLinksFromPath('components/organisms/*/index.md'),
+      items: generateSidebarLinksFromPath('components/organisms/*/index.md', { extractTitle: true }),
       collapsible: true,
     },
   ];
@@ -141,5 +124,5 @@ function getEntryTitle(entry) {
   const content = readFileSync(entry, { encoding: 'UTF-8' });
   const [title] = content.match(/^#\s+.*$/m) ?? [];
 
-  return title ? title.replace(/^#\s?/, '') : basename(dirname(entry));
+  return title ? title.replace(/^#\s?/, '').replace(/(<([^>]+)>)/ig, '') : basename(dirname(entry));
 }

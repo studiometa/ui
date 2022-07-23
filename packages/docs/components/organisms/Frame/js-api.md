@@ -1,5 +1,5 @@
 ---
-title: Cursor JS API
+title: Frame JS API
 ---
 
 # JS API (todo)

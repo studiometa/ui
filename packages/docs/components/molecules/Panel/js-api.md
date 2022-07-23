@@ -1,5 +1,5 @@
 ---
-title: Cursor JS API
+title: Panel JS API
 ---
 
 # JS API (todo)

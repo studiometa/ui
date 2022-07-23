@@ -1,5 +1,5 @@
 ---
-title: Cursor JS API
+title: Tabs JS API
 ---
 
 # JS API (todo)
