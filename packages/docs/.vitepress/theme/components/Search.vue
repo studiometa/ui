@@ -41,7 +41,6 @@
         })
       );
   });
-  console.log(actions);
 </script>
 
 <template>
