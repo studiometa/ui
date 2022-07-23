@@ -46,15 +46,15 @@ const config = defineConfig({
   ],
   server: {
     watch: {
-      ignored: ['!**/node_modules/@studiometa/ui/**'],
+      ignored: ['!**/node_modules/@studiometa/ui/**', '!**/node_modules/@studiometa/js-toolkit/**'],
     },
     fs: {
       allow: ['../../..'],
     },
   },
   optimizeDeps: {
-    include: ['@studiometa/js-toolkit'],
-    exclude: ['@studiometa/ui'],
+    include: ['deepmerge'],
+    exclude: ['@studiometa/ui', '@studiometa/js-toolkit'],
   },
   resolve: {
     alias: {
