@@ -4,14 +4,17 @@ import { defineConfig } from 'vitepress';
 import { basename, dirname, resolve, join } from 'path';
 import { withLeadingSlash, withTrailingSlash } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
+import fs from 'node:fs';
 
-const require = createRequire(import.meta.url);
-const pkg = require('../package.json');
+const pkg = JSON.parse(
+  fs.readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' })
+);
 
 export default defineConfig({
   lang: 'en-US',
   title: '@studiometa/ui',
   description: 'A set of opiniated, unstyled and accessible components',
+  lastUpdated: true,
   base: '/-/',
   outDir: './.symfony/public/-',
   srcExclude: ['**/.symfony/**'],
@@ -24,10 +27,22 @@ export default defineConfig({
     editLinks: true,
     editLinkText: 'Edit this page on GitHub',
     sidebarDepth: 4,
+    footer: {
+      message: 'MIT Licensed',
+      copyright: 'Copyright © 2020–present Studio Meta',
+    },
+    socialLinks: [{ icon: 'github', link: 'https://github.com/studiometa/ui' }],
+
     nav: [
       { text: 'Guide', link: '/guide/concepts/' },
-      { text: 'Components', link: '/components/' },
-      { text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' },
+      {
+        text: 'Components',
+        link: '/components/',
+      },
+      {
+        text: `v${pkg.version}`,
+        items: [{ text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' }],
+      },
     ],
     sidebar: {
       '/components/': getComponentsSidebar(),
@@ -40,7 +55,7 @@ function getGuideSidebar() {
   return [
     {
       text: 'Guide',
-      children: [
+      items: [
         { text: 'Concepts', link: '/guide/concepts/' },
         { text: 'Installation', link: '/guide/installation/' },
         { text: 'Usage', link: '/guide/usage/' },
@@ -49,8 +64,9 @@ function getGuideSidebar() {
     {
       text: 'Migration guides',
       link: '/migration-guides/',
-      children: generateSidebarLinksFromPath('migration-guides/*/index.md', {
+      items: generateSidebarLinksFromPath('migration-guides/*/index.md', {
         extractTitle: true,
+        collapsible: false,
       }),
     },
   ];
@@ -61,36 +77,52 @@ function getComponentsSidebar() {
     {
       text: 'Primitives',
       link: '/components/primitives/',
-      children: generateSidebarLinksFromPath('components/primitives/*/index.md'),
+      items: generateSidebarLinksFromPath('components/primitives/*/index.md', { extractTitle: true }),
+      collapsible: true,
     },
     {
       text: 'Atoms',
       link: '/components/atoms/',
-      children: generateSidebarLinksFromPath('components/atoms/*/index.md'),
+      items: generateSidebarLinksFromPath('components/atoms/*/index.md', { extractTitle: true }),
+      collapsible: true,
     },
     {
       text: 'Molecules',
       link: '/components/molecules/',
-      children: generateSidebarLinksFromPath('components/molecules/*/index.md'),
+      items: generateSidebarLinksFromPath('components/molecules/*/index.md', { extractTitle: true }),
+      collapsible: true,
     },
     {
       text: 'Organisms',
       link: '/components/organisms/',
-      children: generateSidebarLinksFromPath('components/organisms/*/index.md'),
+      items: generateSidebarLinksFromPath('components/organisms/*/index.md', { extractTitle: true }),
+      collapsible: true,
     },
   ];
 }
 
-function generateSidebarLinksFromPath(globs: string | string[], { extractTitle = false } = {}) {
+function generateSidebarLinksFromPath(
+  globs: string | string[],
+  { extractTitle = false, collapsible = false, collapsed = false } = {}
+) {
   return glob.sync(globs).map((entry) => ({
-    link: withLeadingSlash(withTrailingSlash(dirname(entry))),
     text: extractTitle ? getEntryTitle(entry) : basename(dirname(entry)),
+    link: withLeadingSlash(entry.replace(/\/index\.md$/, '/').replace(/\.md$/, '.html')),
+    items: entry.endsWith('/index.md')
+      ? [
+          ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*[!index]*.md'), {
+            extractTitle: true,
+          }),
+        ]
+      : [],
+    collapsible,
+    collapsed,
   }));
 }
 
 function getEntryTitle(entry) {
   const content = readFileSync(entry, { encoding: 'UTF-8' });
-  const [title] = content.match(/^#\s+.*$/m);
+  const [title] = content.match(/^#\s+.*$/m) ?? [];
 
-  return title ? title.replace(/^#\s?/, '') : basename(dirname(entry));
+  return title ? title.replace(/^#\s?/, '').replace(/(<([^>]+)>)/ig, '') : basename(dirname(entry));
 }
