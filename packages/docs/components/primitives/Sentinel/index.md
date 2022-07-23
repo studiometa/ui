@@ -1,4 +1,6 @@
-# Sentinel <Badges :texts="badges" />
+# Sentinel (todo) <Badges :texts="badges" />
+
+The `Sentinel` primitive — whose name is inspired by a [Google Developer article](https://developers.google.com/web/updates/2017/09/sticky-headers) — will help you react to an element's visbility.
 
 <script setup>
   import pkg from '@studiometa/ui/primitives/Sentinel/package.json';
@@ -6,7 +8,12 @@
   const badges = [`v${pkg.version}`, 'JS'];
 </script>
 
-The `Sentinel` primitive — whose name is inspired by a [Google Developer article](https://developers.google.com/web/updates/2017/09/sticky-headers) — will help you react to an element's visbility.
+## Table of content
+
+- [Examples](./examples)
+- [JS API](./js-api)
+
+## Usage
 
 The `Sentinel` should be used as a child component to be able to listen to its `intersected` event when the element enters or leaves the viewport. The main usage is for the detection of an element stickyness (see the [Sticky component](/components/molecules/Sticky/)).
 

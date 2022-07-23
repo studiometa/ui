@@ -10,3 +10,9 @@
     <slot />
   </component>
 </template>
+
+<style scoped>
+  a {
+    color: #fff;
+  }
+</style>

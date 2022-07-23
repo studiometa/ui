@@ -1,48 +1,74 @@
 <script setup lang="ts">
-  import { ref, watch } from 'vue';
+  import { ref, watch, onMounted, onUnmounted } from 'vue';
   import Loader from './Loader.vue';
   import ControlButton from './PreviewControlButton.vue';
+  import useObserver from '../composables/useObserver.js';
 
-  const { src, height } = defineProps({
+  const props = defineProps({
     src: String,
     height: {
       type: String,
       default: '60vh',
     },
+    zoom: {
+      type: [Number,String],
+      default: 0.8,
+    }
   });
 
   const isLoading = ref(true);
   const iframe = ref();
-  const zoom = ref(1);
-  const iframeKey = ref(src);
+  const scale = ref(Number(props.zoom));
+  const iframeKey = ref(props.src);
 
   function reloadIframe() {
     isLoading.value = true;
-    iframeKey.value = src + performance.now();
+    iframeKey.value = props.src + performance.now();
   }
 
+  /**
+   * Change the iframe zoom.
+   * @param {number} value The iframe zoom value.
+   */
   function setIframeZoom(value) {
-    zoom.value = value;
-    try {
-      iframe.value.contentDocument.body.classList.add('transition');
-      iframe.value.contentDocument.body.style.transform = `scale(${value})`;
-      iframe.value.contentDocument.body.style.transformOrigin = `top left`;
-    } catch (err) {}
+    scale.value = value;
   }
+
+  function onLoad() {
+    isLoading.value = false;
+    iframe.value.contentDocument.documentElement.classList.add('story');
+  }
+
+  onMounted(() => {
+    const { observe, cleanup } = useObserver((mutations) => {
+      mutations.filter(mutation => {
+        return mutation.target === document.documentElement && mutation.type === 'attributes' && mutation.attributeName === 'class';
+      }).forEach((mutation) => {
+        iframe.value.contentDocument.documentElement.classList.toggle('dark', mutation.oldValue !== 'dark');
+      });
+    });
+
+    observe(document.documentElement, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
+
+    onUnmounted(() => {
+      cleanup();
+    })
+  });
 </script>
 
 <template>
-  <div class="relative bg-gray-100 overflow-hidden resize-x">
+  <div class="z-above relative my-4 bg-vp-bg-soft ring ring-1 ring-vp-c-divider-light ring-inset rounded-lg overflow-hidden resize-x"
+    :style="{ height }">
     <div class="z-above absolute flex gap-1 top-0 left-0 p-2">
       <slot name="controls-top-left" />
     </div>
     <div class="z-above absolute flex gap-1 top-0 right-0 p-2">
       <slot name="controls-top-right" />
-      <ControlButton @click="setIframeZoom(zoom * 1.1);" title="Zoom in">
+      <ControlButton @click="setIframeZoom(scale * 1.1);" title="Zoom in">
         <span class="sr-only">Zoom in</span>
         <i-octicon-plus-circle-16 class="block w-4 h-4" />
       </ControlButton>
-      <ControlButton @click="setIframeZoom(zoom * 0.9);" title="Zoom out">
+      <ControlButton @click="setIframeZoom(scale * 0.9);" title="Zoom out">
         <span class="sr-only">Zoom out</span>
         <svg
           width="16"
@@ -57,7 +83,7 @@
           />
         </svg>
       </ControlButton>
-      <ControlButton @click="setIframeZoom(1)" title="Reset zoom">
+      <ControlButton @click="setIframeZoom(zoom)" title="Reset zoom">
         <span class="sr-only">Reset zoom</span>
         <i-octicon-x-circle-16 class="block w-4 h-4" />
       </ControlButton>
@@ -74,12 +100,18 @@
     <iframe
       ref="iframe"
       :key="iframeKey"
-      @load="isLoading = false"
-      class="block border-0 bg-gray-100 transition duration-300"
+      @load="onLoad"
+      class="block border-0 transform origin-top-left  duration-300"
       :class="{ 'opacity-0': isLoading }"
       :src="src"
       width="100%"
-      :style="{ height }"
+      :style="{
+        '--scale': scale,
+        '--tw-scale-x': 'var(--scale)',
+        '--tw-scale-y': 'var(--scale)',
+        width: `calc(1 / var(--scale) * 100%)`,
+        height: `calc(1 / var(--scale) * ${height})`,
+      }"
     />
   </div>
 </template>

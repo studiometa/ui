@@ -7,7 +7,7 @@
     text: String,
     vertical: {
       type: String,
-      default: 'middle',
+      default: 'top',
     },
   });
 </script>
@@ -18,7 +18,7 @@
   </span>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
   .badge {
     display: inline-block;
     font-size: 0.75rem;
@@ -27,32 +27,25 @@
     border-radius: 0.25em;
     padding: 0.5em 0.75em;
     color: #fff;
-    background-color: var(--c-brand);
+    background-color: var(--vp-c-brand);
     white-space: nowrap;
+  }
 
-    h1 > &,
-    h2 > &,
-    + .badge {
-      margin-left: 0.5rem;
-    }
+  .badge.green {
+    background-color: var(--vp-c-brand);
+  }
 
-    &.gray,
-    &.grey {
-      @apply bg-gray-400;
-    }
+  .badge.error {
+    background-color: #da5961;
+  }
 
-    &.green {
-      background-color: var(--c-brand);
-    }
+  .badge.warning,
+  .badge.warn,
+  .badge.yellow {
+    background-color: #e7c000;
+  }
 
-    &.error {
-      background-color: #da5961;
-    }
-
-    &.warning,
-    &.warn,
-    &.yellow {
-      background-color: #e7c000;
-    }
+  .badge + .badge {
+    margin-left: 5px;
   }
 </style>
