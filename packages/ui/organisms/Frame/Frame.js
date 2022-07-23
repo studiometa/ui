@@ -58,7 +58,6 @@ export default class Frame extends Base {
       'before-enter',
       'after-enter',
     ],
-    log: true,
     components: {
       FrameAnchor,
       FrameForm,
@@ -177,17 +176,17 @@ export default class Frame extends Base {
    * Prevent click on `FrameAnchor`.
    *
    * @this    {FrameInterface}
-   * @param   {MouseEvent} event
    * @param   {number} index
+   * @param   {MouseEvent} event
    * @returns {void}
    */
-  onFrameAnchorClick(event, index) {
+  onFrameAnchorClick(index, event) {
     // Prevent propagation of nested frames
     if (!isDirectChild(this, 'Frame', 'FrameAnchor', this.$children.FrameAnchor[index])) {
       return;
     }
 
-    this.$log('onAFrameClick', event, index);
+    this.$log('onAFrameClick', index, event);
     event.preventDefault();
     const anchor = this.$children.FrameAnchor[index];
 
@@ -204,17 +203,17 @@ export default class Frame extends Base {
    * Prevent submit on forms.
    *
    * @this    {FrameInterface}
-   * @param   {SubmitEvent} event
    * @param   {number} index
+   * @param   {SubmitEvent} event
    * @returns {void}
    */
-  onFrameFormSubmit(event, index) {
+  onFrameFormSubmit(index, event) {
     // Prevent propagation of nested frames
     if (!isDirectChild(this, 'Frame', 'FrameForm', this.$children.FrameForm[index])) {
       return;
     }
 
-    this.$log('onFrameFormFrameSubmit', event);
+    this.$log('onFrameFormFrameSubmit', index, event);
     event.preventDefault();
     const form = this.$children.FrameForm[index];
     const url = new URL(form.action);
@@ -253,6 +252,7 @@ export default class Frame extends Base {
     const content = await this.fetch(url);
     const doc = this.parseHTML(content);
     const el = doc.querySelector(`#${this.id}`);
+    // @todo manage el === null
     const newFrame = new Frame(/** @type {HTMLElement} */ (el));
     newFrame.$children.registerAll();
 
