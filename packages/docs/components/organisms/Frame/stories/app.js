@@ -21,7 +21,7 @@ class FakeLink extends HTMLElement {
     const href = this.getAttribute('href');
     this.link.setAttribute('href', href);
 
-    return this.link.href;
+    return this.link.href.replace(/\.html$/, '.txt');
   }
 }
 try {
@@ -30,4 +30,4 @@ try {
   // silence is golden.
 }
 
-export default createApp(App, document.body);
+export default createApp(App);

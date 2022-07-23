@@ -1,5 +1,6 @@
 ---
 title: Figure Twig API
+outline: deep
 ---
 
 # Twig API

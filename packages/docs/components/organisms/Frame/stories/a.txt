@@ -1,0 +1,34 @@
+<div data-component="Frame" id="frame" class="flex flex-col gap-8 max-w-xl">
+  <nav class="flex align-center gap-4" data-component="FrameTarget">
+    <fake-link
+      data-component="FrameAnchor"
+      href="./a.html"
+      class="inline-block px-2 py-1 rounded bg-green-300 cursor-pointer"
+    >
+      Page A
+    </fake-link>
+    <fake-link
+      data-component="FrameAnchor"
+      href="./b.html"
+      class="inline-block px-2 py-1 rounded bg-gray-300 cursor-pointer"
+    >
+      Page B
+    </fake-link>
+  </nav>
+  <main
+    data-component="FrameTarget"
+    data-option-enter-from="transform translate-y-4 opacity-0"
+    data-option-enter-active="transition duration-500 ease-out-expo"
+    data-option-leave-active="transition duration-500 ease-in-expo"
+    data-option-leave-to="transform translate-y-4 opacity-0"
+  >
+    <h1 class="text-xl">Page A</h1>
+    <p class="my-4">
+      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut
+      labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+      laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
+      voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat
+      non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+    </p>
+  </main>
+</div>

@@ -1,13 +1,13 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { Figure } from '@studiometa/ui';
+import { Frame } from '@studiometa/ui';
 
 class App extends Base {
   static config = {
     name: 'App',
     components: {
-      Figure,
+      Frame,
     },
   };
 }
 
-export default createApp(App, document.body);
+export default createApp(App);
