@@ -1,4 +1,5 @@
-import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
+import { withMountWhenInView } from '@studiometa/js-toolkit';
+import Transition from '../../primitives/Transition/Transition.js';
 
 /**
  * @typedef {Object} FigureRefs
@@ -15,14 +16,27 @@ import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
  *
  * Manager lazyloading image sources.
  */
-export default class Figure extends withMountWhenInView(Base, { threshold: [0, 1] }) {
+export default class Figure extends withMountWhenInView(Transition, { threshold: [0, 1] }) {
+  /**
+   * Config.
+   */
   static config = {
+    ...Transition.config,
     name: 'Figure',
     refs: ['img'],
     options: {
+      ...Transition.config.options,
       lazy: Boolean,
     },
   };
+
+  /**
+   * Get the transition target.
+   * @returns {HTMLImageElement}
+   */
+  get target() {
+    return this.$refs.img;
+  }
 
   /**
    * Get the image source.
@@ -50,20 +64,25 @@ export default class Figure extends withMountWhenInView(Base, { threshold: [0, 1
    * @this {Figure & FigureInterface}
    */
   mounted() {
-    if (!this.$refs.img) {
+    const { img } = this.$refs;
+
+    if (!img) {
       throw new Error('[Figure] The `img` ref is required.');
     }
 
-    if (!(this.$refs.img instanceof HTMLImageElement)) {
+    if (!(img instanceof HTMLImageElement)) {
       throw new Error('[Figure] The `img` ref must be an `<img>` element.');
     }
 
     if (
       this.$options.lazy &&
-      this.$refs.img.hasAttribute('data-src') &&
-      this.$refs.img.getAttribute('data-src') !== this.src
+      img.hasAttribute('data-src') &&
+      img.getAttribute('data-src') !== this.src
     ) {
-      this.src = this.$refs.img.getAttribute('data-src');
+      img.onload = () => {
+        this.enter();
+      };
+      this.src = img.getAttribute('data-src');
     }
   }
 }
