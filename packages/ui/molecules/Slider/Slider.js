@@ -54,6 +54,7 @@ export default class Slider extends Base {
       fitBounds: Boolean,
       contain: Boolean,
       sensitivity: { type: Number, default: 1 },
+      dropSensitivity: { type: Number, default: 2 },
     },
   };
 
@@ -342,7 +343,7 @@ export default class Slider extends Base {
     }
 
     let finalX = clamp(
-      inertiaFinalValue(this.__distanceX, props.delta.x * this.$options.sensitivity),
+      inertiaFinalValue(this.__distanceX, props.delta.x * this.$options.dropSensitivity),
       0,
       this.getStateValueByMode(this.lastState.x)
     );
