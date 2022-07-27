@@ -1,5 +1,8 @@
 import { Base } from '@studiometa/js-toolkit';
 import { transition, focusTrap } from '@studiometa/js-toolkit/utils';
+import ModalClose from './ModalClose.js';
+import ModalOpen from './ModalOpen.js';
+import ModalOverlay from './ModalOverlay.js';
 
 const { trap, untrap, saveActiveElement } = focusTrap();
 
@@ -50,7 +53,12 @@ export default class Modal extends Base {
    */
   static config = {
     name: 'Modal',
-    refs: ['close[]', 'container', 'content', 'modal', 'open[]', 'overlay'],
+    refs: ['container', 'content', 'modal'],
+    components: {
+      ModalClose,
+      ModalOpen,
+      ModalOverlay,
+    },
     emits: ['open', 'close'],
     options: {
       move: String,
@@ -85,7 +93,7 @@ export default class Modal extends Base {
    *
    * @return {Function} The component's `open` method.
    */
-  get onOpenClick() {
+  get onModalOpenClick() {
     return this.open;
   }
 
@@ -94,7 +102,7 @@ export default class Modal extends Base {
    *
    * @return {Function} The component's `close` method.
    */
-  get onCloseClick() {
+  get onModalCloseClick() {
     return this.close;
   }
 
@@ -103,7 +111,7 @@ export default class Modal extends Base {
    *
    * @return {Function} The component's `close` method.
    */
-  get onOverlayClick() {
+  get onModalOverlayClick() {
     return this.close;
   }
 
