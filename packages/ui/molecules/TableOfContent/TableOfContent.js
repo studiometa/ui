@@ -10,6 +10,9 @@ import TableOfContentAnchor from './TableOfContentAnchor.js';
  *   $options: {
  *     contentSelector: string,
  *     withTemplate: boolean,
+ *   },
+ *   $children: {
+ *     TableOfContentAnchor: TableOfContentAnchor[],
  *   }
  * }} TableOfContentInterface
  */
@@ -43,6 +46,56 @@ export default class TableOfContent extends Base {
       this.generateAnchors();
       this.$update();
     }
+  }
+
+  /**
+   * Get intersecting anchors.
+   *
+   * @this {TableOfContentInterface}
+   * @returns {TableOfContentAnchor[]}
+   */
+  get intersectingAnchors() {
+    // @ts-ignore
+    return this.$children.TableOfContentAnchor.filter(
+      (tableOfContentAnchor) => tableOfContentAnchor.isIntersecting
+    );
+  }
+
+  /**
+   * Get the first intersecting anchor.
+   *
+   * @returns {TableOfContentAnchor}
+   */
+  get firstIntersectingAnchor() {
+    return this.intersectingAnchors[0];
+  }
+
+  /**
+   * Enable the first intersecting anchor when an `is-visible` event
+   * is emitted, hide the other intersecting ones.
+   *
+   * @this {TableOfContentInterface}
+   * @returns {void}
+   */
+  onTableOfContentAnchorIsVisible() {
+    this.$children.TableOfContentAnchor.forEach((child) => {
+      if (child === this.firstIntersectingAnchor) {
+        child.enter();
+      } else {
+        child.leave();
+      }
+    });
+  }
+
+  /**
+   * Hide the emitting anchor when it is emitting the `is-hidden` event.
+   *
+   * @this {TableOfContentInterface}
+   * @param   {number} index
+   * @returns {void}
+   */
+  onTableOfContentAnchorIsHidden(index) {
+    this.$children.TableOfContentAnchor[index].leave();
   }
 
   /**
