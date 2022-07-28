@@ -1,5 +1,5 @@
 import { withMountWhenInView } from '@studiometa/js-toolkit';
-import Transition from '../../primitives/Transition/Transition.js';
+import { Transition } from '../../primitives/index.js';
 
 /**
  * @typedef {ScrollReveal & {
@@ -12,7 +12,7 @@ import Transition from '../../primitives/Transition/Transition.js';
 /**
  * ScrollReveal class.
  */
-export default class ScrollReveal extends withMountWhenInView(Transition, { threshold: [0, 1] }) {
+export default class ScrollReveal extends withMountWhenInView(Transition) {
   /**
    * Config.
    */
@@ -25,6 +25,10 @@ export default class ScrollReveal extends withMountWhenInView(Transition, { thre
       enterKeep: {
         type: Boolean,
         default: true,
+      },
+      intersectionObserver: {
+        type: Object,
+        default: () => ({ threshold: [0, 1] }),
       },
     },
   };
