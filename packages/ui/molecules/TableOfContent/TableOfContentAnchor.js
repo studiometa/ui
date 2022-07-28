@@ -1,29 +1,33 @@
 import { AnchorScrollTo } from '../../atoms/index.js';
+import withTransition from '../../decorators/withTransition.js';
 
 /**
  * TableOfContentAnchor class.
  */
-export default class TableOfContentAnchor extends AnchorScrollTo {
+export default class TableOfContentAnchor extends withTransition(AnchorScrollTo) {
   /**
    * Config.
    */
   static config = {
     name: 'TableOfContentAnchor',
-    emits: ['should-activate'],
+    emits: ['is-visible', 'is-hidden'],
     options: {
-      activeClass: {
-        type: String,
-        default: 'is-active',
-      },
+      sentinelSelector: String,
     },
   };
+
+  /**
+   * Wether the component is intersecting or not.
+   * @type {Boolean}
+   */
+  isIntersecting = false;
 
   /**
    * Get the sentinel.
    * @returns {HTMLElement}
    */
   get sentinel() {
-    return document.querySelector(this.targetSelector);
+    return document.querySelector(this.$options.sentinelSelector || this.targetSelector);
   }
 
   /**
@@ -36,12 +40,8 @@ export default class TableOfContentAnchor extends AnchorScrollTo {
     }
 
     this.observer = new IntersectionObserver(([entry]) => {
-      const shouldActivate =
-        entry.isIntersecting &&
-        entry.boundingClientRect.y < 100 &&
-        entry.boundingClientRect.y > 100;
-      this.$el.classList.toggle(this.$options.activeClass, shouldActivate);
-      this.$emit('should-activate', shouldActivate);
+      this.isIntersecting = entry.isIntersecting;
+      this.$emit(entry.isIntersecting ? 'is-visible' : 'is-hidden');
     });
 
     this.observer.observe(this.sentinel);
