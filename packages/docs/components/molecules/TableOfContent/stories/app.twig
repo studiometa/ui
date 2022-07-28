@@ -1,0 +1,59 @@
+<style>
+  .is-active {
+    background: red !important;
+  }
+</style>
+
+{% set count = 10 %}
+
+<div class="h-96"></div>
+
+<div data-component="TableOfContent"
+  data-option-content-selector="h2[id]"
+  class="z-above fixed top-0 left-0 w-full p-4 bg-vp-bg-soft">
+  <ul data-ref="list" class="flex gap-4">
+    {% for i in 1..count %}
+      <li>
+        {% include '@ui/atoms/Button/StyledButton.twig' with {
+          href: '#target-' ~ i,
+          label: '#' ~ i,
+          attr: {
+            data_component: 'TableOfContentAnchor',
+            data_option_active_class: 'bg-blue-400',
+          }
+        } %}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="h-96"></div>
+
+<div class="p-10">
+  {% for i in 1..count %}
+    <div class="relative">
+      <div id="{{ 'target-' ~ i }}" class="absolute bottom-20 top-0 w-4 -mt-28 bg-green-400"></div>
+      <h2 class="mt-12 mb-4 text-2xl">
+        Target #{{ i }}
+      </h2>
+      <p class="text-lg">
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+        veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+        commodo consequat. Duis aute irure dolor in reprehenderit in voluptate
+        velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
+        cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
+        est laborum.
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+        quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+        cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+        proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+      </p>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="h-96"></div>
+<div class="h-96"></div>
