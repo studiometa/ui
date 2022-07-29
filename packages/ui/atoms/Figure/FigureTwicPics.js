@@ -9,6 +9,7 @@ import Figure from './Figure.js';
  *   $options: {
  *     transform: string,
  *     step: number,
+ *     mode: string,
  *   }
  * }} FigureTwicPicsInterface
  */
@@ -69,7 +70,7 @@ export default class FigureTwicPics extends Figure {
    * @returns {void}
    */
   set src(value) {
-    const url = new URL(value);
+    const url = new URL(value, window.location.origin);
     url.host = this.domain;
 
     const width = normalizeSize(this, 'offsetWidth');
