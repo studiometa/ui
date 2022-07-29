@@ -1,14 +1,15 @@
 import { withMountWhenInView } from '@studiometa/js-toolkit';
-import Transition from '../../primitives/Transition/Transition.js';
+import { Transition } from '../../primitives/index.js';
 
 /**
- * @typedef {Object} FigureRefs
- * @property {HTMLImageElement} img
- */
-
-/**
- * @typedef {Object} FigureInterface
- * @property {FigureRefs} $refs
+ * @typedef {Figure & {
+ *   $refs: {
+ *     img: HTMLImageElement
+ *   },
+ *   $options: {
+ *     lazy: boolean
+ *   }
+ * }} FigureInterface
  */
 
 /**
@@ -32,6 +33,8 @@ export default class Figure extends withMountWhenInView(Transition, { threshold:
 
   /**
    * Get the transition target.
+   *
+   * @this {FigureInterface}
    * @returns {HTMLImageElement}
    */
   get target() {
@@ -41,7 +44,7 @@ export default class Figure extends withMountWhenInView(Transition, { threshold:
   /**
    * Get the image source.
    *
-   * @this {Figure & FigureInterface}
+   * @this {FigureInterface}
    * @returns {string}
    */
   get src() {
@@ -51,7 +54,7 @@ export default class Figure extends withMountWhenInView(Transition, { threshold:
   /**
    * Set the image source.
    *
-   * @this {Figure & FigureInterface}
+   * @this {FigureInterface}
    * @param   {string} value
    * @returns {void}
    */
@@ -61,7 +64,7 @@ export default class Figure extends withMountWhenInView(Transition, { threshold:
 
   /**
    * Load on mount.
-   * @this {Figure & FigureInterface}
+   * @this {FigureInterface}
    */
   mounted() {
     const { img } = this.$refs;
@@ -74,15 +77,16 @@ export default class Figure extends withMountWhenInView(Transition, { threshold:
       throw new Error('[Figure] The `img` ref must be an `<img>` element.');
     }
 
-    if (
-      this.$options.lazy &&
-      img.hasAttribute('data-src') &&
-      img.getAttribute('data-src') !== this.src
-    ) {
-      img.onload = () => {
+    const src = img.getAttribute('data-src');
+
+    if (this.$options.lazy && src && src !== this.src) {
+      let tempImg = new Image();
+      tempImg.onload = () => {
         this.enter();
+        this.src = src;
+        tempImg = null;
       };
-      this.src = img.getAttribute('data-src');
+      tempImg.src = src;
     }
   }
 }
