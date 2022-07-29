@@ -7,33 +7,56 @@ outline: deep
 
 ## Parameters
 
+:::tip Required parameters
+The  [`src`](#src), [`width`](#width) and [`height`](#height) parameters are required.
+:::
+
 ### `src`
 
 - Type: `string`
 
-### `srcset`
-
-- Type: `string`
-
-### `sizes`
-
-- Type: `string`
+Configure the `src` attribute of the image.
 
 ### `width`
 
 - Type: `number`
 
+Configure the `width` attribute of the image and the components sizing.
+
 ### `height`
 
 - Type: `number`
+
+Configure the `height` attribute of the image and the components sizing.
+
+### `srcset`
+
+- Type: `string`
+
+Configure the `srcset` attribute of the image.
+
+### `sizes`
+
+- Type: `string`
+
+Configure the `sizes` attribute of the image.
 
 ### `alt`
 
 - Type: `string`
 
+### `lazy`
+
+- Type: `boolean`
+- Default: `true`
+
+Configure the type of loading for the image. Defaults to `true` which requires the `Figure` JavaScript component to be loaded in your project.
+
 ### `caption`
 
 - Type: `string`
+
+The caption of the image.
 
 ### `fit`
 
