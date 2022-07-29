@@ -1,4 +1,4 @@
-import { withMountWhenInView } from '@studiometa/js-toolkit';
+import { withMountWhenInView, useScroll } from '@studiometa/js-toolkit';
 import { Transition } from '../../primitives/index.js';
 
 /**
@@ -6,6 +6,9 @@ import { Transition } from '../../primitives/index.js';
  *   $refs: {
  *     target?: HTMLElement,
  *   },
+ *   $options: {
+ *     repeat: boolean;
+ *   }
  * }} ScrollRevealInterface
  */
 
@@ -26,12 +29,19 @@ export default class ScrollReveal extends withMountWhenInView(Transition) {
         type: Boolean,
         default: true,
       },
+      repeat: Boolean,
       intersectionObserver: {
         type: Object,
         default: () => ({ threshold: [0, 1] }),
       },
     },
   };
+
+  /**
+   * Vertical scroll direction.
+   * @type {'UP'|'DOWN'|'NONE'}
+   */
+  static scrollDirectionY = 'NONE';
 
   /**
    * Get the transition target.
@@ -50,7 +60,22 @@ export default class ScrollReveal extends withMountWhenInView(Transition) {
    * @returns {void}
    */
   mounted() {
-    this.enter();
-    this.$terminate();
+    if (!this.$options.repeat) {
+      this.enter();
+      this.$terminate();
+      return;
+    }
+
+    const scroll = useScroll();
+
+    if (!scroll.has('ScrollRevealRepeat')) {
+      scroll.add('ScrollRevealRepeat', (props) => {
+        ScrollReveal.scrollDirectionY = props.direction.y;
+      });
+    }
+
+    if (ScrollReveal.scrollDirectionY !== 'UP') {
+      this.enter();
+    }
   }
 }

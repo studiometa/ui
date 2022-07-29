@@ -45,3 +45,25 @@ title: ScrollReveal examples
 </SimpleTabs>
 
 :::
+
+
+## Nested & repeat
+
+<PreviewIframe src="./stories/nested/story.html" />
+
+:::details Code
+
+<SimpleTabs :items="['app.twig', 'app.js']">
+  <template #content-1>
+
+<<< ./components/atoms/ScrollReveal/stories/nested/app.twig
+
+  </template>
+  <template #content-2>
+
+<<< ./components/atoms/ScrollReveal/stories/nested/app.js
+
+  </template>
+</SimpleTabs>
+
+:::
