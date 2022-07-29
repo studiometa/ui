@@ -18,21 +18,20 @@ export default class ScrollRevealRepeat extends ScrollReveal {
    */
   static scrollDirectionY;
 
-  static {
-    const scroll = useScroll();
-    if (!scroll.has('ScrollRevealRepeat')) {
-      scroll.add('ScrollRevealRepeat', (props) => {
-        ScrollRevealRepeat.scrollDirectionY = props.direction.y;
-      });
-    }
-  }
-
   /**
    * Trigger the `enter` transition on mount.
    *
    * @returns {void}
    */
   mounted() {
+    const scroll = useScroll();
+
+    if (!scroll.has('ScrollRevealRepeat')) {
+      scroll.add('ScrollRevealRepeat', (props) => {
+        ScrollRevealRepeat.scrollDirectionY = props.direction.y;
+      });
+    }
+
     if (ScrollRevealRepeat.scrollDirectionY !== 'UP') {
       this.enter();
     }
