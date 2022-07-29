@@ -14,8 +14,12 @@
         height: '400',
         attr: {
           data_ref: 'target',
-          class: 'opacity-0 transform translate-y-full scale-50'
-        }
+          class: 'opacity-0 transform translate-y-full scale-50',
+          data_option_enter_from: 'opacity-0',
+          data_option_enter_active: 'transition duration-500'
+        },
+        inner_attr: { class: 'bg-vp-c-divider-light' },
+        img_attr: { class: 'opacity-0' }
       } %}
     </div>
     <div data-component="ScrollReveal"
@@ -27,14 +31,16 @@
         height: '400',
         attr: {
           data_ref: 'target',
-          class: 'opacity-0 transform translate-y-full scale-50'
-        }
+          class: 'opacity-0 transform translate-y-full scale-50',
+          data_option_enter_from: 'opacity-0',
+          data_option_enter_active: 'transition duration-500'
+        },
+        inner_attr: { class: 'bg-vp-c-divider-light' },
+        img_attr: { class: 'opacity-0' }
       } %}
     </div>
   {% endfor %}
 </div>
-
-<div class="h-screen"></div>
 
 <div class="flex items-end justify-center h-96 p-10 opacity-80">
   Scroll up

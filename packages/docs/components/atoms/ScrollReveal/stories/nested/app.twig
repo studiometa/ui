@@ -18,7 +18,14 @@
           src: 'https://picsum.photos/500/400?rand=1' ~ loop.index,
           width: '500',
           height: '400',
-          attr: { data_ref: 'target', class: 'transform scale-150' }
+          attr: {
+            data_ref: 'target',
+            class: 'transform scale-150',
+            data_option_enter_from: 'opacity-0',
+            data_option_enter_active: 'transition duration-500'
+          },
+          inner_attr: { class: 'bg-vp-c-divider-light' },
+          img_attr: { class: 'opacity-0' }
         } %}
       </div>
     </div>
@@ -36,7 +43,14 @@
           src: 'https://picsum.photos/500/400?rand=2' ~ loop.index,
           width: '500',
           height: '400',
-          attr: { data_ref: 'target', class: 'transform scale-150' }
+          attr: {
+            data_ref: 'target',
+            class: 'transform scale-150',
+            data_option_enter_from: 'opacity-0',
+            data_option_enter_active: 'transition duration-500'
+          },
+          inner_attr: { class: 'bg-vp-c-divider-light' },
+          img_attr: { class: 'opacity-0' }
         } %}
       </div>
     </div>
