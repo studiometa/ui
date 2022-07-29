@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, watch, onMounted, onUnmounted } from 'vue';
+  import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
   import Loader from './Loader.vue';
   import ControlButton from './PreviewControlButton.vue';
   import useObserver from '../composables/useObserver.js';
@@ -13,13 +13,15 @@
     zoom: {
       type: [Number,String],
       default: 0.8,
-    }
+    },
+    noControls: Boolean,
   });
 
   const isLoading = ref(true);
   const iframe = ref();
   const scale = ref(Number(props.zoom));
   const iframeKey = ref(props.src);
+  const withControls = computed(() => !props.noControls);
 
   function reloadIframe() {
     isLoading.value = true;
@@ -62,7 +64,7 @@
     <div class="z-above absolute flex gap-1 top-0 left-0 p-2">
       <slot name="controls-top-left" />
     </div>
-    <div class="z-above absolute flex gap-1 top-0 right-0 p-2">
+    <div v-if="withControls" class="z-above absolute flex gap-1 top-0 right-0 p-2">
       <slot name="controls-top-right" />
       <ControlButton @click="setIframeZoom(scale * 1.1);" title="Zoom in">
         <span class="sr-only">Zoom in</span>
