@@ -9,6 +9,7 @@ import Figure from './Figure.js';
  *   $options: {
  *     transform: string,
  *     step: number,
+ *     mode: string,
  *   }
  * }} FigureTwicPicsInterface
  */
