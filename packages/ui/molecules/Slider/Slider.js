@@ -35,7 +35,6 @@ import SliderItem from './SliderItem.js';
 /**
  * Orchestrate the slider items state transition.
  * @todo a11y
- * @todo better state management with `mode` option
  */
 export default class Slider extends Base {
   /**
@@ -43,7 +42,7 @@ export default class Slider extends Base {
    */
   static config = {
     name: 'Slider',
-    refs: ['wrapper'],
+    refs: ['wrapper', 'debug'],
     emits: ['goto', 'index'],
     components: {
       SliderItem,
@@ -167,7 +166,6 @@ export default class Slider extends Base {
   /**
    * Get the states for each SliderItem.
    *
-   * @todo save value for every available modes to avoid recalculation when switching
    * @this {SliderInterface}
    */
   getStates() {
@@ -180,15 +178,76 @@ export default class Slider extends Base {
       right: originRect.x + originRect.width,
     };
 
-    return this.$children.SliderItem.map((item) => {
-      return {
-        x: {
-          left: (item.rect.x - this.origins.left) * -1,
-          center: (item.rect.x + item.rect.width / 2 - this.origins.center) * -1,
-          right: (item.rect.x + item.rect.width - this.origins.right) * -1,
-        },
-      };
-    });
+    let states = this.$children.SliderItem.map((item) => ({
+      x: {
+        left: (item.rect.x - this.origins.left) * -1,
+        center: (item.rect.x + item.rect.width / 2 - this.origins.center) * -1,
+        right: (item.rect.x + item.rect.width - this.origins.right) * -1,
+      },
+    }));
+    // .map(({ item, state}, index, arr) => {
+    //   if (this.$options.contain) {
+    //     const { item: lastItem, state: lastState } = arr[arr.length - 1];
+    //     const lastItemPosition = Math.abs(lastState.x.left - lastItem.rect.width);
+    //     const lastItemDiffWithRightOrigin = this.origins.right - lastItemPosition;
+    //     console.log({ lastItemPosition, lastItemDiffWithRightOrigin })
+    //     if (lastItemDiffWithRightOrigin < 0) {
+    //       state.x.leftContained = { lastItemPosition, lastItemDiffWithRightOrigin };
+    //     }
+    //   }
+
+    //   return state;
+    // });
+    if (this.$options.contain) {
+      // Find state where last child has passed the wrapper bound completely
+      if (this.$options.mode === 'left') {
+        const lastChild = this.$children.SliderItem.at(-1);
+
+        const maxState = states.find((state) => {
+          const lastChildPosition =
+            lastChild.rect.x - this.origins.left + lastChild.rect.width + state.x.left;
+          const diffWithWrapperBound = originRect.width - lastChildPosition;
+          if (diffWithWrapperBound > 0) {
+            state.x.left = Math.min(state.x.left + diffWithWrapperBound, 0);
+            return true;
+          }
+        });
+
+        states = states.map((state) => {
+          state.x.left = Math.max(state.x.left, maxState.x.left);
+          return state;
+        });
+      }
+
+      if (this.$options.mode === 'right') {
+        const firstChild = this.$children.SliderItem.at(0);
+
+        const maxState = Array.from(states).reverse().find((state) => {
+          const firstChildPosition = firstChild.rect.x + state.x.right;
+          const diffWithWrapperBound = originRect.left - firstChildPosition;
+          console.log(firstChildPosition, state.x.right, diffWithWrapperBound)
+          if (diffWithWrapperBound < 0) {
+            state.x.newRight = state.x.right - diffWithWrapperBound;
+            return true;
+          }
+        });
+
+        console.log(maxState?.x);
+
+        states = states.map((state) => {
+          state.x.right = Math.min(state.x.right, maxState.x.newRight);
+          return state;
+        });
+      }
+    }
+
+    this.$refs.debug.innerHTML = JSON.stringify(
+      { origins: this.origins, originRect, states },
+      null,
+      2
+    );
+
+    return states;
   }
 
   /**
@@ -280,14 +339,6 @@ export default class Slider extends Base {
     }
 
     let state = this.getStateValueByMode(this.states[index].x);
-
-    if (this.$options.contain) {
-      if (this.$children.SliderItem[this.indexMax].willBeFullyVisible(state)) {
-        state = this.getStateValueByMode(this.lastState.x, 'right');
-      } else if (this.$children.SliderItem[0].willBeFullyVisible(state)) {
-        state = this.getStateValueByMode(this.firstState.x, 'left');
-      }
-    }
 
     const itemsToMove = this.getVisibleItems(state);
 
