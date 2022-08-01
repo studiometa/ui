@@ -88,7 +88,7 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
    * @returns {void}
    */
   ticked() {
-    this.dampedX = damp(this.x, this.dampedX, 0.2, 0.00001);
+    this.dampedX = damp(this.x, this.dampedX, 0.1, 0.00001);
     this.render();
 
     if (this.dampedX === this.x) {
