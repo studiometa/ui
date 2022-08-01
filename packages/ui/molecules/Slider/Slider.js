@@ -104,6 +104,12 @@ export default class Slider extends Base {
   };
 
   /**
+   * Wether or not the wrapper is focused.
+   * @type {boolean}
+   */
+  hasFocus = false;
+
+  /**
    * Get the current state.
    * @returns {SliderState}
    */
@@ -400,6 +406,37 @@ export default class Slider extends Base {
         item.move(finalX);
       });
       this.currentIndex = closestIndex;
+    }
+  }
+
+  /**
+   * Enable focus.
+   * @returns {void}
+   */
+  onWrapperFocus() {
+    this.hasFocus = true;
+  }
+
+  /**
+   * Disable focus.
+   * @returns {void}
+   */
+  onWrapperBlur() {
+    this.hasFocus = false;
+  }
+
+  /**
+   * Go prev or next when focus is on the wrapper and pressing arrow keys.
+   * @param   {import('@studiometa/js-toolkit/services/key').KeyServiceProps} props
+   * @returns {void}
+   */
+  keyed({ LEFT, RIGHT, isDown }) {
+    if (this.hasFocus && isDown) {
+      if (LEFT) {
+        this.goPrev();
+      } else if (RIGHT) {
+        this.goNext();
+      }
     }
   }
 
