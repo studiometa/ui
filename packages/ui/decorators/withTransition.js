@@ -34,9 +34,9 @@ function delegateTransition(element, name, endMode) {
  * @param    {T} BaseClass
  * @returns  {T & {
  *   new(...a: any[]): {
- *     target: HTMLElement|HTMLElement[];
- *     enter(): Promise<void|void[]>;
- *     leave(): Promise<void|void[]>;
+ *     get target(): HTMLElement|HTMLElement[];
+ *     enter(target?: HTMLElement|HTMLElement[]): Promise<void|void[]>;
+ *     leave(target?: HTMLElement|HTMLElement[]): Promise<void|void[]>;
  *   }
  * }}
  */
@@ -72,13 +72,14 @@ export default function withTransition(BaseClass) {
      * Trigger the enter transition.
      *
      * @this {Transition & TransitionInterface}
+     * @param {HTMLElement|HTMLElement[]} [target]
      * @returns {Promise<void|void[]>}
      */
-    enter() {
+    enter(target) {
       const { enterFrom, enterActive, enterTo, enterKeep, leaveTo } = this.$options;
 
       return delegateTransition(
-        this.target,
+        target ?? this.target,
         {
           // eslint-disable-next-line prefer-template
           from: (leaveTo + ' ' + enterFrom).trim(),
@@ -93,13 +94,14 @@ export default function withTransition(BaseClass) {
      * Trigger the leave transition.
      *
      * @this {Transition & TransitionInterface}
+     * @param {HTMLElement|HTMLElement[]} [target]
      * @returns {Promise<void|void[]>}
      */
-    leave() {
+    leave(target) {
       const { leaveFrom, leaveActive, leaveTo, leaveKeep, enterTo } = this.$options;
 
       return delegateTransition(
-        this.target,
+        target ?? this.target,
         {
           // eslint-disable-next-line prefer-template
           from: (enterTo + ' ' + leaveFrom).trim(),
