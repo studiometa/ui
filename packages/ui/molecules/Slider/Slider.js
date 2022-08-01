@@ -224,14 +224,14 @@ export default class Slider extends Base {
       if (this.$options.mode === 'right') {
         const firstChild = this.$children.SliderItem.at(0);
 
-        // @todo manage case where all slides are visible
-        const maxState = Array.from(states).find((state) => {
-          if (state.x.right < 0) {
-            const firstChildPosition = firstChild.rect.x - this.origins.left + state.x.right;
-            state.x.right = Math.max(state.x.right + firstChildPosition, 0);
-            return true;
-          }
-        });
+        const maxState =
+          Array.from(states).find((state) => {
+            if (state.x.right < 0) {
+              const firstChildPosition = firstChild.rect.x - this.origins.left + state.x.right;
+              state.x.right = Math.max(state.x.right + firstChildPosition, 0);
+              return true;
+            }
+          }) ?? states.at(-1);
 
         if (maxState) {
           states = states.map((state) => {
