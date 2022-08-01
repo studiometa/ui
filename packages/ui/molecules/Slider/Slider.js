@@ -213,31 +213,32 @@ export default class Slider extends Base {
           }
         });
 
-        states = states.map((state) => {
-          state.x.left = Math.max(state.x.left, maxState.x.left);
-          return state;
-        });
+        if (maxState) {
+          states = states.map((state) => {
+            state.x.left = Math.max(state.x.left, maxState.x.left);
+            return state;
+          });
+        }
       }
 
       if (this.$options.mode === 'right') {
         const firstChild = this.$children.SliderItem.at(0);
 
-        const maxState = Array.from(states).reverse().find((state) => {
-          const firstChildPosition = firstChild.rect.x + state.x.right;
-          const diffWithWrapperBound = originRect.left - firstChildPosition;
-          console.log(firstChildPosition, state.x.right, diffWithWrapperBound)
-          if (diffWithWrapperBound < 0) {
-            state.x.newRight = state.x.right - diffWithWrapperBound;
+        // @todo manage case where all slides are visible
+        const maxState = Array.from(states).find((state) => {
+          if (state.x.right < 0) {
+            const firstChildPosition = firstChild.rect.x - this.origins.left + state.x.right;
+            state.x.right = Math.max(state.x.right + firstChildPosition, 0);
             return true;
           }
         });
 
-        console.log(maxState?.x);
-
-        states = states.map((state) => {
-          state.x.right = Math.min(state.x.right, maxState.x.newRight);
-          return state;
-        });
+        if (maxState) {
+          states = states.map((state) => {
+            state.x.right = Math.min(state.x.right, maxState.x.right);
+            return state;
+          });
+        }
       }
     }
 
