@@ -1,9 +1,8 @@
 {% set slides = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] %}
+{% set widths = ['w-96', 'w-80', 'w-72', 'w-64'] %}
 
 <style type="text/css">
-  .is-active {
-    box-shadow: 0 0 0 3px blue;
-    background-color: rgb(96, 165, 250);
+  .is-active { box-shadow: 0 0 0 3px blue; background-color: rgb(96, 165, 250);
   }
 </style>
 
@@ -17,8 +16,9 @@
       data-ref="wrapper"
       class="space-x-4 whitespace-nowrap ring">
       {% for slide in slides %}
+        {% set width = widths[loop.index0 % widths|length] %}
         <div data-component="SliderItem" class="inline-block rounded">
-          <div class="flex items-center justify-center w-96 h-96 bg-gray-400 rounded">
+          <div class="flex items-center justify-center {{ width }} h-96 bg-gray-400 rounded">
             <span class="text-2xl">#{{ slide }}</span>
           </div>
         </div>
@@ -43,7 +43,9 @@
         <span data-ref="current">1</span> / {{ slides|length }}
       </div>
     </div>
-    <div data-component="SliderDots" data-option-enter-to="is-active" class="space-x-4">
+    <div data-component="SliderDots"
+      data-option-enter-to="is-active"
+      class="space-x-4">
       {% for slide in slides %}
         <button type="button" data-ref="dots[]" class="rounded-full">
           <span class="block w-2 h-2 bg-gray-400 rounded-full"></span>
