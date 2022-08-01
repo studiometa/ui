@@ -31,12 +31,10 @@ export default class SliderProgress extends AbstractSliderChild {
    */
   update(index) {
     domScheduler.read(() => {
-      const unit = this.$refs.progress.clientWidth / this.$parent.indexMax;
-
+      const { progress } = this.$refs;
+      const x = map(index, 0, this.$parent.indexMax, progress.clientWidth * -1, 0);
       domScheduler.write(() => {
-        transform(this.$refs.progress, {
-          x: map(index, 0, this.$parent.indexMax, (this.$refs.progress.clientWidth) * -1, 0),
-        });
+        transform(progress, { x });
       });
     });
   }

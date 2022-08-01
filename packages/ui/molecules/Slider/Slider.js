@@ -321,8 +321,7 @@ export default class Slider extends Base {
       throw new Error('Index out of bound.');
     }
 
-    let state = this.getStateValueByMode(this.states[index].x);
-
+    const state = this.getStateValueByMode(this.states[index].x);
     const itemsToMove = this.getVisibleItems(state);
 
     if (index < this.currentIndex) {
