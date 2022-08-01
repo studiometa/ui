@@ -65,4 +65,9 @@ const config = defineConfig({
   },
 });
 
+if (process.env.NODE_ENV === 'development') {
+  globalThis.__DEV__ = true;
+  config.define = { __DEV__: true };
+}
+
 export default config;

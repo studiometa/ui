@@ -1,13 +1,15 @@
 <div class="max-w-lg mx-auto p-10 space-y-10">
-  {% include '@ui/atoms/Figure/Figure.twig' with {
-    src: 'https://picsum.photos/500/400',
-    width: '500',
-    height: '400',
-    lazy: false
-  } %}
-  {% include '@ui/atoms/Figure/Figure.twig' with {
-    src: 'https://picsum.photos/500/400',
-    width: '500',
-    height: '400'
-  } %}
+  {% for i in 1..10 %}
+    {% include '@ui/atoms/Figure/Figure.twig' with {
+      src: 'https://picsum.photos/500/400?rand=' ~ i,
+      width: '500',
+      height: '400',
+      attr: {
+        data_option_enter_from: 'opacity-0',
+        data_option_enter_active: 'transition duration-500'
+      },
+      inner_attr: { class: 'bg-vp-bg' },
+      img_attr: { class: 'opacity-0' }
+    } %}
+  {% endfor %}
 </div>

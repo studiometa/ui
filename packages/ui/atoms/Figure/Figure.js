@@ -1,13 +1,15 @@
-import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
+import { withMountWhenInView } from '@studiometa/js-toolkit';
+import { Transition } from '../../primitives/index.js';
 
 /**
- * @typedef {Object} FigureRefs
- * @property {HTMLImageElement} img
- */
-
-/**
- * @typedef {Object} FigureInterface
- * @property {FigureRefs} $refs
+ * @typedef {Figure & {
+ *   $refs: {
+ *     img: HTMLImageElement
+ *   },
+ *   $options: {
+ *     lazy: boolean
+ *   }
+ * }} FigureInterface
  */
 
 /**
@@ -15,19 +17,34 @@ import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
  *
  * Manager lazyloading image sources.
  */
-export default class Figure extends withMountWhenInView(Base, { threshold: [0, 1] }) {
+export default class Figure extends withMountWhenInView(Transition, { threshold: [0, 1] }) {
+  /**
+   * Config.
+   */
   static config = {
+    ...Transition.config,
     name: 'Figure',
     refs: ['img'],
     options: {
+      ...Transition.config.options,
       lazy: Boolean,
     },
   };
 
   /**
+   * Get the transition target.
+   *
+   * @this {FigureInterface}
+   * @returns {HTMLImageElement}
+   */
+  get target() {
+    return this.$refs.img;
+  }
+
+  /**
    * Get the image source.
    *
-   * @this {Figure & FigureInterface}
+   * @this {FigureInterface}
    * @returns {string}
    */
   get src() {
@@ -37,7 +54,7 @@ export default class Figure extends withMountWhenInView(Base, { threshold: [0, 1
   /**
    * Set the image source.
    *
-   * @this {Figure & FigureInterface}
+   * @this {FigureInterface}
    * @param   {string} value
    * @returns {void}
    */
@@ -47,23 +64,29 @@ export default class Figure extends withMountWhenInView(Base, { threshold: [0, 1
 
   /**
    * Load on mount.
-   * @this {Figure & FigureInterface}
+   * @this {FigureInterface}
    */
   mounted() {
-    if (!this.$refs.img) {
+    const { img } = this.$refs;
+
+    if (!img) {
       throw new Error('[Figure] The `img` ref is required.');
     }
 
-    if (!(this.$refs.img instanceof HTMLImageElement)) {
+    if (!(img instanceof HTMLImageElement)) {
       throw new Error('[Figure] The `img` ref must be an `<img>` element.');
     }
 
-    if (
-      this.$options.lazy &&
-      this.$refs.img.hasAttribute('data-src') &&
-      this.$refs.img.getAttribute('data-src') !== this.src
-    ) {
-      this.src = this.$refs.img.getAttribute('data-src');
+    const src = img.getAttribute('data-src');
+
+    if (this.$options.lazy && src && src !== this.src) {
+      let tempImg = new Image();
+      tempImg.onload = () => {
+        this.enter();
+        this.src = src;
+        tempImg = null;
+      };
+      tempImg.src = src;
     }
   }
 }

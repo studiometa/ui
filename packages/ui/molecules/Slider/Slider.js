@@ -1,5 +1,5 @@
 import { Base } from '@studiometa/js-toolkit';
-import { clamp, inertiaFinalValue, nextFrame } from '@studiometa/js-toolkit/utils';
+import { clamp, inertiaFinalValue, nextFrame, isDev } from '@studiometa/js-toolkit/utils';
 import SliderDrag from './SliderDrag.js';
 import SliderItem from './SliderItem.js';
 
@@ -35,7 +35,6 @@ import SliderItem from './SliderItem.js';
 /**
  * Orchestrate the slider items state transition.
  * @todo a11y
- * @todo better state management with `mode` option
  */
 export default class Slider extends Base {
   /**
@@ -43,7 +42,7 @@ export default class Slider extends Base {
    */
   static config = {
     name: 'Slider',
-    refs: ['wrapper'],
+    refs: ['wrapper', 'debug'],
     emits: ['goto', 'index'],
     components: {
       SliderItem,
@@ -54,6 +53,7 @@ export default class Slider extends Base {
       fitBounds: Boolean,
       contain: Boolean,
       sensitivity: { type: Number, default: 1 },
+      dropSensitivity: { type: Number, default: 2 },
     },
   };
 
@@ -102,6 +102,12 @@ export default class Slider extends Base {
     center: 0,
     right: 0,
   };
+
+  /**
+   * Wether or not the wrapper is focused.
+   * @type {boolean}
+   */
+  hasFocus = false;
 
   /**
    * Get the current state.
@@ -166,7 +172,6 @@ export default class Slider extends Base {
   /**
    * Get the states for each SliderItem.
    *
-   * @todo save value for every available modes to avoid recalculation when switching
    * @this {SliderInterface}
    */
   getStates() {
@@ -179,15 +184,59 @@ export default class Slider extends Base {
       right: originRect.x + originRect.width,
     };
 
-    return this.$children.SliderItem.map((item) => {
-      return {
-        x: {
-          left: (item.rect.x - this.origins.left) * -1,
-          center: (item.rect.x + item.rect.width / 2 - this.origins.center) * -1,
-          right: (item.rect.x + item.rect.width - this.origins.right) * -1,
-        },
-      };
-    });
+    const states = this.$children.SliderItem.map((item) => ({
+      x: {
+        left: (item.rect.x - this.origins.left) * -1,
+        center: (item.rect.x + item.rect.width / 2 - this.origins.center) * -1,
+        right: (item.rect.x + item.rect.width - this.origins.right) * -1,
+      },
+    }));
+
+    if (this.$options.contain) {
+      const { mode } = this.$options;
+      // Find state where last child has passed the wrapper bound completely
+      if (mode === 'left') {
+        const lastChild = this.$children.SliderItem.at(-1);
+
+        const maxState = states.find((state) => {
+          const lastChildPosition =
+            lastChild.rect.x - this.origins.left + lastChild.rect.width + state.x.left;
+          const diffWithWrapperBound = originRect.width - lastChildPosition;
+          if (diffWithWrapperBound > 0) {
+            state.x.left = Math.min(state.x.left + diffWithWrapperBound, 0);
+            return true;
+          }
+
+          return false;
+        });
+
+        if (maxState) {
+          return states.map((state) => {
+            state.x.left = Math.max(state.x.left, maxState.x.left);
+            return state;
+          });
+        }
+      }
+
+      if (mode === 'right') {
+        const maxStateIndex = states.findIndex((state) => state.x.right <= 0);
+        const maxState = maxStateIndex < 0 ? states.at(-1) : states[maxStateIndex - 1];
+
+        return states.map((state) => {
+          state.x.right = maxStateIndex < 0 ? maxState.x.right : Math.min(state.x.right, 0);
+          return state;
+        });
+      }
+
+      if (mode === 'center' && isDev) {
+        console.warn(
+          `[${this.$id}]`,
+          'The `center` mode is not yet compatible with the `contain` mode.'
+        );
+      }
+    }
+
+    return states;
   }
 
   /**
@@ -232,10 +281,6 @@ export default class Slider extends Base {
       nextFrame(() => {
         this.prepareInvisibleItems();
         this.goTo(this.currentIndex);
-        // const stateValue = this.getStateValueByMode(this.states[this.currentIndex].x);
-        // this.getVisibleItems(stateValue).forEach((item) => {
-        //   item.moveInstantly(stateValue);
-        // });
       });
     });
   }
@@ -278,24 +323,20 @@ export default class Slider extends Base {
       throw new Error('Index out of bound.');
     }
 
-    let state = this.getStateValueByMode(this.states[index].x);
-
-    if (this.$options.contain) {
-      if (this.$children.SliderItem[this.indexMax].willBeFullyVisible(state)) {
-        state = this.getStateValueByMode(this.lastState.x, 'right');
-      } else if (this.$children.SliderItem[0].willBeFullyVisible(state)) {
-        state = this.getStateValueByMode(this.firstState.x, 'left');
-      }
-    }
-
+    const currentState = this.getStateValueByMode(this.currentState.x);
+    const state = this.getStateValueByMode(this.states[index].x);
     const itemsToMove = this.getVisibleItems(state);
-
-    if (index < this.currentIndex) {
-      itemsToMove.reverse();
-    }
+    const invisibleItemsToMoveInstantly = this.getInvisibleItems(state);
 
     itemsToMove.forEach((item) => {
+      // Better perfs when going fast through the slides
+      if (currentState !== state) {
+        item.moveInstantly(currentState);
+      }
       nextFrame(() => item.move(state));
+    });
+    invisibleItemsToMoveInstantly.forEach((item) => {
+      item.moveInstantly(state);
     });
 
     this.currentIndex = index;
@@ -342,7 +383,7 @@ export default class Slider extends Base {
     }
 
     let finalX = clamp(
-      inertiaFinalValue(this.__distanceX, props.delta.x * this.$options.sensitivity),
+      inertiaFinalValue(this.__distanceX, props.delta.x * this.$options.dropSensitivity),
       0,
       this.getStateValueByMode(this.lastState.x)
     );
@@ -366,6 +407,37 @@ export default class Slider extends Base {
         item.move(finalX);
       });
       this.currentIndex = closestIndex;
+    }
+  }
+
+  /**
+   * Enable focus.
+   * @returns {void}
+   */
+  onWrapperFocus() {
+    this.hasFocus = true;
+  }
+
+  /**
+   * Disable focus.
+   * @returns {void}
+   */
+  onWrapperBlur() {
+    this.hasFocus = false;
+  }
+
+  /**
+   * Go prev or next when focus is on the wrapper and pressing arrow keys.
+   * @param   {import('@studiometa/js-toolkit/services/key').KeyServiceProps} props
+   * @returns {void}
+   */
+  keyed({ LEFT, RIGHT, isDown }) {
+    if (this.hasFocus && isDown) {
+      if (LEFT) {
+        this.goPrev();
+      } else if (RIGHT) {
+        this.goNext();
+      }
     }
   }
 
