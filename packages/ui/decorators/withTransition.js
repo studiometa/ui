@@ -1,4 +1,17 @@
-import { transition } from '@studiometa/js-toolkit/utils';
+import { transition, isArray } from '@studiometa/js-toolkit/utils';
+
+/**
+ * Manage transition with multiple targets.
+ * @param   {HTMLElement|HTMLElement[]} element
+ * @param   {Parameters<transition>[1]} name
+ * @param   {Parameters<transition>[2]} endMode
+ * @returns {Promise<void|void[]>}
+ */
+function delegateTransition(element, name, endMode) {
+  return isArray(element)
+    ? Promise.all(element.map((el) => transition(el, name, endMode)))
+    : transition(element, name, endMode);
+}
 
 /**
  * @typedef {{
@@ -21,9 +34,9 @@ import { transition } from '@studiometa/js-toolkit/utils';
  * @param    {T} BaseClass
  * @returns  {T & {
  *   new(...a: any[]): {
- *     target: HTMLElement;
- *     enter(): Promise<void>;
- *     leave(): Promise<void>;
+ *     target: HTMLElement|HTMLElement[];
+ *     enter(): Promise<void|void[]>;
+ *     leave(): Promise<void|void[]>;
  *   }
  * }}
  */
@@ -49,7 +62,7 @@ export default function withTransition(BaseClass) {
     /**
      * Get the transition target.
      *
-     * @returns {HTMLElement}
+     * @returns {HTMLElement|HTMLElement[]}
      */
     get target() {
       return this.$el;
@@ -59,12 +72,12 @@ export default function withTransition(BaseClass) {
      * Trigger the enter transition.
      *
      * @this {Transition & TransitionInterface}
-     * @returns {Promise<void>}
+     * @returns {Promise<void|void[]>}
      */
     enter() {
       const { enterFrom, enterActive, enterTo, enterKeep, leaveTo } = this.$options;
 
-      return transition(
+      return delegateTransition(
         this.target,
         {
           // eslint-disable-next-line prefer-template
@@ -80,12 +93,12 @@ export default function withTransition(BaseClass) {
      * Trigger the leave transition.
      *
      * @this {Transition & TransitionInterface}
-     * @returns {Promise<void>}
+     * @returns {Promise<void|void[]>}
      */
     leave() {
       const { leaveFrom, leaveActive, leaveTo, leaveKeep, enterTo } = this.$options;
 
-      return transition(
+      return delegateTransition(
         this.target,
         {
           // eslint-disable-next-line prefer-template
