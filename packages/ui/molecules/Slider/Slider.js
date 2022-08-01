@@ -1,5 +1,5 @@
 import { Base } from '@studiometa/js-toolkit';
-import { clamp, inertiaFinalValue, nextFrame } from '@studiometa/js-toolkit/utils';
+import { clamp, inertiaFinalValue, nextFrame, isDev } from '@studiometa/js-toolkit/utils';
 import SliderDrag from './SliderDrag.js';
 import SliderItem from './SliderItem.js';
 
@@ -178,29 +178,18 @@ export default class Slider extends Base {
       right: originRect.x + originRect.width,
     };
 
-    let states = this.$children.SliderItem.map((item) => ({
+    const states = this.$children.SliderItem.map((item) => ({
       x: {
         left: (item.rect.x - this.origins.left) * -1,
         center: (item.rect.x + item.rect.width / 2 - this.origins.center) * -1,
         right: (item.rect.x + item.rect.width - this.origins.right) * -1,
       },
     }));
-    // .map(({ item, state}, index, arr) => {
-    //   if (this.$options.contain) {
-    //     const { item: lastItem, state: lastState } = arr[arr.length - 1];
-    //     const lastItemPosition = Math.abs(lastState.x.left - lastItem.rect.width);
-    //     const lastItemDiffWithRightOrigin = this.origins.right - lastItemPosition;
-    //     console.log({ lastItemPosition, lastItemDiffWithRightOrigin })
-    //     if (lastItemDiffWithRightOrigin < 0) {
-    //       state.x.leftContained = { lastItemPosition, lastItemDiffWithRightOrigin };
-    //     }
-    //   }
 
-    //   return state;
-    // });
     if (this.$options.contain) {
+      const { mode } = this.$options;
       // Find state where last child has passed the wrapper bound completely
-      if (this.$options.mode === 'left') {
+      if (mode === 'left') {
         const lastChild = this.$children.SliderItem.at(-1);
 
         const maxState = states.find((state) => {
@@ -211,42 +200,35 @@ export default class Slider extends Base {
             state.x.left = Math.min(state.x.left + diffWithWrapperBound, 0);
             return true;
           }
+
+          return false;
         });
 
         if (maxState) {
-          states = states.map((state) => {
+          return states.map((state) => {
             state.x.left = Math.max(state.x.left, maxState.x.left);
             return state;
           });
         }
       }
 
-      if (this.$options.mode === 'right') {
-        const firstChild = this.$children.SliderItem.at(0);
+      if (mode === 'right') {
+        const maxStateIndex = states.findIndex((state) => state.x.right <= 0);
+        const maxState = maxStateIndex < 0 ? states.at(-1) : states[maxStateIndex - 1];
 
-        const maxState =
-          Array.from(states).find((state) => {
-            if (state.x.right < 0) {
-              const firstChildPosition = firstChild.rect.x - this.origins.left + state.x.right;
-              state.x.right = Math.max(state.x.right + firstChildPosition, 0);
-              return true;
-            }
-          }) ?? states.at(-1);
+        return states.map((state) => {
+          state.x.right = maxStateIndex < 0 ? maxState.x.right : Math.min(state.x.right, 0);
+          return state;
+        });
+      }
 
-        if (maxState) {
-          states = states.map((state) => {
-            state.x.right = Math.min(state.x.right, maxState.x.right);
-            return state;
-          });
-        }
+      if (mode === 'center' && isDev) {
+        console.warn(
+          `[${this.$id}]`,
+          'The `center` mode is not yet compatible with the `contain` mode.'
+        );
       }
     }
-
-    this.$refs.debug.innerHTML = JSON.stringify(
-      { origins: this.origins, originRect, states },
-      null,
-      2
-    );
 
     return states;
   }
