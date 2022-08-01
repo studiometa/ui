@@ -6,15 +6,15 @@
   }
 </style>
 
-<div class="p-10 overflow-hidden">
+
   <div data-component="Slider"
     data-option-mode="left"
-    data-option-fit-bound
+    data-option-fit-bounds
     data-option-contain
     class="space-y-4">
     <div data-component="SliderDrag"
       data-ref="wrapper"
-      class="space-x-4 whitespace-nowrap ring">
+      class="space-x-4 whitespace-nowrap">
       {% for slide in slides %}
         {% set width = widths[loop.index0 % widths|length] %}
         <div data-component="SliderItem" class="inline-block rounded">
@@ -75,6 +75,5 @@
     </div>
     <pre data-ref="debug"></pre>
   </div>
-</div>
 
 <div class="h-screen"></div>
