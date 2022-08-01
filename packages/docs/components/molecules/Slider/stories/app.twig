@@ -1,14 +1,16 @@
-{# {% set slides = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] %} #}
-{% set slides = [1, 2, 3, 4, 5, 6] %}
+{% set slides = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] %}
 
 <style type="text/css">
-  .is-active { box-shadow: 0 0 0 3px blue; }
+  .is-active {
+    box-shadow: 0 0 0 3px blue;
+    background-color: rgb(96, 165, 250);
+  }
 </style>
 
 <div class="p-10 overflow-hidden">
   <div data-component="Slider"
-    data-option-mode="right"
-    data-option-fit-bounds
+    data-option-mode="left"
+    data-option-fit-bound
     data-option-contain
     class="space-y-4">
     <div data-component="SliderDrag"
@@ -41,13 +43,33 @@
         <span data-ref="current">1</span> / {{ slides|length }}
       </div>
     </div>
-    <div data-component="SliderDots" class="space-x-4">
+    <div data-component="SliderDots" data-option-enter-to="is-active" class="space-x-4">
       {% for slide in slides %}
         <button type="button" data-ref="dots[]" class="rounded-full">
           <span class="block w-2 h-2 bg-gray-400 rounded-full"></span>
           <span class="sr-only">Go to slide #{{ loop.index }}</span>
         </button>
       {% endfor %}
+    </div>
+    <div class="relative">
+      <div data-component="SliderProgress"
+        class="w-full rounded bg-gray-200 overflow-hidden">
+        <div class="w-full h-2 bg-gray-400 rounded origin-left transition duration-500 ease-out-expo"
+          data-ref="progress"></div>
+      </div>
+      <div data-component="SliderDots"
+        data-option-enter-to="is-active bg-blue-400 transform scale-150"
+        data-option-enter-active="transition-all duration-500 ease-out-expo"
+        data-option-leave-active="transition-all duration-500 ease-out-expo"
+        class="absolute top-0 left-0 w-full h-full flex items-center justify-between">
+        {% for slide in slides %}
+          <button type="button"
+            data-ref="dots[]"
+            class="block w-2 h-2 bg-gray-600 rounded-full">
+            <span class="sr-only">Go to slide #{{ loop.index }}</span>
+          </button>
+        {% endfor %}
+      </div>
     </div>
     <pre data-ref="debug"></pre>
   </div>
