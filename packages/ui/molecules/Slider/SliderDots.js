@@ -1,4 +1,4 @@
-/* eslint-disable-next-line max-classes-per-file */
+import { withTransition } from '../../decorators/index.js';
 import AbstractSliderChild from './AbstractSliderChild.js';
 
 /**
@@ -12,7 +12,7 @@ import AbstractSliderChild from './AbstractSliderChild.js';
 /**
  * SliderDots class.
  */
-export default class SliderDots extends AbstractSliderChild {
+export default class SliderDots extends withTransition(AbstractSliderChild) {
   /**
    * Config.
    */
@@ -22,6 +22,21 @@ export default class SliderDots extends AbstractSliderChild {
   };
 
   /**
+   * Get target.
+   * @this {SliderDotsInterface}
+   * @returns {HTMLButtonElement[]}
+   */
+  get target() {
+    return this.$refs.dots;
+  }
+
+  /**
+   * The current active index.
+   * @type {number}
+   */
+  currentIndex = 0;
+
+  /**
    * Update dots classes according to the new index.
    *
    * @this    {SliderDotsInterface}
@@ -29,9 +44,9 @@ export default class SliderDots extends AbstractSliderChild {
    * @returns {void}
    */
   update(index) {
-    this.$refs.dots.forEach((dot, i) => {
-      dot.classList.toggle('is-active', index === i);
-    });
+    this.leave(this.$refs.dots[this.currentIndex]);
+    this.enter(this.$refs.dots[index]);
+    this.currentIndex = index;
   }
 
   /**
