@@ -281,10 +281,6 @@ export default class Slider extends Base {
       nextFrame(() => {
         this.prepareInvisibleItems();
         this.goTo(this.currentIndex);
-        // const stateValue = this.getStateValueByMode(this.states[this.currentIndex].x);
-        // this.getVisibleItems(stateValue).forEach((item) => {
-        //   item.moveInstantly(stateValue);
-        // });
       });
     });
   }
@@ -327,15 +323,20 @@ export default class Slider extends Base {
       throw new Error('Index out of bound.');
     }
 
+    const currentState = this.getStateValueByMode(this.currentState.x);
     const state = this.getStateValueByMode(this.states[index].x);
     const itemsToMove = this.getVisibleItems(state);
-
-    if (index < this.currentIndex) {
-      itemsToMove.reverse();
-    }
+    const invisibleItemsToMoveInstantly = this.getInvisibleItems(state);
 
     itemsToMove.forEach((item) => {
+      // Better perfs when going fast through the slides
+      if (currentState !== state) {
+        item.moveInstantly(currentState);
+      }
       nextFrame(() => item.move(state));
+    });
+    invisibleItemsToMoveInstantly.forEach((item) => {
+      item.moveInstantly(state);
     });
 
     this.currentIndex = index;
