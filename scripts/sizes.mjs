@@ -1,4 +1,5 @@
-import { extname, basename } from 'path';
+import { extname, basename, relative } from 'node:path';
+import { writeFileSync } from 'node:fs';
 import { gzipSizeSync } from 'gzip-size';
 import { build } from './shared.mjs';
 
@@ -16,14 +17,20 @@ build({
   console.log('');
   log('Export', 'Size', 'Gzipped sized');
 
-  result.outputFiles
+  const sizes = result.outputFiles
     .filter((file) => !(file.path.endsWith('index.js') || file.path.endsWith('utils.js')))
-    .forEach((file) => {
+    .map((file) => {
       const name = basename(file.path, extname(file.path));
-      const size = `${toKiloBytes(file.text.length)}kb`;
-      const gzip = `${toKiloBytes(gzipSizeSync(file.text))}kb`;
+      const size = `${toKiloBytes(file.text.length)} kB`;
+      const gzip = `${toKiloBytes(gzipSizeSync(file.text))} kB`;
 
       log(name, size, gzip);
+      return { name, path: relative(result.outdir, file.path), size, gzip };
     });
+
+  writeFileSync(
+    './sizes.mjs',
+    sizes.map((size) => `export const ${size.name} = ${JSON.stringify(size)};`).join('\n')
+  );
   console.log('');
 });
