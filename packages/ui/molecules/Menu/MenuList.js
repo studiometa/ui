@@ -99,6 +99,7 @@ export default class MenuList extends Transition {
       return;
     }
 
+    // @todo Remove event listener when the close method is called.
     const clickOutsideHandler = (event) => {
       if (!this.$el.contains(event.target)) {
         document.removeEventListener('click', clickOutsideHandler);
