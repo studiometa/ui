@@ -6,12 +6,12 @@
 
 {% macro animated_image(width, height) %}
   <div data-component="ScrollAnimationWithEase"
-    data-option-ease="outExpo"
     data-option-play-range="[0.1,0.6]"
-    data-option-from="{{ {
-      y: 500,
-      scale: 0.5,
-      opacity: 0
+    data-option-keyframes="{{ {
+      y: [500, 0],
+      scaleX: [0.5, 1],
+      scaleY: [0.5, 1],
+      opacity: [0, 1]
     }|json_encode }}">
     <img data-ref="target"
       src="https://picsum.photos/{{ width }}/{{ height }}"
@@ -34,8 +34,7 @@
       </div>
     </div>
     <div data-component="ScrollAnimation"
-      data-option-from="{{ { y: 160 }|json_encode }}"
-      data-option-to="{{ { y: -160 }|json_encode }}">
+      data-option-keyframes="{{ { y: [160, -160] }|json_encode }}">
       <div data-ref="target" class="space-y-10">
         {{ _self.animated_image(400, 400) }}
         {{ _self.animated_image(400, 450) }}
@@ -43,8 +42,7 @@
       </div>
     </div>
     <div data-component="ScrollAnimation"
-      data-option-from="{{ { y: 320 }|json_encode }}"
-      data-option-to="{{ { y: -320 }|json_encode }}">
+      data-option-keyframes="{{ { y: [320, -320] }|json_encode }}">
       <div data-ref="target" class="space-y-10">
         {{ _self.animated_image(400, 440) }}
         {{ _self.animated_image(400, 460) }}
@@ -53,8 +51,7 @@
       </div>
     </div>
     <div data-component="ScrollAnimation"
-      data-option-from="{{ { y: 160 }|json_encode }}"
-      data-option-to="{{ { y: -160 }|json_encode }}">
+      data-option-keyframes="{{ { y: [160, -160] }|json_encode }}">
       <div data-ref="target" class="space-y-10">
         {{ _self.animated_image(400, 530) }}
         {{ _self.animated_image(400, 520) }}
@@ -73,7 +70,7 @@
 <div {{
   html_attributes({
     data_component: 'ScrollAnimation',
-    data_option_to: { scale: 1.1 },
+    data_option_keyframes: { scale: 1.1 },
     class: 'z-10 relative bg-gray-200',
     style: { contain: 'content' },
   })
@@ -83,7 +80,7 @@
     <span {{
       html_attributes({
         data_component: 'ScrollAnimation',
-        data_option_to: { x: - 300, y: - 100, rotate: - 80, scale: 2 }
+        data_option_keyframes: { x: - 300, y: - 100, rotate: - 80, scale: 2 }
       })
       }}>
       <span class="block pointer-events-none" data-ref="target">D</span>
@@ -91,7 +88,7 @@
     <span {{
       html_attributes({
         data_component: 'ScrollAnimation',
-        data_option_to: { x: - 150, y: - 50, rotate: - 40, scale: 1.5 }
+        data_option_keyframes: { x: - 150, y: - 50, rotate: - 40, scale: 1.5 }
       })
       }}>
       <span class="block pointer-events-none" data-ref="target">E</span>
@@ -99,7 +96,7 @@
     <span {{
       html_attributes({
         data_component: 'ScrollAnimation',
-        data_option_to: { x: 150, y: - 50, rotate: 40, scale: 1.5 }
+        data_option_keyframes: { x: 150, y: - 50, rotate: 40, scale: 1.5 }
       })
       }}>
       <span class="block pointer-events-none" data-ref="target">M</span>
@@ -107,7 +104,7 @@
     <span {{
       html_attributes({
         data_component: 'ScrollAnimation',
-        data_option_to: { x: 300, y: - 100, rotate: 80, scale: 2 }
+        data_option_keyframes: { x: 300, y: - 100, rotate: 80, scale: 2 }
       })
       }}>
       <span class="block pointer-events-none" data-ref="target">O</span>
@@ -118,7 +115,7 @@
   html_attributes({
     data_component: 'ScrollAnimation',
     data_option_damp_factor: 0.1,
-    data_option_from: { scale: 0 },
+    data_option_keyframes: { scale: [0, 1] },
     class: 'relative bg-gray-200',
     style: { height: '300vh' }
   })

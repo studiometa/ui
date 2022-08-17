@@ -1,5 +1,6 @@
 import { Base, withFreezedOptions } from '@studiometa/js-toolkit';
-import { map, clamp, animate } from '@studiometa/js-toolkit/utils';
+import { map, clamp } from '@studiometa/js-toolkit/utils';
+import { animate } from 'motion';
 
 /**
  * @typedef {typeof AbstractScrollAnimation} AbstractScrollAnimationConstructor
@@ -95,7 +96,19 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
       keyframes = [from, to];
     }
 
-    this.animation = animate(this.target, keyframes, { easing: this.$options.easing });
+    this.animation = animate(this.target, keyframes, { duration: 1 });
+    this.animation.pause();
+    this.animation.forEachNative((animation, { easing }) => {
+      if (animation.updateDuration) {
+        if (!easing) animation.easing = (val) => val;
+        animation.updateDuration(1);
+      } else {
+        const timingOptions = { duration: 1000 };
+        if (!easing) timingOptions.easing = 'linear';
+
+        animation?.effect?.updateTiming(timingOptions);
+      }
+    });
   }
 
   /**
@@ -120,6 +133,6 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
    * @returns {void}
    */
   render(progress) {
-    this.animation.progress(progress);
+    this.animation.currentTime = progress;
   }
 }
