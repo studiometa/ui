@@ -79,15 +79,12 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
   }
 
   /**
+   * Lazyly set the `animation` property.
+   *
+   * @this {ScrollAnimationChildInterface}
    * @type {ReturnType<animate>}
    */
-  animation;
-
-  /**
-   * @this {ScrollAnimationChildInterface}
-   * @returns {void}
-   */
-  mounted() {
+  get animation() {
     let { keyframes } = this.$options;
     const { from, to } = this.$options;
 
@@ -95,7 +92,14 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
       keyframes = [from, to];
     }
 
-    this.animation = animate(this.target, keyframes, { easing: this.$options.easing });
+    const animation = animate(this.target, keyframes, { easing: this.$options.easing });
+
+    Object.defineProperty(this, 'animation', {
+      value: animation,
+      configurable: true,
+    });
+
+    return animation;
   }
 
   /**
