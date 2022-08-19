@@ -3,7 +3,7 @@ import esbuild from 'esbuild';
 
 export const resolve = (path, origin = import.meta.url) => new URL(path, origin).pathname;
 
-const entryPoints = glob.sync(['packages/ui/**/*.js', '!**/node_modules/**'], {
+const entryPoints = glob.sync(['packages/ui/**/*.js', 'packages/ui/**/*.ts', '!**/node_modules/**'], {
   cwd: resolve('..'),
 });
 
