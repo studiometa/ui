@@ -1,15 +1,23 @@
 import { Base } from '@studiometa/js-toolkit';
+import type { BaseTypeParameter, BaseInterface } from '@studiometa/js-toolkit';
 
-/**
- * @typedef {{ src: string, terminateOnLoad: boolean }} LazyIncludeOptions
- * @typedef {{ loading: HTMLElement, error: HTMLElement }} LazyIncludeRefs
- * @typedef {LazyInclude & { $refs: LazyIncludeRefs, $options: LazyIncludeOptions }} LazyIncludeInterface
- */
+export interface LazyIncludeInterface extends BaseTypeParameter {
+  $refs: {
+    loading: HTMLElement;
+    error: HTMLElement;
+  };
+  $options: {
+    src: string;
+    terminateOnLoad: boolean;
+  };
+}
 
 /**
  * LazyInclude class.
  */
-export default class LazyInclude extends Base {
+export default class LazyInclude<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
+  T & LazyIncludeInterface
+> implements BaseInterface {
   /**
    * Config.
    */
@@ -25,9 +33,6 @@ export default class LazyInclude extends Base {
 
   /**
    * Load the lazy content on mount.
-   *
-   * @this {LazyIncludeInterface}
-   * @returns {void}
    */
   mounted() {
     if (!this.$options.src) {
@@ -50,21 +55,14 @@ export default class LazyInclude extends Base {
 
   /**
    * Set content.
-   *
-   * @this {LazyIncludeInterface}
-   * @param   {string} content
-   * @returns {void}
    */
-  onContent(content) {
+  onContent(content:string) {
     this.$refs.loading.style.display = 'none';
     this.$el.innerHTML = content;
   }
 
   /**
    * Set error.
-   *
-   * @this {LazyIncludeInterface}
-   * @returns {void}
    */
   onError() {
     this.$refs.error.style.display = 'block';
@@ -72,9 +70,6 @@ export default class LazyInclude extends Base {
 
   /**
    * Always.
-   *
-   * @this {LazyIncludeInterface}
-   * @returns {void}
    */
   onAlways() {
     if (this.$options.terminateOnLoad) {

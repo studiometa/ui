@@ -2,11 +2,12 @@ import { withScrolledInView } from '@studiometa/js-toolkit';
 import AbstractScrollAnimation from './AbstractScrollAnimation.js';
 
 /**
- * @typedef {ScrollAnimation & { $refs: { target: HTMLElement }}} ScrollAnimationInterface
+ * @typedef {{ $refs: { target: HTMLElement }}} ScrollAnimationInterface
  */
 
 /**
  * ScrollAnimation class.
+ * @extends {AbstractScrollAnimation<ScrollAnimationInterface>}
  */
 export default class ScrollAnimation extends withScrolledInView(AbstractScrollAnimation, {}) {
   /**

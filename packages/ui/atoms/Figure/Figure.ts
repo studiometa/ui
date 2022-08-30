@@ -1,27 +1,26 @@
 import { withMountWhenInView } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseTypeParameter } from '@studiometa/js-toolkit';
 import { Transition } from '../../primitives/index.js';
 
-/**
- * @typedef {Figure & {
- *   $refs: {
- *     img: HTMLImageElement
- *   },
- *   $options: {
- *     lazy: boolean
- *   }
- * }} FigureInterface
- */
+export interface FigureInterface extends BaseTypeParameter {
+  $refs: {
+    img: HTMLImageElement;
+  };
+  $options: {
+    lazy: boolean;
+  };
+}
 
 /**
  * Figure class.
- *
- * Manager lazyloading image sources.
  */
-export default class Figure extends withMountWhenInView(Transition, { threshold: [0, 1] }) {
+export default class Figure extends withMountWhenInView<typeof Transition, FigureInterface>(Transition, {
+  threshold: [0, 1],
+}) {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     ...Transition.config,
     name: 'Figure',
     refs: ['img'],
@@ -77,15 +76,15 @@ export default class Figure extends withMountWhenInView(Transition, { threshold:
       throw new Error('[Figure] The `img` ref must be an `<img>` element.');
     }
 
-    const src = img.getAttribute('data-src');
+    const { src } = img.dataset;
 
     if (this.$options.lazy && src && src !== this.src) {
       let tempImg = new Image();
-      tempImg.onload = () => {
+      tempImg.addEventListener('load', () => {
         this.enter();
         this.src = src;
         tempImg = null;
-      };
+      }, { once: true });
       tempImg.src = src;
     }
   }

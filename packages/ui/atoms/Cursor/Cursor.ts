@@ -1,40 +1,27 @@
 import { Base } from '@studiometa/js-toolkit';
+import type { BaseConfig, PointerServiceProps, BaseTypeParameter } from '@studiometa/js-toolkit';
 import { damp, matrix } from '@studiometa/js-toolkit/utils';
 
-/**
- * @typedef {import('@studiometa/js-toolkit/services/pointer').PointerServiceProps} PointerServiceProps
- * @typedef {import('@studiometa/js-toolkit/Base').BaseOptions} BaseOptions
- */
+export interface CursorInterface extends BaseTypeParameter {
+  $options: {
+    growSelectors: string;
+    shrinkSelectors: string;
+    scale: number;
+    growTo: number;
+    shrinkTo: number;
+    translateDampFactor: number;
+    growDampFactor: number;
+    shrinkDampFactor: number;
+  };
+}
 
 /**
- * @typedef {Object} CursorOptions
- * @property {string} growSelectors
- * @property {string} shrinkSelectors
- * @property {number} scale
- * @property {number} growTo
- * @property {number} shrinkTo
- * @property {number} translateDampFactor
- * @property {number} growDampFactor
- * @property {number} shrinkDampFactor
+ * Cursor class.
  */
-
-/**
- * @typedef {Object} CursorPrivateInterface
- * @property {BaseOptions & CursorOptions} $options
- */
-
-/**
- * @typedef {Cursor & CursorPrivateInterface} CursorInterface
- */
-
-/**
- * Custom cursor component.
- */
-export default class Cursor extends Base {
-  /**
-   * Class config.
-   */
-  static config = {
+export default class Cursor<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
+  CursorInterface & T
+> {
+  static config: BaseConfig = {
     name: 'Cursor',
     options: {
       growSelectors: {
@@ -72,39 +59,20 @@ export default class Cursor extends Base {
     },
   };
 
-  /**
-   * @type {number}
-   */
   x = 0;
 
-  /**
-   * @type {number}
-   */
   y = 0;
 
-  /**
-   * @type {number}
-   */
   scale = 0;
 
-  /**
-   * @type {number}
-   */
   pointerX = 0;
 
-  /**
-   * @type {number}
-   */
   pointerY = 0;
 
-  /**
-   * @type {number}
-   */
   pointerScale = 0;
 
   /**
    * Mounted hook.
-   * @return {void}
    */
   mounted() {
     this.x = 0;
@@ -118,13 +86,8 @@ export default class Cursor extends Base {
 
   /**
    * Moved hook.
-   *
-   * @this {CursorInterface}
-   *
-   * @param {PointerServiceProps} options
-   * @return {void}
    */
-  moved({ event, x, y, isDown }) {
+  moved({ event, x, y, isDown }: PointerServiceProps) {
     if (!this.$services.has('ticked')) {
       this.$services.enable('ticked');
     }
@@ -160,10 +123,6 @@ export default class Cursor extends Base {
 
   /**
    * RequestAnimationFrame hook.
-   *
-   * @this {CursorInterface}
-   *
-   * @return {void}
    */
   ticked() {
     this.x = damp(this.pointerX, this.x, this.$options.translateDampFactor);
@@ -171,7 +130,9 @@ export default class Cursor extends Base {
     this.scale = damp(
       this.pointerScale,
       this.scale,
-      this.pointerScale < this.scale ? this.$options.shrinkDampFactor : this.$options.growDampFactor
+      this.pointerScale < this.scale
+        ? this.$options.shrinkDampFactor
+        : this.$options.growDampFactor,
     );
 
     this.render({ x: this.x, y: this.y, scale: this.scale });
@@ -183,14 +144,8 @@ export default class Cursor extends Base {
 
   /**
    * Render the cursor.
-   *
-   * @param  {Object} options
-   * @param  {number} options.x
-   * @param  {number} options.y
-   * @param  {number} options.scale
-   * @return {void}
    */
-  render({ x, y, scale }) {
+  render({ x, y, scale }: { x: number; y: number; scale: number }) {
     const transform = matrix({
       translateX: x,
       translateY: y,

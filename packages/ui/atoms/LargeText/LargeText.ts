@@ -1,21 +1,25 @@
 import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
+import type { BaseTypeParameter, BaseInterface, ScrollServiceProps } from '@studiometa/js-toolkit';
 import { damp, clamp, transform } from '@studiometa/js-toolkit/utils';
 
-/**
- * @typedef {LargeText & {
- *   $refs: { target: HTMLElement },
- *   $options: {
- *     skew: boolean,
- *     sensitivity: number,
- *     skewSensitivity: number,
- *   }
- * }} LargeTextInterface
- */
+export interface LargeTextInterface extends BaseTypeParameter {
+  $refs: {
+    target: HTMLElement;
+  };
+  $options: {
+    skew: boolean;
+    sensitivity: number;
+    skewSensitivity: number;
+  };
+}
 
 /**
  * Large text class.
  */
-export default class LargeText extends withMountWhenInView(Base, { rootMargin: '50%' }) {
+export default class LargeText
+  extends withMountWhenInView<typeof Base, LargeTextInterface>(Base, { rootMargin: '50%' })
+  implements BaseInterface
+{
   /**
    * Config.
    */
@@ -37,13 +41,11 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
 
   /**
    * Translate X.
-   * @type {number}
    */
   x = 0;
 
   /**
    * Scroll delta Y.
-   * @type {number}
    */
   deltaY = 0;
 
@@ -57,15 +59,11 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
 
   /**
    * Target width.
-   * @type {number}
    */
   width = 0;
 
   /**
    * Set width on mount.
-   *
-   * @this    {LargeTextInterface}
-   * @returns {void}
    */
   mounted() {
     this.width = this.$refs.target.clientWidth;
@@ -73,9 +71,6 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
 
   /**
    * Set width on resize.
-   *
-   * @this    {LargeTextInterface}
-   * @returns {void}
    */
   resized() {
     this.width = this.$refs.target.clientWidth;
@@ -83,18 +78,13 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
 
   /**
    * Update delta scroll on scroll.
-   *
-   * @param   {import('@studiometa/js-toolkit/services/scroll').ScrollServiceProps} props
-   * @returns {void}
    */
-  scrolled(props) {
+  scrolled(props: ScrollServiceProps) {
     this.deltaY = props.delta.y;
   }
 
   /**
    * Update values on raf.
-   *
-   * @this    {LargeTextInterface}
    */
   ticked() {
     this.x -= (Math.abs(this.deltaY) + 1) * this.$options.sensitivity;
@@ -105,7 +95,7 @@ export default class LargeText extends withMountWhenInView(Base, { rootMargin: '
       this.transform.skewX = damp(
         clamp(this.deltaY * -1, -50, 50) * this.$options.skewSensitivity,
         this.transform.skewX,
-        0.25
+        0.25,
       );
     }
 

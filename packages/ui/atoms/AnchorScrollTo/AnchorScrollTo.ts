@@ -1,24 +1,24 @@
 import { Base } from '@studiometa/js-toolkit';
+import type { BaseTypeParameter, BaseConfig } from '@studiometa/js-toolkit';
 import { scrollTo } from '@studiometa/js-toolkit/utils';
 
-/**
- * @typedef {AnchorScrollTo & {
- *   $el: HTMLAnchorElement
- * }} AnchorScrollToInterface
- */
+interface AnchorScrollToInterface extends BaseTypeParameter {
+  $el: HTMLAnchorElement;
+}
 
 /**
  * AncorScrollTo class.
  */
-export default class AnchorScrollTo extends Base {
-  static config = {
+export default class AnchorScrollTo<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
+  AnchorScrollToInterface & T
+> {
+  static config: BaseConfig = {
     name: 'AnchorScrollTo',
   };
 
   /**
    * Get the target selector.
    *
-   * @this    {AnchorScrollToInterface}
    * @returns {string}
    */
   get targetSelector() {
@@ -35,7 +35,7 @@ export default class AnchorScrollTo extends Base {
     try {
       scrollTo(this.targetSelector);
       event.preventDefault();
-    } catch (err) {
+    } catch {
       // Silence is golden.
     }
   }

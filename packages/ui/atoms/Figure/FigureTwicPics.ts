@@ -1,26 +1,20 @@
+import { withType } from '@studiometa/js-toolkit';
+import type { BaseTypeParameter } from '@studiometa/js-toolkit';
 import Figure from './Figure.js';
 
-/**
- * @typedef {import('./Figure.js').FigureInterface} FigureInterface
- */
-
-/**
- * @typedef {FigureTwicPics & FigureInterface & {
- *   $options: {
- *     transform: string,
- *     step: number,
- *     mode: string,
- *   }
- * }} FigureTwicPicsInterface
- */
+interface FigureTwicPicsInterface extends BaseTypeParameter {
+  $options: {
+    transform: string;
+    step: number;
+    mode: string;
+  };
+}
 
 /**
  * Normalize the given size to the step option.
- * @param   {FigureTwicPicsInterface} that
- * @param   {string} prop
- * @returns {number}
  */
-function normalizeSize(that, prop) {
+// eslint-disable-next-line no-use-before-define
+function normalizeSize(that:FigureTwicPics, prop:string):number {
   const { step } = that.$options;
   return Math.ceil(that.$refs.img[prop] / step) * step;
 }
@@ -30,7 +24,7 @@ function normalizeSize(that, prop) {
  *
  * Manager lazyloading image sources.
  */
-export default class FigureTwicPics extends Figure {
+export default class FigureTwicPics extends withType<typeof Figure, FigureTwicPicsInterface>(Figure) {
   /**
    * Config.
    */
@@ -53,23 +47,16 @@ export default class FigureTwicPics extends Figure {
 
   /**
    * Get the TwicPics domain.
-   *
-   * @this {FigureTwicPicsInterface}
-   * @returns {string}
    */
-  get domain() {
+  get domain():string {
     const url = new URL(this.$refs.img.dataset.src);
     return url.host;
   }
 
   /**
    * Add TwicPics transforms and domain to the URL.
-   *
-   * @this {FigureTwicPicsInterface}
-   * @param   {string} value
-   * @returns {void}
    */
-  set src(value) {
+  set src(value:string) {
     const url = new URL(value, window.location.origin);
     url.host = this.domain;
 
@@ -80,7 +67,7 @@ export default class FigureTwicPics extends Figure {
       'twic',
       ['v1', this.$options.transform, `${this.$options.mode}=${width}x${height}`]
         .filter(Boolean)
-        .join('/')
+        .join('/'),
     );
 
     url.search = decodeURIComponent(url.search);
@@ -90,9 +77,6 @@ export default class FigureTwicPics extends Figure {
 
   /**
    * Reassign the source from the original on resized.
-   *
-   * @this {FigureTwicPicsInterface}
-   * @returns {void}
    */
   resized() {
     this.src = this.$refs.img.dataset.src;

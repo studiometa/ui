@@ -1,17 +1,17 @@
 import { Base } from '@studiometa/js-toolkit';
 
 /**
- * @typedef {{ prefetch: boolean }} PrefetchOptions
- */
-
-/**
- * @typedef {AbstractPrefetch & {
- *   $options: PrefetchOptions
+ * @typedef {import('@studiometa/js-toolkit').BaseTypeParameter} BaseTypeParameter
+ * @typedef {{
+ *   $el: HTMLAnchorElement
+ *   $options: { prefetch: boolean },
  * }} AbstractPrefetchInterface
  */
 
 /**
  * AbstractPrefetch class.
+ * @template {BaseTypeParameter} [Interface={}]
+ * @extends {Base<AbstractPrefetchInterface>}
  */
 export default class AbstractPrefetch extends Base {
   /**
@@ -36,15 +36,14 @@ export default class AbstractPrefetch extends Base {
   /**
    * Is the given anchor prefetchable?
    * @param   {URL}  url
-   * @param   {PrefetchOptions} options
    * @returns {boolean}
    */
-  isPrefetchable(url, options) {
+  isPrefetchable(url) {
     if (!url || !url.href) {
       return false;
     }
 
-    if (!options.prefetch) {
+    if (!this.$options.prefetch) {
       return false;
     }
 
@@ -73,7 +72,6 @@ export default class AbstractPrefetch extends Base {
   /**
    * Prefetch the given URL and terminate the component.
    *
-   * @this  {AbstractPrefetchInterface}
    * @param {URL} url
    * @returns {void}
    */
@@ -82,7 +80,7 @@ export default class AbstractPrefetch extends Base {
       return;
     }
 
-    if (!this.isPrefetchable(url, this.$options)) {
+    if (!this.isPrefetchable(url)) {
       return;
     }
 

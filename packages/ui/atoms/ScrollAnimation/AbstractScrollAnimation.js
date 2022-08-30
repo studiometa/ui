@@ -2,6 +2,7 @@ import { Base, withFreezedOptions } from '@studiometa/js-toolkit';
 import { map, clamp, animate } from '@studiometa/js-toolkit/utils';
 
 /**
+ * @typedef {import('@studiometa/js-toolkit').BaseTypeParameter} BaseTypeParameter
  * @typedef {typeof AbstractScrollAnimation} AbstractScrollAnimationConstructor
  * @typedef {import('@studiometa/js-toolkit/utils/css/animate.js').Keyframe} Keyframe
  */
@@ -31,10 +32,12 @@ import { map, clamp, animate } from '@studiometa/js-toolkit/utils';
  * ```
  * data-option-to="{ x: 100%, y: innerWidth / 2 }"
  * ```
+ * @template {BaseTypeParameter} [T=BaseTypeParameter]
  */
 export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
   /**
    * Config.
+   * @type {import('@studiometa/js-toolkit').BaseConfig}
    */
   static config = {
     name: 'AbstractScrollAnimation',

@@ -8,6 +8,7 @@ import AbstractPrefetch from './AbstractPrefetch.js';
 
 /**
  * PrefetchWhenOver class.
+ * @extends {AbstractPrefetch<{ $el: HTMLAnchorElement }>}
  */
 export default class PrefetchWhenOver extends AbstractPrefetch {
   /**
@@ -21,7 +22,6 @@ export default class PrefetchWhenOver extends AbstractPrefetch {
   /**
    * Prefetch on mouseenter.
    *
-   * @this    {PrefetchWhenOverInterface}
    * @returns {void}
    */
   onMouseenter() {
