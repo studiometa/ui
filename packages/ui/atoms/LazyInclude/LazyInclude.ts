@@ -15,7 +15,7 @@ export interface LazyIncludeInterface extends BaseTypeParameter {
 /**
  * LazyInclude class.
  */
-export default class LazyInclude<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
+export class LazyInclude<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
   T & LazyIncludeInterface
 > implements BaseInterface {
   /**

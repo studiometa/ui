@@ -14,7 +14,7 @@ export interface FigureInterface extends BaseTypeParameter {
 /**
  * Figure class.
  */
-export default class Figure extends withMountWhenInView<typeof Transition, FigureInterface>(Transition, {
+export class Figure extends withMountWhenInView<typeof Transition, FigureInterface>(Transition, {
   threshold: [0, 1],
 }) {
   /**

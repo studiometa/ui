@@ -1,23 +1,21 @@
 import { Base } from '@studiometa/js-toolkit';
+import type { BaseTypeParameter, BaseConfig } from '@studiometa/js-toolkit';
 
-/**
- * @typedef {import('@studiometa/js-toolkit').BaseTypeParameter} BaseTypeParameter
- * @typedef {{
- *   $el: HTMLAnchorElement
- *   $options: { prefetch: boolean },
- * }} AbstractPrefetchInterface
- */
+export interface AbstractPrefetchInterface extends BaseTypeParameter {
+  $el: HTMLAnchorElement;
+  $options: {
+    prefetch: boolean;
+  }
+}
 
 /**
  * AbstractPrefetch class.
- * @template {BaseTypeParameter} [Interface={}]
- * @extends {Base<AbstractPrefetchInterface>}
  */
-export default class AbstractPrefetch extends Base {
+export class AbstractPrefetch<T extends BaseTypeParameter = BaseTypeParameter> extends Base<T & AbstractPrefetchInterface> {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'AbstractPrefetch',
     options: {
       prefetch: {
@@ -29,16 +27,13 @@ export default class AbstractPrefetch extends Base {
 
   /**
    * Store prefetched URL.
-   * @type {Set<string>}
    */
-  static prefetchedUrls = new Set();
+  static prefetchedUrls:Set<string> = new Set();
 
   /**
    * Is the given anchor prefetchable?
-   * @param   {URL}  url
-   * @returns {boolean}
    */
-  isPrefetchable(url) {
+  isPrefetchable(url:URL):boolean {
     if (!url || !url.href) {
       return false;
     }
@@ -71,11 +66,8 @@ export default class AbstractPrefetch extends Base {
 
   /**
    * Prefetch the given URL and terminate the component.
-   *
-   * @param {URL} url
-   * @returns {void}
    */
-  prefetch(url) {
+  prefetch(url:URL) {
     if (AbstractPrefetch.prefetchedUrls.has(url.href)) {
       return;
     }

@@ -18,7 +18,7 @@ export interface CursorInterface extends BaseTypeParameter {
 /**
  * Cursor class.
  */
-export default class Cursor<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
+export class Cursor<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
   CursorInterface & T
 > {
   static config: BaseConfig = {

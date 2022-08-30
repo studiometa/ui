@@ -1,25 +1,27 @@
-import { withMountWhenInView, useScroll } from '@studiometa/js-toolkit';
+import { withMountWhenInView, useScroll, ScrollServiceProps } from '@studiometa/js-toolkit';
+import type { BaseTypeParameter, BaseConfig } from '@studiometa/js-toolkit';
 import { Transition } from '../../primitives/index.js';
 
-/**
- * @typedef {ScrollReveal & {
- *   $refs: {
- *     target?: HTMLElement,
- *   },
- *   $options: {
- *     repeat: boolean;
- *   }
- * }} ScrollRevealInterface
- */
+export interface ScrollRevealInterface extends BaseTypeParameter {
+  $refs: {
+    target?: HTMLElement;
+  };
+  $options: {
+    repeat: boolean;
+  };
+}
 
 /**
  * ScrollReveal class.
  */
-export default class ScrollReveal extends withMountWhenInView(Transition) {
+export class ScrollReveal extends withMountWhenInView<
+  typeof Transition,
+  ScrollRevealInterface
+>(Transition) {
   /**
    * Config.
    */
-  static config = {
+  static config:BaseConfig = {
     ...Transition.config,
     name: 'ScrollReveal',
     refs: ['target'],
@@ -39,25 +41,18 @@ export default class ScrollReveal extends withMountWhenInView(Transition) {
 
   /**
    * Vertical scroll direction.
-   * @type {'UP'|'DOWN'|'NONE'}
    */
-  static scrollDirectionY = 'NONE';
+  static scrollDirectionY: ScrollServiceProps['direction']['y'] = 'NONE';
 
   /**
    * Get the transition target.
-   *
-   * @this {ScrollRevealInterface}
-   * @returns {HTMLElement}
    */
-  get target() {
+  get target():HTMLElement {
     return this.$refs.target ?? this.$el;
   }
 
   /**
    * Trigger the `enter` transition on mount.
-   *
-   * @this {ScrollRevealInterface}
-   * @returns {void}
    */
   mounted() {
     if (!this.$options.repeat) {

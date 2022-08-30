@@ -2,14 +2,14 @@ import { Base } from '@studiometa/js-toolkit';
 import type { BaseTypeParameter, BaseConfig } from '@studiometa/js-toolkit';
 import { scrollTo } from '@studiometa/js-toolkit/utils';
 
-interface AnchorScrollToInterface extends BaseTypeParameter {
+export interface AnchorScrollToInterface extends BaseTypeParameter {
   $el: HTMLAnchorElement;
 }
 
 /**
  * AncorScrollTo class.
  */
-export default class AnchorScrollTo<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
+export class AnchorScrollTo<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
   AnchorScrollToInterface & T
 > {
   static config: BaseConfig = {

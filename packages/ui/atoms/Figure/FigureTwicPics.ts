@@ -1,8 +1,8 @@
 import { withType } from '@studiometa/js-toolkit';
 import type { BaseTypeParameter } from '@studiometa/js-toolkit';
-import Figure from './Figure.js';
+import { Figure } from './Figure.js';
 
-interface FigureTwicPicsInterface extends BaseTypeParameter {
+export interface FigureTwicPicsInterface extends BaseTypeParameter {
   $options: {
     transform: string;
     step: number;
@@ -24,7 +24,7 @@ function normalizeSize(that:FigureTwicPics, prop:string):number {
  *
  * Manager lazyloading image sources.
  */
-export default class FigureTwicPics extends withType<typeof Figure, FigureTwicPicsInterface>(Figure) {
+export class FigureTwicPics extends withType<typeof Figure, FigureTwicPicsInterface>(Figure) {
   /**
    * Config.
    */
