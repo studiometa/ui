@@ -1,45 +1,27 @@
 import { Base, withFreezedOptions } from '@studiometa/js-toolkit';
+import type { BaseTypeParameter, BaseConfig, BaseInterface } from '@studiometa/js-toolkit';
 import { map, clamp, animate } from '@studiometa/js-toolkit/utils';
+import type { Keyframe } from '@studiometa/js-toolkit/utils';
 
-/**
- * @typedef {import('@studiometa/js-toolkit').BaseTypeParameter} BaseTypeParameter
- * @typedef {typeof AbstractScrollAnimation} AbstractScrollAnimationConstructor
- * @typedef {import('@studiometa/js-toolkit/utils/css/animate.js').Keyframe} Keyframe
- */
-
-/**
- * @typedef {AbstractScrollAnimation & {
- *   $options: {
- *     playRange: string,
- *     dampFactor: number,
- *     dampPrecision: number,
- *     from: Keyframe,
- *     to: Keyframe,
- *     keyframes: Keyframe[],
- *   },
- * }} ScrollAnimationChildInterface
- */
+export interface ScrollAnimationChildInterface extends BaseTypeParameter {
+  $options: {
+    playRange: string;
+    dampFactor: number;
+    dampPrecision: number;
+    from: Keyframe;
+    to: Keyframe;
+    keyframes: Keyframe[];
+  };
+}
 
 /**
  * AbstractScrollAnimation class.
- *
- * @todo add support for magic values in options to access key values:
- * - viewport size
- * - target size
- * - root element size
- * - etc.
- *
- * ```
- * data-option-to="{ x: 100%, y: innerWidth / 2 }"
- * ```
- * @template {BaseTypeParameter} [T=BaseTypeParameter]
  */
-export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
+export class AbstractScrollAnimation extends withFreezedOptions<typeof Base, ScrollAnimationChildInterface>(Base) implements BaseInterface {
   /**
    * Config.
-   * @type {import('@studiometa/js-toolkit').BaseConfig}
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'AbstractScrollAnimation',
     options: {
       playRange: {
@@ -74,21 +56,15 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
 
   /**
    * Get the target element for the animation.
-   *
-   * @returns {HTMLElement}
    */
-  get target() {
+  get target():HTMLElement {
     return this.$el;
   }
 
-  /**
-   * @type {ReturnType<animate>}
-   */
-  animation;
+  animation:ReturnType<typeof animate>;
 
   /**
-   * @this {ScrollAnimationChildInterface}
-   * @returns {void}
+   * Mounted hook.
    */
   mounted() {
     let { keyframes } = this.$options;
@@ -101,9 +77,6 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
     this.animation = animate(this.target, keyframes, { easing: this.$options.easing });
   }
 
-  /**
-   * @todo do not add unnecessary styles
-   */
   scrolledInView(props) {
     const progress = map(
       clamp(props.dampedProgress.y, this.$options.playRange[0], this.$options.playRange[1]),
@@ -118,11 +91,8 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
 
   /**
    * Render the animation for the given progress.
-   *
-   * @param   {number} progress
-   * @returns {void}
    */
-  render(progress) {
+  render(progress:number) {
     this.animation.progress(progress);
   }
 }

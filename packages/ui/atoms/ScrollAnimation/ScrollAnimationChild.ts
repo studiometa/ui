@@ -1,14 +1,15 @@
+import type { BaseConfig } from '@studiometa/js-toolkit';
 import { damp } from '@studiometa/js-toolkit/utils';
-import AbstractScrollAnimation from './AbstractScrollAnimation.js';
+import { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
 
 /**
  * ScrollAnimationChild class.
  */
-export default class ScrollAnimationChild extends AbstractScrollAnimation {
+export class ScrollAnimationChild extends AbstractScrollAnimation {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'ScrollAnimationChild',
     ...AbstractScrollAnimation.config,
   };

@@ -1,4 +1,6 @@
+import type { Base, BaseConfig, BaseConstructor, BaseTypeParameter } from '@studiometa/js-toolkit';
 import { ease } from '@studiometa/js-toolkit/utils';
+import type { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
 
 const regex = /ease([A-Z])/;
 const eases = Object.fromEntries(
@@ -8,24 +10,17 @@ const eases = Object.fromEntries(
 );
 
 /**
- * @typedef {import('./AbstractScrollAnimation.js').AbstractScrollAnimationConstructor} AbstractScrollAnimationConstructor
- */
-
-/**
  * Extend a `ScrollAnimation` component to use easings.
- * @template {AbstractScrollAnimationConstructor} T
- * @param   {T} ScrollAnimation A child class of the `AbstractScrollAnimation` class.
- * @returns {T}
  */
-export default function animationScrollWithEase(ScrollAnimation) {
-  // @ts-ignore
-  return class extends ScrollAnimation {
-    /* eslint-enable require-jsdoc */
-
+export function animationScrollWithEase<
+  S extends BaseConstructor<AbstractScrollAnimation> = BaseConstructor<AbstractScrollAnimation>,
+  T extends BaseTypeParameter = BaseTypeParameter
+>(ScrollAnimation: S) {
+  class AnimationScrollWithEase extends ScrollAnimation {
     /**
      * Config.
      */
-    static config = {
+    static config : BaseConfig = {
       ...ScrollAnimation.config,
       name: `${ScrollAnimation.config.name}WithEase`,
       options: {
@@ -39,11 +34,8 @@ export default function animationScrollWithEase(ScrollAnimation) {
 
     /**
      * Eases the progress value.
-     *
-     * @param   {number} progress
-     * @returns {void}
      */
-    render(progress) {
+    render(progress:number) {
       if (typeof eases[this.$options.ease] === 'function') {
         // eslint-disable-next-line no-param-reassign
         progress = eases[this.$options.ease](progress);
@@ -51,5 +43,13 @@ export default function animationScrollWithEase(ScrollAnimation) {
 
       super.render(progress);
     }
-  };
+  }
+
+  return AnimationScrollWithEase as BaseConstructor<AnimationScrollWithEase> &
+    Pick<typeof AnimationScrollWithEase, keyof typeof AnimationScrollWithEase> &
+    S &
+    BaseConstructor<AbstractScrollAnimation> &
+    Pick<typeof AbstractScrollAnimation, keyof typeof AbstractScrollAnimation> &
+    BaseConstructor<Base<T>> &
+    Pick<typeof Base, keyof typeof Base>;
 }
