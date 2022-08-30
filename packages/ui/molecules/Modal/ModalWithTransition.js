@@ -20,7 +20,7 @@ export default class ModalWithTransition extends Modal {
       styles: {
         type: Object,
         /**
-         * @return {ModalStylesOption}
+         * @returns {ModalStylesOption}
          */
         default: () => ({
           modal: {

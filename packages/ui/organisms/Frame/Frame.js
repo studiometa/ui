@@ -95,8 +95,8 @@ export default class Frame extends Base {
 
     return this.$children[name].filter((child) =>
       this.$children.Frame.every((frame) =>
-        frame.$children[name] ? !frame.$children[name].includes(child) : true
-      )
+        frame.$children[name] ? !frame.$children[name].includes(child) : true,
+      ),
     );
   }
 
@@ -158,7 +158,7 @@ export default class Frame extends Base {
         ...history.state,
         scroll: getScrollPosition(),
       },
-      ''
+      '',
     );
   }
 
@@ -268,7 +268,7 @@ export default class Frame extends Base {
     // Update content
     // @todo insert non existing FrameTarget as well
     this.directChildrenFrameTarget.map((target, index) =>
-      target.updateContent(newFrame.directChildrenFrameTarget[index])
+      target.updateContent(newFrame.directChildrenFrameTarget[index]),
     );
 
     // Push history

@@ -87,7 +87,7 @@ export default class AbstractPrefetch extends Base {
     const prefetcher = document.createElement('link');
     prefetcher.rel = 'prefetch';
     prefetcher.href = url.href;
-    document.head.appendChild(prefetcher);
+    document.head.append(prefetcher);
 
     AbstractPrefetch.prefetchedUrls.add(url.href);
 

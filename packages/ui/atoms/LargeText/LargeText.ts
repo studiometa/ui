@@ -18,8 +18,7 @@ export interface LargeTextInterface extends BaseTypeParameter {
  */
 export default class LargeText
   extends withMountWhenInView<typeof Base, LargeTextInterface>(Base, { rootMargin: '50%' })
-  implements BaseInterface
-{
+  implements BaseInterface {
   /**
    * Config.
    */

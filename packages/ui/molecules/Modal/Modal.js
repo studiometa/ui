@@ -20,9 +20,9 @@ const { trap, untrap, saveActiveElement } = focusTrap();
 
 /**
  * @typedef {Object} ModalOptions
- * @property {String}            move       A selector where to move the modal to.
- * @property {String}            autofocus  A selector for the element to set the focus to when the modal opens.
- * @property {Boolean}           scrollLock Lock or allow scroll in the documentElement.
+ * @property {string}            move       A selector where to move the modal to.
+ * @property {string}            autofocus  A selector for the element to set the focus to when the modal opens.
+ * @property {boolean}           scrollLock Lock or allow scroll in the documentElement.
  * @property {ModalStylesOption} styles     The styles for the different state of the modal.
  */
 
@@ -30,7 +30,7 @@ const { trap, untrap, saveActiveElement } = focusTrap();
  * @typedef {Object} ModalPrivateInterface
  * @property {ModalRefs} $refs
  * @property {ModalOptions} $options
- * @property {Boolean} isOpen
+ * @property {boolean} isOpen
  * @property {Comment} refModalPlaceholder
  * @property {HTMLElement} refModalParentBackup
  * @property {Function} refModalUnbindGetRefFilter
@@ -58,7 +58,7 @@ export default class Modal extends Base {
       styles: {
         type: Object,
         /**
-         * @return {ModalStylesOption}
+         * @returns {ModalStylesOption}
          */
         default: () => ({
           modal: {
@@ -71,7 +71,7 @@ export default class Modal extends Base {
         }),
       },
       /**
-       * @return {ModalScrollLockOption}
+       * @returns {ModalScrollLockOption}
        */
       scrollLock: {
         type: Boolean,
@@ -83,7 +83,7 @@ export default class Modal extends Base {
   /**
    * Open the modal on click on the `open` ref.
    *
-   * @return {Function} The component's `open` method.
+   * @returns {Function} The component's `open` method.
    */
   get onOpenClick() {
     return this.open;
@@ -92,7 +92,7 @@ export default class Modal extends Base {
   /**
    * Close the modal on click on the `close` ref.
    *
-   * @return {Function} The component's `close` method.
+   * @returns {Function} The component's `close` method.
    */
   get onCloseClick() {
     return this.close;
@@ -101,7 +101,7 @@ export default class Modal extends Base {
   /**
    * Close the modal on click on the `overlay` ref.
    *
-   * @return {Function} The component's `close` method.
+   * @returns {Function} The component's `close` method.
    */
   get onOverlayClick() {
     return this.close;
@@ -124,7 +124,7 @@ export default class Modal extends Base {
       this.__refModalParentBackup = this.$refs.modal.parentElement || this.$el;
       this.__refModalParentBackup.insertBefore(this.__refModalPlaceholder, this.$refs.modal);
 
-      target.appendChild(this.$refs.modal);
+      target.append(this.$refs.modal);
     }
   }
 
@@ -151,7 +151,7 @@ export default class Modal extends Base {
    * Unbind all events on destroy.
    *
    * @this {ModalInterface}
-   * @return {Modal} The Modal instance.
+   * @returns {Modal} The Modal instance.
    */
   destroyed() {
     this.close();
@@ -172,9 +172,9 @@ export default class Modal extends Base {
    * @this {ModalInterface}
    * @param  {Object}        options
    * @param  {KeyboardEvent} options.event  The original keyboard event
-   * @param  {Boolean}       options.isUp   Is it a keyup event?
-   * @param  {Boolean}       options.isDown Is it a keydown event?
-   * @param  {Boolean}       options.ESC    Is it the ESC key?
+   * @param  {boolean}       options.isUp   Is it a keyup event?
+   * @param  {boolean}       options.isDown Is it a keydown event?
+   * @param  {boolean}       options.ESC    Is it the ESC key?
    */
   keyed({ event, isUp, isDown, ESC }) {
     if (!this.isOpen) {
@@ -194,7 +194,7 @@ export default class Modal extends Base {
    * Open the modal.
    *
    * @this {ModalInterface}
-   * @return {Promise<void>} The Modal instance.
+   * @returns {Promise<void>} The Modal instance.
    */
   async open() {
     if (this.isOpen) {
@@ -223,9 +223,9 @@ export default class Modal extends Base {
               active,
               to: open,
             },
-            'keep'
-          )
-      )
+            'keep',
+          ),
+      ),
     ).then(() => {
       if (this.$options.autofocus && this.$refs.modal.querySelector(this.$options.autofocus)) {
         saveActiveElement();
@@ -241,7 +241,7 @@ export default class Modal extends Base {
    * Close the modal.
    *
    * @this {ModalInterface}
-   * @return {Promise<void>} The Modal instance.
+   * @returns {Promise<void>} The Modal instance.
    */
   async close() {
     if (!this.isOpen) {
@@ -271,9 +271,9 @@ export default class Modal extends Base {
               active,
               to: closed,
             },
-            'keep'
-          )
-      )
+            'keep',
+          ),
+      ),
     ).then(() => Promise.resolve());
   }
 }

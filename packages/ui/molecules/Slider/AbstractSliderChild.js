@@ -30,7 +30,7 @@ export default class AbstractSliderChild extends Base {
   mounted() {
     if (!(this.$parent instanceof Slider)) {
       throw new Error(
-        `The \`${this.$options.name}\` component must be a direct child of a \`Slider\` component.`
+        `The \`${this.$options.name}\` component must be a direct child of a \`Slider\` component.`,
       );
     }
 

@@ -110,7 +110,7 @@ export default class AbstractScrollAnimation extends withFreezedOptions(Base) {
       this.$options.playRange[0],
       this.$options.playRange[1],
       0,
-      1
+      1,
     );
 
     this.render(progress);

@@ -50,7 +50,6 @@ export default class TableOfContent extends Base {
    *
    * @todo Read anchor template from a ref?
    * @todo Better API to easily override the template function, maybe a `render` function?
-   *
    * @this    {TableOfContentInterface}
    * @returns {void}
    */
@@ -63,7 +62,7 @@ export default class TableOfContent extends Base {
       anchor.href = `#${section.id}`;
       anchor.innerHTML = section.textContent;
       anchor.dataset.component = 'TableOfContentAnchor';
-      this.$refs.list.appendChild(li);
+      this.$refs.list.append(li);
     });
   }
 }

@@ -5,7 +5,7 @@ import animationScrollWithEase from './animationScrollWithEase.js';
  * ScrollAnimationChild class.
  */
 export default class ScrollAnimationChildWithEase extends animationScrollWithEase(
-  ScrollAnimationChild
+  ScrollAnimationChild,
 ) {
   /**
    * Config.

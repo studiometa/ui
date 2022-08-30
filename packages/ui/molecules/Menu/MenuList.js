@@ -166,7 +166,7 @@ export default class MenuList extends Transition {
    */
   __updateTabIndexes(mode = 'open') {
     const focusableItems = Array.from(this.$el.querySelectorAll(FOCUSABLE_ELEMENTS)).filter(
-      (item) => this.__filterFocusableItems(/** @type {HTMLElement} */ (item))
+      (item) => this.__filterFocusableItems(/** @type {HTMLElement} */ (item)),
     );
 
     focusableItems.forEach((item) => {

@@ -130,7 +130,7 @@ export default class Slider extends Base {
    * @returns {SliderState}
    */
   get lastState() {
-    return this.states[this.states.length - 1];
+    return this.states.at(-1);
   }
 
   /**
@@ -231,7 +231,7 @@ export default class Slider extends Base {
       if (mode === 'center' && isDev) {
         console.warn(
           `[${this.$id}]`,
-          'The `center` mode is not yet compatible with the `contain` mode.'
+          'The `center` mode is not yet compatible with the `contain` mode.',
         );
       }
     }
@@ -387,16 +387,14 @@ export default class Slider extends Base {
     let finalX = clamp(
       inertiaFinalValue(this.__distanceX, props.delta.x * this.$options.dropSensitivity),
       0,
-      this.getStateValueByMode(this.lastState.x)
+      this.getStateValueByMode(this.lastState.x),
     );
 
     const absoluteDifferencesBetweenDistanceAndState = this.states.map((state) =>
-      Math.abs(finalX - this.getStateValueByMode(state.x))
+      Math.abs(finalX - this.getStateValueByMode(state.x)),
     );
     const minimumDifference = Math.min(...absoluteDifferencesBetweenDistanceAndState);
-    const closestIndex = absoluteDifferencesBetweenDistanceAndState.findIndex(
-      (number) => number === minimumDifference
-    );
+    const closestIndex = absoluteDifferencesBetweenDistanceAndState.indexOf(minimumDifference);
 
     if (this.$options.fitBounds) {
       this.goTo(closestIndex, { withInstantMove: false });
@@ -486,12 +484,13 @@ export default class Slider extends Base {
    */
   getStateWhereItemWillBeInvisible(item, { reversed = false } = {}) {
     const visibleStates = this.states.filter((state) =>
-      item.willBeVisible(this.getStateValueByMode(state.x))
+      item.willBeVisible(this.getStateValueByMode(state.x)),
     );
     const firstVisibleState = visibleStates[0];
-    const lastVisibleState = visibleStates[visibleStates.length - 1];
+    const lastVisibleState = visibleStates.at(-1);
     const firstVisibleStateIndex = this.states.findIndex(
-      (state) => this.getStateValueByMode(state.x) === this.getStateValueByMode(firstVisibleState.x)
+      (state) =>
+        this.getStateValueByMode(state.x) === this.getStateValueByMode(firstVisibleState.x),
     );
     const lastVisibleStateIndex = this.states.findIndex((state) => state.x === lastVisibleState.x);
 
@@ -520,7 +519,7 @@ export default class Slider extends Base {
    */
   getInvisibleItems(target) {
     return this.$children.SliderItem.filter(
-      (item) => !item.isVisible && !item.willBeVisible(target)
+      (item) => !item.isVisible && !item.willBeVisible(target),
     );
   }
 }

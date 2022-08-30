@@ -4,7 +4,7 @@ const regex = /ease([A-Z])/;
 const eases = Object.fromEntries(
   Object.entries(ease)
     .filter(([name]) => name.startsWith('ease'))
-    .map(([name, value]) => [name.replace(regex, (match, $1) => $1.toLowerCase()), value])
+    .map(([name, value]) => [name.replace(regex, (match, $1) => $1.toLowerCase()), value]),
 );
 
 /**

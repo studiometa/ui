@@ -65,15 +65,15 @@ export default class FrameTarget extends Transition {
         await Promise.all(
           Array.from(this.$el.children)
             .filter((child) =>
-              from.split(' ').every((className) => child.classList.contains(className))
+              from.split(' ').every((className) => child.classList.contains(className)),
             )
             .map((child) => {
               return transition(
                 /** @type {HTMLElement} */ (child),
                 transitionStyles,
-                enterKeep && 'keep'
+                enterKeep && 'keep',
               );
-            })
+            }),
         );
         break;
       case 'replace':
@@ -102,7 +102,7 @@ export default class FrameTarget extends Transition {
         });
         this.$el.insertAdjacentHTML(
           FrameTarget.__INSERT_MODES[this.$options.mode],
-          newTarget.$el.innerHTML
+          newTarget.$el.innerHTML,
         );
         break;
       case 'replace':

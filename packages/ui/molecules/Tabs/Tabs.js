@@ -9,7 +9,7 @@ import { transition } from '@studiometa/js-toolkit/utils';
  * @typedef {Object} TabItem
  * @property {HTMLElement} btn
  * @property {HTMLElement} content
- * @property {Boolean} isEnabled
+ * @property {boolean} isEnabled
  */
 
 /**
@@ -54,7 +54,7 @@ export default class Tabs extends Base {
       styles: {
         type: Object,
         /**
-         * @return {TabsStylesOption}
+         * @returns {TabsStylesOption}
          */
         default: () => ({
           content: {
@@ -74,7 +74,7 @@ export default class Tabs extends Base {
   /**
    * Initialize the component's behaviours.
    * @this {TabsInterface}
-   * @return {void}
+   * @returns {void}
    */
   mounted() {
     this.items = this.$refs.btn.map((btn, index) => {
@@ -99,7 +99,7 @@ export default class Tabs extends Base {
    * @this {TabsInterface}
    * @param  {Event}  event The click event object.
    * @param  {number} index The index of the clicked button.
-   * @return {void}
+   * @returns {void}
    */
   onBtnClick(event, index) {
     this.items.forEach((item, i) => {
@@ -116,7 +116,7 @@ export default class Tabs extends Base {
    *
    * @this {TabsInterface}
    * @param  {TabItem}                item The item to enable.
-   * @return {Promise<TabsInterface>}      Tabs instance.
+   * @returns {Promise<TabsInterface>}      Tabs instance.
    */
   async enableItem(item) {
     if (!item || item.isEnabled) {
@@ -139,7 +139,7 @@ export default class Tabs extends Base {
           active: btnStyles.active,
           to: btnStyles.open,
         },
-        'keep'
+        'keep',
       ),
       transition(
         content,
@@ -148,7 +148,7 @@ export default class Tabs extends Base {
           active: contentStyles.active,
           to: contentStyles.open,
         },
-        'keep'
+        'keep',
       ),
     ]).then(() => Promise.resolve(this));
   }
@@ -158,7 +158,7 @@ export default class Tabs extends Base {
    *
    * @this {TabsInterface}
    * @param  {TabItem}                item The item to disable.
-   * @return {Promise<TabsInterface>}      The Tabs instance.
+   * @returns {Promise<TabsInterface>}      The Tabs instance.
    */
   async disableItem(item) {
     if (!item || !item.isEnabled) {
@@ -181,7 +181,7 @@ export default class Tabs extends Base {
           active: btnStyles.active,
           to: btnStyles.closed,
         },
-        'keep'
+        'keep',
       ),
       transition(
         content,
@@ -190,7 +190,7 @@ export default class Tabs extends Base {
           active: contentStyles.active,
           to: contentStyles.closed,
         },
-        'keep'
+        'keep',
       ),
     ]).then(() => Promise.resolve(this));
   }

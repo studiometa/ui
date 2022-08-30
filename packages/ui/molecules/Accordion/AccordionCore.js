@@ -13,7 +13,7 @@ import { Base } from '@studiometa/js-toolkit';
 
 /**
  * @typedef {Object} AccordionOptions
- * @property {Boolean} autoclose
+ * @property {boolean} autoclose
  * @property {AccordionItemOptions} item
  */
 
@@ -48,7 +48,7 @@ export default class Accordion extends Base {
       item: {
         type: Object,
         /**
-         * @return {Partial<AccordionItemOptions>}
+         * @returns {Partial<AccordionItemOptions>}
          */
         default: () => ({}),
       },
@@ -58,7 +58,7 @@ export default class Accordion extends Base {
   /**
    * @this {AccordionInterface}
    * @param {number} index
-   * @return {void}
+   * @returns {void}
    */
   onAccordionItemOpen(index) {
     const accordionItem = this.$children.AccordionItem[index];
@@ -71,7 +71,7 @@ export default class Accordion extends Base {
   /**
    * @this {AccordionInterface}
    * @param {number} index
-   * @return {void}
+   * @returns {void}
    */
   onAccordionItemClose(index) {
     const accordionItem = this.$children.AccordionItem[index];

@@ -17,9 +17,9 @@ import Accordion from './AccordionCore.js';
 
 /**
  * @typedef {Object} StylesOption
- * @property {String|Partial<CSSStyleDeclaration>} open
- * @property {String|Partial<CSSStyleDeclaration>} active
- * @property {String|Partial<CSSStyleDeclaration>} closed
+ * @property {string | Partial<CSSStyleDeclaration>} open
+ * @property {string | Partial<CSSStyleDeclaration>} active
+ * @property {string | Partial<CSSStyleDeclaration>} closed
  */
 
 /**
@@ -29,7 +29,7 @@ import Accordion from './AccordionCore.js';
 
 /**
  * @typedef {Object} AccordionItemOptions
- * @property {Boolean} isOpen
+ * @property {boolean} isOpen
  * @property {AccordionItemStylesOption} styles
  */
 
@@ -50,7 +50,7 @@ import Accordion from './AccordionCore.js';
 export default class AccordionItem extends Base {
   /**
    * AccordionItem config
-   * @return {Object}
+   * @returns {Object}
    */
   static config = {
     name: 'AccordionItem',
@@ -61,7 +61,7 @@ export default class AccordionItem extends Base {
       styles: {
         type: Object,
         /**
-         * @return {AccordionItemStylesOption}
+         * @returns {AccordionItemStylesOption}
          */
         default: () => ({
           container: {
@@ -135,7 +135,7 @@ export default class AccordionItem extends Base {
 
   /**
    * Get the content ID.
-   * @return {String}
+   * @returns {string}
    */
   get contentId() {
     return `content-${this.$id}`;
@@ -145,7 +145,7 @@ export default class AccordionItem extends Base {
    * Update the refs' attributes according to the given type.
    *
    * @this {AccordionItemInterface}
-   * @param  {Boolean} isOpen The state of the item.
+   * @param  {boolean} isOpen The state of the item.
    */
   updateAttributes(isOpen) {
     this.$refs.container.style.visibility = isOpen ? '' : 'invisible';
@@ -198,8 +198,8 @@ export default class AccordionItem extends Base {
               active,
               to: open,
             },
-            'keep'
-          )
+            'keep',
+          ),
         ),
     ]);
   }
@@ -249,8 +249,8 @@ export default class AccordionItem extends Base {
               active,
               to: closed,
             },
-            'keep'
-          )
+            'keep',
+          ),
         ),
     ]);
   }

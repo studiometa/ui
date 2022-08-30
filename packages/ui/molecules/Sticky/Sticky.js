@@ -55,7 +55,7 @@ export default class Sticky extends Base {
 
   /**
    * Is the component visible?
-   * @type {Boolean}
+   * @type {boolean}
    */
   isVisible = true;
 
@@ -72,7 +72,7 @@ export default class Sticky extends Base {
 
   /**
    * Get instances as array.
-   * @return {Array<StickyInterface>}
+   * @returns {Array<StickyInterface>}
    */
   get instances() {
     return Array.from(Sticky.instances);
@@ -169,12 +169,12 @@ export default class Sticky extends Base {
    */
   setSentinelSize() {
     const { instances } = this;
-    const index = instances.findIndex((instance) => instance === this);
+    const index = instances.indexOf(this);
     const height = instances
       .slice(0, index)
       .filter(
         // Test each instance sticky context against the current element
-        (instance) => this.closestRelativeElement(instance.$el).contains(this.$el)
+        (instance) => this.closestRelativeElement(instance.$el).contains(this.$el),
       )
       .reduce((acc, instance) => acc + instance.$el.offsetHeight, 0);
 
@@ -199,7 +199,7 @@ export default class Sticky extends Base {
     const { instances } = this;
 
     // eslint-disable-next-line no-param-reassign
-    index = index ?? instances.findIndex((instance) => instance === this);
+    index = index ?? instances.indexOf(this);
 
     this.y = instances
       .slice(0, index)
@@ -208,7 +208,7 @@ export default class Sticky extends Base {
         (y, instance) => {
           return y - instance.$refs.inner.offsetHeight;
         },
-        this.isVisible ? 0 : this.$refs.inner.offsetHeight * -1
+        this.isVisible ? 0 : this.$refs.inner.offsetHeight * -1,
       );
   }
 

@@ -15,7 +15,7 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
 
   /**
    * Wether the SliderItem is visible or not.
-   * @type {Boolean}
+   * @type {boolean}
    */
   isVisible = false;
 

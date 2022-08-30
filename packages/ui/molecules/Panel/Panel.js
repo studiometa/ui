@@ -90,7 +90,7 @@ export default class Panel extends Modal {
           transform: 'none',
         },
       },
-      'keep'
+      'keep',
     );
     transition(this.$refs.overlay, {
       from: 'opacity-0',
@@ -124,14 +124,14 @@ export default class Panel extends Modal {
             transform: this.containerOffset,
           },
         },
-        'keep'
+        'keep',
       ),
       transition(
         this.$refs.overlay,
         {
           to: 'opacity-0',
         },
-        'keep'
+        'keep',
       ),
     ]);
 
