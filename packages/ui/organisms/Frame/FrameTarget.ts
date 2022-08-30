@@ -1,14 +1,25 @@
+import { withType } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseTypeParameter } from '@studiometa/js-toolkit';
 import { transition } from '@studiometa/js-toolkit/utils';
 import { Transition } from '../../primitives/index.js';
+
+export interface FrameTargetInterface extends BaseTypeParameter {
+  $options: {
+    mode: 'replace' | 'prepend' | 'append';
+    id: string;
+  };
+}
 
 /**
  * FrameTarget class.
  */
-export default class FrameTarget extends Transition {
+export class FrameTarget extends withType<typeof Transition, FrameTargetInterface>(
+  Transition,
+) {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     ...Transition.config,
     name: 'FrameTarget',
     log: true,
@@ -28,11 +39,12 @@ export default class FrameTarget extends Transition {
   static __INSERT_MODES = {
     prepend: 'afterbegin',
     append: 'beforeend',
-  };
+  } as const;
 
   /**
    * Override options.
    */
+  // @ts-ignore
   get $options() {
     const options = super.$options;
 
@@ -43,17 +55,15 @@ export default class FrameTarget extends Transition {
 
   /**
    * Get uniq ID.
-   * @returns {string}
    */
-  get id() {
+  get id(): string {
     return this.$options.id ?? this.$el.id;
   }
 
   /**
    * Enter transition.
-   * @returns {Promise<void>}
    */
-  async enter() {
+  async enter(): Promise<void> {
     this.$log('enter');
 
     const { enterFrom: from, enterActive: active, enterTo: to, leaveTo, enterKeep } = this.$options;
@@ -67,13 +77,9 @@ export default class FrameTarget extends Transition {
             .filter((child) =>
               from.split(' ').every((className) => child.classList.contains(className)),
             )
-            .map((child) => {
-              return transition(
-                /** @type {HTMLElement} */ (child),
-                transitionStyles,
-                enterKeep && 'keep',
-              );
-            }),
+            .map((child) =>
+              transition(child as HTMLElement, transitionStyles, enterKeep && 'keep'),
+            ),
         );
         break;
       case 'replace':
@@ -89,7 +95,7 @@ export default class FrameTarget extends Transition {
    * @param   {FrameTarget} newTarget The instance of the new target.
    * @returns {void}
    */
-  updateContent(newTarget) {
+  updateContent(newTarget:FrameTarget) {
     // @todo manage 'prepend' and 'append' transition
     // only the new content should have the transition
     // - add the leaveTo and enterFrom classes to all `newTarget.children`

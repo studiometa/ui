@@ -1,8 +1,8 @@
 import { Base, isDirectChild, getDirectChildren } from '@studiometa/js-toolkit';
 import { nextFrame, historyPush } from '@studiometa/js-toolkit/utils';
-import FrameAnchor from './FrameAnchor.js';
-import FrameForm from './FrameForm.js';
-import FrameTarget from './FrameTarget.js';
+import {FrameAnchor} from './FrameAnchor.js';
+import {FrameForm} from './FrameForm.js';
+import {FrameTarget} from './FrameTarget.js';
 
 /**
  * Get the scroll position.
@@ -42,7 +42,7 @@ const cache = new Map();
 /**
  * Class.
  */
-export default class Frame extends Base {
+export class Frame extends Base {
   /**
    * Config.
    */
