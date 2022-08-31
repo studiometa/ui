@@ -316,9 +316,10 @@ export default class Slider extends Base {
    *
    * @this  {SliderInterface}
    * @param {number} index
+   * @param {{ withInstantMove?: boolean }} [options]
    * @returns {void}
    */
-  goTo(index) {
+  goTo(index, { withInstantMove = true } = {}) {
     if (index < 0 || index > this.indexMax) {
       throw new Error('Index out of bound.');
     }
@@ -330,7 +331,7 @@ export default class Slider extends Base {
 
     itemsToMove.forEach((item) => {
       // Better perfs when going fast through the slides
-      if (currentState !== state) {
+      if (currentState !== state && withInstantMove) {
         item.moveInstantly(currentState);
       }
       nextFrame(() => item.move(state));
@@ -397,7 +398,7 @@ export default class Slider extends Base {
     );
 
     if (this.$options.fitBounds) {
-      this.goTo(closestIndex);
+      this.goTo(closestIndex, { withInstantMove: false });
     } else {
       if (this.$options.contain) {
         finalX = Math.min(this.containMinState, finalX);
