@@ -40,6 +40,7 @@ module.exports = {
           'bg-soft': 'var(--vp-c-bg-soft)',
           'code-block-bg': 'var(--vp-code-block-bg)',
           'c-indigo': 'var(--vp-c-indigo)',
+          'c-divider': 'var(--vp-c-divider)',
           'c-divider-light': 'var(--vp-c-divider-light)',
         },
         brand: {
