@@ -316,7 +316,7 @@ export default class Slider extends Base {
    *
    * @this  {SliderInterface}
    * @param {number} index
-   * @param {{ withInstantMove?: true }} [options]
+   * @param {{ withInstantMove?: boolean }} [options]
    * @returns {void}
    */
   goTo(index, { withInstantMove = true } = {}) {
