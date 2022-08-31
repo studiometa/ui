@@ -1,58 +1,35 @@
 import deepmerge from 'deepmerge';
-import { Base } from '@studiometa/js-toolkit';
+import { Base, BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseTypeParameter } from '@studiometa/js-toolkit';
 import { transition } from '@studiometa/js-toolkit/utils';
-import Accordion from './AccordionCore.js';
+import { AccordionCore as Accordion } from './AccordionCore.js';
 
-/**
- * @typedef {import('@studiometa/js-toolkit/Base').BaseOptions} BaseOptions
- * @typedef {import('./AccordionCore.js').AccordionInterface} AccordionInterface
- */
+type AccordionItemStates = Partial<
+  Record<'open' | 'active' | 'closed', string | Partial<CSSStyleDeclaration>>
+>;
 
-/**
- * @typedef {Object} AccordionItemRefs
- * @property {HTMLElement} btn
- * @property {HTMLElement} content
- * @property {HTMLElement} container
- */
-
-/**
- * @typedef {Object} StylesOption
- * @property {string | Partial<CSSStyleDeclaration>} open
- * @property {string | Partial<CSSStyleDeclaration>} active
- * @property {string | Partial<CSSStyleDeclaration>} closed
- */
-
-/**
- * @typedef {Partial<Record<'open'|'active'|'closed', string|Partial<CSSStyleDeclaration>>>} AccordionItemStates
- * @typedef {Partial<Record<keyof AccordionItemRefs, AccordionItemStates>>} AccordionItemStylesOption
- */
-
-/**
- * @typedef {Object} AccordionItemOptions
- * @property {boolean} isOpen
- * @property {AccordionItemStylesOption} styles
- */
-
-/**
- * @typedef {Object} AccordionItemPrivateInterface
- * @property {AccordionItemOptions} $options
- * @property {AccordionItemRefs} $refs
- * @property {Accordion & AccordionInterface} $parent
- */
-
-/**
- * @typedef {AccordionItem & AccordionItemPrivateInterface} AccordionItemInterface
- */
+export interface AccordionItemInterface extends BaseTypeParameter {
+  $refs: {
+    btn: HTMLElement;
+    content: HTMLElement;
+    container: HTMLElement;
+  };
+  $options: {
+    isOpen: boolean;
+    styles: Partial<Record<keyof AccordionItemInterface['$refs'], AccordionItemStates>>;
+  };
+}
 
 /**
  * AccordionItem class.
  */
-export default class AccordionItem extends Base {
+export class AccordionItem<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
+  T & AccordionItemInterface
+> {
   /**
-   * AccordionItem config
-   * @returns {Object}
+   * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'AccordionItem',
     refs: ['btn', 'content', 'container'],
     emits: ['open', 'close'],
@@ -60,10 +37,7 @@ export default class AccordionItem extends Base {
       isOpen: Boolean,
       styles: {
         type: Object,
-        /**
-         * @returns {AccordionItemStylesOption}
-         */
-        default: () => ({
+        default: (): AccordionItemInterface['$options']['styles'] => ({
           container: {
             open: '',
             active: '',
@@ -77,16 +51,18 @@ export default class AccordionItem extends Base {
 
   /**
    * Add aria-attributes on mounted.
-   * @this {AccordionItemInterface}
    */
   mounted() {
     if (this.$parent && this.$parent instanceof Accordion && this.$parent.$options.item) {
       Object.entries(this.$parent.$options.item).forEach(([key, value]) => {
         if (key in this.$options) {
-          const type = AccordionItem.config.options[key].type || AccordionItem.config.options[key];
+          // @ts-ignore
+          const type = AccordionItem.config.options[key].type ?? AccordionItem.config.options[key];
           if (type === Array || type === Object) {
-            this.$options[key] = deepmerge(this.$options[key], /** @type {any} */ (value));
+            // @ts-ignore
+            this.$options[key] = deepmerge(this.$options[key], /** @type {any} */ value);
           } else {
+            // @ts-ignore
             this.$options[key] = value;
           }
         }
@@ -102,19 +78,19 @@ export default class AccordionItem extends Base {
     this.updateAttributes(isOpen);
 
     // Update refs styles on mount
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { container, ...otherStyles } = this.$options.styles;
-    /** @type {AccordionItemRefs} */
-    const refs = this.$refs;
+
+    const { $refs } = this;
     Object.entries(otherStyles)
-      .filter(([refName]) => refs[refName])
+      .filter(([refName]) => $refs[refName])
       .forEach(([refName, { open, closed } = { open: '', closed: '' }]) => {
-        transition(refs[refName], { to: isOpen ? open : closed }, 'keep');
+        transition($refs[refName] as HTMLElement, { to: isOpen ? open : closed }, 'keep');
       });
   }
 
   /**
    * Remove styles on destroy.
-   * @this {AccordionItemInterface}
    */
   destroyed() {
     this.$refs.container.style.visibility = '';
@@ -123,7 +99,6 @@ export default class AccordionItem extends Base {
 
   /**
    * Handler for the click event on the `btn` ref.
-   * @this {AccordionItemInterface}
    */
   onBtnClick() {
     if (this.$options.isOpen) {
@@ -135,19 +110,15 @@ export default class AccordionItem extends Base {
 
   /**
    * Get the content ID.
-   * @returns {string}
    */
-  get contentId() {
+  get contentId():string {
     return `content-${this.$id}`;
   }
 
   /**
    * Update the refs' attributes according to the given type.
-   *
-   * @this {AccordionItemInterface}
-   * @param  {boolean} isOpen The state of the item.
    */
-  updateAttributes(isOpen) {
+  updateAttributes(isOpen:boolean) {
     this.$refs.container.style.visibility = isOpen ? '' : 'invisible';
     this.$refs.container.style.height = isOpen ? '' : '0';
     this.$refs.content.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
@@ -156,7 +127,6 @@ export default class AccordionItem extends Base {
 
   /**
    * Open an item.
-   * @this {AccordionItemInterface}
    */
   async open() {
     if (this.$options.isOpen) {
@@ -172,27 +142,26 @@ export default class AccordionItem extends Base {
     this.$refs.container.style.visibility = '';
     const { container, ...otherStyles } = this.$options.styles;
 
-    /** @type {AccordionItemRefs} */
-    const refs = this.$refs;
+    const { $refs } = this;
 
     await Promise.all([
-      transition(refs.container, {
+      transition($refs.container, {
         from: { height: '0' },
         active: container.active,
-        to: { height: `${refs.content.offsetHeight}px` },
+        to: { height: `${$refs.content.offsetHeight}px` },
       }).then(() => {
         // Remove style only if the item has not been closed before the end
         if (this.$options.isOpen) {
-          refs.content.style.position = '';
+          $refs.content.style.position = '';
         }
 
         return Promise.resolve();
       }),
       ...Object.entries(otherStyles)
-        .filter(([refName]) => refs[refName])
+        .filter(([refName]) => $refs[refName])
         .map(([refName, { open, active, closed } = { open: '', active: '', closed: '' }]) =>
           transition(
-            refs[refName],
+            $refs[refName] as HTMLElement,
             {
               from: closed,
               active,
@@ -206,7 +175,6 @@ export default class AccordionItem extends Base {
 
   /**
    * Close an item.
-   * @this {AccordionItemInterface}
    */
   async close() {
     if (!this.$options.isOpen) {
@@ -243,7 +211,7 @@ export default class AccordionItem extends Base {
         .filter(([refName]) => refs[refName])
         .map(([refName, { open, active, closed } = { open: '', active: '', closed: '' }]) =>
           transition(
-            refs[refName],
+            refs[refName] as HTMLElement,
             {
               from: open,
               active,
