@@ -1,43 +1,39 @@
-import { Base, withDrag } from '@studiometa/js-toolkit';
+import { Base, DragServiceProps, withDrag } from '@studiometa/js-toolkit';
+import type { BaseConfig } from '@studiometa/js-toolkit';
 import { matrix } from '@studiometa/js-toolkit/utils';
 
 /**
  * Draggable class.
  */
-export default class Draggable extends withDrag(Base) {
+export class Draggable extends withDrag(Base) {
   static config = {
     name: 'DraggableElement',
   };
 
   /**
    * Horizontal transformation.
-   * @type {number}
    */
   x = 0;
 
   /**
    * Vertical transformation.
-   * @type {number}
    */
   y = 0;
 
   /**
    * Horizontal position origin.
-   * @type {number}
    */
   originX = 0;
 
   /**
    * Vertical position origin.
-   * @type {number}
    */
   originY = 0;
 
   /**
    * Drag service hook.
-   * @param {import('@studiometa/js-toolkit/services/drag.js').DragServiceProps} props
    */
-  dragged(props) {
+  dragged(props:DragServiceProps) {
     if (props.mode === 'start') {
       this.originX = this.x;
       this.originY = this.y;
