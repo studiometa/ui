@@ -1,8 +1,8 @@
 import { withMountWhenInView } from '@studiometa/js-toolkit';
-import type { BaseConfig, BaseTypeParameter } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { Transition } from '../../primitives/index.js';
 
-export interface FigureInterface extends BaseTypeParameter {
+export interface FigureProps extends BaseProps {
   $refs: {
     img: HTMLImageElement;
   };
@@ -14,9 +14,9 @@ export interface FigureInterface extends BaseTypeParameter {
 /**
  * Figure class.
  */
-export class Figure extends withMountWhenInView<typeof Transition, FigureInterface>(Transition, {
+export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(Transition, {
   threshold: [0, 1],
-}) {
+})<T & FigureProps> {
   /**
    * Config.
    */
@@ -32,9 +32,6 @@ export class Figure extends withMountWhenInView<typeof Transition, FigureInterfa
 
   /**
    * Get the transition target.
-   *
-   * @this {FigureInterface}
-   * @returns {HTMLImageElement}
    */
   get target() {
     return this.$refs.img;
@@ -42,9 +39,6 @@ export class Figure extends withMountWhenInView<typeof Transition, FigureInterfa
 
   /**
    * Get the image source.
-   *
-   * @this {FigureInterface}
-   * @returns {string}
    */
   get src() {
     return this.$refs.img.src;
@@ -52,18 +46,13 @@ export class Figure extends withMountWhenInView<typeof Transition, FigureInterfa
 
   /**
    * Set the image source.
-   *
-   * @this {FigureInterface}
-   * @param   {string} value
-   * @returns {void}
    */
-  set src(value) {
+  set src(value:string) {
     this.$refs.img.src = value;
   }
 
   /**
    * Load on mount.
-   * @this {FigureInterface}
    */
   mounted() {
     const { img } = this.$refs;
@@ -80,11 +69,15 @@ export class Figure extends withMountWhenInView<typeof Transition, FigureInterfa
 
     if (this.$options.lazy && src && src !== this.src) {
       let tempImg = new Image();
-      tempImg.addEventListener('load', () => {
-        this.enter();
-        this.src = src;
-        tempImg = null;
-      }, { once: true });
+      tempImg.addEventListener(
+        'load',
+        async () => {
+          this.src = src;
+          tempImg = null;
+          this.enter();
+        },
+        { once: true },
+      );
       tempImg.src = src;
     }
   }

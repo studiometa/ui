@@ -1,15 +1,15 @@
 import { Base } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 
 /**
  * MenuBtn class.
  */
-export default class MenuBtn extends Base {
+export class MenuBtn<T extends BaseProps = BaseProps> extends Base<T> {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'MenuBtn',
-    debug: true,
   };
 
   /**

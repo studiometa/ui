@@ -1,8 +1,8 @@
 import { withMountWhenInView, useScroll, ScrollServiceProps } from '@studiometa/js-toolkit';
-import type { BaseTypeParameter, BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { Transition } from '../../primitives/index.js';
 
-export interface ScrollRevealInterface extends BaseTypeParameter {
+export interface ScrollRevealProps extends BaseProps {
   $refs: {
     target?: HTMLElement;
   };
@@ -14,14 +14,13 @@ export interface ScrollRevealInterface extends BaseTypeParameter {
 /**
  * ScrollReveal class.
  */
-export class ScrollReveal extends withMountWhenInView<
-  typeof Transition,
-  ScrollRevealInterface
->(Transition) {
+export class ScrollReveal<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(
+  Transition,
+)<T & ScrollRevealProps> {
   /**
    * Config.
    */
-  static config:BaseConfig = {
+  static config: BaseConfig = {
     ...Transition.config,
     name: 'ScrollReveal',
     refs: ['target'],
@@ -47,7 +46,7 @@ export class ScrollReveal extends withMountWhenInView<
   /**
    * Get the transition target.
    */
-  get target():HTMLElement {
+  get target(): HTMLElement {
     return this.$refs.target ?? this.$el;
   }
 

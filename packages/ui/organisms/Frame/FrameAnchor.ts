@@ -1,16 +1,14 @@
 import { Base } from '@studiometa/js-toolkit';
-import type { BaseConfig, BaseTypeParameter } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 
-export interface FrameAnchorInterface extends BaseTypeParameter {
+export interface FrameAnchorProps extends BaseProps {
   $el: HTMLAnchorElement;
 }
 
 /**
  * FrameAnchor class.
  */
-export class FrameAnchor<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
-  FrameAnchorInterface & T
-> {
+export class FrameAnchor<T extends BaseProps = BaseProps> extends Base<T & FrameAnchorProps> {
   /**
    * Config.
    */
@@ -21,7 +19,7 @@ export class FrameAnchor<T extends BaseTypeParameter = BaseTypeParameter> extend
   /**
    * Get the URL.
    */
-  get href():string {
+  get href(): string {
     return this.$el.href;
   }
 }

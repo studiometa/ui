@@ -1,7 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
-import type { BaseTypeParameter, BaseInterface } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseInterface } from '@studiometa/js-toolkit';
 
-export interface LazyIncludeInterface extends BaseTypeParameter {
+export interface LazyIncludeProps extends BaseProps {
   $refs: {
     loading: HTMLElement;
     error: HTMLElement;
@@ -15,8 +15,8 @@ export interface LazyIncludeInterface extends BaseTypeParameter {
 /**
  * LazyInclude class.
  */
-export class LazyInclude<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
-  T & LazyIncludeInterface
+export class LazyInclude<T extends BaseProps = BaseProps> extends Base<
+  T & LazyIncludeProps
 > implements BaseInterface {
   /**
    * Config.

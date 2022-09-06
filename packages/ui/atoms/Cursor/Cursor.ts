@@ -1,8 +1,8 @@
 import { Base } from '@studiometa/js-toolkit';
-import type { BaseConfig, PointerServiceProps, BaseTypeParameter } from '@studiometa/js-toolkit';
+import type { BaseConfig, PointerServiceProps, BaseProps } from '@studiometa/js-toolkit';
 import { damp, matrix } from '@studiometa/js-toolkit/utils';
 
-export interface CursorInterface extends BaseTypeParameter {
+export interface CursorProps extends BaseProps {
   $options: {
     growSelectors: string;
     shrinkSelectors: string;
@@ -18,8 +18,8 @@ export interface CursorInterface extends BaseTypeParameter {
 /**
  * Cursor class.
  */
-export class Cursor<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
-  CursorInterface & T
+export class Cursor<T extends BaseProps = BaseProps> extends Base<
+  CursorProps & T
 > {
   static config: BaseConfig = {
     name: 'Cursor',

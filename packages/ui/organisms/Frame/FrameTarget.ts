@@ -1,21 +1,19 @@
-import { withType } from '@studiometa/js-toolkit';
-import type { BaseConfig, BaseTypeParameter } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { transition } from '@studiometa/js-toolkit/utils';
 import { Transition } from '../../primitives/index.js';
 
-export interface FrameTargetInterface extends BaseTypeParameter {
+export interface FrameTargetProps extends BaseProps {
   $options: {
     mode: 'replace' | 'prepend' | 'append';
     id: string;
+    leaveKeep: true;
   };
 }
 
 /**
  * FrameTarget class.
  */
-export class FrameTarget extends withType<typeof Transition, FrameTargetInterface>(
-  Transition,
-) {
+export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T & FrameTargetProps> {
   /**
    * Config.
    */
@@ -63,7 +61,7 @@ export class FrameTarget extends withType<typeof Transition, FrameTargetInterfac
   /**
    * Enter transition.
    */
-  async enter(): Promise<void> {
+  async enter() {
     this.$log('enter');
 
     const { enterFrom: from, enterActive: active, enterTo: to, leaveTo, enterKeep } = this.$options;

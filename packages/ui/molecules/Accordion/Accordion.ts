@@ -1,13 +1,13 @@
-import type { BaseTypeParameter } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { AccordionCore } from './AccordionCore.js';
-import type { AccordionInterface } from './AccordionCore.js';
+import type { AccordionProps } from './AccordionCore.js';
 import { AccordionItem } from './AccordionItem.js';
 
 /**
  * Accordion class.
  */
-export class Accordion<T extends BaseTypeParameter = BaseTypeParameter> extends AccordionCore<T & AccordionInterface> {
-  static config = {
+export class Accordion<T extends BaseProps = BaseProps> extends AccordionCore<T & AccordionProps> {
+  static config: BaseConfig = {
     ...AccordionCore.config,
     components: {
       AccordionItem,

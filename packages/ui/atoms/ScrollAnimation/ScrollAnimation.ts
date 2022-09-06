@@ -1,12 +1,21 @@
 import { withScrolledInView } from '@studiometa/js-toolkit';
-import type { BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
-import type { ScrollAnimationChildInterface } from './AbstractScrollAnimation.js';
+
+export interface ScrollAnimationProps extends BaseProps {
+  $refs: {
+    target: HTMLElement;
+  };
+}
 
 /**
  * ScrollAnimation class.
  */
-export class ScrollAnimation extends withScrolledInView<typeof AbstractScrollAnimation, ScrollAnimationChildInterface>(AbstractScrollAnimation, {}) {
+export class ScrollAnimation<
+  T extends BaseProps = BaseProps,
+> extends withScrolledInView<AbstractScrollAnimation>(AbstractScrollAnimation, {})<
+  T & ScrollAnimationProps
+> {
   /**
    * Config.
    */
@@ -19,24 +28,7 @@ export class ScrollAnimation extends withScrolledInView<typeof AbstractScrollAni
   /**
    * Use the `target` ref as animation target.
    */
-  get target():HTMLElement {
-    return this.$refs.target as HTMLElement;
-  }
-
-  /**
-   * Get the damp factor from the freezed options.
-   */
-  // @ts-ignore
-  get dampFactor():number {
-    return this.$options.dampFactor;
-  }
-
-  /**
-   * Get the damp precision from the freezed options.
-   * @returns {number}
-   */
-  // @ts-ignore
-  get dampPrecision() {
-    return this.$options.dampPrecision;
+  get target(): HTMLElement {
+    return this.$refs.target;
   }
 }

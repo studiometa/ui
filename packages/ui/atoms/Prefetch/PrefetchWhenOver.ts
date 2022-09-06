@@ -1,11 +1,11 @@
-import type { BaseTypeParameter, BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractPrefetch } from './AbstractPrefetch.js';
 
 /**
  * PrefetchWhenOver class.
  */
 export class PrefetchWhenOver<
-  T extends BaseTypeParameter = BaseTypeParameter,
+  T extends BaseProps = BaseProps,
 > extends AbstractPrefetch<T> {
   /**
    * Config.

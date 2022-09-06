@@ -1,4 +1,5 @@
-import Transition from '../../primitives/Transition/Transition.js';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { Transition } from '../../primitives/index.js';
 
 const FOCUSABLE_ELEMENTS = [
   'a[href]:not([inert])',
@@ -14,22 +15,21 @@ const FOCUSABLE_ELEMENTS = [
   '[tabindex]:not([inert])',
 ].join(',');
 
-/**
- * @typedef {MenuList & {
- *   $children: {
- *     MenuList: MenuList[]
- *   }
- * }} MenuListInterface
- */
+export interface MenuListProps extends BaseProps {
+  $children: {
+    // eslint-disable-next-line no-use-before-define
+    MenuList: MenuList[];
+  };
+}
 
 /**
  * MenuList class.
  */
-export default class MenuList extends Transition {
+export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & MenuListProps> {
   /**
    * Config.
    */
-  static config = {
+  static config:BaseConfig = {
     ...Transition.config,
     name: 'MenuList',
     emits: ['items-open', 'items-close', 'items-mouseleave'],
@@ -40,19 +40,18 @@ export default class MenuList extends Transition {
 
   /**
    * Are the menu items visible?
-   * @type {boolean}
    */
   isOpen = false;
 
   /**
    * Wether the component is hovered.
-   * @type {boolean}
    */
   isHover = false;
 
   /**
    * Override `Transition` options.
    */
+  // @ts-ignore
   get $options() {
     const options = super.$options;
 
@@ -64,8 +63,6 @@ export default class MenuList extends Transition {
 
   /**
    * Update tab indexes on mount.
-   *
-   * @returns {void}
    */
   mounted() {
     this.__updateTabIndexes('close');
@@ -73,8 +70,6 @@ export default class MenuList extends Transition {
 
   /**
    * Set hover state.
-   *
-   * @returns {void}
    */
   onMouseenter() {
     this.isHover = true;
@@ -82,8 +77,6 @@ export default class MenuList extends Transition {
 
   /**
    * Unset hover state.
-   *
-   * @returns {void}
    */
   onMouseleave() {
     this.isHover = false;
@@ -91,8 +84,6 @@ export default class MenuList extends Transition {
 
   /**
    * Display the menu items.
-   *
-   * @returns {void}
    */
   open() {
     if (this.isOpen) {
@@ -117,9 +108,6 @@ export default class MenuList extends Transition {
 
   /**
    * Hide the menu items.
-   *
-   * @this    {MenuListInterface}
-   * @returns {void}
    */
   close() {
     if (!this.isOpen) {
@@ -147,7 +135,6 @@ export default class MenuList extends Transition {
 
   /**
    * Toggle the menu items.
-   * @returns {void}
    */
   toggle() {
     if (this.isOpen) {
@@ -159,14 +146,11 @@ export default class MenuList extends Transition {
 
   /**
    * Update `tabindex` attribute of child focusable elements.
-   *
    * @private
-   * @param {'open'|'close'} mode
-   * @returns {void}
    */
-  __updateTabIndexes(mode = 'open') {
+  __updateTabIndexes(mode:'open'|'close' = 'open') {
     const focusableItems = Array.from(this.$el.querySelectorAll(FOCUSABLE_ELEMENTS)).filter(
-      (item) => this.__filterFocusableItems(/** @type {HTMLElement} */ (item)),
+      (item) => this.__filterFocusableItems(/** @type {HTMLElement} */ item),
     );
 
     focusableItems.forEach((item) => {
@@ -180,12 +164,9 @@ export default class MenuList extends Transition {
 
   /**
    * Filter out items which are inside a child `MenuList` instance.
-   *
    * @private
-   * @param   {HTMLElement} item
-   * @returns {boolean}
    */
-  __filterFocusableItems(item) {
+  __filterFocusableItems(item:HTMLElement):boolean {
     let ancestor = item.parentElement;
 
     // @ts-ignore

@@ -1,8 +1,8 @@
 import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
-import type { BaseTypeParameter, BaseInterface, ScrollServiceProps } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseInterface, ScrollServiceProps } from '@studiometa/js-toolkit';
 import { damp, clamp, transform } from '@studiometa/js-toolkit/utils';
 
-export interface LargeTextInterface extends BaseTypeParameter {
+export interface LargeTextProps extends BaseProps {
   $refs: {
     target: HTMLElement;
   };
@@ -16,8 +16,8 @@ export interface LargeTextInterface extends BaseTypeParameter {
 /**
  * Large text class.
  */
-export class LargeText
-  extends withMountWhenInView<typeof Base, LargeTextInterface>(Base, { rootMargin: '50%' })
+export class LargeText<T extends BaseProps = BaseProps>
+  extends withMountWhenInView(Base, { rootMargin: '50%' })<T & LargeTextProps>
   implements BaseInterface {
   /**
    * Config.

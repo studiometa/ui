@@ -1,4 +1,4 @@
-import type { Base, BaseConfig, BaseConstructor, BaseTypeParameter } from '@studiometa/js-toolkit';
+import type { Base, BaseConfig, BaseConstructor, BaseProps, BaseDecorator, BaseInterface } from '@studiometa/js-toolkit';
 import { ease } from '@studiometa/js-toolkit/utils';
 import type { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
 
@@ -9,14 +9,22 @@ const eases = Object.fromEntries(
     .map(([name, value]) => [name.replace(regex, (match, $1) => $1.toLowerCase()), value]),
 );
 
+export interface AnimationScrollWithEaseProps extends BaseProps {
+  $options: {
+    ease: string;
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface AnimationScrollWithEaseInterface extends BaseInterface {}
+
 /**
  * Extend a `ScrollAnimation` component to use easings.
  */
 export function animationScrollWithEase<
-  S extends BaseConstructor<AbstractScrollAnimation> = BaseConstructor<AbstractScrollAnimation>,
-  T extends BaseTypeParameter = BaseTypeParameter
->(ScrollAnimation: S) {
-  class AnimationScrollWithEase extends ScrollAnimation {
+  S extends AbstractScrollAnimation,
+>(ScrollAnimation: typeof AbstractScrollAnimation): BaseDecorator<AnimationScrollWithEaseInterface, S, AnimationScrollWithEaseProps> {
+  class AnimationScrollWithEase extends ScrollAnimation<AnimationScrollWithEaseProps> {
     /**
      * Config.
      */
@@ -45,11 +53,6 @@ export function animationScrollWithEase<
     }
   }
 
-  return AnimationScrollWithEase as BaseConstructor<AnimationScrollWithEase> &
-    Pick<typeof AnimationScrollWithEase, keyof typeof AnimationScrollWithEase> &
-    S &
-    BaseConstructor<AbstractScrollAnimation> &
-    Pick<typeof AbstractScrollAnimation, keyof typeof AbstractScrollAnimation> &
-    BaseConstructor<Base<T>> &
-    Pick<typeof Base, keyof typeof Base>;
+  // @ts-ignore
+  return AnimationScrollWithEase;
 }

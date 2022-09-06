@@ -1,20 +1,32 @@
 import { transition, isArray } from '@studiometa/js-toolkit/utils';
-import type { Base, BaseTypeParameter, BaseConstructor, BaseConfig } from '@studiometa/js-toolkit';
+import type {
+  Base,
+  BaseDecorator,
+  BaseProps,
+  BaseConfig,
+  BaseInterface,
+} from '@studiometa/js-toolkit';
 
 /**
  * Manage transition with multiple targets.
  */
-function delegateTransition(
-  element: HTMLElement | HTMLElement[] | NodeList,
+function delegateTransition<
+  V extends HTMLElement | HTMLElement[] | NodeList,
+  W = V extends HTMLElement ? Promise<void> : Promise<void[]>,
+>(
+  elementOrElements: V,
   name: Parameters<typeof transition>[1],
-  endMode: Parameters<typeof transition>[2],
-): Promise<void | void[]> {
-  return isArray(element) || element instanceof NodeList
-    ? Promise.all(Array.from(element).map((el: HTMLElement) => transition(el, name, endMode)))
-    : transition(element, name, endMode);
+  endMode?: Parameters<typeof transition>[2],
+): W {
+  // @ts-ignore
+  return isArray(elementOrElements) || elementOrElements instanceof NodeList
+    ? (Promise.all(
+        Array.from(elementOrElements).map((el: HTMLElement) => transition(el, name, endMode)),
+      ) as Promise<void[]>)
+    : (transition(elementOrElements, name, endMode) as Promise<void>);
 }
 
-export interface TransitionInterface extends BaseTypeParameter {
+export interface TransitionProps extends BaseProps {
   $options: {
     enterFrom: string;
     enterActive: string;
@@ -27,14 +39,36 @@ export interface TransitionInterface extends BaseTypeParameter {
   };
 }
 
+export interface TransitionInterface extends BaseInterface {
+  /**
+   * Get the transition target.
+   */
+  get target(): HTMLElement | HTMLElement[];
+  /**
+   * Trigger the enter transition.
+   */
+  enter(target?: HTMLElement | HTMLElement[]):Promise<void>;
+  /**
+   * Trigger the leave transition.
+   */
+  leave(target?: HTMLElement | HTMLElement[]):Promise<void>;
+}
+
 /**
  * Extend a class to add transition capabilities.
  */
-export default function withTransition<
-  S extends BaseConstructor<Base>,
-  T extends BaseTypeParameter = BaseTypeParameter,
->(BaseClass: S) {
-  class Transition extends BaseClass {
+export function withTransition<S extends Base>(
+  BaseClass: typeof Base,
+): BaseDecorator<TransitionInterface, S, TransitionProps> {
+  /**
+   * Class.
+   */
+  class Transition<T extends BaseProps = BaseProps> extends BaseClass<
+    T & TransitionProps
+  > {
+    /**
+     * Config.
+     */
     static config: BaseConfig = {
       name: 'Transition',
       options: {
@@ -59,10 +93,10 @@ export default function withTransition<
     /**
      * Trigger the enter transition.
      */
-    enter(target?: HTMLElement | HTMLElement[]): Promise<void | void[]> {
+    async enter(target?: HTMLElement | HTMLElement[]): Promise<void> {
       const { enterFrom, enterActive, enterTo, enterKeep, leaveTo } = this.$options;
 
-      return delegateTransition(
+      await delegateTransition(
         target ?? this.target,
         {
           // eslint-disable-next-line prefer-template
@@ -77,10 +111,10 @@ export default function withTransition<
     /**
      * Trigger the leave transition.
      */
-    leave(target?: HTMLElement | HTMLElement[]): Promise<void | void[]> {
+    async leave(target?: HTMLElement | HTMLElement[]): Promise<void> {
       const { leaveFrom, leaveActive, leaveTo, leaveKeep, enterTo } = this.$options;
 
-      return delegateTransition(
+      await delegateTransition(
         target ?? this.target,
         {
           // eslint-disable-next-line prefer-template
@@ -93,9 +127,6 @@ export default function withTransition<
     }
   }
 
-  return Transition as BaseConstructor<Transition> &
-    Pick<typeof Transition, keyof typeof Transition> &
-    S &
-    BaseConstructor<Base<T & TransitionInterface>> &
-    Pick<typeof Base, keyof typeof Base>;
+  // @ts-ignore
+  return Transition;
 }

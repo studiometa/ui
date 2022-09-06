@@ -1,6 +1,6 @@
 import deepmerge from 'deepmerge';
 import { Base, BaseConfig } from '@studiometa/js-toolkit';
-import type { BaseTypeParameter } from '@studiometa/js-toolkit';
+import type { BaseProps } from '@studiometa/js-toolkit';
 import { transition } from '@studiometa/js-toolkit/utils';
 import { AccordionCore as Accordion } from './AccordionCore.js';
 
@@ -8,7 +8,7 @@ type AccordionItemStates = Partial<
   Record<'open' | 'active' | 'closed', string | Partial<CSSStyleDeclaration>>
 >;
 
-export interface AccordionItemInterface extends BaseTypeParameter {
+export interface AccordionItemProps extends BaseProps {
   $refs: {
     btn: HTMLElement;
     content: HTMLElement;
@@ -16,15 +16,15 @@ export interface AccordionItemInterface extends BaseTypeParameter {
   };
   $options: {
     isOpen: boolean;
-    styles: Partial<Record<keyof AccordionItemInterface['$refs'], AccordionItemStates>>;
+    styles: Partial<Record<keyof AccordionItemProps['$refs'], AccordionItemStates>>;
   };
 }
 
 /**
  * AccordionItem class.
  */
-export class AccordionItem<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
-  T & AccordionItemInterface
+export class AccordionItem<T extends BaseProps = BaseProps> extends Base<
+  T & AccordionItemProps
 > {
   /**
    * Config.
@@ -37,7 +37,7 @@ export class AccordionItem<T extends BaseTypeParameter = BaseTypeParameter> exte
       isOpen: Boolean,
       styles: {
         type: Object,
-        default: (): AccordionItemInterface['$options']['styles'] => ({
+        default: (): AccordionItemProps['$options']['styles'] => ({
           container: {
             open: '',
             active: '',

@@ -1,7 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
-import type { BaseTypeParameter, BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 
-export interface AbstractPrefetchInterface extends BaseTypeParameter {
+export interface AbstractPrefetchProps extends BaseProps {
   $el: HTMLAnchorElement;
   $options: {
     prefetch: boolean;
@@ -11,7 +11,7 @@ export interface AbstractPrefetchInterface extends BaseTypeParameter {
 /**
  * AbstractPrefetch class.
  */
-export class AbstractPrefetch<T extends BaseTypeParameter = BaseTypeParameter> extends Base<T & AbstractPrefetchInterface> {
+export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<T & AbstractPrefetchProps> {
   /**
    * Config.
    */

@@ -1,31 +1,30 @@
 import { Base, isDirectChild, getDirectChildren } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps, KeyServiceProps } from '@studiometa/js-toolkit';
 import { nextTick } from '@studiometa/js-toolkit/utils';
-import MenuBtn from './MenuBtn.js';
-import MenuList from './MenuList.js';
+import { MenuBtn } from './MenuBtn.js';
+import { MenuList } from './MenuList.js';
 
-/**
- * @typedef {Menu & {
- *   $children: {
- *     Menu: Menu[],
- *     MenuBtn: MenuBtn[],
- *     MenuList: MenuList[],
- *   },
- *   $options: {
- *     mode: 'click'|'hover'
- *   }
- * }} MenuInterface
- */
+export interface MenuProps extends BaseProps {
+  $children: {
+    // eslint-disable-next-line no-use-before-define
+    Menu: Menu[];
+    MenutBtn: MenuBtn[];
+    MenuList: MenuList[];
+  };
+  $options: {
+    mode: 'click' | 'hover';
+  };
+}
 
 /**
  * Menu class.
  */
-export default class Menu extends Base {
+export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'Menu',
-    debug: true,
     components: {
       MenuBtn,
       MenuList,
@@ -41,45 +40,35 @@ export default class Menu extends Base {
 
   /**
    * Get the first `MenuList` instance.
-   *
-   * @this    {MenuInterface}
-   * @returns {MenuList}
    */
-  get menuList() {
-    return /** @type {MenuList[]} */ (getDirectChildren(this, 'Menu', 'MenuList'))[0];
+  get menuList(): MenuList {
+    return getDirectChildren<MenuList>(this, 'Menu', 'MenuList')[0];
   }
 
   /**
    * Get the first `MenuBtn` instance.
-   *
-   * @this    {MenuInterface}
-   * @returns {MenuBtn}
    */
-  get menuBtn() {
-    return /** @type {MenuBtn[]} */ (getDirectChildren(this, 'Menu', 'MenuBtn'))[0];
+  get menuBtn(): MenuBtn {
+    return getDirectChildren<MenuBtn>(this, 'Menu', 'MenuBtn')[0];
   }
 
   /**
-   * @todo test breakpoint to switch between click and hover.
+   * Test which mode to use.
    */
-  get shouldReactOnClick() {
+  get shouldReactOnClick(): boolean {
     return this.$options.mode === 'click';
   }
 
   /**
    * Wether the button or the items are hovered.
-   *
-   * @returns {boolean}
    */
-  get isHover() {
+  get isHover(): boolean {
     return this.menuBtn.isHover || this.menuList.isHover;
   }
 
   /**
    * Set attributes on mounted, destroy the component if it is missing required
    * child components.
-   *
-   * @returns {void}
    */
   mounted() {
     if (!this.menuBtn || !this.menuList) {
@@ -94,11 +83,8 @@ export default class Menu extends Base {
 
   /**
    * Keyboard management.
-   *
-   * @param   {import('@studiometa/js-toolkit/services/key').KeyServiceProps} options
-   * @returns {void}
    */
-  keyed({ ENTER, ESC, isUp }) {
+  keyed({ ENTER, ESC, isUp }: KeyServiceProps) {
     if (!isUp) {
       return;
     }
@@ -118,14 +104,9 @@ export default class Menu extends Base {
   }
 
   /**
-   * Toggle menu items on button click;
-   *
-   * @this    {MenuInterface}
-   * @param   {number} index
-   * @param   {MouseEvent} event
-   * @returns {void}
+   * Toggle menu items on button click.
    */
-  onMenuBtnClick(index, event) {
+  onMenuBtnClick(index: number, event: MouseEvent) {
     if (
       isDirectChild(this, 'Menu', 'MenuBtn', this.$children.MenuBtn[index]) &&
       this.shouldReactOnClick
@@ -137,12 +118,8 @@ export default class Menu extends Base {
 
   /**
    * Open menu items on button mouse enter.
-   *
-   * @this    {MenuInterface}
-   * @param   {number} index
-   * @returns {void}
    */
-  onMenuBtnMouseenter(index) {
+  onMenuBtnMouseenter(index: number) {
     if (this.$children.MenuBtn[index] === this.menuBtn && !this.shouldReactOnClick) {
       this.open();
     }
@@ -150,9 +127,6 @@ export default class Menu extends Base {
 
   /**
    * Close menu items on button mouse leave.
-   *
-   * @this    {MenuInterface}
-   * @returns {void}
    */
   onMenuBtnMouseleave() {
     if (this.shouldReactOnClick) {
@@ -168,9 +142,6 @@ export default class Menu extends Base {
 
   /**
    * Close menu items on button mouse leave.
-   *
-   * @this    {MenuInterface}
-   * @returns {void}
    */
   onMenuListMouseleave() {
     if (this.shouldReactOnClick) {
@@ -186,12 +157,8 @@ export default class Menu extends Base {
 
   /**
    * Close other non-parent menu items on menu items open.
-   *
-   * @this    {MenuInterface}
-   * @param   {number} index
-   * @returns {void}
    */
-  onMenuListItemsOpen(index) {
+  onMenuListItemsOpen(index: number) {
     const targetMenu = this.$children.MenuList[index];
     this.$children.MenuList.forEach((menuItem) => {
       if (!menuItem.$el.contains(targetMenu.$el)) {
@@ -202,7 +169,6 @@ export default class Menu extends Base {
 
   /**
    * Close the menu.
-   * @returns {void}
    */
   close() {
     this.menuList.close();
@@ -210,7 +176,6 @@ export default class Menu extends Base {
 
   /**
    * Open the menu.
-   * @returns {void}
    */
   open() {
     this.menuList.open();
@@ -218,7 +183,6 @@ export default class Menu extends Base {
 
   /**
    * Toggle the menu.
-   * @returns {void}
    */
   toggle() {
     this.menuList.toggle();

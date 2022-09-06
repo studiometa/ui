@@ -5,7 +5,7 @@ import { AbstractPrefetch } from './AbstractPrefetch.js';
 /**
  * PrefetchWhenVisible class.
  */
-export class PrefetchWhenVisible extends withMountWhenInView(AbstractPrefetch) {
+export class PrefetchWhenVisible extends withMountWhenInView<AbstractPrefetch>(AbstractPrefetch) {
   /**
    * Config.
    */

@@ -1,8 +1,8 @@
-import { Base, withScrolledInView } from '@studiometa/js-toolkit';
-import type { BaseConfig, BaseTypeParameter } from '@studiometa/js-toolkit';
+import { Base, ScrollInViewProps, withScrolledInView } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { ScrollAnimationChild } from './ScrollAnimationChild.js';
 
-export interface ScrollAnimationParentInterface extends BaseTypeParameter {
+export interface ScrollAnimationParentProps extends BaseProps {
   $children: {
     ScrollAnimationChild: ScrollAnimationChild[];
   };
@@ -11,10 +11,10 @@ export interface ScrollAnimationParentInterface extends BaseTypeParameter {
 /**
  * ScrollAnimationParent class.
  */
-export class ScrollAnimationParent extends withScrolledInView<
-  typeof Base,
-  ScrollAnimationParentInterface
->(Base, {}) {
+export class ScrollAnimationParent<T extends BaseProps = BaseProps> extends withScrolledInView(
+  Base,
+  {},
+)<T & ScrollAnimationParentProps> {
   /**
    * Config.
    */
@@ -28,7 +28,7 @@ export class ScrollAnimationParent extends withScrolledInView<
   /**
    * Scrolled in view hook.
    */
-  scrolledInView(props) {
+  scrolledInView(props: ScrollInViewProps) {
     this.$children.ScrollAnimationChild.forEach((child) => {
       child.scrolledInView(props);
     });

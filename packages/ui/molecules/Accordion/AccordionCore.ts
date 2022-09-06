@@ -1,15 +1,15 @@
 import { Base } from '@studiometa/js-toolkit';
-import type { BaseConfig, BaseTypeParameter } from '@studiometa/js-toolkit';
-import type { AccordionItem, AccordionItemInterface } from './AccordionItem';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import type { AccordionItem, AccordionItemProps } from './AccordionItem';
 
-export interface AccordionInterface extends BaseTypeParameter {
+export interface AccordionProps extends BaseProps {
   $refs: {
     btn: HTMLElement[];
     content: HTMLElement[];
   };
   $options: {
     autoclose: boolean;
-    item: AccordionItemInterface['$options'];
+    item: AccordionItemProps['$options'];
   };
   $children: {
     AccordionItem: AccordionItem[];
@@ -19,8 +19,8 @@ export interface AccordionInterface extends BaseTypeParameter {
 /**
  * Accordion class.
  */
-export class AccordionCore<T extends BaseTypeParameter = BaseTypeParameter> extends Base<
-  T & AccordionInterface
+export class AccordionCore<T extends BaseProps = BaseProps> extends Base<
+  T & AccordionProps
 > {
   /**
    * Accordion config.
@@ -32,7 +32,7 @@ export class AccordionCore<T extends BaseTypeParameter = BaseTypeParameter> exte
       autoclose: Boolean,
       item: {
         type: Object,
-        default: (): Partial<AccordionItemInterface['$options']> => ({}),
+        default: (): Partial<AccordionItemProps['$options']> => ({}),
       },
     },
   };
