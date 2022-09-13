@@ -1,4 +1,5 @@
 import { Base } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { Sentinel } from '../../primitives/index.js';
 
 /**
@@ -14,18 +15,29 @@ import { Sentinel } from '../../primitives/index.js';
  * @property {{ Sentinel: Sentinel[] }} $children
  */
 
-/**
- * @typedef {Sticky & StickyPrivateInterface} StickyInterface
- */
+export interface StickyProps extends BaseProps {
+  $refs: {
+    inner: HTMLElement;
+    sentinelRef: HTMLElement;
+  };
+  $options: {
+    zIndex: number;
+    hideWhenUp: boolean;
+    hideWhenDown: boolean;
+  };
+  $children: {
+    Sentinel: Sentinel[];
+  };
+}
 
 /**
  * Sticky class.
  */
-export default class Sticky extends Base {
+export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProps> {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'Sticky',
     refs: ['inner', 'sentinelRef'],
     components: {
@@ -43,44 +55,35 @@ export default class Sticky extends Base {
 
   /**
    * Holder for all instances.
-   * @type {Set<StickyInterface>}
    */
-  static instances = new Set();
+  static instances: Set<Sticky> = new Set();
 
   /**
    * Is the component sticky?
-   * @type {boolean}
    */
   isSticky = false;
 
   /**
    * Is the component visible?
-   * @type {boolean}
    */
   isVisible = true;
 
   /**
    * Set the Y value.
-   *
-   * @this    {StickyInterface}
-   * @param   {number} value
-   * @returns {void}
    */
-  set y(value) {
+  set y(value: number) {
     this.$refs.inner.style.transform = `translateY(${value}px) translateZ(0px)`;
   }
 
   /**
    * Get instances as array.
-   * @returns {Array<StickyInterface>}
    */
-  get instances() {
+  get instances(): Sticky[] {
     return Array.from(Sticky.instances);
   }
 
   /**
    * Mounted hook.
-   * @this {StickyInterface}
    */
   mounted() {
     Sticky.instances.add(this);
@@ -89,8 +92,6 @@ export default class Sticky extends Base {
 
   /**
    * Resized hook.
-   * @this {StickyInterface}
-   * @returns {void}
    */
   resized() {
     this.setSentinelSize();
@@ -98,7 +99,6 @@ export default class Sticky extends Base {
 
   /**
    * Destroyed hook.
-   * @this {StickyInterface}
    */
   destroyed() {
     Sticky.instances.delete(this);
@@ -106,7 +106,6 @@ export default class Sticky extends Base {
 
   /**
    * Scrolled hook.
-   * @this {StickyInterface}
    */
   scrolled(props) {
     if (!this.isSticky || props.y === props.last.y) {
@@ -129,14 +128,13 @@ export default class Sticky extends Base {
    * @param   {IntersectionObserverEntry[]} entries
    * @returns {void}
    */
-  onSentinelIntersected([entry]) {
+  onSentinelIntersected([entry]: IntersectionObserverEntry[]) {
     this.isSticky = entry.isIntersecting && entry.boundingClientRect.y < 0;
     this.setPosition();
   }
 
   /**
    * Hide the sticky component when another one is sticky.
-   * @this {StickyInterface}
    */
   hide() {
     if (!this.isVisible) {
@@ -151,7 +149,6 @@ export default class Sticky extends Base {
 
   /**
    * Show the sticky component when the other one is not sticky anymore.
-   * @this {StickyInterface}
    */
   show() {
     if (this.isVisible) {
@@ -165,7 +162,6 @@ export default class Sticky extends Base {
 
   /**
    * Set the sentinel height based on the previous instances.
-   * @this {StickyInterface}
    */
   setSentinelSize() {
     const { instances } = this;
@@ -186,11 +182,10 @@ export default class Sticky extends Base {
   /**
    * Set the component's position.
    *
-   * @this    {StickyInterface}
    * @param   {number} [index] The instance index in all the pages' instances.
    * @returns {void}
    */
-  setPosition(index) {
+  setPosition(index?: number) {
     if (!this.isSticky) {
       this.y = 0;
       return;
@@ -201,24 +196,19 @@ export default class Sticky extends Base {
     // eslint-disable-next-line no-param-reassign
     index = index ?? instances.indexOf(this);
 
-    this.y = instances
+    this.y = (instances
       .slice(0, index)
       .filter((instance) => instance.isSticky && !instance.isVisible)
-      .reduce(
-        (y, instance) => {
-          return y - instance.$refs.inner.offsetHeight;
-        },
+      .reduce<number>(
+        (y: number, instance) => y - instance.$refs.inner.offsetHeight,
         this.isVisible ? 0 : this.$refs.inner.offsetHeight * -1,
-      );
+      )) as number;
   }
 
   /**
    * Find the first parent which has a relative position.
-   *
-   * @param   {HTMLElement} element
-   * @returns {HTMLElement}
    */
-  closestRelativeElement(element) {
+  closestRelativeElement(element:HTMLElement) {
     let parent = element.parentElement;
 
     while (getComputedStyle(parent).position !== 'relative' && parent.parentElement) {

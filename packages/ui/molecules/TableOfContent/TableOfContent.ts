@@ -1,27 +1,29 @@
 import { Base } from '@studiometa/js-toolkit';
-import TableOfContentAnchor from './TableOfContentAnchor.js';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import { TableOfContentAnchor } from './TableOfContentAnchor.js';
 
-/**
- * @typedef {TableOfContent & {
- *   $refs: {
- *     itemTemplate: HTMLTemplateElement,
- *     list: HTMLUListElement
- *   },
- *   $options: {
- *     contentSelector: string,
- *     withTemplate: boolean,
- *   }
- * }} TableOfContentInterface
- */
+export interface TableOfContentProps extends BaseProps {
+  $refs: {
+    itemTemplate: HTMLTemplateElement;
+    list: HTMLUListElement;
+  };
+  $options: {
+    contentSelector: string;
+    withTemplate: boolean;
+  };
+  $children: {
+    TableOfContentAnchor: TableOfContentAnchor[];
+  };
+}
 
 /**
  * TableOfContent class.
  */
-export default class TableOfContent extends Base {
+export default class TableOfContent<T extends BaseProps = BaseProps> extends Base<T & TableOfContentProps> {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'TableOfContent',
     refs: ['itemTemplate', 'list'],
     components: {
@@ -36,7 +38,6 @@ export default class TableOfContent extends Base {
   /**
    * Generate anchors on mount and update the component to instantiate the
    * `TableOfContentAnchor` components.
-   * @returns {void}
    */
   mounted() {
     if (this.$options.withTemplate) {
@@ -50,8 +51,6 @@ export default class TableOfContent extends Base {
    *
    * @todo Read anchor template from a ref?
    * @todo Better API to easily override the template function, maybe a `render` function?
-   * @this    {TableOfContentInterface}
-   * @returns {void}
    */
   generateAnchors() {
     document.querySelectorAll(this.$options.contentSelector).forEach((section) => {

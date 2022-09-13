@@ -1,10 +1,10 @@
+export * from './Accordion/Accordion.js';
+export * from './Accordion/AccordionItem.js';
 export * from './Menu/index.js';
 export * from './Slider/index.js';
+export * from './Sticky/Sticky.js';
 export * from './TableOfContent/index.js';
-export { default as Accordion } from './Accordion/Accordion.js';
-export { default as AccordionItem } from './Accordion/AccordionItem.js';
+export * from './Tabs/index.js';
 export { default as Modal } from './Modal/Modal.js';
 export { default as ModalWithTransition } from './Modal/ModalWithTransition.js';
 export { default as Panel } from './Panel/Panel.js';
-export { default as Sticky } from './Sticky/Sticky.js';
-export { default as Tabs } from './Tabs/Tabs.js';

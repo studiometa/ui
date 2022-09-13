@@ -1,13 +1,22 @@
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { AnchorScrollTo } from '../../atoms/index.js';
+
+export interface TableOfContentAnchorProps extends BaseProps {
+  $options: {
+    activeClass: string;
+  };
+}
 
 /**
  * TableOfContentAnchor class.
  */
-export default class TableOfContentAnchor extends AnchorScrollTo {
+export class TableOfContentAnchor<T extends BaseProps = BaseProps> extends AnchorScrollTo<
+  T & TableOfContentAnchorProps
+> {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'TableOfContentAnchor',
     emits: ['should-activate'],
     options: {
@@ -19,23 +28,27 @@ export default class TableOfContentAnchor extends AnchorScrollTo {
   };
 
   /**
-   * Get the sentinel.
-   * @returns {HTMLElement}
+   * Observer.
+   * @private
    */
-  get sentinel() {
-    return document.querySelector(this.targetSelector);
+  __observer: IntersectionObserver;
+
+  /**
+   * Get the sentinel.
+   */
+  get sentinel():HTMLElement {
+    return document.querySelector(this.targetSelector) as HTMLElement;
   }
 
   /**
    * Init observer on mount.
-   * @returns {void}
    */
   mounted() {
     if (!this.sentinel) {
       return;
     }
 
-    this.observer = new IntersectionObserver(([entry]) => {
+    this.__observer = new IntersectionObserver(([entry]) => {
       const shouldActivate =
         entry.isIntersecting &&
         entry.boundingClientRect.y < 100 &&
@@ -44,15 +57,13 @@ export default class TableOfContentAnchor extends AnchorScrollTo {
       this.$emit('should-activate', shouldActivate);
     });
 
-    this.observer.observe(this.sentinel);
+    this.__observer.observe(this.sentinel);
   }
 
   /**
    * Destroy observer on destroy.
-   *
-   * @returns {void}
    */
   destroyed() {
-    this.observer.disconnect();
+    this.__observer.disconnect();
   }
 }

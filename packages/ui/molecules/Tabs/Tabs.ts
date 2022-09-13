@@ -1,62 +1,44 @@
 import { Base } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { transition } from '@studiometa/js-toolkit/utils';
 
-/**
- * @typedef {import('@studiometa/js-toolkit/Base').BaseOptions} BaseOptions
- */
+type TabItem = {
+  btn: HTMLElement;
+  content: HTMLElement;
+  isEnabled: boolean;
+};
 
-/**
- * @typedef {Object} TabItem
- * @property {HTMLElement} btn
- * @property {HTMLElement} content
- * @property {boolean} isEnabled
- */
+type TabsStates = Partial<
+  Record<'open' | 'active' | 'closed', string | Partial<CSSStyleDeclaration>>
+>;
+// eslint-disable-next-line no-use-before-define
+type TabsStylesOption = Partial<Record<keyof TabsProps['$refs'], TabsStates>>;
 
-/**
- * @typedef {Object} TabsRefs
- * @property {HTMLElement[]} btn
- * @property {HTMLElement[]} content
- */
-
-/**
- * @typedef {Partial<Record<'open'|'active'|'closed', string|Partial<CSSStyleDeclaration>>>} TabsStates
- * @typedef {Partial<Record<keyof TabsRefs, TabsStates>>} TabsStylesOption
- */
-
-/**
- * @typedef {Object} TabsOptions
- * @property {TabsStylesOption} styles
- */
-
-/**
- * @typedef {Object} TabsPrivateInterface
- * @property {TabsOptions} $options
- * @property {TabsRefs} $refs
- * @property {Array<TabItem>} items
- */
-
-/**
- * @typedef {Tabs & TabsPrivateInterface} TabsInterface
- */
+export interface TabsProps extends BaseProps {
+  $options: {
+    styles: TabsStylesOption;
+  };
+  $refs: {
+    btn: HTMLElement[];
+    content: HTMLElement[];
+  };
+}
 
 /**
  * Tabs class.
  */
-export default class Tabs extends Base {
+export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {
   /**
-   * Tabs config.
+   * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'Tabs',
     refs: ['btn[]', 'content[]'],
     emits: ['enable', 'disable'],
     options: {
       styles: {
         type: Object,
-        /**
-         * @returns {TabsStylesOption}
-         */
-        default: () => ({
+        default: (): TabsStylesOption => ({
           content: {
             closed: {
               position: 'absolute',
@@ -71,9 +53,10 @@ export default class Tabs extends Base {
     },
   };
 
+  items: TabItem[];
+
   /**
    * Initialize the component's behaviours.
-   * @this {TabsInterface}
    * @returns {void}
    */
   mounted() {
@@ -95,13 +78,8 @@ export default class Tabs extends Base {
 
   /**
    * Switch tab on button click.
-   *
-   * @this {TabsInterface}
-   * @param  {Event}  event The click event object.
-   * @param  {number} index The index of the clicked button.
-   * @returns {void}
    */
-  onBtnClick(event, index) {
+  onBtnClick(event:MouseEvent, index:number) {
     this.items.forEach((item, i) => {
       if (i !== index) {
         this.disableItem(item);
@@ -113,12 +91,8 @@ export default class Tabs extends Base {
 
   /**
    * Enable the given tab and its associated content.
-   *
-   * @this {TabsInterface}
-   * @param  {TabItem}                item The item to enable.
-   * @returns {Promise<TabsInterface>}      Tabs instance.
    */
-  async enableItem(item) {
+  async enableItem(item:TabItem):Promise<this> {
     if (!item || item.isEnabled) {
       return Promise.resolve(this);
     }
@@ -155,12 +129,8 @@ export default class Tabs extends Base {
 
   /**
    * Disable the given tab and its associated content.
-   *
-   * @this {TabsInterface}
-   * @param  {TabItem}                item The item to disable.
-   * @returns {Promise<TabsInterface>}      The Tabs instance.
    */
-  async disableItem(item) {
+  async disableItem(item:TabItem):Promise<this> {
     if (!item || !item.isEnabled) {
       return Promise.resolve(this);
     }

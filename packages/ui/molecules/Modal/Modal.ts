@@ -1,30 +1,41 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base, KeyServiceProps } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { transition, focusTrap } from '@studiometa/js-toolkit/utils';
 
 const { trap, untrap, saveActiveElement } = focusTrap();
 
-/**
- * @typedef {Object} ModalRefs
- * @property {HTMLElement} close[]
- * @property {HTMLElement} container
- * @property {HTMLElement} content
- * @property {HTMLElement} modal
- * @property {HTMLElement} open[]
- * @property {HTMLElement} overlay
- */
+type ModalStates = Partial<Record<'open'|'active'|'closed', string|Partial<CSSStyleDeclaration>>>
+// eslint-disable-next-line no-use-before-define
+type ModalStylesOption = Partial<Record<keyof ModalProps['$refs'], ModalStates>>
 
-/**
- * @typedef {Partial<Record<'open'|'active'|'closed', string|Partial<CSSStyleDeclaration>>>} ModalStates
- * @typedef {Partial<Record<keyof ModalRefs, ModalStates>>} ModalStylesOption
- */
-
-/**
- * @typedef {Object} ModalOptions
- * @property {string}            move       A selector where to move the modal to.
- * @property {string}            autofocus  A selector for the element to set the focus to when the modal opens.
- * @property {boolean}           scrollLock Lock or allow scroll in the documentElement.
- * @property {ModalStylesOption} styles     The styles for the different state of the modal.
- */
+export interface ModalProps extends BaseProps {
+  $refs: {
+    close: HTMLElement[];
+    container: HTMLElement;
+    content: HTMLElement;
+    modal: HTMLElement;
+    open: HTMLElement[];
+    overlay: HTMLElement;
+  };
+  $options: {
+    /**
+     * A selector where to move the modal to.
+     */
+    move: string;
+    /**
+     * A selector for the element to set the focus to when the modal opens.
+     */
+    autofocus: string;
+    /**
+     * Lock or allow scroll in the documentElement.
+     */
+    scrollLock: boolean;
+    /**
+     * The styles for the different state of the modal.
+     */
+    styles: ModalStylesOption;
+  }
+}
 
 /**
  * @typedef {Object} ModalPrivateInterface
@@ -37,18 +48,13 @@ const { trap, untrap, saveActiveElement } = focusTrap();
  */
 
 /**
- * @typedef {Modal & ModalPrivateInterface} ModalInterface
- * @typedef {typeof Modal} ModalConstructor
- */
-
-/**
  * Modal class.
  */
-export default class Modal extends Base {
+export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps> {
   /**
-   * Modal options.
+   * Config.
    */
-  static config = {
+  static config:BaseConfig = {
     name: 'Modal',
     refs: ['close[]', 'container', 'content', 'modal', 'open[]', 'overlay'],
     emits: ['open', 'close'],
@@ -57,10 +63,7 @@ export default class Modal extends Base {
       autofocus: { type: String, default: '[autofocus]' },
       styles: {
         type: Object,
-        /**
-         * @returns {ModalStylesOption}
-         */
-        default: () => ({
+        default: ():ModalStylesOption => ({
           modal: {
             closed: {
               opacity: '0',
@@ -70,9 +73,6 @@ export default class Modal extends Base {
           },
         }),
       },
-      /**
-       * @returns {ModalScrollLockOption}
-       */
       scrollLock: {
         type: Boolean,
         default: true,
@@ -81,9 +81,32 @@ export default class Modal extends Base {
   };
 
   /**
+   * Wether the modal is open or not.
+   */
+  isOpen = false;
+
+  /**
+   * @private
+   */
+  __refsBackup:(T & ModalProps)['$refs'];
+
+  /**
+   * @private
+   */
+  __refModalPlaceholder: Comment;
+
+  /**
+   * @private
+   */
+  __refModalParentBackup: HTMLElement;
+
+  /**
+   * @private
+   */
+  __refModalUnbindGetRefFilter:() => void;
+
+  /**
    * Open the modal on click on the `open` ref.
-   *
-   * @returns {Function} The component's `open` method.
    */
   get onOpenClick() {
     return this.open;
@@ -91,8 +114,6 @@ export default class Modal extends Base {
 
   /**
    * Close the modal on click on the `close` ref.
-   *
-   * @returns {Function} The component's `close` method.
    */
   get onCloseClick() {
     return this.close;
@@ -109,8 +130,6 @@ export default class Modal extends Base {
 
   /**
    * Initialize the component's behaviours.
-   *
-   * @this {ModalInterface}
    */
   mounted() {
     this.isOpen = false;
@@ -130,8 +149,6 @@ export default class Modal extends Base {
 
   /**
    * Add the moved refs to `this.$refs` when using the `move` options.
-   *
-   * @this {ModalInterface}
    */
   get $refs() {
     const $refs = super.$refs;
@@ -139,6 +156,7 @@ export default class Modal extends Base {
     if (this.$options.move && this.__refsBackup) {
       Object.entries(this.__refsBackup).forEach(([key, ref]) => {
         if (!$refs[key]) {
+          // @ts-ignore
           $refs[key] = ref;
         }
       });
@@ -149,9 +167,6 @@ export default class Modal extends Base {
 
   /**
    * Unbind all events on destroy.
-   *
-   * @this {ModalInterface}
-   * @returns {Modal} The Modal instance.
    */
   destroyed() {
     this.close();
@@ -168,15 +183,8 @@ export default class Modal extends Base {
 
   /**
    * Close the modal on `ESC` and trap the tabulation.
-   *
-   * @this {ModalInterface}
-   * @param  {Object}        options
-   * @param  {KeyboardEvent} options.event  The original keyboard event
-   * @param  {boolean}       options.isUp   Is it a keyup event?
-   * @param  {boolean}       options.isDown Is it a keydown event?
-   * @param  {boolean}       options.ESC    Is it the ESC key?
    */
-  keyed({ event, isUp, isDown, ESC }) {
+  keyed({ event, isUp, isDown, ESC }:KeyServiceProps) {
     if (!this.isOpen) {
       return;
     }
@@ -192,9 +200,6 @@ export default class Modal extends Base {
 
   /**
    * Open the modal.
-   *
-   * @this {ModalInterface}
-   * @returns {Promise<void>} The Modal instance.
    */
   async open() {
     if (this.isOpen) {
@@ -229,8 +234,7 @@ export default class Modal extends Base {
     ).then(() => {
       if (this.$options.autofocus && this.$refs.modal.querySelector(this.$options.autofocus)) {
         saveActiveElement();
-        /** @type {HTMLElement} */
-        const autofocusElement = this.$refs.modal.querySelector(this.$options.autofocus);
+        const autofocusElement = this.$refs.modal.querySelector(this.$options.autofocus) as HTMLElement;
         autofocusElement.focus();
       }
       return Promise.resolve();
@@ -239,9 +243,6 @@ export default class Modal extends Base {
 
   /**
    * Close the modal.
-   *
-   * @this {ModalInterface}
-   * @returns {Promise<void>} The Modal instance.
    */
   async close() {
     if (!this.isOpen) {
@@ -258,7 +259,6 @@ export default class Modal extends Base {
     untrap();
     this.$emit('close');
 
-    /** @type {ModalRefs} */
     const refs = this.$refs;
 
     return Promise.all(
