@@ -1,20 +1,14 @@
-import Modal from './Modal.js';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import { Modal } from './Modal.js';
 
-/**
- * @typedef {import('./Modal.js').ModalInterface} ModalInterface
- * @typedef {import('./Modal.js').ModalStylesOption} ModalStylesOption
- * @typedef {ModalInterface & ModalWithTransition} ModalWithTransitionInterface
- */
 /**
  * ModalWithTransition class.
  */
-// @ts-ignore
-// eslint-disable-next-line require-jsdoc
-export default class ModalWithTransition extends Modal {
+export default class ModalWithTransition<T extends BaseProps = BaseProps> extends Modal<T> {
   /**
    * Modal options.
    */
-  static config = {
+  static config:BaseConfig = {
     name: 'ModalWithTransition',
     options: {
       styles: {
@@ -43,17 +37,11 @@ export default class ModalWithTransition extends Modal {
     },
   };
 
-  /**
-   * @this {ModalWithTransitionInterface}
-   */
   open() {
     this.$refs.modal.style.visibility = '';
     return super.open();
   }
 
-  /**
-   * @this {ModalWithTransitionInterface}
-   */
   async close() {
     await super.close();
     this.$refs.modal.style.visibility = 'hidden';

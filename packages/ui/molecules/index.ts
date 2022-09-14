@@ -5,6 +5,5 @@ export * from './Slider/index.js';
 export * from './Sticky/Sticky.js';
 export * from './TableOfContent/index.js';
 export * from './Tabs/index.js';
-export { default as Modal } from './Modal/Modal.js';
-export { default as ModalWithTransition } from './Modal/ModalWithTransition.js';
-export { default as Panel } from './Panel/Panel.js';
+export * from './Modal/index.js';
+export * from './Panel/index.js';

@@ -1,27 +1,28 @@
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { transition, matrix } from '@studiometa/js-toolkit/utils';
-import Modal from '../Modal/Modal.js';
+import { Modal } from '../Modal/index.js';
 
-/**
- * @typedef {import('../Modal/Modal.js').ModalInterface} ModalInterface
- * @typedef {Panel & ModalInterface} PanelInterface
- * @typedef {typeof Modal} ModalConstructor
- */
+export interface PanelProps extends BaseProps {
+  $options: {
+    position: 'top' | 'right' | 'bottom' | 'left'
+  }
+}
+
+const DEFAULT_POSITION = 'left';
 
 /**
  * Panel class.
  */
-// @ts-ignore
-// eslint-disable-next-line require-jsdoc
-export default class Panel extends Modal {
+export class Panel<T extends BaseProps = BaseProps> extends Modal<T & PanelProps> {
   /**
    * Config.
    */
-  static config = {
+  static config:BaseConfig = {
     name: 'Panel',
     options: {
       position: {
         type: String,
-        default: 'left',
+        default: DEFAULT_POSITION,
       },
     },
   };
@@ -33,6 +34,8 @@ export default class Panel extends Modal {
     left: '-translate-x-full',
   };
 
+  isClosing = false;
+
   /**
    * Get the translation class.
    * @returns {string}
@@ -40,13 +43,10 @@ export default class Panel extends Modal {
   get translateClass() {
     return (
       Panel.translateClasses[this.$options.position] ??
-      Panel.translateClasses[Panel.config.options.position.default]
+      Panel.translateClasses[DEFAULT_POSITION]
     );
   }
 
-  /**
-   * @this {PanelInterface}
-   */
   get containerOffset() {
     const { offsetTop, offsetLeft, offsetWidth, offsetHeight } = this.$refs.container;
 

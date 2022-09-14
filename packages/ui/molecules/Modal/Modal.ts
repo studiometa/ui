@@ -38,16 +38,6 @@ export interface ModalProps extends BaseProps {
 }
 
 /**
- * @typedef {Object} ModalPrivateInterface
- * @property {ModalRefs} $refs
- * @property {ModalOptions} $options
- * @property {boolean} isOpen
- * @property {Comment} refModalPlaceholder
- * @property {HTMLElement} refModalParentBackup
- * @property {Function} refModalUnbindGetRefFilter
- */
-
-/**
  * Modal class.
  */
 export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps> {
