@@ -351,6 +351,7 @@ export default class Slider extends Base {
    */
   onSliderDragStart() {
     this.__initialX = this.currentSliderItem ? this.currentSliderItem.x : 0;
+    this.__distanceX = this.__initialX;
   }
 
   /**
