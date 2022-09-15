@@ -1,4 +1,4 @@
-import type { Base, BaseConfig, BaseConstructor, BaseProps, BaseDecorator, BaseInterface } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps, BaseDecorator, BaseInterface } from '@studiometa/js-toolkit';
 import { ease } from '@studiometa/js-toolkit/utils';
 import type { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
 

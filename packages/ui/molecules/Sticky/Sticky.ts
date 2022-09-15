@@ -56,6 +56,7 @@ export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProp
   /**
    * Holder for all instances.
    */
+  // eslint-disable-next-line no-use-before-define
   static instances: Set<Sticky> = new Set();
 
   /**

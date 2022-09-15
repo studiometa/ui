@@ -1,6 +1,25 @@
 import { Base, KeyServiceProps } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { transition, focusTrap } from '@studiometa/js-toolkit/utils';
+import { transition, isArray, focusTrap } from '@studiometa/js-toolkit/utils';
+
+/**
+ * Manage transition with multiple targets.
+ */
+function delegateTransition<
+  V extends HTMLElement | HTMLElement[] | NodeList,
+  W = V extends HTMLElement ? Promise<void> : Promise<void[]>,
+>(
+  elementOrElements: V,
+  name: Parameters<typeof transition>[1],
+  endMode?: Parameters<typeof transition>[2],
+): W {
+  // @ts-ignore
+  return isArray(elementOrElements) || elementOrElements instanceof NodeList
+    ? (Promise.all(
+        Array.from(elementOrElements).map((el: HTMLElement) => transition(el, name, endMode)),
+      ) as Promise<void[]>)
+    : (transition(elementOrElements, name, endMode) as Promise<void>);
+}
 
 const { trap, untrap, saveActiveElement } = focusTrap();
 
@@ -211,7 +230,7 @@ export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps>
     return Promise.all(
       Object.entries(this.$options.styles).map(
         ([refName, { open, active, closed } = { open: '', active: '', closed: '' }]) =>
-          transition(
+          delegateTransition(
             refs[refName],
             {
               from: closed,
@@ -254,7 +273,7 @@ export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps>
     return Promise.all(
       Object.entries(this.$options.styles).map(
         ([refName, { open, active, closed } = { open: '', active: '', closed: '' }]) =>
-          transition(
+          delegateTransition(
             refs[refName],
             {
               from: open,

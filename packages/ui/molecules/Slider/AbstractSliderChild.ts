@@ -67,12 +67,13 @@ export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<T
     }
   }
 
+  // eslint-disable-next-line jsdoc/require-returns-check
   /**
    * Update the child component with the given index.
    * @param   {number} index The new active index.
    * @returns {void|(()=>void)}
    */
-  update(index) {
+  update(index):void|(()=>void) {
     throw new Error(`The \`AbstractSliderChild.update(${index})\` method must be implemented.`);
   }
 }

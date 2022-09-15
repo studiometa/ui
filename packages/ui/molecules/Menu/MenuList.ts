@@ -150,7 +150,7 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
    */
   __updateTabIndexes(mode:'open'|'close' = 'open') {
     const focusableItems = Array.from(this.$el.querySelectorAll(FOCUSABLE_ELEMENTS)).filter(
-      (item) => this.__filterFocusableItems(/** @type {HTMLElement} */ item),
+      (item) => this.__filterFocusableItems(item as HTMLElement),
     );
 
     focusableItems.forEach((item) => {

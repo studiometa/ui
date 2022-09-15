@@ -1,12 +1,15 @@
-import { Base, DragServiceProps, withDrag } from '@studiometa/js-toolkit';
-import type { BaseConfig } from '@studiometa/js-toolkit';
+import { Base, withDrag } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig, DragServiceProps } from '@studiometa/js-toolkit';
 import { matrix } from '@studiometa/js-toolkit/utils';
 
 /**
  * Draggable class.
  */
-export class Draggable extends withDrag(Base) {
-  static config = {
+export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base)<T> {
+  /**
+   * Config.
+   */
+  static config:BaseConfig = {
     name: 'DraggableElement',
   };
 

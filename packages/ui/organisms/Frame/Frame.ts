@@ -1,12 +1,12 @@
 import { Base, isDirectChild, getDirectChildren } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { nextFrame, historyPush } from '@studiometa/js-toolkit/utils';
-import {FrameAnchor} from './FrameAnchor.js';
-import {FrameForm} from './FrameForm.js';
-import {FrameTarget} from './FrameTarget.js';
+import { FrameAnchor } from './FrameAnchor.js';
+import { FrameForm } from './FrameForm.js';
+import { FrameTarget } from './FrameTarget.js';
 
 /**
  * Get the scroll position.
- * @returns {{ left: number, top: number }}
  */
 function getScrollPosition() {
   return {
@@ -17,36 +17,33 @@ function getScrollPosition() {
 
 /**
  * The fetch cache.
- * @type {Map<string, { promise: Promise<any>, status: 'pending'|'resolved'|'error', content: any }>}
  */
-const cache = new Map();
+const cache: Map<
+  string,
+  { promise: Promise<string>; status: 'pending' | 'resolved' | 'error'; content: string }
+> = new Map();
 
-/**
- * @typedef {Object} FrameOptions
- * @property {boolean} history
- * @property {'replace'|'prepend'|'append'} position
- * @property {string} target
- */
-
-/**
- * @typedef {Frame & {
- *   $children: {
- *     FrameAnchor: FrameAnchor[],
- *     FrameForm: FrameForm[],
- *     FrameTarget: FrameTarget[],
- *     Frame: Frame[],
- *   }
- * }} FrameInterface
- */
+export interface FrameProps extends BaseProps {
+  $children: {
+    FrameAnchor: FrameAnchor[];
+    FrameForm: FrameForm[];
+    FrameTarget: FrameTarget[];
+    // eslint-disable-next-line no-use-before-define
+    Frame: Frame[];
+  };
+  $options: {
+    history: boolean;
+  };
+}
 
 /**
  * Class.
  */
-export class Frame extends Base {
+export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps> {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'Frame',
     emits: [
       'before-fetch',
@@ -71,80 +68,20 @@ export class Frame extends Base {
 
   /**
    * Get uniq id.
-   * @returns {string}
    */
   get id() {
     return this.$el.id;
   }
 
   /**
-   * Get direct children.
-   *
-   * @this    {FrameInterface}
-   * @param   {string} name
-   * @returns {any[]}
-   */
-  getDirectChild(name) {
-    if (!this.$children[name]) {
-      return [];
-    }
-
-    if (!this.$children.Frame) {
-      return this.$children[name];
-    }
-
-    return this.$children[name].filter((child) =>
-      this.$children.Frame.every((frame) =>
-        frame.$children[name] ? !frame.$children[name].includes(child) : true,
-      ),
-    );
-  }
-
-  /**
    * Get direct `FrameTarget` children.
-   * @returns {FrameTarget[]}
    */
-  get directChildrenFrameTarget() {
+  get directChildrenFrameTarget(): FrameTarget[] {
     return getDirectChildren(this, 'Frame', 'FrameTarget');
   }
 
   /**
-   * Mounted hook.
-   * @returns {void}
-   */
-  mounted() {
-    if (this.$options.history) {
-      window.addEventListener('popstate', this);
-    }
-  }
-
-  /**
-   * Destroyed hook.
-   * @returns {void}
-   */
-  destroyed() {
-    window.removeEventListener('popstate', this);
-  }
-
-  /**
-   * Dispatch events.
-   * @param   {PopStateEvent} event
-   * @returns {void}
-   */
-  handleEvent(event) {
-    if (event.type === 'popstate') {
-      this.onWindowPopstate(event);
-    }
-
-    if (event.type === 'beforeunload') {
-      this.onWindowUnload();
-    }
-  }
-
-  /**
    * Prevent scroll top on unload.
-   *
-   * @returns {void}
    */
   onWindowUnload() {
     const { history } = window;
@@ -164,23 +101,15 @@ export class Frame extends Base {
 
   /**
    * Go to the previous URL on `popstate` event.
-   *
-   * @param   {PopStateEvent} event
-   * @returns {void}
    */
-  onWindowPopstate(event) {
+  onWindowPopstate(event: PopStateEvent) {
     this.goTo(window.location.href, event.state);
   }
 
   /**
    * Prevent click on `FrameAnchor`.
-   *
-   * @this    {FrameInterface}
-   * @param   {number} index
-   * @param   {MouseEvent} event
-   * @returns {void}
    */
-  onFrameAnchorClick(index, event) {
+  onFrameAnchorClick(index: number, event: MouseEvent) {
     // Prevent propagation of nested frames
     if (!isDirectChild(this, 'Frame', 'FrameAnchor', this.$children.FrameAnchor[index])) {
       return;
@@ -201,13 +130,8 @@ export class Frame extends Base {
 
   /**
    * Prevent submit on forms.
-   *
-   * @this    {FrameInterface}
-   * @param   {number} index
-   * @param   {SubmitEvent} event
-   * @returns {void}
    */
-  onFrameFormSubmit(index, event) {
+  onFrameFormSubmit(index:number, event:SubmitEvent) {
     // Prevent propagation of nested frames
     if (!isDirectChild(this, 'Frame', 'FrameForm', this.$children.FrameForm[index])) {
       return;
@@ -225,8 +149,6 @@ export class Frame extends Base {
 
   /**
    * Parge an HTML string into a DOM object.
-   * @param   {string} string
-   * @returns {Document}
    */
   parseHTML(string = '') {
     return new DOMParser().parseFromString(string, 'text/html');
@@ -234,11 +156,8 @@ export class Frame extends Base {
 
   /**
    * Go to the given url.
-   * @param   {string} url
-   * @param   {null|{ top: number, left: number }} [scroll]
-   * @returns {Promise<void>}
    */
-  async goTo(url, scroll = null) {
+  async goTo(url:string, scroll:{ top: number, left: number } = null) {
     this.$log('goTo', url);
     const parsedUrl = new URL(url);
 
@@ -253,7 +172,7 @@ export class Frame extends Base {
     const doc = this.parseHTML(content);
     const el = doc.querySelector(`#${this.id}`);
     // @todo manage el === null
-    const newFrame = new Frame(/** @type {HTMLElement} */ (el));
+    const newFrame = new Frame(el as HTMLElement);
     newFrame.$children.registerAll();
 
     this.$emit('after-fetch', url, content);
@@ -298,10 +217,8 @@ export class Frame extends Base {
 
   /**
    * Fetch the given url.
-   * @param   {string} url
-   * @returns {Promise<string>}
    */
-  async fetch(url) {
+  async fetch(url:string):Promise<string> {
     const cached = cache.get(url);
 
     if (cached) {
@@ -312,7 +229,7 @@ export class Frame extends Base {
       return cached.content;
     }
 
-    const promise = fetch(url);
+    const promise = fetch(url).then((response) => response.text());
 
     try {
       cache.set(url, {
@@ -321,7 +238,7 @@ export class Frame extends Base {
         content: undefined,
       });
 
-      const content = await promise.then((response) => response.text());
+      const content = await promise;
 
       cache.set(url, {
         promise,
