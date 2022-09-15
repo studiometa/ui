@@ -1,19 +1,21 @@
-import AbstractSliderChild from './AbstractSliderChild.js';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import { AbstractSliderChild } from './AbstractSliderChild.js';
 
-/**
- * @typedef {SliderBtn & {
- *   $parent: import('./Slider.js').default
- * }} SliderBtnInterface
- */
+export interface SliderBtnProps extends BaseProps {
+  $options: {
+    prev: boolean;
+    next: boolean;
+  };
+}
 
 /**
  * SliderBtn class.
  */
-export default class SliderBtn extends AbstractSliderChild {
+export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderChild<T & SliderBtnProps> {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'SliderBtn',
     options: {
       prev: Boolean,
@@ -23,12 +25,10 @@ export default class SliderBtn extends AbstractSliderChild {
 
   /**
    * Update attributes.
-   *
-   * @this    {SliderBtnInterface}
    * @param   {number} index
    * @returns {void}
    */
-  update(index) {
+  update(index: number) {
     if (
       (index === 0 && this.$options.prev) ||
       (index === this.$parent.indexMax && this.$options.next)
@@ -41,8 +41,6 @@ export default class SliderBtn extends AbstractSliderChild {
 
   /**
    * Go prev or next on click.
-   *
-   * @this    {SliderBtnInterface}
    * @returns {void}
    */
   onClick() {

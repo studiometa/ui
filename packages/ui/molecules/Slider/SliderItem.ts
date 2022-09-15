@@ -1,14 +1,17 @@
 import { Base, withIntersectionObserver } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { damp, domScheduler, transform } from '@studiometa/js-toolkit/utils';
 
 /**
  * Manage a slider item and its state transition.
  */
-export default class SliderItem extends withIntersectionObserver(Base, { threshold: [0, 1] }) {
+export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectionObserver(Base, {
+  threshold: [0, 1],
+})<T> {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'SliderItem',
     emits: ['is-fully-visible', 'is-partially-visible', 'is-hidden'],
   };
@@ -32,9 +35,21 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
   dampedX = 0;
 
   /**
+   * Item original position.
+   */
+  rect:{
+    x: number;
+    y: number;
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+    width: number;
+    height: number;
+  };
+
+  /**
    * Set SliderItem bounding rectangle on mount.
-   *
-   * @returns {void}
    */
   mounted() {
     this.updateRectAdjustedWithX();
@@ -42,8 +57,6 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
 
   /**
    * Update SliderItem bounding rectangle on resize.
-   *
-   * @returns {void}
    */
   resized() {
     this.updateRectAdjustedWithX();
@@ -51,8 +64,6 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
 
   /**
    * Reset position to `0` on destroy.
-   *
-   * @returns {void}
    */
   destroyed() {
     this.moveInstantly(0);
@@ -60,11 +71,8 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
 
   /**
    * Intersected hook.
-   *
-   * @param   {IntersectionObserverEntry[]} entries
-   * @returns {void}
    */
-  intersected([{ intersectionRatio, isIntersecting }]) {
+  intersected([{ intersectionRatio, isIntersecting }]:IntersectionObserverEntry[]) {
     if (intersectionRatio >= 1) {
       this.$emit('is-fully-visible');
       this.$el.setAttribute('aria-hidden', 'false');
@@ -98,8 +106,6 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
 
   /**
    * Enable the SliderItem.
-   *
-   * @returns {void}
    */
   activate() {
     this.$el.classList.add('is-active');
@@ -107,8 +113,6 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
 
   /**
    * Disable the SliderItem.
-   *
-   * @returns {void}
    */
   disactivate() {
     this.$el.classList.remove('is-active');
@@ -116,11 +120,8 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
 
   /**
    * Move the SliderItem to the given target position.
-   *
-   * @param   {number} targetPosition
-   * @returns {void}
    */
-  move(targetPosition) {
+  move(targetPosition:number) {
     this.x = targetPosition;
 
     if (!this.$services.has('ticked')) {
@@ -130,11 +131,8 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
 
   /**
    * Move the SliderItem instantly to the given target position.
-   *
-   * @param   {number} targetPosition
-   * @returns {void}
    */
-  moveInstantly(targetPosition) {
+  moveInstantly(targetPosition:number) {
     this.x = targetPosition;
     this.dampedX = targetPosition;
     this.render();
@@ -142,8 +140,6 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
 
   /**
    * Render the component.
-   *
-   * @returns {void}
    */
   render() {
     domScheduler.write(() => {
@@ -153,11 +149,8 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
 
   /**
    * Check if SliderItem is partially visible for the given target position.
-   *
-   * @param   {number} targetPosition
-   * @returns {boolean}
    */
-  willBeVisible(targetPosition) {
+  willBeVisible(targetPosition:number) {
     return (
       this.rect.x + targetPosition < window.innerWidth * 1.5 &&
       this.rect.x + targetPosition + this.rect.width > window.innerWidth * -0.5
@@ -186,7 +179,7 @@ export default class SliderItem extends withIntersectionObserver(Base, { thresho
    */
   updateRectAdjustedWithX() {
     const x = this.x * -1;
-    const rect = this.$el.getBoundingClientRect().toJSON();
+    const rect:this['rect'] = this.$el.getBoundingClientRect().toJSON();
 
     this.rect = {
       ...rect,

@@ -1,31 +1,25 @@
 import { Base } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig, BaseInterface } from '@studiometa/js-toolkit';
 import { nextFrame, domScheduler, isFunction } from '@studiometa/js-toolkit/utils';
-import Slider from './Slider.js';
+import { Slider } from './Slider.js';
 
-/**
- * @typedef {AbstractSliderChild & { $parent: Slider, $refs: { progress: HTMLElement } }} AbstractSliderChildInterface
- */
+export interface AbstractSliderChildProps extends BaseProps {
+  $parent: Slider;
+}
 
 /**
  * AbstractSliderChild class.
  */
-export default class AbstractSliderChild extends Base {
+export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<T & AbstractSliderChildProps> implements BaseInterface {
   /**
    * Config.
    */
-  static config = {
+  static config:BaseConfig = {
     name: 'AbstractSliderChild',
   };
 
   /**
-   * @type {Slider}
-   */
-  // @ts-ignore
-  $parent;
-
-  /**
    * Listen to the `goto` event of the parent on mount.
-   * @returns {void}
    */
   mounted() {
     if (!(this.$parent instanceof Slider)) {
@@ -39,9 +33,6 @@ export default class AbstractSliderChild extends Base {
 
   /**
    * Trigger update on resize.
-   *
-   * @this    {AbstractSliderChildInterface}
-   * @returns {void}
    */
   resized() {
     nextFrame(() => {
@@ -51,8 +42,6 @@ export default class AbstractSliderChild extends Base {
 
   /**
    * Remove the event listener.
-   *
-   * @returns {void}
    */
   destroyed() {
     this.$parent.$off('index', this);
@@ -80,8 +69,6 @@ export default class AbstractSliderChild extends Base {
 
   /**
    * Update the child component with the given index.
-   *
-   * @this    {AbstractSliderChildInterface}
    * @param   {number} index The new active index.
    * @returns {void|(()=>void)}
    */

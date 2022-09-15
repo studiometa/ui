@@ -1,21 +1,22 @@
+import type { BaseProps, BaseConfig, DragServiceProps } from '@studiometa/js-toolkit';
 import { Base, withDrag } from '@studiometa/js-toolkit';
 
-/**
- * @typedef {SliderDrag & {
- *   $options: {
- *     scrollLockThreshold: number;
- *   }
- * }} SliderDragInterface
- */
+export interface SliderDragProps extends BaseProps {
+  $options: {
+    scrollLockThreshold: number;
+  };
+}
 
 /**
  * SliderDrag class.
  */
-export default class SliderDrag extends withDrag(Base) {
+export class SliderDrag<T extends BaseProps = BaseProps> extends withDrag(Base)<
+  T & SliderDragProps
+> {
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     name: 'SliderDrag',
     emits: ['start', 'drag', 'drop', 'inertia', 'stop'],
     options: {
@@ -29,9 +30,6 @@ export default class SliderDrag extends withDrag(Base) {
   /**
    * Test if the scroll should be blocked. Used with the touchmove event to prevent
    * scrolling vertically when trying to drag the slider.
-   *
-   * @this {SliderDragInterface}
-   * @returns {boolean}
    */
   get shouldPreventScroll() {
     const { distance } = this.$services.get('dragged');
@@ -46,7 +44,7 @@ export default class SliderDrag extends withDrag(Base) {
    * @param   {TouchEvent} event
    * @returns {void}
    */
-  onTouchmove(event) {
+  onTouchmove(event:TouchEvent) {
     if (this.shouldPreventScroll) {
       event.preventDefault();
     }
@@ -54,10 +52,8 @@ export default class SliderDrag extends withDrag(Base) {
 
   /**
    * Emit drag events.
-   * @param   {import('@studiometa/js-toolkit/services/drag').DragServiceProps} props
-   * @returns {void}
    */
-  dragged(props) {
+  dragged(props:DragServiceProps) {
     this.$emit(props.mode, props);
   }
 }

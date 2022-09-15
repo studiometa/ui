@@ -1,29 +1,29 @@
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { withTransition } from '../../decorators/index.js';
-import AbstractSliderChild from './AbstractSliderChild.js';
+import { AbstractSliderChild } from './AbstractSliderChild.js';
 
-/**
- * @typedef {SliderDots & {
- *   $refs: {
- *     dots: HTMLButtonElement[],
- *   }
- * }} SliderDotsInterface
- */
+export interface SliderDotsProps extends BaseProps {
+  $refs: {
+    dots: HTMLButtonElement[];
+  };
+}
 
 /**
  * SliderDots class.
  */
-export default class SliderDots extends withTransition(AbstractSliderChild) {
+export class SliderDots<
+  T extends BaseProps = BaseProps,
+> extends withTransition<AbstractSliderChild>(AbstractSliderChild)<T & SliderDotsProps> {
   /**
    * Config.
    */
-  static config = {
+  static config:BaseConfig = {
     name: 'SliderDots',
     refs: ['dots[]'],
   };
 
   /**
    * Get target.
-   * @this {SliderDotsInterface}
    * @returns {HTMLButtonElement[]}
    */
   get target() {
@@ -32,18 +32,16 @@ export default class SliderDots extends withTransition(AbstractSliderChild) {
 
   /**
    * The current active index.
-   * @type {number}
    */
   currentIndex = 0;
 
   /**
    * Update dots classes according to the new index.
    *
-   * @this    {SliderDotsInterface}
    * @param   {number} index
    * @returns {void}
    */
-  update(index) {
+  update(index:number) {
     this.leave(this.$refs.dots[this.currentIndex]);
     this.enter(this.$refs.dots[index]);
     this.currentIndex = index;
@@ -51,12 +49,8 @@ export default class SliderDots extends withTransition(AbstractSliderChild) {
 
   /**
    * Go to the given index on dot click.
-   *
-   * @param   {MouseEvent} event
-   * @param   {number} index
-   * @returns {void}
    */
-  onDotsClick(event, index) {
+  onDotsClick(event:MouseEvent, index:number) {
     this.$parent.goTo(index);
   }
 }
