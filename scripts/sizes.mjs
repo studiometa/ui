@@ -28,9 +28,9 @@ build({
       return { name, path: relative(result.outdir, file.path), size, gzip };
     });
 
-  writeFileSync(
-    './sizes.mjs',
-    sizes.map((size) => `export const ${size.name} = ${JSON.stringify(size)};`).join('\n')
-  );
+  // writeFileSync(
+  //   './sizes.mjs',
+  //   sizes.map((size) => `export const ${size.name} = ${JSON.stringify(size)};`).join('\n')
+  // );
   console.log('');
 });
