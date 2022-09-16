@@ -2,7 +2,6 @@ import { build } from './shared.mjs';
 
 build({
   format: 'esm',
-  minify: true,
 });
 
 build({
