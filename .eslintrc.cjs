@@ -5,6 +5,7 @@ module.exports = {
   rules: {
     'import/extensions': ['error', 'always', { ignorePackages: true }],
     'no-underscore-dangle': 'off',
+    'import/no-relative-packages': 'off',
   },
   overrides: [
     {
@@ -23,9 +24,18 @@ module.exports = {
       parser: '@typescript-eslint/parser',
       plugins: ['@typescript-eslint'],
       extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
+      rules: {
+        '@typescript-eslint/ban-ts-comment': 'off',
+        'object-curly-newline': 'off',
+        '@typescript-eslint/explicit-module-boundary-types': 'off',
+        'jsdoc/require-param': 'off',
+        'jsdoc/require-returns': 'off',
+        'require-jsdoc': 'off',
+        'import/extensions': 'off',
+      },
     },
     {
-      files: ['packages/ui/**/*.js'],
+      files: ['packages/ui/**/*.js', 'packages/ui/**/*.ts'],
       rules: {
         'import/no-extraneous-dependencies': [
           'error',
