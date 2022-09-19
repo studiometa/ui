@@ -19,7 +19,7 @@ export interface TableOfContentProps extends BaseProps {
 /**
  * TableOfContent class.
  */
-export default class TableOfContent<T extends BaseProps = BaseProps> extends Base<T & TableOfContentProps> {
+export class TableOfContent<T extends BaseProps = BaseProps> extends Base<T & TableOfContentProps> {
   /**
    * Config.
    */
