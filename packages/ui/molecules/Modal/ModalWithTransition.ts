@@ -4,7 +4,7 @@ import { Modal } from './Modal.js';
 /**
  * ModalWithTransition class.
  */
-export default class ModalWithTransition<T extends BaseProps = BaseProps> extends Modal<T> {
+export class ModalWithTransition<T extends BaseProps = BaseProps> extends Modal<T> {
   /**
    * Modal options.
    */
