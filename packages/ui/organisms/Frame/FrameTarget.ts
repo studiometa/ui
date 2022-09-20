@@ -1,5 +1,5 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { transition } from '@studiometa/js-toolkit/utils';
+import { addClass, transition } from '@studiometa/js-toolkit/utils';
 import { Transition } from '../../primitives/index.js';
 
 export interface FrameTargetProps extends BaseProps {
@@ -101,9 +101,7 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
     switch (this.$options.mode) {
       case 'prepend':
       case 'append':
-        Array.from(newTarget.$el.children).forEach((child) => {
-          child.classList.add(...this.$options.enterFrom.split(' '));
-        });
+        addClass(Array.from(newTarget.$el.children), this.$options.enterFrom.split(' '));
         this.$el.insertAdjacentHTML(
           FrameTarget.__INSERT_MODES[this.$options.mode],
           newTarget.$el.innerHTML,
