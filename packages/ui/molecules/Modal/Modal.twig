@@ -15,6 +15,8 @@
  *   Use it to customize the container element attributes.
  * @param array $content_atrr
  *   Use it to customize the content element attributes.
+ * @param string $title
+ *   Use it to customize the modal aria-label attribute.
  *
  * @block $open
  *   Use this block to customize the open trigger button.
@@ -28,6 +30,8 @@
 {# Root attributes #}
 {% set attributes = merge_html_attributes(attr ?? null, { data_component: 'Modal' }) %}
 
+{% set aria_label = 'Modal Title' %}
+
 {# Modal attributes #}
 {% set modal_attributes =
   merge_html_attributes(
@@ -38,6 +42,7 @@
       role: 'dialog',
       aria_modal: true,
       aria_hidden: true,
+      aria_label: aria_label,
       style: { opacity: '0', pointer_events: 'none', visibility: 'hidden' }
     }
   )
@@ -102,7 +107,9 @@
         {% endblock %}
         <div {{ html_attributes(content_attributes) }}>
           {% block content %}
-            No content.
+            <div>
+              No content.
+            </div>
           {% endblock %}
         </div>
       </div>
