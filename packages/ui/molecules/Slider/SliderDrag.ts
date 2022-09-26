@@ -32,7 +32,7 @@ export class SliderDrag<T extends BaseProps = BaseProps> extends withDrag(Base)<
    * scrolling vertically when trying to drag the slider.
    */
   get shouldPreventScroll() {
-    const { distance } = this.$services.get('dragged');
+    const { distance } = this.$services.get('dragged') as DragServiceProps;
     return (
       Math.abs(distance.x) > this.$options.scrollLockThreshold &&
       Math.abs(distance.x) > Math.abs(distance.y)

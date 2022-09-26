@@ -7,25 +7,6 @@ import type {
   BaseInterface,
 } from '@studiometa/js-toolkit';
 
-/**
- * Manage transition with multiple targets.
- */
-function delegateTransition<
-  V extends HTMLElement | HTMLElement[] | NodeList,
-  W = V extends HTMLElement ? Promise<void> : Promise<void[]>,
->(
-  elementOrElements: V,
-  name: Parameters<typeof transition>[1],
-  endMode?: Parameters<typeof transition>[2],
-): W {
-  // @ts-ignore
-  return isArray(elementOrElements) || elementOrElements instanceof NodeList
-    ? (Promise.all(
-        Array.from(elementOrElements).map((el: HTMLElement) => transition(el, name, endMode)),
-      ) as Promise<void[]>)
-    : (transition(elementOrElements, name, endMode) as Promise<void>);
-}
-
 export interface TransitionProps extends BaseProps {
   $options: {
     enterFrom: string;
@@ -96,7 +77,7 @@ export function withTransition<S extends Base>(
     async enter(target?: HTMLElement | HTMLElement[]): Promise<void> {
       const { enterFrom, enterActive, enterTo, enterKeep, leaveTo } = this.$options;
 
-      await delegateTransition(
+      await transition(
         target ?? this.target,
         {
           // eslint-disable-next-line prefer-template
@@ -114,7 +95,7 @@ export function withTransition<S extends Base>(
     async leave(target?: HTMLElement | HTMLElement[]): Promise<void> {
       const { leaveFrom, leaveActive, leaveTo, leaveKeep, enterTo } = this.$options;
 
-      await delegateTransition(
+      await transition(
         target ?? this.target,
         {
           // eslint-disable-next-line prefer-template
