@@ -14,6 +14,7 @@ const defaultOptions = {
   write: true,
   outdir,
   target: 'esnext',
+  sourcemap: true
 };
 
 /**
