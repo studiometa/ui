@@ -1,6 +1,6 @@
 import { Base, KeyServiceProps } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { transition, isArray, focusTrap } from '@studiometa/js-toolkit/utils';
+import { transition, focusTrap } from '@studiometa/js-toolkit/utils';
 
 const { trap, untrap, saveActiveElement } = focusTrap();
 

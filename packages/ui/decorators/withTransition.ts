@@ -1,4 +1,4 @@
-import { transition, isArray } from '@studiometa/js-toolkit/utils';
+import { transition } from '@studiometa/js-toolkit/utils';
 import type {
   Base,
   BaseDecorator,
