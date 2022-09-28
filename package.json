@@ -25,17 +25,17 @@
   "devDependencies": {
     "@studiometa/eslint-config": "^3.0.5",
     "@studiometa/prettier-config": "^2.1.1",
-    "@typescript-eslint/eslint-plugin": "^5.36.0",
-    "@typescript-eslint/parser": "^5.36.0",
-    "esbuild": "^0.15.6",
-    "eslint": "^8.23.0",
+    "@typescript-eslint/eslint-plugin": "^5.38.1",
+    "@typescript-eslint/parser": "^5.38.1",
+    "esbuild": "^0.15.9",
+    "eslint": "^8.24.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
-    "eslint-plugin-jest": "^27.0.1",
-    "fast-glob": "^3.2.11",
+    "eslint-plugin-jest": "^27.0.4",
+    "fast-glob": "^3.2.12",
     "gzip-size": "^7.0.0",
     "prettier": "^2.7.1",
     "prettier-plugin-twig-melody": "^0.4.6",
-    "typescript": "^4.8.2"
+    "typescript": "^4.8.3"
   },
   "dependencies": {
     "patch-package": "^6.4.7"
