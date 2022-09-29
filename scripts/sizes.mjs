@@ -13,6 +13,7 @@ build({
   format: 'esm',
   write: false,
   minify: true,
+  sourcemap: false,
 }).then(async (result) => {
   console.log('');
   log('Export', 'Size', 'Gzipped sized');
