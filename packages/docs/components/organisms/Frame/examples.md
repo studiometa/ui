@@ -6,7 +6,7 @@ title: Frame examples
 
 ## Simple
 
-<PreviewIframe src="./stories/story.html" />
+<PreviewIframe src="./stories/story-a.html" />
 
 :::details Code
 

@@ -4,7 +4,7 @@ layout: none
 
 <script setup>
   import { onMounted } from 'vue';
-  import PageA from './a.txt?raw';
+  import PageA from './story-a.txt?raw';
 
   onMounted(async () => {
     const { default: useApp } = await import('./app.js');
