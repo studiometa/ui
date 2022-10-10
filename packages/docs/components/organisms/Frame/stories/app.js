@@ -21,7 +21,9 @@ class FakeLink extends HTMLElement {
     const href = this.getAttribute('href');
     this.link.setAttribute('href', href);
 
-    return this.link.href.replace(/\.html$/, '.txt');
+    return import.meta.env.DEV
+      ? this.link.href.replace(/\.html$/, '.txt')
+      : this.link.href;
   }
 }
 try {
