@@ -331,7 +331,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
 
     let finalX = clamp(
       inertiaFinalValue(this.__distanceX, props.delta.x * this.$options.dropSensitivity),
-      0,
+      this.getStateValueByMode(this.firstState.x),
       this.getStateValueByMode(this.lastState.x),
     );
 
