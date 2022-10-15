@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@bytebase/vue-kbar": "^0.1.7",
-    "@studiometa/js-toolkit": "^2.6.1"
+    "@studiometa/js-toolkit": "^2.6.3"
   },
   "devDependencies": {
     "@iconify-json/octicon": "^1.1.19",
