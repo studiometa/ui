@@ -9,6 +9,7 @@ export interface AbstractScrollAnimationProps extends BaseProps {
     from: Keyframe;
     to: Keyframe;
     keyframes: Keyframe[];
+    easing: [number,number,number,number];
   };
 }
 
