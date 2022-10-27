@@ -79,6 +79,8 @@ export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView
         { once: true },
       );
       tempImg.src = src;
+
+      this.$terminate();
     }
   }
 }
