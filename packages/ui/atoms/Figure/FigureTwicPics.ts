@@ -80,4 +80,11 @@ export class FigureTwicPics<T extends BaseProps = BaseProps> extends Figure<T & 
   resized() {
     this.src = this.$refs.img.dataset.src;
   }
+
+  /**
+   * Do not terminate on image load as we need to set the src on resize.
+   */
+  onLoad() {
+    // Do not terminate on image load as we need.
+  }
 }
