@@ -9,6 +9,8 @@ namespace Studiometa\Ui;
 
 use Twig\Loader\FilesystemLoader;
 use Studiometa\TwigToolkit\Extension as TwigToolkitExtension;
+use Twig\TwigFunction;
+use Spatie\Url\Url;
 
 /**
  * Twig extension class.
@@ -52,5 +54,16 @@ class Extension extends TwigToolkitExtension
             $loader->addPath($pkg_template_path, 'ui-pkg');
             $loader->addPath($pkg_svg_path, 'svg-pkg');
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getFunctions()
+    {
+        return array_merge(
+            parent::getFunctions(),
+            [new TwigFunction('url', [Url::class, 'fromString'])]
+        );
     }
 }
