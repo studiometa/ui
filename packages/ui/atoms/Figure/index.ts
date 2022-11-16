@@ -1,2 +1,2 @@
 export * from './Figure.js';
-export * from './FigureTwicPics.js';
+export * from './FigureTwicpics.js';

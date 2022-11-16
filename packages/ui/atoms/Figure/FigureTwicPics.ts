@@ -1,9 +1,12 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { withoutLeadingSlash, withoutTrailingSlash } from '@studiometa/js-toolkit/utils';
 import { Figure } from './Figure.js';
 
-export interface FigureTwicPicsProps extends BaseProps {
+export interface FigureTwicpicsProps extends BaseProps {
   $options: {
     transform: string;
+    domain: string;
+    path: string;
     step: number;
     mode: string;
   };
@@ -13,7 +16,7 @@ export interface FigureTwicPicsProps extends BaseProps {
  * Normalize the given size to the step option.
  */
 // eslint-disable-next-line no-use-before-define
-function normalizeSize(that:FigureTwicPics, prop:string):number {
+function normalizeSize(that: FigureTwicpics, prop: string): number {
   const { step } = that.$options;
   return Math.ceil(that.$refs.img[prop] / step) * step;
 }
@@ -23,16 +26,20 @@ function normalizeSize(that:FigureTwicPics, prop:string):number {
  *
  * Manager lazyloading image sources.
  */
-export class FigureTwicPics<T extends BaseProps = BaseProps> extends Figure<T & FigureTwicPicsProps> {
+export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
+  T & FigureTwicpicsProps
+> {
   /**
    * Config.
    */
   static config: BaseConfig = {
     ...Figure.config,
-    name: 'FigureTwicPics',
+    name: 'FigureTwicpics',
     options: {
       ...Figure.config.options,
       transform: String,
+      domain: String,
+      path: String,
       step: {
         type: Number,
         default: 50,
@@ -45,19 +52,27 @@ export class FigureTwicPics<T extends BaseProps = BaseProps> extends Figure<T & 
   };
 
   /**
-   * Get the TwicPics domain.
+   * Get the Twicpics path.
    */
-  get domain():string {
+  get path():string {
+    return withoutTrailingSlash(withoutLeadingSlash(this.$options.path));
+  }
+
+  /**
+   * Get the Twicpics domain.
+   */
+  get domain(): string {
     const url = new URL(this.$refs.img.dataset.src);
     return url.host;
   }
 
   /**
-   * Add TwicPics transforms and domain to the URL.
+   * Add Twicpics transforms, path and domain to the URL.
    */
-  set src(value:string) {
+  set src(value: string) {
     const url = new URL(value, window.location.origin);
     url.host = this.domain;
+    url.pathname = `/${this.path}${url.pathname}`
 
     const width = normalizeSize(this, 'offsetWidth');
     const height = normalizeSize(this, 'offsetHeight');
