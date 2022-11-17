@@ -26,7 +26,7 @@
   {% set attr = (attr ?? {})|merge({ data_option_transform: formatted_transform }) %}
 {% endif %}
 
-{% set src = url(src).withQueryParameter('twic', twic_param) %}
+{% set src = twig_toolkit_url(src).withQueryParameter('twic', twic_param) %}
 
 {% if twic_domain is defined %}
   {% set src = src.withHost(twic_domain) %}
