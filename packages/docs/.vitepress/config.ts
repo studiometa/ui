@@ -121,7 +121,7 @@ function generateSidebarLinksFromPath(
 }
 
 function getEntryTitle(entry) {
-  const content = readFileSync(entry, { encoding: 'UTF-8' });
+  const content = readFileSync(entry, { encoding: 'utf-8' });
   const [title] = content.match(/^#\s+.*$/m) ?? [];
 
   return title ? title.replace(/^#\s?/, '').replace(/(<([^>]+)>)/ig, '') : basename(dirname(entry));

@@ -23,6 +23,7 @@ export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView
   static config: BaseConfig = {
     ...Transition.config,
     name: 'Figure',
+    emits: ['load'],
     refs: ['img'],
     options: {
       ...Transition.config.options,
@@ -75,12 +76,18 @@ export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView
           this.src = src;
           tempImg = null;
           this.enter();
+          this.$emit('load');
         },
         { once: true },
       );
       tempImg.src = src;
-
-      this.$terminate();
     }
+  }
+
+  /**
+   * Terminate the component on load.
+   */
+  onLoad() {
+    this.$terminate();
   }
 }
