@@ -1,24 +1,22 @@
 <div class="max-w-lg mx-auto p-10 space-y-10">
   {% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
-    src: 'https://picsum.photos/500/400?rand=1',
+    src: '/-/image-1.jpg',
     width: '500',
-    height: '400',
+    height: '500',
     lazy: false,
-    twic_domain: 'cdn.studiometa.fr',
-    twic_path: 'production',
+    twic_domain: 'studiometa.twic.pics',
+    twic_path: 'ui',
     twic_transform: { focus: 'auto', crop: '300x300', placeholder: 'auto' }
   } %}
   {% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
-    src: 'https://picsum.photos/500/400?rand=2',
+    src: '/-/image-2.jpg',
     width: '500',
-    height: '400',
-    twic_domain: 'cdn.studiometa.fr'
+    height: '500',
   } %}
   {% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
-    src: 'https://picsum.photos/500/400?rand=3',
+    src: '/-/image-3.jpg',
     width: '500',
-    height: '400',
-    twic_domain: 'cdn.studiometa.fr',
+    height: '500',
     twic_transform: { focus: 'auto', crop: '300x300', placeholder: 'auto' }
   } %}
 </div>

@@ -2,14 +2,14 @@
 outline: deep
 ---
 
-# Figure <Badges :texts="badges" />
+# FigureTwicpics <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/atoms/Figure/package.json';
   const badges = [`v${pkg.version}`, 'Twig', 'JS'];
 </script>
 
-Use the `Figure` component to display images.
+Use the `FigureTwicpics` component to display images with the Twicpics API.
 
 ## Table of content
 
@@ -23,13 +23,13 @@ Register the component in your JavaScript app and use the Twig template to displ
 
 ```js {2,8}
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { Figure } from '@studiometa/ui';
+import { FigureTwicpics } from '@studiometa/ui';
 
 class App extends Base {
   static config = {
     name: 'Base',
     components: {
-      Figure,
+      Figure: FigureTwicpics,
     }
   };
 }
@@ -38,32 +38,18 @@ export default createApp(App);
 ```
 ```twig
 <div class="card">
-  {% include '@ui/atoms/Figure/Figure.twig' with {
+  {% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
     src: 'https://picsum.photos/400/400',
     width: 400,
     height: 400,
+    twic_domain: ''
   } only %}
 </div>
 ```
 
-### With or without lazy load
+### Configuring the domain and path in JavaScript
 
-The Twig component is lazy by default, so if you need to display images with an eager loading strategy, set the `lazy` parameter to `false`;
-
-```diff
-  <div class="card">
-    {% include '@ui/atoms/Figure/Figure.twig' with {
-      src: 'https://picsum.photos/400/400',
-      width: 400,
-      height: 400,
-+     lazy: false
-    } only %}
-  </div>
-```
-
-### With TwicPics
-
-If your project uses TwicPics to optimize images, you can use the `FigureTwicpics` class instead of the `Figure` class. You will need to extend it in your project to configure the TwicPics' domain to use.
+To avoid repeating the domain and path of your Twicpics project via `data-option-*` attributes, you can define the `domain` and `path` getter directly by extending the `FigureTwicpics` class in your project.
 
 ```js
 import { FigureTwicpics } from '@studiometa/ui';
@@ -77,6 +63,10 @@ export default class Figure extends FigureTwicpics {
   get domain() {
     return 'domain.twic.pics';
   }
+
+  get path() {
+    return 'production';
+  }
 }
 ```
 
@@ -84,7 +74,7 @@ And replace the import in your app to import your local class instead of the one
 
 ```diff
   import { Base, createApp } from '@studiometa/js-toolkit';
-- import { Figure } from '@studiometa/ui';
+- import { FigureTwicpics } from '@studiometa/ui';
 + import { Figure } from './atoms/Figure.js';
 
   class App extends Base {
@@ -98,3 +88,7 @@ And replace the import in your app to import your local class instead of the one
 
   export default createApp(App);
 ```
+
+::: warning
+Setting the domain and path via getters in JavaScript will work with lazyloaded images. If you disable lazyloading when using the Twig template, you will need to specify the `twic_domain` and `twic_path` Twig options.
+:::

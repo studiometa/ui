@@ -1,11 +1,11 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { FigureTwicpics } from '@studiometa/ui';
+import Figure from './Figure.js';
 
 class App extends Base {
   static config = {
     name: 'App',
     components: {
-      Figure: FigureTwicpics,
+      Figure,
     },
   };
 }
