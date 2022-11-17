@@ -9,6 +9,8 @@
  *   The Twicpics path to use.
  * @param object $twic_transform
  *   Custom transforms for Twicpics.
+ * @param string $twic_placeholder
+ *   Define how the placeholder should be treated. Possible values: meancolor, maincolor, preview.
  */
 #}
 
@@ -36,4 +38,8 @@
 {% if twic_path is defined %}
   {% set src = src.withPath(twic_path ~ src.getPath()) %}
   {% set attr = (attr ?? {})|merge({ data_option_path: twic_path }) %}
+{% endif %}
+
+{% if twic_placeholder is defined %}
+  {% set placeholder = src.withQueryParameter('twic', '%s/output=%s'|format(twic_param, twic_placeholder)) %}
 {% endif %}
