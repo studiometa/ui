@@ -70,9 +70,13 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
    * Add Twicpics transforms, path and domain to the URL.
    */
   set src(value: string) {
-    const url = new URL(value, window.location.origin);
+    const url = new URL(value, 'https://localhost');
     url.host = this.domain;
-    url.pathname = `/${this.path}${url.pathname}`
+    url.port = '';
+
+    if (this.path) {
+      url.pathname = `/${this.path}${url.pathname}`
+    }
 
     const width = normalizeSize(this, 'offsetWidth');
     const height = normalizeSize(this, 'offsetHeight');
@@ -90,7 +94,7 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
   }
 
   /**
-   * Reassign the source from the original on resized.
+   * Reassign the source from the original on resize.
    */
   resized() {
     this.src = this.$refs.img.dataset.src;
