@@ -9,6 +9,7 @@ namespace Studiometa\Ui;
 
 use Twig\Loader\FilesystemLoader;
 use Studiometa\TwigToolkit\Extension as TwigToolkitExtension;
+use Twig\TwigFunction;
 
 /**
  * Twig extension class.

@@ -1,0 +1,39 @@
+{#
+/**
+ * @file
+ * Figure with Twicpics component.
+ *
+ * @param string $twic_domain
+ *   The Twicpics domain to use.
+ * @param string $twic_path
+ *   The Twicpics path to use.
+ * @param object $twic_transform
+ *   Custom transforms for Twicpics.
+ */
+#}
+
+{% extends '@ui/atoms/Figure/Figure.twig' %}
+
+{% set twic_param = 'v1' %}
+{% if twic_transform is defined %}
+  {% set formatted_transform = [] %}
+  {% for key, value in twic_transform %}
+    {% set formatted_transform = formatted_transform|merge(['%s=%s'|format(key, value)]) %}
+  {% endfor %}
+  {% set formatted_transform = formatted_transform|join('/') %}
+
+  {% set twic_param = 'v1/%s'|format(formatted_transform) %}
+  {% set attr = (attr ?? {})|merge({ data_option_transform: formatted_transform }) %}
+{% endif %}
+
+{% set src = twig_toolkit_url(src).withQueryParameter('twic', twic_param) %}
+
+{% if twic_domain is defined %}
+  {% set src = src.withHost(twic_domain) %}
+  {% set attr = (attr ?? {})|merge({ data_option_domain: twic_domain }) %}
+{% endif %}
+
+{% if twic_path is defined %}
+  {% set src = src.withPath(twic_path ~ src.getPath()) %}
+  {% set attr = (attr ?? {})|merge({ data_option_path: twic_path }) %}
+{% endif %}
