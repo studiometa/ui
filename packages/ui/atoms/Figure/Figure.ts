@@ -53,6 +53,13 @@ export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView
   }
 
   /**
+   * Get the original source.
+   */
+  get original() {
+    return this.$refs.img.dataset.src;
+  }
+
+  /**
    * Load on mount.
    */
   mounted() {
@@ -66,7 +73,7 @@ export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView
       throw new Error('[Figure] The `img` ref must be an `<img>` element.');
     }
 
-    const { src } = img.dataset;
+    const src = this.original;
 
     if (this.$options.lazy && src && src !== this.src) {
       let tempImg = new Image();

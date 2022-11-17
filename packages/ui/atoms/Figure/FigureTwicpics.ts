@@ -54,7 +54,7 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
   /**
    * Get the Twicpics path.
    */
-  get path():string {
+  get path(): string {
     return withoutTrailingSlash(withoutLeadingSlash(this.$options.path));
   }
 
@@ -67,15 +67,22 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
   }
 
   /**
-   * Add Twicpics transforms, path and domain to the URL.
+   * Get formattted original source.
    */
-  set src(value: string) {
-    const url = new URL(value, 'https://localhost');
+  get original() {
+    return this.formatSrc(super.original);
+  }
+
+  /**
+   * Format the source for Twicpics.
+   */
+  formatSrc(src: string): string {
+    const url = new URL(src, 'https://localhost');
     url.host = this.domain;
     url.port = '';
 
     if (this.path) {
-      url.pathname = `/${this.path}${url.pathname}`
+      url.pathname = `/${this.path}${url.pathname}`;
     }
 
     const width = normalizeSize(this, 'offsetWidth');
@@ -90,14 +97,14 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
 
     url.search = decodeURIComponent(url.search);
 
-    super.src = url.toString();
+    return url.toString();
   }
 
   /**
    * Reassign the source from the original on resize.
    */
   resized() {
-    this.src = this.$refs.img.dataset.src;
+    this.src = this.original;
   }
 
   /**

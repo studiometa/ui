@@ -5,7 +5,7 @@ outline: deep
 
 # JS API
 
-The `FigureTwicpics` class extends the [`Figure` class](/atoms/Figure/js-api.html) and adds support for TwicPics API.
+The `FigureTwicpics` class extends the [`Figure` class](/components/atoms/Figure/js-api.html) and adds support for TwicPics API.
 
 ## Options
 
