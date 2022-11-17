@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## v0.2.22 (2022-11-17)
+
+### Fixed
+- **FigureTwicpics:**
+  - Fix potential infinite loop in Twig template ([90e3a6e](https://github.com/studiometa/ui/commit/90e3a6e))
+
+### Changed
+- Update studiometa/twig-toolkit 1.3.0 → 1.3.1 ([ed74555](https://github.com/studiometa/ui/commit/ed74555))
+
 ## v0.2.21 (2022-11-17)
 
 ### Fixed
