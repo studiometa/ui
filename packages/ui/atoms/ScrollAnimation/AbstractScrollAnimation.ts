@@ -82,8 +82,6 @@ export class AbstractScrollAnimation<T extends BaseProps = BaseProps> extends wi
       1,
     );
 
-    this.$options.playRange = [0, 0];
-
     this.render(progress);
   }
 
