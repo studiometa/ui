@@ -1,0 +1,82 @@
+{#
+/**
+ * @file
+ * Hero component.
+ *
+ * @param string $surtitle
+ * @param string $title
+ * @param string $subtitle
+ * @param string $label
+ * @param 'left'|'center'|'right' $content_position
+ * @param array $attr
+ *   Use it to customize the root element attributes.
+ * @param array $img_attr
+ *   Use it to customize the image element attributes.
+ * @param array $title_tag
+ *   Use it to customize the tag of the title element
+ * @param array $title_attr
+ *   Use it to customize the title element attributes.
+ * @param array $content_classes
+ *   Use it to customize the content classes.
+ * @param array $surtitle_classes
+ *   Use it to customize the surtitle classes.
+ *
+ */
+#}
+
+{% set attributes =
+  merge_html_attributes(attr ?? null, { class: ['w-screen', 'h-screen', 'relative'] })
+%}
+
+{% set img_attributes =
+  merge_html_attributes(
+    img_attr ?? null,
+    {
+      class: ['object-cover', 'w-full', 'h-full', 'absolute', 'z-under'],
+      src: src,
+      alt: alt|default(''),
+      width: width|default(false),
+      height: height|default(false)
+    }
+  )
+%}
+
+{% set title_tag = title_tag|default('div') %}
+{% set title_attributes = merge_html_attributes(title_attr ?? null, { class: ['text-xl'] }) %}
+
+{# Default content position value #}
+{% set content_position = content_position|default('center') %}
+{% set content_classes = [
+  'flex flex-col justify-center h-full w-full space-y-8',
+  {
+    'items-start': content_position == 'left',
+    'items-center': content_position == 'center',
+    'items-end': content_position == 'left'
+  }
+] %}
+
+<div {{ html_attributes(attributes) }}>
+  <img {{ html_attributes(img_attributes) }} />
+  {% block content %}
+    <div class="{{ html_classes(content_classes) }}">
+      {% block surtitle %}
+        <div class="{{ html_classes(surtitle_classes|default('text-m')) }}">
+          {{ surtilte }}
+        </div>
+      {% endblock %}
+      {% block title %}
+        {% html_element title_tag with title_attributes %}
+          {{ title }}
+        {% end_html_element %}
+      {% endblock %}
+      {% block subtitle %}
+        <div class="{{ html_classes(subtitle_classes|default('text-s')) }}">
+          {{ subtitle }}
+        </div>
+      {% endblock %}
+      {% block cta %}
+        {% include '@ui/atoms/Button/Button.twig' with { label: label } %}
+      {% endblock %}
+    </div>
+  {% endblock %}
+</div>
