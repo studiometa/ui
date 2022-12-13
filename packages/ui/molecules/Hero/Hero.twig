@@ -32,7 +32,7 @@
  *   customize the tag of the description element
  * @param array                                     $description_attr
  *   customize the description element attributes.
- * @param array                                     $cta_attr
+ * @param array                                     $ctas_attr
  *   customize the cta element attributes.
  */
 #}
@@ -46,7 +46,7 @@
   merge_html_attributes(
     image_attr ?? null,
     {
-      class: ['hero__image', 'object-cover', 'w-full', 'h-full', 'absolute', 'z-under'],
+      class: ['hero__image absolute inset-0'],
       src: src,
       alt: alt|default(''),
       width: width|default(false),
@@ -60,10 +60,10 @@
 {% set content_attributes =
   merge_html_attributes(
     content_attr ?? null,
-    { class: 'hero-content' },
+    { class: 'hero__content relative' },
     {
       class: [
-        'flex flex-col justify-center h-full w-full space-y-8',
+        'flex flex-col justify-center h-full w-full gap-8',
         {
           'items-start': content_position == 'left',
           'items-center': content_position == 'center',
@@ -75,31 +75,31 @@
 %}
 {% set surtitle_tag = title_tag|default('p') %}
 {% set surtitle_attributes =
-  merge_html_attributes(title_attr ?? null, { class: ['hero-content__surtitle', 'type-base'] })
+  merge_html_attributes(title_attr ?? null, { class: ['hero__surtitle type-base'] })
 %}
 
 {% set title_tag = title_tag|default('p') %}
 {% set title_attributes =
-  merge_html_attributes(title_attr ?? null, { class: ['hero-content__title', 'type-h1'] })
+  merge_html_attributes(title_attr ?? null, { class: ['hero__title type-h1'] })
 %}
 
 {% set description_tag = description_tag|default('p') %}
 {% set description_attributes =
   merge_html_attributes(
     description_attr ?? null,
-    { class: ['hero-content__description', 'type-base'] }
+    { class: ['hero__description type-base'] }
   )
 %}
 
-{% set cta_attributes =
-  merge_html_attributes(cta_attr ?? null, { class: ['hero-content__cta', 'flex', 'px-6'] })
+{% set ctas_attributes =
+  merge_html_attributes(ctas_attr ?? null, { class: ['hero__ctas', 'flex', 'px-6'] })
 %}
 
 <section {{ html_attributes(attributes) }}>
   {% block background %}
     {% if image %}
       <div {{ html_attributes(image_attributes) }}>
-        {% include '@ui/atoms/Figure/Figure.twig' with image only %}
+        {% include '@ui/atoms/Figure/Figure.twig' with image|merge({ absolute: true }) only %}
       </div>
     {% endif %}
   {% endblock %}
@@ -123,19 +123,15 @@
         {% if description %}
           {% html_element description_tag with description_attributes %}
             {{ description }}
-          {% end_html_element %}
         {% endif %}
       {% endblock %}
       {% block ctas %}
         {% if ctas %}
-          {% for cta in ctas %}
-            <div {{ html_attributes(cta_attributes) }}>
-              {% include '@ui/atoms/Button/Button.twig' with {
-                label: cta.cta_label,
-                url: cta.cta_url
-              } %}
-            </div>
-          {% endfor %}
+          <div {{ html_attributes(ctas_attributes) }}>
+            {% for cta in ctas %}
+              {% include '@ui/atoms/Button/Button.twig' with cta only %}
+            {% endfor %}
+          </div>
         {% endif %}
       {% endblock %}
     </div>
