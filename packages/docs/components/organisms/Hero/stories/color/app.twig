@@ -1,0 +1,22 @@
+{% set ctas = [
+  { label: 'CTA #1', src: 'https://picsum.photos/200/400?rand=1*' },
+  { label: 'CTA #2', src: 'https://picsum.photos/500/400?rand=1*' }
+] %}
+
+<div class="w-full h-full">
+  {% embed '@ui/organisms/Hero/Hero.twig'
+    with {
+      surtitle: 'Surtitre',
+      surtitle_attr: { class: 'italic' },
+      title: 'Titre',
+      title_attr: { class: 'text-5xl uppercase font-bold' },
+      description: 'Description',
+      ctas: ctas,
+      content_attr: { class: 'relative px-12' }
+    }
+  %}
+    {% block background %}
+      <div class="absolute h-full w-full bg-blue-400"></div>
+    {% endblock %}
+  {% endembed %}
+</div>
