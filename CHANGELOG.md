@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+- **Figure**
+  - Add the `placeholder_color` param to Figure ([51f625d](https://github.com/studiometa/ui/commit/51f625d), [#100](https://github.com/studiometa/ui/issues/100))
+
 ## v0.2.23 (2022-11-17)
 
 ### Added
