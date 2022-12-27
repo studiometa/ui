@@ -5,7 +5,7 @@
   const badges = [`v${pkg.version}`, 'JS', 'Twig'];
 </script>
 
-Use the large text component to easily add very nice looking title animation.
+Use the LargeText component to implement a horizontal scrolling text on scroll.
 
 ## Table of content
 

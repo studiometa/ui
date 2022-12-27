@@ -21,7 +21,7 @@ Configure the `src` attribute of the image.
 ### `width`
 
 - Type: `number`
-- Required
+- Default: `100`
 
 Configure the `width` attribute of the image and the components sizing.
 

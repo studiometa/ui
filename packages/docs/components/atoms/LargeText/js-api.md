@@ -39,4 +39,4 @@ Remember to enable skew with the `skew` option.
 
 - Type: `HTMLElement`
 
-The `LargeText` component should have a ref corresponding to its inner `<span />` element.
+The `LargeText` component should have a ref corresponding to its inner `HTMLElement` element.

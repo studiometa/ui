@@ -33,5 +33,5 @@ class App extends Base {
 export default createApp(App);
 ```
 ```twig
-{% include '@ui/atoms/Cursor/Cursor.twig' %}
+{% include '@ui/atoms/Cursor/Cursor.twig' only %}
 ```
