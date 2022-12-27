@@ -26,6 +26,7 @@
  *   Custom attributes for the image element.
  * @param array $caption_attr
  *   Custom attributes for the caption element.
+ * @param string $placeholder_color
  *
  * @block $caption
  *   Use this block to customize the image's caption.
@@ -44,12 +45,13 @@
 {% set width = width|default(100) %}
 {% set lazy = lazy ?? true %}
 
+{% set placeholder_color = placeholder_color|default('#eee') %}
 {%- set placeholder_markup -%}
   <svg xmlns="http://www.w3.org/2000/svg"
     viewbox="0 0 {{ width }} {{ height }}"
     width="{{ width }}"
     height="{{ height }}">
-    <rect x="0" y="0" width="{{ width }}" height="{{ height }}" fill="#eee" />
+    <rect x="0" y="0" width="{{ width }}" height="{{ height }}" fill="{{ placeholder_color }}" />
   </svg>
 {%- endset -%}
 {% set generic_placeholder = 'data:image/svg+xml,%s'|format(placeholder_markup|url_encode) %}
