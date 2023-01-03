@@ -3,12 +3,13 @@
   src: 'https://picsum.photos/1200/950',
   width: 1200,
   height: 950,
-  fit: 'cover'
+  fit: 'cover',
+  absolute: true
 } %}
 
 {% set ctas = [
-  { label: 'CTA #1', src: 'https://picsum.photos/200/400?rand=1*' },
-  { label: 'CTA #2', src: 'https://picsum.photos/500/400?rand=1*' }
+  { label: 'En savoir plus', src: 'https://picsum.photos/200/400?rand=1*' },
+  { label: 'En savoir plus', src: 'https://picsum.photos/500/400?rand=1*' }
 ] %}
 
 <div class="w-full h-full">
@@ -16,11 +17,9 @@
     image: image,
     surtitle: 'Surtitre',
     surtitle_attr: { class: 'italic' },
-    title: 'Titre',
+    title: 'Lorem ipsum dolor sit amet, consectetur.',
     title_attr: { class: 'text-5xl uppercase font-bold' },
-    description: 'Description',
-    ctas: ctas,
-    content_position: 'left',
-    content_attr: { class: 'relative px-12' }
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Facilisi tempor, dignissim diam egestas habitant aliquet. Etiam ac a at mattis pellentesque felis, in phasellus.',
+    ctas: ctas
   } only %}
 </div>
