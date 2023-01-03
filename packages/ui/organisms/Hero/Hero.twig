@@ -6,13 +6,11 @@
  * @param string $surtitle
  * @param string $title
  * @param string $subtitle
- * @param array $ctas[]
- * @param string $cta_url
- * @param string $cta_label
+ * @param array{url: string, label: string} $ctas
  *
  * @param array                                     $attr
  *   customize the root element attributes.
- * @param array<Figure> $image
+ * @param Figure                                    $image
  *   Image to display. See Figure.twig for the composition.
  * @param array                                     $image_attr
  *   customize the image element attributes.
@@ -20,7 +18,7 @@
  *   customize the content classes.
  * @param 'left'|'center'|'right'                   $content_position
  *   define the content position.
- * @param string                                     $surtitle_tag
+ * @param string                                    $surtitle_tag
  *   customize the tag of the surtitle element
  * @param array                                     $surtitle_attr
  *   customize the surtitle element attributes.
@@ -37,8 +35,23 @@
  */
 #}
 
+{% set content_position = content_position|default('center') %}
+
 {% set attributes =
-  merge_html_attributes(attr ?? null, { class: ['hero', 'w-screen', 'h-screen', 'relative'] })
+  merge_html_attributes(
+    attr ?? null,
+    { class: 'w-full min-h-screen' },
+    {
+      class: [
+        'hero flex relative',
+        {
+          'justify-start': content_position == 'left',
+          'justify-center text-center': content_position == 'center',
+          'justify-end': content_position == 'right'
+        }
+      ]
+    }
+  )
 %}
 
 {# Default images attributes #}
@@ -47,17 +60,16 @@
 %}
 
 {# Default content attributes #}
-{% set content_position = content_position|default('center') %}
 {% set content_attributes =
   merge_html_attributes(
     content_attr ?? null,
-    { class: 'hero__content relative' },
+    { class: 'flex flex-col justify-center h-screen w-1/2 gap-8' },
     {
       class: [
-        'flex flex-col justify-center h-full w-full gap-8',
+        'hero__content relative',
         {
           'items-start': content_position == 'left',
-          'items-center': content_position == 'center',
+          'items-center text-center': content_position == 'center',
           'items-end': content_position == 'right'
         }
       ]
@@ -87,7 +99,7 @@
   {% block background %}
     {% if image %}
       <div {{ html_attributes(image_attributes) }}>
-        {% include '@ui/atoms/Figure/Figure.twig' with image|merge({ absolute: true }) only %}
+        {% include '@ui/atoms/Figure/Figure.twig' with image only %}
       </div>
     {% endif %}
   {% endblock %}
@@ -118,7 +130,7 @@
         {% if ctas %}
           <div {{ html_attributes(ctas_attributes) }}>
             {% for cta in ctas %}
-              {% include '@ui/atoms/Button/Button.twig' with cta only %}
+              {% include '@ui/atoms/Button/StyledButton.twig' with cta only %}
             {% endfor %}
           </div>
         {% endif %}
