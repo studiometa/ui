@@ -12,6 +12,12 @@ title: Hero Twig API
 
 Customize the root element attributes.
 
+### `image`
+
+- Type: `Figure`
+
+Customize the image element.
+
 ### `image_attr`
 
 - Type: `array`
@@ -60,7 +66,7 @@ Customize the title element attributes.
 
 Customize the description tag.
 
-### `title_attr`
+### `description_attr`
 
 - Type: `array`
 
