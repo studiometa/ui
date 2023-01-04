@@ -14,18 +14,21 @@ The  [`src`](#src), [`width`](#width) and [`height`](#height) parameters are req
 ### `src`
 
 - Type: `string`
+- Required
 
 Configure the `src` attribute of the image.
 
 ### `width`
 
 - Type: `number`
+- Default: `100`
 
 Configure the `width` attribute of the image and the components sizing.
 
 ### `height`
 
 - Type: `number`
+- Required
 
 Configure the `height` attribute of the image and the components sizing.
 
