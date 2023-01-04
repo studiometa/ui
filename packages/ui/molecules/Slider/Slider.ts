@@ -19,6 +19,7 @@ export interface SliderProps extends BaseProps {
   $options: {
     mode: SliderModes;
     fitBounds: boolean;
+    contain: boolean;
     sensitivity: number;
     dropSensitivity: number;
   }
