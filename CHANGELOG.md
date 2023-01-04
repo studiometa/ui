@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **Slider:**
+  - Add the `contain` option to SliderBtn ([8407de8](https://github.com/studiometa/ui/commit/8407de8), [#101](https://github.com/studiometa/ui/issues/101))
 
 ## v0.2.23 (2022-11-17)
 
