@@ -1,0 +1,39 @@
+{% set figure = {
+  title: 'Item #1',
+  src: 'https://picsum.photos/1200/950',
+  width: 1200,
+  height: 950,
+  fit: 'cover',
+  attr: { class: '' },
+  absolute: true
+} %}
+
+{% set actions = [
+  { label: 'En savoir plus', src: 'https://picsum.photos/200/400?rand=1*' },
+  { label: 'En savoir plus', src: 'https://picsum.photos/500/400?rand=1*' }
+] %}
+
+<div class="w-full h-full bg-slate-700">
+  {% embed '@ui/organisms/Hero/Hero.twig'
+    with {
+      figure: figure,
+      attr: { class: 'flex flex-row-reverse items-stretch' },
+      content_attr: {
+        class: 'pl-12 flex flex-col justify-center h-screen w-2/3 gap-8'
+      },
+      content_position: 'left',
+      surtitle: 'Surtitre',
+      surtitle_attr: { class: 'italic' },
+      title: 'Lorem ipsum dolor sit amet, consectetur.',
+      title_attr: { class: 'text-5xl uppercase font-bold' },
+      description: 'Lorem ipsum dolorw sit amet, consectetur adipiscing elit. Facilisi tempor, dignissim diam egestas habitant aliquet. Etiam ac a at mattis pellentesque felis, in phasellus. ',
+      actions: actions
+    }
+  %}
+    {% block background %}
+      <div class="relative w-1/3">
+        {{ parent() }}
+      </div>
+    {% endblock %}
+  {% endembed %}
+</div>
