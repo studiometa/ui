@@ -1,4 +1,4 @@
-{% set image = {
+{% set figure = {
   title: 'Item #1',
   src: 'https://picsum.photos/1200/950',
   width: 1200,
@@ -9,7 +9,7 @@
   inner_attr: { class: 'f-full' }
 } %}
 
-{% set ctas = [
+{% set actions = [
   { label: 'En savoir plus', src: 'https://picsum.photos/200/400?rand=1*' },
   { label: 'En savoir plus', src: 'https://picsum.photos/500/400?rand=1*' }
 ] %}
@@ -17,9 +17,9 @@
 <div class="w-full h-full">
   {% embed '@ui/organisms/Hero/Hero.twig'
     with {
-      image: image,
+      figure: figure,
       content_attr: {
-        class: 'pl-20 flex flex-col justify-center h-screen w-1/2 gap-8'
+        class: 'relative pl-20 flex flex-col justify-center h-screen w-1/2 gap-8'
       },
       content_position: 'left',
       surtitle: 'Surtitre',
@@ -27,7 +27,7 @@
       title: 'Lorem ipsum dolor sit amet, consectetur.',
       title_attr: { class: 'text-5xl uppercase font-bold' },
       description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Facilisi tempor, dignissim diam egestas habitant aliquet. Etiam ac a at mattis pellentesque felis, in phasellus. ',
-      ctas: ctas
+      actions: actions
     }
   %}
 

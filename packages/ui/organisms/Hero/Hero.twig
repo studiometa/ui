@@ -6,14 +6,12 @@
  * @param string $surtitle
  * @param string $title
  * @param string $subtitle
- * @param array{url: string, label: string} $ctas
+ * @param array{url: string, label: string} $actions
  *
  * @param array                                     $attr
  *   customize the root element attributes.
- * @param Figure                                    $image
+ * @param Figure                                    $figure
  *   Image to display. See Figure.twig for the composition.
- * @param array                                     $image_attr
- *   customize the image element attributes.
  * @param array                                     $content_attr
  *   customize the content classes.
  * @param 'left'|'center'|'right'                   $content_position
@@ -30,7 +28,7 @@
  *   customize the tag of the description element
  * @param array                                     $description_attr
  *   customize the description element attributes.
- * @param array                                     $ctas_attr
+ * @param array                                     $actions_attr
  *   customize the cta element attributes.
  */
 #}
@@ -55,18 +53,27 @@
 %}
 
 {# Default images attributes #}
-{% set image_attributes =
-  merge_html_attributes(image_attr ?? null, { class: ['hero__image absolute inset-0'] })
+
+{% set figure =
+  figure
+    |default({})
+    |merge({
+      attr: merge_html_attributes(
+        figure.attr ?? null,
+        { class: ['absolute inset-0'] },
+        { class: ['hero__figure'] }
+      )
+    })
 %}
 
 {# Default content attributes #}
 {% set content_attributes =
   merge_html_attributes(
     content_attr ?? null,
-    { class: 'flex flex-col justify-center h-screen w-1/2 gap-8' },
+    { class: 'flex-col justify-center h-screen w-1/2 gap-8 relative' },
     {
       class: [
-        'hero__content relative',
+        'hero__content flex',
         {
           'items-start': content_position == 'left',
           'items-center text-center': content_position == 'center',
@@ -91,16 +98,14 @@
   merge_html_attributes(description_attr ?? null, { class: ['hero__description type-base'] })
 %}
 
-{% set ctas_attributes =
-  merge_html_attributes(ctas_attr ?? null, { class: ['hero__ctas', 'flex', 'gap-6'] })
+{% set actions_attributes =
+  merge_html_attributes(actions_attr ?? null, { class: ['hero__actions', 'flex', 'gap-6'] })
 %}
 
 <section {{ html_attributes(attributes) }}>
   {% block background %}
-    {% if image %}
-      <div {{ html_attributes(image_attributes) }}>
-        {% include '@ui/atoms/Figure/Figure.twig' with image only %}
-      </div>
+    {% if figure.src %}
+      {% include '@ui/atoms/Figure/Figure.twig' with figure only %}
     {% endif %}
   {% endblock %}
   {% block content %}
@@ -126,11 +131,11 @@
           {% end_html_element %}
         {% endif %}
       {% endblock %}
-      {% block ctas %}
-        {% if ctas %}
-          <div {{ html_attributes(ctas_attributes) }}>
-            {% for cta in ctas %}
-              {% include '@ui/atoms/Button/StyledButton.twig' with cta only %}
+      {% block actions %}
+        {% if actions %}
+          <div {{ html_attributes(actions_attributes) }}>
+            {% for action in actions %}
+              {% include '@ui/atoms/Button/StyledButton.twig' with action only %}
             {% endfor %}
           </div>
         {% endif %}
