@@ -25,6 +25,27 @@ title: Hero examples
 
 :::
 
+## Hero image and align right
+
+<PreviewIframe src="./stories/image-right/story.html" />
+
+:::details Code
+
+<SimpleTabs :items="['app.twig', 'app.js']">
+  <template #content-1>
+
+<<< ./components/organisms/Hero/stories/image-right/app.twig
+
+  </template>
+  <template #content-2>
+
+<<< ./components/organisms/Hero/stories/app.js
+
+  </template>
+</SimpleTabs>
+
+:::
+
 ## Hero image and align center
 
 <PreviewIframe src="./stories/image/story.html" />
