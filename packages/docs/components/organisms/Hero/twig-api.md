@@ -80,6 +80,10 @@ Customize the actions element attributes.
 
 ## Blocks
 
+### `before`
+
+Set a block to old content before
+
 ### `background`
 
 Set the background.
@@ -103,3 +107,7 @@ Set the description content.
 ### `actions`
 
 Set the actions content.
+
+### `after`
+
+Set a block to old content after
