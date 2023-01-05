@@ -1,4 +1,4 @@
-{% set figure = {
+{% set image = {
   title: 'Item #1',
   src: 'https://picsum.photos/1200/950',
   width: 1200,
@@ -14,7 +14,7 @@
 
 <div class="w-full h-full">
   {% include '@ui/organisms/Hero/Hero.twig' with {
-    figure: figure,
+    image: image,
     surtitle: 'Surtitre',
     surtitle_attr: { class: 'italic' },
     title: 'Lorem ipsum dolor sit amet, consectetur.',

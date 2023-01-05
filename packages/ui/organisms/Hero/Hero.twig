@@ -10,7 +10,7 @@
  *
  * @param array                                     $attr
  *   customize the root element attributes.
- * @param Figure                                    $figure
+ * @param Image                                     $image
  *   Image to display. See Figure.twig for the composition.
  * @param array                                     $content_attr
  *   customize the content classes.
@@ -54,14 +54,14 @@
 
 {# Default images attributes #}
 
-{% set figure =
-  figure
+{% set image =
+  image
     |default({})
     |merge({
       attr: merge_html_attributes(
-        figure.attr ?? null,
+        image.attr ?? null,
         { class: ['absolute inset-0'] },
-        { class: ['hero__figure'] }
+        { class: ['hero__image'] }
       )
     })
 %}
@@ -107,8 +107,8 @@
 
   {% endblock %}
   {% block background %}
-    {% if figure.src %}
-      {% include '@ui/atoms/Figure/Figure.twig' with figure only %}
+    {% if image.src %}
+      {% include '@ui/atoms/Figure/Figure.twig' with image only %}
     {% endif %}
   {% endblock %}
   {% block content %}

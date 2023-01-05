@@ -1,4 +1,4 @@
-{% set figure = {
+{% set image = {
   title: 'Item #1',
   src: 'https://picsum.photos/1200/950',
   width: 1200,
@@ -17,7 +17,7 @@
 <div class="w-full h-full">
   {% embed '@ui/organisms/Hero/Hero.twig'
     with {
-      figure: figure,
+      image: image,
       content_attr: {
         class: 'relative pl-20 flex flex-col justify-center h-screen w-1/2 gap-8'
       },
