@@ -87,3 +87,45 @@ title: Hero examples
 </SimpleTabs>
 
 :::
+
+## Hero slider
+
+<PreviewIframe src="./stories/slider/story.html" />
+
+:::details Code
+
+<SimpleTabs :items="['app.twig', 'app.js']">
+  <template #content-1>
+
+<<< ./components/organisms/Hero/stories/slider/app.twig
+
+  </template>
+  <template #content-2>
+
+<<< ./components/organisms/Hero/stories/app.js
+
+  </template>
+</SimpleTabs>
+
+:::
+
+## Hero slider - full slide
+
+<PreviewIframe src="./stories/full-slider/story.html" />
+
+:::details Code
+
+<SimpleTabs :items="['app.twig', 'app.js']">
+  <template #content-1>
+
+<<< ./components/organisms/Hero/stories/full-slider/app.twig
+
+  </template>
+  <template #content-2>
+
+<<< ./components/organisms/Hero/stories/app.js
+
+  </template>
+</SimpleTabs>
+
+:::
