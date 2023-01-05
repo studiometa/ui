@@ -103,6 +103,9 @@
 %}
 
 <section {{ html_attributes(attributes) }}>
+  {% block before %}
+
+  {% endblock %}
   {% block background %}
     {% if figure.src %}
       {% include '@ui/atoms/Figure/Figure.twig' with figure only %}
@@ -141,5 +144,8 @@
         {% endif %}
       {% endblock %}
     </div>
+  {% endblock %}
+  {% block after %}
+
   {% endblock %}
 </section>
