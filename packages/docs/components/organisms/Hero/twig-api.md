@@ -12,17 +12,17 @@ title: Hero Twig API
 
 Customize the root element attributes.
 
-### `image`
+### `figure`
 
 - Type: `Figure`
 
-Customize the image element.
+Customize the figure element.
 
-### `image_attr`
+### `figure_attr`
 
 - Type: `array`
 
-Customize the image element attributes.
+Customize the figure element attributes.
 
 ### `content_attr`
 
@@ -72,11 +72,11 @@ Customize the description tag.
 
 Customize the description element attributes.
 
-### `ctas_attr`
+### `actions_attr`
 
 - Type: `array`
 
-Customize the ctas element attributes.
+Customize the actions element attributes.
 
 ## Blocks
 
@@ -100,6 +100,6 @@ Set the title content.
 
 Set the description content.
 
-### `ctas`
+### `actions`
 
-Set the ctas content.
+Set the actions content.
