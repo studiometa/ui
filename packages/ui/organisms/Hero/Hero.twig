@@ -138,7 +138,7 @@
         {% if actions %}
           <div {{ html_attributes(actions_attributes) }}>
             {% for action in actions %}
-              {% include '@ui/atoms/Button/StyledButton.twig' with action only %}
+              {% include '@ui/atoms/Button/StyledButtonRounded.twig' with action only %}
             {% endfor %}
           </div>
         {% endif %}

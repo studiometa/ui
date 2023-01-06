@@ -6,7 +6,7 @@
 ] %}
 
 <style type="text/css">
-  .is-active { box-shadow: 0 0 0 3px var(--vp-c-brand); }
+  .is-active { background-color: white}
 
   html { overflow: hidden; }
 </style>
@@ -64,24 +64,33 @@
   {% endblock %}
   {% block after %}
     <div class="absolute bottom-0 w-full p-12 flex justify-between items-center">
-      <div data-component="SliderDots" class="space-x-4 flex">
+      <div data-component="SliderDots"
+        class="space-x-4 flex"
+        data-option-enter-to="is-active">
         {% for slides in slides %}
           <button type="button"
             data-ref="dots[]"
-            data-option-enter-to="is-active"
             class="relative w-3 flex-wrap h-3 bg-black rounded-full">
             <span class="sr-only">Go to slide #{{ loop.index }}</span>
           </button>
         {% endfor %}
       </div>
-      <div>
-        {% include '@ui/atoms/Button/StyledButton.twig' with {
-          label: '<',
-          attr: { data_component: 'SliderBtn', data_option_prev: true }
+      <div class="flex space-x-4">
+        {% include '@ui/atoms/Button/StyledButtonRounded.twig' with {
+          label: 'Secondary',
+          theme: 'primary',
+          icon: 'chevron',
+          icon_only: true,
+          attr: { data_component: 'SliderBtn', data_option_prev: true },
+          icon_class: ['rotate-90']
         } %}
-        {% include '@ui/atoms/Button/StyledButton.twig' with {
-          label: '>',
-          attr: { data_component: 'SliderBtn', data_option_next: true }
+        {% include '@ui/atoms/Button/StyledButtonRounded.twig' with {
+          label: 'Secondary',
+          theme: 'primary',
+          icon: 'chevron',
+          icon_only: true,
+          attr: { data_component: 'SliderBtn', data_option_next: true },
+          icon_class: ['-rotate-90']
         } %}
       </div>
     </div>
