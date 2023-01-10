@@ -13,7 +13,7 @@
  *   Define the hidden content.
  * @param array $hidden_content_attr
  *   Custom attributes for the hidden content.
- * @param array {label: string} $button
+ * @param array {label: string, label2: string} $btn
 *   Define the button.
  * @param array $button_attr
  *   Custom attributes for the button.
@@ -25,7 +25,7 @@
 #}
 
 {% set attributes =
-  merge_html_attributes(attr ?? null, { data_component: 'Readmore', data_option_animate: 'true' })
+  merge_html_attributes(attr ?? null, { data_component: 'Readmore', data_option_animate: ' true' })
 %}
 
 {% set main_content_attributes =
@@ -59,7 +59,7 @@
     {{ hidden_content }}
   </div>
   {% include '@ui/atoms/Button/StyledButton.twig' with {
-    label: button.label,
+    label: btn.label,
     attr: { data_ref: 'button' }
   } %}
 </div>

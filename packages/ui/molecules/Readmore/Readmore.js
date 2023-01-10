@@ -10,10 +10,12 @@ export default class Readmore extends Base {
    */
   static config = {
     name: 'Readmore',
-    refs: ['button', 'main_content', 'hidden_content'],
+    refs: ['button', 'btnLabel', 'main_content', 'hidden_content'],
     options: {
       length: Number,
       amimate: { type: Boolean, default: 'true' },
+      btnLabelMore: { type: String, default: 'Voir plus' },
+      btnLabelLess: { type: String, default: 'Voir moins' },
     },
   };
 
@@ -23,6 +25,7 @@ export default class Readmore extends Base {
   mounted() {
     this.hiddenContent = this.$refs.hidden_content;
     this.mainContent = this.$refs.main_content;
+    this.button = this.$refs.button;
 
     this.animation = animate(
       this.hiddenContent,
@@ -42,10 +45,15 @@ export default class Readmore extends Base {
    * @returns {void}
    */
   onButtonClick() {
-    setTimeout(() => {
-      this.hiddenContent.classList.remove('hidden');
-    }, 100);
-
-    this.animation.start();
+    if (this.hiddenContent.classList.contains('hidden')) {
+      setTimeout(() => {
+        this.hiddenContent.classList.remove('hidden');
+      }, 50);
+      this.animation.start();
+      this.button.innerHTML = this.$options.btnLabelMore;
+    } else {
+      this.hiddenContent.classList.add('hidden');
+      this.button.innerHTML = this.$options.btnLabelLess;
+    }
   }
 }
