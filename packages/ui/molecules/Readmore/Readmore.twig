@@ -15,7 +15,7 @@
  *   Custom attributes for the hidden content.
  * @param array {label: string, label2: string} $btn
 *   Define the button.
- * @param array $button_attr
+ * @param array $btn_attr
  *   Custom attributes for the button.
  * @param boolean $animation
  *   Wether to use an animation or not
@@ -44,8 +44,8 @@
   )
 %}
 
-{% set button_attr =
-  merge_html_attributes(button_attr ?? null, { class: 'optionnel' }, { class: ['button'] })
+{% set btn_attr =
+  merge_html_attributes(btn_attr ?? null, { class: 'optionnel' }, { class: ['button'] })
 %}
 
 {% set animation = animation|default(true) %}
@@ -59,7 +59,7 @@
     {{ hidden_content }}
   </div>
   {% include '@ui/atoms/Button/StyledButton.twig' with {
-    label: btn.label,
-    attr: { data_ref: 'button' }
+    label: data_options_btn_label_more,
+    attr: { data_ref: 'btn' }
   } %}
 </div>
