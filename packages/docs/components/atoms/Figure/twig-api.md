@@ -79,6 +79,30 @@ Use absolute position on the image holder instead of relative.
 
 Wether to enable the display of the figure inline or not. When `inline`, the root element will have a max-width set corresponding to the `width` given. Use with caution.
 
+### `placeholder`
+
+- Type: `string`
+
+Use a custom placeholder instead of the generic placeholder:
+```twig
+{%- set placeholder_markup -%}
+  <svg xmlns="http://www.w3.org/2000/svg"
+    viewbox="0 0 {{ width }} {{ height }}"
+    width="{{ width }}"
+    height="{{ height }}">
+    <rect x="0" y="0" width="{{ width }}" height="{{ height }}" fill="{{ placeholder_color }}" />
+  </svg>
+{%- endset -%}
+{% set generic_placeholder = 'data:image/svg+xml,%s'|format(placeholder_markup|url_encode) %}
+```
+
+### `placeholder_color`
+
+- Type: `string`
+- Default: `"#eee"`
+
+Define the color of the generic placeholder.
+
 ### `attr`
 
 - Type: `array`
@@ -102,7 +126,6 @@ Custom attributes for the image element.
 - Type: `array`
 
 Custom attributes for the caption element.
-
 
 ## Blocks
 

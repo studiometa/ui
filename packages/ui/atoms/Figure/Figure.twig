@@ -18,6 +18,10 @@
  * @param boolean $inline
  *   Wether to enable the display of the figure inline or not. When `inline`, the root element
  *   will have a max-width set corresponding to the `width` given. Use with caution.
+ * @param string $placeholder
+ *   Use a custom placeholder.
+ * @param string $placeholder_color
+ *   Set an hexadecimal custom color for the generic placeholder.
  * @param array $attr
  *   Custom attributes for the root element.
  * @param array $inner_attr
@@ -44,12 +48,13 @@
 {% set width = width|default(100) %}
 {% set lazy = lazy ?? true %}
 
+{% set placeholder_color = placeholder_color|default('#eee') %}
 {%- set placeholder_markup -%}
   <svg xmlns="http://www.w3.org/2000/svg"
     viewbox="0 0 {{ width }} {{ height }}"
     width="{{ width }}"
     height="{{ height }}">
-    <rect x="0" y="0" width="{{ width }}" height="{{ height }}" fill="#eee" />
+    <rect x="0" y="0" width="{{ width }}" height="{{ height }}" fill="{{ placeholder_color }}" />
   </svg>
 {%- endset -%}
 {% set generic_placeholder = 'data:image/svg+xml,%s'|format(placeholder_markup|url_encode) %}
