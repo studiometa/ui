@@ -197,19 +197,19 @@ export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProp
     // eslint-disable-next-line no-param-reassign
     index = index ?? instances.indexOf(this);
 
-    this.y = (instances
+    this.y = instances
       .slice(0, index)
       .filter((instance) => instance.isSticky && !instance.isVisible)
       .reduce<number>(
         (y: number, instance) => y - instance.$refs.inner.offsetHeight,
         this.isVisible ? 0 : this.$refs.inner.offsetHeight * -1,
-      )) as number;
+      ) as number;
   }
 
   /**
    * Find the first parent which has a relative position.
    */
-  closestRelativeElement(element:HTMLElement) {
+  closestRelativeElement(element: HTMLElement) {
     let parent = element.parentElement;
 
     while (getComputedStyle(parent).position !== 'relative' && parent.parentElement) {

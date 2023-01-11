@@ -17,7 +17,7 @@ export class SliderDots<
   /**
    * Config.
    */
-  static config:BaseConfig = {
+  static config: BaseConfig = {
     name: 'SliderDots',
     refs: ['dots[]'],
   };
@@ -41,7 +41,7 @@ export class SliderDots<
    * @param   {number} index
    * @returns {void}
    */
-  update(index:number) {
+  update(index: number) {
     this.leave(this.$refs.dots[this.currentIndex]);
     this.enter(this.$refs.dots[index]);
     this.currentIndex = index;
@@ -50,7 +50,7 @@ export class SliderDots<
   /**
    * Go to the given index on dot click.
    */
-  onDotsClick(event:MouseEvent, index:number) {
+  onDotsClick(event: MouseEvent, index: number) {
     this.$parent.goTo(index);
   }
 }

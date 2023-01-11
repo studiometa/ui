@@ -4,9 +4,11 @@ import { transition, focusTrap } from '@studiometa/js-toolkit/utils';
 
 const { trap, untrap, saveActiveElement } = focusTrap();
 
-type ModalStates = Partial<Record<'open'|'active'|'closed', string|Partial<CSSStyleDeclaration>>>
+type ModalStates = Partial<
+  Record<'open' | 'active' | 'closed', string | Partial<CSSStyleDeclaration>>
+>;
 // eslint-disable-next-line no-use-before-define
-type ModalStylesOption = Partial<Record<keyof ModalProps['$refs'], ModalStates>>
+type ModalStylesOption = Partial<Record<keyof ModalProps['$refs'], ModalStates>>;
 
 export interface ModalProps extends BaseProps {
   $refs: {
@@ -34,7 +36,7 @@ export interface ModalProps extends BaseProps {
      * The styles for the different state of the modal.
      */
     styles: ModalStylesOption;
-  }
+  };
 }
 
 /**
@@ -44,7 +46,7 @@ export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps>
   /**
    * Config.
    */
-  static config:BaseConfig = {
+  static config: BaseConfig = {
     name: 'Modal',
     refs: ['close[]', 'container', 'content', 'modal', 'open[]', 'overlay'],
     emits: ['open', 'close'],
@@ -53,7 +55,7 @@ export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps>
       autofocus: { type: String, default: '[autofocus]' },
       styles: {
         type: Object,
-        default: ():ModalStylesOption => ({
+        default: (): ModalStylesOption => ({
           modal: {
             closed: {
               opacity: '0',
@@ -78,7 +80,7 @@ export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps>
   /**
    * @private
    */
-  __refsBackup:(T & ModalProps)['$refs'];
+  __refsBackup: (T & ModalProps)['$refs'];
 
   /**
    * @private
@@ -93,7 +95,7 @@ export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps>
   /**
    * @private
    */
-  __refModalUnbindGetRefFilter:() => void;
+  __refModalUnbindGetRefFilter: () => void;
 
   /**
    * Open the modal on click on the `open` ref.
@@ -174,7 +176,7 @@ export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps>
   /**
    * Close the modal on `ESC` and trap the tabulation.
    */
-  keyed({ event, isUp, isDown, ESC }:KeyServiceProps) {
+  keyed({ event, isUp, isDown, ESC }: KeyServiceProps) {
     if (!this.isOpen) {
       return;
     }
@@ -224,7 +226,9 @@ export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps>
     ).then(() => {
       if (this.$options.autofocus && this.$refs.modal.querySelector(this.$options.autofocus)) {
         saveActiveElement();
-        const autofocusElement = this.$refs.modal.querySelector(this.$options.autofocus) as HTMLElement;
+        const autofocusElement = this.$refs.modal.querySelector(
+          this.$options.autofocus,
+        ) as HTMLElement;
         autofocusElement.focus();
       }
       return Promise.resolve();

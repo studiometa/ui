@@ -36,7 +36,7 @@ export class TableOfContentAnchor<T extends BaseProps = BaseProps> extends Ancho
   /**
    * Get the sentinel.
    */
-  get sentinel():HTMLElement {
+  get sentinel(): HTMLElement {
     return document.querySelector(this.targetSelector) as HTMLElement;
   }
 

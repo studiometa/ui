@@ -15,9 +15,10 @@ export interface LazyIncludeProps extends BaseProps {
 /**
  * LazyInclude class.
  */
-export class LazyInclude<T extends BaseProps = BaseProps> extends Base<
-  T & LazyIncludeProps
-> implements BaseInterface {
+export class LazyInclude<T extends BaseProps = BaseProps>
+  extends Base<T & LazyIncludeProps>
+  implements BaseInterface
+{
   /**
    * Config.
    */
@@ -56,7 +57,7 @@ export class LazyInclude<T extends BaseProps = BaseProps> extends Base<
   /**
    * Set content.
    */
-  onContent(content:string) {
+  onContent(content: string) {
     this.$refs.loading.style.display = 'none';
     this.$el.innerHTML = content;
   }

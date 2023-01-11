@@ -9,7 +9,7 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base)<T
   /**
    * Config.
    */
-  static config:BaseConfig = {
+  static config: BaseConfig = {
     name: 'DraggableElement',
   };
 
@@ -36,7 +36,7 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base)<T
   /**
    * Drag service hook.
    */
-  dragged(props:DragServiceProps) {
+  dragged(props: DragServiceProps) {
     if (props.mode === 'start') {
       this.originX = this.x;
       this.originY = this.y;

@@ -13,7 +13,9 @@ export interface SliderBtnProps extends BaseProps {
 /**
  * SliderBtn class.
  */
-export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderChild<T & SliderBtnProps> {
+export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderChild<
+  T & SliderBtnProps
+> {
   /**
    * Config.
    */
@@ -33,12 +35,16 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
    */
   update(index: number) {
     if (isDev && this.$options.contain && !this.$parent.$options.contain) {
-      console.warn(`[${this.$id}] The contain option will only works if the parent Slider also has the contain option.`);
+      console.warn(
+        `[${this.$id}] The contain option will only works if the parent Slider also has the contain option.`,
+      );
     }
 
     const isContainMaxState =
-      this.$options.contain && this.$parent.$options.contain && this.$parent.containMaxState ===
-          this.$parent.getStates()[index].x[this.$parent.$options.mode];
+      this.$options.contain &&
+      this.$parent.$options.contain &&
+      this.$parent.containMaxState ===
+        this.$parent.getStates()[index].x[this.$parent.$options.mode];
 
     if (
       (index === 0 && this.$options.prev) ||

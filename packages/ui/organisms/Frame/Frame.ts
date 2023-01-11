@@ -131,7 +131,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   /**
    * Prevent submit on forms.
    */
-  onFrameFormSubmit(index:number, event:SubmitEvent) {
+  onFrameFormSubmit(index: number, event: SubmitEvent) {
     // Prevent propagation of nested frames
     if (!isDirectChild(this, 'Frame', 'FrameForm', this.$children.FrameForm[index])) {
       return;
@@ -157,7 +157,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   /**
    * Go to the given url.
    */
-  async goTo(url:string, scroll:{ top: number, left: number } = null) {
+  async goTo(url: string, scroll: { top: number; left: number } = null) {
     this.$log('goTo', url);
     const parsedUrl = new URL(url);
 
@@ -218,7 +218,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   /**
    * Fetch the given url.
    */
-  async fetch(url:string):Promise<string> {
+  async fetch(url: string): Promise<string> {
     const cached = cache.get(url);
 
     if (cached) {

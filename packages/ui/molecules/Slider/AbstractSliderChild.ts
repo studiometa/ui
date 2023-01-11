@@ -10,11 +10,14 @@ export interface AbstractSliderChildProps extends BaseProps {
 /**
  * AbstractSliderChild class.
  */
-export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<T & AbstractSliderChildProps> implements BaseInterface {
+export class AbstractSliderChild<T extends BaseProps = BaseProps>
+  extends Base<T & AbstractSliderChildProps>
+  implements BaseInterface
+{
   /**
    * Config.
    */
-  static config:BaseConfig = {
+  static config: BaseConfig = {
     name: 'AbstractSliderChild',
   };
 
@@ -73,7 +76,7 @@ export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<T
    * @param   {number} index The new active index.
    * @returns {void|(()=>void)}
    */
-  update(index):void|(()=>void) {
+  update(index): void | (() => void) {
     throw new Error(`The \`AbstractSliderChild.update(${index})\` method must be implemented.`);
   }
 }

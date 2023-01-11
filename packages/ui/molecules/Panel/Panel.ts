@@ -4,8 +4,8 @@ import { Modal } from '../Modal/index.js';
 
 export interface PanelProps extends BaseProps {
   $options: {
-    position: 'top' | 'right' | 'bottom' | 'left'
-  }
+    position: 'top' | 'right' | 'bottom' | 'left';
+  };
 }
 
 const DEFAULT_POSITION = 'left';
@@ -17,7 +17,7 @@ export class Panel<T extends BaseProps = BaseProps> extends Modal<T & PanelProps
   /**
    * Config.
    */
-  static config:BaseConfig = {
+  static config: BaseConfig = {
     name: 'Panel',
     options: {
       position: {
@@ -42,8 +42,7 @@ export class Panel<T extends BaseProps = BaseProps> extends Modal<T & PanelProps
    */
   get translateClass() {
     return (
-      Panel.translateClasses[this.$options.position] ??
-      Panel.translateClasses[DEFAULT_POSITION]
+      Panel.translateClasses[this.$options.position] ?? Panel.translateClasses[DEFAULT_POSITION]
     );
   }
 

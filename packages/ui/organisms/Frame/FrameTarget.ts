@@ -76,14 +76,14 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
               from.split(' ').every((className) => child.classList.contains(className)),
             )
             .map((child) =>
-              transition(child as HTMLElement, transitionStyles, enterKeep && 'keep'),
+              transition(child as HTMLElement, transitionStyles, enterKeep ? 'keep' : undefined),
             ),
         );
         break;
       case 'replace':
       default:
         transitionStyles.from = Array.from(new Set([from, leaveTo].flat())).join(' ');
-        await transition(this.$el, transitionStyles, enterKeep && 'keep');
+        await transition(this.$el, transitionStyles, enterKeep ? 'keep' : undefined);
     }
   }
 
@@ -93,7 +93,7 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
    * @param   {FrameTarget} newTarget The instance of the new target.
    * @returns {void}
    */
-  updateContent(newTarget:FrameTarget) {
+  updateContent(newTarget: FrameTarget) {
     // @todo manage 'prepend' and 'append' transition
     // only the new content should have the transition
     // - add the leaveTo and enterFrom classes to all `newTarget.children`

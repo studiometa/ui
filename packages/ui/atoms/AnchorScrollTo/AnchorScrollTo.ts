@@ -9,9 +9,7 @@ export interface AnchorScrollToProps extends BaseProps {
 /**
  * AncorScrollTo class.
  */
-export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<
-  AnchorScrollToProps & T
-> {
+export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<AnchorScrollToProps & T> {
   static config: BaseConfig = {
     name: 'AnchorScrollTo',
   };

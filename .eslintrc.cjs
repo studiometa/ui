@@ -22,16 +22,22 @@ module.exports = {
     {
       files: ['**/*.ts'],
       parser: '@typescript-eslint/parser',
+      parserOptions: {
+        project: './tsconfig.json',
+      },
       plugins: ['@typescript-eslint'],
       extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
       rules: {
         '@typescript-eslint/ban-ts-comment': 'off',
-        'object-curly-newline': 'off',
         '@typescript-eslint/explicit-module-boundary-types': 'off',
+        '@typescript-eslint/indent': 'off',
+        '@typescript-eslint/brace-style': 'off',
+        'import/extensions': 'off',
+        'import/prefer-default-export': 'off',
         'jsdoc/require-param': 'off',
         'jsdoc/require-returns': 'off',
+        'object-curly-newline': 'off',
         'require-jsdoc': 'off',
-        'import/extensions': 'off',
       },
     },
     {
