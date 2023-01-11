@@ -98,7 +98,7 @@ Use a custom placeholder instead of the generic placeholder:
 - Type: `string`
 - Default: `"#eee"`
 
-Set an hexadecimal custom color for the generic placeholder.
+Define the color of the generic placeholder.
 
 ### `attr`
 
