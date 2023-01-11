@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 ### Added
 - **Slider:**
-  - Add the `contain` option to SliderBtn ([8407de8](https://github.com/studiometa/ui/commit/8407de8), [#101](https://github.com/studiometa/ui/issues/101))
+  - Add the `contain` option to SliderBtn ([#105](https://github.com/studiometa/ui/pull/105), [#101](https://github.com/studiometa/ui/issues/101))
 
 ## v0.2.23 (2022-11-17)
 
