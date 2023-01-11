@@ -44,7 +44,7 @@ export class SliderDrag<T extends BaseProps = BaseProps> extends withDrag(Base)<
    * @param   {TouchEvent} event
    * @returns {void}
    */
-  onTouchmove(event:TouchEvent) {
+  onTouchmove(event: TouchEvent) {
     if (this.shouldPreventScroll) {
       event.preventDefault();
     }
@@ -53,7 +53,7 @@ export class SliderDrag<T extends BaseProps = BaseProps> extends withDrag(Base)<
   /**
    * Emit drag events.
    */
-  dragged(props:DragServiceProps) {
+  dragged(props: DragServiceProps) {
     this.$emit(props.mode, props);
   }
 }

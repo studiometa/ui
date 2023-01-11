@@ -19,9 +19,7 @@ export interface AccordionProps extends BaseProps {
 /**
  * Accordion class.
  */
-export class AccordionCore<T extends BaseProps = BaseProps> extends Base<
-  T & AccordionProps
-> {
+export class AccordionCore<T extends BaseProps = BaseProps> extends Base<T & AccordionProps> {
   /**
    * Accordion config.
    */

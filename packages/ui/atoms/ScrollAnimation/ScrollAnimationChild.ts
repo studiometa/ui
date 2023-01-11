@@ -19,7 +19,12 @@ function updateProps(
   dampPrecision: number,
   axis: 'x' | 'y' = 'x',
 ) {
-  that.dampedCurrent[axis] = damp(props.current[axis], that.dampedCurrent[axis], dampFactor, dampPrecision);
+  that.dampedCurrent[axis] = damp(
+    props.current[axis],
+    that.dampedCurrent[axis],
+    dampFactor,
+    dampPrecision,
+  );
   that.dampedProgress[axis] = clamp01(
     (that.dampedCurrent[axis] - props.start[axis]) / (props.end[axis] - props.start[axis]),
   );

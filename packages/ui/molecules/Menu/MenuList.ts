@@ -29,7 +29,7 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
   /**
    * Config.
    */
-  static config:BaseConfig = {
+  static config: BaseConfig = {
     ...Transition.config,
     name: 'MenuList',
     emits: ['items-open', 'items-close', 'items-mouseleave'],
@@ -148,7 +148,7 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
    * Update `tabindex` attribute of child focusable elements.
    * @private
    */
-  __updateTabIndexes(mode:'open'|'close' = 'open') {
+  __updateTabIndexes(mode: 'open' | 'close' = 'open') {
     const focusableItems = Array.from(this.$el.querySelectorAll(FOCUSABLE_ELEMENTS)).filter(
       (item) => this.__filterFocusableItems(item as HTMLElement),
     );
@@ -166,7 +166,7 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
    * Filter out items which are inside a child `MenuList` instance.
    * @private
    */
-  __filterFocusableItems(item:HTMLElement):boolean {
+  __filterFocusableItems(item: HTMLElement): boolean {
     let ancestor = item.parentElement;
 
     // @ts-ignore

@@ -5,13 +5,15 @@ export interface AbstractPrefetchProps extends BaseProps {
   $el: HTMLAnchorElement;
   $options: {
     prefetch: boolean;
-  }
+  };
 }
 
 /**
  * AbstractPrefetch class.
  */
-export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<T & AbstractPrefetchProps> {
+export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
+  T & AbstractPrefetchProps
+> {
   /**
    * Config.
    */
@@ -28,12 +30,12 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<T & 
   /**
    * Store prefetched URL.
    */
-  static prefetchedUrls:Set<string> = new Set();
+  static prefetchedUrls: Set<string> = new Set();
 
   /**
    * Is the given anchor prefetchable?
    */
-  isPrefetchable(url:URL):boolean {
+  isPrefetchable(url: URL): boolean {
     if (!url || !url.href) {
       return false;
     }
@@ -67,7 +69,7 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<T & 
   /**
    * Prefetch the given URL and terminate the component.
    */
-  prefetch(url:URL) {
+  prefetch(url: URL) {
     if (AbstractPrefetch.prefetchedUrls.has(url.href)) {
       return;
     }

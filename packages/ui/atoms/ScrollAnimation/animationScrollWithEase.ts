@@ -12,7 +12,7 @@ const eases = Object.fromEntries(
 export interface AnimationScrollWithEaseProps extends BaseProps {
   $options: {
     ease: string;
-  }
+  };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -21,14 +21,14 @@ export interface AnimationScrollWithEaseInterface extends BaseInterface {}
 /**
  * Extend a `ScrollAnimation` component to use easings.
  */
-export function animationScrollWithEase<
-  S extends AbstractScrollAnimation,
->(ScrollAnimation: typeof AbstractScrollAnimation): BaseDecorator<AnimationScrollWithEaseInterface, S, AnimationScrollWithEaseProps> {
+export function animationScrollWithEase<S extends AbstractScrollAnimation>(
+  ScrollAnimation: typeof AbstractScrollAnimation,
+): BaseDecorator<AnimationScrollWithEaseInterface, S, AnimationScrollWithEaseProps> {
   class AnimationScrollWithEase extends ScrollAnimation<AnimationScrollWithEaseProps> {
     /**
      * Config.
      */
-    static config : BaseConfig = {
+    static config: BaseConfig = {
       ...ScrollAnimation.config,
       name: `${ScrollAnimation.config.name}WithEase`,
       options: {
@@ -43,7 +43,7 @@ export function animationScrollWithEase<
     /**
      * Eases the progress value.
      */
-    render(progress:number) {
+    render(progress: number) {
       if (typeof eases[this.$options.ease] === 'function') {
         // eslint-disable-next-line no-param-reassign
         progress = eases[this.$options.ease](progress);

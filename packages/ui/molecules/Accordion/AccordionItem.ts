@@ -23,9 +23,7 @@ export interface AccordionItemProps extends BaseProps {
 /**
  * AccordionItem class.
  */
-export class AccordionItem<T extends BaseProps = BaseProps> extends Base<
-  T & AccordionItemProps
-> {
+export class AccordionItem<T extends BaseProps = BaseProps> extends Base<T & AccordionItemProps> {
   /**
    * Config.
    */
@@ -111,14 +109,14 @@ export class AccordionItem<T extends BaseProps = BaseProps> extends Base<
   /**
    * Get the content ID.
    */
-  get contentId():string {
+  get contentId(): string {
     return `content-${this.$id}`;
   }
 
   /**
    * Update the refs' attributes according to the given type.
    */
-  updateAttributes(isOpen:boolean) {
+  updateAttributes(isOpen: boolean) {
     this.$refs.container.style.visibility = isOpen ? '' : 'invisible';
     this.$refs.container.style.height = isOpen ? '' : '0';
     this.$refs.content.setAttribute('aria-hidden', isOpen ? 'false' : 'true');

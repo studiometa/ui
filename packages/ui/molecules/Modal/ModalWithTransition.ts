@@ -8,7 +8,7 @@ export class ModalWithTransition<T extends BaseProps = BaseProps> extends Modal<
   /**
    * Modal options.
    */
-  static config:BaseConfig = {
+  static config: BaseConfig = {
     name: 'ModalWithTransition',
     options: {
       styles: {

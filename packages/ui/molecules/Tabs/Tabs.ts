@@ -79,7 +79,7 @@ export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {
   /**
    * Switch tab on button click.
    */
-  onBtnClick(event:MouseEvent, index:number) {
+  onBtnClick(event: MouseEvent, index: number) {
     this.items.forEach((item, i) => {
       if (i !== index) {
         this.disableItem(item);
@@ -92,7 +92,7 @@ export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {
   /**
    * Enable the given tab and its associated content.
    */
-  async enableItem(item:TabItem):Promise<this> {
+  async enableItem(item: TabItem): Promise<this> {
     if (!item || item.isEnabled) {
       return Promise.resolve(this);
     }
@@ -130,7 +130,7 @@ export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {
   /**
    * Disable the given tab and its associated content.
    */
-  async disableItem(item:TabItem):Promise<this> {
+  async disableItem(item: TabItem): Promise<this> {
     if (!item || !item.isEnabled) {
       return Promise.resolve(this);
     }
