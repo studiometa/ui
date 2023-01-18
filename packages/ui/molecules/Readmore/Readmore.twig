@@ -5,11 +5,11 @@
  *
  * @param array $attr
  *   Use it to customize the root element attributes.
- * @param string main_content $main_content
+ * @param string $mainContent
  *   Define the main content.
  * @param array $main_content_attr
  *   Custom attributes for the main content.
- * @param string $hidden_content
+ * @param string $hiddenContent
  *   Define the hidden content.
  * @param array $hidden_content_attr
  *   Custom attributes for the hidden content.
@@ -32,7 +32,7 @@
   merge_html_attributes(
     main_content_attr ?? null,
     { class: 'optionnel' },
-    { data_ref: 'main_content', class: ['main_content'] }
+    { data_ref: 'mainContent', class: ['main_content'] }
   )
 %}
 
@@ -40,7 +40,7 @@
   merge_html_attributes(
     hidden_content_attr ?? null,
     { class: 'optionnel' },
-    { data_ref: 'hidden_content', aria_hidden: 'true', class: ['hidden_content hidden'] }
+    { data_ref: 'hiddenContent', aria_hidden: 'true', class: ['hidden_content hidden'] }
   )
 %}
 
@@ -52,14 +52,20 @@
 {% set length = length|default('70') %}
 
 <div {{ html_attributes(attributes) }}>
-  <div {{ html_attributes(main_content_attributes) }}>
-    {{ main_content }}
-  </div>
-  <div {{ html_attributes(hidden_content_attributes) }}>
-    {{ hidden_content }}
-  </div>
-  {% include '@ui/atoms/Button/StyledButton.twig' with {
-    label: data_options_btn_label_more,
-    attr: { data_ref: 'btn' }
-  } %}
+  {% block mainContent %}
+    <div {{ html_attributes(main_content_attributes) }}>
+      {{ mainContent }}
+    </div>
+  {% endblock %}
+  {% block hiddenContent %}
+    <div {{ html_attributes(hidden_content_attributes) }}>
+      {{ hiddenContent }}
+    </div>
+  {% endblock %}
+  {% block button %}
+    {% include '@ui/atoms/Button/Button.twig' with {
+      label: data_options_btn_label_more,
+      attr: { data_ref: 'btn' }
+    } %}
+  {% endblock %}
 </div>
