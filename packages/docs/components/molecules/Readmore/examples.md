@@ -7,6 +7,7 @@ title: Readmore examples
 ## Simple Readmore
 
 <PreviewIframe src="./stories/simple/story.html" />
+
 :::details Code
 
 <SimpleTabs :items="['app.twig', 'app.js']">
