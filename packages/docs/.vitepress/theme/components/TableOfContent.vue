@@ -1,5 +1,5 @@
 <script setup>
-  import { normalizeLink } from 'vitepress/client/theme-default/support/utils.js';
+  import { normalizeLink } from 'vitepress/dist/client/theme-default/support/utils.js';
 
   const props = defineProps({
     modules: Object,

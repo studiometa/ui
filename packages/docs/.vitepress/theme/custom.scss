@@ -2,6 +2,9 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+:root {
+  --vp-c-divider-light: var(--vp-c-divider);
+}
 
 .focus\:ring-opacity-1:focus,
 .hover\:ring-opacity-1:hover {
