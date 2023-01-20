@@ -1,9 +1,10 @@
 {#
 /**
  * @file
- *   Styled button.
+ *   Styled button rounded.
  *
- * @param 'primary'|'secondary'|'tertiary' $theme
+ * @param 'primary' $theme
+ * @param $icon_class
  */
 #}
 
@@ -14,13 +15,13 @@
 {% set theme = theme|default('primary') %}
 
 {% set theme_shared = [
-  'rounded cursor-pointer transition',
-  'disabled:cursor-not-allowed',
+  'rounded-full cursor-pointer transition',
+  'disabled:cursor-not-allowed leading-6',
   {
     'inline-block': icon is not defined,
     'inline-flex items-center': icon is defined,
     'px-6 py-4': not icon_only,
-    'p-4': icon_only
+    'w-14 relative p-4': icon_only
   }
 ] %}
 
@@ -47,3 +48,18 @@
     }
   )
 %}
+{% set icon_class = icon_class|default({}) %}
+{% if icon_only %}
+  {% set icon_classes =
+    icon_classes
+      |default(['absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2'])
+      |merge(icon_class)
+  %}
+{% endif %}
+
+{% block icon %}
+  {{ parent() }}
+  {% if icon_only %}
+    &nbsp;
+  {% endif %}
+{% endblock %}
