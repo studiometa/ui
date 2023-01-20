@@ -20,6 +20,22 @@ title: Button examples
 
 :::
 
+## Primary rounded
+
+<PreviewIframe src="./stories/primary-rounded/story.html" />
+
+:::details Code
+
+<SimpleTabs :items="['app.twig']">
+  <template #content-1>
+
+<<< ./components/atoms/Button/stories/primary-rounded/app.twig
+
+  </template>
+</SimpleTabs>
+
+:::
+
 ## Secondary
 
 <PreviewIframe src="./stories/secondary/story.html" />
@@ -36,3 +52,18 @@ title: Button examples
 
 :::
 
+## Secondary rounded
+
+<PreviewIframe src="./stories/secondary-rounded/story.html" />
+
+:::details Code
+
+<SimpleTabs :items="['app.twig']">
+  <template #content-1>
+
+<<< ./components/atoms/Button/stories/secondary-rounded/app.twig
+
+  </template>
+</SimpleTabs>
+
+:::
