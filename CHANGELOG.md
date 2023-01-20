@@ -8,10 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- **Hero**
-
-  - Add a hero components `hero` ([#99](https://github.com/studiometa/ui/pull/99))
-
+- **Hero:**
+  - Add hero components `hero` ([#99](https://github.com/studiometa/ui/pull/99))
 - **Rounded Styled Button**
   - Add rounded styled button ([4c7a05d](https://github.com/studiometa/ui/commit/4c7a05d))
 
