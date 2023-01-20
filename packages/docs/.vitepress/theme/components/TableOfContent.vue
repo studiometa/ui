@@ -5,12 +5,7 @@
     modules: Object,
   });
 
-  const links = await Promise.all(
-    Object.values(props.modules).map(async (md) => {
-      const { __pageData, ...ctx } = await md();
-      return __pageData;
-    })
-  );
+  const links = Object.values(props.modules).map((md) => md.__pageData);
 </script>
 
 <template>

@@ -114,4 +114,5 @@ storybook-static/
 .phpunit.result.cache
 
 /packages/docs/.vitepress/dist/
+/packages/docs/.vitepress/.temp/
 /packages/docs/.vitepress/cache/

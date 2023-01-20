@@ -6,6 +6,10 @@
   --vp-c-divider-light: var(--vp-c-divider);
 }
 
+.curtain {
+  display: none !important;
+}
+
 .focus\:ring-opacity-1:focus,
 .hover\:ring-opacity-1:hover {
   --tw-ring-opacity: 1;

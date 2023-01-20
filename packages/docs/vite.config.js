@@ -35,14 +35,6 @@ const config = defineConfig({
       resolvers: IconsResolver(),
     }),
     Icons({ autoInstall: true }),
-    {
-      name: 'add-common-js-package-plugin',
-      writeBundle(viteConfig) {
-        if (viteConfig.format === 'cjs' && viteConfig.esModule) {
-          writeFileSync(join(viteConfig.dir, 'package.json'), JSON.stringify({ type: 'commonjs' }));
-        }
-      },
-    },
   ],
   server: {
     watch: {

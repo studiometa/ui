@@ -1,13 +1,11 @@
-import { createRequire } from 'module';
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
+import { basename, dirname, resolve, join } from 'node:path';
 import { defineConfig } from 'vitepress';
-import { basename, dirname, resolve, join } from 'path';
 import { withLeadingSlash, withTrailingSlash } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
-import fs from 'node:fs';
 
 const pkg = JSON.parse(
-  fs.readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' })
+  readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' })
 );
 
 export default defineConfig({

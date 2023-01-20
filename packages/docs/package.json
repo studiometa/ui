@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vitepress dev .",
-    "build": "NODE_ENV=production vitepress build ."
+    "build": "vitepress build ."
   },
   "dependencies": {
-    "@bytebase/vue-kbar": "^0.1.7",
+    "@bytebase/vue-kbar": "^0.1.8",
     "@studiometa/js-toolkit": "^2.8.0"
   },
   "devDependencies": {
@@ -19,8 +19,8 @@
     "sass": "^1.57.1",
     "snake-case": "^3.0.4",
     "tailwindcss": "^3.2.4",
-    "unplugin-icons": "^0.14.3",
-    "unplugin-vue-components": "^0.19.6",
-    "vitepress": "^1.0.0-alpha.38"
+    "unplugin-icons": "^0.15.1",
+    "unplugin-vue-components": "^0.22.12",
+    "vitepress": "^1.0.0-alpha.40"
   }
 }
