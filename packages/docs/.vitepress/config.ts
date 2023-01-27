@@ -38,6 +38,10 @@ export default defineConfig({
         link: '/components/',
       },
       {
+        text: 'Playground',
+        link: 'https://ui-playground.pages.dev/',
+      },
+      {
         text: `v${pkg.version}`,
         items: [{ text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' }],
       },
