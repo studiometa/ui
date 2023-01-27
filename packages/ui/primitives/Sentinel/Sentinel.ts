@@ -8,7 +8,7 @@ export class Sentinel extends withIntersectionObserver(Base, { threshold: [0, 1]
   /**
    * Config.
    */
-  static config:BaseConfig = {
+  static config: BaseConfig = {
     name: 'Sentinel',
   };
 }

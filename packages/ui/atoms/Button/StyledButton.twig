@@ -35,13 +35,15 @@
 ] %}
 
 {% set attr =
-  attr
-    |default({})
-    |merge({
+  merge_html_attributes(
+    attr ?? null,
+    null,
+    {
       class: [
         theme_shared,
         theme == 'primary' ? theme_primary : '',
         theme == 'secondary' ? theme_secondary : ''
       ]
-    })
+    }
+  )
 %}

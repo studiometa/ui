@@ -9,7 +9,7 @@ export class PrefetchWhenVisible extends withMountWhenInView<AbstractPrefetch>(A
   /**
    * Config.
    */
-  static config:BaseConfig = {
+  static config: BaseConfig = {
     ...AbstractPrefetch.config,
     name: 'PrefetchWhenVisible',
   };

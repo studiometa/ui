@@ -53,20 +53,10 @@ cd ui/
 
 # Install root dependencies
 npm install
-composer install
 ddev start
 
-# Install back-end dependencies
-cd packages/docs/.symfony
-composer install
-
 # Launch the dev environment
-cd ..
-npm run dev
-```
-
-You can also [open the repository in GitPod](https://gitpod.io/#https://github.com/studiometa/ui) and start the dev server with the following command in the root of the project:
-
-```
 npm run docs:dev
 ```
+
+You can also [open the repository in GitPod](https://gitpod.io/#https://github.com/studiometa/ui) and start the dev environment there.

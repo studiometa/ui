@@ -1,5 +1,10 @@
 import { Base } from '@studiometa/js-toolkit';
-import type { BaseProps, BaseConfig, DragServiceProps, KeyServiceProps } from '@studiometa/js-toolkit';
+import type {
+  BaseProps,
+  BaseConfig,
+  DragServiceProps,
+  KeyServiceProps,
+} from '@studiometa/js-toolkit';
 import { clamp, inertiaFinalValue, nextFrame, isDev } from '@studiometa/js-toolkit/utils';
 import { SliderDrag } from './SliderDrag.js';
 import { SliderItem } from './SliderItem.js';
@@ -11,7 +16,7 @@ type SliderState = { x: Record<SliderModes, number> };
 export interface SliderProps extends BaseProps {
   $refs: {
     wrapper: HTMLElement;
-  }
+  };
   $children: {
     SliderItem: SliderItem[];
     SliderDrag: SliderDrag[];
@@ -19,9 +24,10 @@ export interface SliderProps extends BaseProps {
   $options: {
     mode: SliderModes;
     fitBounds: boolean;
+    contain: boolean;
     sensitivity: number;
     dropSensitivity: number;
-  }
+  };
 }
 
 /**
@@ -32,7 +38,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Config.
    */
-  static config :BaseConfig = {
+  static config: BaseConfig = {
     name: 'Slider',
     refs: ['wrapper', 'debug'],
     emits: ['goto', 'index'],
@@ -68,7 +74,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Set the current index and emit the `index` event.
    */
-  set currentIndex(value:number) {
+  set currentIndex(value: number) {
     this.currentSliderItem.disactivate();
     this.$emit('index', value);
     this.__currentIndex = value;
@@ -78,12 +84,12 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Store all the states.
    */
-  states:SliderState[] = [];
+  states: SliderState[] = [];
 
   /**
    * Origins for the different modes.
    */
-  origins:Record<SliderModes, number> = {
+  origins: Record<SliderModes, number> = {
     left: 0,
     center: 0,
     right: 0,
@@ -119,21 +125,21 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Get the minimal contain state value.
    */
-  get containMinState():number {
+  get containMinState(): number {
     return this.getStateValueByMode(this.firstState.x, 'left');
   }
 
   /**
    * Get the maximal contain state value.
    */
-  get containMaxState():number {
+  get containMaxState(): number {
     return this.getStateValueByMode(this.lastState.x, 'right');
   }
 
   /**
    * Get the last index.
    */
-  get indexMax():number {
+  get indexMax(): number {
     return this.$children.SliderItem.length - 1;
   }
 
@@ -147,7 +153,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Get the states for each SliderItem.
    */
-  getStates():SliderState[] {
+  getStates(): SliderState[] {
     const { wrapper } = this.$refs;
     const originRect = wrapper.getBoundingClientRect();
 
@@ -157,7 +163,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
       right: originRect.x + originRect.width,
     };
 
-    const states:SliderState[] = this.$children.SliderItem.map((item) => ({
+    const states: SliderState[] = this.$children.SliderItem.map((item) => ({
       x: {
         left: (item.rect.x - this.origins.left) * -1,
         center: (item.rect.x + item.rect.width / 2 - this.origins.center) * -1,
@@ -215,14 +221,14 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Get an origin by mode.
    */
-  getOriginByMode(mode?:SliderModes) {
+  getOriginByMode(mode?: SliderModes) {
     return this.origins[mode ?? this.$options.mode];
   }
 
   /**
    * Get a state value according to the given mode.
    */
-  getStateValueByMode(state:SliderState['x'], mode?:SliderModes) {
+  getStateValueByMode(state: SliderState['x'], mode?: SliderModes) {
     return state[mode ?? this.$options.mode];
   }
 
@@ -273,7 +279,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Go to the given index.
    */
-  goTo(index:number, { withInstantMove = true } = {}) {
+  goTo(index: number, { withInstantMove = true } = {}) {
     if (index < 0 || index > this.indexMax) {
       throw new Error('Index out of bound.');
     }
@@ -309,7 +315,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Listen to the Draggable `drag` event.
    */
-  onSliderDragDrag(props:DragServiceProps) {
+  onSliderDragDrag(props: DragServiceProps) {
     if (Math.abs(props.delta.y) > Math.abs(props.delta.x)) {
       return;
     }
@@ -324,7 +330,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Listen to the Draggable `drop` event and find the new active slide.
    */
-  onSliderDragDrop(props:DragServiceProps) {
+  onSliderDragDrop(props: DragServiceProps) {
     if (Math.abs(props.delta.y) > Math.abs(props.delta.x)) {
       return;
     }
@@ -372,7 +378,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Go prev or next when focus is on the wrapper and pressing arrow keys.
    */
-  keyed({ LEFT, RIGHT, isDown }:KeyServiceProps) {
+  keyed({ LEFT, RIGHT, isDown }: KeyServiceProps) {
     if (this.hasFocus && isDown) {
       if (LEFT) {
         this.goPrev();
@@ -419,7 +425,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Get the state where the given item will be visible.
    */
-  getStateWhereItemWillBeInvisible(item:SliderItem, { reversed = false } = {}):SliderState {
+  getStateWhereItemWillBeInvisible(item: SliderItem, { reversed = false } = {}): SliderState {
     const visibleStates = this.states.filter((state) =>
       item.willBeVisible(this.getStateValueByMode(state.x)),
     );
@@ -439,14 +445,14 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Get the visible slides for the given position.
    */
-  getVisibleItems(target:number) {
+  getVisibleItems(target: number) {
     return this.$children.SliderItem.filter((item) => item.isVisible || item.willBeVisible(target));
   }
 
   /**
    * Get the invisible slides for the given position.
    */
-  getInvisibleItems(target:number) {
+  getInvisibleItems(target: number) {
     return this.$children.SliderItem.filter(
       (item) => !item.isVisible && !item.willBeVisible(target),
     );

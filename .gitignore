@@ -112,3 +112,7 @@ storybook-static/
 # Symbolic docroot
 /web
 .phpunit.result.cache
+
+/packages/docs/.vitepress/dist/
+/packages/docs/.vitepress/.temp/
+/packages/docs/.vitepress/cache/

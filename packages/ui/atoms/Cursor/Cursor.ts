@@ -18,9 +18,7 @@ export interface CursorProps extends BaseProps {
 /**
  * Cursor class.
  */
-export class Cursor<T extends BaseProps = BaseProps> extends Base<
-  CursorProps & T
-> {
+export class Cursor<T extends BaseProps = BaseProps> extends Base<CursorProps & T> {
   static config: BaseConfig = {
     name: 'Cursor',
     options: {

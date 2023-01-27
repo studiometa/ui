@@ -1,19 +1,20 @@
 import type { Ref } from 'vue';
 import { ref, unref } from 'vue';
-import { useData, withBase } from 'vitepress';
-import { withLeadingCharacters } from '@studiometa/js-toolkit';
+import { useData, useRoute, useRouter, withBase } from 'vitepress';
 
 interface Link {
   text: string;
   link: string;
   parent?: Link;
   root?: Link;
+  keywords?: string[];
 }
 
 interface VitepressLink {
   text: string;
   link?: string;
   items?: VitepressLink[];
+  keywords?: string[];
 }
 
 /**
@@ -27,31 +28,31 @@ function addLinks(
   root?: VitepressLink,
 ) {
   if (item.link) {
-    let { text, link } = item;
-    link = withBase(link);
+    let { text, link, keywords = [] } = item;
 
-    if (!linksSet.has(text + link)) {
-      const newLink:Link = {
+    if (!linksSet.has(link)) {
+      const newLink: Link = {
         text,
-        link: link,
+        link: withBase(link),
+        keywords,
       };
 
       if (parent) {
         newLink.parent = {
           text: parent.text,
-          link: withBase(parent.link)
-        }
+          link: parent.link ? withBase(parent.link) : undefined,
+        };
       }
 
       if (root) {
         newLink.root = {
           text: root.text,
-          link: withBase(root.link)
+          link: root.link ? withBase(root.link) : undefined,
         };
       }
 
       links.value.push(newLink);
-      linksSet.add(text + link);
+      linksSet.add(link);
     }
   }
 
@@ -65,13 +66,13 @@ export function useAllLinks() {
   const { nav, sidebar } = unref(theme);
 
   const links = ref([]);
-  const linkSet = new Set<string>();
+  const linkSet = new Set();
 
   nav.forEach((item) => addLinks(links, linkSet, item));
 
-  Object.entries(sidebar).forEach(([name, items]) => {
-    const parent = nav.find(navItem => name.startsWith(navItem.link));
-    items.forEach((link) => addLinks(links, linkSet, link, parent));
+  Object.entries(sidebar).forEach(([name, item]) => {
+    const parent = nav.find((item) => name.startsWith(item.link));
+    item.forEach((link) => addLinks(links, linkSet, link, parent));
   });
 
   return {

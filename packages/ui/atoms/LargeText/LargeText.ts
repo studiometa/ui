@@ -18,7 +18,8 @@ export interface LargeTextProps extends BaseProps {
  */
 export class LargeText<T extends BaseProps = BaseProps>
   extends withMountWhenInView(Base, { rootMargin: '50%' })<T & LargeTextProps>
-  implements BaseInterface {
+  implements BaseInterface
+{
   /**
    * Config.
    */

@@ -28,11 +28,11 @@ export interface TransitionInterface extends BaseInterface {
   /**
    * Trigger the enter transition.
    */
-  enter(target?: HTMLElement | HTMLElement[]):Promise<void>;
+  enter(target?: HTMLElement | HTMLElement[]): Promise<void>;
   /**
    * Trigger the leave transition.
    */
-  leave(target?: HTMLElement | HTMLElement[]):Promise<void>;
+  leave(target?: HTMLElement | HTMLElement[]): Promise<void>;
 }
 
 /**
@@ -44,9 +44,7 @@ export function withTransition<S extends Base>(
   /**
    * Class.
    */
-  class Transition<T extends BaseProps = BaseProps> extends BaseClass<
-    T & TransitionProps
-  > {
+  class Transition<T extends BaseProps = BaseProps> extends BaseClass<T & TransitionProps> {
     /**
      * Config.
      */
@@ -85,7 +83,7 @@ export function withTransition<S extends Base>(
           active: enterActive as string,
           to: enterTo as string,
         },
-        enterKeep && 'keep',
+        enterKeep ? 'keep' : undefined,
       );
     }
 
@@ -103,7 +101,7 @@ export function withTransition<S extends Base>(
           active: leaveActive as string,
           to: leaveTo as string,
         },
-        leaveKeep && 'keep',
+        leaveKeep ? 'keep' : undefined,
       );
     }
   }

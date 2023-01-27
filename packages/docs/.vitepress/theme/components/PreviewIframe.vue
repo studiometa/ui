@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+  import { withBase } from 'vitepress';
   import Loader from './Loader.vue';
   import ControlButton from './PreviewControlButton.vue';
   import useObserver from '../composables/useObserver.js';

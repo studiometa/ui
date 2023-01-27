@@ -9,14 +9,16 @@ export interface AbstractScrollAnimationProps extends BaseProps {
     from: Keyframe;
     to: Keyframe;
     keyframes: Keyframe[];
-    easing: [number,number,number,number];
+    easing: [number, number, number, number];
   };
 }
 
 /**
  * AbstractScrollAnimation class.
  */
-export class AbstractScrollAnimation<T extends BaseProps = BaseProps> extends withFreezedOptions<Base>(Base)<T & AbstractScrollAnimationProps> {
+export class AbstractScrollAnimation<
+  T extends BaseProps = BaseProps,
+> extends withFreezedOptions<Base>(Base)<T & AbstractScrollAnimationProps> {
   /**
    * Config.
    */
@@ -55,7 +57,7 @@ export class AbstractScrollAnimation<T extends BaseProps = BaseProps> extends wi
   /**
    * Lazily get animation.
    */
-  get animation():ReturnType<typeof animate> {
+  get animation(): ReturnType<typeof animate> {
     let { keyframes } = this.$options;
     const { from, to } = this.$options;
 
@@ -73,7 +75,7 @@ export class AbstractScrollAnimation<T extends BaseProps = BaseProps> extends wi
     return animation;
   }
 
-  scrolledInView(props:ScrollInViewProps) {
+  scrolledInView(props: ScrollInViewProps) {
     const progress = map(
       clamp(props.dampedProgress.y, this.$options.playRange[0], this.$options.playRange[1]),
       this.$options.playRange[0],
@@ -88,7 +90,7 @@ export class AbstractScrollAnimation<T extends BaseProps = BaseProps> extends wi
   /**
    * Render the animation for the given progress.
    */
-  render(progress:number) {
+  render(progress: number) {
     this.animation.progress(progress);
   }
 }

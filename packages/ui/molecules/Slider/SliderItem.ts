@@ -37,7 +37,7 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
   /**
    * Item original position.
    */
-  rect:{
+  __rect: {
     x: number;
     y: number;
     top: number;
@@ -48,18 +48,29 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
     height: number;
   };
 
-  /**
-   * Set SliderItem bounding rectangle on mount.
-   */
-  mounted() {
-    this.updateRectAdjustedWithX();
+  shouldEvaluateRect = false;
+
+  get rect() {
+    if (!this.__rect || this.shouldEvaluateRect) {
+      this.shouldEvaluateRect = false;
+      const x = this.x * -1;
+      const rect = this.$el.getBoundingClientRect().toJSON();
+      this.__rect = {
+        ...rect,
+        left: rect.left + x,
+        right: rect.left + x + rect.width,
+        x: rect.left + x,
+      };
+    }
+
+    return this.__rect;
   }
 
   /**
    * Update SliderItem bounding rectangle on resize.
    */
   resized() {
-    this.updateRectAdjustedWithX();
+    this.shouldEvaluateRect = true;
   }
 
   /**
@@ -72,7 +83,7 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
   /**
    * Intersected hook.
    */
-  intersected([{ intersectionRatio, isIntersecting }]:IntersectionObserverEntry[]) {
+  intersected([{ intersectionRatio, isIntersecting }]: IntersectionObserverEntry[]) {
     if (intersectionRatio >= 1) {
       this.$emit('is-fully-visible');
       this.$el.setAttribute('aria-hidden', 'false');
@@ -121,7 +132,7 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
   /**
    * Move the SliderItem to the given target position.
    */
-  move(targetPosition:number) {
+  move(targetPosition: number) {
     this.x = targetPosition;
 
     if (!this.$services.has('ticked')) {
@@ -132,7 +143,7 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
   /**
    * Move the SliderItem instantly to the given target position.
    */
-  moveInstantly(targetPosition:number) {
+  moveInstantly(targetPosition: number) {
     this.x = targetPosition;
     this.dampedX = targetPosition;
     this.render();
@@ -150,7 +161,7 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
   /**
    * Check if SliderItem is partially visible for the given target position.
    */
-  willBeVisible(targetPosition:number) {
+  willBeVisible(targetPosition: number) {
     return (
       this.rect.x + targetPosition < window.innerWidth * 1.5 &&
       this.rect.x + targetPosition + this.rect.width > window.innerWidth * -0.5
@@ -170,22 +181,5 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
       this.rect.x + targetPosition + this.rect.width < window.innerWidth &&
       this.rect.x + targetPosition + this.rect.width > 0
     );
-  }
-
-  /**
-   * Update the bounding rectangle values without the current transformation.
-   *
-   * @returns {void}
-   */
-  updateRectAdjustedWithX() {
-    const x = this.x * -1;
-    const rect:this['rect'] = this.$el.getBoundingClientRect().toJSON();
-
-    this.rect = {
-      ...rect,
-      left: rect.left + x,
-      right: rect.left + x + rect.width,
-      x: rect.left + x,
-    };
   }
 }

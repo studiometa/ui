@@ -1,4 +1,4 @@
-# Icon (todo) <Badges :texts="badges" />
+# Icon <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/atoms/Icon/package.json';
@@ -9,3 +9,13 @@
 
 - [Examples](./examples.html)
 - [Twig API](./twig-api.html)
+
+## Usage
+
+Once the [package installed](/guide/installation/), simply include the template in your project:
+
+```twig
+{% include  '@ui/atoms/Icon/Icon.twig' with {
+  name: 'twitter',
+} %}
+```

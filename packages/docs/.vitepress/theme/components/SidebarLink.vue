@@ -2,8 +2,8 @@
   import type { DefaultTheme } from 'vitepress/theme';
   import { inject, unref, computed } from 'vue';
   import { useData } from 'vitepress';
-  import { isActive } from 'vitepress/client/theme-default/support/utils';
-  import VPLink from 'vitepress/client/theme-default/components/VPLink.vue';
+  import { isActive } from 'vitepress/dist/client/theme-default/support/utils';
+  import VPLink from 'vitepress/dist/client/theme-default/components/VPLink.vue';
 
   const props = defineProps<{
     item: DefaultTheme.SidebarItem;

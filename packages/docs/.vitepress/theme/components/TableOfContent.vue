@@ -1,16 +1,11 @@
 <script setup>
-  import { normalizeLink } from 'vitepress/client/theme-default/support/utils.js';
+  import { normalizeLink } from 'vitepress/dist/client/theme-default/support/utils.js';
 
   const props = defineProps({
     modules: Object,
   });
 
-  const links = await Promise.all(
-    Object.values(props.modules).map(async (md) => {
-      const { __pageData, ...ctx } = await md();
-      return __pageData;
-    })
-  );
+  const links = Object.values(props.modules).map((md) => md.__pageData);
 </script>
 
 <template>

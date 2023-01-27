@@ -4,13 +4,11 @@ import { AbstractPrefetch } from './AbstractPrefetch.js';
 /**
  * PrefetchWhenOver class.
  */
-export class PrefetchWhenOver<
-  T extends BaseProps = BaseProps,
-> extends AbstractPrefetch<T> {
+export class PrefetchWhenOver<T extends BaseProps = BaseProps> extends AbstractPrefetch<T> {
   /**
    * Config.
    */
-  static config:BaseConfig = {
+  static config: BaseConfig = {
     ...AbstractPrefetch.config,
     name: 'PrefetchWhenOver',
   };

@@ -3,6 +3,8 @@
 // Read more: https://github.com/vuejs/core/pull/3399
 import '@vue/runtime-core'
 
+export {}
+
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     IOcticonChevronDown16: typeof import('~icons/octicon/chevron-down16')['default']
@@ -13,5 +15,3 @@ declare module '@vue/runtime-core' {
     IOcticonXCircle16: typeof import('~icons/octicon/x-circle16')['default']
   }
 }
-
-export {}

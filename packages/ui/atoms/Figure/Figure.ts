@@ -14,9 +14,12 @@ export interface FigureProps extends BaseProps {
 /**
  * Figure class.
  */
-export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(Transition, {
-  threshold: [0, 1],
-})<T & FigureProps> {
+export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(
+  Transition,
+  {
+    threshold: [0, 1],
+  },
+)<T & FigureProps> {
   /**
    * Config.
    */
@@ -48,7 +51,7 @@ export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView
   /**
    * Set the image source.
    */
-  set src(value:string) {
+  set src(value: string) {
     this.$refs.img.src = value;
   }
 
