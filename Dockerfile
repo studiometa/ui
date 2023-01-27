@@ -9,5 +9,7 @@ FROM webdevops/php-apache:7.4-alpine
 WORKDIR /app
 COPY . ./
 RUN composer install -d packages/docs/.symfony/
+RUN echo "APP_ENV=prod" > packages/docs/.symfony/.env.local
+RUN chown -R application:application packages/docs/.symfony
 COPY --from=builder /app/packages/docs/.symfony/public/-/ ./packages/docs/.symfony/public/-/
 ENV WEB_DOCUMENT_ROOT="/app/packages/docs/.symfony/public/"

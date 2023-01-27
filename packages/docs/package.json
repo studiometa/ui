@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-docs",
-  "version": "0.2.24",
+  "version": "0.2.25",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@bytebase/vue-kbar": "^0.1.8",
-    "@studiometa/js-toolkit": "^2.8.0"
+    "@studiometa/js-toolkit": "^2.9.0"
   },
   "devDependencies": {
     "@iconify-json/octicon": "^1.1.27",
