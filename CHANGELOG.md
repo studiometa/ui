@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.26](https://github.com/studiometa/ui/compare/0.2.25..0.2.26) (2023-01-30)
+
+### Fixed
+
+- Fix playground access to the API ([a90aef2](https://github.com/studiometa/ui/commit/a90aef2))
+
 ## [v0.2.25](https://github.com/studiometa/ui/compare/0.2.24..0.2.25) (2023-01-27)
 
 ### Fixed
