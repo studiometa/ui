@@ -116,3 +116,6 @@ storybook-static/
 /packages/docs/.vitepress/dist/
 /packages/docs/.vitepress/.temp/
 /packages/docs/.vitepress/cache/
+
+# Local Netlify folder
+.netlify

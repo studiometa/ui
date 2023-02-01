@@ -1,0 +1,17 @@
+{#
+/**
+ * @file
+ *   Radio.
+ *
+ * @param Array $items
+ */
+#}
+
+<div class="relative flex items-center">
+	<span
+		class="absolute -inset-y-1 inset-x-0 block rounded bg-blue-300 dark:bg-blue-800 bg-opacity-30 dark:bg-opacity-30 peer-checked:bg-opacity-100 peer-focus:ring"
+	></span>
+	{% for item in items %}
+		{% include '@components/Radio.twig' with item only %}
+	{% endfor %}
+</div>

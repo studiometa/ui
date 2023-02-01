@@ -22,9 +22,6 @@ module.exports = {
     {
       files: ['**/*.ts'],
       parser: '@typescript-eslint/parser',
-      parserOptions: {
-        project: './tsconfig.json',
-      },
       plugins: ['@typescript-eslint'],
       extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
       rules: {
@@ -38,6 +35,18 @@ module.exports = {
         'jsdoc/require-returns': 'off',
         'object-curly-newline': 'off',
         'require-jsdoc': 'off',
+      },
+    },
+    {
+      files: ['packages/ui/**/*.ts'],
+      parserOptions: {
+        project: './tsconfig.json',
+      },
+    },
+    {
+      files: ['packages/playground/src/js/**/*.ts'],
+      parserOptions: {
+        project: './packages/playground/tsconfig.json',
       },
     },
     {

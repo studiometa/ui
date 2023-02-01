@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html class="fixed inset-0">
+  <head>
+    <script>
+      try {
+        if (!('theme' in localStorage)) {
+          localStorage.theme = window.matchMedia('(prefers-color-scheme:dark)')
+            .matches
+            ? 'dark'
+            : 'light';
+        }
+        if (localStorage.theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch {}
+    </script>
+    <script>
+      try {
+        if (!('layout' in localStorage)) {
+          localStorage.layout = 'horizontal';
+        }
+        if (localStorage.layout === 'vertical') {
+          document.documentElement.classList.add('is-vertical');
+        }
+      } catch {}
+    </script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UI Playground</title>
+    <meta name="description" content="Quickly create and share proof of concepts built with @studiometa/ui, @studiometa/js-toolkit, Twig and Tailwind CSS.">
+    <meta property="og:title" content="UI Playground" />
+    <meta property="og:description" content="Quickly create and share proof of concepts built with @studiometa/ui, @studiometa/js-toolkit, Twig and Tailwind CSS." />
+    <meta property="og:url" content="OPENGRAPH_URL_PLACEHOLDER" />
+    <meta property="og:image" content="OPENGRAPH_IMAGE_PLACEHOLDER" />
+  </head>
+  <body class="fixed inset-0 group dark:bg-zinc-900 dark:text-white">
+    <main class="fixed top-0 left-0 w-full h-full">
+      <div class="z-10 absolute top-0 flex items-center gap-8 w-full p-4 leading-4 bg-zinc-100 dark:bg-zinc-800 text-sm dark:text-zinc-100 dark:border-b-zinc-700">
+        <span class="font-bold">UI Playground</span>
+
+        <div class="flex items-center gap-4">
+          {% include '@components/Checkbox.twig' with {
+            label: 'HTML',
+            attr: {
+              for: 'html-editor',
+            },
+            input_attr: {
+              data_ref: 'htmlVisibility',
+              name: 'html-editor',
+              id: 'html-editor',
+              checked: true,
+            }
+          } %}
+          {% include '@components/Checkbox.twig' with {
+            label: 'JS',
+            attr: {
+              for: 'script-editor',
+            },
+            input_attr: {
+              data_ref: 'scriptVisibility',
+              name: 'script-editor',
+              id: 'script-editor',
+              checked: true,
+            }
+          } %}
+        </div>
+
+        <div data-component="LayoutSwitcher" class="flex items-center gap-4">
+          Layout
+          {% include '@components/RadioGroup.twig' with {
+            items: [
+              {
+                label: 'Horizontal',
+                attr: {
+                  for: 'layout-horizontal',
+                },
+                input_attr: {
+                  data_ref: 'inputs[]',
+                  name: 'layout',
+                  id: 'layout-horizontal',
+                  value: 'horizontal',
+                }
+              },
+              {
+                label: 'Vertical',
+                attr: {
+                  for: 'layout-vertical',
+                },
+                input_attr: {
+                  data_ref: 'inputs[]',
+                  name: 'layout',
+                  id: 'layout-vertical',
+                  value: 'vertical',
+                }
+              }
+            ],
+          } %}
+        </div>
+
+        <div data-component="ThemeSwitcher" class="flex gap-4">
+          Theme
+          {% include '@components/RadioGroup.twig' with {
+            items: [
+              {
+                label: 'Light',
+                attr: {
+                  for: 'theme-light',
+                },
+                input_attr: {
+                  data_ref: 'inputs[]',
+                  name: 'theme',
+                  id: 'theme-light',
+                  value: 'light',
+                }
+              },
+              {
+                label: 'Dark',
+                attr: {
+                  for: 'theme-dark',
+                },
+                input_attr: {
+                  data_ref: 'inputs[]',
+                  name: 'theme',
+                  id: 'theme-dark',
+                  value: 'dark',
+                }
+              }
+            ],
+          } %}
+        </div>
+      </div>
+      <div data-component="LayoutReactive"
+        data-option-horizontal="flex-col"
+        class="absolute top-12 left-0 right-0 bottom-0 flex flex-col">
+        <div data-component="LayoutReactive Editors"
+          data-option-vertical="h-full"
+          data-option-horizontal="w-full"
+          class="flex flex-col w-full">
+          <div data-component="LayoutReactive Resizable"
+            data-option-vertical="flex-col w-[40vw] h-full pr-2"
+            data-option-horizontal="w-full h-[33vh] pb-2"
+            class="relative gap-2 flex flex-grow items-stretch w-full h-[33vh] pb-2 select-none">
+            <div
+              data-component="LayoutReactive ResizableCursorX"
+              data-option-horizontal="hidden"
+              class="z-20 absolute top-0 right-0 flex flex-col items-center justify-center gap-1 w-2 h-full bg-zinc-100 dark:bg-zinc-700 cursor-col-resize">
+              <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+              <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+              <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+            </div>
+            <div
+              data-component="LayoutReactive ResizableCursorY"
+              data-option-vertical="hidden"
+              class="z-20 absolute bottom-0 left-0 flex items-center justify-center gap-1 w-full h-2 bg-zinc-100 dark:bg-zinc-700 cursor-row-resize">
+              <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+              <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+              <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+            </div>
+            <div
+              data-component="HtmlEditor LayoutReactive ResizableSync"
+              data-option-vertical="w-full h-1/2"
+              data-option-horizontal="w-1/2 h-full"
+              class="relative flex-grow w-1/2"
+              data-lang="text/html"
+            >
+              <div class="absolute inset-0 flex items-center justify-center bg-zinc-50 dark:bg-neutral-900">
+                <div class="w-4 h-4 border-2 rounded-full border-zinc-300 dark:opacity-20 border-t-transparent animate-loader"></div>
+              </div>
+              <div
+                data-component="LayoutReactive ResizableCursorX"
+                data-option-vertical="hidden"
+                data-option-horizontal="absolute top-0 left-full"
+                class="z-10 flex-grow flex flex-col items-center justify-center gap-1 w-2 h-full bg-zinc-100 dark:bg-zinc-700 cursor-col-resize">
+                <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+                <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+                <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+              </div>
+              <div
+                data-component="LayoutReactive ResizableCursorY"
+                data-option-horizontal="hidden"
+                data-option-vertical="absolute top-full left-0"
+                class="z-10 flex-grow flex items-center justify-center gap-1 w-full h-2 bg-zinc-100 dark:bg-zinc-700 cursor-row-resize">
+                <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+                <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+                <div class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-900"></div>
+              </div>
+            </div>
+            <div
+              data-component="ScriptEditor LayoutReactive ResizableSync"
+              data-option-vertical="w-full h-1/2"
+              data-option-horizontal="w-1/2 h-full"
+              class="relative flex-grow w-1/2 h-full"
+              data-lang="text/javascript"
+            >
+              <div class="absolute inset-0 flex items-center justify-center bg-zinc-50 dark:bg-neutral-900">
+                <div class="w-4 h-4 border-2 rounded-full border-zinc-300 dark:opacity-20 border-t-transparent animate-loader"></div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+        <div data-component="LayoutReactive"
+          class="relative w-full flex flex-grow items-center justify-center bg-white"
+          data-option-vertical="w-3/5"
+          data-option-horizontal="w-full">
+          <iframe
+            data-component="Iframe"
+            src="about:blank"
+            srcdoc=""
+            frameborder="0"
+            class="z-10 absolute inset-0 w-full h-full bg-white opacity-0"
+          ></iframe>
+          <div class="w-6 h-6 border-2 rounded-full border-zinc-500 dark:opacity-20 border-t-transparent animate-loader"></div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
