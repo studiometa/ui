@@ -39,7 +39,7 @@ export default defineConfig({
       },
       {
         text: 'Playground',
-        link: 'https://ui-playground.pages.dev/',
+        link: 'https://ui.studiometa.dev/play/',
       },
       {
         text: `v${pkg.version}`,
@@ -112,10 +112,10 @@ function generateSidebarLinksFromPath(
     link: withLeadingSlash(entry.replace(/\/index\.md$/, '/').replace(/\.md$/, '.html')),
     items: entry.endsWith('/index.md')
       ? [
-          ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*[!index]*.md'), {
-            extractTitle: true,
-          }),
-        ]
+        ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*[!index]*.md'), {
+          extractTitle: true,
+        }),
+      ]
       : [],
     collapsible,
     collapsed,

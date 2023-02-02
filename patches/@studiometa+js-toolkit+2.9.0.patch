@@ -1,0 +1,35 @@
+diff --git a/node_modules/@studiometa/js-toolkit/services/drag.js b/node_modules/@studiometa/js-toolkit/services/drag.js
+index a75c5e7..b2e1861 100644
+--- a/node_modules/@studiometa/js-toolkit/services/drag.js
++++ b/node_modules/@studiometa/js-toolkit/services/drag.js
+@@ -10,7 +10,6 @@ const MODES = {
+   STOP: "stop"
+ };
+ let count = 0;
+-const events = ["pointerdown", "pointerup", "touchend"];
+ const passiveEventOptions = { passive: true };
+ function getEventPosition(event) {
+   const eventOrTouch = isDefined(event.touches) ? event.touches[0] : event;
+@@ -158,16 +157,16 @@ function createDragService(target, { dampFactor = 0.85, dragTreshold = 10 } = {}
+       }
+     },
+     init() {
+-      events.forEach((event) => {
+-        target.addEventListener(event, handleEvent, passiveEventOptions);
+-      });
++      target.addEventListener("pointerdown", handleEvent, passiveEventOptions);
++      window.addEventListener("pointerup", handleEvent, passiveEventOptions);
++      window.addEventListener("touchend", handleEvent, passiveEventOptions);
+       target.addEventListener("dragstart", handleEvent, { capture: true });
+       target.addEventListener("click", handleEvent, { capture: true });
+     },
+     kill() {
+-      events.forEach((event) => {
+-        target.removeEventListener(event, handleEvent);
+-      });
++      target.removeEventListener("pointerdown", handleEvent);
++      window.removeEventListener("pointerup", handleEvent);
++      window.removeEventListener("touchend", handleEvent);
+       target.removeEventListener("dragstart", handleEvent);
+       target.removeEventListener("click", handleEvent);
+     }

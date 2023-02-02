@@ -15,10 +15,12 @@
     "build:sizes": "node scripts/sizes.mjs",
     "build-for-export-size": "node scripts/update-exports-for-export-size.js && npm run build:pkg && npm run build:cp-files",
     "lint": "npm run lint:eslint && npm run lint:types",
-    "lint:eslint": "eslint packages/ui",
+    "lint:eslint": "eslint packages/ui packages/playground/src/js",
     "lint:types": "tsc --build tsconfig.lint.json",
     "docs:dev": "npm run dev -w @studiometa/ui-docs",
     "docs:build": "npm run build -w @studiometa/ui-docs",
+    "play:dev": "npm run dev -w @studiometa/ui-playground",
+    "play:build": "npm run build -w @studiometa/ui-playground",
     "postversion": "node scripts/update-composer-version.mjs",
     "postinstall": "patch-package"
   },
