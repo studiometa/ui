@@ -31,5 +31,6 @@ RUN composer install -d packages/docs/.symfony/
 RUN echo "APP_ENV=prod" > packages/docs/.symfony/.env.local
 RUN echo "Header set Access-Control-Allow-Origin: https://ui-playground.pages.dev" >> packages/docs/.symfony/public/.htaccess
 COPY --from=builder /app/packages/docs/.symfony/public/-/ ./packages/docs/.symfony/public/-/
+COPY --from=builder /app/packages/docs/.symfony/public/play-assets/ ./packages/docs/.symfony/public/play-assets/
 RUN chown -R application:application packages/docs/.symfony
 ENV WEB_DOCUMENT_ROOT="/app/packages/docs/.symfony/public/"
