@@ -1,0 +1,20 @@
+{
+  "name": "@studiometa/ui-playground",
+  "scripts": {
+    "dev": "meta dev",
+    "watch": "meta watch",
+    "build": "meta build"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^0.10.0",
+    "@studiometa/webpack-config": "^4.2.0-alpha.3",
+    "monaco-editor-webpack-plugin": "^7.0.1",
+    "patch-package": "^6.5.1"
+  },
+  "dependencies": {
+    "@studiometa/js-toolkit": "^2.9.0",
+    "fflate": "^0.7.4",
+    "monaco-editor": "^0.34.1"
+  },
+  "version": "0.0.1"
+}

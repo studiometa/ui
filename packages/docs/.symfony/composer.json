@@ -9,6 +9,7 @@
     "ext-iconv": "*",
     "nelmio/cors-bundle": "^2.1",
     "sensio/framework-extra-bundle": "^6.1",
+    "spatie/browsershot": "^3.40",
     "spatie/url": "^1.3",
     "studiometa/twig-toolkit": "^1.3",
     "symfony/console": "5.3.*",
