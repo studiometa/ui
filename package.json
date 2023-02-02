@@ -21,7 +21,8 @@
     "docs:build": "npm run build -w @studiometa/ui-docs",
     "play:dev": "npm run dev -w @studiometa/ui-playground",
     "play:build": "npm run build -w @studiometa/ui-playground",
-    "postversion": "node scripts/update-composer-version.mjs"
+    "postversion": "node scripts/update-composer-version.mjs",
+    "postinstall": "patch-package"
   },
   "devDependencies": {
     "@studiometa/eslint-config": "^3.1.1",
