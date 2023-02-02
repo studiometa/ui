@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.27](https://github.com/studiometa/ui/compare/0.2.26..0.2.27) (2023-02-02)
+
 ### Added
 
 - Add the playground to the NPM workspace ([#112](https://github.com/studiometa/ui/pull/112))
