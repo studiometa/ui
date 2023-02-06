@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@studiometa/js-toolkit": "^2.9.0",
+    "emmet-monaco-es": "^5.1.2",
     "fflate": "^0.7.4",
     "monaco-editor": "^0.34.1"
   },

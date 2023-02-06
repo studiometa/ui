@@ -2,6 +2,7 @@ import { Base } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { debounce, domScheduler } from '@studiometa/js-toolkit/utils';
 import type { editor } from 'monaco-editor/esm/vs/editor/editor.api.js';
+import { emmetHTML, emmetCSS } from 'emmet-monaco-es';
 import { themeIsDark, watchTheme } from '../store/index.js';
 
 export type EditorProps = BaseProps;
@@ -39,8 +40,8 @@ export default class Editor extends Base<EditorProps> {
   }
 
   async mounted() {
-    const { editor } = await import('monaco-editor/esm/vs/editor/editor.api.js');
-    this.editor = editor.create(this.$el, {
+    const monaco = await import('monaco-editor/esm/vs/editor/editor.api.js');
+    this.editor = monaco.editor.create(this.$el, {
       value: this.initialValue,
       language: this.language,
       minimap: { enabled: false },
@@ -51,6 +52,18 @@ export default class Editor extends Base<EditorProps> {
       tabSize: 2,
       theme: themeIsDark() ? 'vs-dark' : 'vs',
     });
+
+    const disposeHTML = emmetHTML(monaco);
+    const disposeCSS = emmetCSS(monaco);
+
+    this.$on(
+      'destroyed',
+      () => {
+        disposeHTML();
+        disposeCSS();
+      },
+      { once: true },
+    );
 
     watchTheme(() => {
       this.editor.updateOptions({
