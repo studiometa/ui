@@ -40,7 +40,12 @@ export default class Editor extends Base<EditorProps> {
   }
 
   async mounted() {
-    const monaco = await import('monaco-editor/esm/vs/editor/editor.api.js');
+    const [{ addTwigAutocompletion }, { addJsAutocompletion }, monaco] = await Promise.all([
+      import('../utils/twig/index.js'),
+      import('../utils/js/index.js'),
+      import('monaco-editor/esm/vs/editor/editor.api.js'),
+    ]);
+
     this.editor = monaco.editor.create(this.$el, {
       value: this.initialValue,
       language: this.language,
@@ -53,8 +58,10 @@ export default class Editor extends Base<EditorProps> {
       theme: themeIsDark() ? 'vs-dark' : 'vs',
     });
 
-    const disposeHTML = emmetHTML(monaco);
-    const disposeCSS = emmetCSS(monaco);
+    const disposeHTML = emmetHTML(monaco, ['html', 'twig']);
+    const disposeCSS = emmetCSS(monaco, ['css', 'html', 'twig']);
+    addTwigAutocompletion(monaco.languages);
+    addJsAutocompletion(monaco.languages);
 
     this.$on(
       'destroyed',
