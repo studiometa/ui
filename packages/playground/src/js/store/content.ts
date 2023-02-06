@@ -18,8 +18,8 @@ const store = new URLSearchParams(location.search || location.hash.slice(1));
 const storeSetter = store.set.bind(store);
 const storeGetter = store.get.bind(store);
 
-store.get = (key) => {
-  return store.has(key) ? unzip(storeGetter(key)) : '';
+store.get = (key): string | null => {
+  return store.has(key) ? unzip(storeGetter(key)) : null;
 };
 
 store.set = (key, value) => {
@@ -29,7 +29,7 @@ store.set = (key, value) => {
 
 export function getScript() {
   return (
-    store.get('script') ||
+    store.get('script') ??
     `import { Base, createApp } from 'https://cdn.skypack.dev/@studiometa/js-toolkit';
 
 class App extends Base {
@@ -49,7 +49,7 @@ export function setScript(value) {
 
 export function getHtml() {
   return (
-    store.get('html') ||
+    store.get('html') ??
     `{% html_element 'div' with { class: 'p-10' } %}
 	Hello world!
 {% end_html_element %}`

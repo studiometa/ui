@@ -15,7 +15,7 @@ export async function twigRender(content: string) {
 
   // Return cached response early
   if (cache.has(content)) {
-    return cache.get(content);
+    return cache.get(content) ?? 'Failed to get cached response.';
   }
 
   controller = new AbortController();
