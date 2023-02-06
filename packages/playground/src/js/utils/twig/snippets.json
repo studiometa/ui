@@ -1,7 +1,13 @@
 {
   "html_element": {
-    "prefix": "el",
+    "prefix": "html_element",
     "body": "{% html_element '${1:tag}' %}\n\t$0\n{% end_html_element %}",
+    "description": "html_element",
+    "scope": "text.html.twig"
+  },
+  "html_elementw": {
+    "prefix": "html_elementw",
+    "body": "{% html_element '${1:tag}' with ${2:{\\}} %}\n\t$0\n{% end_html_element %}",
     "description": "html_element",
     "scope": "text.html.twig"
   },
