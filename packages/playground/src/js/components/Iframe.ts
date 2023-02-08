@@ -43,6 +43,7 @@ export default class Iframe extends Base<IframeProps> {
 <body>
   ${rendered}
 </body>`;
+    await this.initImportMaps();
 
     // Add Tailwind CDN
     await this.initTailwind();
@@ -63,6 +64,17 @@ export default class Iframe extends Base<IframeProps> {
     await this.updateScript(false);
 
     this.$el.classList.remove('opacity-0');
+  }
+
+  initImportMaps() {
+    const importMap = this.doc.createElement('script');
+    importMap.type = 'importmap';
+    importMap.textContent = JSON.stringify({
+      imports: {
+        '@studiometa/': 'https://cdn.skypack.dev/@studiometa/',
+      },
+    });
+    this.doc.head.append(importMap);
   }
 
   initTailwind(): Promise<void> {

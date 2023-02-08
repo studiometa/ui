@@ -30,12 +30,13 @@ store.set = (key, value) => {
 export function getScript() {
   return (
     store.get('script') ??
-    `import { Base, createApp } from 'https://cdn.skypack.dev/@studiometa/js-toolkit';
+    `import { Base, createApp } from '@studiometa/js-toolkit';
+// import {  } from '@studiometa/ui';
 
 class App extends Base {
-	static config = {
-		name: 'App',
-	};
+  static config = {
+    name: 'App',
+  };
 }
 
 createApp(App)
@@ -51,7 +52,7 @@ export function getHtml() {
   return (
     store.get('html') ??
     `{% html_element 'div' with { class: 'p-10' } %}
-	Hello world!
+  Hello world!
 {% end_html_element %}`
   );
 }
