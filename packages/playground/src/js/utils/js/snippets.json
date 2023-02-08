@@ -1,0 +1,8 @@
+{
+  "base": {
+    "prefix": "base.",
+    "body": "class ${1:Component} extends Base {\n\tstatic config = {\n\t\tname: '${1:Component}',${2}\n\t};\n}\n",
+    "description": "Base class",
+    "scope": "source.js"
+  }
+}

@@ -1,5 +1,7 @@
 {
   "name": "@studiometa/ui-playground",
+  "version": "0.2.27",
+  "private": true,
   "scripts": {
     "dev": "meta dev",
     "watch": "meta watch",
@@ -13,8 +15,8 @@
   },
   "dependencies": {
     "@studiometa/js-toolkit": "^2.9.0",
+    "emmet-monaco-es": "^5.1.2",
     "fflate": "^0.7.4",
     "monaco-editor": "^0.34.1"
-  },
-  "version": "0.0.1"
+  }
 }
