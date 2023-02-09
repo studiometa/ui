@@ -1,0 +1,317 @@
+{
+  "html_element": {
+    "prefix": "html_element",
+    "body": "{% html_element '${1:tag}' %}\n\t$0\n{% end_html_element %}",
+    "description": "html_element",
+    "scope": "text.html.twig"
+  },
+  "html_elementw": {
+    "prefix": "html_elementw",
+    "body": "{% html_element '${1:tag}' with ${2:{\\}} %}\n\t$0\n{% end_html_element %}",
+    "description": "html_element",
+    "scope": "text.html.twig"
+  },
+  "autoescape": {
+    "prefix": "autoescape",
+    "body": "{% autoescape '${1:type}' %}\n\t$0\n{% endautoescape %}",
+    "description": "autoescape",
+    "scope": "text.html.twig"
+  },
+  "blockb": {
+    "prefix": "blockb",
+    "body": "{% block ${1:name} %}\n\t$0\n{% endblock %}",
+    "description": "block (block)",
+    "scope": "text.html.twig"
+  },
+  "block": {
+    "prefix": "block",
+    "body": "{% block ${1:name} %}$0{% endblock %}",
+    "description": "block",
+    "scope": "text.html.twig"
+  },
+  "blockf": {
+    "prefix": "blockf",
+    "body": "{{ block('${1:name}') }}$0",
+    "description": "blockf",
+    "scope": "text.html.twig"
+  },
+  "case": {
+    "prefix": "case",
+    "body": "{% case '${1:value}' %}\n\t$0",
+    "description": "case",
+    "scope": "text.html.twig"
+  },
+  "replace": {
+    "prefix": "replace",
+    "body": "{{ ${1:$TM_SELECTED_TEXT} | replace('search', 'replace') }}$0",
+    "description": "replace with | replace('search', 'replace')"
+  },
+  "replacex": {
+    "prefix": "replacex",
+    "body": "{{ ${1:$TM_SELECTED_TEXT} | replace('/(search)/i', 'replace') }}$0",
+    "description": "replace regex with | replace('/(search)/i', 'replace')"
+  },
+  "split": {
+    "prefix": "split",
+    "body": "{{ ${1:$TM_SELECTED_TEXT} | split('\\n') }}$0",
+    "description": "split on | split ('\\n')"
+  },
+  "dd": {
+    "prefix": "dd",
+    "body": "<pre>\n\t{{ dump($1) }}\n</pre>\n{% exit %}$0",
+    "description": "dump and die",
+    "scope": "text.html.twig"
+  },
+  "do": {
+    "prefix": "do",
+    "body": "{% do $1 %}$0",
+    "description": "do",
+    "scope": "text.html.twig"
+  },
+  "dump": {
+    "prefix": "dump",
+    "body": "<pre>\n\t{{ dump($1) }}\n</pre>",
+    "description": "dump",
+    "scope": "text.html.twig"
+  },
+  "else": {
+    "prefix": "else",
+    "body": "{% else %}\n\t$0",
+    "description": "else",
+    "scope": "text.html.twig"
+  },
+  "embed": {
+    "prefix": "embed",
+    "body": "{% embed '${1:template}' %}\n\t$0\n{% endembed %}",
+    "description": "embed",
+    "scope": "text.html.twig"
+  },
+  "endautoescape": {
+    "prefix": "endautoescape",
+    "body": "{% endautoescape %}$0",
+    "description": "endautoescape",
+    "scope": "text.html.twig"
+  },
+  "endblock": {
+    "prefix": "endblock",
+    "body": "{% endblock %}$0",
+    "description": "endblock",
+    "scope": "text.html.twig"
+  },
+  "endembed": {
+    "prefix": "endembed",
+    "body": "{% endembed %}$0",
+    "description": "endembed",
+    "scope": "text.html.twig"
+  },
+  "endfilter": {
+    "prefix": "endfilter",
+    "body": "{% endfilter %}$0",
+    "description": "endfilter",
+    "scope": "text.html.twig"
+  },
+  "endfor": {
+    "prefix": "endfor",
+    "body": "{% endfor %}$0",
+    "description": "endfor",
+    "scope": "text.html.twig"
+  },
+  "endif": {
+    "prefix": "endif",
+    "body": "{% endif %}$0",
+    "description": "endif",
+    "scope": "text.html.twig"
+  },
+  "endmacro": {
+    "prefix": "endmacro",
+    "body": "{% endmacro %}$0",
+    "description": "endmacro",
+    "scope": "text.html.twig"
+  },
+  "endset": {
+    "prefix": "endset",
+    "body": "{% endset %}$0",
+    "description": "endset",
+    "scope": "text.html.twig"
+  },
+  "endspaceless": {
+    "prefix": "endspaceless",
+    "body": "{% endspaceless %}$0",
+    "description": "endspaceless",
+    "scope": "text.html.twig"
+  },
+  "endswitch": {
+    "prefix": "endswitch",
+    "body": "{% endswitch %}$0",
+    "description": "endswitch",
+    "scope": "text.html.twig"
+  },
+  "endverbatim": {
+    "prefix": "endverbatim",
+    "body": "{% endverbatim %}$0",
+    "description": "endverbatim",
+    "scope": "text.html.twig"
+  },
+  "extends": {
+    "prefix": "extends",
+    "body": "{% extends '${1:template}' %}$0",
+    "description": "extends",
+    "scope": "text.html.twig"
+  },
+  "fore": {
+    "prefix": "fore",
+    "body": "{% for ${1:item} in ${2:items} %}\n\t$3\n{% else %}\n\t$0\n{% endfor %}",
+    "description": "for ... else",
+    "scope": "text.html.twig"
+  },
+  "for": {
+    "prefix": "for",
+    "body": "{% for ${1:item} in ${2:items} %}\n\t$0\n{% endfor %}",
+    "description": "for",
+    "scope": "text.html.twig"
+  },
+  "from": {
+    "prefix": "from",
+    "body": "{% from '${1:template}' import '${2:macro}' %}$0",
+    "description": "from",
+    "scope": "text.html.twig"
+  },
+  "endbody": {
+    "prefix": "endbody",
+    "body": "{{ endBody() }}\n$0",
+    "description": "endBody",
+    "scope": "text.html.twig"
+  },
+  "if": {
+    "prefix": "if",
+    "body": "{% if ${1:condition} %}$2{% endif %}\n$0",
+    "description": "if",
+    "scope": "text.html.twig"
+  },
+  "ifb": {
+    "prefix": "ifb",
+    "body": "{% if ${1:condition} %}\n\t$0\n{% endif %}",
+    "description": "if (block)",
+    "scope": "text.html.twig"
+  },
+  "ife": {
+    "prefix": "ife",
+    "body": "{% if ${1:condition} %}\n\t$2\n{% else %}\n\t$0\n{% endif %}",
+    "description": "if ... else",
+    "scope": "text.html.twig"
+  },
+  "if1": {
+    "prefix": "if",
+    "body": "{% if ${1:condition} %}$0{% endif %}",
+    "description": "if",
+    "scope": "text.html.twig"
+  },
+  "import": {
+    "prefix": "import",
+    "body": "{% import '${1:template}' as ${2:name} %}$0",
+    "description": "import",
+    "scope": "text.html.twig"
+  },
+  "importself": {
+    "prefix": "importself",
+    "body": "{% import _self as ${1:name} %}$0",
+    "description": "importself",
+    "scope": "text.html.twig"
+  },
+  "inckv": {
+    "prefix": "inckv",
+    "body": "{% include '${1:template}' with {\n\t${2:key}: ${3:'${4:value}'}\n} %}\n$0",
+    "description": "include w/ key/value",
+    "scope": "text.html.twig"
+  },
+  "include": {
+    "prefix": "include",
+    "body": "{% include '${1:template}' %}$0",
+    "description": "include",
+    "scope": "text.html.twig"
+  },
+  "inc": {
+    "prefix": "inc",
+    "body": "{% include '${1:template}' %}$0",
+    "description": "inc",
+    "scope": "text.html.twig"
+  },
+  "incp": {
+    "prefix": "incp",
+    "body": "{% include '${1:template}'${2: with ${3:params} }%}$0",
+    "description": "include w/ params",
+    "scope": "text.html.twig"
+  },
+  "macro": {
+    "prefix": "macro",
+    "body": "{% macro ${1:name}(${2:params}) %}\n\t$0\n{% endmacro %}",
+    "description": "macro",
+    "scope": "text.html.twig"
+  },
+  "max": {
+    "prefix": "max",
+    "body": "max(${1:$2, $3})$0",
+    "description": "max",
+    "scope": "text.html.twig"
+  },
+  "min": {
+    "prefix": "min",
+    "body": "min(${1:$2, $3})$0",
+    "description": "min",
+    "scope": "text.html.twig"
+  },
+  "round": {
+    "prefix": "round",
+    "body": "{{ $1 | round(1, 'floor') }}$0",
+    "description": "round",
+    "scope": "text.html.twig"
+  },
+  "setb": {
+    "prefix": "setb",
+    "body": "{% set ${1:var} %}\n\t$0\n{% endset %}",
+    "description": "set (block)",
+    "scope": "text.html.twig"
+  },
+  "set": {
+    "prefix": "set",
+    "body": "{% set ${1:var} = ${2:value} %}$0",
+    "description": "set",
+    "scope": "text.html.twig"
+  },
+  "shuffle": {
+    "prefix": "shuffle",
+    "body": "shuffle($1)$0",
+    "description": "shuffle",
+    "scope": "text.html.twig"
+  },
+  "random": {
+    "prefix": "random",
+    "body": "random($1)$0",
+    "description": "random",
+    "scope": "text.html.twig"
+  },
+  "spaceless": {
+    "prefix": "spaceless",
+    "body": "{% spaceless %}\n\t$0\n{% endspaceless %}",
+    "description": "spaceless",
+    "scope": "text.html.twig"
+  },
+  "switch": {
+    "prefix": "switch",
+    "body": "{% switch ${1:variable} %}\n\n\t{% case '${2:value1}' %}\n\t\n\n\t{% case '${3:value2}' %}\n\t\n\n\t{% default %}\n\t\n\n{% endswitch %}\n$0",
+    "description": "switch",
+    "scope": "text.html.twig"
+  },
+  "use": {
+    "prefix": "use",
+    "body": "{% use '${1:template}' %}$0",
+    "description": "use",
+    "scope": "text.html.twig"
+  },
+  "verbatim": {
+    "prefix": "verbatim",
+    "body": "{% verbatim %}\n\t$0\n{% endverbatim %}",
+    "description": "verbatim",
+    "scope": "text.html.twig"
+  }
+}

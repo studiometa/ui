@@ -35,10 +35,17 @@
   </head>
   <body class="fixed inset-0 group dark:bg-zinc-900 dark:text-white">
     <main class="fixed top-0 left-0 w-full h-full">
-      <div class="z-10 absolute top-0 flex items-center gap-8 w-full p-4 leading-4 bg-zinc-100 dark:bg-zinc-800 text-sm dark:text-zinc-100 dark:border-b-zinc-700">
-        <span class="font-bold">UI Playground</span>
-
-        <div class="flex items-center gap-4">
+      <div class="z-10 absolute top-0 flex items-center gap-4 sm:gap-8 w-full h-12 p-4  leading-4 bg-zinc-100 dark:bg-zinc-800 text-sm dark:text-zinc-100 dark:border-b-zinc-700">
+        <div class="flex items-center gap-2 sm:gap-4">
+          <span class="font-bold">
+            UI
+            <span class="hidden md:inline">Playground</span>
+          </span>
+          <span class="py-1 px-2 rounded bg-zinc-200 dark:bg-zinc-900 dark:bg-opacity-50">
+            <span class="text-xs">v{{ version }}</span>
+          </span>
+        </div>
+        <div class="flex items-center gap-3 sm:gap-4">
           {% include '@components/Checkbox.twig' with {
             label: 'HTML',
             attr: {
@@ -65,8 +72,8 @@
           } %}
         </div>
 
-        <div data-component="LayoutSwitcher" class="flex items-center gap-4">
-          Layout
+        <div data-component="LayoutSwitcher" class="flex items-center gap-2 sm:gap-4">
+          <div class="hidden md:block">Layout</div>
           {% include '@components/RadioGroup.twig' with {
             items: [
               {
@@ -97,8 +104,8 @@
           } %}
         </div>
 
-        <div data-component="ThemeSwitcher" class="flex gap-4">
-          Theme
+        <div data-component="ThemeSwitcher" class="flex gap-2 sm:gap-4">
+          <div class="hidden md:block">Theme</div>
           {% include '@components/RadioGroup.twig' with {
             items: [
               {
