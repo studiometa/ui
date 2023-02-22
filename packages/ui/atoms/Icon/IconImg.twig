@@ -1,0 +1,57 @@
+{#
+/**
+ * @file
+ * Icon Image component
+ * Use `<img>` instead of injecting the SVG file.
+ *
+ * @param string $name The file name of the icon.
+ * @param array $attr Custom attributes.
+ * @param array $css_vars Custom CSS variables to pass to the SVG.
+ * @param string $current_color Custom color for the `currentColor` CSS variable in the SVG.
+ */
+#}
+{%- set svg -%}
+  {{ source('@svg/%s.svg'|format(name), ignore_missing = true) }}
+{%- endset -%}
+
+{% if current_color is defined or css_vars is defined %}
+  {%- set style -%}
+    <style>
+      :root {
+        {% if current_color is defined %}
+          color: {{ current_color }};
+        {% endif %}
+        {% if css_vars is defined %}
+          {% for var, value in css_vars %}
+            --{{ var }}: {{ value }};
+          {% endfor %}
+        {% endif %}
+      }
+    </style>
+  {%- endset -%}
+
+  {% if not 'xmlns="http://www.w3.org/2000/svg"' in svg %}
+    {% set svg = svg|replace({ '<svg': '<svg %s'|format('xmlns="http://www.w3.org/2000/svg"') }) %}
+  {% endif %}
+
+  {% set svg = svg|replace({ '</svg>': '%s</svg>'|format(style) }) %}
+{% endif %}
+
+{% set attributes = merge_html_attributes(
+  attr ?? null,
+  {
+    loading: 'lazy',
+    width: '',
+    height: '',
+    alt: '',
+  },
+  {
+    src: 'data:image/svg+xml,%s'|format(svg|url_encode),
+    class: [
+      'icon-img',
+      'icon-img--%s'|format(name),
+    ],
+  }
+) %}
+
+<img {{ html_attributes(attributes) }}>
