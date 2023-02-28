@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix the adding of the path in FigureTwicpics ([#120](https://github.com/studiometa/ui/pull/120), [0821fee](https://github.com/studiometa/ui/commit/0821fee))
+
 ## [v0.2.28](https://github.com/studiometa/ui/compare/0.2.27..0.2.28) (2023-02-08)
 
 ### Added
