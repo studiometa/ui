@@ -30,11 +30,11 @@
     </style>
   {%- endset -%}
 
-  {% if not 'xmlns="http://www.w3.org/2000/svg"' in svg %}
-    {% set svg = svg|replace({ '<svg': '<svg %s'|format('xmlns="http://www.w3.org/2000/svg"') }) %}
-  {% endif %}
-
   {% set svg = svg|replace({ '</svg>': '%s</svg>'|format(style) }) %}
+{% endif %}
+
+{% if not 'xmlns="http://www.w3.org/2000/svg"' in svg %}
+  {% set svg = svg|replace({ '<svg': '<svg %s'|format('xmlns="http://www.w3.org/2000/svg"') }) %}
 {% endif %}
 
 {% set attributes = merge_html_attributes(
