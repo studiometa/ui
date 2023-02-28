@@ -1,5 +1,9 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { withoutLeadingSlash, withoutTrailingSlash } from '@studiometa/js-toolkit/utils';
+import {
+  withLeadingSlash,
+  withoutLeadingSlash,
+  withoutTrailingSlash,
+} from '@studiometa/js-toolkit/utils';
 import { Figure } from './Figure.js';
 
 export interface FigureTwicpicsProps extends BaseProps {
@@ -81,7 +85,7 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
     url.host = this.domain;
     url.port = '';
 
-    if (this.path) {
+    if (this.path && !url.pathname.startsWith(withLeadingSlash(this.path))) {
       url.pathname = `/${this.path}${url.pathname}`;
     }
 
