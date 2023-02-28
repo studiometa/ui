@@ -12,12 +12,13 @@
 {% set attributes = merge_html_attributes(
   attr ?? null,
   {
-    class: classes|default('inline-block'),
+    class: 'inline-block',
   },
   {
     class: [
       'icon',
       'icon--%s'|format(name),
+      classes
     ],
   }
 ) %}
