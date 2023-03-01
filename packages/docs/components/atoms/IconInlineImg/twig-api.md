@@ -1,5 +1,5 @@
 ---
-title: IconImg Twig API
+title: IconInlineImg Twig API
 ---
 
 # Twig API
