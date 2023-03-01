@@ -8,8 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Add IconImg ([#118](https://github.com/studiometa/ui/pull/118), [68c4e5b](https://github.com/studiometa/ui/commit/68c4e5b))
-- Add the `attr` logic to Icon ([#118](https://github.com/studiometa/ui/pull/118), [920d258](https://github.com/studiometa/ui/commit/920d258))
+- Add IconInlineImg ([#118](https://github.com/studiometa/ui/pull/118))
+- Add IconInline ([#118](https://github.com/studiometa/ui/pull/118))
+
+### Deprecated
+
+- Icon atom ([#118](https://github.com/studiometa/ui/pull/118))
 
 ### Fixed
 
