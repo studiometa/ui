@@ -21,6 +21,30 @@ jobs:
     - name: Build the package
       run: npm run build
 
+  Docs-Build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 16
+    - name: Install modules
+      run: npm install
+    - name: Build the package
+      run: npm run docs:build
+
+  Playground-Build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 16
+    - name: Install modules
+      run: npm install
+    - name: Build the package
+      run: npm run play:build
+
   Code-Quality:
     runs-on: macos-latest
     steps:
