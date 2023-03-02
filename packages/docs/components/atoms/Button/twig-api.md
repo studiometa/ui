@@ -65,4 +65,4 @@ Customize the label content, defaults to the [`label` parameter](#label).
 
 ### `icon`
 
-Customize the icon content, defaults to the [`Icon` atom](/components/atoms/Icon/) with the [`icon` parameter](#icon) as its name.
+Customize the icon content, defaults to the [`IconInline` atom](/components/atoms/IconInline/) with the [`icon` parameter](#icon) as its name.
