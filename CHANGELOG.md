@@ -10,16 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Add IconInlineImg ([#118](https://github.com/studiometa/ui/pull/118))
-- Add IconInline ([#118](https://github.com/studiometa/ui/pull/118))
+- Add `IconInlineImg` template ([#118](https://github.com/studiometa/ui/pull/118))
+- Add `IconInline` template to replace `Icon` ([#118](https://github.com/studiometa/ui/pull/118))
 
-### Deprecated
+### Changed
 
-- Icon atom ([#118](https://github.com/studiometa/ui/pull/118))
+- **Icon:** deprecate the `Icon` atom, use `IconInline` instead ([#118](https://github.com/studiometa/ui/pull/118))
 
 ### Fixed
 
-- Fix the adding of the path in FigureTwicpics ([#120](https://github.com/studiometa/ui/pull/120), [0821fee](https://github.com/studiometa/ui/commit/0821fee))
+- **FigureTwicpics:** fix TwicPics path being added twice ([#120](https://github.com/studiometa/ui/pull/120))
 
 ## [v0.2.28](https://github.com/studiometa/ui/compare/0.2.27..0.2.28) (2023-02-08)
 
