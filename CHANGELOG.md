@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Add IconInlineImg ([#118](https://github.com/studiometa/ui/pull/118))
+- Add IconInline ([#118](https://github.com/studiometa/ui/pull/118))
+
+### Deprecated
+
+- Icon atom ([#118](https://github.com/studiometa/ui/pull/118))
+
 ### Fixed
 
 - Fix the adding of the path in FigureTwicpics ([#120](https://github.com/studiometa/ui/pull/120), [0821fee](https://github.com/studiometa/ui/commit/0821fee))

@@ -1,0 +1,26 @@
+{#
+/**
+ * @file
+ * Icon component
+ *
+ * @param string $name The file name of the icon.
+ * @param array $attr Custom attributes.
+ */
+#}
+
+{% set attributes = merge_html_attributes(
+  attr ?? null,
+  {
+    class: 'inline-block',
+  },
+  {
+    class: [
+      'icon',
+      'icon--%s'|format(name)
+    ],
+  }
+) %}
+
+<span {{ html_attributes(attributes) }}>
+  {{ source('@svg/%s.svg'|format(name), ignore_missing = true) }}
+</span>
