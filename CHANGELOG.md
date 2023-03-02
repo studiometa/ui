@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.29](https://github.com/studiometa/ui/compare/0.2.28..0.2.29) (2023-03-02)
+
 ### Added
 
 - Add IconInlineImg ([#118](https://github.com/studiometa/ui/pull/118))
