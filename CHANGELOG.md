@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.30](https://github.com/studiometa/ui/compare/0.2.29..0.2.30) (2023-03-02)
+
+### Fixed
+
+- **Docs:** fix build and deployment ([1caef03](https://github.com/studiometa/ui/commit/1caef03))
+
 ## [v0.2.29](https://github.com/studiometa/ui/compare/0.2.28..0.2.29) (2023-03-02)
 
 ### Added
