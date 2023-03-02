@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.29](https://github.com/studiometa/ui/compare/0.2.28..0.2.29) (2023-03-02)
+
+### Added
+
+- Add `IconInlineImg` template ([#118](https://github.com/studiometa/ui/pull/118))
+- Add `IconInline` template to replace `Icon` ([#118](https://github.com/studiometa/ui/pull/118))
+
+### Changed
+
+- **Icon:** deprecate the `Icon` atom, use `IconInline` instead ([#118](https://github.com/studiometa/ui/pull/118))
+
+### Fixed
+
+- **FigureTwicpics:** fix TwicPics path being added twice ([#120](https://github.com/studiometa/ui/pull/120))
+
 ## [v0.2.28](https://github.com/studiometa/ui/compare/0.2.27..0.2.28) (2023-02-08)
 
 ### Added

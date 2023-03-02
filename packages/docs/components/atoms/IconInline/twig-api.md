@@ -1,5 +1,5 @@
 ---
-title: Icon Twig API
+title: Icon Inline Twig API
 ---
 
 # Twig API
@@ -12,8 +12,8 @@ title: Icon Twig API
 
 The filename of the icon, as found in the folder corresponding to the `@svg` alias.
 
-### `classes`
+### `attr`
 
-- Type: `string[]`
+- Type: `array[]`
 
-Additional classes to add to the root element.
+Additional attributes to add to the root element.

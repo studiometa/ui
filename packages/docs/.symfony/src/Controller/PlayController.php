@@ -50,6 +50,7 @@ final class PlayController extends AbstractController
             return Browsershot::url($original_uri)
                 ->noSandbox()
                 ->waitUntilNetworkIdle()
+                ->setDelay(5000)
                 ->windowSize(1200, 640)
                 ->setScreenshotType('jpeg', 80)
                 ->screenshot();
