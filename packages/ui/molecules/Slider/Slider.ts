@@ -64,6 +64,8 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
    */
   __currentIndex = 0;
 
+  __isDragging = false;
+
   /**
    * Get the current index.
    */
@@ -310,6 +312,8 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   onSliderDragStart() {
     this.__initialX = this.currentSliderItem ? this.currentSliderItem.x : 0;
     this.__distanceX = this.__initialX;
+
+    this.__isDragging = true;
   }
 
   /**
@@ -331,6 +335,11 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
    * Listen to the Draggable `drop` event and find the new active slide.
    */
   onSliderDragDrop(props: DragServiceProps) {
+    if (!this.__isDragging) {
+      return;
+    }
+    this.__isDragging = false;
+
     if (Math.abs(props.delta.y) > Math.abs(props.delta.x)) {
       return;
     }
