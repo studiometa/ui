@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.32](https://github.com/studiometa/ui/compare/0.2.31..0.2.32) (2023-04-26)
+
 ### Fixed
 
 - Fix playground build ([af997ab](https://github.com/studiometa/ui/commit/af997ab))
