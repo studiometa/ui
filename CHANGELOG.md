@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.32](https://github.com/studiometa/ui/compare/0.2.31..0.2.32) (2023-04-26)
+
+### Fixed
+
+- Fix playground build ([af997ab](https://github.com/studiometa/ui/commit/af997ab))
+
+### Changed
+
+- Update NPM dependencies ([7faf168](https://github.com/studiometa/ui/commit/7faf168))
+- Update playground NPM dependencies ([b8999c4](https://github.com/studiometa/ui/commit/b8999c4))
+- Add favicon to the playground ([a318af7](https://github.com/studiometa/ui/commit/a318af7))
+- Update all Composer dependencies ([#126](https://github.com/studiometa/ui/pull/126))
+
 ## [v0.2.31](https://github.com/studiometa/ui/compare/0.2.30..0.2.31) (2023-03-24)
 
 ### Fixed
