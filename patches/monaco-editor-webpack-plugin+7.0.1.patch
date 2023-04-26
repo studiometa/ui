@@ -1,0 +1,21 @@
+diff --git a/node_modules/monaco-editor-webpack-plugin/out/loaders/include.js b/node_modules/monaco-editor-webpack-plugin/out/loaders/include.js
+index c08bb4f..8bf6bf6 100644
+--- a/node_modules/monaco-editor-webpack-plugin/out/loaders/include.js
++++ b/node_modules/monaco-editor-webpack-plugin/out/loaders/include.js
+@@ -20,9 +20,13 @@ const pitch = function pitch(remainingRequest) {
+         ...(globals
+             ? Object.keys(globals).map((key) => `self[${JSON.stringify(key)}] = ${globals[key]};`)
+             : []),
+-        ...pre.map((include) => `require(${stringifyRequest(include)});`),
+-        `module.exports = require(${stringifyRequest(`!!${remainingRequest}`)});`,
+-        ...post.map((include) => `require(${stringifyRequest(include)});`)
++        ...pre.map((include) => `import ${stringifyRequest(include)};`),
++        `
++import * as monaco from ${stringifyRequest(`!!${remainingRequest}`)};
++export * from ${stringifyRequest(`!!${remainingRequest}`)};
++export default monaco;
++        `,
++        ...post.map((include) => `import ${stringifyRequest(include)};`),
+     ].join('\n');
+ };
+ exports.pitch = pitch;

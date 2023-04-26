@@ -23,14 +23,39 @@ function htmlWebpackScriptTypeModule() {
   };
 }
 
+/**
+ * Preset to load Monaco editor helpers: loader, plugin, etc.
+ * @returns {import('@studiometa/webpack-config/presets').Preset}
+ */
+function monaco() {
+  return {
+    name: 'monaco',
+    handler(config, { extendWebpack }) {
+      return extendWebpack(config, (webpackConfig) => {
+        // Make sure the monaco editor ESM files are treated as ESM
+        webpackConfig.module.rules.push({
+          test: /monaco-editor\/esm\/vs\/.*\.js$/,
+          type: 'javascript/esm',
+        });
+
+        webpackConfig.plugins.push(new MonacoWebpackPlugin());
+
+        // Use SWC to minify JS output, esbuild is buggy with the monaco editor
+        webpackConfig.optimization.minimizer = webpackConfig.optimization.minimizer.map(
+          (minimizer) => {
+            if (minimizer.constructor.name === 'TerserPlugin') {
+              minimizer.minimizer = minimizer.constructor.swcMinify;
+            }
+            return minimizer;
+          },
+        );
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  presets: [prototyping({ ts: true }), htmlWebpackScriptTypeModule()],
-  webpack(config) {
-    config.output.module = true;
-    config.devtool = false;
-    config.optimization.minimize = false;
-    config.plugins.push(new MonacoWebpackPlugin());
-  },
+  presets: [prototyping({ ts: true }), htmlWebpackScriptTypeModule(), monaco()],
   webpackProd(config) {
     config.output.publicPath = '/play-assets/';
     config.output.path = path.resolve('../docs/.symfony/public/play-assets/');
