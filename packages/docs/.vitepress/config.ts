@@ -5,7 +5,7 @@ import { withLeadingSlash, withTrailingSlash } from '@studiometa/js-toolkit/util
 import glob from 'fast-glob';
 
 const pkg = JSON.parse(
-  readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' })
+  readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' }),
 );
 
 export default defineConfig({
@@ -25,6 +25,9 @@ export default defineConfig({
     editLinks: true,
     editLinkText: 'Edit this page on GitHub',
     sidebarDepth: 4,
+    search: {
+      provider: 'local',
+    },
     footer: {
       message: 'MIT Licensed',
       copyright: 'Copyright © 2020–present Studio Meta',
@@ -68,7 +71,6 @@ function getGuideSidebar() {
       link: '/migration-guides/',
       items: generateSidebarLinksFromPath('migration-guides/*/index.md', {
         extractTitle: true,
-        collapsible: false,
       }),
     },
   ];
@@ -79,45 +81,59 @@ function getComponentsSidebar() {
     {
       text: 'Primitives',
       link: '/components/primitives/',
-      items: generateSidebarLinksFromPath('components/primitives/*/index.md', { extractTitle: true }),
-      collapsible: true,
+      items: generateSidebarLinksFromPath('components/primitives/*/index.md', {
+        extractTitle: true,
+        collapsed: true,
+      }),
+      collapsed: false,
     },
     {
       text: 'Atoms',
       link: '/components/atoms/',
-      items: generateSidebarLinksFromPath('components/atoms/*/index.md', { extractTitle: true }),
-      collapsible: true,
+      items: generateSidebarLinksFromPath('components/atoms/*/index.md', {
+        extractTitle: true,
+        collapsed: true,
+      }),
+      collapsed: false,
     },
     {
       text: 'Molecules',
       link: '/components/molecules/',
-      items: generateSidebarLinksFromPath('components/molecules/*/index.md', { extractTitle: true }),
-      collapsible: true,
+      items: generateSidebarLinksFromPath('components/molecules/*/index.md', {
+        extractTitle: true,
+        collapsed: true,
+      }),
+      collapsed: false,
     },
     {
       text: 'Organisms',
       link: '/components/organisms/',
-      items: generateSidebarLinksFromPath('components/organisms/*/index.md', { extractTitle: true }),
-      collapsible: true,
+      items: generateSidebarLinksFromPath('components/organisms/*/index.md', {
+        extractTitle: true,
+        collapsed: true,
+      }),
+      collapsed: false,
     },
   ];
 }
 
 function generateSidebarLinksFromPath(
   globs: string | string[],
-  { extractTitle = false, collapsible = false, collapsed = false } = {}
+  {
+    extractTitle = false,
+    collapsed = undefined,
+  }: { extractTitle?: boolean; collapsed?: boolean } = {},
 ) {
   return glob.sync(globs).map((entry) => ({
     text: extractTitle ? getEntryTitle(entry) : basename(dirname(entry)),
     link: withLeadingSlash(entry.replace(/\/index\.md$/, '/').replace(/\.md$/, '.html')),
     items: entry.endsWith('/index.md')
       ? [
-        ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*[!index]*.md'), {
-          extractTitle: true,
-        }),
-      ]
+          ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*[!index]*.md'), {
+            extractTitle: true,
+          }),
+        ]
       : [],
-    collapsible,
     collapsed,
   }));
 }
@@ -126,5 +142,5 @@ function getEntryTitle(entry) {
   const content = readFileSync(entry, { encoding: 'utf-8' });
   const [title] = content.match(/^#\s+.*$/m) ?? [];
 
-  return title ? title.replace(/^#\s?/, '').replace(/(<([^>]+)>)/ig, '') : basename(dirname(entry));
+  return title ? title.replace(/^#\s?/, '').replace(/(<([^>]+)>)/gi, '') : basename(dirname(entry));
 }
