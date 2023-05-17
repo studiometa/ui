@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.33](https://github.com/studiometa/ui/compare/0.2.32..0.2.33) (2023-05-17)
+
 ### Fixed
 
 - Always use https for TwicPics URLs ([#130](https://github.com/studiometa/ui/pull/130))
