@@ -1,15 +1,13 @@
 <script setup>
   import { watch } from 'vue';
   import { useData } from 'vitepress';
-  import Search from './Search.vue';
-  import App from './App.vue';
+  import Theme from 'vitepress/theme';
 
+  const { Layout } = Theme;
   const { frontmatter } = useData();
 </script>
 
 <template>
   <Content v-if="frontmatter.layout === 'none'" />
-  <Search v-else>
-    <App />
-  </Search>
+  <Layout v-else />
 </template>

@@ -1,3 +1,4 @@
+import './custom.scss';
 import Badge from './components/Badge.vue';
 import Badges from './components/Badges.vue';
 import Layout from './components/Layout.vue';
@@ -9,7 +10,6 @@ import Stories from './components/Stories.vue';
 import Story from './components/Story.vue';
 import TableOfContent from './components/TableOfContent.vue';
 import Tabs from './components/Tabs.vue';
-import './custom.scss';
 
 export default {
   Layout,

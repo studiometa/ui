@@ -9,30 +9,21 @@ title: Button examples
 <PreviewIframe src="./stories/primary/story.html" />
 
 :::details Code
-
-<SimpleTabs :items="['app.twig']">
-  <template #content-1>
+:::code-group
 
 <<< ./components/atoms/Button/stories/primary/app.twig
 
-  </template>
-</SimpleTabs>
-
 :::
+
 
 ## Primary rounded
 
 <PreviewIframe src="./stories/primary-rounded/story.html" />
 
 :::details Code
-
-<SimpleTabs :items="['app.twig']">
-  <template #content-1>
+:::code-group
 
 <<< ./components/atoms/Button/stories/primary-rounded/app.twig
-
-  </template>
-</SimpleTabs>
 
 :::
 
@@ -41,14 +32,9 @@ title: Button examples
 <PreviewIframe src="./stories/secondary/story.html" />
 
 :::details Code
-
-<SimpleTabs :items="['app.twig']">
-  <template #content-1>
+:::code-group
 
 <<< ./components/atoms/Button/stories/secondary/app.twig
-
-  </template>
-</SimpleTabs>
 
 :::
 
@@ -57,13 +43,8 @@ title: Button examples
 <PreviewIframe src="./stories/secondary-rounded/story.html" />
 
 :::details Code
-
-<SimpleTabs :items="['app.twig']">
-  <template #content-1>
+:::code-group
 
 <<< ./components/atoms/Button/stories/secondary-rounded/app.twig
-
-  </template>
-</SimpleTabs>
 
 :::

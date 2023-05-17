@@ -51,7 +51,6 @@ const config = defineConfig({
   resolve: {
     alias: {
       './VPNavBarTitle.vue': resolve('.vitepress/theme/components/NavBarTitle.vue'),
-      './VPNavBarSearch.vue': resolve('.vitepress/theme/components/SearchBtn.vue'),
       './VPSidebarLink.vue': resolve('.vitepress/theme/components/SidebarLink.vue'),
     },
   },
