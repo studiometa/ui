@@ -17,7 +17,8 @@
       <template v-else-if="theme.siteTitle === undefined">{{ site.title }}</template>
       <slot name="nav-bar-title-after" />
     </a>
-    <Badge class="ml-4">v{{ theme.version }}</Badge>
+    &nbsp;&nbsp;
+    <Badge>v{{ theme.version }}</Badge>
   </div>
 </template>
 

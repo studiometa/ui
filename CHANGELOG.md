@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.33](https://github.com/studiometa/ui/compare/0.2.32..0.2.33) (2023-05-17)
+
+### Fixed
+
+- Always use https for TwicPics URLs ([#130](https://github.com/studiometa/ui/pull/130))
+
+### Changed
+
+- Update NPM dependencies ([#117](https://github.com/studiometa/ui/pull/117))
+- Update Composer dependencies ([#129](https://github.com/studiometa/ui/pull/129))
+
 ## [v0.2.32](https://github.com/studiometa/ui/compare/0.2.31..0.2.32) (2023-04-26)
 
 ### Fixed
