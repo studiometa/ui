@@ -12,6 +12,17 @@ export interface FigureProps extends BaseProps {
 }
 
 /**
+ * Load the given image.
+ */
+export function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.addEventListener('load', () => resolve(img));
+    img.src = src;
+  });
+}
+
+/**
  * Figure class.
  */
 export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(
@@ -65,7 +76,7 @@ export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView
   /**
    * Load on mount.
    */
-  mounted() {
+  async mounted() {
     const { img } = this.$refs;
 
     if (!img) {
@@ -79,18 +90,10 @@ export class Figure<T extends BaseProps = BaseProps> extends withMountWhenInView
     const src = this.original;
 
     if (this.$options.lazy && src && src !== this.src) {
-      let tempImg = new Image();
-      tempImg.addEventListener(
-        'load',
-        async () => {
-          this.src = src;
-          tempImg = null;
-          this.enter();
-          this.$emit('load');
-        },
-        { once: true },
-      );
-      tempImg.src = src;
+      await loadImage(src);
+      this.src = src;
+      this.enter();
+      this.$emit('load');
     }
   }
 
