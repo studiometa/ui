@@ -6,20 +6,24 @@
     lazy: false,
     twic_domain: 'studiometa.twic.pics',
     twic_path: 'ui',
-    twic_transform: { focus: 'auto', crop: '300x300', placeholder: 'auto' },
+    twic_transform: { focus: 'auto', crop: '300x300' },
     twic_placeholder: 'maincolor'
   } %}
   {% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
     src: '/-/image-2.jpg',
     width: '500',
     height: '500',
+    twic_domain: 'studiometa.twic.pics',
+    twic_path: 'ui',
     twic_placeholder: 'meancolor'
   } %}
   {% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
     src: '/-/image-3.jpg',
     width: '500',
     height: '500',
-    twic_transform: { focus: 'auto', crop: '300x300', placeholder: 'auto' },
+    twic_domain: 'studiometa.twic.pics',
+    twic_path: 'ui',
+    twic_transform: { focus: 'auto', crop: '300x300' },
     twic_placeholder: 'preview'
   } %}
 </div>
