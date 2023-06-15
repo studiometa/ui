@@ -4,7 +4,7 @@ import {
   withoutLeadingSlash,
   withoutTrailingSlash,
 } from '@studiometa/js-toolkit/utils';
-import { Figure } from './Figure.js';
+import { Figure, loadImage } from './Figure.js';
 
 export interface FigureTwicpicsProps extends BaseProps {
   $options: {
@@ -107,8 +107,9 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
   /**
    * Reassign the source from the original on resize.
    */
-  resized() {
-    this.src = this.original;
+  async resized() {
+    const { src } = await loadImage(this.original);
+    this.src = src;
   }
 
   /**
