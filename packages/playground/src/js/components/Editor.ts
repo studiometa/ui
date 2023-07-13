@@ -43,7 +43,7 @@ export default class Editor extends Base<EditorProps> {
     const [{ addTwigAutocompletion }, { addJsAutocompletion }, monaco] = await Promise.all([
       import('../utils/twig/index.js'),
       import('../utils/js/index.js'),
-      import('monaco-editor/esm/vs/editor/editor.api.js'),
+      import('monaco-editor'),
     ]);
 
     this.editor = monaco.editor.create(this.$el, {

@@ -39,16 +39,6 @@ function monaco() {
         });
 
         webpackConfig.plugins.push(new MonacoWebpackPlugin());
-
-        // Use SWC to minify JS output, esbuild is buggy with the monaco editor
-        webpackConfig.optimization.minimizer = webpackConfig.optimization.minimizer.map(
-          (minimizer) => {
-            if (minimizer.constructor.name === 'TerserPlugin') {
-              minimizer.minimizer = minimizer.constructor.swcMinify;
-            }
-            return minimizer;
-          },
-        );
       });
     },
   };
@@ -57,6 +47,7 @@ function monaco() {
 export default defineConfig({
   presets: [prototyping({ ts: true }), htmlWebpackScriptTypeModule(), monaco()],
   webpackProd(config) {
+    config.output.module = true;
     config.output.publicPath = '/play-assets/';
     config.output.path = path.resolve('../docs/.symfony/public/play-assets/');
   },
