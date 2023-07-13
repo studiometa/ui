@@ -2,6 +2,7 @@ import { Base } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { debounce, domScheduler } from '@studiometa/js-toolkit/utils';
 import type { editor } from 'monaco-editor/esm/vs/editor/editor.api.js';
+import * as monaco from 'monaco-editor';
 import { emmetHTML, emmetCSS } from 'emmet-monaco-es';
 import { themeIsDark, watchTheme } from '../store/index.js';
 
@@ -40,10 +41,9 @@ export default class Editor extends Base<EditorProps> {
   }
 
   async mounted() {
-    const [{ addTwigAutocompletion }, { addJsAutocompletion }, monaco] = await Promise.all([
+    const [{ addTwigAutocompletion }, { addJsAutocompletion }] = await Promise.all([
       import('../utils/twig/index.js'),
       import('../utils/js/index.js'),
-      import('monaco-editor/esm/vs/editor/editor.api.js'),
     ]);
 
     this.editor = monaco.editor.create(this.$el, {
