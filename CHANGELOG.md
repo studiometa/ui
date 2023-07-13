@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **Figure**: improve Figure image loading ([#133](https://github.com/studiometa/ui/pull/133), [59df52f](https://github.com/studiometa/ui/commit/59df52f))
+- **FigureTwicpics**: improve FigureTwicpics image swap on resize ([#133](https://github.com/studiometa/ui/pull/133), [9eae6b0](https://github.com/studiometa/ui/commit/9eae6b0))
+
 ## [v0.2.33](https://github.com/studiometa/ui/compare/0.2.32..0.2.33) (2023-05-17)
 
 ### Fixed
