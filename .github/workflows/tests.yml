@@ -92,3 +92,4 @@ jobs:
           build_script: npm run build-for-export-size
           paths: dist
           bundler: esbuild
+          node-version: '16'

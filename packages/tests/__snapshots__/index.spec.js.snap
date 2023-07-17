@@ -46,6 +46,7 @@ exports[`components exports 1`] = `
   "Tabs",
   "Transition",
   "animationScrollWithEase",
+  "loadImage",
   "withTransition",
 ]
 `;
