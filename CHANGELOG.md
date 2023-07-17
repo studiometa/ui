@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.34](https://github.com/studiometa/ui/compare/0.2.33..0.2.34) (2023-07-17)
+
 ### Changed
 
 - **Figure**: improve Figure image loading ([#133](https://github.com/studiometa/ui/pull/133), [59df52f](https://github.com/studiometa/ui/commit/59df52f))
