@@ -15,7 +15,7 @@ jobs:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
-        node-version: 16
+        node-version: 18
     - name: Install modules
       run: npm install
     - name: Build the package
@@ -27,7 +27,7 @@ jobs:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
-        node-version: 16
+        node-version: 18
     - name: Install modules
       run: npm install
     - name: Build the package
@@ -39,7 +39,7 @@ jobs:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
-        node-version: 16
+        node-version: 18
     - name: Install modules
       run: npm install
     - name: Build the package
@@ -51,7 +51,7 @@ jobs:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
-        node-version: 16
+        node-version: 18
     - name: Install modules
       run: npm install
     - name: Run code quality tests
@@ -65,7 +65,7 @@ jobs:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
-        node-version: 16
+        node-version: 18
     - name: Install modules
       run: npm install
     - name: Run tests
@@ -92,4 +92,4 @@ jobs:
           build_script: npm run build-for-export-size
           paths: dist
           bundler: esbuild
-          node-version: '16'
+          node-version: '18'
