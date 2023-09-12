@@ -34,19 +34,22 @@ export default class Iframe extends Base<IframeProps> {
     // @ts-ignore
     this.window.__DEV__ = true;
 
-    const rendered = await twigRender(getHtml());
     this.doc.documentElement.innerHTML = `
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 <body>
-  ${rendered}
 </body>`;
     await this.initImportMaps();
 
     // Add Tailwind CDN
     await this.initTailwind();
+
+    const rendered = await twigRender(getHtml());
+    if (rendered) {
+      this.doc.body.innerHTML = rendered;
+    }
 
     // Uncomment to enable dark mode in the preview
     // this.doc.documentElement.classList.toggle('dark', themeIsDark());
