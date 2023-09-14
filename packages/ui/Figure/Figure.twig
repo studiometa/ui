@@ -11,6 +11,8 @@
  * @param string $alt
  * @param string $caption
  * @param boolean $lazy
+ * @param boolean $lazy_fallback
+ *   Define if a fallback image should be added for SEO purpose.
  * @param 'cover'|'contain'|'fill'|'none' $fit
  *   Define how the image will fit.
  * @param boolean $absolute
@@ -114,6 +116,14 @@
 <figure {{ html_attributes(attributes) }}>
   <div {{ html_attributes(inner_attributes) }}>
     <img {{ html_attributes(img_attributes) }} />
+    {% if lazy and (lazy_fallback ?? false) %}
+      {% set img_noscript_attributes = img_attributes|twig_toolkit_without('data_src', 'data_ref')|merge({
+        src: img_attributes.data_src,
+      }) %}
+      <noscript>
+        <img {{ html_attributes(img_noscript_attributes) }}>
+      </noscript>
+    {% endif %}
   </div>
   {% if caption is defined %}
     {% block caption %}
