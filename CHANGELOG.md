@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+- Update `IconImgInline` component to avoid accessibility issues ([#143](https://github.com/studiometa/ui/pull/143))
+
 ## [v0.2.35](https://github.com/studiometa/ui/compare/0.2.34..0.2.35) (2023-07-18)
 
 ### Fixed
