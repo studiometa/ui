@@ -31,23 +31,6 @@ RUN npm run play:build
 
 FROM webdevops/php-apache:8.1-alpine
 
-# Install Puppeteer
-RUN apk add --no-cache \
-  chromium \
-  nss \
-  freetype \
-  harfbuzz \
-  ca-certificates \
-  ttf-freefont \
-  nodejs \
-  npm
-
-# Tell Puppeteer to skip installing Chrome. We'll be using the installed package.
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-
-# Puppeteer v13.5.0 works with Chromium 100.
-RUN npm install -g puppeteer@latest
-
 WORKDIR /app
 COPY packages/docs/.symfony/ packages/docs/.symfony/
 COPY packages/ui/ packages/ui/
