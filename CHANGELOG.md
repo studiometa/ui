@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.36](https://github.com/studiometa/ui/compare/0.2.35..0.2.36) (2023-09-21)
+
+### Fixed
+
+- **IconImgInline:** fix accessibility issues ([#143](https://github.com/studiometa/ui/pull/143))
+
+### Removed
+
+- **Playgroud:** remove previews ([8afde76](https://github.com/studiometa/ui/commit/8afde76))
+
 ## [v0.2.35](https://github.com/studiometa/ui/compare/0.2.34..0.2.35) (2023-07-18)
 
 ### Fixed

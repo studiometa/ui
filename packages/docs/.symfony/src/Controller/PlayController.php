@@ -37,6 +37,8 @@ final class PlayController extends AbstractController
      */
     public function preview(Request $request, CacheInterface $cache): Response
     {
+        return new Response();
+
         $original_uri = $request->getUriForPath('/play/');
 
         if ($qs = $request->getQueryString()) {

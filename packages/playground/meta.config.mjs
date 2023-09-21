@@ -38,7 +38,11 @@ function monaco() {
           type: 'javascript/esm',
         });
 
-        webpackConfig.plugins.push(new MonacoWebpackPlugin());
+        webpackConfig.plugins.push(
+          new MonacoWebpackPlugin({
+            filename: '[name].worker.[contenthash].js',
+          }),
+        );
       });
     },
   };

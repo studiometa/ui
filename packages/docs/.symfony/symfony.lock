@@ -89,7 +89,7 @@
         "version": "v1.0.5"
     },
     "guzzlehttp/psr7": {
-        "version": "2.4.3"
+        "version": "2.4.5"
     },
     "intervention/image": {
         "version": "2.7.2"
@@ -107,13 +107,16 @@
         "version": "1.4.0"
     },
     "league/flysystem": {
-        "version": "1.1.10"
+        "version": "3.16.0"
+    },
+    "league/flysystem-local": {
+        "version": "3.16.0"
     },
     "league/glide": {
-        "version": "1.7.1"
+        "version": "2.3.0"
     },
     "league/mime-type-detection": {
-        "version": "1.11.0"
+        "version": "1.13.0"
     },
     "monolog/monolog": {
         "version": "2.3.5"
@@ -193,7 +196,7 @@
         "version": "1.0.0"
     },
     "psr/http-factory": {
-        "version": "1.0.1"
+        "version": "1.0.2"
     },
     "psr/http-message": {
         "version": "1.0.1"
@@ -268,19 +271,19 @@
         ]
     },
     "spatie/browsershot": {
-        "version": "3.40.2"
+        "version": "3.58.2"
     },
     "spatie/image": {
-        "version": "1.10.6"
+        "version": "2.2.7"
     },
     "spatie/image-optimizer": {
-        "version": "1.6.2"
+        "version": "1.7.1"
     },
     "spatie/macroable": {
         "version": "1.0.1"
     },
     "spatie/temporary-directory": {
-        "version": "1.3.0"
+        "version": "2.1.2"
     },
     "spatie/url": {
         "version": "1.3.5"
@@ -512,7 +515,7 @@
         "version": "v1.23.0"
     },
     "symfony/process": {
-        "version": "v5.3.7"
+        "version": "v5.3.14"
     },
     "symfony/property-access": {
         "version": "v5.3.8"
