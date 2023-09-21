@@ -29,7 +29,7 @@ COPY packages/ui/ ./packages/ui/
 COPY --from=install /app/node_modules ./node_modules
 RUN npm run play:build
 
-FROM webdevops/php-apache:7.4-alpine
+FROM webdevops/php-apache:8.1-alpine
 
 # Install Puppeteer
 RUN apk add --no-cache \
