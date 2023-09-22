@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.37](https://github.com/studiometa/ui/compare/0.2.36..0.2.37) (2023-09-22)
+
+### Fixed
+
+- Fix a package-lock conflict blocking GitHub Actions ([4a25aff](https://github.com/studiometa/ui/commit/4a25aff))
+
 ## [v0.2.36](https://github.com/studiometa/ui/compare/0.2.35..0.2.36) (2023-09-21)
 
 ### Fixed
