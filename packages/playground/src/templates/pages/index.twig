@@ -22,6 +22,14 @@
         document.documentElement.classList.add(`is-${localStorage.layout}`);
       } catch {}
     </script>
+    <script>
+      try {
+        if (!('header' in localStorage)) {
+          localStorage.header = 'visible';
+        }
+        document.documentElement.classList.toggle('has-header', localStorage.header === 'visible');
+      } catch {}
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="/-/logo.png">
@@ -34,7 +42,25 @@
   </head>
   <body class="fixed inset-0 group dark:bg-zinc-900 dark:text-white">
     <main class="fixed top-0 left-0 w-full h-full">
-      <div class="z-10 absolute top-0 flex items-center gap-4 sm:gap-8 w-full h-12 p-4  leading-4 bg-zinc-100 dark:bg-zinc-800 text-sm dark:text-zinc-100 dark:border-b-zinc-700">
+      <div data-component="HeaderSwitcher" class="z-50 fixed top-0 right-0 flex items-center h-12 p-4 leading-4">
+        <div class="flex rounded bg-zinc-100 dark:bg-zinc-800">
+          <button data-ref="hide" class="relative flex items-center justify-center w-8 py-1 px-2 rounded bg-blue-300 dark:bg-blue-800 bg-opacity-30 dark:bg-opacity-30 focus:ring ring-blue-500 dark:ring-blue-600">
+            &nbsp;
+            <span class="sr-only">Hide header</span>
+            <span class="absolute block w-3 h-0.5 bg-black dark:bg-white rotate-45"></span>
+            <span class="absolute block w-3 h-0.5 bg-black dark:bg-white -rotate-45"></span>
+          </button>
+          <button data-ref="show" class="relative hidden items-center justify-center w-8 py-1 px-2 rounded bg-blue-300 dark:bg-blue-800 bg-opacity-30 dark:bg-opacity-30 focus:ring ring-blue-500 dark:ring-blue-600">
+            &nbsp;
+            <span class="sr-only">Show header</span>
+            <span class="relative block w-2 h-2 -rotate-45">
+              <span class="absolute top-0 left-0 block w-2 h-0.5 bg-black dark:bg-white"></span>
+              <span class="absolute top-0 left-0 block w-0.5 h-2 bg-black dark:bg-white"></span>
+            </span>
+          </button>
+        </div>
+      </div>
+      <div class="z-10 absolute top-0 hidden has-header:flex items-center gap-2 sm:gap-4 w-full h-12 p-4 leading-4 bg-zinc-100 dark:bg-zinc-800 text-sm dark:text-zinc-100 dark:border-b-zinc-700">
         <div class="flex items-center gap-2 sm:gap-4">
           <span class="font-bold">
             UI
@@ -44,35 +70,39 @@
             <span class="text-xs">v{{ version }}</span>
           </span>
         </div>
-        <div class="flex items-center gap-3 sm:gap-4">
-          {% include '@components/Checkbox.twig' with {
-            label: 'HTML',
-            attr: {
-              for: 'html-editor',
-            },
-            input_attr: {
-              data_ref: 'htmlVisibility',
-              name: 'html-editor',
-              id: 'html-editor',
-              checked: true,
-            }
-          } %}
-          {% include '@components/Checkbox.twig' with {
-            label: 'JS',
-            attr: {
-              for: 'script-editor',
-            },
-            input_attr: {
-              data_ref: 'scriptVisibility',
-              name: 'script-editor',
-              id: 'script-editor',
-              checked: true,
-            }
+        <div class="flex items-center">
+          {% include '@components/CheckboxGroup.twig' with {
+            items: [
+              {
+                label: 'HTML',
+                attr: {
+                  for: 'html-editor',
+                },
+                input_attr: {
+                  data_ref: 'htmlVisibility',
+                  name: 'html-editor',
+                  id: 'html-editor',
+                  checked: true,
+                }
+              },
+              {
+                label: 'JS',
+                attr: {
+                  for: 'script-editor',
+                },
+                input_attr: {
+                  data_ref: 'scriptVisibility',
+                  name: 'script-editor',
+                  id: 'script-editor',
+                  checked: true,
+                }
+              },
+            ]
           } %}
         </div>
 
-        <div data-component="LayoutSwitcher" class="flex items-center gap-2 sm:gap-4">
-          <div class="hidden md:block">Layout</div>
+        <div data-component="LayoutSwitcher" class="flex items-center">
+          <div class="sr-only">Layout</div>
           {% set top_label %}
             <div class="relative inline-block w-3 h-3 border-2 border-black dark:border-white border-solid">
               <span class="sr-only">Top</span>
@@ -151,14 +181,25 @@
           } %}
         </div>
 
-        <div data-component="ThemeSwitcher" class="flex gap-2 sm:gap-4">
-          <div class="hidden md:block">Theme</div>
+        <div data-component="ThemeSwitcher" class="flex">
+          <div class="sr-only">Theme</div>
+          {% set light_label %}
+            <div class="relative w-3 h-3 border-2 border-black dark:border-white border-solid rounded-full">
+              <span class="sr-only">Light</span>
+            </div>
+          {% endset %}
+          {% set dark_label %}
+            <div class="relative w-3 h-3 border-2 border-black dark:border-white border-solid bg-black dark:bg-white bg-opacity-50 dark:bg-opacity-50 rounded-full">
+              <span class="sr-only">Dark</span>
+            </div>
+          {% endset %}
           {% include '@components/RadioGroup.twig' with {
             items: [
               {
-                label: 'Light',
+                label: light_label,
                 attr: {
                   for: 'theme-light',
+                  title: 'Enable light theme'
                 },
                 input_attr: {
                   data_ref: 'inputs[]',
@@ -168,9 +209,10 @@
                 }
               },
               {
-                label: 'Dark',
+                label: dark_label,
                 attr: {
                   for: 'theme-dark',
+                  title: 'Enable dark theme'
                 },
                 input_attr: {
                   data_ref: 'inputs[]',
@@ -187,7 +229,7 @@
         data-option-top="flex-col"
         data-option-right="flex-row-reverse"
         data-option-bottom="flex-col-reverse"
-        class="absolute top-12 left-0 right-0 bottom-0 flex flex-col">
+        class="absolute top-0 has-header:top-12 left-0 right-0 bottom-0 flex flex-col">
         <div data-component="LayoutReactive Editors"
           data-option-top="w-full"
           data-option-right="h-full"

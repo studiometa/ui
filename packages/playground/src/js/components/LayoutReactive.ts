@@ -56,8 +56,6 @@ export default class LayoutReactive extends Base<LayoutReactiveProps> {
       toAdd = toAdd.trim();
       toRemove = toRemove.trim();
 
-      console.log({ toAdd, toRemove });
-
       if (toRemove.length) {
         domScheduler.write(() => {
           this.$el.classList.remove(...toRemove.split(' '));

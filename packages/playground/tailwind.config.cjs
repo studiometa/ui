@@ -1,3 +1,5 @@
+const plugin = require('tailwindcss/plugin');
+
 module.exports = {
   darkMode: 'class',
   content: [
@@ -19,7 +21,12 @@ module.exports = {
       },
       animation: {
         loader: 'loader 1s ease-in-out infinite',
-      }
+      },
     },
   },
+  plugins: [
+    plugin(({ addVariant }) => {
+      addVariant('has-header', 'html.has-header &');
+    }),
+  ],
 };

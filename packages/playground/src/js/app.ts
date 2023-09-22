@@ -1,4 +1,4 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base, createApp } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { domScheduler } from '@studiometa/js-toolkit/utils';
 import Iframe from './components/Iframe.js';
@@ -6,6 +6,7 @@ import HtmlEditor from './components/HtmlEditor.js';
 import ScriptEditor from './components/ScriptEditor.js';
 import LayoutSwitcher from './components/LayoutSwitcher.js';
 import LayoutReactive from './components/LayoutReactive.js';
+import HeaderSwitcher from './components/HeaderSwitcher.js';
 import ThemeSwitcher from './components/ThemeSwitcher.js';
 import Resizable from './components/Resizable.js';
 import Editors from './components/Editors.js';
@@ -15,6 +16,7 @@ export interface AppProps extends BaseProps {
     Iframe: Iframe[];
     LayoutSwitcher: LayoutSwitcher[];
     LayoutReactive: LayoutReactive[];
+    HeaderSwitcher: HeaderSwitcher[];
     Resizable: Resizable[];
     Editors: Editors[];
     HtmlEditor: HtmlEditor[];
@@ -35,6 +37,7 @@ class App extends Base<AppProps> {
       ThemeSwitcher,
       LayoutSwitcher,
       LayoutReactive,
+      HeaderSwitcher,
       Resizable,
       Editors,
       HtmlEditor,
@@ -110,7 +113,8 @@ class App extends Base<AppProps> {
   }
 }
 
-const app = new App(document.body);
-app.$mount();
-
-export default app;
+export default createApp(App, {
+  features: {
+    asyncChildren: true,
+  }
+});
