@@ -7,10 +7,14 @@ import Resizable from './Resizable.js';
 
 export interface LayoutReactiveProps extends BaseProps {
   $options: {
-    horizontal: string;
-    vertical: string;
+    top: string;
+    right: string;
+    bottom: string;
+    left: string;
   };
 }
+
+const layouts = ['top', 'right', 'bottom', 'left'];
 
 /**
  * LayoutReactive class.
@@ -22,8 +26,10 @@ export default class LayoutReactive extends Base<LayoutReactiveProps> {
   static config: BaseConfig = {
     name: 'LayoutReactive',
     options: {
-      horizontal: String,
-      vertical: String,
+      top: String,
+      right: String,
+      bottom: String,
+      left: String,
     },
   };
 
@@ -36,9 +42,21 @@ export default class LayoutReactive extends Base<LayoutReactiveProps> {
 
   switch(value: Layouts) {
     domScheduler.read(() => {
-      const { horizontal, vertical } = this.$options;
-      const toAdd = value === 'horizontal' ? horizontal : vertical;
-      const toRemove = value === 'horizontal' ? vertical : horizontal;
+      let toAdd = '';
+      let toRemove = '';
+
+      layouts.forEach((layout) => {
+        if (value === layout) {
+          toAdd = this.$options[layout];
+        } else if (this.$options[layout]) {
+          toRemove += ` ${this.$options[layout]}`;
+        }
+      });
+
+      toAdd = toAdd.trim();
+      toRemove = toRemove.trim();
+
+      console.log({ toAdd, toRemove });
 
       if (toRemove.length) {
         domScheduler.write(() => {
