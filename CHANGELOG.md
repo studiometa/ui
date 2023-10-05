@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Add icon svg file of the new social network X ([8c9612a](https://github.com/studiometa/ui/commit/8c9612a))
+
 ## [v0.2.37](https://github.com/studiometa/ui/compare/0.2.36..0.2.37) (2023-09-22)
 
 ### Fixed
