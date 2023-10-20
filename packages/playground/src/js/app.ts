@@ -1,24 +1,32 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base, createApp } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { domScheduler } from '@studiometa/js-toolkit/utils';
-import Iframe from './components/Iframe.js';
-import HtmlEditor from './components/HtmlEditor.js';
-import ScriptEditor from './components/ScriptEditor.js';
-import LayoutSwitcher from './components/LayoutSwitcher.js';
+import { domScheduler, wait } from '@studiometa/js-toolkit/utils';
+import HeaderSwitcher from './components/HeaderSwitcher.js';
 import LayoutReactive from './components/LayoutReactive.js';
+import LayoutSwitcher from './components/LayoutSwitcher.js';
 import ThemeSwitcher from './components/ThemeSwitcher.js';
-import Resizable from './components/Resizable.js';
-import Editors from './components/Editors.js';
+import type Editors from './components/Editors.js';
+import type HtmlEditor from './components/HtmlEditor.js';
+import type Iframe from './components/Iframe.js';
+import type Resizable from './components/Resizable.js';
+import type ScriptEditor from './components/ScriptEditor.js';
+import { layoutUpdateDOM, themeUpdateDOM, headerUpdateDOM } from './store/index.js';
+import { urlStore } from './utils/storage/index.js';
+
+layoutUpdateDOM();
+themeUpdateDOM();
+headerUpdateDOM();
 
 export interface AppProps extends BaseProps {
   $children: {
-    Iframe: Iframe[];
     LayoutSwitcher: LayoutSwitcher[];
     LayoutReactive: LayoutReactive[];
-    Resizable: Resizable[];
-    Editors: Editors[];
-    HtmlEditor: HtmlEditor[];
-    ScriptEditor: ScriptEditor[];
+    HeaderSwitcher: HeaderSwitcher[];
+    Iframe: Promise<Iframe>[];
+    Resizable: Promise<Resizable>[];
+    Editors: Promise<Editors>[];
+    HtmlEditor: Promise<HtmlEditor>[];
+    ScriptEditor: Promise<ScriptEditor>[];
   };
   $refs: {
     htmlVisibility: HTMLInputElement;
@@ -31,14 +39,15 @@ class App extends Base<AppProps> {
     name: 'App',
     refs: ['htmlVisibility', 'scriptVisibility'],
     components: {
-      Iframe,
-      ThemeSwitcher,
-      LayoutSwitcher,
       LayoutReactive,
-      Resizable,
-      Editors,
-      HtmlEditor,
-      ScriptEditor,
+      LayoutSwitcher,
+      ThemeSwitcher,
+      HeaderSwitcher,
+      Iframe: async () => wait(100).then(() => import('./components/Iframe.js')),
+      Resizable: async () => wait(100).then(() => import('./components/Resizable.js')),
+      Editors: async () => wait(100).then(() => import('./components/Editors.js')),
+      HtmlEditor: async () => wait(100).then(() => import('./components/HtmlEditor.js')),
+      ScriptEditor: async () => wait(100).then(() => import('./components/ScriptEditor.js')),
     },
   };
 
@@ -59,58 +68,70 @@ class App extends Base<AppProps> {
   }
 
   async mounted() {
+    this.$refs.htmlVisibility.checked =
+      !urlStore.has('html-editor') || urlStore.get('html-editor') === 'true';
+    this.$refs.scriptVisibility.checked =
+      !urlStore.has('script-editor') || urlStore.get('script-editor') === 'true';
     const [htmlEditor, scriptEditor] = await Promise.all([this.htmlEditor, this.scriptEditor]);
     htmlEditor.toggle(this.$refs.htmlVisibility.checked);
     scriptEditor.toggle(this.$refs.scriptVisibility.checked);
     this.maybeToggleEditorsContainer();
   }
 
-  async onHtmlVisibilityInput() {
+  async onHtmlVisibilityInput({ target: { checked } }) {
+    console.log(checked);
     const editor = await this.htmlEditor;
-    editor.toggle(this.$refs.htmlVisibility.checked);
+    editor.toggle(checked);
+    urlStore.set('html-editor', checked);
     this.maybeToggleEditorsContainer();
   }
 
-  async onScriptVisibilityInput() {
+  async onScriptVisibilityInput({ target: { checked } }) {
     const editor = await this.scriptEditor;
     editor.toggle(this.$refs.scriptVisibility.checked);
+    urlStore.set('script-editor', checked);
     this.maybeToggleEditorsContainer();
   }
 
-  maybeToggleEditorsContainer() {
+  async maybeToggleEditorsContainer() {
+    const editors = await this.editors;
     if (!this.$refs.htmlVisibility.checked && !this.$refs.scriptVisibility.checked) {
-      this.editors.hide();
+      editors.hide();
     } else {
-      this.editors.show();
+      editors.show();
     }
   }
 
-  onHtmlEditorContentChange() {
-    this.iframe.updateHtml();
+  async onHtmlEditorContentChange() {
+    const iframe = await this.iframe;
+    iframe.updateHtml();
   }
 
-  onScriptEditorContentChange() {
-    this.iframe.updateScript();
+  async onScriptEditorContentChange() {
+    const iframe = await this.iframe;
+    iframe.updateScript();
   }
 
-  onResizableDragged(props) {
+  async onResizableDragged(props) {
+    const iframe = await this.iframe;
     if (props.mode === 'start') {
       domScheduler.write(() => {
         document.body.classList.add('select-none');
-        this.iframe.$el.parentElement.classList.add('pointer-events-none');
+        iframe.$el.parentElement.classList.add('pointer-events-none');
       });
     }
 
     if (props.mode === 'drop') {
       domScheduler.write(() => {
         document.body.classList.remove('select-none');
-        this.iframe.$el.parentElement.classList.remove('pointer-events-none');
+        iframe.$el.parentElement.classList.remove('pointer-events-none');
       });
     }
   }
 }
 
-const app = new App(document.body);
-app.$mount();
-
-export default app;
+export default createApp(App, {
+  features: {
+    asyncChildren: true,
+  },
+});

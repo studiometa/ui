@@ -1,7 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig, DragServiceProps } from '@studiometa/js-toolkit';
 import { domScheduler, clamp } from '@studiometa/js-toolkit/utils';
-import { layoutIsVertical } from '../store/index.js';
+import { layoutIsVertical, layoutIs } from '../store/index.js';
 import ResizableCursorY from './ResizableCursorY.js';
 import ResizableCursorX from './ResizableCursorX.js';
 import ResizableSync from './ResizableSync.js';
@@ -40,6 +40,11 @@ export default class Resizable extends Base<ResizableProps> {
   }
 
   resize(mode: DragServiceProps['mode'], axis: 'x' | 'y', distance: DragServiceProps['distance']) {
+    if (layoutIs('right') || layoutIs('bottom')) {
+      distance.x *= -1;
+      distance.y *= -1;
+    }
+
     if (mode === 'start') {
       domScheduler.read(() => {
         const size = axis === 'x' ? 'offsetWidth' : 'offsetHeight';

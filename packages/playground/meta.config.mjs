@@ -51,7 +51,10 @@ function monaco() {
 export default defineConfig({
   presets: [prototyping({ ts: true }), htmlWebpackScriptTypeModule(), monaco()],
   webpackProd(config) {
+    config.output.scriptType = 'module';
+    config.output.iife = false;
     config.output.module = true;
+    config.experiments.outputModule = true;
     config.output.publicPath = '/play-assets/';
     config.output.path = path.resolve('../docs/.symfony/public/play-assets/');
   },
