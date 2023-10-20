@@ -1,14 +1,15 @@
 import { domScheduler } from '@studiometa/js-toolkit/utils';
+import { localStore } from '../utils/storage/index.js';
 
 export type Layouts = 'top' | 'right' | 'bottom' | 'left';
 
 const callbacks = [];
 
 export function getLayout(): Layouts {
-  return (localStorage.getItem('layout') || 'top') as Layouts;
+  return (localStore.get('layout') || 'top') as Layouts;
 }
 
-export function layoutIs(position:Layouts) {
+export function layoutIs(position: Layouts) {
   return getLayout() === position;
 }
 
@@ -23,7 +24,7 @@ export function layoutIsHoritontal() {
 }
 
 export function setLayout(value: Layouts) {
-  localStorage.setItem('layout', value);
+  localStore.set('layout', value);
   domScheduler.write(() => {
     document.documentElement.classList.toggle('is-top', value === 'top');
     document.documentElement.classList.toggle('is-right', value === 'right');

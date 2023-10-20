@@ -1,11 +1,12 @@
 import { domScheduler } from '@studiometa/js-toolkit/utils';
+import { localStore } from '../utils/storage/index.js';
 
 export type Themes = 'dark' | 'light';
 
 const themeCallbacks = [];
 
 export function getTheme(): Themes {
-  return (localStorage.getItem('theme') || 'light') as Themes;
+  return (localStore.get('theme') || 'light') as Themes;
 }
 
 export function themeIsDark() {
@@ -17,7 +18,7 @@ export function themeIsLight() {
 }
 
 export function setTheme(value: Themes) {
-  localStorage.setItem('theme', value);
+  localStore.set('theme', value);
   domScheduler.write(() => {
     document.documentElement.classList.toggle('dark', value === 'dark');
   });
