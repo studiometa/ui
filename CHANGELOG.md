@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **Playground:** add ability to mask the header ([#149](https://github.com/studiometa/ui/pull/149))
+- **Playground:** add right and bottom layouts ([#149](https://github.com/studiometa/ui/pull/149))
+- **Playground:** add support for controlling editors display from URL ([#149](https://github.com/studiometa/ui/pull/149))
+
 ## [v0.2.37](https://github.com/studiometa/ui/compare/0.2.36..0.2.37) (2023-09-22)
 
 ### Fixed
@@ -20,7 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Removed
 
-- **Playgroud:** remove previews ([8afde76](https://github.com/studiometa/ui/commit/8afde76))
+- **Playground:** remove previews ([8afde76](https://github.com/studiometa/ui/commit/8afde76))
 
 ## [v0.2.35](https://github.com/studiometa/ui/compare/0.2.34..0.2.35) (2023-07-18)
 

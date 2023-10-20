@@ -1,31 +1,16 @@
 import { historyReplace } from '@studiometa/js-toolkit/utils';
-import { zip, unzip } from '../utils/zip.js';
+import { zipUrlStore as store } from '../utils/storage/index.js';
 
-const { location } = window;
-
-if (location.hash && !location.search) {
+// Legacy migration from hash to search
+if (window.location.hash && !window.location.search) {
   try {
-    const search = new URLSearchParams(location.hash.slice(1));
+    const search = new URLSearchParams(window.location.hash.slice(1));
     historyReplace({ search });
-    location.hash = '';
+    window.location.hash = '';
   } catch {
     // Silence is golden.
   }
 }
-
-const store = new URLSearchParams(location.search || location.hash.slice(1));
-
-const storeSetter = store.set.bind(store);
-const storeGetter = store.get.bind(store);
-
-store.get = (key): string | null => {
-  return store.has(key) ? unzip(storeGetter(key)) : null;
-};
-
-store.set = (key, value) => {
-  storeSetter(key, zip(value));
-  historyReplace({ search: store });
-};
 
 export function getScript() {
   return (
