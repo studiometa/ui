@@ -1,13 +1,16 @@
 import { domScheduler } from '@studiometa/js-toolkit/utils';
-import { localStore } from '../utils/storage/index.js';
+import { fallbackStore as store } from '../utils/storage/index.js';
 
 export type HeaderVisibility = 'visible' | 'hidden';
+
+const headerVisibilities = new Set(['visible', 'hidden']);
+const defaultHeaderVisibility = 'visible';
 
 const key = 'header';
 const callbacks: Array<(value: HeaderVisibility) => unknown> = [];
 
 export function getHeaderVisibility(): HeaderVisibility {
-  return (localStore.get(key) || 'visible') as HeaderVisibility;
+  return (store.get(key) || defaultHeaderVisibility) as HeaderVisibility;
 }
 
 export function headerIs(position: HeaderVisibility) {
@@ -22,11 +25,20 @@ export function headerIsHidden() {
   return headerIs('hidden');
 }
 
-export function setHeaderVisibility(value: HeaderVisibility) {
-  localStore.set(key, value);
+export function headerUpdateDOM(value: HeaderVisibility = getHeaderVisibility()) {
   domScheduler.write(() => {
     document.documentElement.classList.toggle('has-header', value === 'visible');
   });
+}
+
+export function setHeaderVisibility(value: HeaderVisibility = getHeaderVisibility()) {
+  if (!headerVisibilities.has(value)) {
+    console.warn(`The "${value}" header visibility is not valid.`);
+    // eslint-disable-next-line no-param-reassign
+    value = defaultHeaderVisibility;
+  }
+  store.set(key, value);
+  headerUpdateDOM(value);
   callbacks.forEach((callback) => callback(value));
 }
 

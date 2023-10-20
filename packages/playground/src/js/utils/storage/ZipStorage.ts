@@ -1,18 +1,23 @@
-import { historyReplace } from '@studiometa/js-toolkit/utils';
+import { zip, unzip } from '../zip.js';
 import { StorageInterface } from './StorageInterface.js';
 import { AbstractStorage } from './AbstractStorage.js';
 
-export class URLStorage
-  extends AbstractStorage<URLSearchParams>
+export class ZipStorage
+  extends AbstractStorage<StorageInterface<string>>
   implements StorageInterface<string>
 {
   get(key: string): string | null {
-    return this.store.get(key);
+    const value = this.store.get(key);
+
+    if (value) {
+      return unzip(value);
+    }
+
+    return value;
   }
 
   set(key: string, value: string): void {
-    this.store.set(key, value);
-    historyReplace({ search: this.store });
+    this.store.set(key, zip(value));
   }
 
   has(key: string): boolean {

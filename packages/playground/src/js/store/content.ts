@@ -1,5 +1,5 @@
 import { historyReplace } from '@studiometa/js-toolkit/utils';
-import { urlStore } from '../utils/storage/index.js';
+import { zipUrlStore as store } from '../utils/storage/index.js';
 
 // Legacy migration from hash to search
 if (window.location.hash && !window.location.search) {
@@ -14,7 +14,7 @@ if (window.location.hash && !window.location.search) {
 
 export function getScript() {
   return (
-    urlStore.get('script') ??
+    store.get('script') ??
     `import { Base, createApp } from '@studiometa/js-toolkit';
 // import {  } from '@studiometa/ui';
 
@@ -30,12 +30,12 @@ createApp(App)
 }
 
 export function setScript(value) {
-  urlStore.set('script', value);
+  store.set('script', value);
 }
 
 export function getHtml() {
   return (
-    urlStore.get('html') ??
+    store.get('html') ??
     `{% html_element 'div' with { class: 'p-10' } %}
   Hello world!
 {% end_html_element %}`
@@ -43,5 +43,5 @@ export function getHtml() {
 }
 
 export function setHtml(value) {
-  urlStore.set('html', value);
+  store.set('html', value);
 }

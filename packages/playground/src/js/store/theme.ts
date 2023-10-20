@@ -1,12 +1,15 @@
 import { domScheduler } from '@studiometa/js-toolkit/utils';
-import { localStore } from '../utils/storage/index.js';
+import { fallbackStore as store } from '../utils/storage/index.js';
 
 export type Themes = 'dark' | 'light';
+
+const themes = new Set<Themes>(['dark', 'light']);
+const defaultTheme = 'light';
 
 const themeCallbacks = [];
 
 export function getTheme(): Themes {
-  return (localStore.get('theme') || 'light') as Themes;
+  return (store.get('theme') || defaultTheme) as Themes;
 }
 
 export function themeIsDark() {
@@ -17,11 +20,21 @@ export function themeIsLight() {
   return getTheme() === 'light';
 }
 
-export function setTheme(value: Themes) {
-  localStore.set('theme', value);
+export function themeUpdateDOM(value: Themes = getTheme()) {
   domScheduler.write(() => {
     document.documentElement.classList.toggle('dark', value === 'dark');
   });
+}
+
+export function setTheme(value: Themes = getTheme()) {
+  if (!themes.has(value)) {
+    console.warn(`The "${value}" theme is not valid.`);
+    // eslint-disable-next-line no-param-reassign
+    value = defaultTheme;
+  }
+
+  store.set('theme', value);
+  themeUpdateDOM(value);
   themeCallbacks.forEach((callback) => callback(value));
 }
 

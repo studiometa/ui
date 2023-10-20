@@ -1,12 +1,15 @@
 import { domScheduler } from '@studiometa/js-toolkit/utils';
-import { localStore } from '../utils/storage/index.js';
+import { fallbackStore as store } from '../utils/storage/index.js';
 
 export type Layouts = 'top' | 'right' | 'bottom' | 'left';
+
+const layouts = new Set<Layouts>(['top', 'right', 'bottom', 'left']);
+const defaultLayout = 'top';
 
 const callbacks = [];
 
 export function getLayout(): Layouts {
-  return (localStore.get('layout') || 'top') as Layouts;
+  return (store.get('layout') || defaultLayout) as Layouts;
 }
 
 export function layoutIs(position: Layouts) {
@@ -23,14 +26,23 @@ export function layoutIsHoritontal() {
   return layout === 'top' || layout === 'bottom';
 }
 
-export function setLayout(value: Layouts) {
-  localStore.set('layout', value);
+export function layoutUpdateDOM(value: Layouts = getLayout()) {
   domScheduler.write(() => {
     document.documentElement.classList.toggle('is-top', value === 'top');
     document.documentElement.classList.toggle('is-right', value === 'right');
     document.documentElement.classList.toggle('is-bottom', value === 'bottom');
     document.documentElement.classList.toggle('is-left', value === 'left');
   });
+}
+
+export function setLayout(value: Layouts = getLayout()) {
+  if (!layouts.has(value)) {
+    console.log(`The "${value}" layout is not valid.`);
+    // eslint-disable-next-line no-param-reassign
+    value = defaultLayout;
+  }
+  store.set('layout', value);
+  layoutUpdateDOM(value);
   callbacks.forEach((callback) => callback(value));
 }
 

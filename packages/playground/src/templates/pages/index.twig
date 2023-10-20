@@ -1,35 +1,6 @@
 <!DOCTYPE html>
 <html class="fixed inset-0">
   <head>
-    <script>
-      try {
-        if (!('theme' in localStorage)) {
-          localStorage.theme = window.matchMedia('(prefers-color-scheme:dark)')
-            .matches
-            ? 'dark'
-            : 'light';
-        }
-        if (localStorage.theme === 'dark') {
-          document.documentElement.classList.add('dark');
-        }
-      } catch {}
-    </script>
-    <script>
-      try {
-        if (!('layout' in localStorage)) {
-          localStorage.layout = 'top';
-        }
-        document.documentElement.classList.add(`is-${localStorage.layout}`);
-      } catch {}
-    </script>
-    <script>
-      try {
-        if (!('header' in localStorage)) {
-          localStorage.header = 'visible';
-        }
-        document.documentElement.classList.toggle('has-header', localStorage.header === 'visible');
-      } catch {}
-    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="/-/logo.png">

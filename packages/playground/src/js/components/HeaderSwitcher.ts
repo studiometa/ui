@@ -1,7 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { domScheduler } from '@studiometa/js-toolkit/utils';
-import { setHeaderVisibility, getHeaderVisibility } from '../store/header.js';
+import { setHeaderVisibility, getHeaderVisibility, headerIsVisible } from '../store/header.js';
 
 export interface HeaderSwitcherProps extends BaseProps {
   $refs: {
@@ -23,11 +23,7 @@ export default class HeaderSwitcher extends Base<HeaderSwitcherProps> {
   };
 
   mounted() {
-    if (getHeaderVisibility() === 'visible') {
-      this.show();
-    } else {
-      this.hide();
-    }
+    this.update(headerIsVisible());
   }
 
   onShowClick() {
@@ -40,23 +36,22 @@ export default class HeaderSwitcher extends Base<HeaderSwitcherProps> {
 
   show() {
     setHeaderVisibility('visible');
-    domScheduler.write(() => {
-      this.$refs.show.classList.remove('flex');
-      this.$refs.show.classList.add('hidden');
-      this.$refs.hide.classList.remove('hidden');
-      this.$refs.hide.classList.add('flex');
-      this.$refs.hide.focus();
-    });
+    this.update(headerIsVisible());
+    this.$refs.hide.focus();
   }
 
   hide() {
     setHeaderVisibility('hidden');
+    this.update(headerIsVisible());
+    this.$refs.show.focus();
+  }
+
+  update(isVisible) {
     domScheduler.write(() => {
-      this.$refs.hide.classList.remove('flex');
-      this.$refs.hide.classList.add('hidden');
-      this.$refs.show.classList.remove('hidden');
-      this.$refs.show.classList.add('flex');
-      this.$refs.show.focus();
+      this.$refs.hide.classList.toggle('flex', isVisible);
+      this.$refs.show.classList.toggle('flex', !isVisible);
+      this.$refs.hide.classList.toggle('hidden', !isVisible);
+      this.$refs.show.classList.toggle('hidden', isVisible);
     });
   }
 }
