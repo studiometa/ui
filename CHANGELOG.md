@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.38](https://github.com/studiometa/ui/compare/0.2.37..0.2.38) (2023-10-21)
+
 ### Changed
 
 - **Playground:** add ability to mask the header ([#149](https://github.com/studiometa/ui/pull/149))
