@@ -11,6 +11,7 @@ import type Iframe from './components/Iframe.js';
 import type Resizable from './components/Resizable.js';
 import type ScriptEditor from './components/ScriptEditor.js';
 import { layoutUpdateDOM, themeUpdateDOM, headerUpdateDOM } from './store/index.js';
+import { urlStore } from './utils/storage/index.js';
 
 layoutUpdateDOM();
 themeUpdateDOM();
@@ -67,21 +68,28 @@ class App extends Base<AppProps> {
   }
 
   async mounted() {
+    this.$refs.htmlVisibility.checked =
+      !urlStore.has('html-editor') || urlStore.get('html-editor') === 'true';
+    this.$refs.scriptVisibility.checked =
+      !urlStore.has('script-editor') || urlStore.get('script-editor') === 'true';
     const [htmlEditor, scriptEditor] = await Promise.all([this.htmlEditor, this.scriptEditor]);
     htmlEditor.toggle(this.$refs.htmlVisibility.checked);
     scriptEditor.toggle(this.$refs.scriptVisibility.checked);
     this.maybeToggleEditorsContainer();
   }
 
-  async onHtmlVisibilityInput() {
+  async onHtmlVisibilityInput({ target: { checked } }) {
+    console.log(checked);
     const editor = await this.htmlEditor;
-    editor.toggle(this.$refs.htmlVisibility.checked);
+    editor.toggle(checked);
+    urlStore.set('html-editor', checked);
     this.maybeToggleEditorsContainer();
   }
 
-  async onScriptVisibilityInput() {
+  async onScriptVisibilityInput({ target: { checked } }) {
     const editor = await this.scriptEditor;
     editor.toggle(this.$refs.scriptVisibility.checked);
+    urlStore.set('script-editor', checked);
     this.maybeToggleEditorsContainer();
   }
 
