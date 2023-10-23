@@ -4,6 +4,7 @@ import Badges from './components/Badges.vue';
 import Layout from './components/Layout.vue';
 import NotFound from './components/NotFound.vue';
 import PreviewIframe from './components/PreviewIframe.vue';
+import PreviewPlayground from './components/PreviewPlayground.vue';
 import RenderTwig from './components/RenderTwig.vue';
 import SimpleTabs from './components/SimpleTabs.vue';
 import Stories from './components/Stories.vue';
@@ -18,6 +19,7 @@ export default {
     app.component('Badge', Badge);
     app.component('Badges', Badges);
     app.component('PreviewIframe', PreviewIframe);
+    app.component('PreviewPlayground', PreviewPlayground);
     app.component('RenderTwig', RenderTwig);
     app.component('SimpleTabs', SimpleTabs);
     app.component('Stories', Stories);
