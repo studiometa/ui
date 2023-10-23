@@ -16,7 +16,13 @@ export default defineConfig({
   base: '/-/',
   outDir: './.symfony/public/-',
   srcExclude: ['**/.symfony/**'],
-  head: [['link', { rel: 'icon', type: 'image/x-icon', href: '/-/logo.png' }]],
+  head: [
+    [
+      'script',
+      { defer: '', 'data-domain': 'ui.studiometa.dev', src: 'https://p.analytic.sh/js/script.js' },
+    ],
+    ['link', { rel: 'icon', type: 'image/x-icon', href: '/-/logo.png' }],
+  ],
   themeConfig: {
     version: pkg.version,
     repo: 'studiometa/ui',
