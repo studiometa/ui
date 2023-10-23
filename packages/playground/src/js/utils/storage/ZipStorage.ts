@@ -1,4 +1,4 @@
-import { zip, unzip } from '../zip.js';
+import { zip, unzip } from '@studiometa/ui-shared';
 import { StorageInterface } from './StorageInterface.js';
 import { AbstractStorage } from './AbstractStorage.js';
 
