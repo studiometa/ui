@@ -13,12 +13,12 @@ title: Sticky examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/molecules/Sticky/stories/app.twig
+<<< ./stories/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Sticky/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>

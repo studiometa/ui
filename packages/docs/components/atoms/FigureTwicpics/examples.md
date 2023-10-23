@@ -13,17 +13,17 @@ title: FigureTwicpics examples
 <SimpleTabs :items="['app.twig', 'app.js', 'Figure.js']">
   <template #content-1>
 
-<<< ./components/atoms/FigureTwicpics/stories/twicpics/app.twig
+<<< ./stories/twicpics/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/atoms/FigureTwicpics/stories/twicpics/app.js
+<<< ./stories/twicpics/app.js
 
   </template>
   <template #content-3>
 
-<<< ./components/atoms/FigureTwicpics/stories/twicpics/Figure.js
+<<< ./stories/twicpics/Figure.js
 
   </template>
 </SimpleTabs>

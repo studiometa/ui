@@ -13,17 +13,17 @@ title: Slider examples
 <SimpleTabs :items="['app.twig', 'app.js', 'Slider.js']">
   <template #content-1>
 
-<<< ./components/molecules/Slider/stories/left/app.twig
+<<< ./stories/left/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Slider/stories/left/app.js
+<<< ./stories/left/app.js
 
   </template>
   <template #content-3>
 
-<<< ./components/molecules/Slider/stories/left/Slider.js
+<<< ./stories/left/Slider.js
 
   </template>
 </SimpleTabs>
@@ -39,17 +39,17 @@ title: Slider examples
 <SimpleTabs :items="['app.twig', 'app.js', 'Slider.js']">
   <template #content-1>
 
-<<< ./components/molecules/Slider/stories/center/app.twig
+<<< ./stories/center/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Slider/stories/center/app.js
+<<< ./stories/center/app.js
 
   </template>
   <template #content-3>
 
-<<< ./components/molecules/Slider/stories/center/Slider.js
+<<< ./stories/center/Slider.js
 
   </template>
 </SimpleTabs>
@@ -65,17 +65,17 @@ title: Slider examples
 <SimpleTabs :items="['app.twig', 'app.js', 'Slider.js']">
   <template #content-1>
 
-<<< ./components/molecules/Slider/stories/right/app.twig
+<<< ./stories/right/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Slider/stories/right/app.js
+<<< ./stories/right/app.js
 
   </template>
   <template #content-3>
 
-<<< ./components/molecules/Slider/stories/right/Slider.js
+<<< ./stories/right/Slider.js
 
   </template>
 </SimpleTabs>

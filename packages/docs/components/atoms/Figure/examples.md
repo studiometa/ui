@@ -13,12 +13,12 @@ title: Figure examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/atoms/Figure/stories/lazyload/app.twig
+<<< ./stories/lazyload/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/atoms/Figure/stories/lazyload/app.js
+<<< ./stories/lazyload/app.js
 
   </template>
 </SimpleTabs>

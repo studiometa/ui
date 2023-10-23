@@ -13,12 +13,12 @@ title: ImageGrid examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/organisms/ImageGrid/stories/3-images/app.twig
+<<< ./stories/3-images/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/organisms/ImageGrid/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>
@@ -34,12 +34,12 @@ title: ImageGrid examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/organisms/ImageGrid/stories/5-images/app.twig
+<<< ./stories/5-images/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/organisms/ImageGrid/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>

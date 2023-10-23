@@ -13,12 +13,12 @@ title: Tabs examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/molecules/Tabs/stories/app.twig
+<<< ./stories/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Tabs/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>

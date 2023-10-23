@@ -13,17 +13,17 @@ title: Frame examples
 <SimpleTabs :items="['page-a.html', 'page-b.html', 'app.js']">
   <template #content-1>
 
-<<< ./components/organisms/Frame/stories/a-src.html
+<<< ./stories/a-src.html
 
   </template>
   <template #content-2>
 
-<<< ./components/organisms/Frame/stories/b-src.html
+<<< ./stories/b-src.html
 
   </template>
   <template #content-3>
 
-<<< ./components/organisms/Frame/stories/app-src.js
+<<< ./stories/app-src.js
 
   </template>
 </SimpleTabs>

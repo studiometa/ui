@@ -13,12 +13,12 @@ title: Modal examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/molecules/Modal/stories/simple/app.twig
+<<< ./stories/simple/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Modal/stories/simple/app.js
+<<< ./stories/simple/app.js
 
   </template>
 </SimpleTabs>
@@ -34,12 +34,12 @@ title: Modal examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/molecules/Modal/stories/simple/app.twig
+<<< ./stories/simple/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Modal/stories/transition/app.js
+<<< ./stories/transition/app.js
 
   </template>
 </SimpleTabs>
