@@ -1,8 +1,8 @@
 diff --git a/node_modules/monaco-editor/esm/vs/basic-languages/twig/twig.js b/node_modules/monaco-editor/esm/vs/basic-languages/twig/twig.js
-index 0085050..b4b345f 100644
+index 0085050..0b51fa8 100644
 --- a/node_modules/monaco-editor/esm/vs/basic-languages/twig/twig.js
 +++ b/node_modules/monaco-editor/esm/vs/basic-languages/twig/twig.js
-@@ -5,6 +5,26 @@
+@@ -5,6 +5,44 @@
   * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt
   *-----------------------------------------------------------------------------*/
  
@@ -25,11 +25,29 @@ index 0085050..b4b345f 100644
 +__reExport(monaco_editor_core_exports, monaco_editor_core_star);
 +import * as monaco_editor_core_star from "../../editor/editor.api.js";
 +
++const EMPTY_ELEMENTS = [
++  'area',
++  'base',
++  'br',
++  'col',
++  'embed',
++  'hr',
++  'img',
++  'input',
++  'keygen',
++  'link',
++  'menuitem',
++  'meta',
++  'param',
++  'source',
++  'track',
++  'wbr',
++];
 +
  // src/basic-languages/twig/twig.ts
  var conf = {
    wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\$\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\s]+)/g,
-@@ -33,7 +53,39 @@ var conf = {
+@@ -33,7 +71,39 @@ var conf = {
      { open: '"', close: '"' },
      { open: "'", close: "'" },
      { open: "<", close: ">" }
