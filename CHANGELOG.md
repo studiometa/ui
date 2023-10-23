@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.40](https://github.com/studiometa/ui/compare/0.2.39..0.2.40) (2023-10-23)
+
+### Fixed
+
+- **Playground:** fix Twig syntax highlighting in playground ([91f5b93](https://github.com/studiometa/ui/commit/91f5b93))
+
 ## [v0.2.39](https://github.com/studiometa/ui/compare/0.2.38..0.2.39) (2023-10-23)
 
 ### Changed
