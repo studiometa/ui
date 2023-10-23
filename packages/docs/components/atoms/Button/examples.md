@@ -11,7 +11,7 @@ title: Button examples
 :::details Code
 :::code-group
 
-<<< ./components/atoms/Button/stories/primary/app.twig
+<<< ./stories/primary/app.twig
 
 :::
 
@@ -23,7 +23,7 @@ title: Button examples
 :::details Code
 :::code-group
 
-<<< ./components/atoms/Button/stories/primary-rounded/app.twig
+<<< ./stories/primary-rounded/app.twig
 
 :::
 
@@ -34,7 +34,7 @@ title: Button examples
 :::details Code
 :::code-group
 
-<<< ./components/atoms/Button/stories/secondary/app.twig
+<<< ./stories/secondary/app.twig
 
 :::
 
@@ -45,6 +45,6 @@ title: Button examples
 :::details Code
 :::code-group
 
-<<< ./components/atoms/Button/stories/secondary-rounded/app.twig
+<<< ./stories/secondary-rounded/app.twig
 
 :::

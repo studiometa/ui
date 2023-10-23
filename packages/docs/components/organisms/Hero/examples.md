@@ -13,12 +13,12 @@ title: Hero examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/organisms/Hero/stories/image-left/app.twig
+<<< ./stories/image-left/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/organisms/Hero/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>
@@ -34,12 +34,12 @@ title: Hero examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/organisms/Hero/stories/image-right/app.twig
+<<< ./stories/image-right/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/organisms/Hero/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>
@@ -55,12 +55,12 @@ title: Hero examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/organisms/Hero/stories/image/app.twig
+<<< ./stories/image/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/organisms/Hero/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>
@@ -76,12 +76,12 @@ title: Hero examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/organisms/Hero/stories/image-left/app.twig
+<<< ./stories/image-left/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/organisms/Hero/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>
@@ -97,12 +97,12 @@ title: Hero examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/organisms/Hero/stories/color/app.twig
+<<< ./stories/color/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/organisms/Hero/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>
@@ -118,12 +118,12 @@ title: Hero examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/organisms/Hero/stories/slider/app.twig
+<<< ./stories/slider/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/organisms/Hero/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>
@@ -139,12 +139,12 @@ title: Hero examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/organisms/Hero/stories/full-slider/app.twig
+<<< ./stories/full-slider/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/organisms/Hero/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>

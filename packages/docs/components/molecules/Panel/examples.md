@@ -13,12 +13,12 @@ title: Panel examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/molecules/Panel/stories/top/app.twig
+<<< ./stories/top/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Panel/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>
@@ -34,12 +34,12 @@ title: Panel examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/molecules/Panel/stories/right/app.twig
+<<< ./stories/right/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Panel/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>
@@ -55,12 +55,12 @@ title: Panel examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/molecules/Panel/stories/bottom/app.twig
+<<< ./stories/bottom/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Panel/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>
@@ -76,12 +76,12 @@ title: Panel examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/molecules/Panel/stories/left/app.twig
+<<< ./stories/left/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Panel/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>

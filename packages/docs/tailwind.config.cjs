@@ -45,8 +45,8 @@ module.exports = {
           'c-divider-light': 'var(--vp-c-divider-light)',
         },
         brand: {
-          DEFAULT: '#3eaf7c',
-          light: '#42d392',
+          DEFAULT: '#3451b2',
+          light: 'rgba(100, 108, 255, .16)',
         },
         code: {
           bg: 'var(--code-bg-color)',

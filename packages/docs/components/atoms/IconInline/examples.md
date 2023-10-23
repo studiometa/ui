@@ -13,7 +13,7 @@ title: IconInline examples
 <SimpleTabs :items="['app.twig']">
   <template #content-1>
 
-<<< ./components/atoms/IconInline/stories/app.twig
+<<< ./stories/app.twig
 
   </template>
 </SimpleTabs>

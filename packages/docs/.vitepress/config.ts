@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { basename, dirname, resolve, join } from 'node:path';
 import { defineConfig } from 'vitepress';
-import { withLeadingSlash, withTrailingSlash } from '@studiometa/js-toolkit/utils';
+import { withLeadingSlash, withTrailingSlash, withLeadingCharacters } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
 
 const pkg = JSON.parse(
@@ -11,12 +11,35 @@ const pkg = JSON.parse(
 export default defineConfig({
   lang: 'en-US',
   title: '@studiometa/ui',
-  description: 'A set of opiniated, unstyled and accessible components',
+  description: 'A feature-rich library of primitives and components built with ♥️ by Studio Meta',
   lastUpdated: true,
   base: '/-/',
   outDir: './.symfony/public/-',
   srcExclude: ['**/.symfony/**'],
-  head: [['link', { rel: 'icon', type: 'image/x-icon', href: '/-/logo.png' }]],
+  head: [
+    [
+      'script',
+      { defer: '', 'data-domain': 'ui.studiometa.dev', src: 'https://p.analytic.sh/js/script.js' },
+    ],
+    ['link', { rel: 'icon', type: 'image/x-icon', href: '/-/logo.png' }],
+  ],
+  sitemap: {
+    hostname: 'https://ui.studiometa.dev/',
+    transformItems(items) {
+      // Add the playground
+      items.push({
+        url: 'play',
+        changefreq: 'monthly',
+        priority: 0.8
+      });
+
+      // Add base URL
+      return items.map(item => ({
+        ...item,
+        url: withLeadingCharacters(item.url, '-/')
+      }));
+    }
+  },
   themeConfig: {
     version: pkg.version,
     repo: 'studiometa/ui',

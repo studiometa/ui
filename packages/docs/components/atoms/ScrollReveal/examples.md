@@ -13,12 +13,12 @@ title: ScrollReveal examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/atoms/ScrollReveal/stories/simple/app.twig
+<<< ./stories/simple/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/atoms/ScrollReveal/stories/simple/app.js
+<<< ./stories/simple/app.js
 
   </template>
 </SimpleTabs>
@@ -34,12 +34,12 @@ title: ScrollReveal examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/atoms/ScrollReveal/stories/repeat/app.twig
+<<< ./stories/repeat/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/atoms/ScrollReveal/stories/repeat/app.js
+<<< ./stories/repeat/app.js
 
   </template>
 </SimpleTabs>
@@ -56,12 +56,12 @@ title: ScrollReveal examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/atoms/ScrollReveal/stories/nested/app.twig
+<<< ./stories/nested/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/atoms/ScrollReveal/stories/nested/app.js
+<<< ./stories/nested/app.js
 
   </template>
 </SimpleTabs>

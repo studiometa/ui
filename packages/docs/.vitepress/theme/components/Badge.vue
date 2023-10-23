@@ -27,12 +27,12 @@
     border-radius: 0.25em;
     padding: 0.5em 0.75em;
     color: #fff;
-    background-color: var(--vp-c-brand);
+    background-color: var(--vp-c-indigo-3);
     white-space: nowrap;
   }
 
   .badge.green {
-    background-color: var(--vp-c-brand);
+    background-color: var(--vp-c-indigo-3);
   }
 
   .badge.error {

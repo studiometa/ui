@@ -13,12 +13,12 @@ title: Cursor examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/atoms/Cursor/stories/app.twig
+<<< ./stories/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/atoms/Cursor/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>

@@ -13,22 +13,22 @@ title: Menu examples
 <SimpleTabs :items="['app.twig', 'app.js', 'Menu.js', 'MenuList.js']">
   <template #content-1>
 
-<<< ./components/molecules/Menu/stories/burger/app.twig
+<<< ./stories/burger/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Menu/stories/burger/app.js
+<<< ./stories/burger/app.js
 
   </template>
   <template #content-3>
 
-<<< ./components/molecules/Menu/stories/burger/Menu.js
+<<< ./stories/burger/Menu.js
 
   </template>
   <template #content-4>
 
-<<< ./components/molecules/Menu/stories/burger/MenuList.js
+<<< ./stories/burger/MenuList.js
 
   </template>
 </SimpleTabs>
@@ -44,12 +44,12 @@ title: Menu examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/molecules/Menu/stories/dropdown/app.twig
+<<< ./stories/dropdown/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Menu/stories/dropdown/app.js
+<<< ./stories/dropdown/app.js
 
   </template>
 </SimpleTabs>
@@ -65,12 +65,12 @@ title: Menu examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/molecules/Menu/stories/mega-menu/app.twig
+<<< ./stories/mega-menu/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Menu/stories/mega-menu/app.js
+<<< ./stories/mega-menu/app.js
 
   </template>
 </SimpleTabs>
@@ -88,17 +88,17 @@ Switch from a mega menu on desktop to a burger menu on mobile.
 <SimpleTabs :items="['app.twig', 'app.js', 'Menu.js']">
   <template #content-1>
 
-<<< ./components/molecules/Menu/stories/mega-menu-responsive/app.twig
+<<< ./stories/mega-menu-responsive/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/molecules/Menu/stories/mega-menu-responsive/app.js
+<<< ./stories/mega-menu-responsive/app.js
 
   </template>
   <template #content-3>
 
-<<< ./components/molecules/Menu/stories/mega-menu-responsive/Menu.js
+<<< ./stories/mega-menu-responsive/Menu.js
 
   </template>
 </SimpleTabs>

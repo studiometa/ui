@@ -13,12 +13,12 @@ title: Draggable examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/primitives/Draggable/stories/app.twig
+<<< ./stories/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/primitives/Draggable/stories/app.js
+<<< ./stories/app.js
 
   </template>
 </SimpleTabs>

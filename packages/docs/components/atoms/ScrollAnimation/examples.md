@@ -13,12 +13,12 @@ title: ScrollAnimation examples
 <SimpleTabs :items="['app.twig', 'app.js']">
   <template #content-1>
 
-<<< ./components/atoms/ScrollAnimation/stories/simple/app.twig
+<<< ./stories/simple/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/atoms/ScrollAnimation/stories/simple/app.js
+<<< ./stories/simple/app.js
 
   </template>
 </SimpleTabs>
@@ -34,17 +34,17 @@ title: ScrollAnimation examples
 <SimpleTabs :items="['app.twig', 'app.js', 'ScrollAnimationParent.js']">
   <template #content-1>
 
-<<< ./components/atoms/ScrollAnimation/stories/parent/app.twig
+<<< ./stories/parent/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/atoms/ScrollAnimation/stories/parent/app.js
+<<< ./stories/parent/app.js
 
   </template>
   <template #content-3>
 
-<<< ./components/atoms/ScrollAnimation/stories/parent/ScrollAnimationParent.js
+<<< ./stories/parent/ScrollAnimationParent.js
 
   </template>
 </SimpleTabs>
@@ -64,17 +64,17 @@ Here, we even use the [ImageGrid organism](/components/organisms/ImageGrid/) to 
 <SimpleTabs :items="['app.twig', 'app.js', 'Parallax.js']">
   <template #content-1>
 
-<<< ./components/atoms/ScrollAnimation/stories/parallax/app.twig
+<<< ./stories/parallax/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/atoms/ScrollAnimation/stories/parallax/app.js
+<<< ./stories/parallax/app.js
 
   </template>
   <template #content-3>
 
-<<< ./components/atoms/ScrollAnimation/stories/parallax/Parallax.js
+<<< ./stories/parallax/Parallax.js
 
   </template>
 </SimpleTabs>
@@ -94,22 +94,22 @@ The resulting effect is different as each child animation is driven by the paren
 <SimpleTabs :items="['app.twig', 'app.js', 'ParallaxChild.js', 'ParallaxParent.js']">
   <template #content-1>
 
-<<< ./components/atoms/ScrollAnimation/stories/parallax-parent/app.twig
+<<< ./stories/parallax-parent/app.twig
 
   </template>
   <template #content-2>
 
-<<< ./components/atoms/ScrollAnimation/stories/parallax-parent/app.js
+<<< ./stories/parallax-parent/app.js
 
   </template>
   <template #content-3>
 
-<<< ./components/atoms/ScrollAnimation/stories/parallax-parent/ParallaxChild.js
+<<< ./stories/parallax-parent/ParallaxChild.js
 
   </template>
   <template #content-4>
 
-<<< ./components/atoms/ScrollAnimation/stories/parallax-parent/ParallaxParent.js
+<<< ./stories/parallax-parent/ParallaxParent.js
 
   </template>
 </SimpleTabs>
