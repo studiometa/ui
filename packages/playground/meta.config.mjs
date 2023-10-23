@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { defineConfig } from '@studiometa/webpack-config';
-import { prototyping } from '@studiometa/webpack-config/presets';
+import { prototyping } from '@studiometa/webpack-config-preset-prototyping';
 import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin';
 
 /**
