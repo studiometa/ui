@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.39](https://github.com/studiometa/ui/compare/0.2.38..0.2.39) (2023-10-23)
+
+### Changed
+
+- **Docs:** update NPM dependencies ([bc15cc4](https://github.com/studiometa/ui/commit/bc15cc4))
+- **Docs:** add sitemap ([69835fb](https://github.com/studiometa/ui/commit/69835fb))
+- **Playground:** update NPM dependencies ([b0c196e](https://github.com/studiometa/ui/commit/b0c196e))
+
 ## [v0.2.38](https://github.com/studiometa/ui/compare/0.2.37..0.2.38) (2023-10-21)
 
 ### Changed
