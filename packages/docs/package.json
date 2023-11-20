@@ -15,9 +15,9 @@
     "@studiometa/tailwind-config": "^1.1.0",
     "autoprefixer": "^10.4.16",
     "prismjs": "^1.29.0",
-    "sass": "^1.69.4",
+    "sass": "^1.69.5",
     "snake-case": "^3.0.4",
-    "tailwindcss": "^3.3.3",
+    "tailwindcss": "^3.3.5",
     "unplugin-icons": "^0.15.3",
     "unplugin-vue-components": "^0.22.12",
     "vitepress": "^1.0.0-rc.23"
