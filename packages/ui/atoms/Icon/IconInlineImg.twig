@@ -17,16 +17,14 @@
 {% if current_color is defined or css_vars is defined %}
   {%- set style -%}
     <style>
-      :root {
-        {% if current_color is defined %}
-          color: {{ current_color }};
-        {% endif %}
-        {% if css_vars is defined %}
-          {% for var, value in css_vars %}
-            --{{ var }}: {{ value }};
-          {% endfor %}
-        {% endif %}
-      }
+      :root {{% if current_color is defined %}
+        color: {{ current_color }};
+      {% endif %}
+      {% if css_vars is defined %}
+        {% for var, value in css_vars %}
+          --{{ var }}: {{ value }};
+        {% endfor %}
+      {% endif %}}
     </style>
   {%- endset -%}
 
@@ -37,21 +35,15 @@
   {% set svg = svg|replace({ '<svg': '<svg %s'|format('xmlns="http://www.w3.org/2000/svg"') }) %}
 {% endif %}
 
-{% set attributes = merge_html_attributes(
-  attr ?? null,
-  {
-    width: '',
-    height: '',
-    alt: ' ',
-    aria_hidden: 'true'
-  },
-  {
-    src: 'data:image/svg+xml,%s'|format(svg|url_encode),
-    class: [
-      'icon-img',
-      'icon-img--%s'|format(name),
-    ],
-  }
-) %}
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    { width: '', height: '', alt: ' ', aria_hidden: 'true' },
+    {
+      src: 'data:image/svg+xml,%s'|format(svg|url_encode),
+      class: ['icon-img', 'icon-img--%s'|format(name)]
+    }
+  )
+%}
 
-<img {{ html_attributes(attributes) }}>
+<img {{ html_attributes(attributes) }} />
