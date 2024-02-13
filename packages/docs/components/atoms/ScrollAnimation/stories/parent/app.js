@@ -1,5 +1,17 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import ScrollAnimationParent from './ScrollAnimationParent.js';
+import {
+  ScrollAnimationParent as ScrollAnimationParentCore,
+  ScrollAnimationChild,
+} from '@studiometa/ui';
+
+class ScrollAnimationParent extends ScrollAnimationParentCore {
+  static config = {
+    name: 'ScrollAnimationParent',
+    components: {
+      ScrollAnimationChild,
+    },
+  };
+}
 
 class App extends Base {
   static config = {

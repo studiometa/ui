@@ -6,50 +6,17 @@ title: ScrollAnimation examples
 
 ## Simple animation
 
-<PreviewIframe src="./stories/simple/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/simple/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/simple/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/simple/app.twig')"
+  :script="() => import('./stories/simple/app.js?raw')"
+  />
 
 ## Parent driven animation
 
-<PreviewIframe src="./stories/parent/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js', 'ScrollAnimationParent.js']">
-  <template #content-1>
-
-<<< ./stories/parent/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/parent/app.js
-
-  </template>
-  <template #content-3>
-
-<<< ./stories/parent/ScrollAnimationParent.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/parent/app.twig')"
+  :script="() => import('./stories/parent/app.js?raw')"
+  />
 
 ## Parallax
 
@@ -57,29 +24,10 @@ You can easily implement a parallax effect with images by combining the `ScrollA
 
 Here, we even use the [ImageGrid organism](/components/organisms/ImageGrid/) to quickly have a nice listing layout. We are able to configure it to wrap each image in a `Parallax` component.
 
-<PreviewIframe src="./stories/parallax/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js', 'Parallax.js']">
-  <template #content-1>
-
-<<< ./stories/parallax/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/parallax/app.js
-
-  </template>
-  <template #content-3>
-
-<<< ./stories/parallax/Parallax.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/parallax/app.twig')"
+  :script="() => import('./stories/parallax/app.js?raw')"
+  />
 
 ## Parallax with a parent
 
@@ -87,31 +35,7 @@ It might be sometimes interesting to use the parent ↔ child logic of the `Scro
 
 The resulting effect is different as each child animation is driven by the parent one, but it is still interesting.
 
-<PreviewIframe src="./stories/parallax-parent/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js', 'ParallaxChild.js', 'ParallaxParent.js']">
-  <template #content-1>
-
-<<< ./stories/parallax-parent/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/parallax-parent/app.js
-
-  </template>
-  <template #content-3>
-
-<<< ./stories/parallax-parent/ParallaxChild.js
-
-  </template>
-  <template #content-4>
-
-<<< ./stories/parallax-parent/ParallaxParent.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/parallax-parent/app.twig')"
+  :script="() => import('./stories/parallax-parent/app.js?raw')"
+  />

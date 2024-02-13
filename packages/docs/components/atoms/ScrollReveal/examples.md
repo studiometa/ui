@@ -6,64 +6,21 @@ title: ScrollReveal examples
 
 ## Simple
 
-<PreviewIframe src="./stories/simple/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/simple/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/simple/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/simple/app.twig')"
+  :script="() => import('./stories/simple/app.js?raw')"
+  />
 
 ## Repeat
 
-<PreviewIframe src="./stories/repeat/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/repeat/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/repeat/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
-
+<PreviewPlayground
+  :html="() => import('./stories/repeat/app.twig')"
+  :script="() => import('./stories/repeat/app.js?raw')"
+  />
 
 ## Nested & repeat
 
-<PreviewIframe src="./stories/nested/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/nested/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/nested/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/nested/app.twig')"
+  :script="() => import('./stories/nested/app.js?raw')"
+  />
