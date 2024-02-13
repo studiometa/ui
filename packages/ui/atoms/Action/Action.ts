@@ -1,4 +1,5 @@
 import { Base } from '@studiometa/js-toolkit';
+import { isFunction } from '@studiometa/js-toolkit/utils';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 
 export interface ActionProps extends BaseProps {
@@ -54,7 +55,7 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
     }
 
     targets.forEach((target) => {
-      if (!target || !target[method]) {
+      if (!isFunction(target[method])) {
         return;
       }
 
