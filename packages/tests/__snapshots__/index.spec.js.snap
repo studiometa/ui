@@ -7,6 +7,7 @@ exports[`components exports 1`] = `
   "AbstractSliderChild",
   "Accordion",
   "AccordionItem",
+  "Action",
   "AnchorScrollTo",
   "Cursor",
   "Draggable",
