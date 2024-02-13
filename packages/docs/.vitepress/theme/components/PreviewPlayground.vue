@@ -9,8 +9,11 @@
 
   const props = defineProps({
     script: [String, Function],
+    scriptEditor: { type: Boolean, default: null },
     html: [String, Function],
+    htmlEditor: { type: Boolean, default: null },
     css: [String, Function],
+    cssEditor: { type: Boolean, default: null },
     height: {
       type: String,
       default: '60vh',
@@ -24,7 +27,7 @@
 
   const { isDark } = useData();
 
-  const defaultContent = zip(' ');
+  const defaultContent = zip('');
 
   const script = ref(defaultContent);
   if (isFunction(props.script)) {
@@ -53,16 +56,19 @@
     css.value = zip(props.css);
   }
 
+  console.log({ cssEditor: props.cssEditor })
   const src = computed(() => {
     const url = new URL(import.meta.env.DEV ? '/-/play/index.html' : '/-/play/', 'http://localhost');
 
     url.searchParams.set('html', html.value);
     url.searchParams.set('script', script.value);
-    url.searchParams.set('style', css.value);
+    if (css.value !== defaultContent) {
+      url.searchParams.set('style', css.value);
+    }
 
     url.searchParams.set('html-editor', html.value !== defaultContent ? 'true' : 'false');
     url.searchParams.set('script-editor', script.value !== defaultContent ? 'true' : 'false');
-    url.searchParams.set('style-editor', css.value !== defaultContent ? 'true' : 'false');
+    url.searchParams.set('style-editor', css.value !== defaultContent && [true, null].includes(props.cssEditor) ? 'true' : 'false');
 
     url.searchParams.set('theme', isDark.value ? 'dark' : 'light');
 

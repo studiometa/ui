@@ -8,6 +8,8 @@ title: ScrollAnimation examples
 
 <PreviewPlayground
   :html="() => import('./stories/simple/app.twig')"
+  css=" "
+  :css-editor="false"
   :script="() => import('./stories/simple/app.js?raw')"
   />
 
@@ -15,6 +17,8 @@ title: ScrollAnimation examples
 
 <PreviewPlayground
   :html="() => import('./stories/parent/app.twig')"
+  css=" "
+  :css-editor="false"
   :script="() => import('./stories/parent/app.js?raw')"
   />
 
