@@ -6,24 +6,8 @@ title: FigureTwicpics examples
 
 ## TwicPics
 
-<PreviewIframe src="./stories/twicpics/story.html" />
+<PreviewPlayground
+  :html="() => import('./stories/twicpics/app.twig')"
+  :script="() => import('./stories/twicpics/app.js?raw')"
+  />
 
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js', 'Figure.js']">
-  <template #content-1>
-
-<<< ./stories/twicpics/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/twicpics/app.js
-
-  </template>
-  <template #content-3>
-
-<<< ./stories/twicpics/Figure.js
-
-  </template>
-</SimpleTabs>

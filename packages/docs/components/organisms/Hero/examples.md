@@ -6,147 +6,59 @@ title: Hero examples
 
 ## Hero image and align left
 
-<PreviewIframe src="./stories/image-left/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/image-left/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/image-left/app.twig')"
+  css=" "
+  :css-editor="false"
+  />
 
 ## Hero image and align right
 
-<PreviewIframe src="./stories/image-right/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/image-right/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/image-right/app.twig')"
+  css=" "
+  :css-editor="false"
+  />
 
 ## Hero image and align center
 
-<PreviewIframe src="./stories/image/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/image/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/image/app.twig')"
+  css=" "
+  :css-editor="false"
+  />
 
 ## Hero image and text half width
 
-<PreviewIframe src="./stories/image-half/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/image-left/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/image-half/app.twig')"
+  css=" "
+  :css-editor="false"
+  />
 
 ## Hero colored bg
 
-<PreviewIframe src="./stories/color/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/color/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/color/app.twig')"
+  css=" "
+  :css-editor="false"
+  />
 
 ## Hero slider
 
-<PreviewIframe src="./stories/slider/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/slider/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/slider/app.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  css=" "
+  :css-editor="false"
+  />
 
 ## Hero slider - full slide
 
-<PreviewIframe src="./stories/full-slider/story.html" />
+<PreviewPlayground
+  :html="() => import('./stories/full-slider/app.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  css=" "
+  :css-editor="false"
+  />
 
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/full-slider/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::

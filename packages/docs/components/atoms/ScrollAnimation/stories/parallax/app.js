@@ -1,5 +1,19 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import Parallax from './Parallax.js';
+import { Figure, ScrollAnimation } from '@studiometa/ui';
+
+class Parallax extends ScrollAnimation {
+  static config = {
+    ...ScrollAnimation.config,
+    name: 'Parallax',
+    components: {
+      Figure,
+    },
+  };
+
+  get target() {
+    return this.$children.Figure[0].$el;
+  }
+}
 
 class App extends Base {
   static config = {

@@ -1,15 +1,14 @@
-import { isDev } from '@studiometa/js-toolkit/utils';
+/** @type {Map<string, string>} */
+const cache = new Map();
 
-const cache = new Map<string, string>();
-
-// @todo: cancel previous running requests to avoid accidentally
-// updating the HTML content with a longer previous request response.
-// A ------> A'
-//  B ----> B'
-// A' will be used instead of B'
 let controller = new AbortController();
 
-export async function twigRender(content: string) {
+/**
+ * Transform the editor's content with Twig.
+ * @param   {string} content
+ * @returns {Promise<string>}
+ */
+export default async function twigLoader(content) {
   // Always abort previous requests
   controller.abort();
 
@@ -19,7 +18,8 @@ export async function twigRender(content: string) {
   }
 
   controller = new AbortController();
-  const url: string = isDev ? 'https://ui.ddev.site/api' : '/api';
+  /** @type {string} */
+  const url = window.location.hostname === 'localhost' ? 'https://ui.ddev.site/api' : '/api';
 
   return fetch(url, {
     method: 'POST',
