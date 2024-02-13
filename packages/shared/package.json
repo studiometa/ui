@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-shared",
-  "version": "0.2.40",
+  "version": "0.2.41",
   "private": true,
   "module": "index.ts",
   "types": "index.d.ts",
