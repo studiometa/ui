@@ -7,6 +7,7 @@ title: ImageGrid examples
 ## With 3 images
 
 <PreviewPlayground
+  :zoom="0.8"
   :html="() => import('./stories/3-images/app.twig')"
   :script="() => import('./stories/app.js?raw')"
   />
@@ -14,6 +15,7 @@ title: ImageGrid examples
 ## With 5 images
 
 <PreviewPlayground
+  :zoom="0.8"
   :html="() => import('./stories/5-images/app.twig')"
   :script="() => import('./stories/app.js?raw')"
   />
