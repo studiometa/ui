@@ -6,4 +6,7 @@ title: Accordion examples
 
 ## Simple
 
-<PreviewPlayground :html="() => import('./stories/app.twig')" :script="() => import('./stories/app.js?raw')"/>
+<PreviewPlayground
+  :html="() => import('./stories/app.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
