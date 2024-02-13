@@ -4,6 +4,7 @@ import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 
 export interface ActionProps extends BaseProps {
   $options: {
+    on: string;
     target: string;
     method: string;
     selector: string;
@@ -17,6 +18,10 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
   static config: BaseConfig = {
     name: 'Action',
     options: {
+      on: {
+        type: String,
+        default: 'click',
+      },
       target: String,
       method: String,
       selector: String,
@@ -24,20 +29,9 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
   };
 
   /**
-   * Mounted
+   * Run method on targeted components
    */
-  mounted() {
-    const { target, method } = this.$options;
-
-    if (!target || !method || target.length <= 0 || method.length <= 0) {
-      this.$terminate();
-    }
-  }
-
-  /**
-   * On component click
-   */
-  onClick() {
+  doAction() {
     const { target: componentNames, method, selector } = this.$options;
 
     let targets = componentNames.includes(' ')
@@ -61,5 +55,26 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
 
       target[method]();
     });
+  }
+
+  /**
+   * Mounted
+   */
+  mounted() {
+    const { on: eventName, target, method } = this.$options;
+
+    if (!target || !method || target.length <= 0 || method.length <= 0) {
+      this.$terminate();
+      return;
+    }
+
+    this.$el.addEventListener(eventName, this.doAction.bind(this));
+  }
+
+  /**
+   * Destroyed
+   */
+  destroyed() {
+    this.$el.removeEventListener(this.$options.on, this.doAction);
   }
 }
