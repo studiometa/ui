@@ -92,6 +92,7 @@ function getGuideSidebar() {
         { text: 'Concepts', link: '/guide/concepts/' },
         { text: 'Installation', link: '/guide/installation/' },
         { text: 'Usage', link: '/guide/usage/' },
+        { text: 'Contributing', link: '/guide/contributing/' },
       ],
     },
     {
