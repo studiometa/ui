@@ -48,7 +48,6 @@ export class TableOfContent<T extends BaseProps = BaseProps> extends Base<T & Ta
 
   /**
    * Generate all anchors.
-   *
    * @todo Read anchor template from a ref?
    * @todo Better API to easily override the template function, maybe a `render` function?
    */

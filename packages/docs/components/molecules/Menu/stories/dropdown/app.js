@@ -10,4 +10,4 @@ class App extends Base {
   };
 }
 
-export default createApp(App, document.body);
+createApp(App, document.body);

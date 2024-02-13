@@ -89,7 +89,6 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
 
   /**
    * Update the content from the new target.
-   *
    * @param   {FrameTarget} newTarget The instance of the new target.
    * @returns {void}
    */

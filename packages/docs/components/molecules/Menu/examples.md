@@ -6,101 +6,32 @@ title: Menu examples
 
 ## Burger menu
 
-<PreviewIframe src="./stories/burger/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js', 'Menu.js', 'MenuList.js']">
-  <template #content-1>
-
-<<< ./stories/burger/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/burger/app.js
-
-  </template>
-  <template #content-3>
-
-<<< ./stories/burger/Menu.js
-
-  </template>
-  <template #content-4>
-
-<<< ./stories/burger/MenuList.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/burger/app.twig')"
+  :script="() => import('./stories/burger/app.js?raw')"
+  :css="() => import('./stories/burger/app.css?raw')"
+  />
 
 ## Dropdown
 
-<PreviewIframe src="./stories/dropdown/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/dropdown/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/dropdown/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/dropdown/app.twig')"
+  :script="() => import('./stories/dropdown/app.js?raw')"
+  />
 
 ## Mega menu
 
-<PreviewIframe src="./stories/mega-menu/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/mega-menu/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/mega-menu/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/mega-menu/app.twig')"
+  :script="() => import('./stories/mega-menu/app.js?raw')"
+  />
 
 ## Responsive mega menu
 
 Switch from a mega menu on desktop to a burger menu on mobile.
 
-<PreviewIframe src="./stories/mega-menu-responsive/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js', 'Menu.js']">
-  <template #content-1>
-
-<<< ./stories/mega-menu-responsive/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/mega-menu-responsive/app.js
-
-  </template>
-  <template #content-3>
-
-<<< ./stories/mega-menu-responsive/Menu.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/mega-menu-responsive/app.twig')"
+  :script="() => import('./stories/mega-menu-responsive/app.js?raw')"
+  :css="() => import('./stories/burger/app.css?raw')"
+  />

@@ -34,7 +34,11 @@ If no target ref is found, the component will default to applying the transition
 
 Scroll down and up in the example below to see the bug in action:
 
-<PreviewIframe src="./stories/no-target-ref/story.html" height="400px" no-controls />
+<PreviewPlayground
+  :html="() => import('./stories/no-target-ref/app.twig')"
+  :script="() => import('./stories/no-target-ref/app.js?raw')"
+  height="400px"
+  />
 
 It is recommended to always define a `target` ref to avoid such cases.
 :::

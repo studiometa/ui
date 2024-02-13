@@ -6,42 +6,17 @@ title: ImageGrid examples
 
 ## With 3 images
 
-<PreviewIframe src="./stories/3-images/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/3-images/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :zoom="0.8"
+  :html="() => import('./stories/3-images/app.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
 
 ## With 5 images
 
-<PreviewIframe src="./stories/5-images/story.html" />
+<PreviewPlayground
+  :zoom="0.8"
+  :html="() => import('./stories/5-images/app.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
 
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/5-images/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::

@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-workspace",
-  "version": "0.2.40",
+  "version": "0.2.41",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -15,7 +15,7 @@
     "build:sizes": "node scripts/sizes.mjs",
     "build-for-export-size": "node scripts/update-exports-for-export-size.js && npm run build:pkg && npm run build:cp-files",
     "lint": "npm run lint:eslint && npm run lint:types",
-    "lint:eslint": "eslint packages/ui packages/playground/src/js",
+    "lint:eslint": "eslint packages/ui packages/playground/lib/ packages/playground/*.js",
     "lint:types": "tsc --build tsconfig.lint.json",
     "docs:dev": "npm run dev -w @studiometa/ui-docs",
     "docs:build": "npm run build -w @studiometa/ui-docs",
