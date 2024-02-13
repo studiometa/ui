@@ -37,7 +37,6 @@ export class SliderDots<
 
   /**
    * Update dots classes according to the new index.
-   *
    * @param   {number} index
    * @returns {void}
    */

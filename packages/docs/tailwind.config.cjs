@@ -43,6 +43,7 @@ module.exports = {
           'c-indigo': 'var(--vp-c-indigo)',
           'c-divider': 'var(--vp-c-divider)',
           'c-divider-light': 'var(--vp-c-divider-light)',
+          'c-gutter': 'var(--vp-c-gutter)',
         },
         brand: {
           DEFAULT: '#3451b2',

@@ -1,0 +1,10 @@
+{
+  "name": "@studiometa/ui-shared",
+  "version": "0.2.40",
+  "private": true,
+  "module": "index.ts",
+  "types": "index.d.ts",
+  "dependencies": {
+    "fflate": "^0.8.1"
+  }
+}

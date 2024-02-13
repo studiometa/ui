@@ -3,7 +3,7 @@
 
 <style type="text/css">
   .is-active {
-    box-shadow: 0 0 0 3px var(--vp-c-brand);
+    box-shadow: 0 0 0 3px rgb(59 130 246);
   }
 
   html {
@@ -15,7 +15,7 @@
   data-option-mode="left"
   data-option-fit-bounds
   data-option-contain
-  class="space-y-4">
+  class="space-y-4 p-10">
   <div data-component="SliderDrag"
     data-ref="wrapper"
     tabindex="0"
@@ -23,11 +23,11 @@
     {% for slide in slides %}
       {% set width = widths[loop.index0 % widths|length] %}
       <div data-component="SliderItem" class="inline-block rounded" style="contain: content;">
-        <div class="flex items-center justify-center {{ width }} h-96 bg-vp-c-divider-light rounded">
+        <div class="flex items-center justify-center {{ width }} h-48 bg-blue-200 rounded">
           {% include '@ui/atoms/Figure/Figure.twig' with {
             src: 'https://picsum.photos/400/400?rand=' ~ slide,
-            width: 400,
-            height: 400,
+            width: 200,
+            height: 200,
             absolute: true,
             fit: 'cover',
             attr: {
@@ -52,8 +52,8 @@
       attr: { data_component: 'SliderBtn', data_option_next: true }
     } %}
     <div data-component="SliderProgress"
-      class="w-full rounded bg-vp-c-divider-light overflow-hidden">
-      <div class="w-full h-2 bg-brand rounded origin-left transition ease-out"
+      class="w-full rounded bg-blue-200 overflow-hidden">
+      <div class="w-full h-2 bg-blue-500 rounded origin-left transition ease-out"
         data-ref="progress"></div>
     </div>
     <div data-component="SliderCount" class="whitespace-nowrap">
@@ -62,24 +62,26 @@
   </div>
   <div data-component="SliderDots"
     data-option-enter-to="is-active"
+    data-option-enter-keep
     class="space-x-4">
     {% for slide in slides %}
       <button type="button" data-ref="dots[]" class="rounded-full">
-        <span class="block w-2 h-2 bg-vp-c-divider rounded-full"></span>
+        <span class="block w-2 h-2 bg-blue-200 rounded-full"></span>
         <span class="sr-only">Go to slide #{{ loop.index }}</span>
       </button>
     {% endfor %}
   </div>
   <div class="relative">
     <div data-component="SliderProgress"
-      class="w-full rounded bg-vp-c-divider-light overflow-hidden">
-      <div class="w-full h-2 bg-brand rounded origin-left transition duration-500 ease-out-expo"
+      class="w-full rounded bg-blue-200 overflow-hidden">
+      <div class="w-full h-2 bg-blue-500 rounded origin-left transition duration-500 ease-out-expo"
         data-ref="progress"></div>
     </div>
     <div data-component="SliderDots"
-      data-option-enter-to="is-active bg-brand transform scale-150"
+      data-option-enter-to="is-active bg-blue-500 transform scale-150"
       data-option-enter-active="transition-all duration-500 ease-out-expo"
       data-option-leave-active="transition-all duration-500 ease-out-expo"
+      data-option-enter-keep
       class="absolute top-0 left-0 w-full h-full flex items-center justify-between">
       {% for slide in slides %}
         <button type="button"

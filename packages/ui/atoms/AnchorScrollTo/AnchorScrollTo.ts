@@ -16,7 +16,6 @@ export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<Anchor
 
   /**
    * Get the target selector.
-   *
    * @returns {string}
    */
   get targetSelector() {
@@ -25,7 +24,6 @@ export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<Anchor
 
   /**
    * Scroll to the target selector on click.
-   *
    * @param   {MouseEvent} event
    * @returns {void}
    */

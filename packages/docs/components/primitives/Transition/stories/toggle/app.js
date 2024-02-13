@@ -1,5 +1,11 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import Togglable from './Togglable.js';
+import { Transition } from '@studiometa/ui';
+
+class Togglable extends Transition {
+  static config = {
+    name: 'Togglable',
+  };
+}
 
 class App extends Base {
   static config = {

@@ -6,84 +6,28 @@ title: Panel examples
 
 ## Top panel
 
-<PreviewIframe src="./stories/top/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/top/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/top/app.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
 
 ## Right panel
 
-<PreviewIframe src="./stories/right/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/right/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/right/app.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
 
 ## Bottom panel
 
-<PreviewIframe src="./stories/bottom/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/bottom/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/bottom/app.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
 
 ## Left panel
 
-<PreviewIframe src="./stories/left/story.html" />
-
-:::details Code
-
-<SimpleTabs :items="['app.twig', 'app.js']">
-  <template #content-1>
-
-<<< ./stories/left/app.twig
-
-  </template>
-  <template #content-2>
-
-<<< ./stories/app.js
-
-  </template>
-</SimpleTabs>
-
-:::
+<PreviewPlayground
+  :html="() => import('./stories/left/app.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />

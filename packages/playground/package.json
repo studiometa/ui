@@ -2,21 +2,13 @@
   "name": "@studiometa/ui-playground",
   "version": "0.2.40",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "meta dev",
     "watch": "meta watch",
     "build": "meta build"
   },
-  "devDependencies": {
-    "@studiometa/webpack-config": "^5.2.3",
-    "@studiometa/webpack-config-preset-prototyping": "^5.2.3",
-    "monaco-editor-webpack-plugin": "^7.1.0",
-    "patch-package": "^8.0.0"
-  },
   "dependencies": {
-    "@studiometa/js-toolkit": "^2.11.2",
-    "emmet-monaco-es": "^5.3.0",
-    "fflate": "^0.8.1",
-    "monaco-editor": "^0.44.0"
+    "@studiometa/playground": "^0.0.3"
   }
 }

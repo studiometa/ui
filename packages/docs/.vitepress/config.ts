@@ -1,7 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { basename, dirname, resolve, join } from 'node:path';
 import { defineConfig } from 'vitepress';
-import { withLeadingSlash, withTrailingSlash, withLeadingCharacters } from '@studiometa/js-toolkit/utils';
+import {
+  withLeadingSlash,
+  withTrailingSlash,
+  withLeadingCharacters,
+} from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
 
 const pkg = JSON.parse(
@@ -30,15 +34,15 @@ export default defineConfig({
       items.push({
         url: 'play',
         changefreq: 'monthly',
-        priority: 0.8
+        priority: 0.8,
       });
 
       // Add base URL
-      return items.map(item => ({
+      return items.map((item) => ({
         ...item,
-        url: withLeadingCharacters(item.url, '-/')
+        url: withLeadingCharacters(item.url, '-/'),
       }));
-    }
+    },
   },
   themeConfig: {
     version: pkg.version,
@@ -65,7 +69,8 @@ export default defineConfig({
       },
       {
         text: 'Playground',
-        link: 'https://ui.studiometa.dev/play/',
+        link: '/play/',
+        target: '_blank',
       },
       {
         text: `v${pkg.version}`,
@@ -87,6 +92,7 @@ function getGuideSidebar() {
         { text: 'Concepts', link: '/guide/concepts/' },
         { text: 'Installation', link: '/guide/installation/' },
         { text: 'Usage', link: '/guide/usage/' },
+        { text: 'Contributing', link: '/guide/contributing/' },
       ],
     },
     {

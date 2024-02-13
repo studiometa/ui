@@ -45,18 +45,4 @@ Heads up to [ui.studiometa.dev](https://ui.studiometa.dev) for more informations
 
 ## Contributing
 
-Clone the project and install the required dependencies. The back-end can be run with [ddev](https://github.com/drud/ddev) which is preconfigured.
-
-```bash
-git clone https://github.com:studiometa/ui.git
-cd ui/
-
-# Install root dependencies
-npm install
-ddev start
-
-# Launch the dev environment
-npm run docs:dev
-```
-
-You can also [open the repository in GitPod](https://gitpod.io/#https://github.com/studiometa/ui) and start the dev environment there.
+Please read the [contribution docs](https://ui.studiometa.dev/-/guide/contributing/).
