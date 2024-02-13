@@ -2,7 +2,7 @@
   import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
   import { withBase, useData } from 'vitepress';
   import { isFunction, isString } from '@studiometa/js-toolkit/utils';
-  import { zip } from '@studiometa/ui-shared';
+  import { zip } from '@studiometa/playground/dist/lib/utils/zip.js';
   import Loader from './Loader.vue';
   import ControlButton from './PreviewControlButton.vue';
 

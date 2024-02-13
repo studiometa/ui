@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-docs",
-  "version": "0.2.41",
+  "version": "0.2.42",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "@iconify-json/octicon": "^1.1.49",
+    "@studiometa/playground": "^0.0.3",
     "@studiometa/tailwind-config": "^1.1.0",
     "@studiometa/ui-shared": "*",
     "autoprefixer": "^10.4.16",
