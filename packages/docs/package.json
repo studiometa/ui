@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "npm run build --workspace=@studiometa/ui-playground",
     "dev": "vitepress dev .",
+    "prebuild": "npm run build --workspace=@studiometa/ui-playground",
     "build": "vitepress build ."
   },
   "dependencies": {

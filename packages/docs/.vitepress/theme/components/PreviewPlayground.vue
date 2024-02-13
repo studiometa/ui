@@ -1,43 +1,58 @@
 <script setup lang="ts">
   import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
   import { withBase, useData } from 'vitepress';
-  import { isFunction } from '@studiometa/js-toolkit/utils';
+  import { isFunction, isString } from '@studiometa/js-toolkit/utils';
   import { zip } from '@studiometa/ui-shared';
   import Loader from './Loader.vue';
   import ControlButton from './PreviewControlButton.vue';
   import useObserver from '../composables/useObserver.js';
 
   const props = defineProps({
-    scriptImporter: Function,
-    htmlImporter: Function,
+    script: [String, Function],
+    html: [String, Function],
+    css: [String, Function],
     height: {
       type: String,
       default: '60vh',
     },
     zoom: {
-      type: [Number,String],
+      type: [Number, String],
       default: 1,
     },
     noControls: Boolean,
   });
 
-
   const { isDark } = useData();
 
   const script = ref('');
-  if (isFunction(props.scriptImporter)) {
-    props.scriptImporter().then(mod => {
+  if (isFunction(props.script)) {
+    props.script().then((mod) => {
       script.value = zip(mod.default);
     });
+  } else if (isString(props.script)) {
+    script.value = zip(props.script);
   }
+
   const html = ref('');
-  if (isFunction(props.htmlImporter)) {
-    props.htmlImporter().then(mod => {
+  if (isFunction(props.html)) {
+    props.html().then((mod) => {
       html.value = zip(mod.default);
     });
+  } else if (isString(props.html)) {
+    html.value = zip(props.html);
   }
+
+  const css = ref('');
+  if (isFunction(props.css)) {
+    props.css().then((mod) => {
+      css.value = zip(mod.default);
+    });
+  } else if (isString(props.css)) {
+    css.value = zip(props.css);
+  }
+
   const src = computed(() => {
-    const url = new URL('https://ui.studiometa.dev/play/');
+    const url = new URL(import.meta.env.DEV ? '/-/play/index.html' : '/-/play/', 'http://localhost');
     if (html.value) {
       url.searchParams.set('html', html.value);
       url.searchParams.set('html-editor', 'true');
@@ -52,9 +67,21 @@
       url.searchParams.set('script-editor', 'false');
     }
 
+    if (css.value) {
+      url.searchParams.set('style', css.value);
+      url.searchParams.set('style-editor', 'true');
+    } else {
+      url.searchParams.set('style-editor', 'false');
+    }
+
     url.searchParams.set('theme', isDark.value ? 'dark' : 'light');
 
-    return url.toString();
+    const newUrl = new URL(url);
+    // Move URL search params to hash
+    newUrl.hash = newUrl.searchParams.toString();
+    newUrl.search = '';
+
+    return newUrl.toString().replace(newUrl.origin, '');
   });
 
   const isLoading = ref(true);
@@ -62,6 +89,11 @@
   const scale = ref(Number(props.zoom));
   const iframeKey = ref(script.value + html.value);
   const withControls = computed(() => !props.noControls);
+
+  watch(isDark, (newValue) => {
+    const theme = newValue ? 'dark' : 'light';
+    iframe.value.contentDocument.querySelector(`#theme-${theme}`)?.click();
+  })
 
   function reloadIframe() {
     isLoading.value = true;
@@ -83,18 +115,20 @@
 
 <template>
   <div class="story">
-    <div class="z-above relative my-4 bg-vp-bg-soft ring ring-vp-c-divider-light ring-inset rounded-lg overflow-hidden resize-x"
-      :style="{ height }">
+    <div
+      class="z-above relative my-4 bg-vp-bg-soft ring-2 ring-vp-c-gutter rounded-md overflow-hidden resize-x"
+      :style="{ height }"
+    >
       <div class="z-above absolute flex gap-1 top-0 left-0 p-2">
         <slot name="controls-top-left" />
       </div>
       <div v-if="withControls" class="z-above absolute flex gap-1 bottom-0 left-0 p-2">
         <slot name="controls-top-right" />
-        <ControlButton @click="setIframeZoom(scale * 1.1);" title="Zoom in">
+        <ControlButton @click="setIframeZoom(scale * 1.1)" title="Zoom in">
           <span class="sr-only">Zoom in</span>
           <i-octicon-plus-circle-16 class="block w-4 h-4" />
         </ControlButton>
-        <ControlButton @click="setIframeZoom(scale * 0.9);" title="Zoom out">
+        <ControlButton @click="setIframeZoom(scale * 0.9)" title="Zoom out">
           <span class="sr-only">Zoom out</span>
           <svg
             width="16"
@@ -127,7 +161,7 @@
         ref="iframe"
         :key="iframeKey"
         @load="onLoad"
-        class="block border-0 transform origin-top-left  duration-300"
+        class="block border-0 transform origin-top-left duration-300"
         :class="{ 'opacity-0': isLoading }"
         :src="src"
         width="100%"

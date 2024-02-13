@@ -1,5 +1,3 @@
-import { isDev } from '@studiometa/js-toolkit/utils';
-
 /** @type {Map<string, string>} */
 const cache = new Map();
 
@@ -20,7 +18,8 @@ export default async function twigLoader(content) {
   }
 
   controller = new AbortController();
-  const url = isDev ? 'https://ui.ddev.site/api' : '/api';
+  /** @type {string} */
+  const url = window.location.hostname === 'localhost' ? 'https://ui.ddev.site/api' : '/api';
 
   return fetch(url, {
     method: 'POST',

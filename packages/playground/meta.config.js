@@ -48,7 +48,7 @@ createApp(App);`,
     }),
   ],
   webpackProd(config) {
-    config.output.publicPath = '/play-assets/';
-    config.output.path = resolve('../docs/.symfony/public/play-assets/');
+    config.output.publicPath = '/-/play/';
+    config.output.path = resolve('../docs/public/play/');
   },
 });
