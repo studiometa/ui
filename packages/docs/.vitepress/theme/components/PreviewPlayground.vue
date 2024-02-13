@@ -17,7 +17,7 @@
     },
     zoom: {
       type: [Number, String],
-      default: 1,
+      default: 0.9,
     },
     noControls: Boolean,
   });

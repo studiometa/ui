@@ -6,8 +6,8 @@ title: Modal examples
 
 ## Simple
 
-<PreviewPlayground :html-importer="() => import('./stories/simple/app.twig')" :script-importer="() => import('./stories/simple/app.js?raw')"/>
+<PreviewPlayground :html="() => import('./stories/simple/app.twig')" :script="() => import('./stories/simple/app.js?raw')"/>
 
 ## With transition
 
-<PreviewPlayground :html-importer="() => import('./stories/simple/app.twig')" :script-importer="() => import('./stories/transition/app.js?raw')"/>
+<PreviewPlayground :html="() => import('./stories/simple/app.twig')" :script="() => import('./stories/transition/app.js?raw')"/>

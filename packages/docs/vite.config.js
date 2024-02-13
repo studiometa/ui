@@ -1,7 +1,5 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { defineConfig } from 'vite';
-import { writeFileSync } from 'node:fs';
-import { resolve, join } from 'node:path';
 import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import Components from 'unplugin-vue-components/vite';
@@ -48,15 +46,10 @@ const config = defineConfig({
     include: ['deepmerge'],
     exclude: ['@studiometa/ui', '@studiometa/js-toolkit'],
   },
-  resolve: {
-    alias: {
-      './VPNavBarTitle.vue': resolve('.vitepress/theme/components/NavBarTitle.vue'),
-      './VPSidebarLink.vue': resolve('.vitepress/theme/components/SidebarLink.vue'),
-    },
-  },
 });
 
 if (process.env.NODE_ENV === 'development') {
+  // eslint-disable-next-line no-undef
   globalThis.__DEV__ = true;
   config.define = { __DEV__: true };
 }
