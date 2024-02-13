@@ -69,7 +69,6 @@ export class Panel<T extends BaseProps = BaseProps> extends Modal<T & PanelProps
 
   /**
    * Animate before opening.
-   *
    * @this {PanelInterface}
    * @returns {Promise<void>}
    */
@@ -100,7 +99,6 @@ export class Panel<T extends BaseProps = BaseProps> extends Modal<T & PanelProps
 
   /**
    * Animate before closing.
-   *
    * @this {PanelInterface}
    * @returns {Promise<void>}
    */

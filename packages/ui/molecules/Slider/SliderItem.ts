@@ -100,7 +100,6 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
 
   /**
    * Ticked hook.
-   *
    * @todo create AbstractSliderItem with `render` method
    * @todo add state to SliderItem
    * @todo add origin to SliderItem
@@ -170,7 +169,6 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
 
   /**
    * Check if SliderItem is fully visible for the given target position.
-   *
    * @param   {number} targetPosition
    * @returns {boolean}
    */

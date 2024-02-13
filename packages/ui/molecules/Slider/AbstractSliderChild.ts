@@ -52,7 +52,6 @@ export class AbstractSliderChild<T extends BaseProps = BaseProps>
 
   /**
    * Dispatch event.
-   *
    * @param   {CustomEvent} event
    * @returns {void}
    */

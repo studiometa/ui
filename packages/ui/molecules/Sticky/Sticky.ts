@@ -3,13 +3,13 @@ import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { Sentinel } from '../../primitives/index.js';
 
 /**
- * @typedef {Object} StickyRefs
+ * @typedef {object} StickyRefs
  * @property {HTMLElement} inner
  * @property {HTMLElement} sentinelRef
  */
 
 /**
- * @typedef {Object} StickyPrivateInterface
+ * @typedef {object} StickyPrivateInterface
  * @property {StickyRefs} $refs
  * @property {{ zIndex: number, hideWhenUp: boolean, hideWhenDown: boolean }} $options
  * @property {{ Sentinel: Sentinel[] }} $children
@@ -125,7 +125,6 @@ export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProp
 
   /**
    * Listen to the sentinel's `intersected` event to set the `isSticky` value.
-   *
    * @param   {IntersectionObserverEntry[]} entries
    * @returns {void}
    */
@@ -182,7 +181,6 @@ export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProp
 
   /**
    * Set the component's position.
-   *
    * @param   {number} [index] The instance index in all the pages' instances.
    * @returns {void}
    */

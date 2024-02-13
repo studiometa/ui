@@ -113,7 +113,6 @@ export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps>
 
   /**
    * Close the modal on click on the `overlay` ref.
-   *
    * @returns {Function} The component's `close` method.
    */
   get onOverlayClick() {
