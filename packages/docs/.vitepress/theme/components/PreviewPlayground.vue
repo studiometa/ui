@@ -56,7 +56,6 @@
     css.value = zip(props.css);
   }
 
-  console.log({ cssEditor: props.cssEditor })
   const src = computed(() => {
     const url = new URL(import.meta.env.DEV ? '/-/play/index.html' : '/-/play/', 'http://localhost');
 
