@@ -9,9 +9,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 final class ApiController extends AbstractController
 {
-    /**
-     * @Route("/api", name="api", methods={"GET","POST"})
-     */
+    #[Route('/api', methods: ['GET', 'POST'], name: 'api')]
     public function index(Request $request): Response
     {
         $query = $request->query;
@@ -35,9 +33,7 @@ final class ApiController extends AbstractController
         return $this->render($query->get('path'), $query->all());
     }
 
-    /**
-     * @Route("/api/source", name="api-source", methods={"GET"})
-     */
+    #[Route('/api/source', methods: ['GET'], name: 'api-source')]
     public function source(Request $request): Response
     {
         $query = $request->query;

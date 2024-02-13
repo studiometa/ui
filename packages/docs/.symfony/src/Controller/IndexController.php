@@ -9,9 +9,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 final class IndexController extends AbstractController
 {
-    /**
-     * @Route("/", methods={"GET"})
-     */
+    #[Route('/', methods: ['GET'])]
     public function index(): Response
     {
         return $this->redirect('/-/', 301);

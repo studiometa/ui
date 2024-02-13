@@ -20,7 +20,8 @@ COPY packages/ui/ ./packages/ui/
 COPY --from=install /app/node_modules ./node_modules
 RUN npm run docs:build
 
-FROM webdevops/php-apache:8.1-alpine
+FROM webdevops/php-apache:8.3-alpine
+ENV COMPOSER_ALLOW_SUPERUSER=1
 WORKDIR /app
 COPY packages/docs/.symfony/ packages/docs/.symfony/
 COPY packages/ui/ packages/ui/
