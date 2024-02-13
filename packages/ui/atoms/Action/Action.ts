@@ -37,11 +37,15 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
    * On component click
    */
   onClick() {
-    const { target: name, method, selector } = this.$options;
+    const { target: componentNames, method, selector } = this.$options;
 
-    let targets = this.$root.$children[name] as Base[];
+    let targets = componentNames.includes(' ')
+      ? componentNames
+          .split(' ')
+          .flatMap((componentName) => this.$root.$children?.[componentName] as Base[])
+      : (this.$root.$children?.[componentNames] as Base[]);
 
-    if (!targets || targets.length <= 0) {
+    if (!targets.length) {
       return;
     }
 
@@ -49,12 +53,8 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
       targets = targets.filter((target) => target.$el.matches(selector));
     }
 
-    if (!targets || targets.length <= 0) {
-      return;
-    }
-
     targets.forEach((target) => {
-      if (!target[method]) {
+      if (!target || !target[method]) {
         return;
       }
 
