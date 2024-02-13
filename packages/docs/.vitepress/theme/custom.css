@@ -1,0 +1,11 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+.curtain {
+  display: none !important;
+}
+
+.VPHomeHero .text {
+  max-width: 12em;
+}

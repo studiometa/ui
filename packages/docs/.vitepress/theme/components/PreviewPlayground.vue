@@ -5,7 +5,6 @@
   import { zip } from '@studiometa/ui-shared';
   import Loader from './Loader.vue';
   import ControlButton from './PreviewControlButton.vue';
-  import useObserver from '../composables/useObserver.js';
 
   const props = defineProps({
     script: [String, Function],

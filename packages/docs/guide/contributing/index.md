@@ -37,8 +37,8 @@ You can also [open the repository in GitPod](https://gitpod.io/#https://github.c
 
 A component can either be a single TypeScript file, a single Twig template or for more complex features, a combination of both.
 
-::: tip 👍 Good practice
-As a general rule, take inspiration from existing components for new implementations.
+::: tip 💡 Pro tip
+Take inspiration from existing components for new implementations.
 :::
 
 ### TypeScript

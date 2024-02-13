@@ -7,8 +7,6 @@ export {}
 
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
-    IOcticonChevronDown16: typeof import('~icons/octicon/chevron-down16')['default']
-    IOcticonCode16: typeof import('~icons/octicon/code16')['default']
     IOcticonLinkExternal16: typeof import('~icons/octicon/link-external16')['default']
     IOcticonPlusCircle16: typeof import('~icons/octicon/plus-circle16')['default']
     IOcticonSync16: typeof import('~icons/octicon/sync16')['default']
