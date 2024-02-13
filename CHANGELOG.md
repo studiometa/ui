@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.42](https://github.com/studiometa/ui/compare/0.2.41..0.2.42) (2024-02-13)
+
+### Fixed
+
+- Fix the docs production build ([2676812](https://github.com/studiometa/ui/commit/2676812), [d29c08d](https://github.com/studiometa/ui/commit/d29c08d))
+- Fix the monaco-editor patch for Twig ([262754c](https://github.com/studiometa/ui/commit/262754c))
+
 ## [v0.2.41](https://github.com/studiometa/ui/compare/0.2.40..0.2.41) (2024-02-13)
 
 ### Changed

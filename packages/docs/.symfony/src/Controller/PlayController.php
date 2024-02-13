@@ -6,15 +6,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Spatie\Browsershot\Browsershot;
-use Symfony\Contracts\Cache\CacheInterface;
-use Psr\Cache\CacheItemInterface;
 
 final class PlayController extends AbstractController
 {
-    /**
-     * @Route("/play/", methods={"GET"})
-     */
+    #[Route('/play/', methods: ['GET'])]
     public function index(Request $request): Response
     {
         if ($query = $request->getQueryString()) {
@@ -24,9 +19,7 @@ final class PlayController extends AbstractController
         return $this->redirect("/-/play/{$query}", 301);
     }
 
-    /**
-     * @Route("/play/__preview", methods={"GET"})
-     */
+    #[Route('/play/__preview', methods: ['GET'])]
     public function preview(Request $request): Response
     {
         return $this->index($request);
