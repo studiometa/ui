@@ -9,6 +9,7 @@ title: Menu examples
 <PreviewPlayground
   :html="() => import('./stories/burger/app.twig')"
   :script="() => import('./stories/burger/app.js?raw')"
+  :css="() => import('./stories/burger/app.css?raw')"
   />
 
 ## Dropdown
@@ -32,4 +33,5 @@ Switch from a mega menu on desktop to a burger menu on mobile.
 <PreviewPlayground
   :html="() => import('./stories/mega-menu-responsive/app.twig')"
   :script="() => import('./stories/mega-menu-responsive/app.js?raw')"
+  :css="() => import('./stories/burger/app.css?raw')"
   />

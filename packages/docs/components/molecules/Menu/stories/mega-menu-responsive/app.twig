@@ -1,16 +1,11 @@
-<style>
-  a { color: inherit; text-decoration: none; } a:focus { z-index: 1; position:
-  relative; } ul { list-style-type: none; padding: 0; margin: 0; }
-</style>
-
 <nav data-component="Menu" data-breakpoint>
-  <div class="m:hidden px-10 py-20">
+  <div class="m:hidden p-10">
     {% include '@ui/atoms/Button/StyledButton.twig' with {
       label: 'Burger open',
       attr: { data_component: 'MenuBtn', data_option_mode: 'click' }
     } %}
   </div>
-  <div class="fixed m:relative inset-0 m:inset-auto w-full hidden m:block px-10 py-20 m:p-0 bg-gray-300"
+  <div class="fixed m:relative inset-0 m:inset-auto w-full hidden m:block p-10 m:p-0 bg-gray-300"
     data-component="MenuList"
     data-option-enter-from="hidden m:block"
     data-option-leave-to="hidden m:block">

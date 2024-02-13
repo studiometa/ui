@@ -1,10 +1,6 @@
-/* eslint-disable max-classes-per-file */
-import { withResponsiveOptions , Base, createApp } from '@studiometa/js-toolkit';
+import { withResponsiveOptions, Base, createApp } from '@studiometa/js-toolkit@2.11';
 import { Menu as MenuCore } from '@studiometa/ui';
 
-/**
- *
- */
 class Menu extends withResponsiveOptions(MenuCore) {
   static config = {
     ...MenuCore.config,
@@ -22,9 +18,6 @@ class Menu extends withResponsiveOptions(MenuCore) {
   };
 }
 
-/**
- *
- */
 class App extends Base {
   static config = {
     name: 'App',
@@ -34,4 +27,4 @@ class App extends Base {
   };
 }
 
-export default createApp(App, document.body);
+createApp(App, document.body);

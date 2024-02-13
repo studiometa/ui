@@ -1,18 +1,5 @@
-// eslint-disable-next-line max-classes-per-file
 import { Base, createApp } from '@studiometa/js-toolkit';
 import { Menu as MenuCore, MenuList as MenuListCore, MenuBtn } from '@studiometa/ui';
-
-/**
- * Menu class
- */
-class Menu extends MenuCore {
-  static config = {
-    name: 'Menu',
-    components: {
-      Menu,
-    },
-  };
-}
 
 /**
  * Menu List class
@@ -42,6 +29,20 @@ class MenuList extends MenuListCore {
 }
 
 /**
+ * Menu class
+ */
+class Menu extends MenuCore {
+  static config = {
+    name: 'Menu',
+    components: {
+      Menu,
+      MenuList,
+      MenuBtn,
+    },
+  };
+}
+
+/**
  * App class
  */
 class App extends Base {
@@ -49,8 +50,6 @@ class App extends Base {
     name: 'App',
     components: {
       Menu,
-      MenuList,
-      MenuBtn,
     },
   };
 }
