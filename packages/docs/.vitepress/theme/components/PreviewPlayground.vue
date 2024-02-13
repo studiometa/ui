@@ -24,7 +24,9 @@
 
   const { isDark } = useData();
 
-  const script = ref('');
+  const defaultContent = zip(' ');
+
+  const script = ref(defaultContent);
   if (isFunction(props.script)) {
     props.script().then((mod) => {
       script.value = zip(mod.default);
@@ -33,7 +35,7 @@
     script.value = zip(props.script);
   }
 
-  const html = ref('');
+  const html = ref(defaultContent);
   if (isFunction(props.html)) {
     props.html().then((mod) => {
       html.value = zip(mod.default);
@@ -42,7 +44,7 @@
     html.value = zip(props.html);
   }
 
-  const css = ref('');
+  const css = ref(defaultContent);
   if (isFunction(props.css)) {
     props.css().then((mod) => {
       css.value = zip(mod.default);
@@ -53,26 +55,14 @@
 
   const src = computed(() => {
     const url = new URL(import.meta.env.DEV ? '/-/play/index.html' : '/-/play/', 'http://localhost');
-    if (html.value) {
-      url.searchParams.set('html', html.value);
-      url.searchParams.set('html-editor', 'true');
-    } else {
-      url.searchParams.set('html-editor', 'false');
-    }
 
-    if (script.value) {
-      url.searchParams.set('script', script.value);
-      url.searchParams.set('script-editor', 'true');
-    } else {
-      url.searchParams.set('script-editor', 'false');
-    }
+    url.searchParams.set('html', html.value);
+    url.searchParams.set('script', script.value);
+    url.searchParams.set('style', css.value);
 
-    if (css.value) {
-      url.searchParams.set('style', css.value);
-      url.searchParams.set('style-editor', 'true');
-    } else {
-      url.searchParams.set('style-editor', 'false');
-    }
+    url.searchParams.set('html-editor', html.value !== defaultContent ? 'true' : 'false');
+    url.searchParams.set('script-editor', script.value !== defaultContent ? 'true' : 'false');
+    url.searchParams.set('style-editor', css.value !== defaultContent ? 'true' : 'false');
 
     url.searchParams.set('theme', isDark.value ? 'dark' : 'light');
 
