@@ -1,0 +1,58 @@
+{% include '@ui/atoms/Button/StyledButton.twig' with {
+  label: 'Close Panel & Modal with [data-can-be-closed]',
+  attr: {
+    class: 'relative z-50',
+    data_component: 'Action',
+    data_option_on: 'click',
+    data_option_target: 'Modal Panel',
+    data_option_method: 'close',
+    data_option_selector: '[data-can-be-closed]',
+  }
+} %}
+
+<div class="w-full h-screen flex items-center justify-center p-10">
+  {% embed '@ui/molecules/Modal/StyledModal.twig' with {
+    attr: {
+      data_can_be_closed: true,
+    }
+  } %}
+    {% block content %}
+      <p>
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+        veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex <a href="#">
+          ea commodo consequat
+        </a>. Duis aute irure dolor in reprehenderit in voluptate velit esse
+        cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
+        cupidatat non proident, sunt in culpa qui officia deserunt mollit anim
+        id est laborum.
+      </p>
+    {% endblock %}
+  {% endembed %}
+  {% embed '@ui/molecules/Panel/StyledPanel.twig'
+    with {
+      attr: {
+        data_can_be_closed: true,
+      },
+      position: 'right',
+      wrapper_attr: { class: 'p-10' },
+      container_attr: { class: 'max-w-lg mb-auto rounded' },
+      content_attr: { class: 'p-4' }
+    }
+  %}
+    {% block content %}
+      <div class="mb-4">
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+        eiusmod.
+      </div>
+
+      {% include '@ui/atoms/Button/StyledButton.twig' with {
+        label: 'Ok',
+        attr: { data_ref: 'close[]' }
+      } %}
+    {% endblock %}
+    {% block close %}
+
+    {% endblock %}
+  {% endembed %}
+</div>
