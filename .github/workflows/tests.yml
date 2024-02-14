@@ -16,6 +16,20 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 20.11
+        cache: 'npm'
+    - name: Get npm cache directory
+      id: npm-cache-dir
+      shell: bash
+      run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+    - uses: actions/cache@v4
+      id: npm-cache
+      with:
+        path: |
+          ${{ steps.npm-cache-dir.outputs.dir }}
+          **/node_modules
+          .eslintcache
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: ${{ runner.os }}-node-
     - name: Install modules
       run: npm install
     - name: Build the package
@@ -28,6 +42,20 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 20.11
+        cache: 'npm'
+    - name: Get npm cache directory
+      id: npm-cache-dir
+      shell: bash
+      run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+    - uses: actions/cache@v4
+      id: npm-cache
+      with:
+        path: |
+          ${{ steps.npm-cache-dir.outputs.dir }}
+          **/node_modules
+          .eslintcache
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: ${{ runner.os }}-node-
     - name: Install modules
       run: npm install
     - name: Build the package
@@ -69,6 +97,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   Playground-Build:
     runs-on: macos-latest
@@ -77,6 +107,20 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 20.11
+        cache: 'npm'
+    - name: Get npm cache directory
+      id: npm-cache-dir
+      shell: bash
+      run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+    - uses: actions/cache@v4
+      id: npm-cache
+      with:
+        path: |
+          ${{ steps.npm-cache-dir.outputs.dir }}
+          **/node_modules
+          .eslintcache
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: ${{ runner.os }}-node-
     - name: Install modules
       run: npm install
     - name: Build the package
@@ -89,6 +133,20 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 20.11
+        cache: 'npm'
+    - name: Get npm cache directory
+      id: npm-cache-dir
+      shell: bash
+      run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+    - uses: actions/cache@v4
+      id: npm-cache
+      with:
+        path: |
+          ${{ steps.npm-cache-dir.outputs.dir }}
+          **/node_modules
+          .eslintcache
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: ${{ runner.os }}-node-
     - name: Install modules
       run: npm install
     - name: Run code quality tests
@@ -103,6 +161,20 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 20.11
+        cache: 'npm'
+    - name: Get npm cache directory
+      id: npm-cache-dir
+      shell: bash
+      run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+    - uses: actions/cache@v4
+      id: npm-cache
+      with:
+        path: |
+          ${{ steps.npm-cache-dir.outputs.dir }}
+          **/node_modules
+          .eslintcache
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: ${{ runner.os }}-node-
     - name: Install modules
       run: npm install
     - name: Run tests
