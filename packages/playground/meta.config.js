@@ -1,5 +1,7 @@
 import { resolve } from 'node:path';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
+import CopyPlugin from 'copy-webpack-plugin';
+import esbuild from 'esbuild';
 
 export default defineWebpackConfig({
   presets: [
@@ -21,7 +23,9 @@ export default defineWebpackConfig({
         html: resolve('./lib/twig-loader.js'),
       },
       importMap: {
-        '@studiometa/': 'https://cdn.skypack.dev/@studiometa/',
+        '@studiometa/js-toolkit/utils': '/-/play/static/js-toolkit-utils.js',
+        '@studiometa/js-toolkit': '/-/play/static/js-toolkit.js',
+        '@studiometa/ui': '/-/play/static/ui.js',
       },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
@@ -47,8 +51,36 @@ createApp(App);`,
       },
     }),
   ],
-  webpackProd(config) {
+  webpack(config) {
     config.output.publicPath = '/-/play/';
     config.output.path = resolve('../docs/public/play/');
+
+    config.plugins.push(
+      new CopyPlugin({
+        patterns: [
+          {
+            from: './static/*.js',
+            to: config.output.path,
+            info: { minimized: true },
+            async transform(content, filename) {
+              const result = await esbuild.build({
+                bundle: true,
+                target: 'es2020',
+                write: false,
+                format: 'esm',
+                sourcemap: true,
+                minify: false,
+                stdin: {
+                  contents: content,
+                  sourcefile: filename,
+                  resolveDir: config.context,
+                },
+              });
+              return result.outputFiles.at(0).text;
+            },
+          },
+        ],
+      }),
+    );
   },
 });
