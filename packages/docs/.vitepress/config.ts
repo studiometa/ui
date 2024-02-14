@@ -13,6 +13,7 @@ const pkg = JSON.parse(
 );
 
 export default defineConfig({
+  ignoreDeadLinks: 'localhostLinks',
   lang: 'en-US',
   title: '@studiometa/ui',
   description: 'A feature-rich library of primitives and components built with ♥️ by Studio Meta',

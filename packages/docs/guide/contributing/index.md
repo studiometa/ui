@@ -23,13 +23,23 @@ Clone the project and install the required dependencies. The back-end can be run
 git clone https://github.com:studiometa/ui.git
 cd ui/
 
-# Install root dependencies
+# Install NPM dependencies
 npm install
 ddev start
 
 # Launch the dev environment
 npm run docs:dev
 ```
+
+You will then be able to open the documentation development URL [localhost:5173/-/](http://localhost:5173/-/) in your browser.
+
+The TypeScript files from the `@studiometa/ui` packages can be imported in the playground by using a ESM import statement:
+
+```js
+import { Figure } from '@studiometa/ui';
+```
+
+While in dev mode, the source TypeScript files will be automatically rebuild on change and made available to the playground at [localhost:5173/-/play/index.html](http://localhost:5173/-/play/index.html).
 
 You can also [open the repository in GitPod](https://gitpod.io/#https://github.com/studiometa/ui) and start the dev environment there.
 

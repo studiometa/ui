@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-playground",
-  "version": "0.2.42",
+  "version": "0.2.43",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,7 @@
     "build": "meta build"
   },
   "dependencies": {
-    "@studiometa/playground": "^0.0.3"
+    "@studiometa/playground": "^0.0.3",
+    "copy-webpack-plugin": "^12.0.2"
   }
 }
