@@ -1,4 +1,4 @@
-import { resolve } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
 import CopyPlugin from 'copy-webpack-plugin';
 import esbuild from 'esbuild';
@@ -25,7 +25,8 @@ export default defineWebpackConfig({
       importMap: {
         '@studiometa/js-toolkit/utils': '/-/play/static/js-toolkit-utils.js',
         '@studiometa/js-toolkit': '/-/play/static/js-toolkit.js',
-        '@studiometa/ui': '/-/play/static/ui.js',
+        '@studiometa/ui': '/-/play/static/ui/index.js',
+        deepmerge: '/-/play/static/deepmerge.js',
       },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
@@ -62,7 +63,8 @@ createApp(App);`,
             from: './static/*.js',
             to: config.output.path,
             info: { minimized: true },
-            async transform(content, filename) {
+            transform: {
+              async transformer(content, filename) {
               const result = await esbuild.build({
                 bundle: true,
                 target: 'es2020',
@@ -70,6 +72,9 @@ createApp(App);`,
                 format: 'esm',
                 sourcemap: true,
                 minify: false,
+                loader: {
+                  '.ts': 'ts',
+                },
                 stdin: {
                   contents: content,
                   sourcefile: filename,
@@ -77,6 +82,33 @@ createApp(App);`,
                 },
               });
               return result.outputFiles.at(0).text;
+              },
+              cache: true,
+            },
+          },
+          {
+            from: '../ui/**/*.ts',
+            to: join(config.output.path, 'static/ui/[path][name].js'),
+            toType: 'template',
+            info: { minimized: true },
+            transform: {
+              async transformer(content, filename) {
+                const result = await esbuild.build({
+                  target: 'es2020',
+                  write: false,
+                  format: 'esm',
+                  sourcemap: true,
+                  minify: false,
+                  stdin: {
+                    contents: content,
+                    sourcefile: filename,
+                    resolveDir: dirname(filename),
+                    loader: 'ts',
+                  },
+                });
+                return result.outputFiles.at(0).text;
+              },
+              cache: true,
             },
           },
         ],
