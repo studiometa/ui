@@ -1,4 +1,4 @@
-name: Tests
+name: Build
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
 
-  Code-Quality:
+  Build:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
@@ -32,12 +32,10 @@ jobs:
         restore-keys: ${{ runner.os }}-node-
     - name: Install modules
       run: npm install --no-audit --no-fund
-    - name: Run code quality tests
-      run: npm run lint:eslint -- --format=compact
-    - name: Run types tests
-      run: npm run lint:types
+    - name: Build the package
+      run: npm run build
 
-  Unit:
+  Docs-Build:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
@@ -60,29 +58,6 @@ jobs:
         restore-keys: ${{ runner.os }}-node-
     - name: Install modules
       run: npm install --no-audit --no-fund
-    - name: Run tests
-      run: npm run test -- -- --coverage --runInBand --ci || npm run test -- -- --coverage --runInBand --ci
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        directory: ./packages/coverage
-        flags: unittests
-        fail_ci_if_error: false
-        path_to_write_report: ./codecov_report.txt
-        verbose: true
+    - name: Build the package
+      run: npm run docs:build
 
-  Export-Size:
-    runs-on: macos-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: '0'
-      - uses: titouanmathis/export-size-action@main
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          build_script: npm run build-for-export-size
-          paths: dist
-          bundler: esbuild
-          node-version: '18'
