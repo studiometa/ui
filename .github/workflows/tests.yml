@@ -82,6 +82,7 @@ jobs:
 
   Export-Size:
     runs-on: macos-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v2
         with:
