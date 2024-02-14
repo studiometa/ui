@@ -65,23 +65,23 @@ createApp(App);`,
             info: { minimized: true },
             transform: {
               async transformer(content, filename) {
-              const result = await esbuild.build({
-                bundle: true,
-                target: 'es2020',
-                write: false,
-                format: 'esm',
-                sourcemap: true,
-                minify: false,
-                loader: {
-                  '.ts': 'ts',
-                },
-                stdin: {
-                  contents: content,
-                  sourcefile: filename,
-                  resolveDir: config.context,
-                },
-              });
-              return result.outputFiles.at(0).text;
+                const result = await esbuild.build({
+                  bundle: true,
+                  target: 'es2020',
+                  write: false,
+                  format: 'esm',
+                  sourcemap: true,
+                  minify: false,
+                  loader: {
+                    '.ts': 'ts',
+                  },
+                  stdin: {
+                    contents: content,
+                    sourcefile: filename,
+                    resolveDir: config.context,
+                  },
+                });
+                return result.outputFiles.at(0).text;
               },
               cache: true,
             },

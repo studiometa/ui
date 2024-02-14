@@ -35,6 +35,13 @@ const config = defineConfig({
     Icons({ autoInstall: true }),
   ],
   server: {
+    proxy: {
+      '/api': {
+        target: 'https://ui.ddev.site',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
     watch: {
       ignored: ['!**/node_modules/@studiometa/ui/**', '!**/node_modules/@studiometa/js-toolkit/**'],
     },
