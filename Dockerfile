@@ -20,8 +20,7 @@ COPY packages/ui/ ./packages/ui/
 COPY --from=install /app/node_modules ./node_modules
 RUN npm run docs:build
 
-FROM webdevops/php-apache:8.3-alpine
-ENV COMPOSER_ALLOW_SUPERUSER=1
+FROM serversideup/php:beta-8.3-fpm-apache
 WORKDIR /app
 COPY packages/docs/.symfony/ packages/docs/.symfony/
 COPY packages/ui/ packages/ui/
@@ -30,5 +29,5 @@ RUN composer install -d packages/docs/.symfony
 RUN echo "APP_ENV=prod" > packages/docs/.symfony/.env.local
 RUN echo "Header set Access-Control-Allow-Origin: https://ui-playground.pages.dev" >> packages/docs/.symfony/public/.htaccess
 COPY --from=docs_builder /app/packages/docs/.symfony/public/-/ packages/docs/.symfony/public/-/
-RUN chown -R application:application packages/docs/.symfony
-ENV WEB_DOCUMENT_ROOT="/app/packages/docs/.symfony/public/"
+RUN chown -R www-data:www-data packages/docs/.symfony
+ENV APACHE_DOCUMENT_ROOT="/app/packages/docs/.symfony/public/"
