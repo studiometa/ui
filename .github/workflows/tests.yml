@@ -100,32 +100,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  Playground-Build:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 20.11
-        cache: 'npm'
-    - name: Get npm cache directory
-      id: npm-cache-dir
-      shell: bash
-      run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
-    - uses: actions/cache@v4
-      id: npm-cache
-      with:
-        path: |
-          ${{ steps.npm-cache-dir.outputs.dir }}
-          **/node_modules
-          .eslintcache
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: ${{ runner.os }}-node-
-    - name: Install modules
-      run: npm install --no-audit --no-fund
-    - name: Build the package
-      run: npm run play:build
-
   Code-Quality:
     runs-on: macos-latest
     steps:
