@@ -9,12 +9,27 @@ jobs:
   release:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v4
         with:
           node-version: 20.11
           registry-url: https://registry.npmjs.org/
+
+      - name: Get npm cache directory
+        id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+
+      - uses: actions/cache@v4
+        id: npm-cache
+        with:
+          path: |
+            ${{ steps.npm-cache-dir.outputs.dir }}
+            **/node_modules
+            .eslintcache
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
 
       - run: npm i
 
@@ -24,7 +39,7 @@ jobs:
         run: npm run test -- -- --coverage || npm run test -- -- --coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage

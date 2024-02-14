@@ -12,8 +12,8 @@ jobs:
   Build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 20.11
         cache: 'npm'
@@ -38,8 +38,8 @@ jobs:
   Docs-Build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 20.11
         cache: 'npm'
@@ -103,8 +103,8 @@ jobs:
   Playground-Build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 20.11
         cache: 'npm'
@@ -129,8 +129,8 @@ jobs:
   Code-Quality:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 20.11
         cache: 'npm'
@@ -157,8 +157,8 @@ jobs:
   Unit:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 20.11
         cache: 'npm'
@@ -193,7 +193,7 @@ jobs:
     runs-on: macos-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: '0'
       - uses: titouanmathis/export-size-action@main
