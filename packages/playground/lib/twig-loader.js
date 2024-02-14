@@ -18,10 +18,8 @@ export default async function twigLoader(content) {
   }
 
   controller = new AbortController();
-  /** @type {string} */
-  const url = window.location.hostname === 'localhost' ? 'https://ui.ddev.site/api' : '/api';
 
-  return fetch(url, {
+  return fetch('/api', {
     method: 'POST',
     body: content,
     signal: controller.signal,
