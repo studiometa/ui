@@ -31,7 +31,7 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
   /**
    * Run method on targeted components
    */
-  doAction() {
+  handleEvent() {
     const { target: componentNames, method, selector } = this.$options;
 
     let targets = componentNames.includes(' ')
@@ -40,7 +40,7 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
           .flatMap((componentName) => this.$root.$children?.[componentName] as Base[])
       : (this.$root.$children?.[componentNames] as Base[]);
 
-    if (!targets.length) {
+    if (!targets || !targets.length) {
       return;
     }
 
@@ -68,13 +68,13 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
       return;
     }
 
-    this.$el.addEventListener(eventName, this.doAction.bind(this));
+    this.$el.addEventListener(eventName, this);
   }
 
   /**
    * Destroyed
    */
   destroyed() {
-    this.$el.removeEventListener(this.$options.on, this.doAction);
+    this.$el.removeEventListener(this.$options.on, this);
   }
 }

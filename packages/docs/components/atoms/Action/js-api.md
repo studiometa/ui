@@ -4,8 +4,6 @@ title: Action JS API
 
 # JS API
 
-The `Action` component extends the [`Base` class](https://js-toolkit.studiometa.dev/api/configuration.html). It inherits it respective API, so make sure to take a look at it.
-
 ## Options
 
 ### `on`
