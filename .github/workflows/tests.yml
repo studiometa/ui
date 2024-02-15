@@ -61,7 +61,7 @@ jobs:
     - name: Install modules
       run: npm install --no-audit --no-fund
     - name: Run tests
-      run: npm run test -- -- --coverage --runInBand --ci || npm run test -- -- --coverage --runInBand --ci
+      run: npm run test -- -- --coverage
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:

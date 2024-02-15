@@ -1,5 +1,5 @@
-import { jest } from '@jest/globals';
-import { nextFrame } from '@studiometa/js-toolkit/utils';
+import { describe, test as it, expect, beforeEach, beforeAll, afterAll, jest } from 'bun:test';
+import { nextFrame, wait } from '@studiometa/js-toolkit/utils';
 import { Modal } from '@studiometa/ui';
 import template from './Modal.template.html';
 
@@ -15,7 +15,7 @@ afterAll(() => {
 describe('The Modal component', () => {
   let modal;
 
-  beforeAll(() => {
+  beforeEach(() => {
     document.body.innerHTML = template;
     modal = new Modal(document.body.firstElementChild).$mount();
   });
@@ -46,7 +46,7 @@ describe('The Modal component', () => {
   it('should update refs classes and styles when opening and closing.', async () => {
     await modal.open();
     await nextFrame();
-    expect(modal.$refs.modal.getAttribute('style')).toBe('');
+    expect(modal.$refs.modal.getAttribute('style')).toBeFalsy();
     await modal.close();
     await nextFrame();
     expect(modal.$refs.modal.getAttribute('style')).toBe(
@@ -64,6 +64,7 @@ describe('The Modal component', () => {
 
   it('should trap the focus when open.', async () => {
     const tabKeydown = new KeyboardEvent('keydown', { keyCode: 9, bubbles: true });
+    tabKeydown.keyCode = 9;
     const closeButton = modal.$refs.modal.querySelector('[data-ref="close[]"]');
     const openButton = modal.$el.querySelector('[data-ref="open[]"]');
     openButton.focus();
@@ -73,6 +74,7 @@ describe('The Modal component', () => {
 
     await modal.open();
     document.dispatchEvent(tabKeydown);
+    await wait();
     expect(closeButton.focus).toHaveBeenCalledTimes(1);
     expect(openButton.focus).toHaveBeenCalledTimes(0);
     document.dispatchEvent(tabKeydown);
@@ -94,7 +96,8 @@ describe('The Modal component', () => {
   });
 
   it('should close when pressing the escape key.', async () => {
-    const escapeKeyup = new KeyboardEvent('keyup', { keyCode: 27 });
+    const escapeKeyup = new KeyboardEvent('keyup');
+    escapeKeyup.keyCode = 27
     await modal.open();
     expect(modal.isOpen).toBe(true);
     document.dispatchEvent(escapeKeyup);
@@ -131,7 +134,7 @@ describe('The Modal component', () => {
 describe('The Modal component with the `move` option', () => {
   let modal;
 
-  beforeAll(() => {
+  beforeEach(() => {
     document.body.innerHTML = `${template}<div id="target"></div>`;
     document.body.firstElementChild.setAttribute('data-option-move', '#target');
     modal = new Modal(document.body.firstElementChild).$mount();

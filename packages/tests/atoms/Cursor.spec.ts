@@ -1,6 +1,6 @@
-import { jest } from '@jest/globals';
+import { test as it, expect, describe, jest, beforeEach, afterEach } from 'bun:test';
 import { Cursor } from '@studiometa/ui';
-import wait from '../__utils__/wait.js';
+import { wait } from '@studiometa/js-toolkit/utils';
 
 /**
  * @typedef {import('@studiometa/ui/Cursor/Cursor.js').CursorInterface} CursorInterface

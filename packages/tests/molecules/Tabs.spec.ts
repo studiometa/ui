@@ -1,6 +1,6 @@
-import { jest } from '@jest/globals';
+import { describe, test as it, expect, beforeEach, jest } from 'bun:test';
 import { Tabs } from '@studiometa/ui';
-import wait from '@studiometa/ui-tests/__utils__/wait';
+import { wait } from '@studiometa/js-toolkit/utils';
 import template from './Tabs.template.html';
 
 describe('The Tabs component', () => {
@@ -60,10 +60,10 @@ describe('The Tabs component', () => {
     await tabs.enableItem(tabs.items[1]);
     await tabs.disableItem(tabs.items[0]);
     expect(tabs.$refs.btn[1].getAttribute('style')).toBe('border-bottom-color: #fff;');
-    expect(tabs.$refs.content[1].getAttribute('style')).toBe('');
+    expect(tabs.$refs.content[1].getAttribute('style')).toBeFalsy();
     await tabs.enableItem(tabs.items[2]);
     await tabs.disableItem(tabs.items[1]);
-    expect(tabs.$refs.btn[1].getAttribute('style')).toBe('');
+    expect(tabs.$refs.btn[1].getAttribute('style')).toBeFalsy();
     expect(tabs.$refs.content[1].getAttribute('style')).toBe(
       'position: absolute; opacity: 0; pointer-events: none; visibility: hidden;'
     );
