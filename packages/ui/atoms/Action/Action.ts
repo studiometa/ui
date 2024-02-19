@@ -41,6 +41,7 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
       : (this.$root.$children?.[componentNames] as Base[]);
 
     if (!targets || !targets.length) {
+      this.$warn('Target not found.');
       return;
     }
 
@@ -48,8 +49,14 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
       targets = targets.filter((target) => target.$el.matches(selector));
     }
 
+    if (!targets || !targets.length) {
+      this.$warn(`Target with selector "${selector}" not found.`);
+      return;
+    }
+
     targets.forEach((target) => {
       if (!isFunction(target[method])) {
+        this.$warn(`Method "${method}()" not found on target.`, target);
         return;
       }
 
@@ -64,6 +71,7 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
     const { on: eventName, target, method } = this.$options;
 
     if (!target || !method || target.length <= 0 || method.length <= 0) {
+      this.$warn('No target or method specified.');
       this.$terminate();
       return;
     }
