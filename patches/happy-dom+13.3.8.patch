@@ -1,0 +1,13 @@
+diff --git a/node_modules/happy-dom/lib/event/EventTarget.js b/node_modules/happy-dom/lib/event/EventTarget.js
+index 77f63fb..e2e2d98 100644
+--- a/node_modules/happy-dom/lib/event/EventTarget.js
++++ b/node_modules/happy-dom/lib/event/EventTarget.js
+@@ -156,7 +156,7 @@ class EventTarget {
+                     !browserSettings?.disableErrorCapturing &&
+                     browserSettings?.errorCapture === BrowserErrorCaptureEnum.tryAndCatch) {
+                     if (listener.handleEvent) {
+-                        WindowErrorUtility.captureError(window, listener.handleEvent.bind(this, event));
++                        WindowErrorUtility.captureError(window, listener.handleEvent.bind(listener, event));
+                     }
+                     else {
+                         WindowErrorUtility.captureError(window, listener.bind(this, event));
