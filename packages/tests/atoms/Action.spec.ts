@@ -1,4 +1,4 @@
-import { it, jest } from '@jest/globals';
+import { describe, it, expect, mock, beforeEach } from 'bun:test';
 import { Base } from '@studiometa/js-toolkit';
 import { Action as ActionCore } from '@studiometa/ui';
 
@@ -8,7 +8,7 @@ class Action extends ActionCore {
     warn: true,
   };
 
-  static warnFn = jest.fn();
+  static warnFn = mock();
 
   $warn(...args) {
     Action.warnFn();
@@ -21,7 +21,7 @@ class Foo extends Base {
     name: 'Foo',
   };
 
-  static fn = jest.fn();
+  static fn = mock();
 
   fn() {
     Foo.fn();
@@ -33,7 +33,7 @@ class Bar extends Base {
     name: 'Bar',
   };
 
-  static fn = jest.fn();
+  static fn = mock();
 
   fn() {
     Bar.fn();
