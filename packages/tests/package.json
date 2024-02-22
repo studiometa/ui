@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^13.3.8",
+    "@types/bun": "^1.0.5",
     "bun": "^1.0.26",
     "happy-dom": "^13.3.8"
   }
