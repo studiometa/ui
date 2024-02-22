@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Improve the DX of the documentation and playground ([#167](https://github.com/studiometa/ui/pull/167))
 
+### Added
+
+- Add the **Action** atom ([#161](https://github.com/studiometa/ui/issues/161), [#165](https://github.com/studiometa/ui/pull/165))
+
 ## [v0.2.42](https://github.com/studiometa/ui/compare/0.2.41..0.2.42) (2024-02-13)
 
 ### Fixed
