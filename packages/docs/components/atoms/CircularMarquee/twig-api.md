@@ -33,6 +33,12 @@ The radius of the text in the `<svg>`. Must be smaller than `outer_radius`.
 
 The text to insert inside the CircularMarquee
 
+### `content_attr`
+
+- Type: `array`
+
+Custom attributes for the content element.
+
 ### `sensitivity`
 
 - Type: `Number`
