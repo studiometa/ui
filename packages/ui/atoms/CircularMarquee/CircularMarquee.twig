@@ -1,0 +1,55 @@
+{#
+/**
+ * @file
+ * Circular Marquee
+ *
+ * @param {String} id - *required
+ * @param {Number} outer_radius
+ * @param {Number} radius
+ * @param {Number} cx
+ * @param {Number} cy
+ * @param {String} content
+ * @param {Object} content_attr
+ * @param {Number} sensitivity
+ */
+#}
+
+{# Outer radius is svg size radius #}
+{% set outer_radius = outer_radius|default(250) %}
+{% set outer_diameter = outer_radius * 2 %}
+
+{# Inner radius is the circle size inside the svg (need to be smaller to not cut text with svg viewbox) #}
+{% set radius = radius|default(220) %}
+{% set diameter = radius * 2 %}
+{% set cx = cx|default(radius) %}
+{% set cy = cy|default(radius) %}
+{% set perimeter = 3.1413 * diameter %}
+
+{% set first = 'M ' ~ (outer_radius - cx) ~ ',' ~ outer_radius %}
+{% set second = 'a ' ~ radius ~ ',' ~ radius ~ ' 0 1,1 ' ~ diameter ~ ',0' %}
+{% set third = 'a ' ~ radius ~ ',' ~ radius ~ ' 0 1,1 -' ~ diameter ~ ',0' %}
+{% set d = [first, second, third]|join(' ') %}
+
+{% set default_content_attributes = { 'xlink:href': '#' ~ id } %}
+{% set content_attributes =
+  merge_html_attributes(default_content_attributes, content_attr|default({}))
+%}
+
+<div data-component="CircularMarquee"
+  {{ html_attributes({ data_option_sensitivity: sensitivity }) }}>
+  <svg aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 {{ outer_diameter }} {{ outer_diameter }}"
+    width="{{ outer_diameter }}"
+    height="{{ outer_diameter }}"
+    class="z-default relative left-1/2 -translate-x-1/2">
+    <defs>
+      <path d="{{ d }}" id="{{ id }}" />
+    </defs>
+    <text dy="0" textLength="{{ perimeter }}">
+      <textPath {{ html_attributes(content_attributes) }}>
+        {{ content|raw }}
+      </textPath>
+    </text>
+  </svg>
+</div>

@@ -1,0 +1,42 @@
+---
+title: CircularMarquee Twig API
+outline: deep
+---
+
+# Twig API
+
+## Parameters
+
+### `id`
+
+- Type: `string`
+
+The Marquee id's. Mandatory to have it unique, as it is used inside the `<svg>` tag to make a reference
+
+### `outer_radius`
+
+- Type: `Number`
+- Defaults: `250`
+
+The outer radius of the `<svg>`. Must be gretter than `radius`.
+
+### `radius`
+
+- Type: `Number`
+- Defaults: `220`
+
+The radius of the text in the `<svg>`. Must be smaller than `outer_radius`.
+
+### `content`
+
+- Type: `String`
+
+The text to insert inside the CircularMarquee
+
+### `sensitivity`
+
+- Type: `Number`
+- Defaults: `0.1`
+
+The sensitivity of the CircularMarquee, that control the animation.
+Use a negative value to make it spin clockwise. The higher the value, the fatest the animation will be.
