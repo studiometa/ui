@@ -5,9 +5,6 @@ export interface CircularMarqueeProps extends BaseProps {
   $options: {
     sensitivity: number;
   };
-  rotate: number;
-  deltaY: number;
-  transform: object;
 }
 
 /**
