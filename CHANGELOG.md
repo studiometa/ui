@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.44](https://github.com/studiometa/ui/compare/0.2.43..0.2.44) (2024-02-29)
+
 ### Added
 
 - Add the **CircularMarquee** atom ([#171](https://github.com/studiometa/ui/pull/171))
