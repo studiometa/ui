@@ -19,7 +19,7 @@ Use this component to create CircularMarquee, a spinning on scroll circular text
 
 ## Usage
 
-Once the [package installed](/guide/installation/), simply include the template in your project:
+Once the [package installed](/guide/installation/), simply include the Twig template and load the JavaScript component in your project:
 
 ```twig
 {% include '@ui-pkg/atoms/CircularMarquee/CircularMarquee.twig' with {
