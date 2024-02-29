@@ -22,7 +22,7 @@
 
 :::tip Why is there two radius parameters ?
 - `outer_radius` set the size of the **svg viewbox**. `radius` set the size of the `<path>` on which the circular text will be written.
-- `outer_radius` needs be greater is order to **avoid cutting** the text since the `<svg>` will always hide the overflowing content.
+- `outer_radius` needs to be greater in order to **avoid cutting** the text since the `<svg>` will always hide the overflowing content.
 :::
 
 <PreviewPlayground
