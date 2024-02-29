@@ -1,4 +1,6 @@
+export * from './Action/index.js';
 export * from './AnchorScrollTo/index.js';
+export * from './CircularMarquee/index.js';
 export * from './Cursor/index.js';
 export * from './Figure/index.js';
 export * from './LargeText/index.js';

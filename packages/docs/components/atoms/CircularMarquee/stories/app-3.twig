@@ -1,0 +1,17 @@
+<div class="flex items-center justify-center h-48">
+  Scroll down
+</div>
+<div class="h-screen overflow-hidden">
+  <div style="height: 400vh">
+    {% include '@ui/atoms/CircularMarquee/CircularMarquee.twig' with {
+      id: 'fraicheur',
+      sensitivity: - 1 * 0.3,
+      radius: 120,
+      outer_radius: 150,
+      content: ' Douceur • Fraîcheur • Douceur • Fraîcheur • Douceur • Fraîcheur • '
+    } only %}
+  </div>
+</div>
+<div class="flex items-center justify-center h-screen">
+  Scroll up
+</div>
