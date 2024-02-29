@@ -9,6 +9,7 @@ exports[`components exports 1`] = `
   "AccordionItem",
   "Action",
   "AnchorScrollTo",
+  "CircularMarquee",
   "Cursor",
   "Draggable",
   "Figure",
