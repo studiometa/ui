@@ -13,6 +13,7 @@ export interface FigureTwicpicsProps extends BaseProps {
     path: string;
     step: number;
     mode: string;
+    dpr: boolean;
   };
 }
 
@@ -52,8 +53,23 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
         type: String,
         default: 'cover',
       },
+      dpr: {
+        type: Boolean,
+        default: true,
+      },
     },
   };
+
+  devicePixelRatio = window.devicePixelRatio;
+
+  constructor() {
+    super();
+
+    // Disable Device Pixel Ratio
+    if (!this.$options.dpr) {
+      this.devicePixelRatio = 1;
+    }
+  }
 
   /**
    * Get the Twicpics path.
@@ -89,8 +105,13 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
       url.pathname = `/${this.path}${url.pathname}`;
     }
 
-    const width = normalizeSize(this, 'offsetWidth');
-    const height = normalizeSize(this, 'offsetHeight');
+    let width = normalizeSize(this, 'offsetWidth');
+    let height = normalizeSize(this, 'offsetHeight');
+
+    if (!this.isBot) {
+      width *= devicePixelRatio;
+      height *= devicePixelRatio;
+    }
 
     url.searchParams.set(
       'twic',
@@ -117,5 +138,12 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
    */
   onLoad() {
     // Do not terminate on image load as we need.
+  }
+
+  /**
+   * Determine if the user agent is a bot or not.
+   */
+  isBot() {
+    return /bot|crawl|slurp|spider/i.test(navigator.userAgent);
   }
 }
