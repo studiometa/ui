@@ -1,33 +1,19 @@
-image:
-  file: .gitpod.Dockerfile
-
 tasks:
   - init: |
-      composer install -d packages/docs/.symfony/
+      brew install ddev/ddev/ddev
+      nvm install 20
+      nvm use 20
       npm i --no-audit --no-fund
       npm run docs:build
+      ddev start
     command: |
       apachectl start
 
-# VScode xdebug extension
 vscode:
   extensions:
     - bmewburn.vscode-intelephense-client
     - mblode.twig-language-2
 
 ports:
-  - port: 8001
+  - port: 8080
     onOpen: open-preview
-
-github:
-  prebuilds:
-    # enable for the master/default branch (defaults to true)
-    master: true
-    # enable for pull requests coming from this repo (defaults to true)
-    pullRequests: true
-    # add a check to pull requests (defaults to true)
-    addCheck: true
-    # add a "Review in Gitpod" button to the pull request's description (defaults to false)
-    addBadge: true
-    # add a label once the prebuild is ready to pull requests (defaults to false)
-    addLabel: true
