@@ -27,6 +27,11 @@ function normalizeSize(that: FigureTwicpics, prop: string): number {
 }
 
 /**
+ * Determine if the user agent is a bot or not.
+ */
+const isBot = /bot|crawl|slurp|spider/i.test(navigator.userAgent);
+
+/**
  * Figure class.
  *
  * Manager lazyloading image sources.
@@ -60,17 +65,6 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
     },
   };
 
-  devicePixelRatio = window.devicePixelRatio;
-
-  constructor() {
-    super();
-
-    // Disable Device Pixel Ratio
-    if (!this.$options.dpr) {
-      this.devicePixelRatio = 1;
-    }
-  }
-
   /**
    * Get the Twicpics path.
    */
@@ -94,6 +88,18 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
   }
 
   /**
+   * Get the current device pixel ratio
+   * Returns 1 if user agent is considered as a bot.
+   */
+  get devicePixelRatio() {
+    if (!this.$options.dpr) {
+      return 1;
+    }
+
+    return window.devicePixelRatio;
+  }
+
+  /**
    * Format the source for Twicpics.
    */
   formatSrc(src: string): string {
@@ -108,9 +114,9 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
     let width = normalizeSize(this, 'offsetWidth');
     let height = normalizeSize(this, 'offsetHeight');
 
-    if (!this.isBot) {
-      width *= devicePixelRatio;
-      height *= devicePixelRatio;
+    if (!isBot) {
+      width *= this.devicePixelRatio;
+      height *= this.devicePixelRatio;
     }
 
     url.searchParams.set(
@@ -138,12 +144,5 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
    */
   onLoad() {
     // Do not terminate on image load as we need.
-  }
-
-  /**
-   * Determine if the user agent is a bot or not.
-   */
-  isBot() {
-    return /bot|crawl|slurp|spider/i.test(navigator.userAgent);
   }
 }
