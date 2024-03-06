@@ -1,13 +1,13 @@
+image:
+  file: .gitpod.Dockerfile
+
 tasks:
   - init: |
-      brew install ddev/ddev/ddev
-      nvm install 20
       nvm use 20
       npm i --no-audit --no-fund
       npm run docs:build
-      ddev start
     command: |
-      apachectl start
+      ddev start
 
 vscode:
   extensions:
