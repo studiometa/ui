@@ -90,9 +90,10 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
   /**
    * Get the current device pixel ratio
    * Returns 1 if user agent is considered as a bot.
+   * Returns 1 if disabled by the `data-option-no-dpr` attribute.
    */
   get devicePixelRatio() {
-    if (!this.$options.dpr) {
+    if (!this.$options.dpr || isBot) {
       return 1;
     }
 
@@ -111,13 +112,8 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
       url.pathname = `/${this.path}${url.pathname}`;
     }
 
-    let width = normalizeSize(this, 'offsetWidth');
-    let height = normalizeSize(this, 'offsetHeight');
-
-    if (!isBot) {
-      width *= this.devicePixelRatio;
-      height *= this.devicePixelRatio;
-    }
+    const width = normalizeSize(this, 'offsetWidth') * this.devicePixelRatio;
+    const height = normalizeSize(this, 'offsetHeight') * this.devicePixelRatio;
 
     url.searchParams.set(
       'twic',
