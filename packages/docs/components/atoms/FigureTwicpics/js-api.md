@@ -51,6 +51,13 @@ The mode used to resize and crop the image. It can be any key of the [transforma
 
 Use this option to disable the support of the Device Pixel Ratio (DPR) with `data-option-no-dpr` attribute.
 
+### `disable`
+
+- Type: `boolean`
+- Default: `false`
+
+Use this option to return the original src instead of the TwicPics src. Useful when testing in local or preproductions that does not have a TwicPics path configured.
+
 ## Getter
 
 ### `domain`

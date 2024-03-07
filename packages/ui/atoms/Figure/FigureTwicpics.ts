@@ -50,6 +50,7 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
       transform: String,
       domain: String,
       path: String,
+      disable: Boolean,
       step: {
         type: Number,
         default: 50,
@@ -81,10 +82,11 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
   }
 
   /**
-   * Get formattted original source.
+   * Get formatted original source.
+   * If `disable` option is `true` returns the original src.
    */
   get original() {
-    return this.formatSrc(super.original);
+    return this.$options.disable ? super.original : this.formatSrc(super.original);
   }
 
   /**
