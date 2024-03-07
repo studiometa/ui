@@ -1,0 +1,53 @@
+{#
+  /**
+   * Slider with CSS and JS native features:
+   * - CSS scroll snap
+   * - CSS pointer media query
+   * - JS scrollIntoView
+   *
+   * To-do:
+   * - [ ] Update index when scrolled horizontally on touch device
+   * - [ ] Implement bullets
+   * - [ ] Implement drag on non-touch devices
+   * - [ ] Create components for each part: Wrapper, Item, Prev, Next, etc.
+   */
+#}
+
+{% set colors = ['red', 'green', 'blue', 'purple'] %}
+{% set sizes = ['20', '30', '40'] %}
+<div class="flex items-center justify-center w-screen h-[50vh] text-center">
+  Scroll down <br />
+  ↓
+</div>
+<div data-ref="wrapper"
+  class="flex items-center gap-20 w-full p-20 overflow-x-hidden touch:overflow-x-auto snap-x snap-mandatory">
+  {% for i in 1..10 %}
+    {% set color = colors[loop.index0 % (colors|length)] %}
+    {% set width = sizes[loop.index0 % (sizes|length)] %}
+    {% set height = sizes[loop.index % (sizes|length)] %}
+    <div data-ref="items[]"
+      class="snap-center shrink-0 flex items-center justify-center w-[{{ width }}vw] h-[{{
+      height
+      }}vh] bg-{{ color }}-400 ring-inset ring-{{ color }}-600 text-white font-bold rounded-xl">
+      N°{{ i }}
+    </div>
+  {% endfor %}
+</div>
+<nav class="flex items-center justify-center p-10 gap-10">
+  {% include '@ui/atoms/Button/StyledButton.twig' with {
+    label: '← Prev',
+    attr: { data_ref: 'prev' }
+  } %}
+  {% include '@ui/atoms/Button/StyledButton.twig' with {
+    label: 'Next →',
+    attr: { data_ref: 'next' }
+  } %}
+</nav>
+<div class="flex items-center justify-center w-screen h-[50vh] text-center bg-clifford">
+  ↑ <br />
+  Scroll up
+</div>
+
+<style>
+  /* touch device */ @media (pointer: coarse) { .touch\:overflow-x-auto { overflow-x: auto; } }
+</style>
