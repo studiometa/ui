@@ -13,6 +13,7 @@ export interface FigureTwicpicsProps extends BaseProps {
     path: string;
     step: number;
     mode: string;
+    dpr: boolean;
   };
 }
 
@@ -24,6 +25,11 @@ function normalizeSize(that: FigureTwicpics, prop: string): number {
   const { step } = that.$options;
   return Math.ceil(that.$refs.img[prop] / step) * step;
 }
+
+/**
+ * Determine if the user agent is a bot or not.
+ */
+const isBot = /bot|crawl|slurp|spider/i.test(navigator.userAgent);
 
 /**
  * Figure class.
@@ -52,6 +58,10 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
         type: String,
         default: 'cover',
       },
+      dpr: {
+        type: Boolean,
+        default: true,
+      },
     },
   };
 
@@ -78,6 +88,19 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
   }
 
   /**
+   * Get the current device pixel ratio
+   * Returns 1 if user agent is considered as a bot.
+   * Returns 1 if disabled by the `data-option-no-dpr` attribute.
+   */
+  get devicePixelRatio() {
+    if (!this.$options.dpr || isBot) {
+      return 1;
+    }
+
+    return window.devicePixelRatio;
+  }
+
+  /**
    * Format the source for Twicpics.
    */
   formatSrc(src: string): string {
@@ -89,8 +112,8 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
       url.pathname = `/${this.path}${url.pathname}`;
     }
 
-    const width = normalizeSize(this, 'offsetWidth');
-    const height = normalizeSize(this, 'offsetHeight');
+    const width = normalizeSize(this, 'offsetWidth') * this.devicePixelRatio;
+    const height = normalizeSize(this, 'offsetHeight') * this.devicePixelRatio;
 
     url.searchParams.set(
       'twic',
