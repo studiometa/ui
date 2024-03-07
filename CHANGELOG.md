@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-- Add the **MapboxMapStatic** molecule ([#175](https://github.com/studiometa/ui/pull/175))
+- Add the **MapboxStaticMap** molecule ([#175](https://github.com/studiometa/ui/pull/175))
 
 ## [v0.2.44](https://github.com/studiometa/ui/compare/0.2.43..0.2.44) (2024-02-29)
 

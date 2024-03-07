@@ -1,5 +1,5 @@
 ---
-title: MapboxMapStatic Twig API
+title: MapboxStaticMap Twig API
 ---
 
 # Twig API

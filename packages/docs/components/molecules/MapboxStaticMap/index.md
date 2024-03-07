@@ -1,9 +1,9 @@
-# MapboxMapStatic <Badges :texts="badges" />
+# MapboxStaticMap <Badges :texts="badges" />
 
-The `MapboxMapStatic` component can be used to display custom maps anywhere, without having to load the full Mapbox GL JavaScript library. You can test all features from this API on the [static images API playground](https://docs.mapbox.com/playground/static/) from Mapbox.
+The `MapboxStaticMap` component can be used to display custom maps anywhere, without having to load the full Mapbox GL JavaScript library. You can test all features from this API on the [static images API playground](https://docs.mapbox.com/playground/static/) from Mapbox.
 
 <script setup>
-  import pkg from '@studiometa/ui/molecules/Mapbox/package.json';
+  import pkg from '@studiometa/ui/molecules/MapboxStaticMap/package.json';
 
   const badges = [`v${pkg.version}`, 'Twig', 'JS'];
 </script>
@@ -38,5 +38,5 @@ export default createApp(App);
   access_token: '<YOUR_MAPBOX_ACCESS_TOKEN>',
 } %}
 
-{% include '@ui/molecules/Mapbox/MapboxMapStatic.twig' with options %}
+{% include '@ui/molecules/MapboxStaticMap/MapboxStaticMap.twig' with options %}
 ```

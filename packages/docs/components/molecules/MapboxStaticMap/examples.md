@@ -1,5 +1,5 @@
 ---
-title: MapboxMapStatic examples
+title: MapboxStaticMap examples
 ---
 
 # Examples
