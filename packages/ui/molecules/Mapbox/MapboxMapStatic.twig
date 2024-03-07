@@ -28,6 +28,9 @@
  * @param string $overlay
  *   Add overlays/markers, must be a valid geojson object.
 *    see https://docs.mapbox.com/api/maps/static-images/#overlay-options
+ * @param string $marker
+ *   Add custom marker.
+*    see https://docs.mapbox.com/api/maps/static-images/#example-request-retrieve-a-static-map-with-a-custom-marker-overlay
  * @param number $bearing
  *   Rotation, between 0 and 360
  * @param number $pitch
@@ -48,9 +51,10 @@
 {% set username = username|default('mapbox') %}
 {% set style_id = style_id|default('streets-v12') %}
 {% set overlay = overlay|default({}) %}
+{% set marker = marker|default('') %}
 {% set lon = lon|default(0) %}
 {% set lat = lat|default(0) %}
-{% set zoom = zoom|default(1) %}
+{% set zoom = zoom|default(0) %}
 {% set bearing = bearing|default(0) %}
 {% set padding = padding|default(0) %}
 {% set pitch = pitch|default(0) %}
@@ -73,4 +77,4 @@
 {% endif %}
 
 
-{% set src = "https://api.mapbox.com/styles/v1/" ~ username ~ "/" ~ style_id ~ "/static/" ~ (overlay ? 'geojson(' ~ overlay|json_encode|url_encode ~ ')/' : '') ~ lon ~ "," ~ lat ~ "," ~ zoom ~ "," ~ bearing ~ "," ~ pitch ~ "/" ~ width ~ "x" ~ height ~ (is_hd ? '@2x' : '') ~ "?" ~ query_params|url_encode %}
+{% set src = "https://api.mapbox.com/styles/v1/" ~ username ~ "/" ~ style_id ~ "/static/" ~ (marker ? marker|url_encode ~ '/' : '') ~ (overlay ? 'geojson(' ~ overlay|json_encode|url_encode ~ ')/' : '') ~ lon ~ "," ~ lat ~ "," ~ zoom ~ "," ~ bearing ~ "," ~ pitch ~ "/" ~ width ~ "x" ~ height ~ (is_hd ? '@2x' : '') ~ "?" ~ query_params|url_encode %}
