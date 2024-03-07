@@ -8,7 +8,7 @@ tasks:
       npm i --no-audit --no-fund
       npm run docs:build
     command: |
-      ddev start
+      ddev start -y
 
 vscode:
   extensions:
