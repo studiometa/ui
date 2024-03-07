@@ -46,6 +46,7 @@ export default defineConfig({
     },
   },
   themeConfig: {
+    outline: 'deep',
     version: pkg.version,
     repo: 'studiometa/ui',
     docsDir: 'packages/docs',
