@@ -1,0 +1,79 @@
+{#
+/**
+ * @file
+ * MapboxStaticMap component.
+ * Extends Figure component.
+ *
+ * @param array $attr
+ *   Use it to customize the root element attributes.
+ * @param string $alt
+ *   	The image alt.
+ * @param string $username
+ *   	The username of the account to which the style belongs.
+ * @param string $style_id
+ *   The ID of the style from which to create a static map.
+ * @param number $lon
+ *   Longitude for the center point of the static map; a number between -180 and 180.
+ * @param number $lat
+ *   Latitude for the center point of the static map; a number between -85.0511 and 85.0511.
+ * @param number $zoom
+ *   Zoom level; a number between 0 and 22. Fractional zoom levels will be rounded to two decimal places.
+ * @param number $width
+ *   Width of the image; a number between 1 and 1280 pixels.
+ * @param number $height
+ *   Height of the image; a number between 1 and 1280 pixels.
+ *
+ * - Optional parameters
+ *
+ * @param string $overlay
+ *   Add overlays/markers, must be a valid geojson object.
+*    see https://docs.mapbox.com/api/maps/static-images/#overlay-options
+ * @param string $marker
+ *   Add custom marker.
+*    see https://docs.mapbox.com/api/maps/static-images/#example-request-retrieve-a-static-map-with-a-custom-marker-overlay
+ * @param number $bearing
+ *   Rotation, between 0 and 360
+ * @param number $pitch
+ *   Pitch tilts the map, between 0 and 60
+ * @param string $is_hd
+ *   Renders at @2x scale, default: true
+ * @param boolean $attribution
+ *   Whether there is attribution on the image, if false read: https://docs.mapbox.com/help/getting-started/attribution/#static--print, default: true
+ * @param boolean $logo
+ *   Whether there is a Mapbox logo, defaults: true
+ *
+ */
+#}
+
+{% extends '@ui-pkg/atoms/Figure/Figure.twig' %}
+
+{% set access_token = access_token|default('<MISSING_ACCESS_TOKEN>') %}
+{% set username = username|default('mapbox') %}
+{% set style_id = style_id|default('streets-v12') %}
+{% set overlay = overlay|default({}) %}
+{% set marker = marker|default('') %}
+{% set lon = lon|default(0) %}
+{% set lat = lat|default(0) %}
+{% set zoom = zoom|default(0) %}
+{% set bearing = bearing|default(0) %}
+{% set pitch = pitch|default(0) %}
+{% set is_hd = is_hd is defined and not is_hd ? false : true %}
+
+{% set query_params = {
+  access_token: access_token,
+} %}
+
+{% if attribution is defined and not attribution %}
+  {% set query_params = query_params|merge({
+    attribution: 'false'
+  }) %}
+{% endif %}
+
+{% if logo is defined and not logo %}
+  {% set query_params = query_params|merge({
+    logo: 'false'
+  }) %}
+{% endif %}
+
+
+{% set src = "https://api.mapbox.com/styles/v1/" ~ username ~ "/" ~ style_id ~ "/static/" ~ (marker ? marker|url_encode ~ '/' : '') ~ (overlay ? 'geojson(' ~ overlay|json_encode|url_encode ~ ')/' : '') ~ lon ~ "," ~ lat ~ "," ~ zoom ~ "," ~ bearing ~ "," ~ pitch ~ "/" ~ width ~ "x" ~ height ~ (is_hd ? '@2x' : '') ~ "?" ~ query_params|url_encode %}
