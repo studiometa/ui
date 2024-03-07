@@ -5,7 +5,7 @@ The `MapboxStaticMap` component can be used to display custom maps anywhere, wit
 <script setup>
   import pkg from '@studiometa/ui/molecules/MapboxStaticMap/package.json';
 
-  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
+  const badges = [`v${pkg.version}`, 'Twig'];
 </script>
 
 ## Table of content
