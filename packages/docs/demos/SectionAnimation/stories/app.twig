@@ -1,0 +1,27 @@
+{% set list = [
+  { name: 'About', bg: 'green-400' },
+  { name: 'Team', bg: 'blue-400' },
+  { name: 'Project', bg: 'purple-400' },
+  { name: 'Contact', bg: 'green-400' },
+  { name: 'Title', bg: 'red-400' },
+  { name: 'Lorem ipsum', bg: 'cyan-400' }
+] %}
+
+{% for item in list %}
+  <section class="relative"
+    data-component="ScrollAnimationWithEase"
+    data-option-ease="outExpo"
+    data-option-play-range="[0,1]"
+    data-option-from="{{ { y: 0, rotate: - 6 }|json_encode }}"
+    data-option-to="{{ { y: - 230, rotate: 3 }|json_encode }}">
+    <div data-ref="target"
+      class="w-[150%] h-[65vh] absolute top-0 -left-56 bg-{{ item.bg }}"
+      style="transform: translateY(-0px) rotate(-6deg)"></div>
+
+    <div class="bg-{{ item.bg }} min-h-[100vh] grid content-center">
+      <h2 class="relative z-[1] text-6xl text-white text-center font-bold">
+        {{ item.name }}
+      </h2>
+    </div>
+  </section>
+{% endfor %}
