@@ -15,9 +15,7 @@
           class="z-[{{
           (slides|length)
             - loop.index
-          }}] absolute inset-0 flex items-center justify-center {{
-          width
-          }} h-[400px] bg-gray-200 overflow-hidden">
+          }}] absolute inset-0 flex items-center justify-center h-[400px] bg-gray-200 overflow-hidden">
           <a href="#item-{{ loop.index }}" data-ref="scale" class="absolute inset-0">
             {% include '@ui/atoms/Figure/Figure.twig' with {
               src: 'https://picsum.photos/800/600?rand=' ~ slide,
