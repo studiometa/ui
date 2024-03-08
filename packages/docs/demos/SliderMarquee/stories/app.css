@@ -1,0 +1,19 @@
+body {
+  height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+@keyframes marquee {
+  0% {
+      transform: translateX(0);
+  }
+
+  to {
+      transform: translateX(-100%);
+  }
+}
+
+.marquee {
+  animation: marquee 20s linear infinite;
+}

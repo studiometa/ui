@@ -70,6 +70,10 @@ export default defineConfig({
         link: '/components/',
       },
       {
+        text: 'Demos',
+        link: '/demos/',
+      },
+      {
         text: 'Playground',
         link: '/play/',
         target: '_blank',
@@ -82,6 +86,7 @@ export default defineConfig({
     sidebar: {
       '/components/': getComponentsSidebar(),
       '/': getGuideSidebar(),
+      '/demos/': getDemoSidebar(),
     },
   },
 });
@@ -148,6 +153,17 @@ function getComponentsSidebar() {
   ];
 }
 
+function getDemoSidebar() {
+  return [
+    {
+      text: 'Demos',
+      link: '/demos/',
+      items: generateSidebarLinksFromPath('demos/*/index.md', {
+        extractTitle: true,
+      }),
+    },
+  ]
+}
 function generateSidebarLinksFromPath(
   globs: string | string[],
   {
