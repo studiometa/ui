@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add the **MapboxStaticMap** molecule ([#175](https://github.com/studiometa/ui/pull/175))
 - **FigureTwicpics:** add `disable` option ([#176](https://github.com/studiometa/ui/pull/176))
 
+### Fixed
+
+- Add the Node.js version to the ddev config to avoid potential errors ([#179](https://github.com/studiometa/ui/pull/179))
+
 ## [v0.2.44](https://github.com/studiometa/ui/compare/0.2.43..0.2.44) (2024-02-29)
 
 ### Added
