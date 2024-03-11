@@ -7,7 +7,7 @@ export default defineWebpackConfig({
   presets: [
     playground({
       head: {
-        title: 'Playgound — @studiometa/ui',
+        title: 'Playground — @studiometa/ui',
       },
       header: {
         title: `
