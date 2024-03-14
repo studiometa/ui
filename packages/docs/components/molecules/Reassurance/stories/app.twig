@@ -24,10 +24,9 @@
 {% embed '@ui/molecules/Reassurance/Reassurance.twig' with {
   list: list,
 } %}
-
-{% block icon %}
-  <span class="w-12 mb-4 mx-auto block">
-    {{ list[loop.index0].icon|raw }}
-  </span>
-{% endblock %}
+  {% block icon %}
+    <span class="w-12 mb-4 mx-auto block">
+      {{ list[loop.index0].icon|raw }}
+    </span>
+  {% endblock %}
 {% endembed %}
