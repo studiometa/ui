@@ -18,7 +18,7 @@
 
 {% set section_attributes = merge_html_attributes(section_attr ?? null, { class: 'text-[0] pt-14 pb-6 text-center w-full' }) %}
 
-{% set title_attributes = merge_html_attributes(title ?? null, { class: 'text-xl mb-2' }) %}
+{% set title_attributes = merge_html_attributes(title_attr ?? null, { class: 'text-xl mb-2' }) %}
 
 {% set content_attributes = merge_html_attributes(content_attr ?? null, { class: 'text-sm text-black-50 mb-0' }) %}
 
@@ -52,7 +52,7 @@
         {% endif %}
       {% endblock %}
       {% block content %}
-        {% if content %}
+        {% if item.content %}
           <p {{ html_attributes(content_attributes) }}>
             {{ item.content|raw }}
           </p>
