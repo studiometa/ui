@@ -86,13 +86,10 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
   intersected([{ intersectionRatio, isIntersecting }]: IntersectionObserverEntry[]) {
     if (intersectionRatio >= 1) {
       this.$emit('is-fully-visible');
-      this.$el.setAttribute('aria-hidden', 'false');
     } else if (intersectionRatio > 0) {
       this.$emit('is-partially-visible');
-      this.$el.setAttribute('aria-hidden', 'true');
     } else {
       this.$emit('is-hidden');
-      this.$el.setAttribute('aria-hidden', 'true');
     }
 
     this.isVisible = isIntersecting;
