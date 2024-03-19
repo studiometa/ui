@@ -67,6 +67,13 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
   }
 
   /**
+   * Mounted hook
+   */
+  mounted() {
+    this.setAccessibilityAttributes();
+  }
+
+  /**
    * Update SliderItem bounding rectangle on resize.
    */
   resized() {
@@ -109,6 +116,15 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
     if (this.dampedX === this.x) {
       this.$services.disable('ticked');
     }
+  }
+
+  /**
+   * Set accessibility attributes for the component
+   */
+  setAccessibilityAttributes() {
+    this.$el.setAttribute('role', 'group');
+    this.$el.setAttribute('aria-roledescription', 'slide');
+    this.$el.setAttribute('aria-label', this.$id);
   }
 
   /**
