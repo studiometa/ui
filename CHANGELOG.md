@@ -8,12 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Add accessibility attributes to mounted hook for Slider & SliderItem components ([#136](https://github.com/studiometa/ui/pull/136))
 - Add a **Demo** section inside the documentation to provide **copy/paste** ready components and a collection of experiments ([#178](https://github.com/studiometa/ui/pull/178))
 - Add the **MapboxStaticMap** molecule ([#175](https://github.com/studiometa/ui/pull/175))
 - **FigureTwicpics:** add `disable` option ([#176](https://github.com/studiometa/ui/pull/176))
 
 ### Fixed
 
+- Fix accessibility issue for SliderItem, which had attribute aria-hidden="true" if out of view. This prevent screen readers to access further Slides. ([#136](https://github.com/studiometa/ui/pull/136))
 - Add the Node.js version to the ddev config to avoid potential errors ([#179](https://github.com/studiometa/ui/pull/179))
 
 ## [v0.2.44](https://github.com/studiometa/ui/compare/0.2.43..0.2.44) (2024-02-29)
