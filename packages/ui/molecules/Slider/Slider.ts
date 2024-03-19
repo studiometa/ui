@@ -239,6 +239,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
    */
   mounted() {
     this.states = this.getStates();
+    this.setAccessibilityAttributes();
     this.prepareInvisibleItems();
     this.goTo(this.currentIndex);
   }
@@ -254,6 +255,14 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
         this.goTo(this.currentIndex);
       });
     });
+  }
+
+  /**
+   * Set accessibility attributes for the component
+   */
+  setAccessibilityAttributes() {
+    this.$el.setAttribute('role', 'group');
+    this.$el.setAttribute('aria-roledescription', 'carousel');
   }
 
   /**
