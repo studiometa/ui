@@ -1,9 +1,16 @@
 import { Base } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+
+export interface StickyTableSectionProps extends BaseProps {
+  $refs: {
+    item: HTMLElement[];
+  };
+}
 
 /**
  * Manage a sticky table section.
  */
-export class StickyTableSection<T extends BaseProps = BaseProps> extends Base<T> {
+export class StickyTableSection extends Base<StickyTableSectionProps> {
   /**
    * Config.
    */
@@ -13,7 +20,7 @@ export class StickyTableSection<T extends BaseProps = BaseProps> extends Base<T>
     emits: ['is-intersected'],
   };
 
-  /** TODO use the withIntersectionObserver from js-toolkit */
+  /** TODO use the withIntersectionObserver from js-toolkit or with sentinel from ui */
   mounted() {
     const observer = new IntersectionObserver(this.checkIntersection.bind(this), {
       threshold: 0.8,
