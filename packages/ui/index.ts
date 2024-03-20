@@ -24,3 +24,4 @@ export * from './Slider/index.js';
 export * from './Sticky/index.js';
 export * from './Tabs/index.js';
 export * from './Transition/index.js';
+export * from './MapboxMap/index.js';
