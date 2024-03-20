@@ -33,9 +33,11 @@
     "morphdom": "^2.7.8"
   },
   "devDependencies": {
-    "@studiometa/js-toolkit": "3.4.3"
+    "@studiometa/js-toolkit": "3.4.3",
+    "mapbox-gl": "^3.13.0"
   },
   "peerDependencies": {
-    "@studiometa/js-toolkit": "^3.4.0"
+    "@studiometa/js-toolkit": "^3.4.0",
+    "mapbox-gl": "^3.13.0"
   }
 }
