@@ -1,6 +1,5 @@
-import { Base } from '@studiometa/js-toolkit';
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { scrollTo } from '@studiometa/js-toolkit/utils';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { AnchorScrollTo } from '../../atoms/AnchorScrollTo/AnchorScrollTo.js';
 
 export interface StickyTableItemProps extends BaseProps {
   $options: {
@@ -11,21 +10,12 @@ export interface StickyTableItemProps extends BaseProps {
 /**
  * Manage a slider item and its state transition.
  */
-export class StickyTableItem extends Base<StickyTableItemProps> {
+export class StickyTableItem extends AnchorScrollTo<StickyTableItemProps> {
   /**
    * Config.
    */
   static config: BaseConfig = {
+    ...AnchorScrollTo.config,
     name: 'StickyTableItem',
-    options: {
-      id: { type: String, default: 'id' },
-    },
   };
-
-  onClick() {
-    let sectionId = this.$options.id;
-    sectionId = `#${sectionId}`;
-    const section = document.querySelector(sectionId);
-    scrollTo(section);
-  }
 }

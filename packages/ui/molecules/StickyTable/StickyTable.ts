@@ -36,7 +36,7 @@ export class StickyTable<T extends BaseProps = BaseProps> extends Base<T & Stick
       document.querySelector('.current').classList.remove('current');
     }
     const currentStickyTableItem = this.$children.StickyTableItem.find(
-      (stickyTableItem) => stickyTableItem.$options.id === id,
+      (stickyTableItem) => stickyTableItem.targetSelector === id,
     );
     currentStickyTableItem.$el.classList.add('current');
   }
