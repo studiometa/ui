@@ -1,11 +1,17 @@
 import { Base } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { scrollTo } from '@studiometa/js-toolkit/utils';
 
+export interface StickyTableItemProps extends BaseProps {
+  $options: {
+    id: string;
+  };
+}
 
 /**
  * Manage a slider item and its state transition.
  */
-export class StickyTableItem<T extends BaseProps = BaseProps> extends Base<T & StickyTableProps> {
+export class StickyTableItem extends Base<StickyTableItemProps> {
   /**
    * Config.
    */

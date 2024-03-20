@@ -3,6 +3,7 @@ export * from './Accordion/AccordionItem.js';
 export * from './Menu/index.js';
 export * from './Slider/index.js';
 export * from './Sticky/Sticky.js';
+export * from './StickyTable/index.js';
 export * from './TableOfContent/index.js';
 export * from './Tabs/index.js';
 export * from './Modal/index.js';

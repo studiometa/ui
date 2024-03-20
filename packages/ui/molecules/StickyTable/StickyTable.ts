@@ -1,4 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import { StickyTableItem } from './StickyTableItem.js';
+import { StickyTableSection } from './StickyTableSection.js';
 
 /**
  * @typedef {object} StickyTableRefs
@@ -8,7 +11,7 @@ import { Base } from '@studiometa/js-toolkit';
 
 export interface StickyTableProps extends BaseProps {
   $children: {
-    StickyTableSummery: StickyTableSummery[];
+    StickyTableItem: StickyTableItem[];
     StickyTableSection: StickyTableSection[];
   };
 }
