@@ -1,5 +1,5 @@
 ---
-badges: [v0.0.0, JS, deprecated]
+badges: [JS, deprecated]
 ---
 
 # TableOfContent (todo) <Badges :texts="$frontmatter.badges" />

@@ -1,5 +1,5 @@
 ---
-badges: [v0.0.1, Twig]
+badges: [Twig]
 ---
 
 # MapboxStaticMap <Badges :texts="$frontmatter.badges" />

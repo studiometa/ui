@@ -1,5 +1,5 @@
 ---
-badges: [v0.1.0, Twig, JS]
+badges: [Twig, JS]
 ---
 
 # Modal (todo) <Badges :texts="$frontmatter.badges" />

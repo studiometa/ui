@@ -1,5 +1,5 @@
 ---
-badges: [v0.0.0, JS]
+badges: [JS]
 ---
 
 # Menu (todo) <Badges :texts="$frontmatter.badges" />

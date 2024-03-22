@@ -1,5 +1,5 @@
 ---
-badges: [v0.0.0, Twig, JS]
+badges: [Twig, JS]
 ---
 
 # Panel (todo) <Badges :texts="$frontmatter.badges" />

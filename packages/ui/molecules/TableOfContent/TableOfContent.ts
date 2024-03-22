@@ -1,7 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { TableOfContentAnchor } from './TableOfContentAnchor.js';
-import { withDeprecation } from '../../decorators/withDeprecated.js';
+import { withDeprecation } from '../../decorators/withDeprecation.js';
 
 export interface TableOfContentProps extends BaseProps {
   $refs: {

@@ -27,7 +27,7 @@ Components are grouped following the [Atomic Design principles](https://bradfros
 
 <template v-for="section in sections">
 
-  ## <a :href="withBase(section.href)">{{ section.title }}</a>
+## <a :href="withBase(section.href)">{{ section.title }}</a>
 
   <Suspense>
     <Toc :modules="section.components" />

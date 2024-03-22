@@ -1,8 +1,8 @@
 ---
-badges: [v0.1.0, Twig, JS]
+badges: [Twig, JS]
 ---
 
-# Accordion <Badges :texts="badges" />
+# Accordion <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 
