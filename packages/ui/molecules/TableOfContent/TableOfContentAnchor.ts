@@ -1,5 +1,6 @@
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { AnchorScrollTo } from '../../atoms/index.js';
+import { withDeprecation } from '../../decorators/withDeprecated.js';
 
 export interface TableOfContentAnchorProps extends BaseProps {
   $options: {
@@ -9,10 +10,11 @@ export interface TableOfContentAnchorProps extends BaseProps {
 
 /**
  * TableOfContentAnchor class.
+ * @deprecated
  */
-export class TableOfContentAnchor<T extends BaseProps = BaseProps> extends AnchorScrollTo<
-  T & TableOfContentAnchorProps
-> {
+export class TableOfContentAnchor<T extends BaseProps = BaseProps> extends withDeprecation(
+  AnchorScrollTo,
+)<T & TableOfContentAnchorProps> {
   /**
    * Config.
    */
