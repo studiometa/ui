@@ -1,5 +1,5 @@
 ---
-title: Reassurance Twig API
+title: Reinsurance Twig API
 ---
 
 # Twig API
@@ -10,7 +10,7 @@ title: Reassurance Twig API
 
 - Type: `array<{ title: string, content: string, icon: string }>`
 
-List of reassurance (max 4)
+List of reinsurance (max 4)
 
 ### `section_attr`
 

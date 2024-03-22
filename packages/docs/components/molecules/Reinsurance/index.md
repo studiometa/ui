@@ -1,7 +1,7 @@
-# Reassurance <Badges :texts="badges" />
+# Reinsurance <Badges :texts="badges" />
 
 <script setup>
-  import pkg from '@studiometa/ui/molecules/Reassurance/package.json';
+  import pkg from '@studiometa/ui/molecules/Reinsurance/package.json';
   const badges = [`v${pkg.version}`, 'Twig'];
 </script>
 

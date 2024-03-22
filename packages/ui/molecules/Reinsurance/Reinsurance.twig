@@ -1,7 +1,7 @@
 {#
 /**
  * @file
- * Reassurance
+ * Reinsurance
  *
  * @param {Object}  section_attr customize the section element.
  * @param {Object}  title_attr customize the title element
@@ -10,9 +10,9 @@
  * @param {Array}   mobile_classes adjust mobile scroll
  * @param {Array}   list list of reassurace
  * @param {String}  list.icon icon handle (svg)
- * @param {String}  list.title title of reassurance
+ * @param {String}  list.title title of reinsurance
  * @param {String}  list.content content for reassurace
- * 
+ *
  */
 #}
 
@@ -29,7 +29,7 @@
 {% if slider_mobile %}
   {% set mobile_classes = mobile_classes|default(['whitespace-nowrap overflow-scroll s:whitespace-normal s:overflow-auto']) %}
   {% set section_attributes = merge_html_attributes(
-  section_attr ?? null, 
+  section_attr ?? null,
   {
     class: section_attributes.class|merge(mobile_classes)|join(' ')
   }) %}

@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# Reassurance <Badges :texts="badges" />
+# Reinsurance <Badges :texts="badges" />
 
 ## 4 center items
 <PreviewPlayground
@@ -25,12 +25,12 @@ outline: deep
   />
 
 <script setup>
-  import pkg from '@studiometa/ui/molecules/Reassurance/package.json';
+  import pkg from '@studiometa/ui/molecules/Reinsurance/package.json';
 
   const badges = [`v${pkg.version}`, 'Twig'];
 </script>
 
-Use this component to create Reassurance. Horizontal list of elements with icons, title and content.
+Use this component to create Reinsurance. Horizontal list of elements with icons, title and content.
 
 ## Table of content
 
@@ -42,7 +42,7 @@ Use this component to create Reassurance. Horizontal list of elements with icons
 Once the [package installed](/guide/installation/), simply include the Twig template component in your project:
 
 ```twig
-{% include '@ui-pkg/molecules/Reassurance/Reassurance.twig' with {
+{% include '@ui-pkg/molecules/Reinsurance/Reinsurance.twig' with {
   list: list
 } only %}
 ```
