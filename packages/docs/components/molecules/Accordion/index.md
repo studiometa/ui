@@ -1,9 +1,8 @@
-# Accordion <Badges :texts="badges" />
+---
+badges: [Twig, JS]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/molecules/Accordion/package.json';
-  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
-</script>
+# Accordion <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

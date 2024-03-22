@@ -11,7 +11,10 @@
 <template>
   <ul v-for="link in links" :key="link.relativePath">
     <li>
-      <a :href="normalizeLink(link.relativePath)">{{ link.title }}</a>
+      <a :href="normalizeLink(link.relativePath)">
+        {{ link.title }}
+      </a>&nbsp;
+      <Badges v-if="link?.frontmatter?.badges" :texts="link.frontmatter.badges" />
     </li>
   </ul>
 </template>

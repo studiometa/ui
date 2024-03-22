@@ -1,5 +1,6 @@
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { AnchorScrollTo } from '../../atoms/index.js';
+import { withDeprecation } from '../../decorators/withDeprecation.js';
 
 export interface TableOfContentAnchorProps extends BaseProps {
   $options: {
@@ -9,10 +10,11 @@ export interface TableOfContentAnchorProps extends BaseProps {
 
 /**
  * TableOfContentAnchor class.
+ * @deprecated
  */
-export class TableOfContentAnchor<T extends BaseProps = BaseProps> extends AnchorScrollTo<
-  T & TableOfContentAnchorProps
-> {
+export class TableOfContentAnchor<T extends BaseProps = BaseProps> extends withDeprecation<AnchorScrollTo>(
+  AnchorScrollTo,
+)<T & TableOfContentAnchorProps> {
   /**
    * Config.
    */
@@ -52,7 +54,7 @@ export class TableOfContentAnchor<T extends BaseProps = BaseProps> extends Ancho
       const shouldActivate =
         entry.isIntersecting &&
         entry.boundingClientRect.y < 100 &&
-        entry.boundingClientRect.y > 100;
+        entry.boundingClientRect.y > -100;
       this.$el.classList.toggle(this.$options.activeClass, shouldActivate);
       this.$emit('should-activate', shouldActivate);
     });
