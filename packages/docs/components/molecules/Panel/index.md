@@ -1,9 +1,8 @@
-# Panel (todo) <Badges :texts="badges" />
+---
+badges: [Twig, JS]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/molecules/Panel/package.json';
-  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
-</script>
+# Panel (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

@@ -119,7 +119,6 @@
 
 <template>
   <UseElementVisibility v-slot="{ isVisible }">
-    <pre>{{ isVisible }}</pre>
     <div class="story">
       <div
         class="z-above relative my-4 bg-vp-bg-soft ring-2 ring-vp-c-gutter rounded-md overflow-hidden resize-x"

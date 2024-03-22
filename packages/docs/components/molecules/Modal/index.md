@@ -1,9 +1,8 @@
-# Modal (todo) <Badges :texts="badges" />
+---
+badges: [Twig, JS]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/molecules/Modal/package.json';
-  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
-</script>
+# Modal (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

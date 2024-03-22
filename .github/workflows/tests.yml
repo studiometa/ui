@@ -33,9 +33,11 @@ jobs:
     - name: Install modules
       run: npm install --no-audit --no-fund
     - name: Run code quality tests
-      run: npm run lint:eslint -- --format=compact
+      run: npm run lint:static
     - name: Run types tests
       run: npm run lint:types
+    - name: Run Prettier check
+      run: npm run lint:prettier
 
   Unit:
     runs-on: macos-latest

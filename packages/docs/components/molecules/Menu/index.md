@@ -1,9 +1,8 @@
-# Menu (todo) <Badges :texts="badges" />
+---
+badges: [JS]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/molecules/Menu/package.json';
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# Menu (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 
