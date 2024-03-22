@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.47](https://github.com/studiometa/ui/compare/0.2.46..0.2.47) (2024-03-22)
+
+### Added
+
+- Add a `withDeprecation` decorator ([40d2ffe](https://github.com/studiometa/ui/commits/40d2ffe))
+
+### Fixed
+
+- Update docs dependencies ([93a4aaf](https://github.com/studiometa/ui/commits/93a4aaf))
+- Update dependencies ([62f139d](https://github.com/studiometa/ui/commits/62f139d))
+- Remove a dumped variable from the doc ([0df567f](https://github.com/studiometa/ui/commits/0df567f))
+- Fix dependency installation ([c5c40ae](https://github.com/studiometa/ui/commits/c5c40ae))
+
+### Changed
+
+- Deprecate the `TableOfContent...` components ([2fcd95f](https://github.com/studiometa/ui/commits/2fcd95f))
+- Replace ESLint by oxlint ([e774114](https://github.com/studiometa/ui/commits/e774114))
+
 ## [v0.2.46](https://github.com/studiometa/ui/compare/0.2.45..0.2.46) (2024-03-22)
 
 ### Fixed
