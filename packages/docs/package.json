@@ -17,7 +17,6 @@
     "@iconify-json/octicon": "^1.1.49",
     "@studiometa/playground": "^0.0.3",
     "@studiometa/tailwind-config": "^1.1.0",
-    "@studiometa/ui-shared": "*",
     "@vueuse/components": "^10.9.0",
     "@vueuse/core": "^10.9.0",
     "autoprefixer": "^10.4.16",
