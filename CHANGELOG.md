@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.45](https://github.com/studiometa/ui/compare/0.2.44..0.2.45) (2024-03-22)
+
 ### Added
 
 - Add a **Demo** section inside the documentation to provide **copy/paste** ready components and a collection of experiments ([#178](https://github.com/studiometa/ui/pull/178))
