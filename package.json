@@ -14,9 +14,10 @@
     "build:pkg": "node scripts/build.mjs",
     "build:sizes": "node scripts/sizes.mjs",
     "build-for-export-size": "node scripts/update-exports-for-export-size.js && npm run build:pkg && npm run build:cp-files",
-    "lint": "npm run lint:eslint && npm run lint:types",
-    "lint:eslint": "eslint packages/ui packages/playground/lib/ packages/playground/*.js --cache",
+    "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
+    "lint:static": "oxlint",
     "lint:types": "tsc --build tsconfig.lint.json",
+    "lint:prettier": "prettier --check --cache packages/docs/**/*.md",
     "docs:dev": "npm run dev -w @studiometa/ui-docs",
     "docs:build": "npm run build -w @studiometa/ui-docs",
     "play:dev": "npm run dev -w @studiometa/ui-playground",
@@ -25,21 +26,15 @@
     "postinstall": "patch-package"
   },
   "devDependencies": {
-    "@studiometa/eslint-config": "^3.1.3",
-    "@studiometa/prettier-config": "^2.1.1",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
-    "esbuild": "^0.17.19",
-    "eslint": "^8.52.0",
-    "eslint-config-airbnb-typescript": "^17.1.0",
-    "eslint-plugin-jest": "^27.4.3",
-    "fast-glob": "^3.3.1",
+    "@studiometa/prettier-config": "^3.0.0",
+    "esbuild": "^0.20.2",
+    "fast-glob": "^3.3.2",
     "gzip-size": "^7.0.0",
+    "oxlint": "^0.2.14",
     "prettier": "^2.8.8",
-    "prettier-plugin-twig-melody": "^0.4.6",
-    "typescript": "^4.9.5"
+    "typescript": "^5.4.3"
   },
   "dependencies": {
-    "patch-package": "^6.5.1"
+    "patch-package": "^8.0.0"
   }
 }
