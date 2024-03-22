@@ -49,6 +49,7 @@ exports[`components exports 1`] = `
   "Transition",
   "animationScrollWithEase",
   "loadImage",
+  "withDeprecation",
   "withTransition",
 ]
 `;
