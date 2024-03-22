@@ -1,0 +1,63 @@
+{#
+/**
+ * @file
+ * Reinsurance
+ *
+ * @param {Object}  section_attr customize the section element.
+ * @param {Object}  title_attr customize the title element
+ * @param {Object}  content_attr customize the content element
+ * @param {Boolean} slider_mobile activate scroll on mobile
+ * @param {Array}   mobile_classes adjust mobile scroll
+ * @param {Array}   list list of reassurace
+ * @param {String}  list.icon icon handle (svg)
+ * @param {String}  list.title title of reinsurance
+ * @param {String}  list.content content for reassurace
+ *
+ */
+#}
+
+{% set section_attributes = merge_html_attributes(section_attr ?? null, { class: 'text-[0] pt-14 pb-6 text-center w-full' }) %}
+
+{% set title_attributes = merge_html_attributes(title_attr ?? null, { class: 'text-xl mb-2' }) %}
+
+{% set content_attributes = merge_html_attributes(content_attr ?? null, { class: 'text-sm text-black-50 mb-0' }) %}
+
+{% set item_attributes = merge_html_attributes(item_attr ?? null, { class: 'inline-block align-top mb-12 s:mb-8 px-3 w-56 whitespace-normal' }) %}
+
+{% set slider_mobile = slider_mobile|default(false) %}
+
+{% if slider_mobile %}
+  {% set mobile_classes = mobile_classes|default(['whitespace-nowrap overflow-scroll s:whitespace-normal s:overflow-auto']) %}
+  {% set section_attributes = merge_html_attributes(
+  section_attr ?? null,
+  {
+    class: section_attributes.class|merge(mobile_classes)|join(' ')
+  }) %}
+{% endif %}
+
+<section {{ html_attributes(section_attributes) }}>
+  {% for item in list %}
+    {% set icon_attributes = merge_html_attributes(icon_attr ?? null, { attr: { class: 'inline-block mb-2 s:mb-8' }, name: item.icon }) %}
+    <div {{ html_attributes(item_attributes) }}>
+      {% block icon %}
+        {% if icon %}
+          {% include '@ui/atoms/Icon/IconInlineImg.twig' with icon_attributes only %}
+        {% endif %}
+      {% endblock %}
+      {% block title %}
+        {% if item.title %}
+        <p {{ html_attributes(title_attributes) }}>
+          {{ item.title|raw }}
+        </p>
+        {% endif %}
+      {% endblock %}
+      {% block content %}
+        {% if item.content %}
+          <p {{ html_attributes(content_attributes) }}>
+            {{ item.content|raw }}
+          </p>
+        {% endif %}
+      {% endblock %}
+    </div>
+  {% endfor %}
+</section>
