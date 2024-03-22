@@ -21,7 +21,7 @@ describe('AccordionItem component', () => {
 
   class AccordionItemWithIcon extends AccordionItem {
     static config = {
-      ...(AccordionItem.config || {}),
+      ...AccordionItem.config,
       refs: [...AccordionItem.config.refs, 'icon'],
     };
   }
