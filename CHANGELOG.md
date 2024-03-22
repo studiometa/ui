@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add a **Demo** section inside the documentation to provide **copy/paste** ready components and a collection of experiments ([#178](https://github.com/studiometa/ui/pull/178))
 - Add the **MapboxStaticMap** molecule ([#175](https://github.com/studiometa/ui/pull/175))
 - **FigureTwicpics:** add `disable` option ([#176](https://github.com/studiometa/ui/pull/176))
+- **Demos:**
+  - Add a section with sticky cards and a 3D effect while scrolling ([#187](https://github.com/studiometa/ui/pull/187))
 
 ### Fixed
 
