@@ -49,7 +49,7 @@ Once the [package installed](/guide/installation/), simply include the Twig temp
 
 ## HTML Snippet
 
-```
+```twig
 <section class="text-[0] pt-14 pb-6 text-center w-full">
   {% for item in 0..4 %}
     <div class="inline-block align-top mb-12 s:mb-8 px-3 w-56 whitespace-normal">

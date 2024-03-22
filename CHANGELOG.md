@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.46](https://github.com/studiometa/ui/compare/0.2.45..0.2.46) (2024-03-22)
+
+### Fixed
+
+- Fix docs playground preview displaying nothing ([#189](https://github.com/studiometa/ui/pull/189), [fa59c05](https://github.com/studiometa/ui/commit/fa59c05))
+- Update doc with correct syntax highlighting ([#189](https://github.com/studiometa/ui/pull/189), [1154d19](https://github.com/studiometa/ui/commit/1154d19))
+
 ## [v0.2.45](https://github.com/studiometa/ui/compare/0.2.44..0.2.45) (2024-03-22)
 
 ### Added
