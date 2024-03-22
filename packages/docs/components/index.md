@@ -5,34 +5,32 @@
   const { theme: { value: {sidebar } } } = useData();
 
   const components = sidebar['/components/'];
+  const categories = import.meta.glob('./*/index.md', { eager: true });
+  const mod = import.meta.glob(`./*/*/index.md`, { eager: true });
+
+  const sections = Object.values(categories).map((md) => {
+    const { title, relativePath } = md.__pageData;
+    const sectionPath = relativePath.replace(/\/index\.md$/, '/');
+    const components = Object.fromEntries(Object.entries(mod).filter(([,{ __pageData }]) => {
+      return __pageData.filePath.startsWith(sectionPath)
+    }));
+
+    return {
+      title,
+      href: `/${sectionPath}`,
+      components,
+    }
+  });
 </script>
 
 Components are grouped following the [Atomic Design principles](https://bradfrost.com/blog/post/atomic-web-design/) with an extra `Primitives` group containing components that are not directly usable but should be used to create other components.
 
-<template v-for="type in components" :key="type.link">
-  <template v-if="type.text === 'Primitives'">
+<template v-for="section in sections">
 
-## Primitives
+  ## <a :href="withBase(section.href)">{{ section.title }}</a>
 
-  </template>
-  <template v-if="type.text === 'Atoms'">
+  <Suspense>
+    <Toc :modules="section.components" />
+  </Suspense>
 
-## Atoms
-
-  </template>
-  <template v-if="type.text === 'Molecules'">
-
-## Molecules
-
-  </template>
-  <template v-if="type.text === 'Organisms'">
-
-## Organisms
-
-  </template>
-  <ul v-if="type.items">
-    <li v-for="child in type.items" :key="child.link">
-      <a :href="withBase(child.link)">{{ child.text }}</a>
-    </li>
-  </ul>
 </template>

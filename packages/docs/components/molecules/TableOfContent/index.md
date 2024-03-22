@@ -1,10 +1,8 @@
-# TableOfContent (todo) <Badges :texts="badges" />
+---
+badges: [v0.0.0, JS, deprecated]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/molecules/TableOfContent/package.json';
-
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# TableOfContent (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 
