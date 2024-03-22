@@ -46,3 +46,5 @@ Heads up to [ui.studiometa.dev](https://ui.studiometa.dev) for more informations
 ## Contributing
 
 Please read the [contribution docs](https://ui.studiometa.dev/-/guide/contributing/).
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/studiometa/ui)

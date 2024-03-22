@@ -1,0 +1,40 @@
+<main
+  data-component="ScrollAnimationParent"
+  data-option-offset="start start / end end"
+  class="relative px-6">
+
+  <p class="absolute top-8 left-1/2 -translate-x-1/2 text-xl">Scroll ⇣</p>
+
+  {% set length = 3 %}
+
+  {% for card in 1..length %}
+    {% set card_loop = loop %}
+
+    {% set keyframes = [] %}
+    {% for keyframe in 1..length %}
+      {% set keyframes =
+        loop.index0 <= card_loop.index0
+          ? keyframes|merge([{ y: 0, scale: 1, '--bg-opacity': 1 }])
+          : keyframes|merge([{ y: -32 * (loop.index0 - card_loop.index0), scale: 1 - ((loop.index0 - card_loop.index0) * 0.1), '--bg-opacity': 1 - ((loop.index0 - card_loop.index0) * 0.1) }])
+      %}
+    {% endfor %}
+
+    <section class="sticky top-0 pt-24 pb-6 h-screen">
+      <div {{
+        html_attributes({
+          data_component: 'ScrollAnimationChild',
+          data_option_keyframes: keyframes|json_encode,
+          style: {
+            '--bg-opacity': 1,
+            'will-change': 'transform',
+          },
+          class: 'h-full bg-white rounded-2xl origin-top overflow-hidden'
+        })
+      }}>
+        <div class="flex justify-center items-center h-full p-6 bg-blue-500 bg-opacity-[var(--bg-opacity)] text-white">
+          <h2 class="text-3xl">Card n°{{ card }}</h2>
+        </div>
+      </div>
+    </section>
+  {% endfor %}
+</main>

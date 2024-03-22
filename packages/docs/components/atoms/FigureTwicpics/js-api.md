@@ -44,6 +44,20 @@ The step used to round up image size calculation. Default to `50`, which means t
 
 The mode used to resize and crop the image. It can be any key of the [transformations API](https://www.twicpics.com/docs/api/transformations) of TwicPics which accepts a size as value.
 
+### `dpr`
+
+- Type: `boolean`
+- Default: `true`
+
+Use this option to disable the support of the Device Pixel Ratio (DPR) with `data-option-no-dpr` attribute.
+
+### `disable`
+
+- Type: `boolean`
+- Default: `false`
+
+Use this option to return the original src instead of the TwicPics src. Useful when testing in local or preproductions that does not have a TwicPics path configured.
+
 ## Getter
 
 ### `domain`

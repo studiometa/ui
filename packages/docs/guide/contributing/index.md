@@ -6,7 +6,7 @@ outline: deep
 
 ## Git Flow
 
-The [repository](https://github.com/studiometa/ui) for `@studiometa/ui follows the [Git Flow](https://nvie.com/posts/a-successful-git-branching-model/) convention, so branches should be prefixed as follow:
+The [repository](https://github.com/studiometa/ui) for `@studiometa/ui` follows the [Git Flow](https://nvie.com/posts/a-successful-git-branching-model/) convention, so branches should be prefixed as follow:
 
 - `feature/...` for new features
 - `bugfix/...` for bug fixes
@@ -42,6 +42,12 @@ import { Figure } from '@studiometa/ui';
 While in dev mode, the source TypeScript files will be automatically rebuild on change and made available to the playground at [localhost:5173/-/play/index.html](http://localhost:5173/-/play/index.html).
 
 You can also [open the repository in GitPod](https://gitpod.io/#https://github.com/studiometa/ui) and start the dev environment there.
+
+### Remote development with Gitpod
+
+The repository is also configured to easily run in [Gitpod](https://gitpod.io). Just click on the following button to get started:
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/studiometa/ui)
 
 ## Adding a component
 

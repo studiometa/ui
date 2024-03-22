@@ -1,8 +1,5 @@
 <!---
-☝️ PR title should follow conventional commits (https://conventionalcommits.org)
-
-Please carefully read the contribution docs before creating a pull request
- 👉 https://nuxt.com/docs/community/contribution
+☝️ PR title should be prefixed by [Feature], [Bugfix], [Release] or [Hotfix]
 -->
 
 ### 🔗 Linked issue

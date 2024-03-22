@@ -6,12 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.45](https://github.com/studiometa/ui/compare/0.2.44..0.2.45) (2024-03-22)
+
+### Added
+
+- Add a **Demo** section inside the documentation to provide **copy/paste** ready components and a collection of experiments ([#178](https://github.com/studiometa/ui/pull/178))
+- Add a Twig `MapboxStaticMap` component ([#175](https://github.com/studiometa/ui/pull/175))
+- Add a Twig `Reinsurance` component ([#181](https://github.com/studiometa/ui/pull/181))
+- **Slider:** add accessibility attributes to mounted hook for `Slider` and `SliderItem` components ([#136](https://github.com/studiometa/ui/pull/136))
+- **FigureTwicpics:** add `disable` option ([#176](https://github.com/studiometa/ui/pull/176))
+- **Demos:** add a section with sticky cards and a 3D effect while scrolling ([#187](https://github.com/studiometa/ui/pull/187))
+
+### Fixed
+
+- **SliderItem:** fix accessibility issue were screen readers could not access all slides as the ones out of view had an `aria-hidden="true"` attribute ([#136](https://github.com/studiometa/ui/pull/136))
+- Fix potential errors in development with mismatch in Node versions ([#179](https://github.com/studiometa/ui/pull/179))
+
 ## [v0.2.44](https://github.com/studiometa/ui/compare/0.2.43..0.2.44) (2024-02-29)
 
 ### Added
 
 - Add the **Action** atom ([#161](https://github.com/studiometa/ui/issues/161), [#165](https://github.com/studiometa/ui/pull/165))
 - Add the **CircularMarquee** atom ([#171](https://github.com/studiometa/ui/pull/171))
+- Add the device pixel ratio support for **FigureTwicpics** atom ([#173](https://github.com/studiometa/ui/pull/173))
 
 ## [v0.2.43](https://github.com/studiometa/ui/compare/0.2.42..0.2.43) (2024-02-14)
 
