@@ -17,6 +17,8 @@ exports[`components exports 1`] = `
   "Draggable",
   "Figure",
   "FigureTwicpics",
+  "FigureVideo",
+  "FigureVideoTwicpics",
   "Frame",
   "FrameAnchor",
   "FrameForm",
