@@ -83,7 +83,7 @@
           'object-none': fit == 'none'
         }
       ],
-      poster: lazy ? placeholder : poster|default(placeholder),
+      poster: lazy and poster ? placeholder : poster,
       data_poster: lazy and poster ? poster : false,
       width: width|default(false),
       height: height|default(false),
