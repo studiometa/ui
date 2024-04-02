@@ -22,23 +22,8 @@
       {% endfor %}
     </ul>
   </nav>
-  <div class="w-2/3" data-component="AnchorNavTarget">
-  <div data-ref="item[]" id="item-1" class="relative bg-purple-200 h-[300px]">
-      <div class="bg-pink-200 h-[50px]">
-        Item-1
-      </div>
-    </div>
-    <div data-ref="item[]" id="item-2" class="relative bg-purple-300 h-[300px]">
-      <div class="bg-pink-200 h-[50px]">
-        Item-2
-      </div>
-    </div>
-    <div data-ref="item[]" id="item-3" class="relative bg-purple-400 h-[300px]">
-      <div class="bg-pink-200 h-[50px]">
-        Item-3
-      </div>
-    </div>
-    {# {% for item in 1..section_length %}
+  <div class="w-2/3">
+    {% for item in 1..section_length %}
       <section data-component="AnchorNavTarget"
         id="item-{{ loop.index }}"
         class="relative bg-purple-200 h-[300px]">
@@ -46,7 +31,7 @@
           Item-{{ loop.index }}
         </div>
       </section>
-    {% endfor %} #}
+    {% endfor %}
   </div>
 </div>
 
