@@ -1,7 +1,7 @@
-# StickyTable <Badges :texts="badges" />
+# AnchorNav <Badges :texts="badges" />
 
 <script setup>
-  import pkg from '@studiometa/ui/molecules/StickyTable/package.json';
+  import pkg from '@studiometa/ui/molecules/AnchorNav/package.json';
   const badges = [`v${pkg.version}`, 'Twig'];
 </script>
 

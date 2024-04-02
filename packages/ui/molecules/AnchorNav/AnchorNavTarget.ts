@@ -1,7 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 
-export interface StickyTableSectionProps extends BaseProps {
+export interface AnchorNavTargetProps extends BaseProps {
   $refs: {
     item: HTMLElement[];
   };
@@ -10,12 +10,12 @@ export interface StickyTableSectionProps extends BaseProps {
 /**
  * Manage a sticky table section.
  */
-export class StickyTableSection extends Base<StickyTableSectionProps> {
+export class AnchorNavTarget extends Base<AnchorNavTargetProps> {
   /**
    * Config.
    */
   static config: BaseConfig = {
-    name: 'StickyTableSection',
+    name: 'AnchorNavTarget',
     refs: ['item[]'],
     options: {
       threshold: { type: String, default: '0.5' },
@@ -24,8 +24,9 @@ export class StickyTableSection extends Base<StickyTableSectionProps> {
     emits: ['is-intersected'],
   };
 
-  /** TODO use the withIntersectionObserver from js-toolkit or with sentinel from ui */
   mounted() {
+    console.log('mounted');
+
     const observer = new IntersectionObserver(this.checkIntersection.bind(this), {
       threshold: this.$options.threshold,
       rootMargin: this.$options.rootmargin,
@@ -36,12 +37,38 @@ export class StickyTableSection extends Base<StickyTableSectionProps> {
   }
 
   checkIntersection(entries) {
-    if (entries[0].isIntersecting) {
-      console.log(this.$options);
+    console.log(entries);
 
+    if (entries[0].isIntersecting) {
       let { id } = entries[0].target;
       id = `#${id}`;
+      console.log(id);
+
       this.$emit('is-intersected', id);
     }
   }
 }
+
+/**
+ * Manage a sticky table section.
+ */
+// export class AnchorNavTarget extends withIntersectionObserver(Base, {
+//   threshold: 0.5,
+//   rootMargin: '0% 0px -40% 0px',
+// })<AnchorNavTargetProps> {
+//   /**
+//    * Config.
+//    */
+//   static config: BaseConfig = {
+//     name: 'AnchorNavTarget',
+//   };
+
+  // intersected(entries) {
+  //   if (entries[0].isIntersecting) {
+  //     console.log(this.$options);
+
+  //     let { id } = entries[0].target;
+  //     id = `#${id}`;
+  //     this.$emit('is-intersected', id);
+  //   }
+// }

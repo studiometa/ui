@@ -1,0 +1,53 @@
+{% set section_length = 3 %}
+<style type="text/css">
+  .current { color: pink; }
+</style>
+
+
+<div data-component="AnchorNav" class="flex items-start relative">
+  <nav class="bg-blue-200 w-1/3 sticky flex flex-col top-4">
+    <ul>
+      {% for item in 1..section_length %}
+        <li>
+          <a href="#item-{{ loop.index }}"
+            data-component="AnchorNavLink"
+            data-option-enter-to="text-purple-500"
+            data-option-enter-active="transition-colors duration-300 ease-out-quad"
+            data-option-leave-from="text-purple-500"
+            data-option-leave-active="transition-colors duration-300 ease-out-quad"
+            class="py-2 px-2">
+            item-{{ loop.index }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </nav>
+  <div class="w-2/3" data-component="AnchorNavTarget">
+  <div data-ref="item[]" id="item-1" class="relative bg-purple-200 h-[300px]">
+      <div class="bg-pink-200 h-[50px]">
+        Item-1
+      </div>
+    </div>
+    <div data-ref="item[]" id="item-2" class="relative bg-purple-300 h-[300px]">
+      <div class="bg-pink-200 h-[50px]">
+        Item-2
+      </div>
+    </div>
+    <div data-ref="item[]" id="item-3" class="relative bg-purple-400 h-[300px]">
+      <div class="bg-pink-200 h-[50px]">
+        Item-3
+      </div>
+    </div>
+    {# {% for item in 1..section_length %}
+      <section data-component="AnchorNavTarget"
+        id="item-{{ loop.index }}"
+        class="relative bg-purple-200 h-[300px]">
+        <div class="bg-pink-200 h-[50px]">
+          Item-{{ loop.index }}
+        </div>
+      </section>
+    {% endfor %} #}
+  </div>
+</div>
+
+<div class="h-screen"></div>
