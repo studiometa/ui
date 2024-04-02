@@ -225,6 +225,17 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    * Fetch the given url.
    */
   async fetch(url: string, formData: FormData = null): Promise<string> {
+    // @note skip cache for POST requests.
+    if (formData) {
+      const promise = fetch(url, {
+        method: 'post',
+        body: formData,
+      }).then((response) => response.text());
+
+      const content = await promise;
+      return content;
+    }
+
     const cached = cache.get(url);
 
     if (cached) {
@@ -235,10 +246,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
       return cached.content;
     }
 
-    const promise = fetch(url, {
-      method: formData ? 'post' : 'get',
-      body: formData,
-    }).then((response) => response.text());
+    const promise = fetch(url).then((response) => response.text());
 
     try {
       cache.set(url, {
