@@ -8,4 +8,4 @@
 ## Table of content
 
 - [Examples](./examples)
-- [Twig API](./twig-api)
+- [JS API](./js-api)
