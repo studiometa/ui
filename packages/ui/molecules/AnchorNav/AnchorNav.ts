@@ -26,7 +26,6 @@ export class AnchorNav<T extends BaseProps = BaseProps> extends Base<T & AnchorN
    * Listen to the AnchorNavTarget that is intersected
    */
   onAnchorNavTargetIsIntersected(id) {
-    console.log(id);
     this.$children.AnchorNavLink.forEach((item) => {
       const method = item.targetSelector === id ? 'enter' : 'leave';
       item[method]();
