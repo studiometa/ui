@@ -23,10 +23,7 @@ export class AnchorNavTarget extends withIntersectionObserver(Base, {
   };
 
   intersected(entries) {
-    console.log(entries);
     if (entries[0].isIntersecting) {
-      console.log(this.$options);
-
       let { id } = entries[0].target;
       id = `#${id}`;
       this.$emit('is-intersected', id);

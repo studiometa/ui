@@ -1,5 +1,6 @@
 import type { BaseConfig } from '@studiometa/js-toolkit';
 import { AnchorScrollTo } from '../../atoms/AnchorScrollTo/AnchorScrollTo.js';
+import { withTransition } from '../../decorators/index.js';
 
 export interface AnchorNavLinkProps extends AnchorScrollToProps {
   $options: {
@@ -10,7 +11,7 @@ export interface AnchorNavLinkProps extends AnchorScrollToProps {
 /**
  * Manage a slider item and its state transition.
  */
-export class AnchorNavLink extends AnchorScrollTo<AnchorNavLinkProps> {
+export class AnchorNavLink extends withTransition(AnchorScrollTo)<AnchorNavLinkProps> {
   /**
    * Config.
    */

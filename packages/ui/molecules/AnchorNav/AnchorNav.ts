@@ -27,20 +27,9 @@ export class AnchorNav<T extends BaseProps = BaseProps> extends Base<T & AnchorN
    */
   onAnchorNavTargetIsIntersected(id) {
     console.log(id);
-
-    if (document.querySelector('.current')) {
-      document.querySelector('.current').classList.remove('current');
-    }
-    const currentAnchorNavLink = this.$children.AnchorNavLink.find(
-      (anchorNavLink) => anchorNavLink.targetSelector === id,
-    );
-    currentAnchorNavLink.$el.classList.add('current');
+    this.$children.AnchorNavLink.forEach((item) => {
+      const method = item.targetSelector === id ? 'enter' : 'leave';
+      item[method]();
+    });
   }
-
-  //   this.$children.AnchorNavLink.filter((navLink, navLinkId) => id !== navLinkId).forEach(
-  //     ({ leave }) => leave(),
-  //   );
-
-  //   this.$children.AnchorNavLink[id].enter();
-  // }
 }
