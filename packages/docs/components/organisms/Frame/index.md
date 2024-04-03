@@ -1,4 +1,4 @@
-# Frame (todo) <Badges :texts="badges" />
+# Frame <Badges :texts="badges" />
 
 <script setup>
   import pkg from '@studiometa/ui/organisms/Frame/package.json';
