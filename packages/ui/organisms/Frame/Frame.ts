@@ -197,7 +197,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     );
 
     // Push history
-    if (this.$options.history) {
+    if (this.$options.history && formData === null) {
       document.title = doc.title;
       historyPush({ path: parsedUrl.pathname, search: parsedUrl.searchParams });
     }
