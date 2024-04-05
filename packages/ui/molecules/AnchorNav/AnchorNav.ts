@@ -23,12 +23,28 @@ export class AnchorNav<T extends BaseProps = BaseProps> extends Base<T & AnchorN
   };
 
   /**
-   * Listen to the AnchorNavTarget that is intersected
+   * Listen to the AnchorNavTarget that is mounted
    */
-  onAnchorNavTargetIsIntersected(id) {
-    this.$children.AnchorNavLink.forEach((item) => {
-      const method = item.targetSelector === id ? 'enter' : 'leave';
-      item[method]();
+  onAnchorNavTargetMounted(index) {
+    const { id } = this.$children.AnchorNavTarget[index].$el;
+    this.$children.AnchorNavLink.forEach((anchorNavLink) => {
+      if (id === anchorNavLink.targetId) {
+        console.log(id, anchorNavLink.targetId, 'enter');
+        anchorNavLink.enter();
+      }
+    });
+  }
+
+  /**
+   * Listen to the AnchorNavTarget that is destroyed
+   */
+  onAnchorNavTargetDestroyed(index) {
+    const { id } = this.$children.AnchorNavTarget[index].$el;
+    this.$children.AnchorNavLink.forEach((anchorNavLink) => {
+      if (id === anchorNavLink.targetId) {
+        console.log(id, anchorNavLink.targetId, 'destroyed');
+        anchorNavLink.leave();
+      }
     });
   }
 }

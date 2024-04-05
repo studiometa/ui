@@ -19,4 +19,8 @@ export class AnchorNavLink extends withTransition(AnchorScrollTo)<AnchorNavLinkP
     ...AnchorScrollTo.config,
     name: 'AnchorNavLink',
   };
+
+  get targetId() {
+    return this.$el.hash.replace(/^#/, '');
+  }
 }
