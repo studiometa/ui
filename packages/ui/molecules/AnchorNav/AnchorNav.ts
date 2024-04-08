@@ -29,7 +29,6 @@ export class AnchorNav<T extends BaseProps = BaseProps> extends Base<T & AnchorN
     const { id } = this.$children.AnchorNavTarget[index].$el;
     this.$children.AnchorNavLink.forEach((anchorNavLink) => {
       if (id === anchorNavLink.targetId) {
-        console.log(id, anchorNavLink.targetId, 'enter');
         anchorNavLink.enter();
       }
     });
@@ -42,7 +41,6 @@ export class AnchorNav<T extends BaseProps = BaseProps> extends Base<T & AnchorN
     const { id } = this.$children.AnchorNavTarget[index].$el;
     this.$children.AnchorNavLink.forEach((anchorNavLink) => {
       if (id === anchorNavLink.targetId) {
-        console.log(id, anchorNavLink.targetId, 'destroyed');
         anchorNavLink.leave();
       }
     });
