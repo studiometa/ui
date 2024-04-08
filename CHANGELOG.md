@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Add a `ui.ease` Twig global object to the Twig extension ([#195](https://github.com/studiometa/ui/pull/195))
+- Add `AnchorNav`, `AnchorNavLink` and `AnchorNavTarget` JavaScript components ([#185](https://github.com/studiometa/ui/pull/185))
+
 
 ## [v0.2.47](https://github.com/studiometa/ui/compare/0.2.46..0.2.47) (2024-03-22)
 
