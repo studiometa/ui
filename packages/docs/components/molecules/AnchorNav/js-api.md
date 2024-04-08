@@ -3,4 +3,15 @@ title: AnchorNav JS API
 ---
 
 # JS API
-The `AnchorNav` component extends the [`Base` class](https://js-toolkit.studiometa.dev/api/configuration.html) using the [WithTransition Decorator]. It inherits their respective APIs, so make sur have a look at them.
+
+## AnchorNav
+
+The `AnchorNav` component does not expose any specific JavaScript API.
+
+## AnchorNavLink
+
+The `AnchorNavLink` class implements the features of the [`Transition` primitive](/components/primitives/Transition/).
+
+## AnchorNavTarget
+
+The `AnchorNavTarget` class implementes the features of the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html).
