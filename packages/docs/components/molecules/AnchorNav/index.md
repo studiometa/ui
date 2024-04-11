@@ -39,7 +39,7 @@ Then in your html make sure to have similar id and href for the link and the tar
 </div>
 ```
 
-You can then add options from the withTransition and withMountWhenInView:
+You can then add options from the [withTransition](/components/primitives/Transition/#transition) and [withMountWhenInView](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html):
 
 ```html{16}
 <div data-component="AnchorNav">
