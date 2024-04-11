@@ -16,16 +16,7 @@ This component can be directly imported and defined as a dependency of your appl
 
 ```js{2,8}
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { AnchorNav as AnchorNavCore, AnchorNavLink, AnchorNavTarget } from '@studiometa/ui';
-
-class AnchorNav extends AnchorNavCore {
-  static config = {
-    components: {
-      AnchorNavLink,
-      AnchorNavTarget,
-    },
-  };
-}
+import { AnchorNav } from '@studiometa/ui';
 
 class App extends Base {
   static config = {
