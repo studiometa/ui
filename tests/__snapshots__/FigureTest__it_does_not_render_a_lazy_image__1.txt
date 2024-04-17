@@ -1,11 +1,11 @@
 <figure data-component="Figure" class="figure w-full">
-  <div class="figure__inner relative w-full h-0" style="padding-top: 100&#x25 ;">
+  <div class="figure__inner relative w-full h-0" style="padding-top: 100&#x25">
     <img
       class="figure__img absolute inset-0 w-full max-w-none h-full"
-      src="https:&#x2F;&#x2F;picsum.photos&#x2F;400&#x2F;400"
+      src="https://picsum.photos/400/400"
+      data-src="https://picsum.photos/400/400"
       width="400"
       height="400"
-      data-ref="img"
-    />
+      data-ref="img" />
   </div>
 </figure>
