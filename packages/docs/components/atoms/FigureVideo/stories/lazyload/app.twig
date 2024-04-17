@@ -1,0 +1,14 @@
+<div class="max-w-lg mx-auto p-10">
+  {# Video by invisiblepower on Pixabay #}
+  {% include '@ui/atoms/FigureVideo/FigureVideo.twig' with {
+    src: '/-/invisiblepower-pixabay-mountains-video.mp4',
+    width: 640,
+    height: 360,
+    attr: {
+      data_option_enter_from: 'opacity-0',
+      data_option_enter_active: 'transition duration-500'
+    },
+    inner_attr: { class: 'bg-vp-bg' },
+    img_attr: { class: 'opacity-0' }
+  } %}
+</div>

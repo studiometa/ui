@@ -1,0 +1,152 @@
+{#
+/**
+ * @file
+ * Video Figure component.
+ *
+ * @param string $src
+ * @param array  $sources
+ * @param string $poster
+ * @param string $placeholder
+ * @param number $width
+ * @param number $height
+ * @param string $caption
+ * @param boolean $lazy
+ * @param 'cover'|'contain'|'fill'|'none' $fit
+ *   Define how the video will fit.
+ * @param boolean $absolute
+ *   Use absolute position on the video holder instead of relative.
+ * @param boolean $inline
+ *   Wether to enable the display of the figure inline or not. When `inline`, the root element
+ *   will have a max-width set corresponding to the `width` given. Use with caution.
+ * @param string $placeholder
+ *   Use a custom placeholder.
+ * @param string $placeholder_color
+ *   Set an hexadecimal custom color for the generic placeholder.
+ * @param array $attr
+ *   Custom attributes for the root element.
+ * @param array $inner_attr
+ *   Custom attributes for the inner element.
+ * @param array $video_attr
+ *   Custom attributes for the video element.
+ * @param array $caption_attr
+ *   Custom attributes for the caption element.
+ *
+ * @block $caption
+ *   Use this block to customize the video's caption.
+ *
+ */
+#}
+
+{% set absolute = absolute|default(false) %}
+{% set inline = inline|default(false) %}
+{% set fit = fit ?? null %}
+{% set height = height|default(100) %}
+{% set width = width|default(100) %}
+{% set lazy = lazy ?? true %}
+{% set placeholder = placeholder|default('') %}
+
+{% if placeholder is empty %}
+  {% set placeholder_color = placeholder_color|default('#eee') %}
+  {%- set placeholder_markup -%}
+    <svg xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 {{ width }} {{ height }}"
+      width="{{ width }}"
+      height="{{ height }}">
+      <rect x="0" y="0" width="{{ width }}" height="{{ height }}" fill="{{ placeholder_color }}" />
+    </svg>
+  {%- endset -%}
+  {% set placeholder = 'data:image/svg+xml,%s'|format(placeholder_markup|url_encode) %}
+{% endif %}
+
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    { data_component: 'FigureVideo', class: ['figure-video', 'w-full'] },
+    {
+      style: { height: absolute ? '100%' : '', maxWidth: inline ? width ~ 'px' : '' },
+      data_option_lazy: lazy
+    }
+  )
+%}
+
+{% set video_attributes =
+  merge_html_attributes(
+    video_attr ?? null,
+    { class: 'figure-video__video' },
+    {
+      class: [
+        'absolute inset-0 w-full max-w-none h-full',
+        {
+          'object-cover': fit == 'cover',
+          'object-contain': fit == 'contain',
+          'object-fill': fit == 'fill',
+          'object-none': fit == 'none'
+        }
+      ],
+      poster: lazy and poster ? placeholder : poster,
+      data_poster: lazy and poster ? poster : false,
+      width: width|default(false),
+      height: height|default(false),
+      playsinline: true,
+      autoplay: true,
+      controls: false,
+      loop: true,
+      muted: true,
+      preload: lazy ? false : preload ?? false,
+      data_ref: 'video'
+    }
+  )
+%}
+
+{% set inner_attributes =
+  merge_html_attributes(
+    inner_attr ?? null,
+    { class: ['figure-video__inner'] },
+    {
+      class: absolute ? ['absolute', 'inset-0'] : ['relative', 'w-full', 'h-0'],
+      style: { paddingTop: absolute ? '' : height * 100 / width ~ '%' }
+    }
+  )
+%}
+
+{% set caption_attributes =
+  merge_html_attributes(caption_attr ?? null, { class: 'figure-video__caption' })
+%}
+
+<figure {{ html_attributes(attributes) }}>
+  <div {{ html_attributes(inner_attributes) }}>
+    <video {{ html_attributes(video_attributes) }}>
+      {% block sources %}
+        {% if sources is not empty %}
+          {% for source in sources %}
+            <source {{
+              html_attributes(
+                merge_html_attributes(
+                  source,
+                  {
+                    src: lazy ? false : source.src|default(false),
+                    data_src: lazy ? source.src|default(false) : false
+                  }
+                )
+              )
+              }} />
+          {% endfor %}
+        {% else %}
+          <source {{
+            html_attributes({
+              src: lazy ? false : src|default(false),
+              data_src: lazy ? src|default(false) : false
+            })
+            }} />
+        {% endif %}
+      {% endblock %}
+    </video>
+  </div>
+  {% if caption is defined %}
+    {% block caption %}
+      <figcaption {{ html_attributes(caption_attributes) }}>
+        {{ caption }}
+      </figcaption>
+    {% endblock %}
+  {% endif %}
+</figure>

@@ -71,7 +71,6 @@ jobs:
         directory: ./packages/coverage
         flags: unittests
         fail_ci_if_error: false
-        path_to_write_report: ./codecov_report.txt
         verbose: true
 
   Export-Size:
