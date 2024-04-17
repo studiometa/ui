@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.48](https://github.com/studiometa/ui/compare/0.2.47..0.2.48) (2024-04-17)
+
 ### Added
 
 - Add a `ui.ease` Twig global object to the Twig extension ([#195](https://github.com/studiometa/ui/pull/195))
