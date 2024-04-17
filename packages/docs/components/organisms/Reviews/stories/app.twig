@@ -1,0 +1,49 @@
+{% set reviews = [
+{
+  score: '4',
+  name: 'Guillaume Schermesser',
+  date: '24/03/24',
+  avatar: 'https://picsum.photos/id/237/40/40',
+  content: 'Super agence web qui fait du site de qualité !',
+  link: 'https://www.google.fr'
+},
+{
+  score: '2',
+  name: 'Titouan Mathis',
+  date: '24/02/21',
+  avatar: 'https://picsum.photos/id/232/40/40',
+  content: 'Super agence web qui fait du site de qualité !',
+  link: 'https://www.google.fr'
+},
+{
+  score: '3',
+  name: 'Ludovic Janot',
+  date: '18/03/23',
+  avatar: 'https://picsum.photos/id/230/40/40',
+  content: 'Super agence web qui fait du site de qualité !',
+  link: 'https://www.google.fr'
+},
+{
+  score: '3',
+  name: 'Nicolas Mertz',
+  date: '24/07/24',
+  avatar: 'https://picsum.photos/id/227/40/40',
+  content: 'Super agence web qui fait du site de qualité !',
+  link: 'https://www.google.fr'
+},
+{
+  score: '1',
+  name: 'Coralie Bach',
+  date: '01/03/24',
+  avatar: 'https://picsum.photos/id/137/40/40',
+  content: 'Super agence web qui fait du site de qualité !',
+  link: 'https://www.google.fr'
+}
+] %}
+
+{% set global_average = 3.5 %}
+
+{% include '@ui/organisms/Reviews/Reviews.twig' with {
+  reviews: reviews,
+  global_averate: global_average,
+} %}

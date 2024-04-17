@@ -1,0 +1,181 @@
+<section class="relative bg-blue-500">
+  <div class="overflow-hidden flex items-center relative z-0">
+    <div class="s:container relative">
+      <div class="grid grid-cols-1 s:grid-cols-12 s:gap-x-8">
+        <div class="col-span-12 s:col-span-4 text-white z-1 relative pt-48 pb-12 text-center px-8 s:text-left before:absolute before:top-0 before:w-full before:h-full before:bg-black/30 before:left-0 before:z-1 s:before:hidden">
+          <img src="https://picsum.photos/540/423"
+            alt=""
+            width="540"
+            height="423"
+            loading="lazy"
+            class="h-full object-cover object-top absolute top-0 left-0 z-0 s:hidden w-full" />
+          <div class="relative z-2">
+            {% block left_content %}
+              <p class="text-2xl mb-2 s:mb-8">
+                Ils nous ont fait confiance
+              </p>
+              <p class="text-base mb-6 s:mb-11">
+                Choisissez la transparence et la sérénité avec EDEN BOITES.
+              </p>
+              {% include '@ui/atoms/Button/Button.twig' with {
+                label: 'Consultez la FAQ',
+                href: '#',
+              } only %}
+            {% endblock %}
+            <div>
+              <div class="inline-block mr-3 align-middle relative h-[20px]">
+                {% set percent = global_average * 100 / 5 %}
+                <div class="overflow-hidden absolute top-0 left-0 h-full"
+                  style="width: {{ percent }}%;">
+                  <svg width="124" height="20" viewBox="0 0 124 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 0L12.9389 5.95492L19.5106 6.90983L14.7553 11.5451L15.8779 18.0902L10 15L4.12215 18.0902L5.24472 11.5451L0.489435 6.90983L7.06107 5.95492L10 0Z" fill="#FFD600"/>
+                    <path d="M36 0L38.9389 5.95492L45.5106 6.90983L40.7553 11.5451L41.8779 18.0902L36 15L30.1221 18.0902L31.2447 11.5451L26.4894 6.90983L33.0611 5.95492L36 0Z" fill="#FFD600"/>
+                    <path d="M62 0L64.9389 5.95492L71.5106 6.90983L66.7553 11.5451L67.8779 18.0902L62 15L56.1221 18.0902L57.2447 11.5451L52.4894 6.90983L59.0611 5.95492L62 0Z" fill="#FFD600"/>
+                    <path d="M88 0L90.9389 5.95492L97.5106 6.90983L92.7553 11.5451L93.8779 18.0902L88 15L82.1221 18.0902L83.2447 11.5451L78.4894 6.90983L85.0611 5.95492L88 0Z" fill="#FFD600"/>
+                    <path d="M114 0L116.939 5.95492L123.511 6.90983L118.755 11.5451L119.878 18.0902L114 15L108.122 18.0902L109.245 11.5451L104.489 6.90983L111.061 5.95492L114 0Z" fill="#FFD600"/>
+                    <path d="M119.878 18.0902L114 15V0L116.939 5.95492L123.511 6.90983L118.755 11.5451L119.878 18.0902Z" fill="#FFD600"/>
+                  </svg>
+                </div>
+                <svg width="124" height="20" viewBox="0 0 124 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 0L12.9389 5.95492L19.5106 6.90983L14.7553 11.5451L15.8779 18.0902L10 15L4.12215 18.0902L5.24472 11.5451L0.489435 6.90983L7.06107 5.95492L10 0Z" fill="#D9D9D9"/>
+                  <path d="M36 0L38.9389 5.95492L45.5106 6.90983L40.7553 11.5451L41.8779 18.0902L36 15L30.1221 18.0902L31.2447 11.5451L26.4894 6.90983L33.0611 5.95492L36 0Z" fill="#D9D9D9"/>
+                  <path d="M62 0L64.9389 5.95492L71.5106 6.90983L66.7553 11.5451L67.8779 18.0902L62 15L56.1221 18.0902L57.2447 11.5451L52.4894 6.90983L59.0611 5.95492L62 0Z" fill="#D9D9D9"/>
+                  <path d="M88 0L90.9389 5.95492L97.5106 6.90983L92.7553 11.5451L93.8779 18.0902L88 15L82.1221 18.0902L83.2447 11.5451L78.4894 6.90983L85.0611 5.95492L88 0Z" fill="#D9D9D9"/>
+                  <path d="M114 0L116.939 5.95492L123.511 6.90983L118.755 11.5451L119.878 18.0902L114 15L108.122 18.0902L109.245 11.5451L104.489 6.90983L111.061 5.95492L114 0Z" fill="#D9D9D9"/>
+                  <path d="M119.878 18.0902L114 15V0L116.939 5.95492L123.511 6.90983L118.755 11.5451L119.878 18.0902Z" fill="#D9D9D9"/>
+                </svg>
+              </div>
+              <div class="inline-block text-white align-middle">
+                <span class="text-yellow text-xl">{{ global_average }}</span>&nbsp;/&nbsp;5
+              </div>
+              {% set count_rating = 490 %}
+              <p class="mt-4">
+                {{
+                  'Note issue des %d avis vérifiés Google'|replace({
+                    '%d': count_rating
+                  })
+                }}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 s:px-0 s:col-span-8 s:col-start-5 relative z-0"
+          data-component="Slider"
+          data-option-mode="left"
+          data-option-fit-bounds
+          data-option-contain>
+          <div class="s:grid grid-cols-8 s:gap-x-8">
+            <div class="col-span-7 col-start-2 pt-12 s:pt-36">
+              <div class="whitespace-nowrap space-x-2 s:space-x-8"
+                data-ref="wrapper"
+                data-component="SliderDrag">
+                {% for item in reviews %}
+                  {% block card %}
+                  <div class="bg-white rounded-2xl h-[360px] w-[280px] inline-block align-top px-6 py-7 whitespace-normal"
+                    data-component="SliderItem">
+                    <div class="flex flex-col justify-between h-full">
+                      <div>
+                        <div class="block relative h-[20px] w-[124px]">
+                          {% set percent = item.score * 100 / 5 %}
+                          <div class="overflow-hidden absolute top-0 left-0"
+                            style="width: {{ percent }}%;">
+                            <svg width="124" height="20" viewBox="0 0 124 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M10 0L12.9389 5.95492L19.5106 6.90983L14.7553 11.5451L15.8779 18.0902L10 15L4.12215 18.0902L5.24472 11.5451L0.489435 6.90983L7.06107 5.95492L10 0Z" fill="#FFD600"/>
+                              <path d="M36 0L38.9389 5.95492L45.5106 6.90983L40.7553 11.5451L41.8779 18.0902L36 15L30.1221 18.0902L31.2447 11.5451L26.4894 6.90983L33.0611 5.95492L36 0Z" fill="#FFD600"/>
+                              <path d="M62 0L64.9389 5.95492L71.5106 6.90983L66.7553 11.5451L67.8779 18.0902L62 15L56.1221 18.0902L57.2447 11.5451L52.4894 6.90983L59.0611 5.95492L62 0Z" fill="#FFD600"/>
+                              <path d="M88 0L90.9389 5.95492L97.5106 6.90983L92.7553 11.5451L93.8779 18.0902L88 15L82.1221 18.0902L83.2447 11.5451L78.4894 6.90983L85.0611 5.95492L88 0Z" fill="#FFD600"/>
+                              <path d="M114 0L116.939 5.95492L123.511 6.90983L118.755 11.5451L119.878 18.0902L114 15L108.122 18.0902L109.245 11.5451L104.489 6.90983L111.061 5.95492L114 0Z" fill="#FFD600"/>
+                              <path d="M119.878 18.0902L114 15V0L116.939 5.95492L123.511 6.90983L118.755 11.5451L119.878 18.0902Z" fill="#FFD600"/>
+                            </svg>
+                          </div>
+                          <svg width="124" height="20" viewBox="0 0 124 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 0L12.9389 5.95492L19.5106 6.90983L14.7553 11.5451L15.8779 18.0902L10 15L4.12215 18.0902L5.24472 11.5451L0.489435 6.90983L7.06107 5.95492L10 0Z" fill="#D9D9D9"/>
+                            <path d="M36 0L38.9389 5.95492L45.5106 6.90983L40.7553 11.5451L41.8779 18.0902L36 15L30.1221 18.0902L31.2447 11.5451L26.4894 6.90983L33.0611 5.95492L36 0Z" fill="#D9D9D9"/>
+                            <path d="M62 0L64.9389 5.95492L71.5106 6.90983L66.7553 11.5451L67.8779 18.0902L62 15L56.1221 18.0902L57.2447 11.5451L52.4894 6.90983L59.0611 5.95492L62 0Z" fill="#D9D9D9"/>
+                            <path d="M88 0L90.9389 5.95492L97.5106 6.90983L92.7553 11.5451L93.8779 18.0902L88 15L82.1221 18.0902L83.2447 11.5451L78.4894 6.90983L85.0611 5.95492L88 0Z" fill="#D9D9D9"/>
+                            <path d="M114 0L116.939 5.95492L123.511 6.90983L118.755 11.5451L119.878 18.0902L114 15L108.122 18.0902L109.245 11.5451L104.489 6.90983L111.061 5.95492L114 0Z" fill="#D9D9D9"/>
+                            <path d="M119.878 18.0902L114 15V0L116.939 5.95492L123.511 6.90983L118.755 11.5451L119.878 18.0902Z" fill="#D9D9D9"/>
+                          </svg>
+                        </div>
+                        <p class="relative font-title mt-6 font-medium h-[210px] overflow-hidden block after:absolute after:w-full after:bottom-0 after:h-[50px] after:left-0 after:bg-gradient-white">
+                          {{ item.content }}
+                        </p>
+                      </div>
+                      <div class="relative flex items-center w-full pl-12 justify-between">
+                        <div class="overflow-hidden rounded-full w-10 h-10 block absolute left-0 top-1/2 -translate-y-1/2">
+                          <img src="{{ item.avatar }}"
+                            alt="{{ item.name }}"
+                            class="w-full h-full object-cover"
+                            width="40"
+                            height="40"
+                            loading="lazy" />
+                        </div>
+                        <div class="w-4/5">
+                          <span class="text-sm font-bold block text-ellipsis overflow-hidden block whitespace-nowrap w-[85%]">
+                            {{ item.name }}
+                          </span>
+                          <span class="text-black-50 text-sm block">{{ item.date }}</span>
+                        </div>
+                        {% if item.link %}
+                        <a href="{{ item.link }}" target="_blank" rel="nofollow">
+                          <span class="icon icon--arrow-slider block -scale-x-100">
+                            <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M23.3333 9H2" stroke="currentColor" stroke-width="1.5"/>
+                              <path d="M10 17L2 9L10 1" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                          </span>
+                        </a>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  {% endblock %}
+                {% endfor %}
+              </div>
+              {% block bottom %}
+              <div class="pb-10 pt-8 w-full text-center flex items-center justify-between">
+                <div class="flex items-center justify-between w-full m:justify-start s:space-x-4 relative">
+                  <button data-component="SliderBtn"
+                    data-option-prev="true"
+                    class="disabled:opacity-50 enabled:hover:-translate-x-1 transition duration-200 pointer-events-auto text-white">
+                    <span class="icon icon--arrow-slider block">
+                      <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M23.3333 9H2" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M10 17L2 9L10 1" stroke="currentColor" stroke-width="1.5"/>
+                      </svg>
+                    </span>
+                  </button>
+                  <span class="w-px h-8 bg-black-20 hidden s:block"></span>
+                  <a href="#"
+                    class="m:absolute m:right-0 m:bottom-0 text-white underline">
+                    Voir tous les avis
+                  </a>
+                  <button data-component="SliderBtn"
+                    data-option-next="true"
+                    class="disabled:opacity-50 enabled:hover:translate-x-1 transition duration-200 pointer-events-auto text-white">
+                    <span class="icon icon--arrow-slider block -scale-x-100">
+                      <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M23.3333 9H2" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M10 17L2 9L10 1" stroke="currentColor" stroke-width="1.5"/>
+                      </svg>
+                    </span>
+                  </button>
+                </div>
+              </div>
+              {% endblock %}
+            </div>
+          </div>
+          <div class="absolute w-[150%] h-full right-full top-0 z-0 before:absolute before:bg-black/40 before:top-0 before:right-0 before:w-full before:h-full hidden s:block">
+            <img src="https://picsum.photos/540/423"
+              width="540"
+              height="423"
+              alt="ALT"
+              loading="lazy"
+              class="h-full object-contain object-right-top w-full" />
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
