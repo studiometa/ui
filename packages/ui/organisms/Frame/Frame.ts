@@ -103,7 +103,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    * Go to the previous URL on `popstate` event.
    */
   onWindowPopstate(event: PopStateEvent) {
-    this.goTo(window.location.href, event.state);
+    this.goTo(window.location.href, null, event.state);
   }
 
   /**
@@ -141,10 +141,16 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     event.preventDefault();
     const form = this.$children.FrameForm[index];
     const url = new URL(form.action);
-    // @ts-ignore
-    url.search = new URLSearchParams(new FormData(form.$el)).toString();
-    // @todo handle post request
-    this.goTo(url.toString());
+
+    if (form.$el.method === 'get') {
+      // @ts-ignore
+      url.search = new URLSearchParams(new FormData(form.$el)).toString();
+      this.goTo(url.toString());
+    }
+
+    if (form.$el.method === 'post') {
+      this.goTo(url.toString(), new FormData(form.$el));
+    }
   }
 
   /**
@@ -157,7 +163,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   /**
    * Go to the given url.
    */
-  async goTo(url: string, scroll: { top: number; left: number } = null) {
+  async goTo(url: string, formData: FormData = null, scroll: { top: number; left: number } = null) {
     this.$log('goTo', url);
     const parsedUrl = new URL(url);
 
@@ -168,7 +174,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     this.$emit('before-fetch', url);
 
     // @todo add option to use content as is or to parse it and extract the new frame
-    const content = await this.fetch(url);
+    const content = await this.fetch(url, formData);
     const doc = this.parseHTML(content);
     const el = doc.querySelector(`#${this.id}`);
     // @todo manage el === null
@@ -191,7 +197,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     );
 
     // Push history
-    if (this.$options.history) {
+    if (this.$options.history && formData === null) {
       document.title = doc.title;
       historyPush({ path: parsedUrl.pathname, search: parsedUrl.searchParams });
     }
@@ -218,7 +224,18 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   /**
    * Fetch the given url.
    */
-  async fetch(url: string): Promise<string> {
+  async fetch(url: string, formData: FormData = null): Promise<string> {
+    // @note skip cache for POST requests.
+    if (formData) {
+      const promise = fetch(url, {
+        method: 'post',
+        body: formData,
+      }).then((response) => response.text());
+
+      const content = await promise;
+      return content;
+    }
+
     const cached = cache.get(url);
 
     if (cached) {
