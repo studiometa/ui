@@ -4,6 +4,9 @@ docroot: packages/docs/.symfony/public
 php_version: '8.3'
 nodejs_version: '22'
 webserver_type: nginx-fpm
+database:
+    type: mariadb
+    version: "10.4"
 use_dns_when_possible: true
 omit_containers: [db]
 upload_dirs: [/-]
