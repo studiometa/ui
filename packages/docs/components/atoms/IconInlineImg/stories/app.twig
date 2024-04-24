@@ -1,17 +1,55 @@
 <div class="flex items-center justify-center space-x-4 p-10">
-  {% include '@ui/atoms/Icon/IconInlineImg.twig' with {
+  {% include '@ui/atoms/Icon/IconInline.twig' with {
     name: 'logo-studiometa'
   } %}
-  {% include '@ui/atoms/Icon/IconInlineImg.twig' with {
-    name: 'twitter',
-    current_color: '#1da1f2'
-  } %}
-  {% include '@ui/atoms/Icon/IconInlineImg.twig' with {
+</div>
+<div class="flex items-center justify-center space-x-4 p-10">
+  {% include '@ui/atoms/Icon/IconInline.twig' with {
     name: 'facebook',
-    current_color: '#1877f2'
+    current_color: '#1877f2',
   } %}
-  {% include '@ui/atoms/Icon/IconInlineImg.twig' with {
+  {% include '@ui/atoms/Icon/IconInline.twig' with {
+    name: 'instagram',
+    current_color: '#ffffff',
+    css_vars: {
+      'bg': 'linear-gradient(115deg, #f9ce34, #ee2a7b, #6228d7)',
+    },
+    attr: { class: 'rounded overflow-hidden' }
+  } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with {
+    name: 'linkedin',
+    current_color: '#0a66c2',
+  } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with { name: 'pinterest',
+    current_color: '#e60023',
+  } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with { name: 'x' } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with { name: 'tiktok' } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with { name: 'whatsapp' } %}
+</div>
+<div class="flex items-center justify-center space-x-4 p-10">
+  {% include '@ui/atoms/Icon/IconInline.twig' with { name: 'globe' } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with { name: 'at' } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with { name: 'mail' } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with { name: 'phone' } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with { name: 'copy' } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with { name: 'link' } %}
+</div>
+<div class="flex items-center justify-center space-x-4 p-10">
+  {% include '@ui/atoms/Icon/IconInline.twig' with {
     name: 'chevron',
     attr: { class: 'inline-block transform rotate-180' }
+  } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with {
+    name: 'chevron',
+    attr: { class: 'inline-block transform rotate-90' }
+  } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with {
+    name: 'chevron',
+    attr: { class: 'inline-block' }
+  } %}
+  {% include '@ui/atoms/Icon/IconInline.twig' with {
+    name: 'chevron',
+    attr: { class: 'inline-block transform -rotate-90' }
   } %}
 </div>
