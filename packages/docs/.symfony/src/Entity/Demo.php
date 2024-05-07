@@ -86,4 +86,16 @@ class Demo
     {
         return $this->title;
     }
+
+    public static function __toArray(Demo $demo): array {
+        return [
+            'id' => $demo->id,
+            'author' => $demo->author,
+            'title' => $demo->title,
+            'content' => $demo->content,
+            'iframe_link' => $demo->iframe_link,
+            'created_at' => $demo->createdAt->format('d/m/Y à H:i'),
+            'updated_at' => $demo->updatedAt->format('d/m/Y à H:i'),
+        ];
+    }
 }

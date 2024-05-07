@@ -40,6 +40,7 @@ const config = defineConfig({
         target: 'https://ui.ddev.site',
         changeOrigin: true,
         secure: false,
+        ws: true,
       },
     },
     watch: {

@@ -1,13 +1,14 @@
 import { readFileSync } from 'node:fs';
-import { basename, dirname, resolve, join } from 'node:path';
+import { basename, dirname } from 'node:path';
 import { defineConfig } from 'vitepress';
 import {
   withLeadingSlash,
-  withTrailingSlash,
   withLeadingCharacters,
 } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
+import { loadEnv } from 'vitepress';
 
+const env = loadEnv('', process.cwd());
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' }),
 );
@@ -87,7 +88,7 @@ export default defineConfig({
     sidebar: {
       '/components/': getComponentsSidebar(),
       '/': getGuideSidebar(),
-      '/demos/': getDemoSidebar(),
+      '/demos/': await getDemoSidebar(),
     },
   },
 });
@@ -154,16 +155,41 @@ function getComponentsSidebar() {
   ];
 }
 
-function getDemoSidebar() {
+async function getDemoSidebar() {
+
   return [
     {
       text: 'Demos',
       link: '/demos/',
-      items: generateSidebarLinksFromPath('demos/*/index.md', {
-        extractTitle: true,
-      }),
+      items: await getDemoItems(),
+      collapsed: false,
     },
   ];
+}
+
+async function getDemoItems() {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  let final_data = [];
+  const url = env.APP_URL ?? 'http://ui.ddev.site';
+  console.log(url, env.APP_URL);
+
+  await fetch(`${url}/api/demos/`)
+    .then((response) => {
+      return response.json();
+    })
+    .then((data) => {
+      final_data = data.map((el) => {
+        return {
+          text: el.title,
+          link: '/demos/' + el.id,
+        }
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+
+  return final_data;
 }
 
 function generateSidebarLinksFromPath(
