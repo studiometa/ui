@@ -36,7 +36,7 @@ class DashboardController extends AbstractDashboardController
             MenuItem::linkToCrud('Démo', 'fas fa-list', Demo::class),
             MenuItem::linkToCrud('Ajouter une démo', 'fa fa-plus', Demo::class)
                 ->setAction('new'),
-            MenuItem::section('Utilisateur'),
+            // MenuItem::section('Utilisateur'),
             // MenuItem::linkToLogout('Logout', 'fa fa-exit'),
         ];
     }
