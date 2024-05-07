@@ -26,6 +26,9 @@ class Demo
     #[ORM\Column(type: Types::TEXT)]
     private ?string $iframe_link = null;
 
+    #[ORM\Column(type: Types::TEXT)]
+    private ?string $author = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -63,6 +66,18 @@ class Demo
     public function setIframeLink(string $iframe_link): static
     {
         $this->iframe_link = $iframe_link;
+
+        return $this;
+    }
+
+    public function getAuthor(): ?string
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(string $author): static
+    {
+        $this->author = $author;
 
         return $this;
     }

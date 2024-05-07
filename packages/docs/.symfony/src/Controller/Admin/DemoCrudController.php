@@ -48,5 +48,7 @@ class DemoCrudController extends AbstractCrudController
         } elseif (Crud::PAGE_NEW !== $pageName) {
             yield $updatedAt;
         }
+
+        yield TextField::new('author')->setLabel("Auteur");
     }
 }
