@@ -3,8 +3,9 @@
  * @file
  * Icon component
  *
- * @param string $name The file name of the icon.
- * @param array $attr Custom attributes.
+ * @param string  $name           The file name of the icon.
+ * @param boolean $ignore_missing Avoid empty <span> printing
+ * @param array   $attr           Custom attributes.
  */
 #}
 
@@ -21,6 +22,12 @@
   }
 ) %}
 
-<span {{ html_attributes(attributes) }}>
+{%- set icon -%}
   {{ source('@svg/%s.svg'|format(name), ignore_missing = true) }}
-</span>
+{%- endset -%}
+
+{% if icon is not empty or not ignore_missing %}
+  <span {{ html_attributes(attributes) }}>
+    {{ icon }}
+  </span>
+{% endif %}

@@ -37,11 +37,17 @@ Custom attributes for the root element. Using this parameter with an `href` prop
 
 Name of an icon to use in the button.
 
+### `icon_attr`
+
+- Type: `array`
+
+Custom attributes for the icon component.
+
 ### `icon_classes`
 
 - Type: `string`
 
-Customize classes for the icon element. Defaults to `mr-3` when the [`icon_position` parameter](#icon_position) is set to `start` and to `ml-3` when set to `end`.
+Customize classes for the icon element. Defaults to `mr-3` when the [`icon_position` parameter](#icon_position) is set to `start` and to `ml-3` when set to `end`. (Can be overrided by the `icon_attr` classes.)
 
 ### `icon_position`
 

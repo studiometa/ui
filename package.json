@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-workspace",
-  "version": "0.2.48",
+  "version": "0.2.49",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -27,10 +27,10 @@
   },
   "devDependencies": {
     "@studiometa/prettier-config": "^3.0.0",
-    "esbuild": "^0.20.2",
+    "esbuild": "^0.21.0",
     "fast-glob": "^3.3.2",
     "gzip-size": "^7.0.0",
-    "oxlint": "^0.2.17",
+    "oxlint": "^0.4.0",
     "prettier": "^2.8.8",
     "typescript": "^5.4.5"
   },

@@ -16,6 +16,6 @@ Once the [package installed](/guide/installation/), simply include the template 
 
 ```twig
 {% include  '@ui/atoms/Icon/IconInline.twig' with {
-  name: 'twitter',
+  name: 'globe',
 } %}
 ```

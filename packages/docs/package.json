@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-docs",
-  "version": "0.2.48",
+  "version": "0.2.49",
   "private": true,
   "type": "module",
   "scripts": {
@@ -23,7 +23,7 @@
     "concurrently": "^8.2.2",
     "snake-case": "^3.0.4",
     "tailwindcss": "^3.4.3",
-    "unplugin-icons": "^0.15.3",
+    "unplugin-icons": "^0.19.0",
     "unplugin-vue-components": "^0.22.12",
     "vitepress": "^1.1.0"
   }
