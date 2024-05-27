@@ -18,10 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - `Button` component now use `IconInline` instead of the deprecated `Icon` component. ([#201](https://github.com/studiometa/ui/pull/201))
 - Globe and Facebook svg icons have now a dimension of 24x24 ([#201](https://github.com/studiometa/ui/pull/201))
-
-### Deleted
-
-- Twitter svg icon is deleted ([#201](https://github.com/studiometa/ui/pull/201))
+- Twitter svg icon is now a symlink to X and have a dimension of 24x24 ([#201](https://github.com/studiometa/ui/pull/201))
 
 ## [v0.2.48](https://github.com/studiometa/ui/compare/0.2.47..0.2.48) (2024-04-17)
 
