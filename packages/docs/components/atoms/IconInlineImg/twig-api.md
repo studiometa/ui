@@ -12,6 +12,12 @@ title: IconInlineImg Twig API
 
 The filename of the icon, as found in the folder corresponding to the `@svg` alias.
 
+### `ignore_missing`
+
+- Type: `boolean`
+
+Avoid printing of `<img>` with empty `src`.
+
 ### `attr`
 
 - Type: `array[]`

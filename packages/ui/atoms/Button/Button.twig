@@ -8,6 +8,7 @@
  * @param string $href
  * @param array $attr
  * @param string $icon
+ * @param array  $icon_attr
  * @param array|string $icon_classes
  * @param 'start'|'end' $icon_position
  * @param boolean $icon_only
@@ -39,12 +40,21 @@
 
 {% set rendered_icon %}
   {% block icon %}
-    {% include '@ui/atoms/Icon/Icon.twig' with {
+    {# @TODO: Breaking change -> Delete icon_classes to use only icon_attr #}
+    {% include '@ui/atoms/Icon/IconInline.twig' with {
       name: icon ?? '',
-      classes: icon_classes ?? {
-        'mr-3': not icon_only and icon_position == 'start',
-        'ml-3': not icon_only and icon_position == 'end',
-       }
+      attr: merge_html_attributes(
+        icon_attr ?? null,
+        {
+          class: {
+            'mr-3': not icon_only and icon_position == 'start',
+            'ml-3': not icon_only and icon_position == 'end',
+          }
+        },
+        {
+          class: icon_classes,
+        },
+      )
     } %}
   {% endblock %}
 {% endset %}

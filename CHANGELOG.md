@@ -8,7 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-**Demos:** Add a Navbar component ([#198](https://github.com/studiometa/ui/pull/198))
+- **Demos:** Add a Navbar component ([#198](https://github.com/studiometa/ui/pull/198))
+- Add a `IconList` molecule who displays a list of clickable icons ([#201](https://github.com/studiometa/ui/pull/201))
+- Add a `ignore_missing` option to the `IconInline` and `IconInlineImg` components to avoid empty tag printing ([#201](https://github.com/studiometa/ui/pull/201))
+- Add the `icon_attr` option on the `Button` to pass attr directly to the `IconInline` component ([#201](https://github.com/studiometa/ui/pull/201))
+- Add some brand new 24x24 svg icons : at, copy, instagram, link, linkedin, mail, phone, pinterest, tiktok, whatsapp, x ([#201](https://github.com/studiometa/ui/pull/201))
+
+### Changed
+
+- `Button` component now use `IconInline` instead of the deprecated `Icon` component. ([#201](https://github.com/studiometa/ui/pull/201))
+- Globe and Facebook svg icons have now a dimension of 24x24 ([#201](https://github.com/studiometa/ui/pull/201))
+- Twitter svg icon is now a symlink to X and have a dimension of 24x24 ([#201](https://github.com/studiometa/ui/pull/201))
 
 ## [v0.2.48](https://github.com/studiometa/ui/compare/0.2.47..0.2.48) (2024-04-17)
 
