@@ -20,6 +20,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Globe and Facebook svg icons have now a dimension of 24x24 ([#201](https://github.com/studiometa/ui/pull/201))
 - Twitter svg icon is now a symlink to X and have a dimension of 24x24 ([#201](https://github.com/studiometa/ui/pull/201))
 
+### Dependencies
+
+- Update dependency @iconify-json/octicon to v1.1.54 ([6599061](https://github.com/studiometa/ui/commits/6599061))
+- Update dependency esbuild to ^0.21.0 ([777f416](https://github.com/studiometa/ui/commits/777f416))
+- Update dependency oxlint to ^0.4.0 ([f3905cb](https://github.com/studiometa/ui/commits/f3905cb))
+- Update dependency studiometa/twig-toolkit to v1.3.6 ([63b6ce8](https://github.com/studiometa/ui/commits/63b6ce8))
+- Update dependency twig/twig to v3.10.2 ([99164e3](https://github.com/studiometa/ui/commits/99164e3))
+- Update dependency twig/twig to v3.10.3 ([1bbdf25](https://github.com/studiometa/ui/commits/1bbdf25))
+- Update dependency unplugin-icons to ^0.19.0 ([f0f7833](https://github.com/studiometa/ui/commits/f0f7833))
+- Update dependency vitepress to v1.1.4 ([c0d951e](https://github.com/studiometa/ui/commits/c0d951e))
+- Update dependency vitepress to v1.2.2 ([37afc6f](https://github.com/studiometa/ui/commits/37afc6f))
+
 ## [v0.2.48](https://github.com/studiometa/ui/compare/0.2.47..0.2.48) (2024-04-17)
 
 ### Added
