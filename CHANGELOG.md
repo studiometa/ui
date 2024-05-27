@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.49](https://github.com/studiometa/ui/compare/0.2.48..0.2.49) (2024-05-27)
+
 ### Added
 
 - **Demos:** Add a Navbar component ([#198](https://github.com/studiometa/ui/pull/198))
