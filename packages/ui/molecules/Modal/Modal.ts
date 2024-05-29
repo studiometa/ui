@@ -1,8 +1,11 @@
 import { Base, KeyServiceProps } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { transition, focusTrap } from '@studiometa/js-toolkit/utils';
-
-const { trap, untrap, saveActiveElement } = focusTrap();
+import {
+  transition,
+  trapFocus as trap,
+  untrapFocus as untrap,
+  saveActiveElement,
+} from '@studiometa/js-toolkit/utils';
 
 type ModalStates = Partial<
   Record<'open' | 'active' | 'closed', string | Partial<CSSStyleDeclaration>>
