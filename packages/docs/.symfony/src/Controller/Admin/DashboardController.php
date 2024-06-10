@@ -2,6 +2,7 @@
 
 namespace App\Controller\Admin;
 
+use App\Entity\Category;
 use App\Entity\Demo;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
@@ -34,10 +35,7 @@ class DashboardController extends AbstractDashboardController
             MenuItem::linktoRoute('Retourner au site', 'fas fa-home', 'homepage'),
             MenuItem::section('Démos'),
             MenuItem::linkToCrud('Démo', 'fas fa-list', Demo::class),
-            MenuItem::linkToCrud('Ajouter une démo', 'fa fa-plus', Demo::class)
-                ->setAction('new'),
-            // MenuItem::section('Utilisateur'),
-            // MenuItem::linkToLogout('Logout', 'fa fa-exit'),
+            MenuItem::linkToCrud('Catégorie', 'fas fa-list', Category::class)
         ];
     }
 }
