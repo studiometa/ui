@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\DemoRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
@@ -28,6 +30,17 @@ class Demo
 
     #[ORM\Column(type: Types::TEXT)]
     private ?string $author = null;
+
+    /**
+     * @var Collection<int, Category>
+     */
+    #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'demos')]
+    private Collection $categories;
+
+    public function __construct()
+    {
+        $this->categories = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -87,15 +100,45 @@ class Demo
         return $this->title;
     }
 
-    public static function __toArray(Demo $demo): array {
+    public static function __toArray(Demo $demo): array
+    {
+        $categories = $demo->getCategories()
+            ->map(fn ($category) => $category->getTitle())
+            ->toArray();
+
         return [
             'id' => $demo->id,
             'author' => $demo->author,
             'title' => $demo->title,
             'content' => $demo->content,
             'iframe_link' => $demo->iframe_link,
+            'categories' => $categories,
             'created_at' => $demo->createdAt->format('d/m/Y à H:i'),
             'updated_at' => $demo->updatedAt->format('d/m/Y à H:i'),
         ];
+    }
+
+    /**
+     * @return Collection<int, Category>
+     */
+    public function getCategories(): Collection
+    {
+        return $this->categories;
+    }
+
+    public function addCategory(Category $category): static
+    {
+        if (!$this->categories->contains($category)) {
+            $this->categories->add($category);
+        }
+
+        return $this;
+    }
+
+    public function removeCategory(Category $category): static
+    {
+        $this->categories->removeElement($category);
+
+        return $this;
     }
 }
