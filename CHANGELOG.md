@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Add a `ui.ease` Twig global object to the Twig extension ([#195](https://github.com/studiometa/ui/pull/195))
+- Add the administration of demos from the back-office (4d534ca)
+- Add dependencies for the administration of demos from back-office (a3fc15b)
+- Add Demo in Vitepress (0e1b912)
+- Add author on each Demo (9a235d9)
+- Add user authentification (27b68b5)
+- Add Demo CRUD (91b358b)
 
 ## [v0.2.47](https://github.com/studiometa/ui/compare/0.2.46..0.2.47) (2024-03-22)
 
