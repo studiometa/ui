@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.50](https://github.com/studiometa/ui/compare/0.2.49..0.2.50) (2024-06-10)
+
+### Fixed
+
+- Replace `twitter.svg` symlink by a svg file because it is not supported by TailwindCSS during the compilation ([#238](https://github.com/studiometa/ui/pull/238))
+
 ## [v0.2.49](https://github.com/studiometa/ui/compare/0.2.48..0.2.49) (2024-05-27)
 
 ### Added
