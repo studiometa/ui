@@ -12,6 +12,9 @@ export interface AnchorScrollToProps extends BaseProps {
 export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<AnchorScrollToProps & T> {
   static config: BaseConfig = {
     name: 'AnchorScrollTo',
+    options: {
+      hashCloak: Boolean,
+    },
   };
 
   /**
@@ -27,10 +30,21 @@ export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<Anchor
    * @param   {MouseEvent} event
    * @returns {void}
    */
-  onClick(event) {
+  async onClick(event) {
+    const target = document.querySelector(this.targetSelector) as HTMLElement;
+    if (!target) {
+      return;
+    }
+
     try {
-      scrollTo(this.targetSelector);
       event.preventDefault();
+      await scrollTo(target);
+
+      if (this.$options.hashCloak) {
+        return;
+      }
+
+      window.location.hash = this.targetSelector;
     } catch {
       // Silence is golden.
     }
