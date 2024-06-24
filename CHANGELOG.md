@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Dependencies
+
+- Lock file maintenance (dc4606e)
+- Update dependency @iconify-json/octicon to v1.1.55 (f00c80f)
+- Update dependency esbuild to v0.21.5 (1a19693)
+- Update dependency oxlint to v0.4.3 (1f8a90a)
+- Update dependency oxlint to v0.4.4 (d443a78)
+
 ## [v0.2.50](https://github.com/studiometa/ui/compare/0.2.49..0.2.50) (2024-06-10)
 
 ### Fixed
