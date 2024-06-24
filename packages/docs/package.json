@@ -14,7 +14,7 @@
     "@studiometa/js-toolkit": "^2.12.0"
   },
   "devDependencies": {
-    "@iconify-json/octicon": "1.1.54",
+    "@iconify-json/octicon": "1.1.55",
     "@studiometa/playground": "0.0.3",
     "@studiometa/tailwind-config": "1.1.0",
     "@vueuse/components": "10.10.0",
