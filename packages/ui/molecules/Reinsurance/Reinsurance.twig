@@ -40,7 +40,7 @@
     {% set icon_attributes = merge_html_attributes(icon_attr ?? null, { attr: { class: 'inline-block mb-2 s:mb-8' }, name: item.icon }) %}
     <div {{ html_attributes(item_attributes) }}>
       {% block icon %}
-        {% if icon %}
+        {% if item.icon %}
           {% include '@ui/atoms/Icon/IconInlineImg.twig' with icon_attributes only %}
         {% endif %}
       {% endblock %}

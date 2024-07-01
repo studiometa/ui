@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.51](https://github.com/studiometa/ui/compare/0.2.50..0.2.51) (2024-06-24)
+
+### Fixed
+
+- Fix the condition for displaying the Reinsurance molecule icon ([#247](https://github.com/studiometa/ui/pull/247))
+
 ## [v0.2.50](https://github.com/studiometa/ui/compare/0.2.49..0.2.50) (2024-06-10)
 
 ### Fixed
