@@ -6,17 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.52](https://github.com/studiometa/ui/compare/0.2.51..0.2.52) (2024-07-03)
+
 ### Added
 
 - Add support for advanced TwicPics placeholder ([#251](https://github.com/studiometa/ui/pull/251))
 
 ### Dependencies
 
-- Lock file maintenance (dc4606e)
-- Update dependency @iconify-json/octicon to v1.1.55 (f00c80f)
-- Update dependency esbuild to v0.21.5 (1a19693)
-- Update dependency oxlint to v0.4.3 (1f8a90a)
-- Update dependency oxlint to v0.4.4 (d443a78)
+- Lock file maintenance ([dc4606e](https://github.com/studiometa/ui/commits/dc4606e), [d72d430](https://github.com/studiometa/ui/commits/d72d430))
+- Update dependency @iconify-json/octicon to v1.1.55 ([f00c80f](https://github.com/studiometa/ui/commits/f00c80f))
+- Update dependency esbuild to v0.21.5 ([1a19693](https://github.com/studiometa/ui/commits/1a19693))
+- Update dependency oxlint to v0.4.3 ([1f8a90a](https://github.com/studiometa/ui/commits/1f8a90a))
+- Update dependency oxlint to v0.4.4 ([d443a78](https://github.com/studiometa/ui/commits/d443a78))
+- Update dependency oxlint to v0.5.0 ([cc971c2](https://github.com/studiometa/ui/commits/cc971c2))
+- Update dependency unplugin-vue-components to v0.27.2 ([0f05cec](https://github.com/studiometa/ui/commits/0f05cec))
 
 ## [v0.2.51](https://github.com/studiometa/ui/compare/0.2.50..0.2.51) (2024-06-24)
 
