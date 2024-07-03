@@ -1,0 +1,16 @@
+<figure
+  data-component="Figure"
+  class="figure w-full"
+  data-option-domain="test.twic.pics"
+  data-option-path="path"
+  data-option-lazy>
+  <div class="figure__inner relative w-full h-0" style="padding-top: 100&#x25">
+    <img
+      class="figure__img absolute inset-0 w-full max-w-none h-full"
+      src="https://test.twic.pics/path/uploads/image.jpg&#x3F;twic&#x3D;v1/output&#x3D;preview"
+      data-src="https://test.twic.pics/path/uploads/image.jpg&#x3F;twic&#x3D;v1"
+      width="400"
+      height="400"
+      data-ref="img" />
+  </div>
+</figure>
