@@ -47,7 +47,7 @@ export default createApp(App);
 </div>
 ```
 
-### Configuring the domain and path in JavaScript
+### With JavaScript only
 
 To avoid repeating the domain and path of your Twicpics project via `data-option-*` attributes, you can define the `domain` and `path` getter directly by extending the `FigureTwicpics` class in your project.
 
@@ -92,3 +92,40 @@ And replace the import in your app to import your local class instead of the one
 ::: warning
 Setting the domain and path via getters in JavaScript will work with lazyloaded images. If you disable lazyloading when using the Twig template, you will need to specify the `twic_domain` and `twic_path` Twig options.
 :::
+
+### With Twig
+
+If your project uses Twig as a templating language, it is recommended to define the domain and path for TwicPics in Twig. This will allow the usage of TwicPics for placeholders.
+
+The best way to implement this is to define an override for the `Figure.twig` template in your project by adding an `atoms/Figure/Figure.twig` file and using the `@ui` namespace to include the component `{% include '@ui/atoms/Figure/Figure.twig' with {} %}`. You will then be able to extends the `FigureTwicpics.twig` template:
+
+```twig
+{% extends '@ui-pkg/atoms/Figure/FigureTwicpics.twig' %}
+
+{% set twic_domain = 'my-domain.twic.pics' %}
+{% set twic_path = 'my-path' %}
+```
+
+::: info
+This approach is a replacement of defining the domain and path in JavaScript described above.
+:::
+
+### Using placeholders
+
+By default, the `FigureTwicpics` component uses an blank SVG placeholder as the source of the image. This can be customized with the [`twic_placeholder` parameter](/components/atoms/FigureTwicpics/twig-api.html#twic-placeholder).
+
+```twig {4,10-12}
+{# Will display a blurred version of the image #}
+{% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
+  twic_domain: 'org.twic.pics',
+  twic_placeholder: 'preview',
+} %}
+
+{# Will display a lighter version of the image with its quality degraded to 5 #}
+{% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
+  twic_domain: 'org.twic.pics',
+  twic_placeholder: {
+    quality_max: 5,
+  },
+} %}
+```
