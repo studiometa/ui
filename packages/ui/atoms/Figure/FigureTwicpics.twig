@@ -41,5 +41,17 @@
 {% endif %}
 
 {% if twic_placeholder is defined %}
-  {% set placeholder = src.withQueryParameter('twic', '%s/output=%s'|format(twic_param, twic_placeholder)) %}
+  {% if twic_placeholder in ['preview', 'meancolor', 'maincolor', 'blurhash', 'blank'] %}
+    {% set placeholder = src.withQueryParameter('twic', '%s/output=%s'|format(twic_param, twic_placeholder)) %}
+  {% else %}
+    {% set formatted_placeholder_transform = [] %}
+    {% for key, value in twic_placeholder %}
+      {% set key = key|replace({ _: '-' }) %}
+      {% set formatted_placeholder_transform = formatted_placeholder_transform|merge(['%s=%s'|format(key, value)]) %}
+    {% endfor %}
+    {% set formatted_placeholder_transform = formatted_placeholder_transform|join('/') %}
+
+    {% set placeholder = src.withQueryParameter('twic', '%s/%s'|format(twic_param, formatted_placeholder_transform)) %}
+  {% endif %}
 {% endif %}
+
