@@ -23,6 +23,6 @@ Use the `DataBind`, `DataModel` and `DataComputed` components to bind and synchr
 Import the components in your main app and use the `DataModel` component on HTML form elements and the `DataBind` and `DataComputed` components on other elements that need to be updated accordingly.
 
 <PreviewPlayground
-  :html="() => import('./stories/basic/app.twig')"
-  :script="() => import('./stories/basic/app.js?raw')"
+  :html="() => import('./stories/basic.twig')"
+  :script="() => import('./stories/app.js?raw')"
   />
