@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@studiometa/prettier-config": "3.0.0",
-    "esbuild": "0.21.5",
+    "esbuild": "0.23.0",
     "fast-glob": "3.3.2",
     "gzip-size": "7.0.0",
     "oxlint": "0.5.0",
