@@ -1,0 +1,19 @@
+<input
+  data-component="DataModel"
+  data-option-name="msg"
+  data-option-main
+  value="Hello world"
+  class="p-4 ring rounded" />
+<h1
+  data-component="DataBind"
+  data-option-name="msg"
+  class="my-4 text-4xl font-bold">
+  Hello world
+</h1>
+<p
+  data-component="DataComputed"
+  data-option-compute="`Length: ${msg.length}`"
+  data-option-name="msg"
+  class="my-4 text-xl">
+  Lengh: 11
+</p>
