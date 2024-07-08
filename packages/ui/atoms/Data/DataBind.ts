@@ -47,14 +47,6 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
       if (instance.$options.main) {
         return instance;
       }
-
-      if (
-        instance.$el instanceof HTMLInputElement &&
-        ['radio', 'checkbox'].includes(instance.$el.type) &&
-        instance.$el.checked
-      ) {
-        return instance;
-      }
     }
 
     return this.relatedInstances.values().next().value;
@@ -88,28 +80,42 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
   }
 
   get() {
-    if (this.target instanceof HTMLSelectElement) {
-      const option = this.target.options.item(this.target.selectedIndex);
+    const { target } = this;
+
+    if (target instanceof HTMLSelectElement) {
+      const option = target.options.item(target.selectedIndex);
       return option.value || option.textContent;
     }
 
-    return this.target[this.prop];
+    if (target instanceof HTMLInputElement && target.type === 'checkbox') {
+      return target.checked;
+    }
+
+    return target[this.prop];
   }
 
   set(value) {
-    if (this.target instanceof HTMLSelectElement) {
-      for (const option of this.target.options) {
+    const { target } = this;
+
+    if (target instanceof HTMLSelectElement) {
+      for (const option of target.options) {
         option.selected = option.value === value;
       }
       return;
     }
 
-    if (this.target instanceof HTMLInputElement && this.target.type == 'radio') {
-      this.target.checked = this.target.value === value;
-      return;
+    if (target instanceof HTMLInputElement) {
+      switch (target.type) {
+        case 'radio':
+          target.checked = target.value === value;
+          return;
+        case 'checkbox':
+          target.checked = value;
+          return;
+      }
     }
 
-    this.target[this.prop] = value;
+    target[this.prop] = value;
   }
 
   mounted() {
