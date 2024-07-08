@@ -31,7 +31,16 @@ export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<Data
   }
 
   set(value) {
-    super.set(this.compute(value));
+    let newValue = value;
+
+    try {
+      newValue = this.compute(value)
+    } catch (error) {
+      // @todo better handling of errors?
+      console.log('Failed', error);
+    }
+
+    super.set(newValue);
   }
 
   get() {
