@@ -10,6 +10,9 @@ export class DataModel<T extends BaseProps = BaseProps> extends DataBind<DataMod
   };
 
   onInput() {
-    this.value = this.get();
+    const value = this.get();
+    for (const instance of this.relatedInstances) {
+      instance.set(value);
+    }
   }
 }

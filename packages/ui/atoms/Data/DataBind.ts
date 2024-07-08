@@ -1,5 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { isArray } from '@studiometa/js-toolkit/utils';
+import { isInput, isRadio, isCheckbox, isSelect } from './utils.js';
 
 const defaultProp = Symbol('default');
 
@@ -11,6 +13,7 @@ export interface DataBindProps extends BaseProps {
     name: string;
     target: string;
     main: boolean;
+    multiple: boolean;
   };
 }
 
@@ -25,6 +28,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
       name: String,
       target: String,
       main: Boolean,
+      multiple: Boolean,
     },
   };
 
@@ -53,7 +57,8 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
   }
 
   get target() {
-    return this.$refs[this.$options.target] ?? this.$el;
+    const target = this.$refs[this.$options.target] ?? this.$el;
+    return isArray(target) ? target[0] : target;
   }
 
   get prop() {
@@ -69,26 +74,38 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
     return 'textContent';
   }
 
-  get value() {
-    return this.get();
-  }
-
-  set value(value) {
-    for (const instance of this.relatedInstances) {
-      instance.set(value);
-    }
-  }
-
   get() {
     const { target } = this;
+    const { multiple } = this.$options;
 
-    if (target instanceof HTMLSelectElement) {
+    if (isSelect(target)) {
+      if (multiple) {
+        const values = [];
+        for (const option of target.options) {
+          if (option.selected) {
+            values.push(option.value);
+          }
+        }
+
+        return values;
+      }
+
       const option = target.options.item(target.selectedIndex);
-      return option.value || option.textContent;
+      return option.value;
     }
 
-    if (target instanceof HTMLInputElement && target.type === 'checkbox') {
-      return target.checked;
+    if (isCheckbox(target)) {
+      if (multiple) {
+        const values = [];
+        for (const instance of this.relatedInstances) {
+          if (instance.target instanceof HTMLInputElement && instance.target.type === 'checkbox' && instance.target.checked) {
+            values.push(instance.target.value ?? instance.target.textContent);
+          }
+        }
+        return values;
+      } else {
+        return target.checked;
+      }
     }
 
     return target[this.prop];
@@ -96,21 +113,22 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
 
   set(value) {
     const { target } = this;
+    const { multiple } = this.$options;
 
-    if (target instanceof HTMLSelectElement) {
+    if (isSelect(target)) {
       for (const option of target.options) {
-        option.selected = option.value === value;
+        option.selected = multiple ? value.includes(option.value) : option.value === value;
       }
       return;
     }
 
-    if (target instanceof HTMLInputElement) {
+    if (isInput(target)) {
       switch (target.type) {
         case 'radio':
           target.checked = target.value === value;
           return;
         case 'checkbox':
-          target.checked = value;
+          target.checked = multiple ? value.includes(target.value) : value;
           return;
       }
     }
@@ -122,9 +140,9 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
     this.relatedInstances.add(this);
 
     if (this !== this.main) {
-      this.value = this.main.get();
+      this.set(this.main.get());
     } else {
-      this.value = this.get();
+      this.set(this.get());
     }
   }
 

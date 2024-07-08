@@ -20,7 +20,7 @@ export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<Data
     const key = compute + name;
 
     if (!callbacks.has(key)) {
-      callbacks.set(key, new Function(name, 'instance', `return ${compute};`));
+      callbacks.set(key, new Function('value', 'instance', `return ${compute};`));
     }
 
     return callbacks.get(key);
