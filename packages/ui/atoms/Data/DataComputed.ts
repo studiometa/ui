@@ -20,7 +20,7 @@ export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<Data
     const key = compute + name;
 
     if (!callbacks.has(key)) {
-      callbacks.set(key, new Function(name, `return ${compute};`));
+      callbacks.set(key, new Function(name, 'instance', `return ${compute};`));
     }
 
     return callbacks.get(key);
@@ -34,7 +34,7 @@ export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<Data
     let newValue = value;
 
     try {
-      newValue = this.compute(value)
+      newValue = this.compute(value, this);
     } catch (error) {
       // @todo better handling of errors?
       console.log('Failed', error);
