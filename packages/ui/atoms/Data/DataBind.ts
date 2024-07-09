@@ -1,7 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { isArray } from '@studiometa/js-toolkit/utils';
-import { isInput, isRadio, isCheckbox, isSelect } from './utils.js';
+import { isInput, isCheckbox, isSelect } from './utils.js';
 
 const instances = new Map<string, Set<DataBind>>();
 

@@ -2,10 +2,6 @@ export function isInput(el: Element): el is HTMLInputElement {
   return el instanceof HTMLInputElement;
 }
 
-export function isRadio(el: Element): el is HTMLInputElement {
-  return isInput(el) && el.type === 'radio';
-}
-
 export function isCheckbox(el: Element): el is HTMLInputElement {
   return isInput(el) && el.type === 'checkbox';
 }
