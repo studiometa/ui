@@ -3,13 +3,11 @@ import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { isArray } from '@studiometa/js-toolkit/utils';
 import { isInput, isRadio, isCheckbox, isSelect } from './utils.js';
 
-const defaultProp = Symbol('default');
-
 const instances = new Map<string, Set<DataBind>>();
 
 export interface DataBindProps extends BaseProps {
   $options: {
-    prop: string | Symbol;
+    prop: string;
     name: string;
   };
 }
@@ -18,10 +16,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
   static config: BaseConfig = {
     name: 'DataBind',
     options: {
-      prop: {
-        type: String,
-        default: defaultProp,
-      },
+      prop: String,
       name: String,
     },
   };
@@ -49,8 +44,8 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
   }
 
   get prop() {
-    if (this.$options.prop !== defaultProp) {
-      return this.$options.prop as string;
+    if (this.$options.prop) {
+      return this.$options.prop;
     }
 
     const { target } = this;
