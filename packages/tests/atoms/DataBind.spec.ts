@@ -1,6 +1,5 @@
 import { it, describe, expect } from '@jest/globals';
-import { Base } from '@studiometa/js-toolkit';
-import { DataBind, DataModel, DataEffect, DataComputed } from '@studiometa/ui';
+import { DataBind } from '@studiometa/ui';
 import { h } from '#test-utils';
 
 describe('The DataBind component', () => {
