@@ -1,5 +1,5 @@
 ---
-title: Figure examples
+title: DataBind, DataModel and DataComputed examples
 ---
 
 # Examples
