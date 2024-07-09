@@ -13,7 +13,6 @@ export interface DataBindProps extends BaseProps {
     name: string;
     target: string;
     main: boolean;
-    multiple: boolean;
   };
 }
 
@@ -28,7 +27,6 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
       name: String,
       target: String,
       main: Boolean,
-      multiple: Boolean,
     },
   };
 
@@ -56,6 +54,10 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
     return this.relatedInstances.values().next().value;
   }
 
+  get multiple() {
+    return this.$options.name.endsWith('[]');
+  }
+
   get target() {
     const target = this.$refs[this.$options.target] ?? this.$el;
     return isArray(target) ? target[0] : target;
@@ -75,8 +77,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
   }
 
   get() {
-    const { target } = this;
-    const { multiple } = this.$options;
+    const { target, multiple } = this;
 
     if (isSelect(target)) {
       if (multiple) {
@@ -112,8 +113,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
   }
 
   set(value) {
-    const { target } = this;
-    const { multiple } = this.$options;
+    const { target, multiple } = this;
 
     if (isSelect(target)) {
       for (const option of target.options) {
