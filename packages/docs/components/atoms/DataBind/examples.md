@@ -1,5 +1,5 @@
 ---
-title: DataBind, DataModel and DataComputed examples
+title: DataBind, DataModel, DataEffect and DataComputed examples
 ---
 
 # Examples

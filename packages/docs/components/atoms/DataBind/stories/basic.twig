@@ -1,19 +1,25 @@
-<input
-  data-component="DataModel"
+<div data-component="DataEffect"
   data-option-name="msg"
-  data-option-main
-  value="Hello world"
-  class="p-4 ring rounded" />
-<h1
-  data-component="DataBind"
-  data-option-name="msg"
-  class="my-4 text-4xl font-bold">
-  Hello world
-</h1>
-<p
-  data-component="DataComputed"
-  data-option-compute="`Length: ${value.length}`"
-  data-option-name="msg"
-  class="my-4 text-xl">
-  Lengh: 11
-</p>
+  data-option-effect="target.classList.toggle('bg-red-100', value.length > 15)"
+  class="flex flex-col gap-4">
+  <input
+    data-component="DataModel"
+    data-option-name="msg"
+    data-option-main
+    value="Hello world"
+    class="p-4 ring rounded" />
+  <h1
+    data-component="DataBind DataEffect"
+    data-option-name="msg"
+    data-option-effect="target.classList.toggle('text-red-600', value.length > 15)"
+    class="text-4xl font-bold">
+    Hello world
+  </h1>
+  <p
+    data-component="DataComputed"
+    data-option-compute="`Length: ${value.length}`"
+    data-option-name="msg"
+    class="text-xl">
+    Lengh: 11
+  </p>
+</div>
