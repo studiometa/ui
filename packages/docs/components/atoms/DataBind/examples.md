@@ -17,3 +17,17 @@ title: Figure examples
   :html="() => import('./stories/checkboxes.twig')"
   :script="() => import('./stories/app.js?raw')"
   />
+
+## Select
+
+<PreviewPlayground
+  :html="() => import('./stories/select.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
+
+## Select multiple
+
+<PreviewPlayground
+  :html="() => import('./stories/select-multiple.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
