@@ -13,3 +13,15 @@ export function isCheckbox(el: Element): el is HTMLInputElement {
 export function isSelect(el: Element): el is HTMLSelectElement {
   return el instanceof HTMLSelectElement;
 }
+
+const callbacks = new Map<string, Function>();
+
+export function getCallback(name: string, code: string): Function {
+  const key = code + name;
+
+  if (!callbacks.has(key)) {
+    callbacks.set(key, new Function('value', 'target', code));
+  }
+
+  return callbacks.get(key);
+}

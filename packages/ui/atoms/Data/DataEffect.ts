@@ -4,37 +4,31 @@ import { DataBind } from './DataBind.js';
 import type { DataBindProps } from './DataBind.js';
 import { getCallback } from './utils.js';
 
-export interface DataComputedProps extends DataBindProps {
+export interface DataEffectProps extends DataBindProps {
   $options: {
-    compute: string;
+    effect: string;
   } & DataBindProps['$options'];
 }
 
-const callbacks = new Map<string, Function>();
-
-export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<DataComputedProps & T> {
+export class DataEffect<T extends BaseProps = BaseProps> extends DataBind<DataEffectProps & T> {
   static config: BaseConfig = {
-    name: 'DataComputed',
+    name: 'DataEffect',
     options: {
-      compute: String,
+      effect: String,
     },
   };
 
-  get compute() {
-    const { name, compute } = this.$options;
-    return getCallback(name, `return ${compute};`);
+  get effect() {
+    const { name, effect } = this.$options;
+    return getCallback(name, effect);
   }
 
   set(value: boolean | string | string[]) {
-    let newValue = value;
-
     try {
-      newValue = this.compute(value, this.target);
+      this.effect(value, this.target);
     } catch (error) {
       // @todo better handling of errors?
       console.log('Failed', error);
     }
-
-    super.set(newValue);
   }
 }
