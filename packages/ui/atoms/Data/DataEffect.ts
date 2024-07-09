@@ -28,7 +28,7 @@ export class DataEffect<T extends BaseProps = BaseProps> extends DataBind<DataEf
       this.effect(value, this.target);
     } catch (error) {
       // @todo better handling of errors?
-      console.log('Failed', error);
+      console.error('Failed', error);
     }
   }
 }
