@@ -11,8 +11,6 @@ export interface DataBindProps extends BaseProps {
   $options: {
     prop: string | Symbol;
     name: string;
-    target: string;
-    main: boolean;
   };
 }
 
@@ -25,8 +23,6 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
         default: defaultProp,
       },
       name: String,
-      target: String,
-      main: Boolean,
     },
   };
 
@@ -44,23 +40,12 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
     return instances.get(name);
   }
 
-  get main() {
-    for (const instance of this.relatedInstances) {
-      if (instance.$options.main) {
-        return instance;
-      }
-    }
-
-    return this.relatedInstances.values().next().value;
-  }
-
   get multiple() {
     return this.$options.name.endsWith('[]');
   }
 
   get target() {
-    const target = this.$refs[this.$options.target] ?? this.$el;
-    return isArray(target) ? target[0] : target;
+    return this.$el;
   }
 
   get prop() {
@@ -99,7 +84,11 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
       if (multiple) {
         const values = [];
         for (const instance of this.relatedInstances) {
-          if (instance.target instanceof HTMLInputElement && instance.target.type === 'checkbox' && instance.target.checked) {
+          if (
+            instance.target instanceof HTMLInputElement &&
+            instance.target.type === 'checkbox' &&
+            instance.target.checked
+          ) {
             values.push(instance.target.value ?? instance.target.textContent);
           }
         }
@@ -112,12 +101,12 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
     return target[this.prop];
   }
 
-  set(value) {
+  set(value: boolean | string | string[]) {
     const { target, multiple } = this;
 
     if (isSelect(target)) {
       for (const option of target.options) {
-        option.selected = multiple ? value.includes(option.value) : option.value === value;
+        option.selected = multiple && isArray(value) ? value.includes(option.value) : option.value === value;
       }
       return;
     }
@@ -128,7 +117,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
           target.checked = target.value === value;
           return;
         case 'checkbox':
-          target.checked = multiple ? value.includes(target.value) : value;
+          target.checked = multiple && isArray(value) ? value.includes(target.value) : Boolean(value);
           return;
       }
     }
@@ -138,12 +127,6 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
 
   mounted() {
     this.relatedInstances.add(this);
-
-    if (this !== this.main) {
-      this.set(this.main.get());
-    } else {
-      this.set(this.get());
-    }
   }
 
   destroyed() {
