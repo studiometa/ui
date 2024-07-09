@@ -5,8 +5,5 @@ outline: deep
 
 # DataModel JS API
 
-@todo
+The `DataModel` component have the same public API as the [`DataBind` component](./data-bind-js-api.html).
 
-## Options
-
-@todo
