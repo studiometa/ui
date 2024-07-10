@@ -1,4 +1,4 @@
-name: Tests
+name: tests
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   pull_request:
 
 jobs:
-  Code-Quality:
+  code_quality:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
       - name: Run Prettier check
         run: npm run lint:prettier
 
-  Unit-Node:
+  unit_node:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -72,7 +72,7 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
-  Unit-Pest:
+  unit_pest:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -128,7 +128,7 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
-  Export-Size:
+  export_size:
     runs-on: macos-latest
     if: github.event_name == 'pull_request'
     steps:
