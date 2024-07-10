@@ -18,7 +18,7 @@
     "@studiometa/playground": "0.0.3",
     "@studiometa/tailwind-config": "1.1.0",
     "@vueuse/components": "10.11.0",
-    "@vueuse/core": "10.10.0",
+    "@vueuse/core": "10.11.0",
     "autoprefixer": "10.4.19",
     "concurrently": "8.2.2",
     "snake-case": "3.0.4",
