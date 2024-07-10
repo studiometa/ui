@@ -2,6 +2,7 @@
   "name": "@studiometa/ui-workspace",
   "version": "0.2.52",
   "private": true,
+  "type": "module",
   "workspaces": [
     "packages/*"
   ],
@@ -17,7 +18,7 @@
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
     "lint:static": "oxlint",
     "lint:types": "tsc --build tsconfig.lint.json",
-    "lint:prettier": "prettier --check --cache packages/docs/**/*.md",
+    "lint:prettier": "prettier --check --cache packages/**/*.{md,twig,js,ts}",
     "docs:dev": "npm run dev -w @studiometa/ui-docs",
     "docs:build": "npm run build -w @studiometa/ui-docs",
     "play:dev": "npm run dev -w @studiometa/ui-playground",
@@ -26,12 +27,12 @@
     "postinstall": "patch-package"
   },
   "devDependencies": {
-    "@studiometa/prettier-config": "3.0.0",
+    "@studiometa/prettier-config": "4.1.0",
     "esbuild": "0.23.0",
     "fast-glob": "3.3.2",
     "gzip-size": "7.0.0",
     "oxlint": "0.5.2",
-    "prettier": "2.8.8",
+    "prettier": "3.3.2",
     "typescript": "5.5.3"
   },
   "dependencies": {
