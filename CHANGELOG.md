@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Update Node 20 → 22 ([#257](https://github.com/studiometa/ui/pull/257), 4f2d947)
+- Add a Dockerfile for easy deployment of the documentation ([#257](https://github.com/studiometa/ui/pull/257), 016a509)
+
 ## [v0.2.52](https://github.com/studiometa/ui/compare/0.2.51..0.2.52) (2024-07-03)
 
 ### Added
