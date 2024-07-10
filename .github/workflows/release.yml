@@ -1,4 +1,4 @@
-name: Release
+name: release
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.11
+          node-version: 22
           registry-url: https://registry.npmjs.org/
 
       - name: Get npm cache directory
