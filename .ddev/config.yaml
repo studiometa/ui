@@ -2,7 +2,7 @@ name: ui
 type: php
 docroot: packages/docs/.symfony/public
 php_version: '8.3'
-nodejs_version: '20.11.1'
+nodejs_version: '22'
 webserver_type: nginx-fpm
 use_dns_when_possible: true
 omit_containers: [db]
