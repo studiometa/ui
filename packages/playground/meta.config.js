@@ -34,6 +34,7 @@ export default defineWebpackConfig({
 {% end_html_element %}`,
         style: `html.dark {
   background-color: #222;
+  color: #eee;
 }
 
 body {

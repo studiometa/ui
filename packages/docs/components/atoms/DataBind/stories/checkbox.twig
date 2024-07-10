@@ -1,0 +1,25 @@
+<div class="flex flex-col gap-2">
+  <label>
+    <input type="checkbox"
+      data-component="DataModel"
+      data-option-name="checkbox" />
+    <span>Foo</span>
+  </label>
+  <label>
+    <input type="checkbox"
+      data-component="DataModel"
+      data-option-name="checkbox" />
+    <span>Bar</span>
+  </label>
+  <p data-component="DataBind" data-option-name="checkbox">
+    false
+  </p>
+  <p>
+    The checkboxes are
+    <span data-component="DataComputed"
+      data-option-name="checkbox"
+      data-option-compute="value ? 'checked' : 'not checked'">
+      not checked
+    </span>
+  </p>
+</div>

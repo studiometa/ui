@@ -1,0 +1,21 @@
+<div class="flex flex-col gap-2">
+  <label>
+    <input type="checkbox"
+      data-component="DataModel"
+      data-option-name="checkbox[]"
+      value="foo" />
+    <span>Foo</span>
+  </label>
+  <label>
+    <input type="checkbox"
+      data-component="DataModel"
+      data-option-name="checkbox[]"
+      value="bar" />
+    <span>Bar</span>
+  </label>
+  <p data-component="DataBind" data-option-name="checkbox[]"></p>
+  <pre data-component="DataComputed"
+    data-option-name="checkbox[]"
+    data-option-compute="JSON.stringify(value, null, 2)"
+    class="text-sm"></pre>
+</div>

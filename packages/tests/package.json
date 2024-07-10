@@ -18,5 +18,8 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "ts-jest-resolver": "^2.0.1"
+  },
+  "imports": {
+    "#test-utils": "./__utils__/index.ts"
   }
 }
