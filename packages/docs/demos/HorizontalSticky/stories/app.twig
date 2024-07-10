@@ -1,15 +1,20 @@
 {% set total = 10 %}
 
-<div class="flex items-center justify-center w-full h-screen">
-  Scroll down
-</div>
+<div class="flex items-center justify-center w-full h-screen">Scroll down</div>
 <div data-component="ScrollAnimationParent"
   data-option-offset="0 0 / 1 1"
   style="--total: {{ total }}; height: calc(var(--total) * 100vw);"
   class="relative w-full bg-gray-200">
   <div data-component="ScrollAnimationChild"
     {{
-    html_attributes({ data_option_from: { '--progress': 0 }, data_option_to: { '--progress': 1 } })
+    html_attributes({
+      data_option_from: {
+        '--progress': 0
+      },
+      data_option_to: {
+        '--progress': 1
+      }
+    })
     }}
     style="width: calc(var(--total) * 100vw); --tw-translate-x: calc(var(--progress) * -100% + var(--progress) * 100vw)"
     class="sticky top-0 flex h-screen bg-green-100 translate-x-0">
@@ -18,8 +23,12 @@
         class="w-screen h-screen p-12"
         {{
         html_attributes({
-          data_option_from: { x: 200 },
-          data_option_to: { x: - 200 },
+          data_option_from: {
+            x: 200
+          },
+          data_option_to: {
+            x: - 200
+          },
           data_option_offset: '-1 0 / 1 -1'
         })
         }}>
@@ -32,7 +41,9 @@
                 height: 400,
                 absolute: true,
                 fit: 'cover',
-                attr: { data_ref: 'target' }
+                attr: {
+                  data_ref: 'target'
+                }
               } %}
             </div>
           </div>
@@ -41,6 +52,4 @@
     {% endfor %}
   </div>
 </div>
-<div class="flex items-center justify-center w-full h-screen">
-  Scroll up
-</div>
+<div class="flex items-center justify-center w-full h-screen">Scroll up</div>

@@ -13,10 +13,16 @@
  */
 #}
 
-{% set default_attributes = { data_component: 'Sticky', class: 'z-10 sticky top-0 w-full' } %}
+{% set default_attributes = {
+  data_component: 'Sticky',
+  class: 'z-10 sticky top-0 w-full'
+} %}
 {% set attributes = attr|default({})|merge_html_attributes(default_attributes) %}
 
-{% set default_inner_attributes = { data_ref: 'inner', class:'transition duration-500 ease-out-expo' } %}
+{% set default_inner_attributes = {
+  data_ref: 'inner',
+  class: 'transition duration-500 ease-out-expo'
+} %}
 {% set inner_attributes = inner_attr|default({})|merge_html_attributes(default_inner_attributes) %}
 
 <div {{ html_attributes(attributes) }}>

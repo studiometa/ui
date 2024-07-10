@@ -1,6 +1,10 @@
 <div class="w-full h-96 flex items-center justify-center p-10">
   {% embed '@ui/molecules/Panel/StyledPanel.twig'
-    with { container_attr: { class: 'max-w-lg m:max-w-2xl h-full' } }
+    with {
+      container_attr: {
+        class: 'max-w-lg m:max-w-2xl h-full'
+      }
+    }
   %}
     {% block content %}
       <p>
@@ -14,7 +18,9 @@
 
       {% include '@ui/atoms/Button/StyledButton.twig' with {
         label: 'Custom close trigger',
-        attr: { data_ref: 'close[]' }
+        attr: {
+          data_ref: 'close[]'
+        }
       } %}
     {% endblock %}
   {% endembed %}

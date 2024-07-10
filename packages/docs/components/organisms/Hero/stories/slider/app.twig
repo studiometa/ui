@@ -1,8 +1,14 @@
 {% set slides = [1, 2, 3] %}
 
 {% set actions = [
-  { label: 'En savoir plus', src: 'https://picsum.photos/200/400?rand=1*' },
-  { label: 'En savoir plus', src: 'https://picsum.photos/500/400?rand=1*' }
+  {
+    label: 'En savoir plus',
+    src: 'https://picsum.photos/200/400?rand=1*'
+  },
+  {
+    label: 'En savoir plus',
+    src: 'https://picsum.photos/500/400?rand=1*'
+  }
 ] %}
 
 <style type="text/css">
@@ -13,9 +19,13 @@
   {% embed '@ui/organisms/Hero/Hero.twig'
     with {
       surtitle: 'Surtitre',
-      surtitle_attr: { class: 'italic' },
+      surtitle_attr: {
+        class: 'italic'
+      },
       title: 'Lorem ipsum dolor sit amet, consectetur.',
-      title_attr: { class: 'text-5xl uppercase font-bold' },
+      title_attr: {
+        class: 'text-5xl uppercase font-bold'
+      },
       content_position: 'left',
       description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Facilisi tempor, dignissim diam egestas habitant aliquet. Etiam ac a at mattis pellentesque felis, in phasellus.',
       actions: actions,
@@ -45,8 +55,12 @@
                 data_option_enter_from: 'opacity-0 transform scale-110',
                 data_option_enter_active: 'transition duration-1000 ease-out-expo'
               },
-              inner_attr: { class: 'bg-vp-bg' },
-              img_attr: { class: 'opacity-0 transform scale-110' }
+              inner_attr: {
+                class: 'bg-vp-bg'
+              },
+              img_attr: {
+                class: 'opacity-0 transform scale-110'
+              }
             } only %}
           </div>
         {% endfor %}

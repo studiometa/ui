@@ -2,13 +2,9 @@
 {% set widths = ['w-96', 'w-80', 'w-72', 'w-64'] %}
 
 <style type="text/css">
-  .is-active {
-    box-shadow: 0 0 0 3px rgb(59 130 246);
-  }
+  .is-active { box-shadow: 0 0 0 3px rgb(59 130 246); }
 
-  html {
-    overflow: hidden;
-  }
+  html { overflow: hidden; }
 </style>
 
 <div data-component="Slider"
@@ -21,9 +17,13 @@
     tabindex="0"
     class="space-x-12 whitespace-nowrap select-none">
     {% for slide in slides %}
-      {% set width = widths[loop.index0 % widths|length] %}
-      <div data-component="SliderItem" class="inline-block rounded" style="contain: content;">
-        <div class="flex items-center justify-center {{ width }} h-48 bg-blue-200 rounded">
+      {% set width = widths[loop.index0 % (widths|length)] %}
+      <div data-component="SliderItem"
+        class="inline-block rounded"
+        style="contain: content;">
+        <div class="flex items-center justify-center {{
+          width
+          }} h-48 bg-blue-200 rounded">
           {% include '@ui/atoms/Figure/Figure.twig' with {
             src: 'https://picsum.photos/400/400?rand=' ~ slide,
             width: 200,
@@ -34,8 +34,12 @@
               data_option_enter_from: 'opacity-0 transform scale-110',
               data_option_enter_active: 'transition duration-1000 ease-out-expo'
             },
-            inner_attr: { class: 'bg-vp-bg' },
-            img_attr: { class: 'opacity-0 transform scale-110' }
+            inner_attr: {
+              class: 'bg-vp-bg'
+            },
+            img_attr: {
+              class: 'opacity-0 transform scale-110'
+            }
           } only %}
         </div>
       </div>
@@ -45,11 +49,17 @@
   <div class="flex items-center gap-4">
     {% include '@ui/atoms/Button/StyledButton.twig' with {
       label: 'Previous',
-      attr: { data_component: 'SliderBtn', data_option_prev: true }
+      attr: {
+        data_component: 'SliderBtn',
+        data_option_prev: true
+      }
     } %}
     {% include '@ui/atoms/Button/StyledButton.twig' with {
       label: 'Next',
-      attr: { data_component: 'SliderBtn', data_option_next: true }
+      attr: {
+        data_component: 'SliderBtn',
+        data_option_next: true
+      }
     } %}
     <div data-component="SliderProgress"
       class="w-full rounded bg-blue-200 overflow-hidden">

@@ -26,11 +26,13 @@
 ] %}
 
 <div class="max-w-2xl mx-auto">
-  {% embed '@ui/molecules/Tabs/Tabs.twig' with { items: items } %}
+  {% embed '@ui/molecules/Tabs/Tabs.twig'
+    with {
+      items: items
+    }
+  %}
     {% block title_wrapper %}
-      <div class="relative flex px-10">
-        {{ parent() }}
-      </div>
+      <div class="relative flex px-10">{{ parent() }}</div>
     {% endblock %}
     {% block title %}
       <span class="block -mb-px -ml-px p-4 bg-vp-bg border border-b-0 border-vp-c-divider-light font-bold">

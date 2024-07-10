@@ -18,11 +18,10 @@
       data_component: 'Cursor',
       class: 'fixed top-0 left-0 w-12 h-12 -mt-6 -ml-6 rounded-full bg-black'
     },
-    { class: 'pointer-events-none' }
+    {
+      class: 'pointer-events-none'
+    }
   )
 %}
 
-<div {{ html_attributes(attributes) }}>
-  {% block content %}
-  {% endblock %}
-</div>
+<div {{ html_attributes(attributes) }}>{% block content %}{% endblock %}</div>

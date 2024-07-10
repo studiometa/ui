@@ -1,8 +1,12 @@
 <div class="flex flex-wrap gap-10 p-10 text-center">
-  {% include '@ui/atoms/Button/StyledButton.twig' with { label: 'Primary' } %}
+  {% include '@ui/atoms/Button/StyledButton.twig' with {
+    label: 'Primary'
+  } %}
   {% include '@ui/atoms/Button/StyledButton.twig' with {
     label: 'Primary',
-    attr: { disabled: true }
+    attr: {
+      disabled: true
+    }
   } %}
   {% include '@ui/atoms/Button/StyledButton.twig' with {
     label: 'Primary',

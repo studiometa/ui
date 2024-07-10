@@ -23,15 +23,27 @@
   {% set formatted_transform = formatted_transform|join('/') %}
 
   {% set twic_param = 'v1/%s'|format(formatted_transform) %}
-  {% set attr = (attr ?? {})|merge({ data_option_transform: formatted_transform }) %}
+  {% set attr =
+    (attr ?? {})|merge({
+      data_option_transform: formatted_transform
+    })
+  %}
 {% endif %}
 
 {% if twic_domain is defined %}
-  {% set attr = (attr ?? {})|merge({ data_option_domain: twic_domain }) %}
+  {% set attr =
+    (attr ?? {})|merge({
+      data_option_domain: twic_domain
+    })
+  %}
 {% endif %}
 
 {% if twic_path is defined %}
-  {% set attr = (attr ?? {})|merge({ data_option_path: twic_path }) %}
+  {% set attr =
+    (attr ?? {})|merge({
+      data_option_path: twic_path
+    })
+  %}
 {% endif %}
 
 {% block sources %}

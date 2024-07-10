@@ -61,9 +61,15 @@
 {% set attributes =
   merge_html_attributes(
     attr ?? null,
-    { data_component: 'FigureVideo', class: ['figure-video', 'w-full'] },
     {
-      style: { height: absolute ? '100%' : '', maxWidth: inline ? width ~ 'px' : '' },
+      data_component: 'FigureVideo',
+      class: ['figure-video', 'w-full']
+    },
+    {
+      style: {
+        height: absolute ? '100%' : '',
+        maxWidth: inline ? width ~ 'px' : ''
+      },
       data_option_lazy: lazy
     }
   )
@@ -72,7 +78,9 @@
 {% set video_attributes =
   merge_html_attributes(
     video_attr ?? null,
-    { class: 'figure-video__video' },
+    {
+      class: 'figure-video__video'
+    },
     {
       class: [
         'absolute inset-0 w-full max-w-none h-full',
@@ -101,16 +109,25 @@
 {% set inner_attributes =
   merge_html_attributes(
     inner_attr ?? null,
-    { class: ['figure-video__inner'] },
+    {
+      class: ['figure-video__inner']
+    },
     {
       class: absolute ? ['absolute', 'inset-0'] : ['relative', 'w-full', 'h-0'],
-      style: { paddingTop: absolute ? '' : height * 100 / width ~ '%' }
+      style: {
+        paddingTop: absolute ? '' : height * 100 / width ~ '%'
+      }
     }
   )
 %}
 
 {% set caption_attributes =
-  merge_html_attributes(caption_attr ?? null, { class: 'figure-video__caption' })
+  merge_html_attributes(
+    caption_attr ?? null,
+    {
+      class: 'figure-video__caption'
+    }
+  )
 %}
 
 <figure {{ html_attributes(attributes) }}>
@@ -144,9 +161,7 @@
   </div>
   {% if caption is defined %}
     {% block caption %}
-      <figcaption {{ html_attributes(caption_attributes) }}>
-        {{ caption }}
-      </figcaption>
+      <figcaption {{ html_attributes(caption_attributes) }}>{{ caption }}</figcaption>
     {% endblock %}
   {% endif %}
 </figure>

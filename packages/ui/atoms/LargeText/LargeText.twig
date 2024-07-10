@@ -17,16 +17,28 @@
 {% set attributes =
   merge_html_attributes(
     attr ?? null,
-    { data_component: 'LargeText' },
-    { class: 'overflow-x-hidden pointer-events-none', style: { contain: 'content' } }
+    {
+      data_component: 'LargeText'
+    },
+    {
+      class: 'overflow-x-hidden pointer-events-none',
+      style: {
+        contain: 'content'
+      }
+    }
   )
 %}
 
 {% set target_attributes =
   merge_html_attributes(
     target_attr ?? null,
-    { class: 'text-9xl font-bold' },
-    { data_ref: 'target', class: 'relative inline-block whitespace-nowrap' }
+    {
+      class: 'text-9xl font-bold'
+    },
+    {
+      data_ref: 'target',
+      class: 'relative inline-block whitespace-nowrap'
+    }
   )
 %}
 
@@ -40,8 +52,12 @@
   <span {{ html_attributes(target_attributes) }}>
     {% for count in 1..repeat ?? 2 %}
       {% set content_attributes = {
-        style: { left: loop.first ? '' : loop.index0 * position_factor ~ '%' },
-        class: { 'absolute top-0': not loop.first }
+        style: {
+          left: loop.first ? '' : loop.index0 * position_factor ~ '%'
+        },
+        class: {
+          'absolute top-0': not loop.first
+        }
       } %}
       <span {{ html_attributes(content_attributes) }}>&nbsp;{{ content }}</span>
     {% endfor %}

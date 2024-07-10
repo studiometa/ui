@@ -21,12 +21,12 @@
     {% for item in 1..section_length %}
       <section class="relative bg-purple-200 h-[300px]">
         <div data-component="AnchorNavTarget"
-        data-option-intersection-observer='{
-          "threshold": 0.5,
-          "rootMargin": "0% 0px -30% 0px"
-        }'
-        id="item-{{ loop.index }}"
-        class="bg-pink-200 h-[150px]">
+          data-option-intersection-observer="{{ {
+            threshold: 0.5,
+            rootMargin: '0% 0px -30% 0px'
+          }|json_encode }}"
+          id="item-{{ loop.index }}"
+          class="bg-pink-200 h-[150px]">
           Item-{{ loop.index }}
         </div>
       </section>

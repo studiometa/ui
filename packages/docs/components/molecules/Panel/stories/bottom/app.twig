@@ -2,8 +2,12 @@
   {% embed '@ui/molecules/Panel/StyledPanel.twig'
     with {
       position: 'bottom',
-      wrapper_attr: { class: 'p-10' },
-      container_attr: { class: 'w-full rounded' }
+      wrapper_attr: {
+        class: 'p-10'
+      },
+      container_attr: {
+        class: 'w-full rounded'
+      }
     }
   %}
     {% block content %}
@@ -18,7 +22,9 @@
 
       {% include '@ui/atoms/Button/StyledButton.twig' with {
         label: 'Custom close trigger',
-        attr: { data_ref: 'close[]' }
+        attr: {
+          data_ref: 'close[]'
+        }
       } %}
     {% endblock %}
   {% endembed %}

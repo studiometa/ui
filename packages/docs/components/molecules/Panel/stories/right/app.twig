@@ -2,9 +2,15 @@
   {% embed '@ui/molecules/Panel/StyledPanel.twig'
     with {
       position: 'right',
-      wrapper_attr: { class: 'p-10' },
-      container_attr: { class: 'max-w-lg mb-auto rounded' },
-      content_attr: { class: 'p-4' }
+      wrapper_attr: {
+        class: 'p-10'
+      },
+      container_attr: {
+        class: 'max-w-lg mb-auto rounded'
+      },
+      content_attr: {
+        class: 'p-4'
+      }
     }
   %}
     {% block content %}
@@ -15,11 +21,11 @@
 
       {% include '@ui/atoms/Button/StyledButton.twig' with {
         label: 'Ok',
-        attr: { data_ref: 'close[]' }
+        attr: {
+          data_ref: 'close[]'
+        }
       } %}
     {% endblock %}
-    {% block close %}
-
-    {% endblock %}
+    {% block close %}{% endblock %}
   {% endembed %}
 </div>

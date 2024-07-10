@@ -19,11 +19,26 @@
  */
 #}
 
-{% set attributes = merge_html_attributes(attr ?? null, { data_component: 'Accordion' }) %}
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    {
+      data_component: 'Accordion'
+    }
+  )
+%}
 
 <div {{ html_attributes(attributes) }}>
   {% for item in items %}
-    {% set item_attributes = merge_html_attributes(item_attr ?? null, { data_component: 'AccordionItem' }, item.attr ?? null) %}
+    {% set item_attributes =
+      merge_html_attributes(
+        item_attr ?? null,
+        {
+          data_component: 'AccordionItem'
+        },
+        item.attr ?? null
+      )
+    %}
     {% set is_open = item_attributes.data_option_is_open ?? false %}
     <div {{ html_attributes(item_attributes) }}>
       <button data-ref="btn" class="block w-full" aria-expanded="{{ is_open ? 'true' : 'false' }}">
@@ -37,7 +52,10 @@
           {},
           {
             data_ref: 'container',
-            style: { visibility: is_open ? '' : 'hidden', height: is_open ? '' : '0' },
+            style: {
+              visibility: is_open ? '' : 'hidden',
+              height: is_open ? '' : '0'
+            },
             class: 'relative overflow-hidden'
           }
         )

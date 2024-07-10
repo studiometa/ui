@@ -23,13 +23,22 @@
 {% set list_attributes =
   merge_html_attributes(
     attr ?? list_attr ?? null,
-    { class: ['flex justify-start items-center gap-3'] }
+    {
+      class: ['flex justify-start items-center gap-3']
+    }
   )
 %}
 
 {% set item_attributes = merge_html_attributes(item_attr ?? null, {}) %}
 
-{% set icon_attributes = merge_html_attributes(icon_attr ?? null, { class: 'flex items-center' }) %}
+{% set icon_attributes =
+  merge_html_attributes(
+    icon_attr ?? null,
+    {
+      class: 'flex items-center'
+    }
+  )
+%}
 
 <ul {{ html_attributes(list_attributes) }}>
   {% for name, value in items %}
@@ -66,7 +75,15 @@
             title: title ?? label,
             aria_label: label,
             class: 'block p-1 hover:opacity-80 cursor-pointer'
-          }|merge(tag == 'button' ? { type: 'button' } : { href: href })
+          }|merge(
+            tag == 'button'
+              ? {
+                type: 'button'
+              }
+              : {
+                href: href
+              }
+          )
         )
       %}
 

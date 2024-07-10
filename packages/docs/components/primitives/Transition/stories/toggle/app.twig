@@ -2,11 +2,15 @@
   <div class="flex items-center gap-4">
     {% include '@ui/atoms/Button/StyledButton.twig' with {
       label: 'Enter',
-      attr: { data_ref: 'enterBtn' }
+      attr: {
+        data_ref: 'enterBtn'
+      }
     } %}
     {% include '@ui/atoms/Button/StyledButton.twig' with {
       label: 'Leave',
-      attr: { data_ref: 'leaveBtn' }
+      attr: {
+        data_ref: 'leaveBtn'
+      }
     } %}
   </div>
   <div data-component="Togglable"

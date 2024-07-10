@@ -1,7 +1,9 @@
 <div data-component="Menu" class="flex justify-end p-10">
   {% include '@ui/atoms/Button/StyledButton.twig' with {
     label: 'Menu',
-    attr: { data_component: 'MenuBtn' }
+    attr: {
+      data_component: 'MenuBtn'
+    }
   } %}
   <div data-component="MenuList"
     data-option-enter-from="-translate-y-full"
@@ -18,7 +20,9 @@
       <div class="absolute top-10 right-10">
         {% include '@ui/atoms/Button/StyledButton.twig' with {
           label: 'Close',
-          attr: { data_component: 'MenuBtn' }
+          attr: {
+            data_component: 'MenuBtn'
+          }
         } %}
       </div>
       <ul class="flex flex-col gap-10 justify-center text-white text-9xl font-bold uppercase">

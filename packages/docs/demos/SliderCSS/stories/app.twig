@@ -36,11 +36,15 @@
 <nav class="flex items-center justify-center p-10 gap-10">
   {% include '@ui/atoms/Button/StyledButton.twig' with {
     label: '← Prev',
-    attr: { data_ref: 'prev' }
+    attr: {
+      data_ref: 'prev'
+    }
   } %}
   {% include '@ui/atoms/Button/StyledButton.twig' with {
     label: 'Next →',
-    attr: { data_ref: 'next' }
+    attr: {
+      data_ref: 'next'
+    }
   } %}
 </nav>
 <div class="flex items-center justify-center w-screen h-[50vh] text-center bg-clifford">

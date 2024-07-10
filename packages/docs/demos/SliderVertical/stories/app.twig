@@ -1,8 +1,6 @@
 {% set slides = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] %}
 
-<style type="text/css">
-  html { overflow: hidden; }
-</style>
+<style type="text/css">html { overflow: hidden; }</style>
 
 <div data-component="Slider" data-option-mode="left" data-option-fit-bounds data-option-contain>
   <div data-component="SliderDrag"
@@ -27,8 +25,12 @@
                 data_option_enter_from: 'opacity-0 transform scale-110',
                 data_option_enter_active: 'transition duration-1000 ease-out-expo'
               },
-              inner_attr: { class: 'bg-vp-bg' },
-              img_attr: { class: 'opacity-0 transform scale-110' }
+              inner_attr: {
+                class: 'bg-vp-bg'
+              },
+              img_attr: {
+                class: 'opacity-0 transform scale-110'
+              }
             } only %}
           </a>
         </div>
@@ -39,11 +41,17 @@
   <div class="flex items-center gap-4 p-10">
     {% include '@ui/atoms/Button/StyledButton.twig' with {
       label: 'Previous',
-      attr: { data_component: 'SliderBtn', data_option_prev: true }
+      attr: {
+        data_component: 'SliderBtn',
+        data_option_prev: true
+      }
     } %}
     {% include '@ui/atoms/Button/StyledButton.twig' with {
       label: 'Next',
-      attr: { data_component: 'SliderBtn', data_option_next: true }
+      attr: {
+        data_component: 'SliderBtn',
+        data_option_next: true
+      }
     } %}
     <div data-component="SliderDots"
       data-option-enter-to="ring ring-blue-800"

@@ -18,23 +18,24 @@
     title: 'Satisfaction client',
     content: 'L’objectif numéro 1 de toute l’équipe',
     icon: '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M480-251q70.598 0 128.799-38Q667-327 692-392H268q26 65 83.701 103Q409.402-251 480-251ZM300-528l46.488-45L391-528l41-42-86-87-87 87 41 42Zm270 0 44.512-45L661-528l41-42-87-87-86 87 41 42ZM480-64q-85.64 0-161.893-32.73-76.254-32.731-132.66-88.841Q129.04-241.68 96.52-318.02 64-394.36 64-480q0-85.64 32.73-161.893 32.731-76.254 88.841-132.66Q241.68-830.96 318.02-863.48 394.36-896 480-896q85.64 0 161.893 32.731 76.254 32.73 132.66 88.84Q830.96-718.32 863.48-641.98 896-565.64 896-480q0 85.64-32.731 161.893-32.73 76.254-88.84 132.66Q718.32-129.04 641.98-96.52 565.64-64 480-64Zm0-416Zm.181 343q143.194 0 243.007-99.993Q823-336.986 823-480.181q0-143.194-99.993-243.007Q623.014-823 479.819-823q-143.194 0-243.007 99.993Q137-623.014 137-479.819q0 143.194 99.993 243.007Q336.986-137 480.181-137Z" fill="currentColor" /></svg>'
-  },
+  }
 ] %}
 
-{% embed '@ui/molecules/Reinsurance/Reinsurance.twig' with {
-  list: list,
-  slider_mobile: true,
-  section_attr: {
-    class: 'text-[0] pt-14 pb-6 bg-black text-white text-center'
-  },
-  item_attr: {
-    class: 'inline-block align-top mb-12 s:mb-8 px-4 w-60 whitespace-normal relative before:w-px before:h-24 before:top-1/2 before:-translate-y-1/2 before:absolute before:right-0 before:bg-white/50 last:before:hidden'
+{% embed '@ui/molecules/Reinsurance/Reinsurance.twig'
+  with {
+    list: list,
+    slider_mobile: true,
+    section_attr: {
+      class: 'text-[0] pt-14 pb-6 bg-black text-white text-center'
+    },
+    item_attr: {
+      class: 'inline-block align-top mb-12 s:mb-8 px-4 w-60 whitespace-normal relative before:w-px before:h-24 before:top-1/2 before:-translate-y-1/2 before:absolute before:right-0 before:bg-white/50 last:before:hidden'
+    }
   }
-} %}
-
-{% block icon %}
-  <span class="w-12 mb-4 mx-auto block text-white">
-    {{ list[loop.index0].icon|raw }}
-  </span>
-{% endblock %}
+%}
+  {% block icon %}
+    <span class="w-12 mb-4 mx-auto block text-white">
+      {{ list[loop.index0].icon|raw }}
+    </span>
+  {% endblock %}
 {% endembed %}

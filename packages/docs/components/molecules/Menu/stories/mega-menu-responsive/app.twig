@@ -2,7 +2,10 @@
   <div class="m:hidden p-10">
     {% include '@ui/atoms/Button/StyledButton.twig' with {
       label: 'Burger open',
-      attr: { data_component: 'MenuBtn', data_option_mode: 'click' }
+      attr: {
+        data_component: 'MenuBtn',
+        data_option_mode: 'click'
+      }
     } %}
   </div>
   <div class="fixed m:relative inset-0 m:inset-auto w-full hidden m:block p-10 m:p-0 bg-gray-300"
@@ -12,7 +15,10 @@
     <div class="m:hidden mb-10">
       {% include '@ui/atoms/Button/StyledButton.twig' with {
         label: 'Burger close',
-        attr: { data_component: 'MenuBtn', data_option_mode: 'click' }
+        attr: {
+          data_component: 'MenuBtn',
+          data_option_mode: 'click'
+        }
       } %}
     </div>
     <ul class="m:flex items-center justify-around">

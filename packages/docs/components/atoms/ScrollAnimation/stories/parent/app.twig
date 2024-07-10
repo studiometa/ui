@@ -1,12 +1,6 @@
-<style>
-  html {
-    overflow-x: hidden;
-  }
-</style>
+<style>html { overflow-x: hidden; }</style>
 
-<div class="h-screen p-10 space-y-4 text-center text-gray-800">
-  Scroll down
-</div>
+<div class="h-screen p-10 space-y-4 text-center text-gray-800">Scroll down</div>
 <div data-component="ScrollAnimationParent"
   class="relative h-screen pointer-events-none">
   <div class="absolute top-0 left-1/2 w-96 h-96 transform -translate-x-1/2">
@@ -65,15 +59,23 @@
     <div class="absolute top-full left-1/2 w-2 h-2 -mt-1 -ml-1 pointer-events-none">
       <div data-component="ScrollAnimationChild"
         data-option-damp-factor="0.1"
-        data-option-from="{{ { scale: 0 }|json_encode }}"
-        data-option-to="{{ { scale: 2 }|json_encode }}"
+        data-option-from="{{ {
+          scale: 0
+        }|json_encode }}"
+        data-option-to="{{ {
+          scale: 2
+        }|json_encode }}"
         class="absolute top-1/2 left-1/2 bg-blue-600 rounded-full transform scale-0"
         style="width: 250vmax; height: 250vmax; margin-top: -125vmax; margin-left: -125vmax;"></div>
       <div data-component="ScrollAnimationChild"
         data-option-damp-factor="0.1"
         data-option-play-range="[0.4, 1]"
-        data-option-from="{{ { scale: 0 }|json_encode }}"
-        data-option-to="{{ { scale: 1 }|json_encode }}"
+        data-option-from="{{ {
+          scale: 0
+        }|json_encode }}"
+        data-option-to="{{ {
+          scale: 1
+        }|json_encode }}"
         class="absolute top-1/2 left-1/2 bg-gray-200 rounded-full transform scale-0"
         style="width: 250vmax; height: 250vmax; margin-top: -125vmax; margin-left: -125vmax;"></div>
     </div>

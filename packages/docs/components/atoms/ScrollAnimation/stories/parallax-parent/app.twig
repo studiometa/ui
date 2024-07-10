@@ -4,7 +4,10 @@
 
 {% set img_attr = {
   class: 'object-cover',
-  style: { top: '-20%', height: '140%' }
+  style: {
+    top: '-20%',
+    height: '140%'
+  }
 } %}
 
 {% set images = [
@@ -45,14 +48,18 @@
     images: images,
     image_attr: {
       data_component: 'ParallaxChild',
-      data_option_from: { y: [-20, '%'] },
-      data_option_to: { y: [20, '%'] },
+      data_option_from: {
+        y: [- 20, '%']
+      },
+      data_option_to: {
+        y: [20, '%']
+      },
       class: 'h-fit overflow-hidden',
-      style: { contain: 'content' }
+      style: {
+        contain: 'content'
+      }
     }
   } %}
 </div>
 
-<div class="flex items-end justify-center h-96 p-10 opacity-80">
-  Scroll up
-</div>
+<div class="flex items-end justify-center h-96 p-10 opacity-80">Scroll up</div>

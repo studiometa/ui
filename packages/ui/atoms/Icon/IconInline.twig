@@ -9,25 +9,22 @@
  */
 #}
 
-{% set attributes = merge_html_attributes(
-  attr ?? null,
-  {
-    class: 'inline-block',
-  },
-  {
-    class: [
-      'icon',
-      'icon--%s'|format(name)
-    ],
-  }
-) %}
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    {
+      class: 'inline-block'
+    },
+    {
+      class: ['icon', 'icon--%s'|format(name)]
+    }
+  )
+%}
 
 {%- set icon -%}
   {{ source('@svg/%s.svg'|format(name), ignore_missing = true) }}
 {%- endset -%}
 
 {% if icon is not empty or not ignore_missing %}
-  <span {{ html_attributes(attributes) }}>
-    {{ icon }}
-  </span>
+  <span {{ html_attributes(attributes) }}>{{ icon }}</span>
 {% endif %}

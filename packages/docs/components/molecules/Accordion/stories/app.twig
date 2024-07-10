@@ -26,21 +26,32 @@
 ] %}
 
 <div class="p-20 max-w-2xl mx-auto">
-  {% embed '@ui/molecules/Accordion/Accordion.twig' with { items: items } %}
+  {% embed '@ui/molecules/Accordion/Accordion.twig'
+    with {
+      items: items
+    }
+  %}
     {% block title %}
-      <div
-        class="
+      <div class="
           p-4 text-left font-bold border border-vp-c-divider-light bg-vp-bg
-          {{ html_classes({ 'border-b-0': not loop.last }) }}
+          {{
+        html_classes({
+          'border-b-0': not loop.last
+        })
+        }}
         ">
         {{ item.title }}
       </div>
     {% endblock %}
     {% block content %}
-      <div
-        class="
+      <div class="
           p-4 border border-vp-c-divider-light bg-vp-bg-alt
-          {{ html_classes({ 'border-t-0': loop.last, 'border-b-0': not loop.last }) }}
+          {{
+        html_classes({
+          'border-t-0': loop.last,
+          'border-b-0': not loop.last
+        })
+        }}
         ">
         {{ item.content }}
       </div>

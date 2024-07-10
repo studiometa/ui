@@ -6,16 +6,18 @@
     data_option_on: 'click',
     data_option_target: 'Modal Panel',
     data_option_method: 'close',
-    data_option_selector: '[data-can-be-closed]',
+    data_option_selector: '[data-can-be-closed]'
   }
 } %}
 
 <div class="w-full h-screen flex items-center justify-center p-10">
-  {% embed '@ui/molecules/Modal/StyledModal.twig' with {
-    attr: {
-      data_can_be_closed: true,
+  {% embed '@ui/molecules/Modal/StyledModal.twig'
+    with {
+      attr: {
+        data_can_be_closed: true
+      }
     }
-  } %}
+  %}
     {% block content %}
       <p>
         Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
@@ -32,12 +34,18 @@
   {% embed '@ui/molecules/Panel/StyledPanel.twig'
     with {
       attr: {
-        data_can_be_closed: true,
+        data_can_be_closed: true
       },
       position: 'right',
-      wrapper_attr: { class: 'p-10' },
-      container_attr: { class: 'max-w-lg mb-auto rounded' },
-      content_attr: { class: 'p-4' }
+      wrapper_attr: {
+        class: 'p-10'
+      },
+      container_attr: {
+        class: 'max-w-lg mb-auto rounded'
+      },
+      content_attr: {
+        class: 'p-4'
+      }
     }
   %}
     {% block content %}
@@ -48,11 +56,11 @@
 
       {% include '@ui/atoms/Button/StyledButton.twig' with {
         label: 'Ok',
-        attr: { data_ref: 'close[]' }
+        attr: {
+          data_ref: 'close[]'
+        }
       } %}
     {% endblock %}
-    {% block close %}
-
-    {% endblock %}
+    {% block close %}{% endblock %}
   {% endembed %}
 </div>

@@ -60,20 +60,42 @@
 {% set is_hd = is_hd is defined and not is_hd ? false : true %}
 
 {% set query_params = {
-  access_token: access_token,
+  access_token: access_token
 } %}
 
 {% if attribution is defined and not attribution %}
-  {% set query_params = query_params|merge({
-    attribution: 'false'
-  }) %}
+  {% set query_params =
+    query_params|merge({
+      attribution: 'false'
+    })
+  %}
 {% endif %}
 
 {% if logo is defined and not logo %}
-  {% set query_params = query_params|merge({
-    logo: 'false'
-  }) %}
+  {% set query_params =
+    query_params|merge({
+      logo: 'false'
+    })
+  %}
 {% endif %}
 
-
-{% set src = "https://api.mapbox.com/styles/v1/" ~ username ~ "/" ~ style_id ~ "/static/" ~ (marker ? marker|url_encode ~ '/' : '') ~ (overlay ? 'geojson(' ~ overlay|json_encode|url_encode ~ ')/' : '') ~ lon ~ "," ~ lat ~ "," ~ zoom ~ "," ~ bearing ~ "," ~ pitch ~ "/" ~ width ~ "x" ~ height ~ (is_hd ? '@2x' : '') ~ "?" ~ query_params|url_encode %}
+{% set src = 'https://api.mapbox.com/styles/v1/' ~ username ~ '/' ~ style_id ~ '/static/'
+  ~ (marker ? (marker|url_encode) ~ '/' : '')
+  ~ (overlay ? 'geojson(' ~ (overlay|json_encode|url_encode) ~ ')/' : '')
+  ~ lon
+  ~ ','
+  ~ lat
+  ~ ','
+  ~ zoom
+  ~ ','
+  ~ bearing
+  ~ ','
+  ~ pitch
+  ~ '/'
+  ~ width
+  ~ 'x'
+  ~ height
+  ~ (is_hd ? '@2x' : '')
+  ~ '?'
+  ~ (query_params|url_encode)
+%}

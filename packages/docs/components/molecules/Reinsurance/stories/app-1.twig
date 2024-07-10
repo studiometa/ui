@@ -16,13 +16,14 @@
   }
 ] %}
 
-{% embed '@ui/molecules/Reinsurance/Reinsurance.twig' with {
-  list: list,
-} %}
-
-{% block icon %}
-  <span class="w-12 mb-4 mx-auto block">
-    {{ list[loop.index0].icon|raw }}
-  </span>
-{% endblock %}
+{% embed '@ui/molecules/Reinsurance/Reinsurance.twig'
+  with {
+    list: list
+  }
+%}
+  {% block icon %}
+    <span class="w-12 mb-4 mx-auto block">
+      {{ list[loop.index0].icon|raw }}
+    </span>
+  {% endblock %}
 {% endembed %}

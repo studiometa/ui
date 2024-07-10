@@ -1,4 +1,11 @@
-<div data-component="Tabs" data-option-styles='{ "btn": { "open": { "borderBottomColor": "#fff" } } }'>
+<div data-component="Tabs"
+  data-option-styles="{{ {
+    btn: {
+      open: {
+        borderBottomColor: '#fff'
+      }
+    }
+  }|json_encode }}">
   {% block title_wrapper %}
     {% for item in items %}
       <button data-ref="btn[]" style="border-bottom: 1px solid transparent;">
@@ -9,12 +16,12 @@
     {% endfor %}
   {% endblock %}
   {% block content_wrapper %}
-      {% for item in items %}
-        <div data-ref="content[]" aria-hidden="false">
-          {% block content %}
-            {{ item.content }}
-          {% endblock %}
-        </div>
-      {% endfor %}
+    {% for item in items %}
+      <div data-ref="content[]" aria-hidden="false">
+        {% block content %}
+          {{ item.content }}
+        {% endblock %}
+      </div>
+    {% endfor %}
   {% endblock %}
 </div>

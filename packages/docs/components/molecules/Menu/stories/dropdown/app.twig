@@ -1,14 +1,13 @@
 <style>
-  a { color: inherit; text-decoration: none; }
-  a:focus, button:focus { outline: none; }
-  ul { list-style-type: none; padding: 0; }
+  a { color: inherit; text-decoration: none; } a:focus, button:focus { outline:
+  none; } ul { list-style-type: none; padding: 0; }
 </style>
 
 <nav data-component="Menu" class="relative inline-block">
   {% include '@ui/atoms/Button/StyledButton.twig' with {
     label: 'Dropdown',
     attr: {
-      data_component: 'MenuBtn',
+      data_component: 'MenuBtn'
     }
   } %}
   <div data-component="MenuList"
@@ -24,7 +23,6 @@
           href="#">
           Action #1 Edit
         </a>
-
       </li>
       <li data-component="Menu">
         <a data-component="MenuBtn"

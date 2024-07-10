@@ -7,6 +7,10 @@
  * @param string[] $classes Additional classes.
  */
 #}
-<span class="icon {{ 'icon--%s'|format(name) }} {{ html_classes(classes|default('inline-block')) }}">
+<span class="icon {{ 'icon--%s'|format(name) }} {{
+  html_classes(
+    classes|default('inline-block')
+  )
+  }}">
   {{ source('@svg/%s.svg'|format(name), ignore_missing = true) }}
 </span>

@@ -34,7 +34,9 @@
       href: tag == 'a' and href is defined ? href : false,
       aria_label: icon_only ? label : false
     },
-    { class: ['btn'] }
+    {
+      class: ['btn']
+    }
   )
 %}
 
@@ -48,12 +50,12 @@
         {
           class: {
             'mr-3': not icon_only and icon_position == 'start',
-            'ml-3': not icon_only and icon_position == 'end',
+            'ml-3': not icon_only and icon_position == 'end'
           }
         },
         {
-          class: icon_classes,
-        },
+          class: icon_classes
+        }
       )
     } %}
   {% endblock %}
