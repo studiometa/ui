@@ -56,7 +56,6 @@ createApp(App);`,
   webpack(config) {
     config.output.publicPath = '/-/play/';
     config.output.path = resolve('../docs/public/play/');
-    config.optimization.minimize = false;
 
     config.plugins.push(
       new CopyPlugin({
