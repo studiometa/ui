@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.53](https://github.com/studiometa/ui/compare/0.2.52..0.2.53) (2024-07-16)
+
 ### Added
 
 - Add `DataBind`, `DataModel`, `DataEffect` and `DataComputed` components ([#256](https://github.com/studiometa/ui/pull/256))
