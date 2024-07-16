@@ -13,6 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - ⚠️ Update @studiometa/js-toolkit 2.12.0 → 3.0.0-alpha.5 ([#264](https://github.com/studiometa/ui/pull/264), [27684a2](https://github.com/studiometa/ui/commits/27684a2))
+- ⚠️ **Action:** add support for effect and improve target resolution ([#258](https://github.com/studiometa/ui/issues/258), [#261](https://github.com/studiometa/ui/pull/261), [6b1ab86](https://github.com/studiometa/ui/commits/6b1ab86))
+
+### Fixed
+
+- **Button:** fix an error where a variable might not be defined ([2b00b60](https://github.com/studiometa/ui/commits/2b00b60))
+- **IconInline:** fix an error where a variable might not be defined ([72153ce](https://github.com/studiometa/ui/commits/72153ce))
 
 ## [v0.2.53](https://github.com/studiometa/ui/compare/0.2.52..0.2.53) (2024-07-16)
 
