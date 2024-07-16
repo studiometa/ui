@@ -1,3 +1,7 @@
+---
+outline: deep
+---
+
 # Action <Badges :texts="badges" />
 
 <script setup>
@@ -6,38 +10,42 @@
   const badges = [`v${pkg.version}`, 'JS'];
 </script>
 
-The `Action` atom is a component who trigger an action on specified components.
+The `Action` atom is a component who trigger an action on other components.
 
 ## Table of content
 
-- [Examples](./examples)
-- [JS API](./js-api)
+- [Examples](./examples.html)
+- [JS API](./js-api.html)
 
 ## Usage
 
-This component can be directly imported and defined as a dependency of your application:
+This component can be directly imported and defined as a dependency of your application and then used directly with `data-...` attributes in your HTML.
 
-```js {2,8}
-import { Base, createApp } from '@studiometa/js-toolkit';
-import { Action } from '@studiometa/ui';
+In the following example, the buttons each have an `Action` component targeting the [`Transition`](/components/primitives/Transition/index.html) component in the page.
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Action,
-    },
-  };
-}
-```
+<PreviewPlayground
+  :html="() => import('./stories/basic/app.twig')"
+  :script="() => import('./stories/basic/app.js?raw')"
+  />
 
-```html
-<button
-  type="button"
-  data-component="Action"
-  data-option-target="Panel Modal"
-  data-option-selector=".can-be-closed"
-  data-option-method="close">
-  Close every panel & modal with .can-be-closed class
-</button>
-```
+The `Action` components can control multiple targets:
+
+<PreviewPlayground
+  :html="() => import('./stories/basic/app-multiple.twig')"
+  :script="() => import('./stories/basic/app.js?raw')"
+  />
+
+And specify an additional selector to filter the targeted components:
+
+<PreviewPlayground
+  :html="() => import('./stories/basic/app-selector.twig')"
+  :script="() => import('./stories/basic/app.js?raw')"
+  />
+
+
+## Combining it with `Data` components
+
+<PreviewPlayground
+  :html="() => import('./stories/counter/app.twig')"
+  :script="() => import('./stories/counter/app.js?raw')"
+  />
