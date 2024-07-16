@@ -1,6 +1,6 @@
-import { jest } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
 import { Draggable } from '@studiometa/ui';
-import wait from '../__utils__/wait.js';
+import { wait } from '#test-utils';
 
 function createEvent(type, data = {}, options = {}) {
   const event = new Event(type, options);

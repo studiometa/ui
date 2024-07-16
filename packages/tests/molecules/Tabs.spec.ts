@@ -1,6 +1,6 @@
-import { jest } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { Tabs } from '@studiometa/ui';
-import wait from '@studiometa/ui-tests/__utils__/wait';
+import { wait } from '#test-utils';
 import template from './Tabs.template.html';
 
 describe('The Tabs component', () => {

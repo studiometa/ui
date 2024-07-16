@@ -1,11 +1,11 @@
 import { describe, it, expect, jest, beforeAll, afterEach } from '@jest/globals';
 import { AnchorNav, AnchorNavLink } from '@studiometa/ui';
-import { wait } from '@studiometa/js-toolkit/utils';
 import {
+  wait,
   intersectionObserverBeforeAllCallback,
   intersectionObserverAfterEachCallback,
   mockIsIntersecting,
-} from '../__utils__/mockIntersectionObserver.js';
+} from '#test-utils';
 
 beforeAll(() => {
   intersectionObserverBeforeAllCallback();
