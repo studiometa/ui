@@ -1,48 +1,44 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
 import { Cursor } from '@studiometa/ui';
 import { wait } from '#test-utils';
 
-/**
- * @typedef {import('@studiometa/ui/Cursor/Cursor.js').CursorInterface} CursorInterface
- */
+async function getContext() {
+  const root = document.createElement('div');
+  const cursor = new Cursor(root);
+  const renderSpy = jest.spyOn(cursor, 'render');
+  jest.useFakeTimers();
+  cursor.$mount();
+  await jest.advanceTimersByTimeAsync(100);
+  jest.useRealTimers();
+  cursor.$options.translateDampFactor = 1;
+  cursor.$options.growDampFactor = 1;
+  cursor.$options.shrinkDampFactor = 1;
 
-const root = document.createElement('div');
-/** @type {Cursor & CursorInterface} */
-const cursor = new Cursor(root);
-cursor.$options.translateDampFactor = 1;
-cursor.$options.growDampFactor = 1;
-cursor.$options.shrinkDampFactor = 1;
+  async function moveMouse({ event = { target: document }, x, y }) {
+    jest.useFakeTimers();
+    cursor.moved({ event, x, y });
+    await jest.advanceTimersByTimeAsync(16);
+    jest.useRealTimers();
+  }
 
-/**
- * @param {Object} options
- * @param {Object} [options.event]
- * @param {Number} options.x
- * @param {Number} options.y
- */
-function moveMouse({ event = { target: document }, x, y }) {
-  cursor.moved({ event, x, y });
-  return new Promise((resolve) => setTimeout(resolve));
+  return {
+    root,
+    cursor,
+    Cursor,
+    moveMouse,
+    renderSpy,
+  };
 }
 
 describe('The Cursor component', () => {
-  let renderSpy;
-
-  beforeEach(() => {
-    renderSpy = jest.spyOn(cursor, 'render');
-  });
-
-  afterEach(() => {
-    renderSpy.mockReset();
-  });
-
-  it('should render on mount', () => {
-    cursor.$mount();
+  it('should render on mount', async () => {
+    const { renderSpy } = await getContext();
     expect(renderSpy).toHaveBeenLastCalledWith({ x: 0, y: 0, scale: 0 });
   });
 
   it('should render on mousemove', async () => {
-    moveMouse({ x: 100, y: 100 });
-    await wait(16);
+    const { moveMouse, renderSpy } = await getContext();
+    await moveMouse({ x: 100, y: 100 });
     expect(renderSpy).toHaveBeenLastCalledWith({
       x: 100,
       y: 100,
@@ -51,17 +47,17 @@ describe('The Cursor component', () => {
   });
 
   it('should disable the `ticked` service when not moving', async () => {
+    const { moveMouse, cursor } = await getContext();
     const serviceSpy = jest.spyOn(cursor.$services, 'disable');
-    moveMouse({ x: 100, y: 100 });
-    await wait(16);
+    await moveMouse({ x: 100, y: 100 });
     expect(serviceSpy).toHaveBeenNthCalledWith(1, 'ticked');
   });
 
   it('should grow when hovering on grow selectors', async () => {
+    const { renderSpy, moveMouse } = await getContext();
     const div = document.createElement('div');
     div.setAttribute('data-cursor-grow', '');
-    moveMouse({ x: 100, y: 100, event: { target: div } });
-    await wait(16);
+    await moveMouse({ x: 100, y: 100, event: { target: div } });
     expect(renderSpy).toHaveBeenCalledWith({
       x: 100,
       y: 100,
@@ -70,10 +66,10 @@ describe('The Cursor component', () => {
   });
 
   it('should shrink when hovering on shrink selectors', async () => {
+    const { renderSpy, moveMouse } = await getContext();
     const div = document.createElement('div');
     div.setAttribute('data-cursor-shrink', '');
-    moveMouse({ x: 100, y: 100, event: { target: div } });
-    await wait(16);
+    await moveMouse({ x: 100, y: 100, event: { target: div } });
 
     expect(renderSpy).toHaveBeenCalledWith({
       x: 100,
@@ -83,8 +79,8 @@ describe('The Cursor component', () => {
   });
 
   it('should scale back to the original size when hovering on nothing', async () => {
-    moveMouse({ event: null, x: 100, y: 100 });
-    await wait(16);
+    const { renderSpy, moveMouse } = await getContext();
+    await moveMouse({ event: null, x: 100, y: 100 });
 
     expect(renderSpy).toHaveBeenCalledWith({
       x: 100,

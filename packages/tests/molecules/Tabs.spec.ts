@@ -8,8 +8,10 @@ describe('The Tabs component', () => {
 
   beforeEach(async () => {
     document.body.innerHTML = template;
+    jest.useFakeTimers();
     tabs = new Tabs(document.body.firstElementChild).$mount();
-    await wait(100);
+    await jest.advanceTimersByTimeAsync(100);
+    jest.useRealTimers();
   });
 
   it('should emit `enable` and `disable` events.', async () => {
@@ -51,7 +53,10 @@ describe('The Tabs component', () => {
     tabs.$on('enable', fn);
     tabs.$refs.btn[1].click();
     expect(fn).toHaveBeenCalledTimes(1);
+    jest.useFakeTimers();
     tabs.$destroy();
+    await jest.advanceTimersByTimeAsync(100);
+    jest.useRealTimers();
     tabs.$refs.btn[0].click();
     expect(fn).toHaveBeenCalledTimes(1);
   });
