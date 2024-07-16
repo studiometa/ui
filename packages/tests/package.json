@@ -9,6 +9,7 @@
   "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
   "license": "MIT",
   "dependencies": {
+    "@jest/fake-timers": "29.7.0",
     "@jest/globals": "^29.7.0",
     "@studiometa/ui": "file:../ui",
     "esbuild-jest": "^0.5.0",

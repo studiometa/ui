@@ -2,57 +2,58 @@ import { describe, it, jest, expect, beforeEach } from '@jest/globals';
 import { Base } from '@studiometa/js-toolkit';
 import { Action as ActionCore } from '@studiometa/ui';
 
-class Action extends ActionCore {
-  static config = {
-    ...ActionCore.config,
-    warn: true,
-  };
+async function getContext() {
+  class Action extends ActionCore {
+    static config = {
+      ...ActionCore.config,
+      warn: true,
+    };
 
-  static warnFn = jest.fn();
+    static warnFn = jest.fn();
 
-  $warn(...args) {
-    Action.warnFn();
-    super.$warn(...args);
+    $warn(...args) {
+      Action.warnFn();
+      super.$warn(...args);
+    }
   }
-}
 
-class Foo extends Base {
-  static config = {
-    name: 'Foo',
-  };
+  class Foo extends Base {
+    static config = {
+      name: 'Foo',
+    };
 
-  static fn = jest.fn();
+    static fn = jest.fn();
 
-  fn() {
-    Foo.fn();
+    fn() {
+      Foo.fn();
+    }
   }
-}
 
-class Bar extends Base {
-  static config = {
-    name: 'Bar',
-  };
+  class Bar extends Base {
+    static config = {
+      name: 'Bar',
+    };
 
-  static fn = jest.fn();
+    static fn = jest.fn();
 
-  fn() {
-    Bar.fn();
+    fn() {
+      Bar.fn();
+    }
   }
-}
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Action,
-      Foo,
-      Bar,
-    },
-  };
-}
+  class App extends Base {
+    static config = {
+      name: 'App',
+      components: {
+        Action,
+        Foo,
+        Bar,
+      },
+    };
+  }
 
-const root = document.createElement('div');
-root.innerHTML = `
+  const root = document.createElement('div');
+  root.innerHTML = `
   <div data-component="Foo"></div>
   <div data-component="Bar"></div>
   <button data-component="Action"
@@ -72,39 +73,56 @@ root.innerHTML = `
     data-option-method="unavailableFn"
     data-option-target="Foo">Click me</button>
 `;
-const app = new App(root);
-app.$mount();
-const [action1, action2, action3, action4, action5] = app.$children.Action;
+  const app = new App(root);
+  jest.useFakeTimers();
+  app.$mount();
+  await jest.advanceTimersByTimeAsync(100);
+  jest.useRealTimers();
 
-beforeEach(() => {
-  Foo.fn.mockReset();
-  Bar.fn.mockReset();
-  Action.warnFn.mockReset();
-});
+  const [action1, action2, action3, action4, action5] = app.$children.Action;
+
+  return {
+    Foo,
+    Bar,
+    Action,
+    root,
+    app,
+    action1,
+    action2,
+    action3,
+    action4,
+    action5,
+  };
+}
 
 describe('The Action component', () => {
-  it('should trigger a method on another component on click', () => {
+  it('should trigger a method on another component on click', async () => {
+    const { Foo, action1 } = await getContext();
     action1.$el.click();
     expect(Foo.fn).toHaveBeenCalledTimes(1);
   });
 
-  it('should trigger a method on multiple components on click', () => {
+  it('should trigger a method on multiple components on click', async () => {
+    const { Foo, Bar, action2 } = await getContext();
     action2.$el.click();
     expect(Foo.fn).toHaveBeenCalledTimes(1);
     expect(Bar.fn).toHaveBeenCalledTimes(1);
   });
 
-  it('should trigger a method from another component on any event', () => {
+  it('should trigger a method from another component on any event', async () => {
+    const { Foo, action3 } = await getContext();
     action3.$el.dispatchEvent(new FocusEvent('focus'));
     expect(Foo.fn).toHaveBeenCalledTimes(1);
   });
 
-  it('should display a warning if the targeted component does not exist', () => {
+  it('should display a warning if the targeted component does not exist', async () => {
+    const { Action, action4 } = await getContext();
     action4.$el.click();
     expect(Action.warnFn).toHaveBeenCalledTimes(1);
   });
 
-  it('should display a warning if the targeted method does not exist', () => {
+  it('should display a warning if the targeted method does not exist', async () => {
+    const { Action, action5 } = await getContext();
     action5.$el.click();
     expect(Action.warnFn).toHaveBeenCalledTimes(1);
   });

@@ -102,7 +102,7 @@ export function intersectionMockInstance(element) {
 /**
  * Set the `isIntersecting` for the IntersectionObserver of a specific element.
  */
-export function mockIsIntersecting(element, isIntersecting) {
+export async function mockIsIntersecting(element, isIntersecting) {
   const observer = intersectionMockInstance(element);
   if (!observer) {
     throw new Error(
@@ -111,6 +111,9 @@ export function mockIsIntersecting(element, isIntersecting) {
   }
   const item = observers.get(observer);
   if (item) {
+    jest.useFakeTimers();
     triggerIntersection([element], isIntersecting, observer, item);
+    await jest.advanceTimersByTimeAsync(10);
+    jest.useRealTimers();
   }
 }

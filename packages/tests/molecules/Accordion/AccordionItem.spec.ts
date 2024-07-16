@@ -1,23 +1,10 @@
 import { describe, it, expect, jest, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import { AccordionItem } from '@studiometa/ui';
-import { wait } from '#test-utils';
+import { h, wait } from '#test-utils';
 
-let consoleSpy;
-
-beforeAll(() => {
-  consoleSpy = jest.spyOn(console, 'warn');
+async function getContext() {
+  const consoleSpy = jest.spyOn(console, 'warn');
   consoleSpy.mockImplementation(() => true);
-});
-
-afterAll(() => {
-  consoleSpy.mockRestore();
-});
-
-describe('AccordionItem component', () => {
-  let item;
-  let btn;
-  let content;
-  let icon;
 
   class AccordionItemWithIcon extends AccordionItem {
     static config = {
@@ -26,34 +13,50 @@ describe('AccordionItem component', () => {
     };
   }
 
-  beforeEach(() => {
-    document.body.innerHTML = `
-<div
-  data-component="AccordionItem"
-  data-option-styles='{
-    "icon": {
-      "open": "transform rotate-180",
-      "active": { "transition": "all 1s linear" },
-      "closed": "transform rotate-0"
-    }
-  }'>
-  <button data-ref="btn">
-    Button
-    <span data-ref="icon">▼</span>
-  </button>
-  <div data-ref="container">
-    <div data-ref="content">Content</div>
-  </div>
-</div>;
-    `;
-    item = new AccordionItemWithIcon(document.body.firstElementChild);
-    item.$mount();
-    btn = document.querySelector('[data-ref="btn"]');
-    content = document.querySelector('[data-ref="content"]');
-    icon = document.querySelector('[data-ref="icon"]');
-  });
+  const root = h('div');
+  root.innerHTML = `
+    <div
+      data-component="AccordionItem"
+      data-option-styles='{
+        "icon": {
+          "open": "transform rotate-180",
+          "active": { "transition": "all 1s linear" },
+          "closed": "transform rotate-0"
+        }
+      }'>
+      <button data-ref="btn">
+        Button
+        <span data-ref="icon">▼</span>
+      </button>
+      <div data-ref="container">
+        <div data-ref="content">Content</div>
+      </div>
+    </div>;
+        `;
+  const item = new AccordionItemWithIcon(root.firstElementChild as HTMLElement);
+  const btn = root.querySelector('[data-ref="btn"]') as HTMLButtonElement;
+  const content = root.querySelector('[data-ref="content"]');
+  const icon = root.querySelector('[data-ref="icon"]');
 
-  it('should had aria-attributes when mounted', () => {
+  jest.useFakeTimers();
+  item.$mount();
+  await jest.advanceTimersByTimeAsync(100);
+  jest.useRealTimers();
+
+  return {
+    root,
+    item,
+    btn,
+    content,
+    icon,
+    consoleSpy,
+    consoleSpyRestor: () => consoleSpy.mockRestore(),
+  };
+}
+
+describe('AccordionItem component', () => {
+  it('should had aria-attributes when mounted', async () => {
+    const { btn, content, item } = await getContext();
     expect(btn.id).toBe(item.$id);
     expect(content.getAttribute('aria-labelledby')).toBe(item.$id);
     expect(btn.getAttribute('aria-expanded')).toBe('false');
@@ -61,6 +64,7 @@ describe('AccordionItem component', () => {
   });
 
   it('should open and close', async () => {
+    const { btn, content, item, icon } = await getContext();
     const spy = jest.spyOn(icon.classList, 'add');
     await item.open();
     expect(content.getAttribute('aria-hidden')).toBe('false');
@@ -85,6 +89,7 @@ describe('AccordionItem component', () => {
   });
 
   it('should emit open and close events', async () => {
+    const { btn, content, item, icon } = await getContext();
     const fn = jest.fn();
     item.$on('open', fn);
     item.$on('close', fn);
@@ -100,8 +105,12 @@ describe('AccordionItem component', () => {
     expect(fn).toHaveBeenCalledTimes(3);
   });
 
-  it('should remove styles when destroyed', () => {
+  it('should remove styles when destroyed', async () => {
+    const { btn, content, item, icon } = await getContext();
+    jest.useFakeTimers();
     item.$destroy();
+    await jest.advanceTimersByTimeAsync(100);
+    jest.useRealTimers();
     expect(item.$refs.container.style.visibility).toBe('');
     expect(item.$refs.container.style.height).toBe('');
   });
