@@ -11,7 +11,10 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "baseUrl": "./packages/ui/",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "#test-utils": ["./packages/tests/__utils__/index.ts"]
+    }
   },
   "include": [
     "packages/ui/**/*.ts"

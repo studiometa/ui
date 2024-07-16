@@ -34,6 +34,7 @@ export default defineWebpackConfig({
 {% end_html_element %}`,
         style: `html.dark {
   background-color: #222;
+  color: #eee;
 }
 
 body {
@@ -55,7 +56,6 @@ createApp(App);`,
   webpack(config) {
     config.output.publicPath = '/-/play/';
     config.output.path = resolve('../docs/public/play/');
-    config.optimization.minimize = false;
 
     config.plugins.push(
       new CopyPlugin({
