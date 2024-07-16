@@ -1,4 +1,4 @@
-import { it, jest } from '@jest/globals';
+import { describe, it, jest, expect, beforeEach } from '@jest/globals';
 import { Base } from '@studiometa/js-toolkit';
 import { Action as ActionCore } from '@studiometa/ui';
 
@@ -53,24 +53,24 @@ class App extends Base {
 
 const root = document.createElement('div');
 root.innerHTML = `
-	<div data-component="Foo"></div>
-	<div data-component="Bar"></div>
-	<button data-component="Action"
-		data-option-method="fn"
-		data-option-target="Foo">Click me</button>
-	<button data-component="Action"
-		data-option-method="fn"
-		data-option-target="Foo Bar">Click me</button>
-	<button data-component="Action"
-		data-option-on="focus"
-		data-option-method="fn"
-		data-option-target="Foo">Focus me</button>
+  <div data-component="Foo"></div>
+  <div data-component="Bar"></div>
   <button data-component="Action"
-		data-option-method="fn"
-		data-option-target="Baz">Click me</button>
+    data-option-method="fn"
+    data-option-target="Foo">Click me</button>
   <button data-component="Action"
-		data-option-method="unavailableFn"
-		data-option-target="Foo">Click me</button>
+    data-option-method="fn"
+    data-option-target="Foo Bar">Click me</button>
+  <button data-component="Action"
+    data-option-on="focus"
+    data-option-method="fn"
+    data-option-target="Foo">Focus me</button>
+  <button data-component="Action"
+    data-option-method="fn"
+    data-option-target="Baz">Click me</button>
+  <button data-component="Action"
+    data-option-method="unavailableFn"
+    data-option-target="Foo">Click me</button>
 `;
 const app = new App(root);
 app.$mount();

@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { describe, it, expect, jest, beforeAll, afterAll } from '@jest/globals';
 import { nextFrame } from '@studiometa/js-toolkit/utils';
 import { Modal } from '@studiometa/ui';
 import template from './Modal.template.html';

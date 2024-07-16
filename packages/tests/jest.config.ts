@@ -1,7 +1,5 @@
-/**
- * @see https://jestjs.io/docs/en/configuration.html
- * @type {import('@jest/types').Config.GlobalConfig}
- */
+import type { Config } from 'jest';
+
 export default {
   testEnvironment: 'jsdom',
   testEnvironmentOptions: {
@@ -23,4 +21,4 @@ export default {
   globals: {
     __DEV__: true,
   },
-};
+} as Config;

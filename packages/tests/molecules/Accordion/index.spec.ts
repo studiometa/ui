@@ -1,6 +1,6 @@
-import { jest } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { Accordion, AccordionItem } from '@studiometa/ui';
-import wait from '@studiometa/ui-tests/__utils__/wait';
+import { wait } from '#test-utils';
 
 describe('Accordion component', () => {
   it('should have at least 1 test', () => {
