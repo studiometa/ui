@@ -17,6 +17,8 @@ export interface ActionProps extends BaseProps {
  */
 const TARGET_REGEX = /([a-zA-Z]+)(\((.*)\))?/;
 
+const effectCache = new Map<string, Function>();
+
 /**
  * Action class.
  */
@@ -34,11 +36,21 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
     },
   };
 
+  get event() {
+    const [event] = this.$options.on.split('.', 1);
+    return event;
+  }
+
+  get modifiers() {
+    return this.$options.on.split('.').slice(1);
+  }
+
   get effect() {
     const { effect } = this.$options;
-    // @todo add cache for functions, no need to create X times the same function
-    const fn = new Function('ctx', 'event', 'target', `return ${effect}`);
-    return fn;
+    if (!effectCache.has(effect)) {
+      effectCache.set(effect, new Function('ctx', 'event', 'target', `return ${effect}`));
+    }
+    return effectCache.get(effect);
   }
 
   get targets() {
@@ -68,8 +80,16 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
   /**
    * Run method on targeted components
    */
-  handleEvent(event) {
-    const { targets, effect } = this;
+  handleEvent(event: Event) {
+    const { targets, effect, modifiers } = this;
+
+    if (modifiers.includes('prevent')) {
+      event.preventDefault();
+    }
+
+    if (modifiers.includes('stop')) {
+      event.stopPropagation();
+    }
 
     for (const target of targets) {
       try {
@@ -88,15 +108,13 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
    * Mounted
    */
   mounted() {
-    const { on: eventName, target } = this.$options;
+    const { event, modifiers } = this;
 
-    if (!target) {
-      this.$warn('Missing target options.');
-      this.$terminate();
-      return;
-    }
-
-    this.$el.addEventListener(eventName, this);
+    this.$el.addEventListener(event, this, {
+      capture: modifiers.includes('capture'),
+      once: modifiers.includes('once'),
+      passive: modifiers.includes('passive'),
+    });
   }
 
   /**
