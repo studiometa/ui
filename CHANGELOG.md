@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Button:** fix an error where a variable might not be defined ([2b00b60](https://github.com/studiometa/ui/commits/2b00b60))
 - **IconInline:** fix an error where a variable might not be defined ([72153ce](https://github.com/studiometa/ui/commits/72153ce))
 
+### Removed
+
+- ⚠️ **Action:** remove `method` and `selector` options ([#258](https://github.com/studiometa/ui/issues/258), [#261](https://github.com/studiometa/ui/pull/261), [6b1ab86](https://github.com/studiometa/ui/commits/6b1ab86))
+
 ## [v0.2.53](https://github.com/studiometa/ui/compare/0.2.52..0.2.53) (2024-07-16)
 
 ### Added
