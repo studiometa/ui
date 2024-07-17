@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **DataBind:** add `value` getter and setter as alias for the `get()` and `set(value)` methods ([#265](https://github.com/studiometa/ui/pull/265), [de1e36b](https://github.com/studiometa/ui/commits/de1e36b))
+
 ### Changed
 
 - ⚠️ Update @studiometa/js-toolkit 2.12.0 → 3.0.0-alpha.5 ([#264](https://github.com/studiometa/ui/pull/264), [27684a2](https://github.com/studiometa/ui/commits/27684a2))
