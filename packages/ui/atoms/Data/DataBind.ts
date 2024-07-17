@@ -52,6 +52,14 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
     return 'textContent';
   }
 
+  get value() {
+    return this.get();
+  }
+
+  set value(value) {
+    this.set(value);
+  }
+
   get() {
     const { target, multiple } = this;
 
