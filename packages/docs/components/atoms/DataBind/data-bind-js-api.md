@@ -19,6 +19,12 @@ The `DataBind` component can be used to keep a value in sync between multiple DO
 - Type: `string`
 - Default: `''`
 
+## Properties
+
+### `value`
+
+Get and set the value on the current instance. This is a getter and setter alias for the [`set(value)`](#set-value-string-boolean-string) and [get()](#get) methods.
+
 ## Methods
 
 ### `set(value: string | boolean | string[])`

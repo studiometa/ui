@@ -138,4 +138,15 @@ describe('The DataBind component', () => {
     expect(instanceA.relatedInstances).toEqual(new Set([]));
     expect(instanceB.relatedInstances).toEqual(new Set([]));
   });
+
+  it('should have a `value` getter and setter as alias for the get and set methods', async () => {
+    const instance = new DataBind(h('div', ['foo']));
+    const spyGet = jest.spyOn(instance, 'get');
+    const spySet = jest.spyOn(instance, 'set');
+    expect(instance.value).toBe(instance.get());
+    expect(spyGet).toHaveBeenCalledTimes(2);
+    instance.value = 'bar';
+    expect(spySet).toHaveBeenCalledTimes(1);
+    expect(spySet).toHaveBeenLastCalledWith('bar');
+  });
 });
