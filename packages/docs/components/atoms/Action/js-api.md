@@ -10,8 +10,25 @@ title: Action JS API
 
 - Type: `string`
 - Default: `'click'`
+- Format: `<event>[.<modifier>...]`
 
-Use this option to change the event that will trigger the [effect callback](#effect) on the defined [targets](#target).
+Use this option to change the event that will trigger the [effect callback](#effect) on the defined [targets](#target). Modifiers can be used to configure how the event will be listened to. Available modifiers are:
+
+- `prevent` to call the `event.preventDefault()` in the event handler
+- `stop` to call the `event.stopPropagation()` in the event handler
+- `passive` to register the handler with passive mode enabled
+- `once` to trigger the handler only once
+- `capture` to register the handle in capture mode
+
+Modifiers can be chained with a `.` as separator:
+
+```html {3}
+<button
+  data-component="Action"
+  data-option-on="click.prevent.stop.passive">
+  Click me
+</button>
+```
 
 ### `target`
 
