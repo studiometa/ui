@@ -1,7 +1,7 @@
 import { describe, it, jest, expect, afterEach } from '@jest/globals';
 import { Base } from '@studiometa/js-toolkit';
 import { Action } from '@studiometa/ui';
-import { destroy, h, mount } from '#test-utils';
+import { h, mount, destroy } from '#test-utils';
 
 class Foo extends Base {
   static config = {
@@ -148,13 +148,51 @@ describe('The Action component', () => {
   it('should trigger the effect returned function with ctx, target and event parameters', async () => {
     const { action, foo, reset } = await getContext({
       target: 'Foo',
-      effect: '(_ctx, _event, _target) => target.$update(ctx, _ctx, event, _event, target, _target)',
+      effect:
+        '(_ctx, _event, _target) => target.$update(ctx, _ctx, event, _event, target, _target)',
     });
     const spy = jest.spyOn(foo, '$update');
     const event = new Event('click');
     action.$el.dispatchEvent(event);
     expect(spy).toHaveBeenCalledWith(action.targets[0], action.targets[0], event, event, foo, foo);
     spy.mockRestore();
+    await reset();
+  });
+
+  it('should prevent default and stop propagation if modifiers specified', async () => {
+    const { action, reset } = await getContext({
+      target: 'Foo',
+      on: 'click.prevent.stop',
+    });
+    expect(action.event).toBe('click');
+    expect(action.modifiers).toEqual(['prevent', 'stop']);
+    const event = new Event('click');
+    const preventSpy = jest.spyOn(event, 'preventDefault');
+    const stopSpy = jest.spyOn(event, 'stopPropagation');
+    action.$el.dispatchEvent(event);
+    expect(preventSpy).toHaveBeenCalledTimes(1);
+    expect(stopSpy).toHaveBeenCalledTimes(1);
+    await reset();
+  });
+
+  it('should configure the addEventListener options if modifiers specified', async () => {
+    const { action, reset } = await getContext({
+      target: 'Foo',
+      on: 'click.capture.once.passive',
+    });
+    expect(action.event).toBe('click');
+    expect(action.modifiers).toEqual(['capture', 'once', 'passive']);
+    const event = new Event('click');
+    action.$el.dispatchEvent(event);
+    const addEventSpy = jest.spyOn(action.$el, 'addEventListener');
+    await destroy(action);
+    await mount(action);
+    expect(addEventSpy).toHaveBeenCalledTimes(1);
+    expect(addEventSpy).toHaveBeenCalledWith('click', action, {
+      capture: true,
+      once: true,
+      passive: true,
+    });
     await reset();
   });
 
