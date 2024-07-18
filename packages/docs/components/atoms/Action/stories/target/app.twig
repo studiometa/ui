@@ -1,20 +1,20 @@
 <div class="flex flex-col gap-8">
   <div class="flex gap-4">
     <button data-component="Action"
-      data-option-target="DataBind"
-      data-option-effect="target.value -= 1"
+      data-option-target="Target"
+      data-option-effect="target.$el.valueAsNumber -= 1"
       class="px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
       -
     </button>
-    <input data-component="DataBind"
+    <input data-component="Target"
       data-option-name="counter"
-      name="counter"
+      type="number"
       value="0"
       readonly
       class="px-4 py-2 ring-2 rounded bg-transparent" />
     <button data-component="Action"
-      data-option-target="DataBind"
-      data-option-effect="target.value += 1"
+      data-option-target="Target"
+      data-option-effect="target.$el.valueAsNumber += 1"
       class="px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
       +
     </button>
