@@ -6,7 +6,7 @@ export interface TargetProps extends BaseProps {}
 /**
  * Target class.
  */
-export default class Target extends Base<TargetProps> {
+export class Target extends Base<TargetProps> {
   /**
    * Config.
    */
