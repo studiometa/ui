@@ -68,7 +68,7 @@ createApp(App);`,
               async transformer(content, filename) {
                 const result = await esbuild.build({
                   bundle: true,
-                  target: 'es2020',
+                  target: 'es2022',
                   write: false,
                   format: 'esm',
                   sourcemap: true,
@@ -95,7 +95,7 @@ createApp(App);`,
             transform: {
               async transformer(content, filename) {
                 const result = await esbuild.build({
-                  target: 'es2020',
+                  target: 'es2022',
                   write: false,
                   format: 'esm',
                   sourcemap: true,
