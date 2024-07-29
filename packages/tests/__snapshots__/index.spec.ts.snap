@@ -55,6 +55,7 @@ exports[`components exports 1`] = `
   "TableOfContent",
   "TableOfContentAnchor",
   "Tabs",
+  "Target",
   "Transition",
   "animationScrollWithEase",
   "loadImage",
