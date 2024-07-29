@@ -162,8 +162,9 @@ function getDemoSidebar() {
         extractTitle: true,
       }),
     },
-  ]
+  ];
 }
+
 function generateSidebarLinksFromPath(
   globs: string | string[],
   {

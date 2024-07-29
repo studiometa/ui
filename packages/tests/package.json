@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-tests",
-  "version": "0.2.53",
+  "version": "1.0.0-alpha.0",
   "private": true,
   "type": "module",
   "scripts": {
