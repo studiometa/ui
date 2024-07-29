@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-workspace",
-  "version": "0.2.53",
+  "version": "1.0.0-alpha.0",
   "private": true,
   "workspaces": [
     "packages/*"
