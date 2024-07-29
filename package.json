@@ -32,7 +32,7 @@
     "gzip-size": "7.0.0",
     "oxlint": "0.6.1",
     "prettier": "2.8.8",
-    "typescript": "5.5.3"
+    "typescript": "5.5.4"
   },
   "dependencies": {
     "patch-package": "^8.0.0"
