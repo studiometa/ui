@@ -1,0 +1,46 @@
+<div class="flex flex-col gap-8">
+  <div class="flex gap-4">
+    <button data-component="Action"
+      data-option-target="Transition(#foo)"
+      data-option-effect="target.enter()"
+      class="px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
+      Show
+    </button>
+    <button data-component="Action"
+      data-option-target="Transition(#foo)"
+      data-option-effect="ctx.Transition.leave()"
+      class="px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
+      Hide
+    </button>
+    <button data-component="Action"
+      data-option-target="Transition(#foo)"
+      data-option-effect="({ Transition }) => Transition.$el.classList.contains('is-visible') ? Transition.leave() : Transition.enter()"
+      class="px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
+      Toggle
+    </button>
+  </div>
+  <div class="flex gap-4">
+    <div data-component="Transition"
+      data-option-enter-from="scale-50 opacity-10"
+      data-option-enter-active="transition"
+      data-option-enter-to="is-visible"
+      data-option-enter-keep
+      data-option-leave-from="is-visible"
+      data-option-leave-active="transition"
+      data-option-leave-to="scale-50 opacity-10"
+      data-option-leave-keep
+      id="foo"
+      class="w-24 h-24 bg-green-400 dark:bg-green-600 rounded scale-50 opacity-10"></div>
+
+    <div data-component="Transition"
+      data-option-enter-from="scale-50 opacity-10"
+      data-option-enter-active="transition"
+      data-option-enter-to="is-visible"
+      data-option-enter-keep
+      data-option-leave-from="is-visible"
+      data-option-leave-active="transition"
+      data-option-leave-to="scale-50 opacity-10"
+      data-option-leave-keep
+      class="w-24 h-24 bg-green-400 dark:bg-green-600 rounded scale-50 opacity-10"></div>
+  </div>
+</div>

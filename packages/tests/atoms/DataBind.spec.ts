@@ -1,4 +1,4 @@
-import { it, describe, expect } from '@jest/globals';
+import { it, describe, expect, jest } from '@jest/globals';
 import { DataBind } from '@studiometa/ui';
 import { h } from '#test-utils';
 
@@ -45,13 +45,16 @@ describe('The DataBind component', () => {
     expect(instance.get()).toBe(true);
   });
 
-  it('should set the checked property of multiple checkbox', () => {
+  it('should set the checked property of multiple checkbox', async () => {
     const inputA = h('input', { type: 'checkbox', value: 'foo', dataOptionName: 'checkbox[]' });
     const inputB = h('input', { type: 'checkbox', value: 'bar', dataOptionName: 'checkbox[]' });
     const instanceA = new DataBind(inputA);
     const instanceB = new DataBind(inputB);
+    jest.useFakeTimers();
     instanceA.$mount();
     instanceB.$mount();
+    await jest.advanceTimersByTimeAsync(100);
+    jest.useRealTimers();
     expect(inputA.checked).toBe(false);
     expect(inputB.checked).toBe(false);
     expect(instanceA.get()).toEqual([]);
@@ -111,7 +114,7 @@ describe('The DataBind component', () => {
     expect(instance.get()).toEqual([optionA.value, optionB.value]);
   });
 
-  it('should remove the current instance from the related set after destroy', () => {
+  it('should remove the current instance from the related set after destroy', async () => {
     const divA = h('div');
     const divB = h('div');
     const instanceA = new DataBind(divA);
@@ -119,15 +122,31 @@ describe('The DataBind component', () => {
     expect(instanceA.relatedInstances).toBe(instanceB.relatedInstances);
     expect(instanceA.relatedInstances).toEqual(new Set([]));
     expect(instanceB.relatedInstances).toEqual(new Set([]));
+    jest.useFakeTimers();
     instanceA.$mount();
     instanceB.$mount();
+    await jest.advanceTimersByTimeAsync(100);
     expect(instanceA.relatedInstances).toEqual(new Set([instanceA, instanceB]));
     expect(instanceB.relatedInstances).toEqual(new Set([instanceA, instanceB]));
     instanceB.$destroy();
+    await jest.advanceTimersByTimeAsync(100);
     expect(instanceA.relatedInstances).toEqual(new Set([instanceA]));
     expect(instanceB.relatedInstances).toEqual(new Set([instanceA]));
     instanceA.$destroy();
+    await jest.advanceTimersByTimeAsync(100);
+    jest.useRealTimers();
     expect(instanceA.relatedInstances).toEqual(new Set([]));
     expect(instanceB.relatedInstances).toEqual(new Set([]));
+  });
+
+  it('should have a `value` getter and setter as alias for the get and set methods', async () => {
+    const instance = new DataBind(h('div', ['foo']));
+    const spyGet = jest.spyOn(instance, 'get');
+    const spySet = jest.spyOn(instance, 'set');
+    expect(instance.value).toBe(instance.get());
+    expect(spyGet).toHaveBeenCalledTimes(2);
+    instance.value = 'bar';
+    expect(spySet).toHaveBeenCalledTimes(1);
+    expect(spySet).toHaveBeenLastCalledWith('bar');
   });
 });

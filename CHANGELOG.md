@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-alpha.0](https://github.com/studiometa/ui/compare/0.2.53..1.0.0-alpha.0) (2024-07-29)
+
+### Added
+
+- **DataBind:** add `value` getter and setter as alias for the `get()` and `set(value)` methods ([#265](https://github.com/studiometa/ui/pull/265), [de1e36b](https://github.com/studiometa/ui/commits/de1e36b))
+- **Action:** add a `Target` bare component for easy reference ([#261](https://github.com/studiometa/ui/pull/261))
+
+### Changed
+
+- ⚠️ Update @studiometa/js-toolkit 2.12.0 → 3.0.0-alpha.5 ([#264](https://github.com/studiometa/ui/pull/264), [27684a2](https://github.com/studiometa/ui/commits/27684a2))
+- ⚠️ **Action:** add support for effect and improve target resolution ([#258](https://github.com/studiometa/ui/issues/258), [#261](https://github.com/studiometa/ui/pull/261))
+
+### Fixed
+
+- **Button:** fix an error where a variable might not be defined ([2b00b60](https://github.com/studiometa/ui/commits/2b00b60))
+- **IconInline:** fix an error where a variable might not be defined ([72153ce](https://github.com/studiometa/ui/commits/72153ce))
+
+### Removed
+
+- ⚠️ **Action:** remove `method` and `selector` options ([#258](https://github.com/studiometa/ui/issues/258), [#261](https://github.com/studiometa/ui/pull/261), [6b1ab86](https://github.com/studiometa/ui/commits/6b1ab86))
+
 ## [v0.2.53](https://github.com/studiometa/ui/compare/0.2.52..0.2.53) (2024-07-16)
 
 ### Added

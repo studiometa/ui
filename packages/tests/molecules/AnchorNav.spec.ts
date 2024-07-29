@@ -1,11 +1,11 @@
 import { describe, it, expect, jest, beforeAll, afterEach } from '@jest/globals';
 import { AnchorNav, AnchorNavLink } from '@studiometa/ui';
-import { wait } from '@studiometa/js-toolkit/utils';
 import {
+  wait,
   intersectionObserverBeforeAllCallback,
   intersectionObserverAfterEachCallback,
   mockIsIntersecting,
-} from '../__utils__/mockIntersectionObserver.js';
+} from '#test-utils';
 
 beforeAll(() => {
   intersectionObserverBeforeAllCallback();
@@ -15,7 +15,7 @@ afterEach(() => {
   intersectionObserverAfterEachCallback();
 });
 
-function getContext() {
+async function getContext() {
   const mountedFn = jest.fn();
   const destroyedFn = jest.fn();
   const enterFn = jest.fn();
@@ -65,7 +65,10 @@ function getContext() {
   const targetOne = div.querySelector('#one');
 
   const anchorNavTest = new AnchorNavTest(div);
+  jest.useFakeTimers();
   anchorNavTest.$mount();
+  await jest.advanceTimersByTimeAsync(100);
+  jest.useRealTimers();
 
   return {
     mountedFn,
@@ -80,32 +83,32 @@ function getContext() {
 
 describe('The `AnchorNav` component', () => {
   it('should listen to mounted and destroyed event on child AnchorNavTarget', async () => {
-    const { mountedFn, destroyedFn, targetOne } = getContext();
+    const { mountedFn, destroyedFn, targetOne } = await getContext();
     expect(mountedFn).toHaveBeenCalledTimes(0);
     expect(destroyedFn).toHaveBeenCalledTimes(0);
 
-    mockIsIntersecting(targetOne, true);
+    await mockIsIntersecting(targetOne, true);
 
     expect(mountedFn).toHaveBeenCalledTimes(1);
     expect(destroyedFn).toHaveBeenCalledTimes(0);
 
-    mockIsIntersecting(targetOne, false);
+    await mockIsIntersecting(targetOne, false);
     await wait(1);
 
     expect(destroyedFn).toHaveBeenCalledTimes(1);
   });
 
   it('should trigger the enter and leave method on AnchorNavLink', async () => {
-    const { enterFn, leaveFn, targetOne } = getContext();
+    const { enterFn, leaveFn, targetOne } = await getContext();
     expect(enterFn).toHaveBeenCalledTimes(0);
     expect(leaveFn).toHaveBeenCalledTimes(0);
 
-    mockIsIntersecting(targetOne, true);
+    await mockIsIntersecting(targetOne, true);
 
     expect(enterFn).toHaveBeenCalledTimes(1);
     expect(leaveFn).toHaveBeenCalledTimes(0);
 
-    mockIsIntersecting(targetOne, false);
+    await mockIsIntersecting(targetOne, false);
     await wait(1);
 
     expect(leaveFn).toHaveBeenCalledTimes(1);

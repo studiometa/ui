@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-workspace",
-  "version": "0.2.53",
+  "version": "1.0.0-alpha.0",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -30,9 +30,9 @@
     "esbuild": "0.23.0",
     "fast-glob": "3.3.2",
     "gzip-size": "7.0.0",
-    "oxlint": "0.5.2",
+    "oxlint": "0.6.1",
     "prettier": "2.8.8",
-    "typescript": "5.5.3"
+    "typescript": "5.5.4"
   },
   "dependencies": {
     "patch-package": "^8.0.0"

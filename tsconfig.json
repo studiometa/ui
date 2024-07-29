@@ -13,10 +13,12 @@
     "baseUrl": "./packages/ui/",
     "skipLibCheck": true,
     "paths": {
-      "#test-utils": ["./packages/tests/__utils__/index.ts"]
+      "#private": ["./*"],
+      "#test-utils": ["../tests/__utils__/index.ts"]
     }
   },
   "include": [
-    "packages/ui/**/*.ts"
+    "packages/ui/**/*.ts",
+    "packages/tests/**/*.ts"
   ]
 }

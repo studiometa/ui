@@ -26,7 +26,7 @@
   {{ source('@svg/%s.svg'|format(name), ignore_missing = true) }}
 {%- endset -%}
 
-{% if icon is not empty or not ignore_missing %}
+{% if icon is not empty or not (ignore_missing ?? true)  %}
   <span {{ html_attributes(attributes) }}>
     {{ icon }}
   </span>

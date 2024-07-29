@@ -1,0 +1,13 @@
+<div class="inline-flex flex-col gap-4">
+  <a href="#foo"
+    data-component="Action"
+    data-option-log
+    data-option-target="Foo"
+    data-option-on="click.prevent"
+    data-option-effect="target.$el.textContent = performance.now()"
+    class="px-4 py-2 bg-blue-300 dark:bg-blue-600 rounded">
+    Click me
+  </a>
+
+  <pre data-component="Foo" class="text-sm">...</pre>
+</div>
