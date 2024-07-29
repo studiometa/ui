@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.53](https://github.com/studiometa/ui/compare/0.2.52..0.2.53) (2024-07-16)
+
 ### Added
 
 - **DataBind:** add `value` getter and setter as alias for the `get()` and `set(value)` methods ([#265](https://github.com/studiometa/ui/pull/265), [de1e36b](https://github.com/studiometa/ui/commits/de1e36b))
