@@ -1,7 +1,11 @@
 import { it, describe, expect } from '@jest/globals';
-import { Base } from '@studiometa/js-toolkit';
 import { DataModel } from '@studiometa/ui';
 import { h } from '#test-utils';
+
+function check(input: HTMLInputElement, checked = true) {
+  input.checked = checked;
+  input.dispatchEvent(new Event('input'));
+}
 
 describe('The DataModel component', () => {
   it('should sync values on input', () => {
@@ -21,5 +25,48 @@ describe('The DataModel component', () => {
     expect(instanceA.get()).toBe(instanceB.get());
     expect(instanceA.get()).toBe(newValue);
     expect(instanceB.get()).toBe(newValue);
+  });
+
+  it('should set value for multiple checkboxes with the same name', async () => {
+    const checkboxA1 = h('input', { type: 'checkbox', value: 'a', dataOptionName: 'check[]' });
+    const checkboxA2 = h('input', { type: 'checkbox', value: 'a', dataOptionName: 'check[]' });
+    const checkboxB1 = h('input', { type: 'checkbox', value: 'b', dataOptionName: 'check[]' });
+    const checkboxB2 = h('input', { type: 'checkbox', value: 'b', dataOptionName: 'check[]' });
+    const instanceA1 = new DataModel(checkboxA1);
+    const instanceA2 = new DataModel(checkboxA2);
+    const instanceB1 = new DataModel(checkboxB1);
+    const instanceB2 = new DataModel(checkboxB2);
+
+    instanceA1.$mount();
+    instanceA2.$mount();
+    instanceB1.$mount();
+    instanceB2.$mount();
+
+    expect(instanceA1.multiple).toBe(true);
+
+    check(checkboxA1, true);
+    expect(instanceA1.get()).toEqual(['a']);
+    expect(instanceA2.get()).toEqual(['a']);
+    expect(instanceB1.get()).toEqual(['a']);
+    expect(instanceB2.get()).toEqual(['a']);
+
+    check(checkboxA1, false);
+    expect(instanceA1.get()).toEqual([]);
+    expect(instanceA2.get()).toEqual([]);
+    expect(instanceB1.get()).toEqual([]);
+    expect(instanceB2.get()).toEqual([]);
+
+    check(checkboxA1, true);
+    check(checkboxA2, true);
+    expect(instanceA1.get()).toEqual(['a']);
+    expect(instanceA2.get()).toEqual(['a']);
+    expect(instanceB1.get()).toEqual(['a']);
+    expect(instanceB2.get()).toEqual(['a']);
+
+    check(checkboxA1, false);
+    expect(instanceA1.get()).toEqual([]);
+    expect(instanceA2.get()).toEqual([]);
+    expect(instanceB1.get()).toEqual([]);
+    expect(instanceB2.get()).toEqual([]);
   });
 });
