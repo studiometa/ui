@@ -1,5 +1,4 @@
 import { it, describe, expect, jest } from '@jest/globals';
-import { Base } from '@studiometa/js-toolkit';
 import { DataModel } from '@studiometa/ui';
 import { h } from '#test-utils';
 
