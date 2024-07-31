@@ -1,5 +1,4 @@
 import { it, describe, expect } from '@jest/globals';
-import { Base } from '@studiometa/js-toolkit';
 import { DataModel } from '@studiometa/ui';
 import { h } from '#test-utils';
 
@@ -38,39 +37,36 @@ describe('The DataModel component', () => {
     const instanceB1 = new DataModel(checkboxB1);
     const instanceB2 = new DataModel(checkboxB2);
 
-    jest.useFakeTimers();
     instanceA1.$mount();
     instanceA2.$mount();
     instanceB1.$mount();
     instanceB2.$mount();
-    await jest.advanceTimersByTimeAsync(100);
-    jest.useRealTimers();
 
     expect(instanceA1.multiple).toBe(true);
 
     check(checkboxA1, true);
-    expect(instanceA1.value).toEqual(['a']);
-    expect(instanceA2.value).toEqual(['a']);
-    expect(instanceB1.value).toEqual(['a']);
-    expect(instanceB2.value).toEqual(['a']);
+    expect(instanceA1.get()).toEqual(['a']);
+    expect(instanceA2.get()).toEqual(['a']);
+    expect(instanceB1.get()).toEqual(['a']);
+    expect(instanceB2.get()).toEqual(['a']);
 
     check(checkboxA1, false);
-    expect(instanceA1.value).toEqual([]);
-    expect(instanceA2.value).toEqual([]);
-    expect(instanceB1.value).toEqual([]);
-    expect(instanceB2.value).toEqual([]);
+    expect(instanceA1.get()).toEqual([]);
+    expect(instanceA2.get()).toEqual([]);
+    expect(instanceB1.get()).toEqual([]);
+    expect(instanceB2.get()).toEqual([]);
 
     check(checkboxA1, true);
     check(checkboxA2, true);
-    expect(instanceA1.value).toEqual(['a']);
-    expect(instanceA2.value).toEqual(['a']);
-    expect(instanceB1.value).toEqual(['a']);
-    expect(instanceB2.value).toEqual(['a']);
+    expect(instanceA1.get()).toEqual(['a']);
+    expect(instanceA2.get()).toEqual(['a']);
+    expect(instanceB1.get()).toEqual(['a']);
+    expect(instanceB2.get()).toEqual(['a']);
 
     check(checkboxA1, false);
-    expect(instanceA1.value).toEqual([]);
-    expect(instanceA2.value).toEqual([]);
-    expect(instanceB1.value).toEqual([]);
-    expect(instanceB2.value).toEqual([]);
+    expect(instanceA1.get()).toEqual([]);
+    expect(instanceA2.get()).toEqual([]);
+    expect(instanceB1.get()).toEqual([]);
+    expect(instanceB2.get()).toEqual([]);
   });
 });
