@@ -81,13 +81,13 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
 
     if (isCheckbox(target)) {
       if (multiple) {
-        const values = [];
+        const values = new Set();
         for (const instance of this.relatedInstances) {
           if (isCheckbox(instance.target) && instance.target.checked) {
-            values.push(instance.target.value);
+            values.add(instance.target.value);
           }
         }
-        return values;
+        return Array.from(values);
       } else {
         return target.checked;
       }

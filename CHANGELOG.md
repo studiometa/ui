@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-alpha.1](https://github.com/studiometa/ui/compare/1.0.0-alpha.0..1.0.0-alpha.1) (2024-07-31)
+
+### Fixed
+
+- Fix tracking values for multiple checkboxes ([#275](https://github.com/studiometa/ui/issues/275), [#276](https://github.com/studiometa/ui/pull/276), [d8c8c69](https://github.com/studiometa/ui/commit/d8c8c69))
+
 ## [v1.0.0-alpha.0](https://github.com/studiometa/ui/compare/0.2.53..1.0.0-alpha.0) (2024-07-29)
 
 ### Added
