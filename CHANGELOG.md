@@ -6,11 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-alpha.2](https://github.com/studiometa/ui/compare/1.0.0-alpha.1..1.0.0-alpha.2) (2024-08-01)
+
+### Changed
+
+- **DataBind:** add support for more reactivity ([#279](https://github.com/studiometa/ui/issues/279), [#281](https://github.com/studiometa/ui/pull/281), [dbe37a3](https://github.com/studiometa/ui/commit/dbe37a3))
+
+### Removed
+
+- ⚠️ Remove the .cjs files from the package ([#282](https://github.com/studiometa/ui/pull/282), [6574212](https://github.com/studiometa/ui/commit/6574212))
+
 ## [v1.0.0-alpha.1](https://github.com/studiometa/ui/compare/1.0.0-alpha.0..1.0.0-alpha.1) (2024-07-31)
 
 ### Fixed
 
-- Fix tracking values for multiple checkboxes ([#275](https://github.com/studiometa/ui/issues/275), [#276](https://github.com/studiometa/ui/pull/276), [d8c8c69](https://github.com/studiometa/ui/commit/d8c8c69))
+- **DataBind:** fix tracking values for multiple checkboxes ([#275](https://github.com/studiometa/ui/issues/275), [#276](https://github.com/studiometa/ui/pull/276), [d8c8c69](https://github.com/studiometa/ui/commit/d8c8c69))
 
 ## [v1.0.0-alpha.0](https://github.com/studiometa/ui/compare/0.2.53..1.0.0-alpha.0) (2024-07-29)
 

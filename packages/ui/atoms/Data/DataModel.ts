@@ -21,7 +21,7 @@ export class DataModel<T extends BaseProps = BaseProps> extends DataBind<DataMod
     }
 
     for (const instance of this.relatedInstances) {
-      instance.set(value);
+      instance.set(value, false);
     }
   }
 

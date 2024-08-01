@@ -35,6 +35,6 @@ export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<Data
       console.error('Failed', error);
     }
 
-    super.set(newValue);
+    super.set(newValue, false);
   }
 }
