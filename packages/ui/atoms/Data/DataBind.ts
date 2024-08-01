@@ -96,8 +96,16 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
     return target[this.prop];
   }
 
-  set(value: boolean | string | string[]) {
-    const { target, multiple } = this;
+  set(value: boolean | string | string[], dispatch = true) {
+    const { target, multiple, relatedInstances } = this;
+
+    if (dispatch) {
+      for (const instance of relatedInstances) {
+        if (instance !== this && instance.value !== value) {
+          instance.set(value, false);
+        }
+      }
+    }
 
     if (isSelect(target)) {
       for (const option of target.options) {

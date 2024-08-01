@@ -23,3 +23,16 @@ Use this option to define a piece of JavaScript code to transform the value befo
   :script="() => import('./stories/compute-example.js?raw')"
   />
 
+## Methods
+
+### `set(value: string | boolean | string[])`
+
+Set the value for the current instance.
+
+**Params**
+
+- `value` (`string | boolean | string[]`): the value to set
+
+### `get()`
+
+Get the current value.

@@ -1,6 +1,6 @@
 import { it, describe, expect, jest } from '@jest/globals';
 import { DataModel } from '@studiometa/ui';
-import { h } from '#test-utils';
+import { h, mount } from '#test-utils';
 
 function check(input: HTMLInputElement, checked = true) {
   input.checked = checked;
@@ -15,11 +15,9 @@ describe('The DataModel component', () => {
     const inputB = h('input', { value });
     const instanceA = new DataModel(inputA);
     const instanceB = new DataModel(inputB);
-    jest.useFakeTimers();
-    instanceA.$mount();
-    instanceB.$mount();
-    await jest.advanceTimersByTimeAsync(100);
-    jest.useRealTimers();
+
+    await mount(instanceA, instanceB);
+
     expect(instanceA.get()).toBe(instanceB.get());
     expect(instanceA.get()).toBe(value);
     expect(instanceB.get()).toBe(value);
@@ -40,13 +38,7 @@ describe('The DataModel component', () => {
     const instanceB1 = new DataModel(checkboxB1);
     const instanceB2 = new DataModel(checkboxB2);
 
-    jest.useFakeTimers();
-    instanceA1.$mount();
-    instanceA2.$mount();
-    instanceB1.$mount();
-    instanceB2.$mount();
-    await jest.advanceTimersByTimeAsync(100);
-    jest.useRealTimers();
+    await mount(instanceA1, instanceA2, instanceB1, instanceB2);
 
     expect(instanceA1.multiple).toBe(true);
 

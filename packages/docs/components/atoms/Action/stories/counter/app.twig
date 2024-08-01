@@ -1,11 +1,5 @@
 <div class="flex flex-col gap-8">
-  <div class="flex gap-4">
-    <button data-component="Action"
-      data-option-target="DataBind"
-      data-option-effect="target.value -= 1"
-      class="px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
-      -
-    </button>
+  <div class="flex flex-wrap gap-4 w-48">
     <input data-component="DataBind"
       data-option-name="counter"
       name="counter"
@@ -14,9 +8,20 @@
       class="px-4 py-2 ring-2 rounded bg-transparent" />
     <button data-component="Action"
       data-option-target="DataBind"
+      data-option-effect="target.value -= 1"
+      class="w-20 px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
+      -
+    </button>
+    <button data-component="Action"
+      data-option-target="DataBind"
       data-option-effect="target.value += 1"
-      class="px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
+      class="w-20 px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
       +
     </button>
+    <p data-component="DataComputed"
+      data-option-name="counter"
+      data-option-compute="`Double is ${value * 2}.`">
+      Double is 0.
+    </p>
   </div>
 </div>

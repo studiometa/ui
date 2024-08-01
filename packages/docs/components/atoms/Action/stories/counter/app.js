@@ -1,5 +1,5 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { Action, DataBind as DataBindCore } from '@studiometa/ui';
+import { Action, DataBind as DataBindCore, DataComputed } from '@studiometa/ui';
 
 class DataBind extends DataBindCore {
   get() {
@@ -13,6 +13,7 @@ class App extends Base {
     components: {
       Action,
       DataBind,
+      DataComputed,
     },
   };
 }

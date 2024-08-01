@@ -1,6 +1,6 @@
 import { it, describe, expect, jest } from '@jest/globals';
-import { DataBind } from '@studiometa/ui';
-import { h } from '#test-utils';
+import { DataBind, DataComputed, DataEffect } from '@studiometa/ui';
+import { destroy, h, mount } from '#test-utils';
 
 describe('The DataBind component', () => {
   it('should set the textContent of the root element', () => {
@@ -50,11 +50,9 @@ describe('The DataBind component', () => {
     const inputB = h('input', { type: 'checkbox', value: 'bar', dataOptionName: 'checkbox[]' });
     const instanceA = new DataBind(inputA);
     const instanceB = new DataBind(inputB);
-    jest.useFakeTimers();
-    instanceA.$mount();
-    instanceB.$mount();
-    await jest.advanceTimersByTimeAsync(100);
-    jest.useRealTimers();
+
+    await mount(instanceA, instanceB);
+
     expect(inputA.checked).toBe(false);
     expect(inputB.checked).toBe(false);
     expect(instanceA.get()).toEqual([]);
@@ -122,19 +120,19 @@ describe('The DataBind component', () => {
     expect(instanceA.relatedInstances).toBe(instanceB.relatedInstances);
     expect(instanceA.relatedInstances).toEqual(new Set([]));
     expect(instanceB.relatedInstances).toEqual(new Set([]));
-    jest.useFakeTimers();
-    instanceA.$mount();
-    instanceB.$mount();
-    await jest.advanceTimersByTimeAsync(100);
+
+    await mount(instanceA, instanceB);
+
     expect(instanceA.relatedInstances).toEqual(new Set([instanceA, instanceB]));
     expect(instanceB.relatedInstances).toEqual(new Set([instanceA, instanceB]));
-    instanceB.$destroy();
-    await jest.advanceTimersByTimeAsync(100);
+
+    await destroy(instanceB);
+
     expect(instanceA.relatedInstances).toEqual(new Set([instanceA]));
     expect(instanceB.relatedInstances).toEqual(new Set([instanceA]));
-    instanceA.$destroy();
-    await jest.advanceTimersByTimeAsync(100);
-    jest.useRealTimers();
+
+    await destroy(instanceA);
+
     expect(instanceA.relatedInstances).toEqual(new Set([]));
     expect(instanceB.relatedInstances).toEqual(new Set([]));
   });
@@ -148,5 +146,24 @@ describe('The DataBind component', () => {
     instance.value = 'bar';
     expect(spySet).toHaveBeenCalledTimes(1);
     expect(spySet).toHaveBeenLastCalledWith('bar');
+  });
+
+  it('should dispatch value to other instances', async () => {
+    const instance1 = new DataBind(h('div', { dataOptionName: 'a' }, ['foo']));
+    const instance2 = new DataBind(h('div', { dataOptionName: 'a' }, ['foo']));
+    const instance3 = new DataComputed(h('div', { dataOptionName: 'a', dataOptionCompute: 'value + value' }, ['foofoo']));
+    const instance4 = new DataEffect(h('div', { dataOptionName: 'a', dataOptionEffect: 'target.id = value', id: 'foo' }));
+
+    await mount(instance1, instance2, instance3, instance4);
+
+    expect(instance1.value).toBe('foo');
+    expect(instance2.value).toBe('foo');
+    expect(instance3.value).toBe('foofoo');
+    expect(instance4.$el.id).toBe('foo');
+    instance1.value = 'bar';
+    expect(instance1.value).toBe('bar');
+    expect(instance2.value).toBe('bar');
+    expect(instance3.value).toBe('barbar');
+    expect(instance4.$el.id).toBe('bar');
   });
 });
