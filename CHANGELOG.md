@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-alpha.2](https://github.com/studiometa/ui/compare/1.0.0-alpha.1..1.0.0-alpha.2) (2024-08-01)
+
 ### Changed
 
 - **DataBind:** add support for more reactivity ([#281](https://github.com/studiometa/ui/pull/281), [dbe37a3](https://github.com/studiometa/ui/commit/dbe37a3))
