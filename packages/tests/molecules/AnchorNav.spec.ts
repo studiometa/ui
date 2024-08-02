@@ -1,4 +1,4 @@
-import { describe, it, expect, jest, beforeAll, afterEach } from '@jest/globals';
+import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
 import { AnchorNav, AnchorNavLink } from '@studiometa/ui';
 import {
   wait,
@@ -16,10 +16,10 @@ afterEach(() => {
 });
 
 async function getContext() {
-  const mountedFn = jest.fn();
-  const destroyedFn = jest.fn();
-  const enterFn = jest.fn();
-  const leaveFn = jest.fn();
+  const mountedFn = vi.fn();
+  const destroyedFn = vi.fn();
+  const enterFn = vi.fn();
+  const leaveFn = vi.fn();
 
   class AnchorNavLinkTest extends AnchorNavLink {
     enter(...args) {
@@ -65,10 +65,10 @@ async function getContext() {
   const targetOne = div.querySelector('#one');
 
   const anchorNavTest = new AnchorNavTest(div);
-  jest.useFakeTimers();
+  vi.useFakeTimers();
   anchorNavTest.$mount();
-  await jest.advanceTimersByTimeAsync(100);
-  jest.useRealTimers();
+  await vi.advanceTimersByTimeAsync(100);
+  vi.useRealTimers();
 
   return {
     mountedFn,

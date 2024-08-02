@@ -1,4 +1,4 @@
-<div data-component="Modal">
+export default `<div data-component="Modal">
   <!--
     Modal opening trigger.
     This ref will be used to open the modal on click.
@@ -10,7 +10,7 @@
   <div data-ref="modal" role="dialog" aria-modal="true" aria-hidden="true" style="opacity: 0; pointer-events: none; visibility: hidden;" class="z-goku fixed inset-0">
     <!--
       Modal overlay
-      The `tabindex="-"` attribute is required.
+      The \`tabindex="-"\` attribute is required.
     -->
     <div data-ref="overlay" tabindex="-1" class="z-under absolute inset-0 bg-black opacity-75"></div>
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -30,7 +30,7 @@
         <!--
           Modal content
           The content displayed in the modal.
-          The `max-w-3xl` class defines the modal width.
+          The \`max-w-3xl\` class defines the modal width.
         -->
         <div class="max-w-3xl p-10 pt-16" data-ref="content">
           Lorem ipsum dolor sit amet, consectetur adipisicing elit. Beatae laudantium sint culpa sequi enim <a href="#" class="border-b">quaerat</a> itaque possimus at <a autofocus href="#" class="border-b">voluptatem</a> voluptates voluptatum velit illum nulla, optio porro ea. Doloremque, aut, beatae!
@@ -39,3 +39,4 @@
     </div>
   </div>
 </div>
+`

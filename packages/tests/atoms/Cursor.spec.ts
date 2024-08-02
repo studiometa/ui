@@ -1,24 +1,24 @@
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, it, expect, vi } from 'vitest';
 import { Cursor } from '@studiometa/ui';
 import { wait } from '#test-utils';
 
 async function getContext() {
   const root = document.createElement('div');
   const cursor = new Cursor(root);
-  const renderSpy = jest.spyOn(cursor, 'render');
-  jest.useFakeTimers();
+  const renderSpy = vi.spyOn(cursor, 'render');
+  vi.useFakeTimers();
   cursor.$mount();
-  await jest.advanceTimersByTimeAsync(100);
-  jest.useRealTimers();
+  await vi.advanceTimersByTimeAsync(100);
+  vi.useRealTimers();
   cursor.$options.translateDampFactor = 1;
   cursor.$options.growDampFactor = 1;
   cursor.$options.shrinkDampFactor = 1;
 
   async function moveMouse({ event = { target: document }, x, y }) {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     cursor.moved({ event, x, y });
-    await jest.advanceTimersByTimeAsync(16);
-    jest.useRealTimers();
+    await vi.advanceTimersByTimeAsync(16);
+    vi.useRealTimers();
   }
 
   return {
@@ -48,7 +48,7 @@ describe('The Cursor component', () => {
 
   it('should disable the `ticked` service when not moving', async () => {
     const { moveMouse, cursor } = await getContext();
-    const serviceSpy = jest.spyOn(cursor.$services, 'disable');
+    const serviceSpy = vi.spyOn(cursor.$services, 'disable');
     await moveMouse({ x: 100, y: 100 });
     expect(serviceSpy).toHaveBeenNthCalledWith(1, 'ticked');
   });

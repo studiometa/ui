@@ -1,4 +1,4 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Accordion, AccordionItem } from '@studiometa/ui';
 import { getInstanceFromElement } from '@studiometa/js-toolkit';
 import { h, wait } from '#test-utils';
@@ -30,10 +30,10 @@ async function getContext() {
 
   const instance = new Accordion(root.firstElementChild as HTMLElement);
 
-  jest.useFakeTimers();
+  vi.useFakeTimers();
   instance.$mount();
-  await jest.advanceTimersByTimeAsync(100);
-  jest.useRealTimers();
+  await vi.advanceTimersByTimeAsync(100);
+  vi.useRealTimers();
 
   const btn = Array.from(root.querySelectorAll('[data-ref="btn"]')) as HTMLButtonElement[];
   const content = Array.from(root.querySelectorAll('[data-ref="content"]'));

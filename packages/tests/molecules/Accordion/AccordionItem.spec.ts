@@ -1,9 +1,9 @@
-import { describe, it, expect, jest, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 import { AccordionItem } from '@studiometa/ui';
 import { h, wait } from '#test-utils';
 
 async function getContext() {
-  const consoleSpy = jest.spyOn(console, 'warn');
+  const consoleSpy = vi.spyOn(console, 'warn');
   consoleSpy.mockImplementation(() => true);
 
   class AccordionItemWithIcon extends AccordionItem {
@@ -38,10 +38,10 @@ async function getContext() {
   const content = root.querySelector('[data-ref="content"]');
   const icon = root.querySelector('[data-ref="icon"]');
 
-  jest.useFakeTimers();
+  vi.useFakeTimers();
   item.$mount();
-  await jest.advanceTimersByTimeAsync(100);
-  jest.useRealTimers();
+  await vi.advanceTimersByTimeAsync(100);
+  vi.useRealTimers();
 
   return {
     root,
@@ -65,7 +65,7 @@ describe('AccordionItem component', () => {
 
   it('should open and close', async () => {
     const { btn, content, item, icon } = await getContext();
-    const spy = jest.spyOn(icon.classList, 'add');
+    const spy = vi.spyOn(icon.classList, 'add');
     await item.open();
     expect(content.getAttribute('aria-hidden')).toBe('false');
     expect(spy).toHaveBeenLastCalledWith('transform', 'rotate-180');
@@ -90,7 +90,7 @@ describe('AccordionItem component', () => {
 
   it('should emit open and close events', async () => {
     const { btn, content, item, icon } = await getContext();
-    const fn = jest.fn();
+    const fn = vi.fn();
     item.$on('open', fn);
     item.$on('close', fn);
     await item.open();
@@ -107,10 +107,10 @@ describe('AccordionItem component', () => {
 
   it('should remove styles when destroyed', async () => {
     const { btn, content, item, icon } = await getContext();
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     item.$destroy();
-    await jest.advanceTimersByTimeAsync(100);
-    jest.useRealTimers();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
     expect(item.$refs.container.style.visibility).toBe('');
     expect(item.$refs.container.style.height).toBe('');
   });

@@ -38,7 +38,7 @@ export class AccordionCore<T extends BaseProps = BaseProps> extends Base<T & Acc
   /**
    * Synchronize close on open.
    */
-  onAccordionItemOpen(index: number) {
+  onAccordionItemOpen({ index }: { index: number }) {
     this.$emit('open', this.$children.AccordionItem[index], index);
     if (this.$options.autoclose) {
       this.$children.AccordionItem.filter((el, i) => index !== i).forEach((item) => item.close());
@@ -48,7 +48,7 @@ export class AccordionCore<T extends BaseProps = BaseProps> extends Base<T & Acc
   /**
    * Emit close event.
    */
-  onAccordionItemClose(index: number) {
+  onAccordionItemClose({ index }: { index: number }) {
     this.$emit('close', this.$children.AccordionItem[index], index);
   }
 }

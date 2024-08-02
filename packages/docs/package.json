@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-docs",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "build": "vitepress build ."
   },
   "dependencies": {
-    "@studiometa/js-toolkit": "^3.0.0-alpha.5"
+    "@studiometa/js-toolkit": "^3.0.0-alpha.6"
   },
   "devDependencies": {
     "@iconify-json/octicon": "1.1.56",
