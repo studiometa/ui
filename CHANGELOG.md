@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Migrate tests to Vitest ([#283](https://github.com/studiometa/ui/pull/283), [b76a444](https://github.com/studiometa/ui/commit/b76a444))
+
 ## [v1.0.0-alpha.2](https://github.com/studiometa/ui/compare/1.0.0-alpha.1..1.0.0-alpha.2) (2024-08-01)
 
 ### Changed
