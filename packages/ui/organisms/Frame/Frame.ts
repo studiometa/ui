@@ -132,7 +132,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    */
   onFrameFormSubmit({ event, target }: { event: SubmitEvent, target: FrameForm }) {
     // Prevent propagation of nested frames
-    if (!isDirectChild(this, 'Frame', 'FrameForm', this.$children.FrameForm[index])) {
+    if (!isDirectChild(this, 'Frame', 'FrameForm', target)) {
       return;
     }
 
