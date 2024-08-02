@@ -1,4 +1,4 @@
-import { it, describe, expect, jest } from '@jest/globals';
+import { it, describe, expect, vi } from 'vitest';
 import { Base } from '@studiometa/js-toolkit';
 import { DataEffect } from '@studiometa/ui';
 import { h } from '#test-utils';
@@ -16,7 +16,7 @@ describe('The DataModel component', () => {
   });
 
   it('should fail quietly if the compute callback throws an error', () => {
-    const consoleSpy = jest.spyOn(console, 'error');
+    const consoleSpy = vi.spyOn(console, 'error');
     consoleSpy.mockImplementation(() => {});
     const div = h('div', { dataOptionEffect: 'targett.setAttribute("id", value)' });
     const instance = new DataEffect(div);

@@ -1,11 +1,11 @@
-import { describe, it, expect, jest, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { nextFrame } from '@studiometa/js-toolkit/utils';
 import { Modal } from '@studiometa/ui';
 import { h } from '#test-utils';
-import template from './Modal.template.html';
+import template from './Modal.template.html.js';
 
 async function getContext({ move = '' } = {}) {
-  const consoleSpy = jest.spyOn(console, 'warn');
+  const consoleSpy = vi.spyOn(console, 'warn');
   const target = h('div', { id: 'target' });
   const root = h('div');
   root.innerHTML = template;
@@ -16,10 +16,10 @@ async function getContext({ move = '' } = {}) {
     modal.$options.move = move;
   }
 
-  jest.useFakeTimers();
+  vi.useFakeTimers();
   modal.$mount();
-  await jest.advanceTimersByTimeAsync(100);
-  jest.useRealTimers();
+  await vi.advanceTimersByTimeAsync(100);
+  vi.useRealTimers();
 
   return {
     root,
@@ -39,7 +39,7 @@ describe('The Modal component', () => {
 
   it('should emit events when opening and closing', async () => {
     const { modal } = await getContext();
-    const fn = jest.fn();
+    const fn = vi.fn();
     modal.$on('open', fn);
     modal.$on('close', fn);
 
@@ -61,7 +61,7 @@ describe('The Modal component', () => {
     const { modal } = await getContext();
     await modal.open();
     await nextFrame();
-    expect(modal.$refs.modal.getAttribute('style')).toBe('');
+    expect(modal.$refs.modal.getAttribute('style')).toBe(null);
     await modal.close();
     await nextFrame();
     expect(modal.$refs.modal.getAttribute('style')).toBe(
@@ -72,7 +72,7 @@ describe('The Modal component', () => {
   it('should set the focus to the `autofocus` element when opening.', async () => {
     const { modal } = await getContext();
     const autofocus = modal.$refs.modal.querySelector('[autofocus]');
-    jest.spyOn(autofocus, 'focus');
+    vi.spyOn(autofocus, 'focus');
     await modal.open();
     expect(autofocus.focus).toHaveBeenCalledTimes(1);
     await modal.close();
@@ -85,8 +85,8 @@ describe('The Modal component', () => {
     const openButton = modal.$el.querySelector('[data-ref="open[]"]');
     openButton.focus();
 
-    jest.spyOn(closeButton, 'focus');
-    jest.spyOn(openButton, 'focus');
+    vi.spyOn(closeButton, 'focus');
+    vi.spyOn(openButton, 'focus');
 
     await modal.open();
     document.dispatchEvent(tabKeydown);
@@ -144,10 +144,10 @@ describe('The Modal component', () => {
     const { modal } = await getContext();
     await modal.open();
     expect(modal.isOpen).toBe(true);
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     modal.$destroy();
-    await jest.advanceTimersByTimeAsync(100);
-    jest.useRealTimers();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
     expect(modal.isOpen).toBe(false);
   });
 });
@@ -160,10 +160,10 @@ describe('The Modal component with the `move` option', () => {
 
   it.skip('should move the `modal` ref back to its previous place.', async () => {
     const { modal } = await getContext({ move: '#target' });
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     modal.$destroy();
-    await jest.advanceTimersByTimeAsync(100);
-    jest.useRealTimers();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
     expect(document.body.firstElementChild).toBeNull();
   });
 });

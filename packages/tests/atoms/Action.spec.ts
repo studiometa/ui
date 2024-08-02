@@ -1,4 +1,4 @@
-import { describe, it, jest, expect, afterEach } from '@jest/globals';
+import { describe, it, vi, expect, afterEach } from 'vitest';
 import { Base } from '@studiometa/js-toolkit';
 import { Action } from '@studiometa/ui';
 import { h, mount, destroy } from '#test-utils';
@@ -20,7 +20,7 @@ async function getContext({
   target = '',
   on = 'click',
 } = {}) {
-  const spy = jest.spyOn(console, 'log');
+  const spy = vi.spyOn(console, 'log');
   spy.mockImplementation(() => {});
 
   const root = h('div', {
@@ -111,7 +111,7 @@ describe('The Action component', () => {
       target: 'Foo',
       effect: 'target.$update()',
     });
-    const spy = jest.spyOn(foo, '$update');
+    const spy = vi.spyOn(foo, '$update');
     action.$el.dispatchEvent(new Event('click'));
     expect(spy).toHaveBeenCalledTimes(1);
     spy.mockRestore();
@@ -124,7 +124,7 @@ describe('The Action component', () => {
       on: 'mouseenter',
       effect: '(ctx) => ctx.Foo.$update()',
     });
-    const spy = jest.spyOn(foo, '$update');
+    const spy = vi.spyOn(foo, '$update');
     action.$el.dispatchEvent(new Event('mouseenter'));
     action.$el.dispatchEvent(new Event('click'));
     expect(spy).toHaveBeenCalledTimes(1);
@@ -137,7 +137,7 @@ describe('The Action component', () => {
       target: 'Foo',
       effect: 'target.$update(ctx, event, target)',
     });
-    const spy = jest.spyOn(foo, '$update');
+    const spy = vi.spyOn(foo, '$update');
     const event = new Event('click');
     action.$el.dispatchEvent(event);
     expect(spy).toHaveBeenCalledWith(action.targets[0], event, foo);
@@ -151,7 +151,7 @@ describe('The Action component', () => {
       effect:
         '(_ctx, _event, _target) => target.$update(ctx, _ctx, event, _event, target, _target)',
     });
-    const spy = jest.spyOn(foo, '$update');
+    const spy = vi.spyOn(foo, '$update');
     const event = new Event('click');
     action.$el.dispatchEvent(event);
     expect(spy).toHaveBeenCalledWith(action.targets[0], action.targets[0], event, event, foo, foo);
@@ -167,8 +167,8 @@ describe('The Action component', () => {
     expect(action.event).toBe('click');
     expect(action.modifiers).toEqual(['prevent', 'stop']);
     const event = new Event('click');
-    const preventSpy = jest.spyOn(event, 'preventDefault');
-    const stopSpy = jest.spyOn(event, 'stopPropagation');
+    const preventSpy = vi.spyOn(event, 'preventDefault');
+    const stopSpy = vi.spyOn(event, 'stopPropagation');
     action.$el.dispatchEvent(event);
     expect(preventSpy).toHaveBeenCalledTimes(1);
     expect(stopSpy).toHaveBeenCalledTimes(1);
@@ -184,7 +184,7 @@ describe('The Action component', () => {
     expect(action.modifiers).toEqual(['capture', 'once', 'passive']);
     const event = new Event('click');
     action.$el.dispatchEvent(event);
-    const addEventSpy = jest.spyOn(action.$el, 'addEventListener');
+    const addEventSpy = vi.spyOn(action.$el, 'addEventListener');
     await destroy(action);
     await mount(action);
     expect(addEventSpy).toHaveBeenCalledTimes(1);
@@ -201,7 +201,7 @@ describe('The Action component', () => {
       target: 'Foo',
       effect: 'target.undefinedMethod()',
     });
-    const spy = jest.spyOn(action, '$warn');
+    const spy = vi.spyOn(action, '$warn');
     action.$el.dispatchEvent(new Event('click'));
     expect(spy).toHaveBeenCalledTimes(1);
     spy.mockRestore();
