@@ -66,6 +66,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
     if (isSelect(target)) {
       if (multiple) {
         const values = [];
+        // @ts-ignore
         for (const option of target.options) {
           if (option.selected) {
             values.push(option.value);
@@ -108,6 +109,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
     }
 
     if (isSelect(target)) {
+      // @ts-ignore
       for (const option of target.options) {
         option.selected =
           multiple && isArray(value) ? value.includes(option.value) : option.value === value;
