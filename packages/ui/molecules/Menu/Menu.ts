@@ -72,8 +72,7 @@ export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
    */
   mounted() {
     if (!this.menuBtn || !this.menuList) {
-      this.$destroy();
-      return;
+      return this.$destroy();
     }
 
     this.menuBtn.$el.setAttribute('aria-controls', this.$id);
