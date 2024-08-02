@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { vi } from 'vitest';
 
 /**
  * Thanks to the react-intersecton-observer package for this IntersectionObserver mock!
@@ -13,7 +13,7 @@ export function intersectionObserverBeforeAllCallback() {
    * We keep track of the elements being observed, so when `mockAllIsIntersecting` is triggered it will
    * know which elements to trigger the event on.
    */
-  globalThis.IntersectionObserver = jest.fn(
+  globalThis.IntersectionObserver = vi.fn(
     (cb, options = {}) => {
       const item = {
         callback: cb,
@@ -24,16 +24,16 @@ export function intersectionObserverBeforeAllCallback() {
         thresholds: Array.isArray(options.threshold) ? options.threshold : [options.threshold ?? 0],
         root: options.root ?? null,
         rootMargin: options.rootMargin ?? '',
-        observe: jest.fn((element) => {
+        observe: vi.fn((element) => {
           item.elements.add(element);
         }),
-        unobserve: jest.fn((element) => {
+        unobserve: vi.fn((element) => {
           item.elements.delete(element);
         }),
-        disconnect: jest.fn(() => {
+        disconnect: vi.fn(() => {
           observers.delete(instance);
         }),
-        takeRecords: jest.fn(),
+        takeRecords: vi.fn(),
       };
 
       observers.set(instance, item);
@@ -111,9 +111,9 @@ export async function mockIsIntersecting(element, isIntersecting) {
   }
   const item = observers.get(observer);
   if (item) {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     triggerIntersection([element], isIntersecting, observer, item);
-    await jest.advanceTimersByTimeAsync(10);
-    jest.useRealTimers();
+    await vi.advanceTimersByTimeAsync(10);
+    vi.useRealTimers();
   }
 }

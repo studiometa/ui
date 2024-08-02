@@ -1,4 +1,4 @@
-import { it, describe, expect, jest } from '@jest/globals';
+import { it, describe, expect } from 'vitest';
 import { DataModel } from '@studiometa/ui';
 import { h, mount } from '#test-utils';
 

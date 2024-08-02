@@ -1,22 +1,22 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Tabs } from '@studiometa/ui';
 import { wait } from '#test-utils';
-import template from './Tabs.template.html';
+import template from './Tabs.template.html.js';
 
 describe('The Tabs component', () => {
   let tabs;
 
   beforeEach(async () => {
     document.body.innerHTML = template;
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     tabs = new Tabs(document.body.firstElementChild).$mount();
-    await jest.advanceTimersByTimeAsync(100);
-    jest.useRealTimers();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
   });
 
   it('should emit `enable` and `disable` events.', async () => {
-    const enableFn = jest.fn();
-    const disableFn = jest.fn();
+    const enableFn = vi.fn();
+    const disableFn = vi.fn();
     tabs.$on('enable', enableFn);
     tabs.$on('disable', disableFn);
 
@@ -49,14 +49,14 @@ describe('The Tabs component', () => {
   });
 
   it('should not be working when destroyed.', async () => {
-    const fn = jest.fn();
+    const fn = vi.fn();
     tabs.$on('enable', fn);
     tabs.$refs.btn[1].click();
     expect(fn).toHaveBeenCalledTimes(1);
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     tabs.$destroy();
-    await jest.advanceTimersByTimeAsync(100);
-    jest.useRealTimers();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
     tabs.$refs.btn[0].click();
     expect(fn).toHaveBeenCalledTimes(1);
   });
@@ -65,10 +65,10 @@ describe('The Tabs component', () => {
     await tabs.enableItem(tabs.items[1]);
     await tabs.disableItem(tabs.items[0]);
     expect(tabs.$refs.btn[1].getAttribute('style')).toBe('border-bottom-color: #fff;');
-    expect(tabs.$refs.content[1].getAttribute('style')).toBe('');
+    expect(tabs.$refs.content[1].getAttribute('style')).toBe(null);
     await tabs.enableItem(tabs.items[2]);
     await tabs.disableItem(tabs.items[1]);
-    expect(tabs.$refs.btn[1].getAttribute('style')).toBe('');
+    expect(tabs.$refs.btn[1].getAttribute('style')).toBe(null);
     expect(tabs.$refs.content[1].getAttribute('style')).toBe(
       'position: absolute; opacity: 0; pointer-events: none; visibility: hidden;'
     );
