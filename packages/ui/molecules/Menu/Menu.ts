@@ -106,11 +106,8 @@ export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
   /**
    * Toggle menu items on button click.
    */
-  onMenuBtnClick(index: number, event: MouseEvent) {
-    if (
-      isDirectChild(this, 'Menu', 'MenuBtn', this.$children.MenuBtn[index]) &&
-      this.shouldReactOnClick
-    ) {
+  onMenuBtnClick({ event, target }: { event: MouseEvent; target: MenuBtn }) {
+    if (isDirectChild(this, 'Menu', 'MenuBtn', target) && this.shouldReactOnClick) {
       event.preventDefault();
       this.toggle();
     }
@@ -119,8 +116,8 @@ export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
   /**
    * Open menu items on button mouse enter.
    */
-  onMenuBtnMouseenter(index: number) {
-    if (this.$children.MenuBtn[index] === this.menuBtn && !this.shouldReactOnClick) {
+  onMenuBtnMouseenter({ target }: { target: MenuBtn }) {
+    if (target === this.menuBtn && !this.shouldReactOnClick) {
       this.open();
     }
   }
@@ -158,10 +155,9 @@ export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
   /**
    * Close other non-parent menu items on menu items open.
    */
-  onMenuListItemsOpen(index: number) {
-    const targetMenu = this.$children.MenuList[index];
+  onMenuListItemsOpen({ target }: { target: MenuList }) {
     this.$children.MenuList.forEach((menuItem) => {
-      if (!menuItem.$el.contains(targetMenu.$el)) {
+      if (!menuItem.$el.contains(target.$el)) {
         menuItem.close();
       }
     });

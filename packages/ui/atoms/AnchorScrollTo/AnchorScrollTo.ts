@@ -24,10 +24,8 @@ export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<Anchor
 
   /**
    * Scroll to the target selector on click.
-   * @param   {MouseEvent} event
-   * @returns {void}
    */
-  onClick(event) {
+  onClick({ event }: { event: MouseEvent }) {
     try {
       scrollTo(this.targetSelector);
       event.preventDefault();

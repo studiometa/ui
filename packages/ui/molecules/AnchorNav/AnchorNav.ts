@@ -25,8 +25,8 @@ export class AnchorNav<T extends BaseProps = BaseProps> extends Base<T & AnchorN
   /**
    * Listen to the AnchorNavTarget that is mounted
    */
-  onAnchorNavTargetMounted(index) {
-    const { id } = this.$children.AnchorNavTarget[index].$el;
+  onAnchorNavTargetMounted({ target }: { target: AnchorNavTarget }) {
+    const { id } = target.$el;
     this.$children.AnchorNavLink.forEach((anchorNavLink) => {
       if (id === anchorNavLink.targetId) {
         anchorNavLink.enter();
@@ -37,8 +37,8 @@ export class AnchorNav<T extends BaseProps = BaseProps> extends Base<T & AnchorN
   /**
    * Listen to the AnchorNavTarget that is destroyed
    */
-  onAnchorNavTargetDestroyed(index) {
-    const { id } = this.$children.AnchorNavTarget[index].$el;
+  onAnchorNavTargetDestroyed({ target }: { target: AnchorNavTarget }) {
+    const { id } = target.$el;
     this.$children.AnchorNavLink.forEach((anchorNavLink) => {
       if (id === anchorNavLink.targetId) {
         anchorNavLink.leave();

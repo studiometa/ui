@@ -128,7 +128,7 @@ export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProp
    * @param   {IntersectionObserverEntry[]} entries
    * @returns {void}
    */
-  onSentinelIntersected([entry]: IntersectionObserverEntry[]) {
+  onSentinelIntersected({ args: [[entry]] }: { args: [IntersectionObserverEntry[]] }) {
     this.isSticky = entry.isIntersecting && entry.boundingClientRect.y < 0;
     this.setPosition();
   }

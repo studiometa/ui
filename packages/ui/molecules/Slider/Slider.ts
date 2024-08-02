@@ -328,7 +328,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Listen to the Draggable `drag` event.
    */
-  onSliderDragDrag(props: DragServiceProps) {
+  onSliderDragDrag({ args: [props] }: { args: [DragServiceProps] }) {
     if (Math.abs(props.delta.y) > Math.abs(props.delta.x)) {
       return;
     }
@@ -343,7 +343,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Listen to the Draggable `drop` event and find the new active slide.
    */
-  onSliderDragDrop(props: DragServiceProps) {
+  onSliderDragDrop({ args: [props] }: { args: [DragServiceProps] }) {
     if (!this.__isDragging) {
       return;
     }

@@ -57,7 +57,7 @@ export class LazyInclude<T extends BaseProps = BaseProps>
   /**
    * Set content.
    */
-  onContent(content: string) {
+  onContent({ args: [content] }: { args: [string] }) {
     this.$refs.loading.style.display = 'none';
     this.$el.innerHTML = content;
   }

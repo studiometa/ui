@@ -79,7 +79,7 @@ export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {
   /**
    * Switch tab on button click.
    */
-  onBtnClick(event: MouseEvent, index: number) {
+  onBtnClick({ event, index }: { event: MouseEvent, index: number }) {
     this.items.forEach((item, i) => {
       if (i !== index) {
         this.disableItem(item);
