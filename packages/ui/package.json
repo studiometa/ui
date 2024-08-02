@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/studiometa/ui#readme",
   "dependencies": {
-    "@studiometa/js-toolkit": "^3.0.0-alpha.5",
+    "@studiometa/js-toolkit": "^3.0.0-alpha.6",
     "deepmerge": "^4.3.1"
   }
 }

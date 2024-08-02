@@ -23,7 +23,7 @@ export class MenuBtn<T extends BaseProps = BaseProps> extends Base<T> {
    * @param   {MouseEvent} event
    * @returns {void}
    */
-  onClick(event) {
+  onClick({ event }: { event: MouseEvent }) {
     event.stopPropagation();
   }
 
@@ -32,7 +32,7 @@ export class MenuBtn<T extends BaseProps = BaseProps> extends Base<T> {
    * @param   {MouseEvent} event
    * @returns {void}
    */
-  onMouseenter(event) {
+  onMouseenter({ event }: { event: MouseEvent }) {
     this.isHover = true;
     event.stopPropagation();
   }
@@ -42,7 +42,7 @@ export class MenuBtn<T extends BaseProps = BaseProps> extends Base<T> {
    * @param   {MouseEvent} event
    * @returns {void}
    */
-  onMouseleave(event) {
+  onMouseleave({ event }: { event: MouseEvent }) {
     this.isHover = false;
     event.stopPropagation();
   }

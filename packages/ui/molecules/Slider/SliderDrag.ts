@@ -44,7 +44,7 @@ export class SliderDrag<T extends BaseProps = BaseProps> extends withDrag(Base)<
    * @param   {TouchEvent} event
    * @returns {void}
    */
-  onTouchmove(event: TouchEvent) {
+  onTouchmove({ event }: { event: TouchEvent }) {
     if (this.shouldPreventScroll) {
       event.preventDefault();
     }

@@ -102,54 +102,52 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   /**
    * Go to the previous URL on `popstate` event.
    */
-  onWindowPopstate(event: PopStateEvent) {
+  onWindowPopstate({ event }: { event: PopStateEvent }) {
     this.goTo(window.location.href, null, event.state);
   }
 
   /**
    * Prevent click on `FrameAnchor`.
    */
-  onFrameAnchorClick(index: number, event: MouseEvent) {
+  onFrameAnchorClick({ target, event }: { event: MouseEvent, target: FrameAnchor }) {
     // Prevent propagation of nested frames
-    if (!isDirectChild(this, 'Frame', 'FrameAnchor', this.$children.FrameAnchor[index])) {
+    if (!isDirectChild(this, 'Frame', 'FrameAnchor', target)) {
       return;
     }
 
-    this.$log('onAFrameClick', index, event);
+    this.$log('onAFrameClick', target, event);
     event.preventDefault();
-    const anchor = this.$children.FrameAnchor[index];
 
     // Do nothing when clicking links on the same page
     // @todo handle hash change
-    if (anchor.href === window.location.href) {
+    if (target.href === window.location.href) {
       return;
     }
 
-    this.goTo(anchor.href);
+    this.goTo(target.href);
   }
 
   /**
    * Prevent submit on forms.
    */
-  onFrameFormSubmit(index: number, event: SubmitEvent) {
+  onFrameFormSubmit({ event, target }: { event: SubmitEvent, target: FrameForm }) {
     // Prevent propagation of nested frames
-    if (!isDirectChild(this, 'Frame', 'FrameForm', this.$children.FrameForm[index])) {
+    if (!isDirectChild(this, 'Frame', 'FrameForm', target)) {
       return;
     }
 
-    this.$log('onFrameFormFrameSubmit', index, event);
+    this.$log('onFrameFormFrameSubmit', target, event);
     event.preventDefault();
-    const form = this.$children.FrameForm[index];
-    const url = new URL(form.action);
+    const url = new URL(target.action);
 
-    if (form.$el.method === 'get') {
+    if (target.$el.method === 'get') {
       // @ts-ignore
-      url.search = new URLSearchParams(new FormData(form.$el)).toString();
+      url.search = new URLSearchParams(new FormData(target.$el)).toString();
       this.goTo(url.toString());
     }
 
-    if (form.$el.method === 'post') {
-      this.goTo(url.toString(), new FormData(form.$el));
+    if (target.$el.method === 'post') {
+      this.goTo(url.toString(), new FormData(target.$el));
     }
   }
 
