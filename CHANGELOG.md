@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-alpha.3](https://github.com/studiometa/ui/compare/1.0.0-alpha.2..1.0.0-alpha.3) (2024-08-02)
+
 ### Changed
 
 - Migrate tests to Vitest ([#283](https://github.com/studiometa/ui/pull/283), [b76a444](https://github.com/studiometa/ui/commit/b76a444))
