@@ -4,7 +4,7 @@ You will find on this page documentation on all the breaking changes included in
 
 ## Update [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit) to v3
 
-The v1 of [@studiometa/ui](https://github.com/studiometa/ui) now depends on [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit) v3.
+The v1 of [@studiometa/ui](https://github.com/studiometa/ui) now depends on [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit) v3. Make sure to consult the [migration guide from v2 to v3](https://js-toolkit.studiometa.dev/guide/migration/v2-to-v3.html) for this package as well, it contains documentation on all the major breaking changes.
 
 ```diff
    "dependencies": {
