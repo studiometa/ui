@@ -3,18 +3,6 @@ import { Base } from '@studiometa/js-toolkit';
 import { Action } from '@studiometa/ui';
 import { h, mount, destroy } from '#test-utils';
 
-class Foo extends Base {
-  static config = {
-    name: 'Foo',
-  };
-}
-
-class Bar extends Base {
-  static config = {
-    name: 'Bar',
-  };
-}
-
 async function getContext({
   effect = 'console.log(...arguments);',
   target = '',
@@ -22,6 +10,23 @@ async function getContext({
 } = {}) {
   const spy = vi.spyOn(console, 'log');
   spy.mockImplementation(() => {});
+
+  const fooFn = vi.fn();
+  class Foo extends Base {
+    static config = {
+      name: 'Foo',
+    };
+
+    fn(...args) {
+      fooFn(...args);
+    }
+  }
+
+  class Bar extends Base {
+    static config = {
+      name: 'Bar',
+    };
+  }
 
   const root = h('div', {
     dataOptionEffect: effect,
@@ -42,8 +47,11 @@ async function getContext({
     root,
     fooRoot,
     foo,
+    Foo,
+    fooFn,
     barRoot,
     bar,
+    Bar,
     spy,
     async reset() {
       spy.mockRestore();
@@ -107,41 +115,35 @@ describe('The Action component', () => {
   });
 
   it('should react on click by default', async () => {
-    const { action, foo, reset } = await getContext({
+    const { action, foo, fooFn, reset } = await getContext({
       target: 'Foo',
-      effect: 'target.$update()',
+      effect: 'target.fn()',
     });
-    const spy = vi.spyOn(foo, '$update');
     action.$el.dispatchEvent(new Event('click'));
-    expect(spy).toHaveBeenCalledTimes(1);
-    spy.mockRestore();
+    expect(fooFn).toHaveBeenCalledTimes(1);
     await reset();
   });
 
   it('should react on the given event', async () => {
-    const { action, foo, reset } = await getContext({
+    const { action, foo, fooFn, reset } = await getContext({
       target: 'Foo',
       on: 'mouseenter',
-      effect: '(ctx) => ctx.Foo.$update()',
+      effect: '(ctx) => ctx.Foo.fn()',
     });
-    const spy = vi.spyOn(foo, '$update');
     action.$el.dispatchEvent(new Event('mouseenter'));
     action.$el.dispatchEvent(new Event('click'));
-    expect(spy).toHaveBeenCalledTimes(1);
-    spy.mockRestore();
+    expect(fooFn).toHaveBeenCalledTimes(1);
     await reset();
   });
 
   it('should trigger the effect with ctx, target and event parameters', async () => {
-    const { action, foo, reset } = await getContext({
+    const { action, foo, fooFn, reset } = await getContext({
       target: 'Foo',
-      effect: 'target.$update(ctx, event, target)',
+      effect: 'target.fn(ctx, event, target)',
     });
-    const spy = vi.spyOn(foo, '$update');
     const event = new Event('click');
     action.$el.dispatchEvent(event);
-    expect(spy).toHaveBeenCalledWith(action.targets[0], event, foo);
-    spy.mockRestore();
+    expect(fooFn).toHaveBeenCalledWith(action.targets[0], event, foo);
     await reset();
   });
 
@@ -163,6 +165,7 @@ describe('The Action component', () => {
     const { action, reset } = await getContext({
       target: 'Foo',
       on: 'click.prevent.stop',
+      effect: 'target.fn()',
     });
     expect(action.event).toBe('click');
     expect(action.modifiers).toEqual(['prevent', 'stop']);
@@ -179,6 +182,7 @@ describe('The Action component', () => {
     const { action, reset } = await getContext({
       target: 'Foo',
       on: 'click.capture.once.passive',
+      effect: 'target.fn()',
     });
     expect(action.event).toBe('click');
     expect(action.modifiers).toEqual(['capture', 'once', 'passive']);
