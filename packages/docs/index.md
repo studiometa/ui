@@ -4,7 +4,7 @@ sidebar: false
 hero:
   name: '@studiometa/ui'
   text: A library of unstyled and accessible components
-  tagline: A feature-rich library of primitives and components built with ♥️ by Studio Meta
+  tagline: A feature-rich library of primitives and components built with ♥️ by <a href="https://www.studiometa.fr" target="_blank" rel="noopener">Studio Meta</a>
   actions:
     - theme: brand
       text: Get Started →
