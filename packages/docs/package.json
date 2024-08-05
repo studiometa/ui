@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-docs",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@iconify-json/octicon": "1.1.56",
-    "@studiometa/playground": "0.1.3",
+    "@studiometa/playground": "0.1.4",
     "@studiometa/tailwind-config": "1.1.0",
     "@vueuse/components": "10.11.0",
     "@vueuse/core": "10.11.0",

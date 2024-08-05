@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-alpha.4](https://github.com/studiometa/ui/compare/1.0.0-alpha.3..1.0.0-alpha.4) (2024-08-05)
+
+### Fixed
+
+- Fix release and publish GitHub Action ([173aff6](https://github.com/studiometa/ui/commit/173aff6))
+
+### Changed
+
+- Update @studiometa/playground 0.1.3 → 0.1.4 ([e82f93a](https://github.com/studiometa/ui/commit/e82f93a))
+
 ## [v1.0.0-alpha.3](https://github.com/studiometa/ui/compare/1.0.0-alpha.2..1.0.0-alpha.3) (2024-08-02)
 
 ### Changed

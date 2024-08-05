@@ -50,7 +50,7 @@ export default defineConfig({
     version: pkg.version,
     repo: 'studiometa/ui',
     docsDir: 'packages/docs',
-    lastUpdated: 'Last updated',
+    lastUpdated: { text: 'Last updated' },
     editLinks: true,
     editLinkText: 'Edit this page on GitHub',
     sidebarDepth: 4,
@@ -59,7 +59,8 @@ export default defineConfig({
     },
     footer: {
       message: 'MIT Licensed',
-      copyright: 'Copyright © 2020–present Studio Meta',
+      copyright:
+        'Copyright © 2020–present <a href="https://www.studiometa.fr" target="_blank" rel="noopener">Studio Meta</a>',
     },
     socialLinks: [{ icon: 'github', link: 'https://github.com/studiometa/ui' }],
 

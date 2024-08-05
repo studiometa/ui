@@ -48,39 +48,28 @@ jobs:
           verbose: true
 
       - run: |
-          cd dist
-          ls -al
-          VERSION=${GITHUB_REF/refs\/tags\//}
-          TAG='latest'
-          if [[ $VERSION =~ 'alpha' || $VERSION =~ 'beta' ]]; then
-            TAG='next'
-          fi
-          npm publish --tag $TAG --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+          NPM_TAG='latest'
+          IS_PRERELEASE=false
 
-      # @see https://github.com/actions/create-release/issues/38#issuecomment-715327220
-      # @see https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-commands-for-github-actions#environment-files
-      - name: Prepare the changelog from the tag message
-        id: prepare_changelog
-        run: |
-          PRERELEASE=false
-          # Check release type
           if [[ $GITHUB_REF_NAME =~ 'alpha' || $GITHUB_REF_NAME =~ 'beta' || $GITHUB_REF_NAME =~ 'rc' ]]; then
-            echo "This is a prerelease."
-            PRERELEASE=true
+            NPM_TAG='next'
+            IS_PRERELEASE=true
           fi
-          echo "is_prerelease=$PRERELEASE" >> $GITHUB_ENV
 
-      # @see https://github.com/actions/create-release
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "NPM_TAG=$NPM_TAG" >> $GITHUB_ENV
+          echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
+
+      - uses: JS-DevTools/npm-publish@v3
         with:
-          tag_name: ${{ github.ref }}
-          release_name: v${{ github.ref_name }}
+          provenance: true
+          package: dist/
+          tag: ${{ env.NPM_TAG }}
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref }}
+          name: v${{ github.ref_name }}
           body: Please refer to [CHANGELOG.md](https://github.com/studiometa/ui/blob/${{ github.ref_name }}/CHANGELOG.md) for details.
           draft: false
-          prerelease: ${{ env.is_prerelease }}
+          prerelease: ${{ env.IS_PRERELEASE }}
