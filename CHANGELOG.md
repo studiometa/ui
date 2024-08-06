@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-alpha.5](https://github.com/studiometa/ui/compare/1.0.0-alpha.4..1.0.0-alpha.5) (2024-08-06)
+
+### Fixed
+
+- Fix publication with GitHub actions ([cb6381f](https://github.com/studiometa/ui/commit/cb6381f))
+
 ## [v1.0.0-alpha.4](https://github.com/studiometa/ui/compare/1.0.0-alpha.3..1.0.0-alpha.4) (2024-08-05)
 
 ### Fixed
