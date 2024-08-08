@@ -142,7 +142,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
    * Get the last index.
    */
   get indexMax(): number {
-    return this.$children.SliderItem.length - 1;
+    return this.states.length - 1;
   }
 
   /**
@@ -196,6 +196,20 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
             state.x.left = Math.max(state.x.left, maxState.x.left);
             return state;
           });
+
+          let iterable = 0;
+          const s = states.filter((state) => {
+            if (state.x.left === maxState.x.left) {
+              if (iterable === 0) {
+                iterable += 1;
+                return true;
+              }
+              return false;
+            }
+            return true;
+          });
+
+          return s;
         }
       }
 
@@ -296,23 +310,26 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     }
 
     const currentState = this.getStateValueByMode(this.currentState.x);
-    const state = this.getStateValueByMode(this.states[index].x);
-    const itemsToMove = this.getVisibleItems(state);
-    const invisibleItemsToMoveInstantly = this.getInvisibleItems(state);
 
-    itemsToMove.forEach((item) => {
-      // Better perfs when going fast through the slides
-      if (currentState !== state && withInstantMove) {
-        item.moveInstantly(currentState);
-      }
-      nextFrame(() => item.move(state));
-    });
-    invisibleItemsToMoveInstantly.forEach((item) => {
-      item.moveInstantly(state);
-    });
+    // @note Test if the state exist since they might have been filtered
+    if (this.states[index]) {
+      const state = this.getStateValueByMode(this.states[index].x);
+      const itemsToMove = this.getVisibleItems(state);
+      const invisibleItemsToMoveInstantly = this.getInvisibleItems(state);
+      itemsToMove.forEach((item) => {
+        // Better perfs when going fast through the slides
+        if (currentState !== state && withInstantMove) {
+          item.moveInstantly(currentState);
+        }
+        nextFrame(() => item.move(state));
+      });
+      invisibleItemsToMoveInstantly.forEach((item) => {
+        item.moveInstantly(state);
+      });
 
-    this.currentIndex = index;
-    this.$emit('goto', index);
+      this.currentIndex = index;
+      this.$emit('goto', index);
+    }
   }
 
   /**
