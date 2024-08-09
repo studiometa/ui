@@ -33,7 +33,6 @@ Modifiers can be chained with a `.` as separator:
 ### `target`
 
 - Type: `string`
-- Required
 - Available formats:
   - `Name`
   - `Name OtherName`
@@ -53,6 +52,19 @@ class Foo extends Base {
 }
 ```
 :::
+
+#### No target
+
+By not defining the `target` option, the default target will be the current `Action` instance. The following will toggle the `clicked` class on the `<button>` element:
+
+```html
+<button
+  data-component="Action"
+  data-option-effect="target.classList.toggle('clicked')"
+  class="clicked">
+  Click me
+</button>
+```
 
 #### Single target
 
@@ -111,6 +123,7 @@ The `effect` option must be used to define a small piece of JavaScript that will
 - `ctx` (`Record<name, Base>`): the current targeted component in an object with a uniq key being its name set in the static `config.name` property and the value being the component instance
 - `event` (`Event`): the event that triggered the action
 - `target` (`Base`): a direct reference to the current targeted component
+- `action` (`Base`): a direct reference to the current action component
 
 #### Simple effect vs callback effect
 

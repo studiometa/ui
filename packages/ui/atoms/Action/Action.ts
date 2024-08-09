@@ -48,13 +48,18 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
   get effect() {
     const { effect } = this.$options;
     if (!effectCache.has(effect)) {
-      effectCache.set(effect, new Function('ctx', 'event', 'target', `return ${effect}`));
+      effectCache.set(effect, new Function('ctx', 'event', 'target', 'action', `return ${effect}`));
     }
     return effectCache.get(effect);
   }
 
-  get targets() {
+  get targets(): Array<Record<string, Base>> {
     const { target } = this.$options;
+
+    if (!target) {
+      return [{ [this.__config.name]: this }];
+    }
+
     const parts = target.split(' ').map((part) => {
       const [, name, , selector] = part.match(TARGET_REGEX) ?? [];
       return [name, selector];
@@ -93,10 +98,10 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
 
     for (const target of targets) {
       try {
-        const [name, currentTarget] = Object.entries(target).flat();
-        const value = effect(target, event, currentTarget);
+        const [currentTarget] = Object.values(target).flat();
+        const value = effect(target, event, currentTarget, this);
         if (typeof value === 'function') {
-          value(target, event, currentTarget);
+          value(target, event, currentTarget, this);
         }
       } catch (err) {
         this.$warn(err);

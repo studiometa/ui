@@ -80,7 +80,7 @@ export default defineConfig({
         target: '_blank',
       },
       {
-        text: `v${pkg.version}`,
+        text: `<span class="VPBadge font-bold bg-[var(--vp-button-brand-bg)] text-[var(--vp-button-brand-text)]">v${pkg.version}</span>`,
         items: [{ text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' }],
       },
     ],

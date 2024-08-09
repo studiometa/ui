@@ -12,7 +12,6 @@ const folders = fs
   .map((item) => path.resolve(ui, item.name));
 
 module.exports = {
-  important: '.story',
   presets: [defaultConfig, tailwindConfig],
   content: [
     ...folders.map((folder) => path.relative(__dirname, path.resolve(folder, '**/*.js'))),
