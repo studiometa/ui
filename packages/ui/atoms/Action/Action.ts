@@ -53,8 +53,13 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
     return effectCache.get(effect);
   }
 
-  get targets() {
+  get targets(): Array<Record<string, Base>> {
     const { target } = this.$options;
+
+    if (!target) {
+      return [{ [this.__config.name]: this }];
+    }
+
     const parts = target.split(' ').map((part) => {
       const [, name, , selector] = part.match(TARGET_REGEX) ?? [];
       return [name, selector];
