@@ -1,14 +1,8 @@
 ---
-outline: deep
+badges: [JS]
 ---
 
-# Action <Badges :texts="badges" />
-
-<script setup>
-  import pkg from '@studiometa/ui/atoms/Action/package.json';
-
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# Action <Badges :texts="$frontmatter.badges" />
 
 The `Action` atom is a component who trigger an action on other components.
 
