@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently 'npm run dev:playground' 'npm run dev:vitepress' --names 'playground,vitepress'",
+    "dev": "concurrently 'npm run dev:playground' 'npm run dev:vitepress' --names 'play,docs'",
     "dev:playground": "npm run watch --workspace=@studiometa/ui-playground",
     "dev:vitepress": "vitepress dev .",
     "prebuild": "npm run build --workspace=@studiometa/ui-playground",

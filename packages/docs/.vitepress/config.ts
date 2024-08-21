@@ -76,7 +76,7 @@ export default defineConfig({
       },
       {
         text: 'Playground',
-        link: '/play/',
+        link: process.env.NODE_ENV === 'development' ? '/play/index.html' : '/play/',
         target: '_blank',
       },
       {
