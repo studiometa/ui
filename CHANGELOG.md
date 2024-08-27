@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-alpha.6](https://github.com/studiometa/ui/compare/1.0.0-alpha.5..1.0.0-alpha.6) (2024-08-27)
+
 ### Added
 
 - Add support for targeting self by default ([#290](https://github.com/studiometa/ui/issues/290), [#291](https://github.com/studiometa/ui/pull/291), [2951299](https://github.com/studiometa/ui/commit/2951299))
