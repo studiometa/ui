@@ -1,17 +1,17 @@
 {
   "name": "@studiometa/ui-docs",
-  "version": "1.0.0-alpha.5",
+  "version": "1.0.0-alpha.6",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently 'npm run dev:playground' 'npm run dev:vitepress' --names 'playground,vitepress'",
+    "dev": "concurrently 'npm run dev:playground' 'npm run dev:vitepress' --names 'play,docs'",
     "dev:playground": "npm run watch --workspace=@studiometa/ui-playground",
     "dev:vitepress": "vitepress dev .",
     "prebuild": "npm run build --workspace=@studiometa/ui-playground",
     "build": "vitepress build ."
   },
   "dependencies": {
-    "@studiometa/js-toolkit": "^3.0.0-alpha.6"
+    "@studiometa/js-toolkit": "^3.0.0-alpha.9"
   },
   "devDependencies": {
     "@iconify-json/octicon": "1.1.56",

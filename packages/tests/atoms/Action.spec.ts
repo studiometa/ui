@@ -82,6 +82,14 @@ describe('The Action component', () => {
     await reset();
   });
 
+  it('should resolve targets to self if option is not set', async () => {
+    const { action, reset } = await getContext({
+      target: '',
+    });
+    expect(action.targets).toEqual([{ Action: action }]);
+    await reset();
+  })
+
   it('should resolve single target', async () => {
     const { action, foo, reset } = await getContext({
       target: 'Foo',
@@ -136,14 +144,14 @@ describe('The Action component', () => {
     await reset();
   });
 
-  it('should trigger the effect with ctx, target and event parameters', async () => {
+  it('should trigger the effect with ctx, target, event and action parameters', async () => {
     const { action, foo, fooFn, reset } = await getContext({
       target: 'Foo',
-      effect: 'target.fn(ctx, event, target)',
+      effect: 'target.fn(ctx, event, target, action)',
     });
     const event = new Event('click');
     action.$el.dispatchEvent(event);
-    expect(fooFn).toHaveBeenCalledWith(action.targets[0], event, foo);
+    expect(fooFn).toHaveBeenCalledWith(action.targets[0], event, foo, action);
     await reset();
   });
 
