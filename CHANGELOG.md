@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add support for targeting self by default ([#290](https://github.com/studiometa/ui/issues/290), [#291](https://github.com/studiometa/ui/pull/291), [2951299](https://github.com/studiometa/ui/commit/2951299))
 - Add support for self reference in the effect ([#290](https://github.com/studiometa/ui/issues/290), [#291](https://github.com/studiometa/ui/pull/291), [0eac076](https://github.com/studiometa/ui/commit/0eac076))
 
+### Changed
+
+- Update [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit) to 3.0.0-alpha.9 ([6c1a8c7](https://github.com/studiometa/ui/commit/6c1a8c7))
+
 ## [v1.0.0-alpha.5](https://github.com/studiometa/ui/compare/1.0.0-alpha.4..1.0.0-alpha.5) (2024-08-06)
 
 ### Fixed
