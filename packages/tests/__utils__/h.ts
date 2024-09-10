@@ -32,3 +32,18 @@ export function h<T extends keyof HTMLElementTagNameMap = 'div'>(
 
   return el;
 }
+
+/**
+ * Connect the given element to a document instance in order
+ * to set its `isConnected` property to `true`.
+ */
+export function connectElement<T extends Node>(element:T):T {
+  const doc = new Document();
+  doc.append(element);
+  return element;
+}
+
+/**
+ * Create an HTMLElement and connect it to a document.
+ */
+export const hConnected: typeof h = (...args) => connectElement(h(...args));
