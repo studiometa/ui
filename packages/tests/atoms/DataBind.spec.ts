@@ -1,6 +1,6 @@
 import { it, describe, expect, vi } from 'vitest';
 import { DataBind, DataComputed, DataEffect } from '@studiometa/ui';
-import { destroy, h, mount } from '#test-utils';
+import { destroy, hConnected as h, mount } from '#test-utils';
 
 describe('The DataBind component', () => {
   it('should set the textContent of the root element', () => {
@@ -151,8 +151,12 @@ describe('The DataBind component', () => {
   it('should dispatch value to other instances', async () => {
     const instance1 = new DataBind(h('div', { dataOptionName: 'a' }, ['foo']));
     const instance2 = new DataBind(h('div', { dataOptionName: 'a' }, ['foo']));
-    const instance3 = new DataComputed(h('div', { dataOptionName: 'a', dataOptionCompute: 'value + value' }, ['foofoo']));
-    const instance4 = new DataEffect(h('div', { dataOptionName: 'a', dataOptionEffect: 'target.id = value', id: 'foo' }));
+    const instance3 = new DataComputed(
+      h('div', { dataOptionName: 'a', dataOptionCompute: 'value + value' }, ['foofoo']),
+    );
+    const instance4 = new DataEffect(
+      h('div', { dataOptionName: 'a', dataOptionEffect: 'target.id = value', id: 'foo' }),
+    );
 
     await mount(instance1, instance2, instance3, instance4);
 
@@ -165,5 +169,39 @@ describe('The DataBind component', () => {
     expect(instance2.value).toBe('bar');
     expect(instance3.value).toBe('barbar');
     expect(instance4.$el.id).toBe('bar');
+  });
+
+  it('should forget related instances not in the DOM anymore', async () => {
+    const fragment = new Document();
+    const inputA = h('input', {
+      type: 'checkbox',
+      value: 'foo',
+      checked: '',
+      dataOptionName: 'checkbox[]',
+    });
+    const inputB = h('input', {
+      type: 'checkbox',
+      value: 'bar',
+      checked: '',
+      dataOptionName: 'checkbox[]',
+    });
+    fragment.append(inputA, inputB);
+
+    const instanceA = new DataBind(inputA);
+    const instanceB = new DataBind(inputB);
+
+    await mount(instanceA, instanceB);
+
+    expect(inputA.isConnected).toBe(true);
+    expect(inputB.isConnected).toBe(true);
+    expect(instanceA.value).toEqual(['foo', 'bar']);
+
+    inputB.replaceWith(
+      h('input', { type: 'checkbox', value: 'bar', dataOptionName: 'checkbox[]' }),
+    );
+
+    expect(inputA.isConnected).toBe(true);
+    expect(inputB.isConnected).toBe(false);
+    expect(instanceA.value).toEqual(['foo']);
   });
 });
