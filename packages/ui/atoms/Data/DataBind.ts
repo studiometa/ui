@@ -3,7 +3,7 @@ import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { isArray } from '@studiometa/js-toolkit/utils';
 import { isInput, isCheckbox, isSelect } from './utils.js';
 
-const instances = new Map<string, Set<DataBind>>();
+const groups = new Map<string, Set<DataBind>>();
 
 export interface DataBindProps extends BaseProps {
   $options: {
@@ -24,11 +24,15 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
   get relatedInstances() {
     const { name } = this.$options;
 
-    if (!instances.has(name)) {
-      instances.set(name, new Set());
+    const instances = groups.get(name) ?? groups.set(name, new Set()).get(name);
+
+    for (const instance of instances) {
+      if (!instance.$el.isConnected) {
+        instances.delete(instance);
+      }
     }
 
-    return instances.get(name);
+    return instances;
   }
 
   get multiple() {
