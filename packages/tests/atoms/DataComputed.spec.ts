@@ -1,7 +1,7 @@
 import { it, describe, expect, vi } from 'vitest';
 import { Base } from '@studiometa/js-toolkit';
 import { DataComputed } from '@studiometa/ui';
-import { h } from '#test-utils';
+import { hConnected as h, } from '#test-utils';
 
 describe('The DataModel component', () => {
   it('should set the value as the returned value from the compute option', () => {

@@ -1,6 +1,6 @@
 import { it, describe, expect } from 'vitest';
 import { DataModel } from '@studiometa/ui';
-import { h, mount } from '#test-utils';
+import { hConnected as h, mount } from '#test-utils';
 
 function check(input: HTMLInputElement, checked = true) {
   input.checked = checked;
