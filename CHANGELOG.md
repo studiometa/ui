@@ -6,9 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-alpha.7](https://github.com/studiometa/ui/compare/1.0.0-alpha.6..1.0.0-alpha.7) (2024-09-10)
+
 ### Fixed
 
-- Fix inconsistencies with removed DOM elements ([#293](https://github.com/studiometa/ui/issues/293), [#294](https://github.com/studiometa/ui/pull/294), [de945b1](https://github.com/studiometa/ui/commit/de945b1))
+- **DataBind:** fix inconsistencies with removed DOM elements ([#293](https://github.com/studiometa/ui/issues/293), [#294](https://github.com/studiometa/ui/pull/294), [de945b1](https://github.com/studiometa/ui/commit/de945b1))
 
 ### Changed
 
