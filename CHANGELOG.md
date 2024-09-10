@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix inconsistencies with removed DOM elements ([#293](https://github.com/studiometa/ui/issues/293), [#294](https://github.com/studiometa/ui/pull/294), [de945b1](https://github.com/studiometa/ui/commit/de945b1))
+
 ## [v1.0.0-alpha.6](https://github.com/studiometa/ui/compare/1.0.0-alpha.5..1.0.0-alpha.6) (2024-08-27)
 
 ### Added
