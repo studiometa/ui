@@ -11,7 +11,7 @@
     "build": "vitepress build ."
   },
   "dependencies": {
-    "@studiometa/js-toolkit": "^3.0.0-alpha.9"
+    "@studiometa/js-toolkit": "^3.0.0-alpha.10"
   },
   "devDependencies": {
     "@iconify-json/octicon": "1.1.56",
