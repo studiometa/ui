@@ -14,12 +14,12 @@ The `DataBind` component can be used to keep a value in sync between multiple DO
 - Type: `string`
 - Default: `'textContent'`
 
-### `name`
+### `group`
 
 - Type: `string`
 - Default: `''`
 
-The `name` option is used to group instances together. All related instances will be updated when the value changes.
+The `group` option is used to group instances together. All related instances will be updated when the value changes.
 
 When using it with multiple checkboxes or select multiple, use the `[]` suffix to push each selected value in an array. See the [checkboxes example](/components/atoms/DataBind/examples.html#checkboxes) for more details on how this works.
 
@@ -41,7 +41,7 @@ The targeted DOM element.
 - Type: `boolean`
 - Readonly
 
-Wether new values should be pushed to an array instead of a single value. This is enabled by adding the `[]` suffix to the [`name` option](#name).
+Wether new values should be pushed to an array instead of a single value. This is enabled by adding the `[]` suffix to the [`group` option](#group).
 
 ## Methods
 
