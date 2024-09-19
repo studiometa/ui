@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- ⚠️ **DataBind:** rename the `name` option to `group` ([#288](https://github.com/studiometa/ui/issues/288), [#297](https://github.com/studiometa/ui/pull/297), [5ea37c9](https://github.com/studiometa/ui/commit/5ea37c9))
+
 ## [v1.0.0-alpha.7](https://github.com/studiometa/ui/compare/1.0.0-alpha.6..1.0.0-alpha.7) (2024-09-10)
 
 ### Fixed

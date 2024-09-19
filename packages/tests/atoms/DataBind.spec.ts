@@ -46,8 +46,8 @@ describe('The DataBind component', () => {
   });
 
   it('should set the checked property of multiple checkbox', async () => {
-    const inputA = h('input', { type: 'checkbox', value: 'foo', dataOptionName: 'checkbox[]' });
-    const inputB = h('input', { type: 'checkbox', value: 'bar', dataOptionName: 'checkbox[]' });
+    const inputA = h('input', { type: 'checkbox', value: 'foo', dataOptionGroup: 'checkbox[]' });
+    const inputB = h('input', { type: 'checkbox', value: 'bar', dataOptionGroup: 'checkbox[]' });
     const instanceA = new DataBind(inputA);
     const instanceB = new DataBind(inputB);
 
@@ -80,7 +80,7 @@ describe('The DataBind component', () => {
   it('should select an option of a select', () => {
     const optionA = h('option', { value: 'foo' }, ['Foo']);
     const optionB = h('option', { value: 'bar' }, ['Bar']);
-    const select = h('select', { dataOptionName: 'select' }, [optionA, optionB]);
+    const select = h('select', { dataOptionGroup: 'select' }, [optionA, optionB]);
     const instance = new DataBind(select);
     expect(optionA.selected).toBe(true);
     expect(optionB.selected).toBe(false);
@@ -95,7 +95,7 @@ describe('The DataBind component', () => {
     const optionA = h('option', { value: 'foo', selected: true }, ['Foo']);
     const optionB = h('option', { value: 'bar' }, ['Bar']);
     const optionC = h('option', { value: 'baz' }, ['Baz']);
-    const select = h('select', { multiple: true, dataOptionName: 'select[]' }, [
+    const select = h('select', { multiple: true, dataOptionGroup: 'select[]' }, [
       optionA,
       optionB,
       optionC,
@@ -149,13 +149,13 @@ describe('The DataBind component', () => {
   });
 
   it('should dispatch value to other instances', async () => {
-    const instance1 = new DataBind(h('div', { dataOptionName: 'a' }, ['foo']));
-    const instance2 = new DataBind(h('div', { dataOptionName: 'a' }, ['foo']));
+    const instance1 = new DataBind(h('div', { dataOptionGroup: 'a' }, ['foo']));
+    const instance2 = new DataBind(h('div', { dataOptionGroup: 'a' }, ['foo']));
     const instance3 = new DataComputed(
-      h('div', { dataOptionName: 'a', dataOptionCompute: 'value + value' }, ['foofoo']),
+      h('div', { dataOptionGroup: 'a', dataOptionCompute: 'value + value' }, ['foofoo']),
     );
     const instance4 = new DataEffect(
-      h('div', { dataOptionName: 'a', dataOptionEffect: 'target.id = value', id: 'foo' }),
+      h('div', { dataOptionGroup: 'a', dataOptionEffect: 'target.id = value', id: 'foo' }),
     );
 
     await mount(instance1, instance2, instance3, instance4);
@@ -177,13 +177,13 @@ describe('The DataBind component', () => {
       type: 'checkbox',
       value: 'foo',
       checked: '',
-      dataOptionName: 'checkbox[]',
+      dataOptionGroup: 'checkbox[]',
     });
     const inputB = h('input', {
       type: 'checkbox',
       value: 'bar',
       checked: '',
-      dataOptionName: 'checkbox[]',
+      dataOptionGroup: 'checkbox[]',
     });
     fragment.append(inputA, inputB);
 
@@ -197,7 +197,7 @@ describe('The DataBind component', () => {
     expect(instanceA.value).toEqual(['foo', 'bar']);
 
     inputB.replaceWith(
-      h('input', { type: 'checkbox', value: 'bar', dataOptionName: 'checkbox[]' }),
+      h('input', { type: 'checkbox', value: 'bar', dataOptionGroup: 'checkbox[]' }),
     );
 
     expect(inputA.isConnected).toBe(true);

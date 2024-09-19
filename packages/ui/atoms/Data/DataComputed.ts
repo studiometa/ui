@@ -21,8 +21,8 @@ export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<Data
   };
 
   get compute() {
-    const { name, compute } = this.$options;
-    return getCallback(name, `return ${compute};`);
+    const { group, compute } = this.$options;
+    return getCallback(group, `return ${compute};`);
   }
 
   set(value: boolean | string | string[]) {
