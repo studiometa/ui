@@ -61,67 +61,6 @@ async function getContext({
 }
 
 describe('The Action component', () => {
-  it('should define a callable effect property based on the effect option', async () => {
-    const { action, spy, reset } = await getContext();
-    action.effect('foo');
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy).toHaveBeenCalledWith('foo');
-    await reset();
-  });
-
-  it('should return a callable function from the effect property', async () => {
-    const { action, spy, reset } = await getContext({
-      effect: '(...args) => console.log(...args);',
-    });
-    const fn = action.effect('foo');
-    expect(spy).toHaveBeenCalledTimes(0);
-    expect(typeof fn).toBe('function');
-    fn('bar');
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy).toHaveBeenLastCalledWith('bar');
-    await reset();
-  });
-
-  it('should resolve targets to self if option is not set', async () => {
-    const { action, reset } = await getContext({
-      target: '',
-    });
-    expect(action.targets).toEqual([{ Action: action }]);
-    await reset();
-  })
-
-  it('should resolve single target', async () => {
-    const { action, foo, reset } = await getContext({
-      target: 'Foo',
-    });
-    expect(action.targets).toEqual([{ Foo: foo }]);
-    await reset();
-  });
-
-  it('should resolve multiple targets', async () => {
-    const { action, foo, bar, reset } = await getContext({
-      target: 'Foo Bar',
-    });
-    expect(action.targets).toEqual([{ Foo: foo }, { Bar: bar }]);
-    await reset();
-  });
-
-  it('should resolve targets with selectors', async () => {
-    const { action, foo, bar, reset } = await getContext({
-      target: "Foo(.foo) Bar([class*='bar'])",
-    });
-    expect(action.targets).toEqual([{ Foo: foo }, { Bar: bar }]);
-    await reset();
-  });
-
-  it('should fail to resolve targets silently when the target string can not be parsed', async () => {
-    const { action, foo, bar, reset } = await getContext({
-      target: '1234 &#',
-    });
-    expect(action.targets).toEqual([]);
-    await reset();
-  });
-
   it('should react on click by default', async () => {
     const { action, foo, fooFn, reset } = await getContext({
       target: 'Foo',
@@ -151,7 +90,8 @@ describe('The Action component', () => {
     });
     const event = new Event('click');
     action.$el.dispatchEvent(event);
-    expect(fooFn).toHaveBeenCalledWith(action.targets[0], event, foo, action);
+    const [target] = Array.from(action.actionEvents)[0].targets
+    expect(fooFn).toHaveBeenCalledWith(target, event, foo, action);
     await reset();
   });
 
@@ -164,59 +104,21 @@ describe('The Action component', () => {
     const spy = vi.spyOn(foo, '$update');
     const event = new Event('click');
     action.$el.dispatchEvent(event);
-    expect(spy).toHaveBeenCalledWith(action.targets[0], action.targets[0], event, event, foo, foo);
+    const [target] = Array.from(action.actionEvents)[0].targets
+    expect(spy).toHaveBeenCalledWith(target, target, event, event, foo, foo);
     spy.mockRestore();
     await reset();
   });
 
-  it('should prevent default and stop propagation if modifiers specified', async () => {
-    const { action, reset } = await getContext({
-      target: 'Foo',
-      on: 'click.prevent.stop',
-      effect: 'target.fn()',
+  it('should listen to advanced configured events', async () => {
+    const div = h('div', {
+      id: 'bar',
+      'data-option-on:click': 'target.$el.id = "foo"',
     });
-    expect(action.event).toBe('click');
-    expect(action.modifiers).toEqual(['prevent', 'stop']);
-    const event = new Event('click');
-    const preventSpy = vi.spyOn(event, 'preventDefault');
-    const stopSpy = vi.spyOn(event, 'stopPropagation');
-    action.$el.dispatchEvent(event);
-    expect(preventSpy).toHaveBeenCalledTimes(1);
-    expect(stopSpy).toHaveBeenCalledTimes(1);
-    await reset();
-  });
-
-  it('should configure the addEventListener options if modifiers specified', async () => {
-    const { action, reset } = await getContext({
-      target: 'Foo',
-      on: 'click.capture.once.passive',
-      effect: 'target.fn()',
-    });
-    expect(action.event).toBe('click');
-    expect(action.modifiers).toEqual(['capture', 'once', 'passive']);
-    const event = new Event('click');
-    action.$el.dispatchEvent(event);
-    const addEventSpy = vi.spyOn(action.$el, 'addEventListener');
-    await destroy(action);
-    await mount(action);
-    expect(addEventSpy).toHaveBeenCalledTimes(1);
-    expect(addEventSpy).toHaveBeenCalledWith('click', action, {
-      capture: true,
-      once: true,
-      passive: true,
-    });
-    await reset();
-  });
-
-  it('should warn when the effect throws an error', async () => {
-    const { action, foo, reset } = await getContext({
-      target: 'Foo',
-      effect: 'target.undefinedMethod()',
-    });
-    const spy = vi.spyOn(action, '$warn');
+    const action = new Action(div);
+    await mount(action)
+    expect(action.$el.id).toBe('bar');
     action.$el.dispatchEvent(new Event('click'));
-    expect(spy).toHaveBeenCalledTimes(1);
-    spy.mockRestore();
-    await reset();
+    expect(action.$el.id).toBe('foo');
   });
 });
