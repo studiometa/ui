@@ -1,6 +1,6 @@
-import { Base, getInstances } from '@studiometa/js-toolkit';
-import { isFunction } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import { ActionEvent } from './ActionEvent.js';
 
 export interface ActionProps extends BaseProps {
   $options: {
@@ -10,14 +10,6 @@ export interface ActionProps extends BaseProps {
     effect: string;
   };
 }
-
-/**
- * Extract component name and an optional additional selector from a string.
- * @type {RegExp}
- */
-const TARGET_REGEX = /([a-zA-Z]+)(\((.*)\))?/;
-
-const effectCache = new Map<string, Function>();
 
 /**
  * Action class.
@@ -31,101 +23,55 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
         default: 'click',
       },
       target: String,
-      selector: String,
       effect: String,
     },
   };
 
-  get event() {
-    const [event] = this.$options.on.split('.', 1);
-    return event;
-  }
-
-  get modifiers() {
-    return this.$options.on.split('.').slice(1);
-  }
-
-  get effect() {
-    const { effect } = this.$options;
-    if (!effectCache.has(effect)) {
-      effectCache.set(effect, new Function('ctx', 'event', 'target', 'action', `return ${effect}`));
-    }
-    return effectCache.get(effect);
-  }
-
-  get targets(): Array<Record<string, Base>> {
-    const { target } = this.$options;
-
-    if (!target) {
-      return [{ [this.__config.name]: this }];
-    }
-
-    const parts = target.split(' ').map((part) => {
-      const [, name, , selector] = part.match(TARGET_REGEX) ?? [];
-      return [name, selector];
-    });
-
-    const targets = [] as Array<Record<string, Base>>;
-
-    for (const instance of getInstances()) {
-      const { name } = instance.__config;
-
-      for (const part of parts) {
-        const shouldPush =
-          part[0] === name && (!part[1] || (part[1] && instance.$el.matches(part[1])));
-        if (shouldPush) {
-          targets.push({ [instance.$options.name]: instance });
-        }
-      }
-    }
-
-    return targets;
-  }
-
   /**
-   * Run method on targeted components
+   * @private
    */
-  handleEvent(event: Event) {
-    const { targets, effect, modifiers } = this;
+  __actionEvents: Set<ActionEvent<Action>>;
 
-    if (modifiers.includes('prevent')) {
-      event.preventDefault();
+  get actionEvents() {
+    if (this.__actionEvents) {
+      return this.__actionEvents;
     }
 
-    if (modifiers.includes('stop')) {
-      event.stopPropagation();
-    }
+    const { on } = this.$options;
+    this.__actionEvents = new Set();
 
-    for (const target of targets) {
-      try {
-        const [currentTarget] = Object.values(target).flat();
-        const value = effect(target, event, currentTarget, this);
-        if (typeof value === 'function') {
-          value(target, event, currentTarget, this);
-        }
-      } catch (err) {
-        this.$warn(err);
+    // @ts-ignore
+    for (const attribute of this.$el.attributes) {
+      if (attribute.name.includes('on:')) {
+        const name = attribute.name.split('on:').pop();
+        this.__actionEvents.add(new ActionEvent(this, name, attribute.value));
       }
     }
+
+    if (on) {
+      const { target, effect } = this.$options;
+      const effectDefinition = target ? `${target}${ActionEvent.effectSeparator}${effect}` : effect;
+      this.__actionEvents.add(new ActionEvent(this, on, effectDefinition));
+    }
+
+    return this.__actionEvents;
   }
 
   /**
    * Mounted
    */
   mounted() {
-    const { event, modifiers } = this;
-
-    this.$el.addEventListener(event, this, {
-      capture: modifiers.includes('capture'),
-      once: modifiers.includes('once'),
-      passive: modifiers.includes('passive'),
-    });
+    for (const actionEvent of this.actionEvents) {
+      actionEvent.attachEvent();
+    }
   }
 
   /**
    * Destroyed
    */
   destroyed() {
-    this.$el.removeEventListener(this.$options.on, this);
+    for (const actionEvent of this.actionEvents) {
+      actionEvent.detachEvent();
+    }
   }
 }

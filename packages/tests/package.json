@@ -15,6 +15,7 @@
     "vitest": "2.0.5"
   },
   "imports": {
-    "#test-utils": "./__utils__/index.ts"
+    "#test-utils": "./__utils__/index.ts",
+    "#private/*": "../ui/*"
   }
 }
