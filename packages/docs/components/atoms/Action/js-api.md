@@ -159,3 +159,23 @@ This can be useful to destructure the first `ctx` parameter and make a direct re
 ::: warning Advanced pattern
 The pattern described above with multiple components as targets is an advanced pattern that should be used with care, as it adds complexity to the DOM that might not be necessary.
 :::
+
+### `on:<event>[.<modifier>]`
+
+- Type: `string`
+- Format: `[<name>[(<selector>)] -> ]<effect>`
+
+This option can be used to combine the [`on`](#on), [`target`](#target) and [`effect`](#effect) options into one single attributes. This option can be used to attach multiple events to a single `Action` component.
+
+```html {3}
+<button
+  data-component="Action"
+  data-option-on:click.stop="target.$el.textContent = 'Clicked'"
+  data-option-on:mouseenter="target.$el.textContent = 'Hovered'">
+  Hover and click me
+</button>
+```
+
+::: warning Virtual option
+This is a virtual option, meaning that it can be used in HTML but will not be present in the `$options` property of the component in JavaScript.
+:::
