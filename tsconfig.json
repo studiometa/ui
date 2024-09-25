@@ -13,7 +13,7 @@
     "baseUrl": "./packages/ui/",
     "skipLibCheck": true,
     "paths": {
-      "#private": ["./*"],
+      "#private/*": ["./*"],
       "#test-utils": ["../tests/__utils__/index.ts"]
     }
   },

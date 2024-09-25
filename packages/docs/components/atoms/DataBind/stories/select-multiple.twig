@@ -1,6 +1,6 @@
 <div class="flex items-center gap-4">
   <select data-component="DataModel"
-    data-option-name="select[]"
+    data-option-group="select[]"
     multiple
     class="p-2 bg-transparent ring-2 rounded">
     <option>
@@ -13,10 +13,10 @@
       Bar
     </option>
   </select>
-  <p data-component="DataBind" data-option-name="select[]"></p>
+  <p data-component="DataBind" data-option-group="select[]"></p>
   <pre
     data-component="DataComputed"
-    data-option-name="select[]"
+    data-option-group="select[]"
     data-option-compute="JSON.stringify(value)"
     class="text-sm"></pre>
 </div>

@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-tests",
-  "version": "1.0.0-alpha.7",
+  "version": "1.0.0-alpha.8",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,6 +15,7 @@
     "vitest": "2.0.5"
   },
   "imports": {
-    "#test-utils": "./__utils__/index.ts"
+    "#test-utils": "./__utils__/index.ts",
+    "#private/*": "../ui/*"
   }
 }

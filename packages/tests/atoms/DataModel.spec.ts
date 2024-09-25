@@ -29,10 +29,10 @@ describe('The DataModel component', () => {
   });
 
   it('should set value for multiple checkboxes with the same name', async () => {
-    const checkboxA1 = h('input', { type: 'checkbox', value: 'a', dataOptionName: 'check[]' });
-    const checkboxA2 = h('input', { type: 'checkbox', value: 'a', dataOptionName: 'check[]' });
-    const checkboxB1 = h('input', { type: 'checkbox', value: 'b', dataOptionName: 'check[]' });
-    const checkboxB2 = h('input', { type: 'checkbox', value: 'b', dataOptionName: 'check[]' });
+    const checkboxA1 = h('input', { type: 'checkbox', value: 'a', dataOptionGroup: 'check[]' });
+    const checkboxA2 = h('input', { type: 'checkbox', value: 'a', dataOptionGroup: 'check[]' });
+    const checkboxB1 = h('input', { type: 'checkbox', value: 'b', dataOptionGroup: 'check[]' });
+    const checkboxB2 = h('input', { type: 'checkbox', value: 'b', dataOptionGroup: 'check[]' });
     const instanceA1 = new DataModel(checkboxA1);
     const instanceA2 = new DataModel(checkboxA2);
     const instanceB1 = new DataModel(checkboxB1);

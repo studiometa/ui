@@ -8,7 +8,7 @@ const groups = new Map<string, Set<DataBind>>();
 export interface DataBindProps extends BaseProps {
   $options: {
     prop: string;
-    name: string;
+    group: string;
   };
 }
 
@@ -17,14 +17,14 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
     name: 'DataBind',
     options: {
       prop: String,
-      name: String,
+      group: String,
     },
   };
 
   get relatedInstances() {
-    const { name } = this.$options;
+    const { group } = this.$options;
 
-    const instances = groups.get(name) ?? groups.set(name, new Set()).get(name);
+    const instances = groups.get(group) ?? groups.set(group, new Set()).get(group);
 
     for (const instance of instances) {
       if (!instance.$el.isConnected) {
@@ -36,7 +36,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
   }
 
   get multiple() {
-    return this.$options.name.endsWith('[]');
+    return this.$options.group.endsWith('[]');
   }
 
   get target() {

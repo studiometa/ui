@@ -52,3 +52,12 @@ The `Target` component is a companion of the `Action` component that can be used
   :html="() => import('./stories/counter/app.twig')"
   :script="() => import('./stories/counter/app.js?raw')"
   />
+
+### Listening to multiple events
+
+The advanced HTML [option `on:<event>[.<modifier>]`](./js-api.html#on-event-modifier) can be used to listen to multiple events on a single `Action` component.
+
+<PreviewPlayground
+  :html="() => import('./stories/multiple-events/app.twig')"
+  :script="() => import('./stories/multiple-events/app.js?raw')"
+  />

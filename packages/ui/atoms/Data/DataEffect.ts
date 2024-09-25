@@ -19,8 +19,8 @@ export class DataEffect<T extends BaseProps = BaseProps> extends DataBind<DataEf
   };
 
   get effect() {
-    const { name, effect } = this.$options;
-    return getCallback(name, effect);
+    const { group, effect } = this.$options;
+    return getCallback(group, effect);
   }
 
   set(value: boolean | string | string[]) {
