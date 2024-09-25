@@ -62,8 +62,8 @@ export class ActionEvent<T extends Base> {
       [targetDefinition, effect] = effect.split(ActionEvent.effectSeparator);
     }
 
-    this.targetDefinition = targetDefinition;
-    this.effectDefinition = effect;
+    this.targetDefinition = targetDefinition.trim();
+    this.effectDefinition = effect.trim();
   }
 
   /**
