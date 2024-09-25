@@ -121,4 +121,22 @@ describe('The Action component', () => {
     action.$el.dispatchEvent(new Event('click'));
     expect(action.$el.id).toBe('foo');
   });
+
+  it('should work with multiline effects', async () => {
+    const div = h('div', {
+      id: 'bar',
+      'data-option-on:click': `
+        Action(#bar)
+        ->
+        target.$el.id = true
+          ? "foo"
+          : "bar"
+      `,
+    });
+    const action = new Action(div);
+    await mount(action)
+    expect(action.$el.id).toBe('bar');
+    action.$el.dispatchEvent(new Event('click'));
+    expect(action.$el.id).toBe('foo');
+  });
 });
