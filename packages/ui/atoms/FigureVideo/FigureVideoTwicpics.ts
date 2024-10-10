@@ -4,7 +4,7 @@ import {
   withoutLeadingSlash,
   withoutTrailingSlash,
 } from '@studiometa/js-toolkit/utils';
-import { loadImage } from '../index.js';
+import { loadImage } from '../Figure/utils.js';
 import { FigureVideo } from './FigureVideo.js';
 
 export interface FigureVideoTwicpicsProps extends BaseProps {

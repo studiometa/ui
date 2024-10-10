@@ -4,7 +4,8 @@ import {
   withoutLeadingSlash,
   withoutTrailingSlash,
 } from '@studiometa/js-toolkit/utils';
-import { Figure, loadImage } from './Figure.js';
+import { Figure } from './Figure.js';
+import { loadImage, normalizeSize } from './utils.js';
 
 export interface FigureTwicpicsProps extends BaseProps {
   $options: {
@@ -15,15 +16,6 @@ export interface FigureTwicpicsProps extends BaseProps {
     mode: string;
     dpr: boolean;
   };
-}
-
-/**
- * Normalize the given size to the step option.
- */
-// eslint-disable-next-line no-use-before-define
-function normalizeSize(that: FigureTwicpics, prop: string): number {
-  const { step } = that.$options;
-  return Math.ceil(that.$refs.img[prop] / step) * step;
 }
 
 /**
@@ -106,6 +98,8 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
    * Format the source for Twicpics.
    */
   formatSrc(src: string): string {
+    const { transform, mode, step } = this.$options;
+
     const url = new URL(src, 'https://localhost');
     url.host = this.domain;
     url.port = '';
@@ -114,14 +108,12 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
       url.pathname = `/${this.path}${url.pathname}`;
     }
 
-    const width = normalizeSize(this, 'offsetWidth') * this.devicePixelRatio;
-    const height = normalizeSize(this, 'offsetHeight') * this.devicePixelRatio;
+    const width = normalizeSize(this.$refs.img.offsetWidth, step) * this.devicePixelRatio;
+    const height = normalizeSize(this.$refs.img.offsetHeight, step) * this.devicePixelRatio;
 
     url.searchParams.set(
       'twic',
-      ['v1', this.$options.transform, `${this.$options.mode}=${width}x${height}`]
-        .filter(Boolean)
-        .join('/'),
+      ['v1', transform, `${mode}=${width}x${height}`].filter(Boolean).join('/'),
     );
 
     url.search = decodeURIComponent(url.search);
