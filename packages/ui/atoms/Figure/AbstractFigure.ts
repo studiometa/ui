@@ -68,12 +68,9 @@ export class AbstractFigure<
   async mounted() {
     const { img } = this.$refs;
 
-    if (!img) {
-      throw new Error('[Figure] The `img` ref is required.');
-    }
-
-    if (!(img instanceof HTMLImageElement)) {
-      throw new Error('[Figure] The `img` ref must be an `<img>` element.');
+    if (!img || !(img instanceof HTMLImageElement)) {
+      this.$warn('The `img` refs is missing or not an `<img>` element.');
+      return;
     }
 
     const src = this.original;
