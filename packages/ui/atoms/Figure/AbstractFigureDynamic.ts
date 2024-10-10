@@ -54,7 +54,8 @@ export class AbstractFigureDynamic<T extends BaseProps = BaseProps> extends Abst
    * Reassign the source from the original on resize.
    */
   async resized() {
-    const { src } = await loadImage(this.original);
-    this.src = src;
+    const { original } = this;
+    await loadImage(original);
+    this.src = original;
   }
 }
