@@ -9,9 +9,10 @@
   "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
   "license": "MIT",
   "dependencies": {
+    "@happy-dom/global-registrator": "^14.12.3",
     "@studiometa/ui": "file:../ui",
     "@vitest/coverage-v8": "2.0.5",
-    "happy-dom": "14.12.3",
+    "happy-dom": "^14.12.3",
     "vitest": "2.0.5"
   },
   "imports": {
