@@ -1,4 +1,4 @@
-import { it, describe, vi, expect, beforeAll, afterEach } from 'vitest';
+import { it, describe, vi, expect, beforeAll, afterEach, beforeEach } from 'vitest';
 import { Base } from '@studiometa/js-toolkit';
 import { FigureTwicpics } from '@studiometa/ui';
 import {
@@ -8,14 +8,22 @@ import {
   mount,
   intersectionObserverBeforeAllCallback,
   intersectionObserverAfterEachCallback,
+  unmockImageLoad,
+  mockImageLoad,
 } from '#test-utils';
+import { resizeWindow } from '../__utils__/resizeWindow';
 
 beforeAll(() => {
   intersectionObserverBeforeAllCallback();
 });
 
+beforeEach(() => {
+  mockImageLoad();
+});
+
 afterEach(() => {
   intersectionObserverAfterEachCallback();
+  unmockImageLoad();
 });
 
 async function getContext({ figureAttributes = {} } = {}) {
@@ -56,6 +64,16 @@ describe('The FigureTwicpics component', () => {
     expect(instance.original).toBe('https://localhost/image.jpg?twic=v1/cover=100x100');
     setSize({ width: 200, height: 200 });
     expect(instance.original).toBe('https://localhost/image.jpg?twic=v1/cover=200x200');
+  });
+
+  it('should update the image source on resize', async () => {
+    const { instance, setSize, img } = await getContext();
+    expect(instance.original).toBe('https://localhost/image.jpg?twic=v1/cover=100x100');
+    expect(img.src).toBe('https://localhost/image.jpg?twic=v1/cover=100x100');
+    setSize({ width: 200, height: 200 });
+    await resizeWindow();
+    expect(instance.original).toBe('https://localhost/image.jpg?twic=v1/cover=200x200');
+    expect(img.src).toBe('https://localhost/image.jpg?twic=v1/cover=200x200');
   });
 
   it('should set the domain and path', async () => {

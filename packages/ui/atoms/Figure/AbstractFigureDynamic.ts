@@ -46,6 +46,7 @@ export class AbstractFigureDynamic<T extends BaseProps = BaseProps> extends Abst
   /**
    * Format the source with dynamic parameters.
    */
+  /* v8 ignore next 3 */
   formatSrc(src: string): string {
     return src;
   }

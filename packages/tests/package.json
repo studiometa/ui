@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "@happy-dom/global-registrator": "^14.12.3",
+    "@jest/fake-timers": "^29.7.0",
     "@studiometa/ui": "file:../ui",
     "@vitest/coverage-v8": "2.0.5",
     "happy-dom": "^14.12.3",
