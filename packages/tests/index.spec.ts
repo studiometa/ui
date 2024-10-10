@@ -22,6 +22,7 @@ test('components exports', () => {
       "DataModel",
       "Draggable",
       "Figure",
+      "FigureShopify",
       "FigureTwicpics",
       "FigureVideo",
       "FigureVideoTwicpics",
@@ -60,7 +61,6 @@ test('components exports', () => {
       "Target",
       "Transition",
       "animationScrollWithEase",
-      "loadImage",
       "withDeprecation",
       "withTransition",
     ]

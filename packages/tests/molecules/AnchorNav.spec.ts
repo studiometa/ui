@@ -5,6 +5,7 @@ import {
   intersectionObserverBeforeAllCallback,
   intersectionObserverAfterEachCallback,
   mockIsIntersecting,
+  mount,
 } from '#test-utils';
 
 beforeAll(() => {
@@ -65,10 +66,8 @@ async function getContext() {
   const targetOne = div.querySelector('#one');
 
   const anchorNavTest = new AnchorNavTest(div);
-  vi.useFakeTimers();
-  anchorNavTest.$mount();
-  await vi.advanceTimersByTimeAsync(100);
-  vi.useRealTimers();
+
+  await mount(anchorNavTest);
 
   return {
     mountedFn,
@@ -87,13 +86,14 @@ describe('The `AnchorNav` component', () => {
     expect(mountedFn).toHaveBeenCalledTimes(0);
     expect(destroyedFn).toHaveBeenCalledTimes(0);
 
-    await mockIsIntersecting(targetOne, true);
+    mockIsIntersecting(targetOne, true);
+    await wait(10);
 
     expect(mountedFn).toHaveBeenCalledTimes(1);
     expect(destroyedFn).toHaveBeenCalledTimes(0);
 
-    await mockIsIntersecting(targetOne, false);
-    await wait(1);
+    mockIsIntersecting(targetOne, false);
+    await wait(10);
 
     expect(destroyedFn).toHaveBeenCalledTimes(1);
   });
@@ -103,13 +103,14 @@ describe('The `AnchorNav` component', () => {
     expect(enterFn).toHaveBeenCalledTimes(0);
     expect(leaveFn).toHaveBeenCalledTimes(0);
 
-    await mockIsIntersecting(targetOne, true);
+    mockIsIntersecting(targetOne, true);
+    await wait(10);
 
     expect(enterFn).toHaveBeenCalledTimes(1);
     expect(leaveFn).toHaveBeenCalledTimes(0);
 
-    await mockIsIntersecting(targetOne, false);
-    await wait(1);
+    mockIsIntersecting(targetOne, false);
+    await wait(10);
 
     expect(leaveFn).toHaveBeenCalledTimes(1);
   });

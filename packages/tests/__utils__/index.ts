@@ -3,3 +3,4 @@ export * from './h.js';
 export * from './lifecycle.js';
 export * from './mockIntersectionObserver.js';
 export * from './wait.js';
+export * from './mockImageLoad.js';
