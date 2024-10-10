@@ -66,8 +66,7 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends AbstractFig
    * Get the Twicpics domain.
    */
   get domain(): string {
-    const url = new URL(this.$refs.img.dataset.src);
-    return url.host;
+    return this.$options.domain || new URL(this.$refs.img.dataset.src).host;
   }
 
   /**
