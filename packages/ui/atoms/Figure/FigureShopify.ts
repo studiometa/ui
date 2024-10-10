@@ -1,15 +1,9 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import {
-  withLeadingSlash,
-  withoutLeadingSlash,
-  withoutTrailingSlash,
-} from '@studiometa/js-toolkit/utils';
-import { Figure } from './Figure.js';
-import { loadImage, normalizeSize } from './utils.js';
+import { AbstractFigureDynamic } from './AbstractFigureDynamic.js';
+import { normalizeSize } from './utils.js';
 
 export interface FigureShopifyProps extends BaseProps {
   $options: {
-    step: number;
     crop?: 'top' | 'left' | 'right' | 'bottom' | 'center';
   };
 }
@@ -19,33 +13,23 @@ export interface FigureShopifyProps extends BaseProps {
  *
  * Manager lazyloading image sources.
  */
-export class FigureShopify<T extends BaseProps = BaseProps> extends Figure<T & FigureShopifyProps> {
+export class FigureShopify<T extends BaseProps = BaseProps> extends AbstractFigureDynamic<
+  T & FigureShopifyProps
+> {
   /**
    * Config.
    */
   static config: BaseConfig = {
-    ...Figure.config,
+    ...AbstractFigureDynamic.config,
     name: 'FigureShopify',
     options: {
-      ...Figure.config.options,
-      disable: Boolean,
-      step: {
-        type: Number,
-        default: 50,
-      },
+      ...AbstractFigureDynamic.config.options,
       crop: {
         type: String,
         default: null,
       },
     },
   };
-
-  /**
-   * Get the formatted source or the original based on the `disable` option.
-   */
-  get original() {
-    return this.$options.disable ? super.original : this.formatSrc(super.original);
-  }
 
   /**
    * Format the source for Shopify CDN API.
@@ -66,20 +50,5 @@ export class FigureShopify<T extends BaseProps = BaseProps> extends Figure<T & F
     }
 
     return url.toString();
-  }
-
-  /**
-   * Reassign the source from the original on resize.
-   */
-  async resized() {
-    const { src } = await loadImage(this.original);
-    this.src = src;
-  }
-
-  /**
-   * Do not terminate on image load as we need to set the src on resize.
-   */
-  onLoad() {
-    // Do not terminate on image load as we need.
   }
 }

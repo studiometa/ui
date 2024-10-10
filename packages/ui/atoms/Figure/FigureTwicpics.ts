@@ -4,15 +4,14 @@ import {
   withoutLeadingSlash,
   withoutTrailingSlash,
 } from '@studiometa/js-toolkit/utils';
-import { Figure } from './Figure.js';
-import { loadImage, normalizeSize } from './utils.js';
+import { AbstractFigureDynamic } from './AbstractFigureDynamic.js';
+import { normalizeSize } from './utils.js';
 
 export interface FigureTwicpicsProps extends BaseProps {
   $options: {
     transform: string;
     domain: string;
     path: string;
-    step: number;
     mode: string;
     dpr: boolean;
   };
@@ -24,21 +23,19 @@ export interface FigureTwicpicsProps extends BaseProps {
 const isBot = /bot|crawl|slurp|spider/i.test(navigator.userAgent);
 
 /**
- * Figure class.
- *
- * Manager lazyloading image sources.
+ * FigureTwicpics class.
  */
-export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
+export class FigureTwicpics<T extends BaseProps = BaseProps> extends AbstractFigureDynamic<
   T & FigureTwicpicsProps
 > {
   /**
    * Config.
    */
   static config: BaseConfig = {
-    ...Figure.config,
+    ...AbstractFigureDynamic.config,
     name: 'FigureTwicpics',
     options: {
-      ...Figure.config.options,
+      ...AbstractFigureDynamic.config.options,
       transform: String,
       domain: String,
       path: String,
@@ -71,14 +68,6 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
   get domain(): string {
     const url = new URL(this.$refs.img.dataset.src);
     return url.host;
-  }
-
-  /**
-   * Get formatted original source.
-   * If `disable` option is `true` returns the original src.
-   */
-  get original() {
-    return this.$options.disable ? super.original : this.formatSrc(super.original);
   }
 
   /**
@@ -119,20 +108,5 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
     url.search = decodeURIComponent(url.search);
 
     return url.toString();
-  }
-
-  /**
-   * Reassign the source from the original on resize.
-   */
-  async resized() {
-    const { src } = await loadImage(this.original);
-    this.src = src;
-  }
-
-  /**
-   * Do not terminate on image load as we need to set the src on resize.
-   */
-  onLoad() {
-    // Do not terminate on image load as we need.
   }
 }
