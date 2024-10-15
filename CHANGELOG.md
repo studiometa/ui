@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Add a [FigureShopify](https://ui.studiometa.dev/-/components/atoms/FigureShopify/) component ([#303](https://github.com/studiometa/ui/pull/303))
+
 ## [v1.0.0-alpha.8](https://github.com/studiometa/ui/compare/1.0.0-alpha.7..1.0.0-alpha.8) (2024-09-25)
 
 ### Added

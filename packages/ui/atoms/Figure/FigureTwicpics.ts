@@ -4,26 +4,17 @@ import {
   withoutLeadingSlash,
   withoutTrailingSlash,
 } from '@studiometa/js-toolkit/utils';
-import { Figure, loadImage } from './Figure.js';
+import { AbstractFigureDynamic } from './AbstractFigureDynamic.js';
+import { normalizeSize } from './utils.js';
 
 export interface FigureTwicpicsProps extends BaseProps {
   $options: {
     transform: string;
     domain: string;
     path: string;
-    step: number;
     mode: string;
     dpr: boolean;
   };
-}
-
-/**
- * Normalize the given size to the step option.
- */
-// eslint-disable-next-line no-use-before-define
-function normalizeSize(that: FigureTwicpics, prop: string): number {
-  const { step } = that.$options;
-  return Math.ceil(that.$refs.img[prop] / step) * step;
 }
 
 /**
@@ -32,21 +23,19 @@ function normalizeSize(that: FigureTwicpics, prop: string): number {
 const isBot = /bot|crawl|slurp|spider/i.test(navigator.userAgent);
 
 /**
- * Figure class.
- *
- * Manager lazyloading image sources.
+ * FigureTwicpics class.
  */
-export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
+export class FigureTwicpics<T extends BaseProps = BaseProps> extends AbstractFigureDynamic<
   T & FigureTwicpicsProps
 > {
   /**
    * Config.
    */
   static config: BaseConfig = {
-    ...Figure.config,
+    ...AbstractFigureDynamic.config,
     name: 'FigureTwicpics',
     options: {
-      ...Figure.config.options,
+      ...AbstractFigureDynamic.config.options,
       transform: String,
       domain: String,
       path: String,
@@ -77,16 +66,7 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
    * Get the Twicpics domain.
    */
   get domain(): string {
-    const url = new URL(this.$refs.img.dataset.src);
-    return url.host;
-  }
-
-  /**
-   * Get formatted original source.
-   * If `disable` option is `true` returns the original src.
-   */
-  get original() {
-    return this.$options.disable ? super.original : this.formatSrc(super.original);
+    return this.$options.domain || new URL(this.$refs.img.dataset.src).host;
   }
 
   /**
@@ -106,6 +86,8 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
    * Format the source for Twicpics.
    */
   formatSrc(src: string): string {
+    const { transform, mode, step } = this.$options;
+
     const url = new URL(src, 'https://localhost');
     url.host = this.domain;
     url.port = '';
@@ -114,33 +96,16 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends Figure<
       url.pathname = `/${this.path}${url.pathname}`;
     }
 
-    const width = normalizeSize(this, 'offsetWidth') * this.devicePixelRatio;
-    const height = normalizeSize(this, 'offsetHeight') * this.devicePixelRatio;
+    const width = normalizeSize(this.$refs.img.offsetWidth, step) * this.devicePixelRatio;
+    const height = normalizeSize(this.$refs.img.offsetHeight, step) * this.devicePixelRatio;
 
     url.searchParams.set(
       'twic',
-      ['v1', this.$options.transform, `${this.$options.mode}=${width}x${height}`]
-        .filter(Boolean)
-        .join('/'),
+      ['v1', transform, `${mode}=${width}x${height}`].filter(Boolean).join('/'),
     );
 
     url.search = decodeURIComponent(url.search);
 
     return url.toString();
-  }
-
-  /**
-   * Reassign the source from the original on resize.
-   */
-  async resized() {
-    const { src } = await loadImage(this.original);
-    this.src = src;
-  }
-
-  /**
-   * Do not terminate on image load as we need to set the src on resize.
-   */
-  onLoad() {
-    // Do not terminate on image load as we need.
   }
 }
