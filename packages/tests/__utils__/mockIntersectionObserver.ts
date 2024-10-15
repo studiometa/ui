@@ -1,11 +1,17 @@
 import { vi } from 'vitest';
 
+type Item = {
+  callback: IntersectionObserverCallback;
+  elements: Set<Element>;
+  created: number;
+};
+
 /**
  * Thanks to the react-intersecton-observer package for this IntersectionObserver mock!
  *
  * @see https://github.com/thebuilder/react-intersection-observer/blob/master/src/test-utils.ts
  */
-const observers = new Map();
+const observers: Map<IntersectionObserver, Item> = new Map();
 
 export function intersectionObserverBeforeAllCallback() {
   /**
@@ -14,20 +20,20 @@ export function intersectionObserverBeforeAllCallback() {
    * know which elements to trigger the event on.
    */
   globalThis.IntersectionObserver = vi.fn(
-    (cb, options = {}) => {
-      const item = {
+    (cb: IntersectionObserverCallback, options: IntersectionObserverInit = {}) => {
+      const item: Item = {
         callback: cb,
         elements: new Set(),
         created: Date.now(),
       };
-      const instance = {
+      const instance: IntersectionObserver = {
         thresholds: Array.isArray(options.threshold) ? options.threshold : [options.threshold ?? 0],
         root: options.root ?? null,
         rootMargin: options.rootMargin ?? '',
-        observe: vi.fn((element) => {
+        observe: vi.fn((element: Element) => {
           item.elements.add(element);
         }),
-        unobserve: vi.fn((element) => {
+        unobserve: vi.fn((element: Element) => {
           item.elements.delete(element);
         }),
         disconnect: vi.fn(() => {
@@ -51,8 +57,8 @@ export function intersectionObserverAfterEachCallback() {
 
 function triggerIntersection(
   elements,
-  isIntersecting,
-  observer,
+  isIntersecting: boolean,
+  observer: IntersectionObserver,
   item,
 ) {
   const entries = [];
@@ -74,7 +80,7 @@ function triggerIntersection(
             toJSON() {},
           },
       isIntersecting,
-      rootBounds: observer.root ? (observer.root).getBoundingClientRect() : null,
+      rootBounds: observer.root ? (observer.root as Element).getBoundingClientRect() : null,
       target: element,
       time: Date.now() - item.created,
     });
@@ -89,7 +95,7 @@ function triggerIntersection(
  * `IntersectionObserver` instance. You can use this to spy on the `observe` and
  * `unobserve` methods.
  */
-export function intersectionMockInstance(element) {
+export function intersectionMockInstance(element: Element): IntersectionObserver {
   for (const [observer, item] of observers) {
     if (item.elements.has(element)) {
       return observer;
@@ -102,7 +108,7 @@ export function intersectionMockInstance(element) {
 /**
  * Set the `isIntersecting` for the IntersectionObserver of a specific element.
  */
-export async function mockIsIntersecting(element, isIntersecting) {
+export function mockIsIntersecting(element: Element, isIntersecting: boolean) {
   const observer = intersectionMockInstance(element);
   if (!observer) {
     throw new Error(
@@ -111,9 +117,6 @@ export async function mockIsIntersecting(element, isIntersecting) {
   }
   const item = observers.get(observer);
   if (item) {
-    vi.useFakeTimers();
     triggerIntersection([element], isIntersecting, observer, item);
-    await vi.advanceTimersByTimeAsync(10);
-    vi.useRealTimers();
   }
 }

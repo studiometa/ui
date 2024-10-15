@@ -1,7 +1,7 @@
 import { withMountWhenInView } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { Transition } from '../../primitives/index.js';
-import { loadImage } from '../index.js';
+import { loadImage } from '../Figure/utils.js';
 
 export interface FigureVideoProps extends BaseProps {
   $refs: {

@@ -1,0 +1,26 @@
+<div class="max-w-lg mx-auto p-10 space-y-10">
+  {% for i in 1..10 %}
+    <figure
+      data-component="Figure"
+      class="relative overflow-hidden"
+      data-option-enter-from="translate-x-full skew-x-12"
+      data-option-enter-active="transition duration-[2s] ease-out-expo"
+      data-option-group="figure-{{ i }}">
+      <div class="absolute inset-0 bg-[#a76844] dark:bg-[#f1c092]"></div>
+      <div data-component="Transition"
+        data-option-group="figure-{{ i }}"
+        data-option-enter-from="-translate-x-full -skew-x-12"
+        data-option-enter-active="transition duration-[2s] ease-out-expo"
+        class="overflow-hidden -translate-x-full -skew-x-12 origin-top-left">
+        <img
+          data-ref="FigureShopify.img"
+          class="relative w-full h-auto translate-x-full skew-x-12 origin-top-left"
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+          data-src="https://theme-dawn-demo.myshopify.com/cdn/shop/files/beige_1100x_d4e0c67c-45cd-4f0f-903f-74d6dd8467fd.jpg"
+          width="400"
+          height="400"
+          alt="" />
+      </div>
+    </figure>
+  {% endfor %}
+</div>
