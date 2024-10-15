@@ -33,6 +33,10 @@ export class AbstractFigureDynamic<T extends BaseProps = BaseProps> extends Abst
         type: Number,
         default: 50,
       },
+      lazy: {
+        type: Boolean,
+        default: true,
+      },
     },
   };
 
