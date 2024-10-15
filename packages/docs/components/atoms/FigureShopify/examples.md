@@ -21,3 +21,11 @@ This example uses a small sized image with a maximum width of 10 pixels with a b
   :html="() => import('./stories/blurred.liquid?raw')"
   :script="() => import('./stories/app.js?raw')"
   />
+
+## Advanced reveal
+
+<PreviewPlayground
+  :html="() => import('./stories/reveal.liquid?raw')"
+  :script="() => import('./stories/reveal.js?raw')"
+  :css="() => import('./stories/reveal.css?raw')"
+  />

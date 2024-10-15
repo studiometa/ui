@@ -120,6 +120,26 @@ Configure wether or not the `leaveTo` classes should be kept on the target eleme
 ```
 
 
+### `group`
+
+- Type: `String`
+- Default: `''`
+
+Define a group to sync `enter` and `leave` transition between multiple instances.
+
+```html {2,7}
+<div data-component="Transition"
+  data-option-group="my-group">
+  ...
+</div>
+
+<div data-component="Transition"
+  data-option-group="my-group">
+  ...
+</div>
+```
+
+
 ## Properties
 
 ### `target`

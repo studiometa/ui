@@ -1,0 +1,12 @@
+html {
+  background-color: #f1c092;
+}
+
+html.dark {
+  background-color: #a76844;
+  color: #eee;
+}
+
+body {
+  padding: 1rem;
+}
