@@ -12,17 +12,17 @@ class Category
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $title = null;
+    #[ORM\Column(length: 255, type: 'string')]
+    protected ?string $title = null;
 
     /**
      * @var Collection<int, Demo>
      */
     #[ORM\ManyToMany(targetEntity: Demo::class, mappedBy: 'categories')]
-    private Collection $demos;
+    protected Collection $demos;
 
     public function __construct()
     {
@@ -35,6 +35,26 @@ class Category
     }
 
     public function getTitle(): ?string
+    {
+        return $this->title;
+    }
+
+    public function setTitle(string $title): static
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Category>
+     */
+    public function getDemos(): Collection
+    {
+        return $this->demos;
+    }
+
+    public function __toString(): string
     {
         return $this->title;
     }

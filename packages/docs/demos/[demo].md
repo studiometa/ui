@@ -1,4 +1,6 @@
-## {{ $params.title }}
+# {{ $params.title }}
+
+---
 
 <!-- @content -->
 
@@ -6,5 +8,3 @@
   :src="$params.iframe_link"
   height="90vh"
   />
-
-##### Last update: <time>{{ $params.updated_at }}</time>

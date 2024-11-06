@@ -171,7 +171,6 @@ async function getDemoItems() {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
   let final_data = [];
   const url = env.APP_URL ?? 'http://ui.ddev.site';
-  console.log(url, env.APP_URL);
 
   await fetch(`${url}/api/demos/`)
     .then((response) => {
@@ -181,7 +180,8 @@ async function getDemoItems() {
       final_data = data.map((el) => {
         return {
           text: el.title,
-          link: '/demos/' + el.id,
+          lastUpdated: el.updated_at,
+          link: '/demos/' + el.slug,
         }
       });
     })

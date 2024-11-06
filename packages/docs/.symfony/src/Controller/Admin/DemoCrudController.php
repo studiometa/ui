@@ -20,7 +20,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class DemoCrudController extends AbstractCrudController
 {
     public const COMPILATION_IN_PROGRESS = 'compilation-in-progress';
-    private const int COMPILATION_DELAY_IN_SECONDS = 120;
+    private const COMPILATION_DELAY_IN_SECONDS = 120;
 
     public static function getEntityFqcn(): string
     {
@@ -84,8 +84,15 @@ class DemoCrudController extends AbstractCrudController
 
         yield AssociationField::new('categories')
             ->setLabel('Catégories')
-            ->setFormTypeOption('choice_label', 'title')
-            ->setFormTypeOption('disabled', true);
+            ->formatValue(function ($value) {
+                if ($value->isEmpty()) {
+                    return '/';
+                }
+
+                // Concatène les titres des catégories
+                return implode(', ', $value->map(fn($category) => $category->__toString())->toArray());
+            })
+            ->setFormTypeOption('choice_label', 'title');
     }
 
     public function compile(HttpClientInterface $client, LoggerInterface $logger)

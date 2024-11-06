@@ -110,11 +110,12 @@ class Demo
             'id' => $demo->id,
             'author' => $demo->author,
             'title' => $demo->title,
+            'slug' => implode('', array_map('ucfirst', explode(' ', $demo->title))),
             'content' => $demo->content,
             'iframe_link' => $demo->iframe_link,
             'categories' => $categories,
-            'created_at' => $demo->createdAt->format('d/m/Y à H:i'),
-            'updated_at' => $demo->updatedAt->format('d/m/Y à H:i'),
+            'created_at' => $demo->createdAt->format('d/m/Y H:i'),
+            'updated_at' => $demo->updatedAt->format('d/m/Y H:i'),
         ];
     }
 

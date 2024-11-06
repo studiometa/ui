@@ -47,9 +47,7 @@ class CategoryCrudController extends AbstractCrudController
 
     public function configureFields(string $pageName): iterable
     {
-        return [
-            IdField::new('id'),
-            TextField::new('title'),
-        ];
+        yield IdField::new('id')->hideOnForm();
+        yield TextField::new('title')->setRequired(true)->setLabel('Titre');
     }
 }
