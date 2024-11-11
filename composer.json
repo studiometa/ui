@@ -1,6 +1,6 @@
 {
   "name": "studiometa/ui",
-  "version": "1.0.0-alpha.11",
+  "version": "1.0.0-alpha.12",
   "description": "A set of opiniated, unstyled and accessible components.",
   "license": "MIT",
   "require": {
@@ -19,7 +19,7 @@
     "pestphp/pest": "^1.21",
     "spatie/pest-plugin-snapshots": "^1.1",
     "mallardduck/prettier-php-runner": "^1.0",
-    "symfony/maker-bundle": "^1.58"
+    "symfony/maker-bundle": "^1.61"
   },
   "scripts": {
     "phpcs": "phpcs",
