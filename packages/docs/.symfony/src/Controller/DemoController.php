@@ -27,38 +27,4 @@ class DemoController extends AbstractController
 
         return $this->json($demos);
     }
-
-    // #[Route('/demo/{id}/edit', name: 'demo_edit', methods: ['GET'])]
-    // public function update(EntityManagerInterface $entityManager, int $id): Response
-    // {
-    //     $demo = $entityManager->getRepository(Demo::class)->find($id);
-
-    //     if (!$demo) {
-    //         throw $this->createNotFoundException(
-    //             'No demo found for id ' . $id
-    //         );
-    //     }
-
-    //     $current_date = new \DateTimeImmutable('now', new \DateTimeZone("Europe/Paris"));
-    //     $demo->setUpdatedAt($current_date);
-    //     $entityManager->flush();
-    // }
-
-    // #[Route('/demo/{id}/edit', name: 'demo_edit', methods: ['POST'])]
-    // public function update(EntityManagerInterface $entityManager, int $id): Response
-    // {
-    //     $demo = $entityManager->getRepository(Demo::class)->find($id);
-
-    //     if (!$demo) {
-    //         throw $this->createNotFoundException(
-    //             'No demo found for id ' . $id
-    //         );
-    //     }
-
-    //     $current_date = new \DateTimeImmutable('now', new \DateTimeZone("Europe/Paris"));
-    //     $demo->setUpdatedAt($current_date);
-    //     $entityManager->flush();
-
-    //     return $this->redirectToRoute('demos_list');
-    // }
 }

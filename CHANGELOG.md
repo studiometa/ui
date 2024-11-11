@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+
+## [v1.0.0-alpha.10](https://github.com/studiometa/ui/compare/1.0.0-alpha.9..1.0.0-alpha.10) (2024-11-07)
+
+### Added
+
+- Add the administration of demos from the back-office (4d534ca)
+- Add user authentification (27b68b5)
+
 ## [v1.0.0-alpha.9](https://github.com/studiometa/ui/compare/1.0.0-alpha.8..1.0.0-alpha.9) (2024-10-15)
 
 ### Added
