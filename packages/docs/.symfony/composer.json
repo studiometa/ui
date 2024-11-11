@@ -18,8 +18,9 @@
     "symfony/console": "7.1.*",
     "symfony/dotenv": "7.1.*",
     "symfony/flex": "^2.4.1",
-    "symfony/framework-bundle": "7.1.*",
+    "symfony/framework-bundle": "7.0.*",
     "symfony/http-client": "7.1.*",
+    "symfony/maker-bundle": "^1.61",
     "symfony/runtime": "7.1.*",
     "symfony/twig-bundle": "7.1.*",
     "symfony/yaml": "7.1.*",
@@ -74,8 +75,5 @@
       "allow-contrib": false,
       "require": "7.0.*"
     }
-  },
-  "require-dev": {
-    "symfony/maker-bundle": "^1.58"
   }
 }
