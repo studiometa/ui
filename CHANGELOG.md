@@ -7,12 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 
+## [v1.0.0-alpha.11](https://github.com/studiometa/ui/compare/1.0.0-alpha.10..1.0.0-alpha.11) (2024-11-11)
+
+### Fixed
+
+- Fix version number [d539eea](https://github.com/studiometa/ui/commit/d539eea)
+
 ## [v1.0.0-alpha.10](https://github.com/studiometa/ui/compare/1.0.0-alpha.9..1.0.0-alpha.10) (2024-11-07)
 
 ### Added
 
-- Add the administration of demos from the back-office (4d534ca)
-- Add user authentification (27b68b5)
+- Add the administration of demos from the back-office [4d534ca](https://github.com/studiometa/ui/commit/4d534ca)
+- Add user authentification [27b68b5](https://github.com/studiometa/ui/commit/27b68b5)
 
 ## [v1.0.0-alpha.9](https://github.com/studiometa/ui/compare/1.0.0-alpha.8..1.0.0-alpha.9) (2024-10-15)
 
