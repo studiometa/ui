@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 
+## [v1.0.0-alpha.12](https://github.com/studiometa/ui/compare/1.0.0-alpha.11..1.0.0-alpha.12) (2024-11-11)
+
+### Fixed
+
+- Fix composer dependencies [e0a2e02](https://github.com/studiometa/ui/commit/e0a2e02)
+
 ## [v1.0.0-alpha.11](https://github.com/studiometa/ui/compare/1.0.0-alpha.10..1.0.0-alpha.11) (2024-11-11)
 
 ### Fixed
