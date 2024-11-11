@@ -19,7 +19,7 @@
     "pestphp/pest": "^1.21",
     "spatie/pest-plugin-snapshots": "^1.1",
     "mallardduck/prettier-php-runner": "^1.0",
-    "symfony/maker-bundle": "^1.58"
+    "symfony/maker-bundle": "^1.61"
   },
   "scripts": {
     "phpcs": "phpcs",
