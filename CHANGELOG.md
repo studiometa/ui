@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- ⚠️ Bump minimum PHP version for the package to 8.1 ([#318](https://github.com/studiometa/ui/pull/318), [512f076](https://github.com/studiometa/ui/commit/512f076))
 
 ## [v1.0.0-alpha.12](https://github.com/studiometa/ui/compare/1.0.0-alpha.11..1.0.0-alpha.12) (2024-11-11)
 
