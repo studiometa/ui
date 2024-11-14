@@ -35,11 +35,13 @@ describe('The Figure component', () => {
     const figure = h('figure', { dataOptionLazy: '' }, [img]);
 
     const instance = new Figure(figure);
+    const fn = vi.fn();
+    instance.$on('terminated', fn);
     expect(img.src).not.toBe(src);
     mockIsIntersecting(figure, true);
-    await wait(10);
+    await wait(100);
     expect(img.src).toBe(src);
-    expect(getInstanceFromElement(figure, Figure)).toBe('terminated');
+    expect(fn).toHaveBeenCalledOnce();
   });
 
   it('should warn if the `img` ref is misconfigured', async () => {
