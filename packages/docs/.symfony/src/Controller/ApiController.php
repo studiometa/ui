@@ -22,7 +22,7 @@ final class ApiController extends AbstractController
 
         if (!empty($tpl)) {
             return $this->render(
-                '@private/render-from-tpl.html.twig',
+                'render-from-tpl.html.twig',
                 array_merge(
                     $query->all(),
                     ['tpl' => $tpl],

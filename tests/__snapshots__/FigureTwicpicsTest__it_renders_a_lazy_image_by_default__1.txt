@@ -3,12 +3,14 @@
   class="figure w-full"
   data-option-domain="test.twic.pics"
   data-option-path="path"
+  style=""
   data-option-lazy>
   <div class="figure__inner relative w-full h-0" style="padding-top: 100&#x25">
     <img
       class="figure__img absolute inset-0 w-full max-w-none h-full"
       src="data:image/svg&#x2B;xml,&#x25;3Csvg&#x25;20xmlns&#x25;3D&#x25;22http&#x25;3A&#x25;2F&#x25;2Fwww.w3.org&#x25;2F2000&#x25;2Fsvg&#x25;22&#x25;0A&#x25;20&#x25;20&#x25;20&#x25;20viewbox&#x25;3D&#x25;220&#x25;200&#x25;20400&#x25;20400&#x25;22&#x25;0A&#x25;20&#x25;20&#x25;20&#x25;20width&#x25;3D&#x25;22400&#x25;22&#x25;0A&#x25;20&#x25;20&#x25;20&#x25;20height&#x25;3D&#x25;22400&#x25;22&#x25;3E&#x25;0A&#x25;20&#x25;20&#x25;20&#x25;20&#x25;3Crect&#x25;20x&#x25;3D&#x25;220&#x25;22&#x25;20y&#x25;3D&#x25;220&#x25;22&#x25;20width&#x25;3D&#x25;22400&#x25;22&#x25;20height&#x25;3D&#x25;22400&#x25;22&#x25;20fill&#x25;3D&#x25;22&#x25;23eee&#x25;22&#x25;20&#x25;2F&#x25;3E&#x25;0A&#x25;20&#x25;20&#x25;3C&#x25;2Fsvg&#x25;3E"
       data-src="https://test.twic.pics/path/uploads/image.jpg&#x3F;twic&#x3D;v1"
+      alt=""
       width="400"
       height="400"
       data-ref="img" />

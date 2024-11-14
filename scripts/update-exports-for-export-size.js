@@ -1,7 +1,7 @@
-const path = require('path');
-const fs = require('fs');
+import path from 'node:path';
+import fs from 'node:fs';
 
-const index = path.resolve(__dirname, '../packages/ui/index.ts');
+const index = path.resolve(import.meta.dirname, '../packages/ui/index.ts');
 
 const content = `import * as PRIMITIVES from './primitives/index.js';
 import * as ATOMS from './atoms/index.js';

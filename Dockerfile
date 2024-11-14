@@ -28,6 +28,7 @@ COPY packages/ui/ ./packages/ui/
 COPY packages/twig-extension/ ./packages/twig-extension/
 RUN composer install -d ./packages/docs/.symfony
 RUN echo "APP_ENV=prod" > ./packages/docs/.symfony/.env.local
+RUN echo 'DATABASE_URL="sqlite:///%kernel.project_dir%/var/data.db"' >> ./packages/docs/.symfony/.env.local
 COPY --from=docs_builder /app/packages/docs/.symfony/public/-/ ./packages/docs/.symfony/public/-/
 RUN chown -R www-data:www-data .
 ENV NGINX_WEBROOT="/app/packages/docs/.symfony/public/"
