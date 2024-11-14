@@ -1,6 +1,7 @@
 {
   "name": "@studiometa/ui-workspace",
   "version": "1.0.0-alpha.12",
+  "type": "module",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -11,8 +12,8 @@
     "build:cp-files": "cp packages/ui/package.json dist/ && cp LICENSE dist/ && cp README.md dist/ && sed -i '' 's/index\\.ts/index\\.js/' dist/package.json",
     "build:twig": "rsync -avh --include='*/' --include='**/*.twig' --exclude='*' --prune-empty-dirs packages/ui/ dist/",
     "build:types": "tsc --build tsconfig.build.json",
-    "build:pkg": "node scripts/build.mjs",
-    "build:sizes": "node scripts/sizes.mjs",
+    "build:pkg": "node scripts/build.js",
+    "build:sizes": "node scripts/sizes.js",
     "build-for-export-size": "node scripts/update-exports-for-export-size.js && npm run build:pkg && npm run build:cp-files",
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
     "lint:static": "oxlint",
@@ -22,16 +23,16 @@
     "docs:build": "npm run build -w @studiometa/ui-docs",
     "play:dev": "npm run dev -w @studiometa/ui-playground",
     "play:build": "npm run build -w @studiometa/ui-playground",
-    "postversion": "node scripts/update-composer-version.mjs",
+    "postversion": "node scripts/update-composer-version.js",
     "postinstall": "patch-package"
   },
   "devDependencies": {
-    "@studiometa/prettier-config": "3.0.0",
+    "@studiometa/prettier-config": "4.1.0",
     "esbuild": "0.23.0",
     "fast-glob": "3.3.2",
     "gzip-size": "7.0.0",
     "oxlint": "0.6.1",
-    "prettier": "2.8.8",
+    "prettier": "3.3.3",
     "typescript": "5.5.4"
   },
   "dependencies": {

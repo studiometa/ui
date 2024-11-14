@@ -1,11 +1,6 @@
-import { loadEnv } from 'vitepress';
-
-const env = loadEnv('', process.cwd());
-
 export default {
   async paths() {
-    const url = env.APP_URL ?? 'http://ui.ddev.site';
-    const demos = await (await fetch(`${url}/api/demos/`)).json();
+    const demos = await (await fetch(`https://ui.studiometa.dev/api/demos/`)).json();
 
     return demos.map((demo) => {
       return {

@@ -1,7 +1,7 @@
 import { extname, basename, relative } from 'node:path';
 import { writeFileSync } from 'node:fs';
 import { gzipSizeSync } from 'gzip-size';
-import { build } from './shared.mjs';
+import { build } from './shared.js';
 
 const toKiloBytes = (bytes) => (bytes / 1024).toFixed(2);
 
