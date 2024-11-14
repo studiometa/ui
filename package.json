@@ -12,8 +12,8 @@
     "build:cp-files": "cp packages/ui/package.json dist/ && cp LICENSE dist/ && cp README.md dist/ && sed -i '' 's/index\\.ts/index\\.js/' dist/package.json",
     "build:twig": "rsync -avh --include='*/' --include='**/*.twig' --exclude='*' --prune-empty-dirs packages/ui/ dist/",
     "build:types": "tsc --build tsconfig.build.json",
-    "build:pkg": "node scripts/build.mjs",
-    "build:sizes": "node scripts/sizes.mjs",
+    "build:pkg": "node scripts/build.js",
+    "build:sizes": "node scripts/sizes.js",
     "build-for-export-size": "node scripts/update-exports-for-export-size.js && npm run build:pkg && npm run build:cp-files",
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
     "lint:static": "oxlint",
@@ -23,7 +23,7 @@
     "docs:build": "npm run build -w @studiometa/ui-docs",
     "play:dev": "npm run dev -w @studiometa/ui-playground",
     "play:build": "npm run build -w @studiometa/ui-playground",
-    "postversion": "node scripts/update-composer-version.mjs",
+    "postversion": "node scripts/update-composer-version.js",
     "postinstall": "patch-package"
   },
   "devDependencies": {
