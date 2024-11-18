@@ -18,7 +18,7 @@
     "symfony/console": "7.1.*",
     "symfony/dotenv": "7.1.*",
     "symfony/flex": "^2.4.1",
-    "symfony/framework-bundle": "7.0.*",
+    "symfony/framework-bundle": "7.1.*",
     "symfony/http-client": "7.1.*",
     "symfony/maker-bundle": "^1.61",
     "symfony/runtime": "7.1.*",
