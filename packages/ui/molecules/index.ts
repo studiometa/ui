@@ -7,3 +7,4 @@ export * from './TableOfContent/index.js';
 export * from './Tabs/index.js';
 export * from './Modal/index.js';
 export * from './Panel/index.js';
+export * from './Carousel/index.js';
