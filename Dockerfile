@@ -20,7 +20,7 @@ COPY --from=install /app/node_modules ./node_modules
 RUN apt update && apt install git -y
 RUN npm run docs:build
 
-FROM serversideup/php:8.3-fpm-nginx
+FROM serversideup/php:8.4-fpm-nginx
 WORKDIR /app
 USER root
 COPY packages/docs/.symfony/ ./packages/docs/.symfony/
