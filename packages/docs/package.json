@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@iconify-json/octicon": "1.1.56",
-    "@studiometa/playground": "0.1.4",
+    "@studiometa/playground": "0.1.5",
     "@studiometa/tailwind-config": "1.1.0",
     "@vueuse/components": "10.11.1",
     "@vueuse/core": "10.11.1",
