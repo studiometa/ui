@@ -8,8 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
-- Fix Frame component ([#341](https://github.com/studiometa/ui/pull/341), [4595aff](https://github.com/studiometa/ui/commit/4595aff))
-- Fix a potential Twig error ([#341](https://github.com/studiometa/ui/pull/341), [3714905](https://github.com/studiometa/ui/commit/3714905))
+- **Frame:** fix compatibility with latest @studiometa/js-toolkit beta version ([#341](https://github.com/studiometa/ui/pull/341), [4595aff](https://github.com/studiometa/ui/commit/4595aff))
+- **CircularMarquee:** fix a potential Twig error ([#341](https://github.com/studiometa/ui/pull/341), [3714905](https://github.com/studiometa/ui/commit/3714905))
+- **IconList:** fix a potential Twig error ([#341](https://github.com/studiometa/ui/pull/341), [6b1d3ec](https://github.com/studiometa/ui/commit/6b1d3ec))
 
 ### Changed
 
