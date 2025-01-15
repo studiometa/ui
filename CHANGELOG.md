@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix Frame component ([#341](https://github.com/studiometa/ui/pull/341), [4595aff](https://github.com/studiometa/ui/commit/4595aff))
+- Fix a potential Twig error ([#341](https://github.com/studiometa/ui/pull/341), [3714905](https://github.com/studiometa/ui/commit/3714905))
+
+### Changed
+
+- Update dependencies ([#341](https://github.com/studiometa/ui/pull/341), [e2e8514](https://github.com/studiometa/ui/commit/e2e8514))
+
 ## [v1.0.0-alpha.13](https://github.com/studiometa/ui/compare/1.0.0-alpha.12..1.0.0-alpha.13) (2024-11-14)
 
 ### Changed
