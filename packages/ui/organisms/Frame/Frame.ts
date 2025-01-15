@@ -177,7 +177,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     const el = doc.querySelector(`#${this.id}`);
     // @todo manage el === null
     const newFrame = new Frame(el as HTMLElement);
-    newFrame.$children.registerAll();
+    newFrame.__children.registerAll();
 
     this.$emit('after-fetch', url, content);
 

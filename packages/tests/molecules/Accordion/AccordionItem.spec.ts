@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { AccordionItem } from '@studiometa/ui';
 import { h, wait } from '#test-utils';
 
@@ -89,7 +89,7 @@ describe('AccordionItem component', () => {
   });
 
   it('should emit open and close events', async () => {
-    const { btn, content, item, icon } = await getContext();
+    const { item } = await getContext();
     const fn = vi.fn();
     item.$on('open', fn);
     item.$on('close', fn);
@@ -106,7 +106,7 @@ describe('AccordionItem component', () => {
   });
 
   it('should remove styles when destroyed', async () => {
-    const { btn, content, item, icon } = await getContext();
+    const { item } = await getContext();
     vi.useFakeTimers();
     item.$destroy();
     await vi.advanceTimersByTimeAsync(100);

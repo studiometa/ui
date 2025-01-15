@@ -49,7 +49,7 @@ export class SliderDots<
   /**
    * Go to the given index on dot click.
    */
-  onDotsClick({ event, index }: { event: MouseEvent, index: number }) {
+  onDotsClick({ index }: { index: number }) {
     this.$parent.goTo(index);
   }
 }

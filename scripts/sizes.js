@@ -1,5 +1,4 @@
 import { extname, basename, relative } from 'node:path';
-import { writeFileSync } from 'node:fs';
 import { gzipSizeSync } from 'gzip-size';
 import { build } from './shared.js';
 
@@ -34,4 +33,6 @@ build({
   //   sizes.map((size) => `export const ${size.name} = ${JSON.stringify(size)};`).join('\n')
   // );
   console.log('');
+
+  return sizes;
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { nextFrame } from '@studiometa/js-toolkit/utils';
 import { Modal } from '@studiometa/ui';
 import { h } from '#test-utils';
@@ -10,7 +10,6 @@ async function getContext({ move = '' } = {}) {
   const root = h('div');
   root.innerHTML = template;
   root.append(target);
-  const modalRoot = root.firstElementChild;
   const modal = new Modal(root.firstElementChild as HTMLElement);
   if (move) {
     modal.$options.move = move;

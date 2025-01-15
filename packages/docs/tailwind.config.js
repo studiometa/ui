@@ -1,7 +1,7 @@
-const path = require('path');
-const fs = require('fs');
-const defaultConfig = require('tailwindcss/defaultConfig');
-const tailwindConfig = require('@studiometa/tailwind-config');
+import path from 'node:path';
+import fs from 'node:fs';
+import defaultConfig from 'tailwindcss/defaultConfig';
+import { config as tailwindConfig } from '@studiometa/tailwind-config';
 
 tailwindConfig.corePlugins = undefined;
 
@@ -11,7 +11,7 @@ const folders = fs
   .filter((item) => item.isDirectory() && item.name !== 'node_modules')
   .map((item) => path.resolve(ui, item.name));
 
-module.exports = {
+export default {
   presets: [defaultConfig, tailwindConfig],
   content: [
     ...folders.map((folder) => path.relative(__dirname, path.resolve(folder, '**/*.js'))),
@@ -28,6 +28,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      zIndex: {
+        above: 1,
+      },
       cursor: {
         grab: 'grab',
         grabbing: 'grabbing',

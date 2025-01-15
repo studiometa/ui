@@ -26,7 +26,7 @@ class FakeLink extends HTMLElement {
 }
 try {
   customElements.define('fake-link', FakeLink);
-} catch (err) {
+} catch {
   // silence is golden.
 }
 

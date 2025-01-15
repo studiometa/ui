@@ -1,5 +1,4 @@
 import { it, describe, expect, vi } from 'vitest';
-import { Base } from '@studiometa/js-toolkit';
 import { DataEffect } from '@studiometa/ui';
 import { hConnected as h } from '#test-utils';
 

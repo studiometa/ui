@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Tabs } from '@studiometa/ui';
-import { wait, h } from '#test-utils';
+import { h } from '#test-utils';
 import template from './Tabs.template.html.js';
 
 async function getContext() {

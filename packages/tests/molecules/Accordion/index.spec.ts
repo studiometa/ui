@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Accordion, AccordionItem } from '@studiometa/ui';
 import { getInstanceFromElement } from '@studiometa/js-toolkit';
 import { h, wait } from '#test-utils';

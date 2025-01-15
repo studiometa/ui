@@ -1,4 +1,4 @@
-import { describe, it, vi, expect, afterEach } from 'vitest';
+import { describe, it, vi, expect } from 'vitest';
 import { Action, Target } from '@studiometa/ui';
 import { ActionEvent } from '#private/atoms/Action/ActionEvent.js';
 import { h, mount, destroy, Foo } from '#test-utils';
