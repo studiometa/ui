@@ -47,16 +47,16 @@
       {% if value is iterable %}
         {% set href = value.attr.href ?? value.href ?? null %}
         {% set label = value.attr.label ?? value.label ?? (name|capitalize) %}
-        {% set title = value.attr.title ?? value.title %}
+        {% set title = value.attr.title ?? value.title ?? null %}
         {% set tag = value.tag
           ?? (action_tag|default(href is defined and href is not null ? 'a' : 'button'))
         %}
-        {% set current_attr = merge_html_attributes(value.attr ?? {}, action_attr) %}
+        {% set current_attr = merge_html_attributes(value.attr ?? {}, action_attr ?? {}) %}
       {% else %}
         {% set href = value %}
         {% set label = name|capitalize %}
         {% set tag = action_tag|default('a') %}
-        {% set current_attr = action_attr %}
+        {% set current_attr = action_attr ?? {} %}
       {% endif %}
 
       {% set action_attributes =

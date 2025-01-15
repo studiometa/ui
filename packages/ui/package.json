@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui",
-  "version": "1.0.0-alpha.13",
+  "version": "1.0.0-alpha.14",
   "description": "A set of opiniated, unstyled and accessible components",
   "publishConfig": {
     "access": "public"
@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/studiometa/ui#readme",
   "dependencies": {
-    "@studiometa/js-toolkit": "^3.0.0-alpha.10",
+    "@studiometa/js-toolkit": "^3.0.0-beta.4",
     "deepmerge": "^4.3.1"
   }
 }

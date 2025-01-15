@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Draggable } from '@studiometa/ui';
-import { wait } from '#test-utils';
 
 function createEvent(type, data = {}, options = {}) {
   const event = new Event(type, options);

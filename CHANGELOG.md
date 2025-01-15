@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-alpha.14](https://github.com/studiometa/ui/compare/1.0.0-alpha.13..1.0.0-alpha.14) (2025-01-15)
+
+### Fixed
+
+- **Frame:** fix compatibility with latest @studiometa/js-toolkit beta version ([#341](https://github.com/studiometa/ui/pull/341), [4595aff](https://github.com/studiometa/ui/commit/4595aff))
+- **CircularMarquee:** fix a potential Twig error ([#341](https://github.com/studiometa/ui/pull/341), [3714905](https://github.com/studiometa/ui/commit/3714905))
+- **IconList:** fix a potential Twig error ([#341](https://github.com/studiometa/ui/pull/341), [6b1d3ec](https://github.com/studiometa/ui/commit/6b1d3ec))
+
+### Changed
+
+- Update dependencies ([#341](https://github.com/studiometa/ui/pull/341), [e2e8514](https://github.com/studiometa/ui/commit/e2e8514), [d2f9714](https://github.com/studiometa/ui/commit/d2f9714))
+
 ## [v1.0.0-alpha.13](https://github.com/studiometa/ui/compare/1.0.0-alpha.12..1.0.0-alpha.13) (2024-11-14)
 
 ### Changed

@@ -127,18 +127,3 @@ jobs:
           flags: unittests
           fail_ci_if_error: false
           verbose: true
-
-  export_size:
-    runs-on: macos-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: '0'
-      - uses: titouanmathis/export-size-action@main
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          build_script: npm run build-for-export-size
-          paths: dist
-          bundler: esbuild
-          node-version: '22'

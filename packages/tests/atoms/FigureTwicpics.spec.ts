@@ -1,11 +1,9 @@
 import { it, describe, vi, expect, beforeAll, afterEach, beforeEach } from 'vitest';
-import { Base } from '@studiometa/js-toolkit';
 import { FigureTwicpics } from '@studiometa/ui';
 import {
   wait,
   hConnected as h,
   mockIsIntersecting,
-  mount,
   intersectionObserverBeforeAllCallback,
   intersectionObserverAfterEachCallback,
   unmockImageLoad,
@@ -77,7 +75,7 @@ describe('The FigureTwicpics component', () => {
   });
 
   it('should set the domain and path', async () => {
-    const { instance, setSize } = await getContext({
+    const { instance } = await getContext({
       figureAttributes: {
         dataOptionDomain: 'twic.pics',
         dataOptionPath: 'path',

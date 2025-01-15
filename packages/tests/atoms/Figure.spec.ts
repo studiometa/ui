@@ -1,5 +1,4 @@
 import { it, describe, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
-import { getInstanceFromElement } from '@studiometa/js-toolkit';
 import { Figure } from '@studiometa/ui';
 import {
   wait,

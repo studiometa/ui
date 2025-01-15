@@ -1,11 +1,9 @@
 import { it, describe, vi, expect, beforeAll, afterEach } from 'vitest';
-import { Base } from '@studiometa/js-toolkit';
 import { FigureShopify } from '@studiometa/ui';
 import {
   wait,
   hConnected as h,
   mockIsIntersecting,
-  mount,
   intersectionObserverBeforeAllCallback,
   intersectionObserverAfterEachCallback,
 } from '#test-utils';
@@ -59,7 +57,7 @@ describe('The FigureShopify component', () => {
   });
 
   it('should not override the original image when disabled', async () => {
-    const { instance, setSize } = await getContext();
+    const { instance } = await getContext();
     instance.$options.disable = true;
     expect(instance.original).toBe('https://localhost/image.jpg');
   });

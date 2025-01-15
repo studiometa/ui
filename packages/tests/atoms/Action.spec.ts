@@ -1,4 +1,4 @@
-import { describe, it, vi, expect, afterEach } from 'vitest';
+import { describe, it, vi, expect } from 'vitest';
 import { Base } from '@studiometa/js-toolkit';
 import { Action } from '@studiometa/ui';
 import { h, mount, destroy } from '#test-utils';
@@ -62,7 +62,7 @@ async function getContext({
 
 describe('The Action component', () => {
   it('should react on click by default', async () => {
-    const { action, foo, fooFn, reset } = await getContext({
+    const { action, fooFn, reset } = await getContext({
       target: 'Foo',
       effect: 'target.fn()',
     });
@@ -72,7 +72,7 @@ describe('The Action component', () => {
   });
 
   it('should react on the given event', async () => {
-    const { action, foo, fooFn, reset } = await getContext({
+    const { action, fooFn, reset } = await getContext({
       target: 'Foo',
       on: 'mouseenter',
       effect: '(ctx) => ctx.Foo.fn()',

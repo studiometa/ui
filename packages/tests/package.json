@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-tests",
-  "version": "1.0.0-alpha.13",
+  "version": "1.0.0-alpha.14",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,12 +9,12 @@
   "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
   "license": "MIT",
   "dependencies": {
-    "@happy-dom/global-registrator": "^14.12.3",
+    "@happy-dom/global-registrator": "^16.6.0",
     "@jest/fake-timers": "^29.7.0",
     "@studiometa/ui": "file:../ui",
-    "@vitest/coverage-v8": "2.0.5",
-    "happy-dom": "^14.12.3",
-    "vitest": "2.0.5"
+    "@vitest/coverage-v8": "2.1.8",
+    "happy-dom": "^16.6.0",
+    "vitest": "2.1.8"
   },
   "imports": {
     "#test-utils": "./__utils__/index.ts",
