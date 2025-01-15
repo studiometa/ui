@@ -1,4 +1,3 @@
-import { withMountWhenInView } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { AbstractFigure } from './AbstractFigure.js';
 import type { AbstractFigureProps } from './AbstractFigure.js';

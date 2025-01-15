@@ -1,5 +1,4 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { isDefined } from '@studiometa/js-toolkit/utils';
 import { DataBind } from './DataBind.js';
 import type { DataBindProps } from './DataBind.js';
 import { getCallback } from './utils.js';
@@ -9,8 +8,6 @@ export interface DataComputedProps extends DataBindProps {
     compute: string;
   } & DataBindProps['$options'];
 }
-
-const callbacks = new Map<string, Function>();
 
 export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<DataComputedProps & T> {
   static config: BaseConfig = {

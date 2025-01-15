@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Cursor } from '@studiometa/ui';
-import { wait } from '#test-utils';
 
 async function getContext() {
   const root = document.createElement('div');

@@ -1,9 +1,4 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import {
-  withLeadingSlash,
-  withoutLeadingSlash,
-  withoutTrailingSlash,
-} from '@studiometa/js-toolkit/utils';
 import { AbstractFigure } from './AbstractFigure.js';
 import { loadImage } from './utils.js';
 
