@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-workspace",
-  "version": "1.0.0-alpha.13",
+  "version": "1.0.0-alpha.14",
   "type": "module",
   "private": true,
   "workspaces": [

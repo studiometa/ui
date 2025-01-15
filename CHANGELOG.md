@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-alpha.14](https://github.com/studiometa/ui/compare/1.0.0-alpha.13..1.0.0-alpha.14) (2025-01-15)
+
 ### Fixed
 
 - **Frame:** fix compatibility with latest @studiometa/js-toolkit beta version ([#341](https://github.com/studiometa/ui/pull/341), [4595aff](https://github.com/studiometa/ui/commit/4595aff))
