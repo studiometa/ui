@@ -2,7 +2,7 @@
 
 test('it renders a button', function () {
     assertTwigMatchesSnapshot("
-        {% include '@ui/atoms/Button/Button.twig' with {
+        {% include '@ui/Button/Button.twig' with {
             label: 'Label',
             attr: {
                 class: 'py-4'
@@ -13,7 +13,7 @@ test('it renders a button', function () {
 
 test('it renders a link', function () {
     assertTwigMatchesSnapshot("
-        {% include '@ui/atoms/Button/Button.twig' with {
+        {% include '@ui/Button/Button.twig' with {
             label: 'Label',
             href: '#',
         } %}
@@ -22,7 +22,7 @@ test('it renders a link', function () {
 
 test('it renders a button with type submit', function () {
     assertTwigMatchesSnapshot("
-{% include '@ui/atoms/Button/Button.twig' with {
+{% include '@ui/Button/Button.twig' with {
     label: 'Label',
     attr: { type: 'submit' },
 } %}
@@ -34,6 +34,6 @@ test('it renders a button without duplicate classes', function() {
 {% set attr = {
   class: ['py-4']
 } %}
-{% extends '@ui/atoms/Button/Button.twig' %}
+{% extends '@ui/Button/Button.twig' %}
     ");
 });
