@@ -9,7 +9,8 @@ namespace Studiometa\Ui;
 
 use Twig\Loader\FilesystemLoader;
 use Studiometa\TwigToolkit\Extension as TwigToolkitExtension;
-use Twig\TwigFunction;
+use Studiometa\Ui\TwigFunctions\TwigFunctionProvider;
+use Studiometa\Ui\TwigFunctions\Icon;
 
 /**
  * Twig extension class.
@@ -53,6 +54,13 @@ class Extension extends TwigToolkitExtension
             $loader->addPath($pkg_template_path, 'ui-pkg');
             $loader->addPath($pkg_svg_path, 'svg-pkg');
         }
+    }
+
+    public function getFunctions()
+    {
+        return TwigFunctionProvider::provide(
+            Icon::class,
+        );
     }
 
     /**
