@@ -14,7 +14,6 @@
     "build:types": "tsc --build tsconfig.build.json",
     "build:pkg": "node scripts/build.js",
     "build:sizes": "node scripts/sizes.js",
-    "build-for-export-size": "node scripts/update-exports-for-export-size.js && npm run build:pkg && npm run build:cp-files",
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
     "lint:static": "oxlint",
     "lint:types": "tsc --build tsconfig.lint.json",
