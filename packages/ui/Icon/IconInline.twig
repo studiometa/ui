@@ -23,7 +23,11 @@
 ) %}
 
 {%- set icon -%}
-  {{ source('@svg/%s.svg'|format(name), ignore_missing = true) }}
+  {% if ':' in name %}
+    {{ meta_icon(name) }}
+  {% else %}
+    {{ source('@svg/%s.svg'|format(name), ignore_missing = true) }}
+  {% endif %}
 {%- endset -%}
 
 {% if icon is not empty or not (ignore_missing ?? true)  %}
