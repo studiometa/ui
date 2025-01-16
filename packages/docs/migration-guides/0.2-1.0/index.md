@@ -24,7 +24,7 @@ npm i @studiometa/js-toolkit@next @studiometa/ui@next
 
 ## Update the options of the `Action` component
 
-The [`Action` component](/components/atoms/Action/) has been reworked and its options has changed. The `method` and `selector` have been removed.
+The [`Action` component](/components/Action/) has been reworked and its options has changed. The `method` and `selector` have been removed.
 
 ```diff
   <button

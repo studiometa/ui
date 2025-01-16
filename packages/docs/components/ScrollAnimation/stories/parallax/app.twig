@@ -1,0 +1,59 @@
+<div class="flex items-start justify-center h-96 p-10 opacity-80">
+  Scroll down
+</div>
+
+{% set img_attr = {
+  class: 'object-cover',
+  style: { top: '-15%', height: '130%' }
+} %}
+
+{% set images = [
+  {
+    src: 'https://picsum.photos/700/600',
+    width: '700',
+    height: '600',
+    img_attr: img_attr
+  },
+  {
+    src: 'https://picsum.photos/800/600',
+    width: '800',
+    height: '600',
+    img_attr: img_attr
+  },
+  {
+    src: 'https://picsum.photos/600/800',
+    width: '600',
+    height: '800',
+    img_attr: img_attr
+  },
+  {
+    src: 'https://picsum.photos/700/600',
+    width: '700',
+    height: '600',
+    img_attr: img_attr
+  },
+  {
+    src: 'https://picsum.photos/800/600',
+    width: '800',
+    height: '600',
+    img_attr: img_attr
+  }
+] %}
+
+<div class="max-w-2xl l:max-w-5xl mx-auto">
+  {% include '@ui/ImageGrid/ImageGrid.twig' with {
+    images: images,
+    image_attr: {
+      data_component: 'Parallax',
+      data_option_from: { y: [-15, '%'] },
+      data_option_to: { y: [15, '%'] },
+      data_option_damp_factor: 1,
+      class: 'h-fit overflow-hidden',
+      style: { contain: 'content' }
+    }
+  } %}
+</div>
+
+<div class="flex items-end justify-center h-96 p-10 opacity-80">
+  Scroll up
+</div>

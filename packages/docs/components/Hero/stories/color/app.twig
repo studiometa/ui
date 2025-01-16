@@ -1,0 +1,22 @@
+{% set actions = [
+  { label: 'En savoir plus', src: 'https://picsum.photos/200/400?rand=1*' },
+  { label: 'En savoir plus', src: 'https://picsum.photos/500/400?rand=1*' }
+] %}
+
+<div class="w-full h-full">
+  {% embed '@ui/Hero/Hero.twig'
+    with {
+      surtitle: 'Surtitre',
+      surtitle_attr: { class: 'italic' },
+      title: 'Lorem ipsum dolor sit amet, consectetur.',
+      title_attr: { class: 'text-5xl uppercase font-bold' },
+      description: 'Description',
+      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Facilisi tempor, dignissim diam egestas habitant aliquet. Etiam ac a at mattis pellentesque felis, in phasellus.',
+      actions: actions
+    }
+  %}
+    {% block background %}
+      <div class="absolute h-full w-full bg-slate-700"></div>
+    {% endblock %}
+  {% endembed %}
+</div>
