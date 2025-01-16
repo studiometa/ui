@@ -1,0 +1,20 @@
+{% set icons = [
+  'logo-studiometa',
+  'globe',
+] %}
+
+{% set colors = [
+  'rgb(62, 99, 221)',
+  'rgb(221, 99, 62)'
+] %}
+
+{% for color in colors %}
+  <div class="flex items-center justify-center gap-4 p-10">
+    {% for icon in icons %}
+      {% include '@ui/Icon/IconInlineImg.twig' with {
+        name: icon,
+        current_color: color,
+      } %}
+    {% endfor %}
+  </div>
+{% endfor %}
