@@ -1,0 +1,151 @@
+{#
+/**
+ * @file
+ * Hero component.
+ *
+ * @param string $surtitle
+ * @param string $title
+ * @param string $subtitle
+ * @param array{url: string, label: string} $actions
+ *
+ * @param array                                     $attr
+ *   customize the root element attributes.
+ * @param Image                                     $image
+ *   Image to display. See Figure.twig for the composition.
+ * @param array                                     $content_attr
+ *   customize the content classes.
+ * @param 'left'|'center'|'right'                   $content_position
+ *   define the content position.
+ * @param string                                    $surtitle_tag
+ *   customize the tag of the surtitle element
+ * @param array                                     $surtitle_attr
+ *   customize the surtitle element attributes.
+ * @param array                                     $title_tag
+ *   customize the tag of the title element
+ * @param array                                     $title_attr
+ *   customize the title element attributes.
+ * @param array                                     $description_tag
+ *   customize the tag of the description element
+ * @param array                                     $description_attr
+ *   customize the description element attributes.
+ * @param array                                     $actions_attr
+ *   customize the cta element attributes.
+ */
+#}
+
+{% set content_position = content_position|default('center') %}
+
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    { class: 'w-full min-h-screen' },
+    {
+      class: [
+        'hero flex relative',
+        {
+          'justify-start': content_position == 'left',
+          'justify-center text-center': content_position == 'center',
+          'justify-end': content_position == 'right'
+        }
+      ]
+    }
+  )
+%}
+
+{# Default images attributes #}
+
+{% set image =
+  image
+    |default({})
+    |merge({
+      attr: merge_html_attributes(
+        image.attr ?? null,
+        { class: ['absolute inset-0'] },
+        { class: ['hero__image'] }
+      )
+    })
+%}
+
+{# Default content attributes #}
+{% set content_attributes =
+  merge_html_attributes(
+    content_attr ?? null,
+    { class: 'flex-col justify-center h-screen w-1/2 gap-8 relative' },
+    {
+      class: [
+        'hero__content flex',
+        {
+          'items-start text-left': content_position == 'left',
+          'items-center text-center': content_position == 'center',
+          'items-end text-right': content_position == 'right'
+        }
+      ]
+    }
+  )
+%}
+{% set surtitle_tag = title_tag|default('p') %}
+{% set surtitle_attributes =
+  merge_html_attributes(surtitle_attr ?? null, { class: ['hero__surtitle type-base'] })
+%}
+
+{% set title_tag = title_tag|default('p') %}
+{% set title_attributes =
+  merge_html_attributes(title_attr ?? null, { class: ['hero__title type-h1'] })
+%}
+
+{% set description_tag = description_tag|default('p') %}
+{% set description_attributes =
+  merge_html_attributes(description_attr ?? null, { class: ['hero__description type-base'] })
+%}
+
+{% set actions_attributes =
+  merge_html_attributes(actions_attr ?? null, { class: ['hero__actions', 'flex', 'gap-6'] })
+%}
+
+<section {{ html_attributes(attributes) }}>
+  {% block before %}
+
+  {% endblock %}
+  {% block background %}
+    {% if image.src %}
+      {% include '@ui/Figure/Figure.twig' with image only %}
+    {% endif %}
+  {% endblock %}
+  {% block content %}
+    <div {{ html_attributes(content_attributes) }}>
+      {% block surtitle %}
+        {% if surtitle %}
+          {% html_element surtitle_tag with surtitle_attributes %}
+            {{ surtitle }}
+          {% end_html_element %}
+        {% endif %}
+      {% endblock %}
+      {% block title %}
+        {% if title %}
+          {% html_element title_tag with title_attributes %}
+            {{ title }}
+          {% end_html_element %}
+        {% endif %}
+      {% endblock %}
+      {% block description %}
+        {% if description %}
+          {% html_element description_tag with description_attributes %}
+            {{ description }}
+          {% end_html_element %}
+        {% endif %}
+      {% endblock %}
+      {% block actions %}
+        {% if actions %}
+          <div {{ html_attributes(actions_attributes) }}>
+            {% for action in actions %}
+              {% include '@ui/Button/StyledButtonRounded.twig' with action only %}
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endblock %}
+    </div>
+  {% endblock %}
+  {% block after %}
+
+  {% endblock %}
+</section>

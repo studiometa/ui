@@ -1,0 +1,21 @@
+<div class="w-full h-screen flex items-center justify-center p-10">
+  {% include '@ui/IconList/IconList.twig' with {
+    items: {
+      x: {
+        title: 'X (Anciennement Twitter)',
+        label: 'Réseau social "X"',
+        href: 'https://x.com'
+      },
+      facebook: {
+        href: 'https://facebook.com',
+        attr: { class: ['block p-1', 'text-blue-800 hover:text-red-500'] }
+      },
+      instagram: 'https://instagram.com',
+      globe: { href: 'https://website.domain', label: 'Site internet' },
+      copy: {
+        label: 'Copier le lien dans le presse-papier',
+        attr: { data_component: 'ClipboardCopy' }
+      }
+    }
+  } only %}
+</div>

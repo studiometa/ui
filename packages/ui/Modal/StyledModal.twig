@@ -1,0 +1,42 @@
+{#
+/**
+ * @file
+ * Modal component.
+ *
+ * @param array $attr
+ *   Use it to customize the root element attributes.
+ * @param array $modal_attr
+ *   Use it to customize the modal element attributes.
+ * @param array $overlay_attr
+ *   Use it to customize the overlay element attributes.
+ * @param array $container_atrr
+ *   Use it to customize the container element attributes.
+ * @param array $content_atrr
+ *   Use it to customize the content element attributes.
+ *
+ * @block $open
+ *   Use this block to customize the open trigger button.
+ * @block $close
+ *   Use this block to customize the close trigger button.
+ * @block $content
+ *   Use this block to set the modal's content.
+ */
+#}
+
+{% extends '@ui/Modal/Modal.twig' %}
+
+{% block open %}
+  {% include '@ui/Button/StyledButton.twig' with {
+    label: 'Open',
+    attr: { data_ref: 'open[]' }
+  } %}
+{% endblock %}
+
+{% block close %}
+  <div class="absolute top-0 right-0 m-2">
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: 'Close',
+      attr: { data_ref: 'close[]' }
+    } %}
+  </div>
+{% endblock %}

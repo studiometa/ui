@@ -19,7 +19,7 @@ test('it renders an Accordion, default is_open option is set to true, the first 
                 content: 'lorem lorem'
             },
         ]%}
-        {% include '@ui/molecules/Accordion/Accordion.twig' with {
+        {% include '@ui/Accordion/Accordion.twig' with {
             items: items,
             item_attr: {
                 data_option_is_open: true

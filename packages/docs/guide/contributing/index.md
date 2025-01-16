@@ -78,7 +78,7 @@ export default class Name extends Base<NameProps> {
 ```
 
 Once your component is ready, add an export of all its content to the `index.ts`
-file of its category. For example, if it is a molecule, edit the `packages/ui/molecules/index.ts` file:
+file of its category. For example, if it is a molecule, edit the `packages/ui/index.ts` file:
 
 ```diff
  export * from './Modal/index.js';

@@ -1,0 +1,61 @@
+<div class="flex items-start justify-center h-96 p-10 opacity-80">
+  Scroll down
+</div>
+<div class="grid gap-10 grid-cols-2 max-w-2xl mx-auto">
+  {% for count in 1..10 %}
+    <div data-component="ScrollReveal"
+      class="-mt-10"
+      data-option-repeat
+      data-option-enter-from="opacity-0 transform translate-y-full scale-0"
+      data-option-enter-active="transition duration-1000 ease-out-expo">
+      <div data-ref="target"
+        data-component="ScrollReveal"
+        data-option-repeat
+        class="opacity-0 transform translate-y-full scale-0 overflow-hidden"
+        data-option-enter-from="transform scale-150"
+        data-option-enter-active="transition duration-1000 ease-out-expo">
+        {% include '@ui/Figure/Figure.twig' with {
+          src: 'https://picsum.photos/500/400?rand=1' ~ loop.index,
+          width: '500',
+          height: '400',
+          attr: {
+            data_ref: 'target',
+            class: 'transform scale-150',
+            data_option_enter_from: 'opacity-0',
+            data_option_enter_active: 'transition duration-500'
+          },
+          inner_attr: { class: 'bg-vp-c-divider-light' },
+          img_attr: { class: 'opacity-0' }
+        } %}
+      </div>
+    </div>
+    <div data-component="ScrollReveal"
+      data-option-repeat
+      data-option-enter-from="opacity-0 transform translate-y-full scale-0"
+      data-option-enter-active="transition duration-1000 ease-out-expo">
+      <div data-ref="target"
+        data-component="ScrollReveal"
+        data-option-repeat
+        class="opacity-0 transform translate-y-full scale-0 overflow-hidden"
+        data-option-enter-from="transform scale-150"
+        data-option-enter-active="transition duration-1000 ease-out-expo">
+        {% include '@ui/Figure/Figure.twig' with {
+          src: 'https://picsum.photos/500/400?rand=2' ~ loop.index,
+          width: '500',
+          height: '400',
+          attr: {
+            data_ref: 'target',
+            class: 'transform scale-150',
+            data_option_enter_from: 'opacity-0',
+            data_option_enter_active: 'transition duration-500'
+          },
+          inner_attr: { class: 'bg-vp-c-divider-light' },
+          img_attr: { class: 'opacity-0' }
+        } %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+<div class="flex items-end justify-center h-96 p-10 opacity-80">
+  Scroll down
+</div>

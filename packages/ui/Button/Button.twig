@@ -1,0 +1,78 @@
+{#
+/**
+ * @file
+ * Button component.
+ *
+ * @param string $label
+ * @param string $tag
+ * @param string $href
+ * @param array $attr
+ * @param string $icon
+ * @param array  $icon_attr
+ * @param array|string $icon_classes
+ * @param 'start'|'end' $icon_position
+ * @param boolean $icon_only
+ */
+#}
+
+{# Customizable tag with a default value. #}
+{% set tag =
+  tag|default(href is defined or (attr is defined and attr.href is defined) ? 'a' : 'button')
+%}
+
+{# Default icon values #}
+{% set icon_position = icon_position|default('start') %}
+{% set icon_only = icon_only|default(false) %}
+
+{# Final attributes are a merge of the defaults, the given and then the required #}
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    {
+      title: label,
+      type: tag == 'button' ? 'button' : false,
+      href: tag == 'a' and href is defined ? href : false,
+      aria_label: icon_only ? label : false
+    },
+    { class: ['btn'] }
+  )
+%}
+
+{% set rendered_icon %}
+  {% block icon %}
+    {# @TODO: Breaking change -> Delete icon_classes to use only icon_attr #}
+    {% include '@ui/Icon/IconInline.twig' with {
+      name: icon ?? '',
+      attr: merge_html_attributes(
+        icon_attr ?? null,
+        {
+          class: {
+            'mr-3': not icon_only and icon_position == 'start',
+            'ml-3': not icon_only and icon_position == 'end',
+          }
+        },
+        {
+          class: icon_classes ?? '',
+        },
+      )
+    } %}
+  {% endblock %}
+{% endset %}
+
+{% html_element tag with attributes %}
+  {% block content %}
+    {% if icon is defined and icon_position == 'start' %}
+      {{ rendered_icon }}
+    {% endif %}
+    {% block label %}
+      {% if icon_only %}
+        <span class="sr-only">{{ label }}</span>
+      {% else %}
+        {{ label }}
+      {% endif %}
+    {% endblock %}
+    {% if icon is defined and icon_position == 'end' %}
+      {{ rendered_icon }}
+    {% endif %}
+  {% endblock %}
+{% end_html_element %}
