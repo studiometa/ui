@@ -1,9 +1,8 @@
-# AnchorNav <Badges :texts="badges" />
+---
+badges: [JS, Twig]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/AnchorNav/package.json';
-  const badges = [`v${pkg.version}`, 'Twig'];
-</script>
+# AnchorNav <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

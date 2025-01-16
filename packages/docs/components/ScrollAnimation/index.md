@@ -1,9 +1,8 @@
-# ScrollAnimation (todo) <Badges :texts="badges" />
+---
+badges: [JS]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/ScrollAnimation/package.json';
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# ScrollAnimation (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

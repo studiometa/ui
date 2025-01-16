@@ -1,9 +1,8 @@
-# Frame <Badges :texts="badges" />
+---
+badges: [JS]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/Frame/package.json';
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# Frame <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

@@ -1,9 +1,8 @@
-# ImageGrid (todo) <Badges :texts="badges" />
+---
+badges: [Twig]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/ImageGrid/package.json';
-  const badges = [`v${pkg.version}`, 'Twig'];
-</script>
+# ImageGrid (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

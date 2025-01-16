@@ -1,10 +1,8 @@
-# LazyInclude (todo) <Badges :texts="badges" />
+---
+badges: [JS]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/LazyInclude/package.json';
-
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# LazyInclude (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

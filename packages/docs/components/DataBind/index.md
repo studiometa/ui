@@ -1,13 +1,8 @@
 ---
-outline: deep
+badges: [JS]
 ---
 
-# DataBind <Badges :texts="badges" />
-
-<script setup>
-  import pkg from '@studiometa/ui/Data/package.json';
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# DataBind <Badges :texts="$frontmatter.badges" />
 
 Use the `DataBind`, `DataModel`, `DataEffect` and `DataComputed` components to bind and synchronize data between DOM elements.
 

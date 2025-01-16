@@ -1,13 +1,8 @@
 ---
-outline: deep
+badges: [JS, Twig]
 ---
 
-# Figure <Badges :texts="badges" />
-
-<script setup>
-  import pkg from '@studiometa/ui/Figure/package.json';
-  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
-</script>
+# Figure <Badges :texts="$frontmatter.badges" />
 
 Use the `Figure` component to display images.
 

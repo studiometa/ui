@@ -1,9 +1,8 @@
-# Hero (todo) <Badges :texts="badges" />
+---
+badges: [Twig]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/Hero/package.json';
-  const badges = [`v${pkg.version}`, 'Twig'];
-</script>
+# Hero (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

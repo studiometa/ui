@@ -1,13 +1,8 @@
 ---
-outline: deep
+badges: [JS, Twig]
 ---
 
-# FigureTwicpics <Badges :texts="badges" />
-
-<script setup>
-  import pkg from '@studiometa/ui/Figure/package.json';
-  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
-</script>
+# FigureTwicpics <Badges :texts="$frontmatter.badges" />
 
 Use the `FigureTwicpics` component to display images with the Twicpics API.
 

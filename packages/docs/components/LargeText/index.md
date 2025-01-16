@@ -1,9 +1,8 @@
-# LargeText <Badges :texts="badges" />
+---
+badges: [JS, Twig]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/LargeText/package.json';
-  const badges = [`v${pkg.version}`, 'JS', 'Twig'];
-</script>
+# LargeText <Badges :texts="$frontmatter.badges" />
 
 Use the LargeText component to implement a horizontal scrolling text on scroll.
 

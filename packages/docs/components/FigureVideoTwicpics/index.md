@@ -1,13 +1,8 @@
 ---
-outline: deep
+badges: [JS, Twig]
 ---
 
-# FigureVideoTwicpics <Badges :texts="badges" />
-
-<script setup>
-  import pkg from '@studiometa/ui/FigureVideo/package.json';
-  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
-</script>
+# FigureVideoTwicpics <Badges :texts="$frontmatter.badges" />
 
 Use the `FigureVideoTwicpics` component to display loop, muted & autoplay decorative videos with the Twicpics API.
 

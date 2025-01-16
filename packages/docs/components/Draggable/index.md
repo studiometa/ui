@@ -1,9 +1,8 @@
-# Draggable (todo) <Badges :texts="badges" />
+---
+badges: [JS]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/Draggable/package.json';
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# Draggable (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

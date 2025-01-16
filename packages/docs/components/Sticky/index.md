@@ -1,9 +1,8 @@
-# Sticky (todo) <Badges :texts="badges" />
+---
+badges: [JS, Twig]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/Sticky/package.json';
-  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
-</script>
+# Sticky (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

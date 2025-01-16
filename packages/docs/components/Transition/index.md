@@ -1,12 +1,12 @@
-# Transition <Badges :texts="badges" />
+---
+badges: [JS]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/Transition/package.json';
-
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# Transition <Badges :texts="$frontmatter.badges" />
 
 The Transition primitive should be used when creating components which can switch between two states (often visible/hidden). It implements the [`transition` utility](https://js-toolkit.studiometa.dev/utils/css/transition.html) from the [@studiometa/js-toolkit package](https://js-toolkit.studiometa.dev) and provides configuration via `data-option-...` attributes and actions with the `leave` and `leave` methods which trigger the transition between the two states of the component.
+
+It is available as a `Transition` component as well as a `withTransition(Base)` decorator.
 
 ## Table of content
 
@@ -73,3 +73,16 @@ You can now add a togglable component in your HTML with the needed option to des
 ::: tip Example
 Checkout the [result of this example](./examples#togglable) for a better understanding.
 :::
+
+### Use the decorator to make an existing component transitionable
+
+The transition API can be added to an existing component by wrapping it with the `withTransition` decorator. The `Togglable` component from the previous example can also be implemented as follows:
+
+```js {2,4}
+import { Base } from '@studiometa/js-toolkit';
+import { withTransition } from '@studiometa/ui';
+
+export default class Togglable extends withTransition(Base) {
+  // ...
+}
+```

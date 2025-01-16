@@ -1,13 +1,8 @@
 ---
-outline: deep
+badges: [JS]
 ---
 
-# ScrollReveal <Badges :texts="badges" />
-
-<script setup>
-  import pkg from '@studiometa/ui/ScrollReveal/package.json';
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# ScrollReveal <Badges :texts="$frontmatter.badges" />
 
 The `ScrollReveal` component should be used when you want to apply classes to an element when it enters the viewport.
 

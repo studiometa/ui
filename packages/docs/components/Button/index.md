@@ -1,14 +1,8 @@
 ---
-outline: deep
+badges: [Twig]
 ---
 
-# Button <Badges :texts="badges" />
-
-<script setup>
-  import pkg from '@studiometa/ui/Button/package.json';
-
-  const badges = [`v${pkg.version}`, 'Twig'];
-</script>
+# Button <Badges :texts="$frontmatter.badges" />
 
 Use this component to create robust buttons.
 

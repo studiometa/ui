@@ -1,9 +1,8 @@
-# IconInline <Badges :texts="badges" />
+---
+badges: [Twig]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/Icon/package.json';
-  const badges = [`v${pkg.version}`, 'Twig'];
-</script>
+# IconInline <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

@@ -1,10 +1,8 @@
-# Prefetch (todo) <Badges :texts="badges" />
+---
+badges: [JS]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/Prefetch/package.json';
-
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# Prefetch (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

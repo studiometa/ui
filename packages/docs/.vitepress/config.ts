@@ -107,10 +107,15 @@ function getGuideSidebar() {
 }
 
 function getComponentsSidebar() {
-  return generateSidebarLinksFromPath('components/*/index.md', {
-    extractTitle: true,
-    collapsed: true,
-  });
+  return [
+    {
+      text: 'Components',
+      items: generateSidebarLinksFromPath('components/*/index.md', {
+        extractTitle: true,
+        collapsed: true,
+      }),
+    },
+  ];
 }
 
 async function getDemoSidebar() {

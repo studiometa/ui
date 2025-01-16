@@ -1,9 +1,8 @@
-# Slider (todo) <Badges :texts="badges" />
+---
+badges: [JS]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/Slider/package.json';
-  const badges = [`v${pkg.version}`, 'JS'];
-</script>
+# Slider (todo) <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

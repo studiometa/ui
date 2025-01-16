@@ -1,34 +1,28 @@
----
-outline: deep
----
-
-# Reinsurance <Badges :texts="badges" />
+# Reinsurance examples
 
 ## 4 center items
+
 <PreviewPlayground
   :html="() => import('./stories/app.twig')"
   />
 
 ## 3 center items
+
 <PreviewPlayground
   :html="() => import('./stories/app-1.twig')"
   />
 
 ## Slider in mobile (only css)
+
 <PreviewPlayground
   :html="() => import('./stories/app-2.twig')"
   />
 
 ## Stylized section
+
 <PreviewPlayground
   :html="() => import('./stories/app-3.twig')"
   />
-
-<script setup>
-  import pkg from '@studiometa/ui/Reinsurance/package.json';
-
-  const badges = [`v${pkg.version}`, 'Twig'];
-</script>
 
 Use this component to create Reinsurance. Horizontal list of elements with icons, title and content.
 

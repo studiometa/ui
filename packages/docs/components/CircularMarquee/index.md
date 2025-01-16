@@ -1,14 +1,8 @@
 ---
-outline: deep
+badges: [JS, Twig]
 ---
 
-# CircularMarquee <Badges :texts="badges" />
-
-<script setup>
-  import pkg from '@studiometa/ui/Button/package.json';
-
-  const badges = [`v${pkg.version}`, 'Twig'];
-</script>
+# CircularMarquee <Badges :texts="$frontmatter.badges" />
 
 Use this component to create CircularMarquee, a spinning on scroll circular text. This is made using the `<svg>` capabilities.
 

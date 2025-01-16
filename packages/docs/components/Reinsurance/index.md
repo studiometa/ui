@@ -1,9 +1,8 @@
-# Reinsurance <Badges :texts="badges" />
+---
+badges: [Twig]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/Reinsurance/package.json';
-  const badges = [`v${pkg.version}`, 'Twig'];
-</script>
+# Reinsurance <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 

@@ -1,9 +1,8 @@
-# Cursor <Badges :texts="badges" />
+---
+badges: [JS, Twig]
+---
 
-<script setup>
-  import pkg from '@studiometa/ui/Cursor/package.json';
-  const badges = [`v${pkg.version}`, 'Twig', 'JS'];
-</script>
+# Cursor <Badges :texts="$frontmatter.badges" />
 
 Use the cursor component to easily add a custom cursor to your project.
 
