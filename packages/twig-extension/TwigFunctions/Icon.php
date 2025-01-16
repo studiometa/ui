@@ -26,16 +26,15 @@ class Icon extends AbstractTwigFunction {
 
     /**
      * Execute the function.
-     *
-     * @param  string $icon_name Name composed with an icon collection and an icon name.
-     * @return string
      */
-    public function run( Environment $env, string $collection, string $icon ): string {
+    public function run( Environment $env, string $icon ): string {
         $collection_instance = new Collection();
+
+        list($collection, $icon) = explode(':', $icon);
 
         $collection_file = $collection_instance->findIconifyCollection($collection);
 
-        if (! (file_exists($collection_file) && $collection_instance->loadIconifyCollection($collection))) {
+        if (!(file_exists($collection_file) && $collection_instance->loadIconifyCollection($collection))) {
             return $env->isDebug() ? "Could not find the '$collection' collection." : "";
         }
 
@@ -46,6 +45,6 @@ class Icon extends AbstractTwigFunction {
         }
 
         $svg = new SVG($data);
-        return $svg->getSVG();
+        return $svg->getSVG($data);
     }
 }

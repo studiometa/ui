@@ -58,8 +58,11 @@ class Extension extends TwigToolkitExtension
 
     public function getFunctions()
     {
-        return TwigFunctionProvider::provide(
-            Icon::class,
+        return array_merge(
+            parent::getFunctions(),
+            TwigFunctionProvider::provide(
+                Icon::class,
+            ),
         );
     }
 
