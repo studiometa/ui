@@ -47,7 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Add a [FigureShopify](https://ui.studiometa.dev/-/components/atoms/FigureShopify/) component ([#303](https://github.com/studiometa/ui/pull/303))
+- Add a [FigureShopify](https://ui.studiometa.dev/-/components/FigureShopify/) component ([#303](https://github.com/studiometa/ui/pull/303))
 - **Transition:** add support for grouped transitions ([#305](https://github.com/studiometa/ui/issues/305), [#306](https://github.com/studiometa/ui/pull/306), [be85501](https://github.com/studiometa/ui/commit/be85501))
 
 ## [v1.0.0-alpha.8](https://github.com/studiometa/ui/compare/1.0.0-alpha.7..1.0.0-alpha.8) (2024-09-25)
