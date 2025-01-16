@@ -13,15 +13,6 @@ The v1 of [@studiometa/ui](https://github.com/studiometa/ui) now depends on [@st
    }
 ```
 
-::: warning Prereleases
-At the time of writing (07/2024), both packages are still in their alpha stage, you will need to use the `next` tag to install them:
-
-```bash
-npm i @studiometa/js-toolkit@next @studiometa/ui@next
-```
-
-:::
-
 ## Update the options of the `Action` component
 
 The [`Action` component](/components/Action/) has been reworked and its options has changed. The `method` and `selector` have been removed.
@@ -37,4 +28,13 @@ The [`Action` component](/components/Action/) has been reworked and its options 
     type="button">
     Click me
   </button>
+```
+
+## Update include paths in Twig
+
+The atomic folders `primitives`, `atoms`, `molecules` and `organisms` have been removed (see [#343](https://github.com/studiometa/ui/pull/343)). This has no impact for JavaScript imports, but `{% include %}`, `{% embed %}` and `{% extend %}` paths must be updated in Twig files.
+
+```diff
+- {% include '@ui/atoms/Button/Button.twig' with { label: 'Button' } %}
++ {% include '@ui/Button/Button.twig' with { label: 'Button' } %}
 ```
