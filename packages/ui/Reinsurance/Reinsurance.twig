@@ -41,7 +41,7 @@
     <div {{ html_attributes(item_attributes) }}>
       {% block icon %}
         {% if item.icon %}
-          {% include '@ui/Icon/IconInlineImg.twig' with icon_attributes only %}
+          {% include '@ui/Icon/IconImg.twig' with icon_attributes only %}
         {% endif %}
       {% endblock %}
       {% block title %}

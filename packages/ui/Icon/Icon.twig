@@ -1,12 +1,37 @@
 {#
 /**
  * @file
- * Icon component (Decrecated)
+ * Icon component
  *
- * @param string $name The file name of the icon.
- * @param string[] $classes Additional classes.
+ * @param string  $name           The file name of the icon.
+ * @param boolean $ignore_missing Avoid empty <span> printing
+ * @param array   $attr           Custom attributes.
  */
 #}
-<span class="icon {{ 'icon--%s'|format(name) }} {{ html_classes(classes|default('inline-block')) }}">
-  {{ source('@svg/%s.svg'|format(name), ignore_missing = true) }}
-</span>
+
+{% set attributes = merge_html_attributes(
+  attr ?? null,
+  {
+    class: 'inline-block',
+  },
+  {
+    class: [
+      'icon',
+      'icon--%s'|format(name)
+    ],
+  }
+) %}
+
+{%- set icon -%}
+  {% if ':' in name %}
+    {{ meta_icon(name) }}
+  {% else %}
+    {{ source('@svg/%s.svg'|format(name), ignore_missing = true) }}
+  {% endif %}
+{%- endset -%}
+
+{% if icon is not empty or not (ignore_missing ?? true)  %}
+  <span {{ html_attributes(attributes) }}>
+    {{ icon }}
+  </span>
+{% endif %}
