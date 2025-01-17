@@ -68,6 +68,8 @@ class Extension extends TwigToolkitExtension
 
     /**
      * Get global variables.
+     *
+     * @return array
      */
     public function getGlobals()
     {

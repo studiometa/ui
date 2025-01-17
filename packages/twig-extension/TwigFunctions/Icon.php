@@ -6,18 +6,21 @@ use Iconify\JSONTools\Collection;
 use Iconify\JSONTools\SVG;
 use Twig\Environment;
 
-class Icon extends AbstractTwigFunction {
+class Icon extends AbstractTwigFunction
+{
     /**
      * {@inheritdoc}
      */
-    public function name(): string {
+    public function name(): string
+    {
         return 'meta_icon';
     }
 
     /**
      * {@inheritdoc}
      */
-    public function options(): array {
+    public function options(): array
+    {
         return [
             'needs_environment' => true,
             'is_safe' => ['html']
@@ -27,7 +30,8 @@ class Icon extends AbstractTwigFunction {
     /**
      * Execute the function.
      */
-    public function run( Environment $env, string $icon ): string {
+    public function run(Environment $env, string $icon): string
+    {
         $collection_instance = new Collection();
 
         list($collection, $icon) = explode(':', $icon);

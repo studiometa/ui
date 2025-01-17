@@ -4,14 +4,16 @@ namespace Studiometa\Ui\TwigFunctions;
 
 use Twig\TwigFunction;
 
-class TwigFunctionProvider {
+class TwigFunctionProvider
+{
     /**
      * Get a Twig function.
      *
-     * @param  class-string<TwigFunctionInterface>
+     * @param  class-string<TwigFunctionInterface> $class_names
      * @return TwigFunction[]
      */
-    public static function provide( string ...$class_names ): array {
+    public static function provide(string ...$class_names): array
+    {
         $functions = [];
 
         foreach ($class_names as $class_name) {
@@ -19,7 +21,7 @@ class TwigFunctionProvider {
 
             $functions[] = new TwigFunction(
                 $instance->name(),
-                $instance->run(...),
+                $instance->callback(),
                 $instance->options(),
             );
         }

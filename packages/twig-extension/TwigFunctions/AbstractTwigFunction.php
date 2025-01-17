@@ -2,18 +2,33 @@
 
 namespace Studiometa\Ui\TwigFunctions;
 
-abstract class AbstractTwigFunction implements TwigFunctionInterface {
+abstract class AbstractTwigFunction implements TwigFunctionInterface
+{
     /**
-     * Name of the function.
+     * {@inheritdoc}
      */
-    public function name(): string {
+    public function name(): string
+    {
         return '';
     }
 
     /**
-     * Get options for the TwigFunction instance.
+     * {@inheritdoc}
      */
-    public function options(): array {
+    public function options(): array
+    {
         return [];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function callback(): callable
+    {
+        if (method_exists($this, 'run')) {
+            return $this->run(...);
+        }
+
+        return fn () => null;
     }
 }
