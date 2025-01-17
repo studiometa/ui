@@ -1,5 +1,5 @@
 ---
-title: IconInline examples
+title: IconImg examples
 ---
 
 # Examples
@@ -23,5 +23,5 @@ title: IconInline examples
 [Unicons](https://icones.js.org/collection/uil) can be used directly.
 
 <PreviewPlayground
-  :html="() => import('./stories/mdi.twig')"
+  :html="() => import('./stories/uil.twig')"
   />

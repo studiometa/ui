@@ -1,5 +1,5 @@
 ---
-title: IconInlineImg examples
+title: Icon examples
 ---
 
 # Examples

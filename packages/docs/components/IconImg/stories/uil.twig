@@ -1,14 +1,14 @@
 {% set icons = [
-  'mdi:globe',
-  'mdi:at',
-  'mdi:mail',
-  'mdi:phone',
-  'mdi:content-copy',
-  'mdi:link',
-  'mdi:chevron-left',
-  'mdi:chevron-up',
-  'mdi:chevron-right',
-  'mdi:chevron-down',
+  'uil:globe',
+  'uil:at',
+  'uil:envelope',
+  'uil:phone',
+  'uil:copy',
+  'uil:link',
+  'uil:angle-left',
+  'uil:angle-up',
+  'uil:angle-right',
+  'uil:angle-down',
 ] %}
 
 {% set colors = [
@@ -19,7 +19,7 @@
 {% for color in colors %}
   <div class="flex items-center justify-center gap-4 p-10">
     {% for icon in icons %}
-      {% include '@ui/Icon/IconInlineImg.twig' with {
+      {% include '@ui/Icon/IconImg.twig' with {
         name: icon,
         current_color: color,
       } %}
