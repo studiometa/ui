@@ -9,7 +9,8 @@ namespace Studiometa\Ui;
 
 use Twig\Loader\FilesystemLoader;
 use Studiometa\TwigToolkit\Extension as TwigToolkitExtension;
-use Twig\TwigFunction;
+use Studiometa\Ui\TwigFunctions\TwigFunctionProvider;
+use Studiometa\Ui\TwigFunctions\Icon;
 
 /**
  * Twig extension class.
@@ -55,8 +56,20 @@ class Extension extends TwigToolkitExtension
         }
     }
 
+    public function getFunctions()
+    {
+        return array_merge(
+            parent::getFunctions(),
+            TwigFunctionProvider::provide(
+                Icon::class,
+            ),
+        );
+    }
+
     /**
      * Get global variables.
+     *
+     * @return array
      */
     public function getGlobals()
     {

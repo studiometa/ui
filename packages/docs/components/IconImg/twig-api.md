@@ -1,5 +1,5 @@
 ---
-title: IconInlineImg Twig API
+title: IconImg Twig API
 ---
 
 # Twig API
@@ -10,7 +10,7 @@ title: IconInlineImg Twig API
 
 - Type: `string`
 
-The filename of the icon, as found in the folder corresponding to the `@svg` alias.
+The filename of the icon, as found in the folder corresponding to the `@svg` alias or any `collection:icon-name` combination from [Iconify](https://icon-sets.iconify.design/).
 
 ### `ignore_missing`
 

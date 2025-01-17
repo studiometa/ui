@@ -4,8 +4,79 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2f332b59da5f064ec1835e9b4280906f",
+    "content-hash": "88ee6c8d06659d5d2b2afb0257c95ca9",
     "packages": [
+        {
+            "name": "iconify/json",
+            "version": "2.2.295",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/iconify/icon-sets.git",
+                "reference": "f522b9a91f1f7c64684508eacc0156c42d827f12"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/iconify/icon-sets/zipball/f522b9a91f1f7c64684508eacc0156c42d827f12",
+                "reference": "f522b9a91f1f7c64684508eacc0156c42d827f12",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Iconify\\IconsJSON\\": "lib"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Iconify icons collection in JSON format",
+            "homepage": "https://iconify.design/icon-sets/",
+            "support": {
+                "issues": "https://github.com/iconify/icon-sets/issues",
+                "source": "https://github.com/iconify/icon-sets/tree/2.2.295"
+            },
+            "time": "2025-01-14T07:22:47+00:00"
+        },
+        {
+            "name": "iconify/json-tools",
+            "version": "1.0.10",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/iconify/json-tools.php.git",
+                "reference": "3d24f282b309cb17e3cb80192ae071dd47bce9e0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/iconify/json-tools.php/zipball/3d24f282b309cb17e3cb80192ae071dd47bce9e0",
+                "reference": "3d24f282b309cb17e3cb80192ae071dd47bce9e0",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6"
+            },
+            "require-dev": {
+                "iconify/json": "1.*",
+                "phpunit/phpunit": "9.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Iconify\\JSONTools\\": "lib"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Functions for manipulating Iconify JSON SVG collections.",
+            "homepage": "https://iconify.design/",
+            "support": {
+                "issues": "https://github.com/iconify/json-tools.php/issues",
+                "source": "https://github.com/iconify/json-tools.php/tree/1.0.10"
+            },
+            "time": "2020-12-16T13:04:11+00:00"
+        },
         {
             "name": "jawira/case-converter",
             "version": "v3.5.1",
@@ -1339,20 +1410,20 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "0.12.100",
+            "version": "2.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "48236ddf823547081b2b153d1cd2994b784328c3"
+                "reference": "cd6e973e04b4c2b94c86e8612b5a65f0da0e08e7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/48236ddf823547081b2b153d1cd2994b784328c3",
-                "reference": "48236ddf823547081b2b153d1cd2994b784328c3",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/cd6e973e04b4c2b94c86e8612b5a65f0da0e08e7",
+                "reference": "cd6e973e04b4c2b94c86e8612b5a65f0da0e08e7",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.1|^8.0"
+                "php": "^7.4|^8.0"
             },
             "conflict": {
                 "phpstan/phpstan-shim": "*"
@@ -1362,11 +1433,6 @@
                 "phpstan.phar"
             ],
             "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "0.12-dev"
-                }
-            },
             "autoload": {
                 "files": [
                     "bootstrap.php"
@@ -1377,9 +1443,16 @@
                 "MIT"
             ],
             "description": "PHPStan - PHP Static Analysis Tool",
+            "keywords": [
+                "dev",
+                "static analysis"
+            ],
             "support": {
+                "docs": "https://phpstan.org/user-guide/getting-started",
+                "forum": "https://github.com/phpstan/phpstan/discussions",
                 "issues": "https://github.com/phpstan/phpstan/issues",
-                "source": "https://github.com/phpstan/phpstan/tree/0.12.100"
+                "security": "https://github.com/phpstan/phpstan/security/policy",
+                "source": "https://github.com/phpstan/phpstan-src"
             },
             "funding": [
                 {
@@ -1389,13 +1462,9 @@
                 {
                     "url": "https://github.com/phpstan",
                     "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/phpstan/phpstan",
-                    "type": "tidelift"
                 }
             ],
-            "time": "2022-11-01T09:52:08+00:00"
+            "time": "2025-01-05T16:43:48+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",

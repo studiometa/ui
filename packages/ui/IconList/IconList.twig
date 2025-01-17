@@ -35,7 +35,7 @@
   {% for name, value in items %}
     {%- set rendered_icon -%}
       {%- block icon -%}
-        {%- include '@ui/Icon/IconInline.twig' with {
+        {%- include '@ui/Icon/Icon.twig' with {
           name: name,
           attr: icon_attributes,
           ignore_missing: true

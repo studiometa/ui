@@ -41,7 +41,7 @@
 {% set rendered_icon %}
   {% block icon %}
     {# @TODO: Breaking change -> Delete icon_classes to use only icon_attr #}
-    {% include '@ui/Icon/IconInline.twig' with {
+    {% include '@ui/Icon/Icon.twig' with {
       name: icon ?? '',
       attr: merge_html_attributes(
         icon_attr ?? null,
