@@ -13,13 +13,16 @@
   "require-dev": {
     "mallardduck/prettier-php-runner": "^1.0",
     "pestphp/pest": "^1.23",
-    "phpstan/phpstan": "^0.12.100",
+    "phpstan/phpstan": "^2.1",
     "spatie/pest-plugin-snapshots": "^1.1",
     "squizlabs/php_codesniffer": "^3.6"
   },
   "scripts": {
-    "phpcs": "phpcs",
-    "phpstan": "phpstan analyse",
+    "lint": ["@lint:style", "@lint:static"],
+    "lint:style": "phpcs",
+    "lint:static": "phpstan analyse --memory-limit=1024M",
+    "fix": ["@fix:style"],
+    "fix:style": "phpcbf",
     "test": "pest"
   },
   "autoload": {
