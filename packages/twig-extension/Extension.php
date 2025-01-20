@@ -27,7 +27,7 @@ class Extension extends TwigToolkitExtension
      * @param string                $svg_path      The path to your projects SVG files.
      */
     public function __construct(
-        FilesystemLoader $loader = null,
+        FilesystemLoader|null $loader = null,
         string $template_path = '',
         string $svg_path = ''
     ) {
