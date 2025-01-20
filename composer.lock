@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a48e2cc890fcd6c393e15a0ce65703e3",
+    "content-hash": "36e42daa7db000ac83d7983b57752458",
     "packages": [
         {
             "name": "iconify/json",
