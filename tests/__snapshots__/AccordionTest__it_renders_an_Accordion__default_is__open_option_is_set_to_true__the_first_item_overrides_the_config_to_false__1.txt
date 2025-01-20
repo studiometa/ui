@@ -1,0 +1,23 @@
+<div data-component="Accordion">
+  <div data-component="AccordionItem">
+    <button data-ref="btn" class="block w-full" aria-expanded="false">Item #1</button>
+    <div
+      data-ref="container"
+      style="visibility: hidden; height: 0"
+      class="relative overflow-hidden">
+      <div data-ref="content" aria-hidden="true">lorem lorem</div>
+    </div>
+  </div>
+  <div data-component="AccordionItem" data-option-is-open>
+    <button data-ref="btn" class="block w-full" aria-expanded="true">Item #2</button>
+    <div data-ref="container" style="" class="relative overflow-hidden">
+      <div data-ref="content" aria-hidden="true">lorem lorem</div>
+    </div>
+  </div>
+  <div data-component="AccordionItem" data-option-is-open>
+    <button data-ref="btn" class="block w-full" aria-expanded="true">Item #3</button>
+    <div data-ref="container" style="" class="relative overflow-hidden">
+      <div data-ref="content" aria-hidden="true">lorem lorem</div>
+    </div>
+  </div>
+</div>

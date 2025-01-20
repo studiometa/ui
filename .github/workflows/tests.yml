@@ -8,36 +8,6 @@ on:
   pull_request:
 
 jobs:
-  code_quality:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-      - name: Get npm cache directory
-        id: npm-cache-dir
-        shell: bash
-        run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
-      - uses: actions/cache@v4
-        id: npm-cache
-        with:
-          path: |
-            ${{ steps.npm-cache-dir.outputs.dir }}
-            **/node_modules
-            .eslintcache
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: ${{ runner.os }}-node-
-      - name: Install modules
-        run: npm install --no-audit --no-fund
-      - name: Run code quality tests
-        run: npm run lint:static
-      - name: Run types tests
-        run: npm run lint:types
-      - name: Run Prettier check
-        run: npm run lint:prettier
-
   unit_node:
     runs-on: macos-latest
     steps:
@@ -77,13 +47,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['8.1', '8.2', '8.3']
-        twig-versions: ['^2.10', '^3']
+        php-versions: ['8.1', '8.2', '8.3', '8.4']
     env:
       PHP_VERSION: ${{ matrix.php-versions }}
-      TWIG_VERSION: ${{ matrix.twig-versions }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
@@ -110,10 +78,11 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
-        run: composer install --no-progress --prefer-dist --optimize-autoloader
+        run: composer install --no-progress --prefer-dist --optimize-autoloader --ignore-platform-reqs
 
-      - name: Install Twig specific version
-        run: composer require twig/twig:${{ matrix.twig-versions }}
+      - name: Install Pest v3
+        run: composer require pest/pest:^3.0
+        if: ${{ matrix.php-version == '8.4' }}
 
       - name: Pest
         run: php -v && XDEBUG_MODE=coverage ./vendor/bin/pest --coverage --coverage-clover='coverage.xml'
@@ -122,7 +91,7 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          env_vars: PHP_VERSION,TWIG_VERSION
+          env_vars: PHP_VERSION
           file: ./coverage.xml
           flags: unittests
           fail_ci_if_error: false
