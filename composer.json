@@ -12,9 +12,9 @@
   },
   "require-dev": {
     "mallardduck/prettier-php-runner": "^1.0",
-    "pestphp/pest": "^1.23",
+    "pestphp/pest": "^2.0",
     "phpstan/phpstan": "^2.1",
-    "spatie/pest-plugin-snapshots": "^1.1",
+    "spatie/pest-plugin-snapshots": "^2.0",
     "squizlabs/php_codesniffer": "^3.6"
   },
   "scripts": {
