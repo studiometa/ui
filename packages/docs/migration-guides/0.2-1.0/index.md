@@ -2,6 +2,8 @@
 
 You will find on this page documentation on all the breaking changes included in the v1.0 of the package.
 
+[[toc]]
+
 ## Update [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit) to v3
 
 The v1 of [@studiometa/ui](https://github.com/studiometa/ui) now depends on [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit) v3. Make sure to consult the [migration guide from v2 to v3](https://js-toolkit.studiometa.dev/guide/migration/v2-to-v3.html) for this package as well, it contains documentation on all the major breaking changes.
@@ -15,7 +17,7 @@ The v1 of [@studiometa/ui](https://github.com/studiometa/ui) now depends on [@st
 
 ## Update the options of the `Action` component
 
-The [`Action` component](/components/Action/) has been reworked and its options has changed. The `method` and `selector` have been removed.
+The [`Action` component](/components/Action/) has been reworked and its options has changed. The `method` and `selector` options have been removed.
 
 ```diff
   <button
@@ -38,3 +40,22 @@ The atomic folders `primitives`, `atoms`, `molecules` and `organisms` have been 
 - {% include '@ui/atoms/Button/Button.twig' with { label: 'Button' } %}
 + {% include '@ui/Button/Button.twig' with { label: 'Button' } %}
 ```
+
+## The `IconInline.twig` template has been renamed to `Icon.twig`
+
+The deprecated `Icon/Icon.twig` template has been replaced with the new `Icon/IconInline.twig` template. Its variant `Icon/IconInlineImg.twig` has been renamed `Icon/IconImg.twig`.
+
+```diff
+- {% include '@ui/atoms/Icon/IconInline.twig' with { name: 'globe' } %}
++ {% include '@ui/Icon/Icon.twig' with { name: 'globe' } %}
+
+- {% include '@ui/atoms/Icon/IconInlineImg.twig' with { name: 'globe' } %}
++ {% include '@ui/Icon/IconImg.twig' with { name: 'globe' } %}
+```
+
+## Minimum requirements for Composer have been upgraded
+
+As we upgraded the [studiometa/twig-toolkit](https://github.com/studiometa/twig-toolkit) dependency to ^2.0, the Composer package [studiometa/ui](https://packagist.org/packages/studiometa/ui) now has the following minimum requirements:
+
+- php: ^8.1
+- [twig/twig](https://github.com/twigphp/Twig): ^3.0
