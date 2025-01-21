@@ -1,6 +1,6 @@
 {
   "name": "studiometa/ui",
-  "version": "1.0.0-alpha.14",
+  "version": "1.0.0-beta.0",
   "description": "A set of opiniated, unstyled and accessible components.",
   "license": "MIT",
   "require": {
@@ -18,10 +18,15 @@
     "squizlabs/php_codesniffer": "^3.6"
   },
   "scripts": {
-    "lint": ["@lint:style", "@lint:static"],
+    "lint": [
+      "@lint:style",
+      "@lint:static"
+    ],
     "lint:style": "phpcs",
     "lint:static": "phpstan analyse --memory-limit=1024M",
-    "fix": ["@fix:style"],
+    "fix": [
+      "@fix:style"
+    ],
     "fix:style": "phpcbf",
     "test": "pest"
   },
