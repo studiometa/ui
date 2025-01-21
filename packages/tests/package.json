@@ -9,12 +9,12 @@
   "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
   "license": "MIT",
   "dependencies": {
-    "@happy-dom/global-registrator": "^16.6.0",
+    "@happy-dom/global-registrator": "^16.7.1",
     "@jest/fake-timers": "^29.7.0",
     "@studiometa/ui": "file:../ui",
-    "@vitest/coverage-v8": "2.1.8",
-    "happy-dom": "^16.6.0",
-    "vitest": "2.1.8"
+    "@vitest/coverage-v8": "3.0.2",
+    "happy-dom": "^16.7.1",
+    "vitest": "3.0.2"
   },
   "imports": {
     "#test-utils": "./__utils__/index.ts",

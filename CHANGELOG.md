@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - ⚠️ Remove the atomic folders ([#343](https://github.com/studiometa/ui/pull/343), [a61d8e6](https://github.com/studiometa/ui/commit/a61d8e6))
 - ⚠️ Upgrade twig/twig to ^3.0 ([#348](https://github.com/studiometa/ui/pull/348), [c8e3830](https://github.com/studiometa/ui/commit/c8e3830))
 - ⚠️ Upgrade studiometa/twig-toolkit to ^2.0 ([#348](https://github.com/studiometa/ui/pull/348), [39b43c8](https://github.com/studiometa/ui/commit/39b43c8))
+- Upgrade @studiometa/js-toolkit to ^3.0 ([#350](https://github.com/studiometa/ui/pull/350), [439288a](https://github.com/studiometa/ui/commit/439288a))
 
 ### Removed
 
