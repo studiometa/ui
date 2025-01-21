@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-beta.0](https://github.com/studiometa/ui/compare/1.0.0-alpha.14..1.0.0-beta.0) (2025-01-21)
+
 ### Added
 
 - **Icon:** add support for icon sets ([#344](https://github.com/studiometa/ui/pull/344), [090b1b1](https://github.com/studiometa/ui/commit/090b1b1))
@@ -21,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Removed
 
-- ⚠️ **Icon:** remove the deprecated version Icon ([#344](https://github.com/studiometa/ui/pull/344), [c8a4001](https://github.com/studiometa/ui/commit/c8a4001))
+- ⚠️ **Icon:** remove the deprecated version ([#344](https://github.com/studiometa/ui/pull/344), [c8a4001](https://github.com/studiometa/ui/commit/c8a4001))
 - Remove component specific package.json file ([#343](https://github.com/studiometa/ui/pull/343), [6c29694](https://github.com/studiometa/ui/commit/6c29694))
 
 ## [v1.0.0-alpha.14](https://github.com/studiometa/ui/compare/1.0.0-alpha.13..1.0.0-alpha.14) (2025-01-15)
