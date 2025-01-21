@@ -2,7 +2,7 @@
 
 test('it does not render a lazy image', function () {
     assertTwigMatchesSnapshot("
-        {% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
+        {% include '@ui/Figure/FigureTwicpics.twig' with {
             src: '/uploads/image.jpg',
             width: 400,
             height: 400,
@@ -16,7 +16,7 @@ test('it does not render a lazy image', function () {
 
 test('it renders a lazy image by default', function () {
     assertTwigMatchesSnapshot("
-        {% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
+        {% include '@ui/Figure/FigureTwicpics.twig' with {
             src: '/uploads/image.jpg',
             width: 400,
             height: 400,
@@ -28,7 +28,7 @@ test('it renders a lazy image by default', function () {
 
 test('it can render TwicPics placeholders', function () {
     assertTwigMatchesSnapshot("
-        {% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
+        {% include '@ui/Figure/FigureTwicpics.twig' with {
             src: '/uploads/image.jpg',
             width: 400,
             height: 400,
@@ -41,7 +41,7 @@ test('it can render TwicPics placeholders', function () {
 
 test('it can render advanced TwicPics placeholders', function () {
     assertTwigMatchesSnapshot("
-        {% include '@ui/atoms/Figure/FigureTwicpics.twig' with {
+        {% include '@ui/Figure/FigureTwicpics.twig' with {
             src: '/uploads/image.jpg',
             width: 400,
             height: 400,

@@ -1,0 +1,42 @@
+{#
+/**
+ * @file
+ *   Image Grid.
+ *
+ * @param array<Figure> $images
+ *   List of images to display. See Figure.twig for the composition of each image.
+ * @param array $attr
+ *   Custom attributes for the root element.
+ * @param array $inner_attr
+ *   Custom attributes for the inner element.
+ * @param array $image_attr
+ *   Custom attributes for the images' elements.
+ */
+#}
+
+{% set attributes = merge_html_attributes(attr ?? null, { class: 'image-grid' }) %}
+{% set inner_attributes =
+  merge_html_attributes(inner_attr ?? null, { class: 'image-grid__inner s:grid grid-cols-12 gap-10' })
+%}
+
+<div {{ html_attributes(attributes) }}>
+  <div {{ html_attributes(inner_attributes) }}>
+    {% for image in images %}
+      {% set modulo = loop.index % 5 %}
+      {% set image_attributes = merge_html_attributes(image_attr ?? null, {
+        class: 'image-grid__img'
+      }, {
+        class: {
+          's:col-span-7': modulo == 1 or modulo == 4,
+          's:col-span-5 mt-10': modulo == 2,
+          's:col-span-5 mt-10 clear-m-left': modulo == 3 and not loop.last,
+          's:col-start-2 s:col-end-11': modulo == 0 or (modulo in [0,3] and loop.last),
+          's:col-start-2 s:col-end-13': loop.first and loop.last
+        }
+      }) %}
+      <div {{ html_attributes(image_attributes) }}>
+        {% include '@ui/Figure/Figure.twig' with image only %}
+      </div>
+    {% endfor %}
+  </div>
+</div>

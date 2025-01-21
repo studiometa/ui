@@ -1,6 +1,6 @@
 import { describe, it, vi, expect } from 'vitest';
 import { Action, Target } from '@studiometa/ui';
-import { ActionEvent } from '#private/atoms/Action/ActionEvent.js';
+import { ActionEvent } from '#private/Action/ActionEvent.js';
 import { h, mount, destroy, Foo } from '#test-utils';
 
 describe('The Action component', () => {

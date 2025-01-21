@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-workspace",
-  "version": "1.0.0-alpha.14",
+  "version": "1.0.0-beta.0",
   "type": "module",
   "private": true,
   "workspaces": [
@@ -14,7 +14,6 @@
     "build:types": "tsc --build tsconfig.build.json",
     "build:pkg": "node scripts/build.js",
     "build:sizes": "node scripts/sizes.js",
-    "build-for-export-size": "node scripts/update-exports-for-export-size.js && npm run build:pkg && npm run build:cp-files",
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
     "lint:static": "oxlint",
     "lint:types": "tsc --build tsconfig.lint.json",
@@ -31,7 +30,7 @@
     "esbuild": "0.24.2",
     "fast-glob": "3.3.3",
     "gzip-size": "7.0.0",
-    "oxlint": "0.15.6",
+    "oxlint": "0.15.7",
     "prettier": "3.4.2",
     "typescript": "5.7.3"
   },

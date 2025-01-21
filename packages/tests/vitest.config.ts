@@ -12,5 +12,8 @@ export default defineConfig({
       provider: 'v8',
       include: ['ui/**']
     },
+    exclude: [
+      '**/.symfony/vendor/**'
+    ]
   },
 })

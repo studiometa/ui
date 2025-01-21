@@ -27,14 +27,14 @@ export default createApp(App, document.body);
 Twig components can be used as is in your project by including or embeding them:
 
 ```twig
-{% include '@ui/atoms/Button/Button.twig' with { label: 'Click me' } %}
+{% include '@ui/Button/Button.twig' with { label: 'Click me' } %}
 ```
 
 Or they can be extended for customization and propagate the extended version in every other components where they are used:
 
 ```twig
 {# atoms/Button/Button.twig #}
-{% extends '@ui-pkg/atoms/Button/Button.twig' %}
+{% extends '@ui-pkg/Button/Button.twig' %}
 
 {% set attr = attr|default({})|merge({
   class: 'p-4 rounded text-white bg-blue-500'

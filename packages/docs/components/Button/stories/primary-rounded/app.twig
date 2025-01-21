@@ -1,0 +1,28 @@
+<div class="flex flex-wrap gap-10 p-10 text-center">
+  {% include '@ui/Button/StyledButtonRounded.twig' with {
+    label: 'Primary'
+  } %}
+  {% include '@ui/Button/StyledButtonRounded.twig' with {
+    label: 'Primary',
+    attr: { disabled: true }
+  } %}
+  {% include '@ui/Button/StyledButtonRounded.twig' with {
+    label: 'Primary',
+    icon: 'globe'
+  } %}
+  {% include '@ui/Button/StyledButtonRounded.twig' with {
+    label: 'Primary',
+    icon: 'globe',
+    icon_position: 'start'
+  } %}
+  {% include '@ui/Button/StyledButtonRounded.twig' with {
+    label: 'Primary',
+    icon: 'uil:globe',
+    icon_position: 'end'
+  } %}
+  {% include '@ui/Button/StyledButtonRounded.twig' with {
+    label: 'Primary',
+    icon: 'mdi:globe',
+    icon_only: true
+  } %}
+</div>

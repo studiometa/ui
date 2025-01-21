@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-beta.0](https://github.com/studiometa/ui/compare/1.0.0-alpha.14..1.0.0-beta.0) (2025-01-21)
+
+### Added
+
+- **Icon:** add support for icon sets ([#344](https://github.com/studiometa/ui/pull/344), [090b1b1](https://github.com/studiometa/ui/commit/090b1b1))
+- **TwigExtension:** add a `meta_icon('collection:icon')` Twig function ([#223](https://github.com/studiometa/ui/issues/223), [#344](https://github.com/studiometa/ui/pull/344), [7dfb635](https://github.com/studiometa/ui/commit/7dfb635))
+- Add support for PHP 8.4 ([#348](https://github.com/studiometa/ui/pull/348))
+
+### Changed
+
+- ⚠️ Remove the atomic folders ([#343](https://github.com/studiometa/ui/pull/343), [a61d8e6](https://github.com/studiometa/ui/commit/a61d8e6))
+- ⚠️ Upgrade twig/twig to ^3.0 ([#348](https://github.com/studiometa/ui/pull/348), [c8e3830](https://github.com/studiometa/ui/commit/c8e3830))
+- ⚠️ Upgrade studiometa/twig-toolkit to ^2.0 ([#348](https://github.com/studiometa/ui/pull/348), [39b43c8](https://github.com/studiometa/ui/commit/39b43c8))
+- Upgrade @studiometa/js-toolkit to ^3.0 ([#350](https://github.com/studiometa/ui/pull/350), [439288a](https://github.com/studiometa/ui/commit/439288a))
+
+### Removed
+
+- ⚠️ **Icon:** remove the deprecated version ([#344](https://github.com/studiometa/ui/pull/344), [c8a4001](https://github.com/studiometa/ui/commit/c8a4001))
+- Remove component specific package.json file ([#343](https://github.com/studiometa/ui/pull/343), [6c29694](https://github.com/studiometa/ui/commit/6c29694))
+
 ## [v1.0.0-alpha.14](https://github.com/studiometa/ui/compare/1.0.0-alpha.13..1.0.0-alpha.14) (2025-01-15)
 
 ### Fixed
@@ -47,7 +67,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Add a [FigureShopify](https://ui.studiometa.dev/-/components/atoms/FigureShopify/) component ([#303](https://github.com/studiometa/ui/pull/303))
+- Add a [FigureShopify](https://ui.studiometa.dev/-/components/FigureShopify/) component ([#303](https://github.com/studiometa/ui/pull/303))
 - **Transition:** add support for grouped transitions ([#305](https://github.com/studiometa/ui/issues/305), [#306](https://github.com/studiometa/ui/pull/306), [be85501](https://github.com/studiometa/ui/commit/be85501))
 
 ## [v1.0.0-alpha.8](https://github.com/studiometa/ui/compare/1.0.0-alpha.7..1.0.0-alpha.8) (2024-09-25)
