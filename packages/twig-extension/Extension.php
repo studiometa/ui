@@ -11,6 +11,7 @@ use Twig\Loader\FilesystemLoader;
 use Studiometa\TwigToolkit\Extension as TwigToolkitExtension;
 use Studiometa\Ui\TwigFunctions\TwigFunctionProvider;
 use Studiometa\Ui\TwigFunctions\Icon;
+use Twig\Extension\GlobalsInterface;
 
 /**
  * Twig extension class.
@@ -18,7 +19,7 @@ use Studiometa\Ui\TwigFunctions\Icon;
  * @author Studio Meta <agence@studiometa.fr>
  * @since 1.0.0
  */
-class Extension extends TwigToolkitExtension
+class Extension extends TwigToolkitExtension implements GlobalsInterface
 {
     /**
      * Constructor.
@@ -71,7 +72,7 @@ class Extension extends TwigToolkitExtension
      *
      * @return array
      */
-    public function getGlobals()
+    public function getGlobals(): array
     {
         return [
             'ui' => [
