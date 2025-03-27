@@ -1,0 +1,71 @@
+{#
+/**
+ * @file
+ *   Readmore component.
+ *
+ * @param array $attr
+ *   Use it to customize the root element attributes.
+ * @param string $mainContent
+ *   Define the main content.
+ * @param array $main_content_attr
+ *   Custom attributes for the main content.
+ * @param string $hiddenContent
+ *   Define the hidden content.
+ * @param array $hidden_content_attr
+ *   Custom attributes for the hidden content.
+ * @param array {label: string, label2: string} $btn
+*   Define the button.
+ * @param array $btn_attr
+ *   Custom attributes for the button.
+ * @param boolean $animation
+ *   Wether to use an animation or not
+ * @param number $length
+ *   The maximum characters length before hidding the content if only one content is provided.s
+ */
+#}
+
+{% set attributes =
+  merge_html_attributes(attr ?? null, { data_component: 'Readmore', data_option_animate: ' true' })
+%}
+
+{% set main_content_attributes =
+  merge_html_attributes(
+    main_content_attr ?? null,
+    { class: 'optionnel' },
+    { data_ref: 'mainContent', class: ['main_content'] }
+  )
+%}
+
+{% set hidden_content_attributes =
+  merge_html_attributes(
+    hidden_content_attr ?? null,
+    { class: 'optionnel' },
+    { data_ref: 'hiddenContent', aria_hidden: 'true', class: ['hidden_content hidden'] }
+  )
+%}
+
+{% set btn_attr =
+  merge_html_attributes(btn_attr ?? null, { class: 'optionnel' }, { class: ['button'] })
+%}
+
+{% set animation = animation|default(true) %}
+{% set length = length|default('70') %}
+
+<div {{ html_attributes(attributes) }}>
+  {% block mainContent %}
+    <div {{ html_attributes(main_content_attributes) }}>
+      {{ mainContent }}
+    </div>
+  {% endblock %}
+  {% block hiddenContent %}
+    <div {{ html_attributes(hidden_content_attributes) }}>
+      {{ hiddenContent }}
+    </div>
+  {% endblock %}
+  {% block button %}
+    {% include '@ui/atoms/Button/Button.twig' with {
+      label: data_options_btn_label_more,
+      attr: { data_ref: 'btn' }
+    } %}
+  {% endblock %}
+</div>
