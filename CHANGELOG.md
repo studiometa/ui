@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-beta.1](https://github.com/studiometa/ui/compare/1.0.0-beta.0..1.0.0-beta.1) (2025-04-14)
+
+### Fixed
+
+- Fix a dependency conflit ([#371](https://github.com/studiometa/ui/pull/371), [3c0b290](https://github.com/studiometa/ui/commit/3c0b290))
+
+### Dependencies
+
+- Update dependency oxlint to v0.15.12 ([#366](https://github.com/studiometa/ui/pull/366), [75fc0ad](https://github.com/studiometa/ui/commit/75fc0ad))
+- Update dependency oxlint to v0.15.11 ([#362](https://github.com/studiometa/ui/pull/362), [86f532e](https://github.com/studiometa/ui/commit/86f532e))
+- Update dependency @iconify-json/octicon to v1.2.5 ([#361](https://github.com/studiometa/ui/pull/361), [d023417](https://github.com/studiometa/ui/commit/d023417))
+- Update dependency @iconify-json/octicon to v1.2.4 ([#359](https://github.com/studiometa/ui/pull/359), [c664631](https://github.com/studiometa/ui/commit/c664631))
+- Update dependency @iconify-json/octicon to v1.2.3 ([#356](https://github.com/studiometa/ui/pull/356), [7562ee1](https://github.com/studiometa/ui/commit/7562ee1))
+- Update dependency oxlint to v0.15.10 ([#357](https://github.com/studiometa/ui/pull/357), [fc6bdcf](https://github.com/studiometa/ui/commit/fc6bdcf))
+- Update dependency oxlint to v0.15.8 ([#355](https://github.com/studiometa/ui/pull/355), [6491759](https://github.com/studiometa/ui/commit/6491759))
+- Update dependency twig/twig to v3.19.0 [SECURITY] ([#354](https://github.com/studiometa/ui/pull/354), [e278502](https://github.com/studiometa/ui/commit/e278502))
+- Update dependency vitepress to v1.6.3 ([#352](https://github.com/studiometa/ui/pull/352), [e514f1c](https://github.com/studiometa/ui/commit/e514f1c))
+- Update vueuse monorepo to v12.5.0 ([#353](https://github.com/studiometa/ui/pull/353), [86f24be](https://github.com/studiometa/ui/commit/86f24be))
+
 ## [v1.0.0-beta.0](https://github.com/studiometa/ui/compare/1.0.0-alpha.14..1.0.0-beta.0) (2025-01-21)
 
 ### Added
