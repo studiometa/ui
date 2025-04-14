@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Removed
+
+- ⚠️ Remove the deprecated TableOfContent component ([#372](https://github.com/studiometa/ui/issues/372), [#373](https://github.com/studiometa/ui/pull/373), [14d2c34](https://github.com/studiometa/ui/commit/14d2c34))
+
 ## [v1.0.0-beta.1](https://github.com/studiometa/ui/compare/1.0.0-beta.0..1.0.0-beta.1) (2025-04-14)
 
 ### Fixed
