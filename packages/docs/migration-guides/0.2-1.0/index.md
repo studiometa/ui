@@ -62,4 +62,4 @@ As we upgraded the [studiometa/twig-toolkit](https://github.com/studiometa/twig-
 
 ## The `TableOfContent` component has been removed
 
-The `TableOfContent` component has been deprecated for a while, is is removed from v1. The [AnchorNav component](/components/AnchorNav/) can be used as a replacement.
+The `TableOfContent` component has been deprecated for a while, it is removed in v1. The [AnchorNav component](/components/AnchorNav/) can be used as a replacement.
