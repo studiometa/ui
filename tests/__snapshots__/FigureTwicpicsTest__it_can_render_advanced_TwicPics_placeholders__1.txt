@@ -5,11 +5,11 @@
   data-option-path="path"
   style=""
   data-option-lazy>
-  <div class="figure__inner relative w-full h-0" style="padding-top: 100&#x25">
+  <div class="figure__inner relative w-full h-0" style="padding-top: 100%">
     <img
       class="figure__img absolute inset-0 w-full max-w-none h-full"
-      src="https://test.twic.pics/path/uploads/image.jpg&#x3F;twic&#x3D;v1/quality-max&#x3D;1"
-      data-src="https://test.twic.pics/path/uploads/image.jpg&#x3F;twic&#x3D;v1"
+      src="https://test.twic.pics/path/uploads/image.jpg?twic=v1/quality-max=1"
+      data-src="https://test.twic.pics/path/uploads/image.jpg?twic=v1"
       alt=""
       width="400"
       height="400"

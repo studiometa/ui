@@ -5,11 +5,11 @@
   data-option-path="path"
   style=""
   data-option-lazy>
-  <div class="figure__inner relative w-full h-0" style="padding-top: 100&#x25">
+  <div class="figure__inner relative w-full h-0" style="padding-top: 100%">
     <img
       class="figure__img absolute inset-0 w-full max-w-none h-full"
-      src="data:image/svg&#x2B;xml,&#x25;3Csvg&#x25;20xmlns&#x25;3D&#x25;22http&#x25;3A&#x25;2F&#x25;2Fwww.w3.org&#x25;2F2000&#x25;2Fsvg&#x25;22&#x25;0A&#x25;20&#x25;20&#x25;20&#x25;20viewbox&#x25;3D&#x25;220&#x25;200&#x25;20400&#x25;20400&#x25;22&#x25;0A&#x25;20&#x25;20&#x25;20&#x25;20width&#x25;3D&#x25;22400&#x25;22&#x25;0A&#x25;20&#x25;20&#x25;20&#x25;20height&#x25;3D&#x25;22400&#x25;22&#x25;3E&#x25;0A&#x25;20&#x25;20&#x25;20&#x25;20&#x25;3Crect&#x25;20x&#x25;3D&#x25;220&#x25;22&#x25;20y&#x25;3D&#x25;220&#x25;22&#x25;20width&#x25;3D&#x25;22400&#x25;22&#x25;20height&#x25;3D&#x25;22400&#x25;22&#x25;20fill&#x25;3D&#x25;22&#x25;23eee&#x25;22&#x25;20&#x25;2F&#x25;3E&#x25;0A&#x25;20&#x25;20&#x25;3C&#x25;2Fsvg&#x25;3E"
-      data-src="https://test.twic.pics/path/uploads/image.jpg&#x3F;twic&#x3D;v1"
+      src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%0A%20%20%20%20viewbox%3D%220%200%20400%20400%22%0A%20%20%20%20width%3D%22400%22%0A%20%20%20%20height%3D%22400%22%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22400%22%20height%3D%22400%22%20fill%3D%22%23eee%22%20%2F%3E%0A%20%20%3C%2Fsvg%3E"
+      data-src="https://test.twic.pics/path/uploads/image.jpg?twic=v1"
       alt=""
       width="400"
       height="400"
