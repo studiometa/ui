@@ -55,8 +55,6 @@ test('components exports', () => {
       "SliderItem",
       "SliderProgress",
       "Sticky",
-      "TableOfContent",
-      "TableOfContentAnchor",
       "Tabs",
       "Target",
       "Transition",
