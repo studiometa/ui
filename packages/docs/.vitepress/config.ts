@@ -17,7 +17,7 @@ export default defineConfig({
   head: [
     [
       'script',
-      { defer: '', 'data-domain': 'ui.studiometa.dev', src: 'https://p.analytic.sh/js/script.js' },
+      { defer: '', 'data-domain': 'ui.studiometa.dev', src: 'https://plausible.io/js/script.outbound-links.js' },
     ],
     ['link', { rel: 'icon', type: 'image/x-icon', href: '/-/logo.png' }],
   ],
