@@ -63,3 +63,16 @@ As we upgraded the [studiometa/twig-toolkit](https://github.com/studiometa/twig-
 ## The `TableOfContent` component has been removed
 
 The `TableOfContent` component has been deprecated for a while, it is removed in v1. The [AnchorNav component](/components/AnchorNav/) can be used as a replacement.
+
+## Some Twig parameters have been renamed
+
+The `Reinsurance` Twig template had a `section_attr` parameter which has been renamed to `attr` to match all other templates.
+
+```diff
+  {% include '@ui/Reinsurance/Reinsurance.twig' with {
+-   section_attr:
++   attr: {
+      id: 'some-id'
+    }
+  } %}
+```
