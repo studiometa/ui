@@ -3,14 +3,15 @@
  * @file
  * Circular Marquee
  *
- * @param {String} id - *required
- * @param {Number} outer_radius
- * @param {Number} radius
- * @param {Number} cx
- * @param {Number} cy
- * @param {String} content
- * @param {Object} content_attr
- * @param {Number} sensitivity
+ * @param {string} id - *required
+ * @param {number} outer_radius
+ * @param {number} radius
+ * @param {number} cx
+ * @param {number} cy
+ * @param {string} content
+ * @param {array} content_attr
+ * @param {number} sensitivity
+ * @param array $attr
  */
 #}
 
@@ -30,26 +31,37 @@
 {% set third = 'a ' ~ radius ~ ',' ~ radius ~ ' 0 1,1 -' ~ diameter ~ ',0' %}
 {% set d = [first, second, third]|join(' ') %}
 
-{% set default_content_attributes = { 'xlink:href': '#' ~ id } %}
-{% set content_attributes =
-  merge_html_attributes(default_content_attributes, content_attr|default({}))
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    {
+      data_component: 'CircularMarquee',
+      data_option_sensitivity: sensitivity ?? null
+    },
+    {}
+  )
 %}
 
-<div data-component="CircularMarquee"
-  {{ html_attributes({ data_option_sensitivity: sensitivity ?? null }) }}>
+{% set content_attributes =
+  merge_html_attributes(
+    content_attr ?? null,
+    {},
+    {
+      'xlink:href': '#' ~ id
+    }
+  )
+%}
+
+<div {{ html_attributes(attributes) }}>
   <svg aria-hidden="true"
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 {{ outer_diameter }} {{ outer_diameter }}"
     width="{{ outer_diameter }}"
     height="{{ outer_diameter }}"
     class="z-default relative left-1/2 -translate-x-1/2">
-    <defs>
-      <path d="{{ d }}" id="{{ id }}" />
-    </defs>
+    <defs><path d="{{ d }}" id="{{ id }}" /></defs>
     <text dy="0" textLength="{{ perimeter }}">
-      <textPath {{ html_attributes(content_attributes) }}>
-        {{ content|raw }}
-      </textPath>
+      <textPath {{ html_attributes(content_attributes) }}>{{ content|raw }}</textPath>
     </text>
   </svg>
 </div>

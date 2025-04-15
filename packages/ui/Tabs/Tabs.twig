@@ -1,7 +1,68 @@
-<div data-component="Tabs" data-option-styles='{ "btn": { "open": { "borderBottomColor": "#fff" } } }'>
+{#
+/**
+ * @file
+ * Tabs component.
+ *
+ * @param array $items
+ * @param array $attr
+ *   Custom attributes for the root element.
+ *
+ * @block $title_wrapper
+ * @block $title
+ * @block $content_wrapper
+ * @block $content
+ */
+#}
+
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    {
+      data_component: 'Tabs',
+      data_option_styles: {
+        btn: {
+          open: {
+            borderBottomColor: '#fff'
+          }
+        }
+      }
+    },
+    {}
+  )
+%}
+
+{% set btn_attributes =
+  merge_html_attributes(
+    btn_attr ?? null,
+    {
+      type: 'button',
+      data_ref: 'btn[]',
+      style: {
+        borderBottom: '1px solid transparent'
+      }
+    },
+    {}
+  )
+%}
+
+{% set content_attributes =
+  merge_html_attributes(
+    content_attr ?? null,
+    {
+      data_ref: 'content[]',
+      aria_hidden: 'false'
+    },
+    {}
+  )
+%}
+
+<div {{ html_attributes(attributes) }}>
   {% block title_wrapper %}
     {% for item in items %}
-      <button data-ref="btn[]" style="border-bottom: 1px solid transparent;">
+      {% set current_btn_attributes =
+        merge_html_attributes(item.btn_attr ?? null, btn_attributes)
+      %}
+      <button {{ html_attributes(current_btn_attributes) }}>
         {% block title %}
           {{ item.title }}
         {% endblock %}
@@ -9,12 +70,15 @@
     {% endfor %}
   {% endblock %}
   {% block content_wrapper %}
-      {% for item in items %}
-        <div data-ref="content[]" aria-hidden="false">
-          {% block content %}
-            {{ item.content }}
-          {% endblock %}
-        </div>
-      {% endfor %}
+    {% for item in items %}
+      {% set current_content_attributes =
+        merge_html_attributes(item.content_attr ?? null, content_attributes)
+      %}
+      <div {{ html_attributes(current_content_attributes) }}>
+        {% block content %}
+          {{ item.content }}
+        {% endblock %}
+      </div>
+    {% endfor %}
   {% endblock %}
 </div>
