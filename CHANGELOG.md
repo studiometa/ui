@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- ⚠️ Implement `attr` API for all Twig components ([#70](https://github.com/studiometa/ui/issues/70), [#374](https://github.com/studiometa/ui/pull/374), [d3ba69c](https://github.com/studiometa/ui/commit/d3ba69c))
+
 ### Removed
 
 - ⚠️ Remove the deprecated TableOfContent component ([#372](https://github.com/studiometa/ui/issues/372), [#373](https://github.com/studiometa/ui/pull/373), [14d2c34](https://github.com/studiometa/ui/commit/14d2c34))
