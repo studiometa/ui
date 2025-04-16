@@ -6,8 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-rc.0](https://github.com/studiometa/ui/compare/1.0.0-beta.1..1.0.0-rc.0) (2025-04-16)
+
 ### Changed
 
+- ⚠️ Switch LICENSE from MIT to FSL ([dd01b91](https://github.com/studiometa/ui/commit/dd01b91))
 - ⚠️ Implement `attr` API for all Twig components ([#70](https://github.com/studiometa/ui/issues/70), [#374](https://github.com/studiometa/ui/pull/374), [d3ba69c](https://github.com/studiometa/ui/commit/d3ba69c))
 
 ### Removed
