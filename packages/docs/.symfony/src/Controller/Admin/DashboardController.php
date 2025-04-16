@@ -26,7 +26,7 @@ class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('Symfony');
+            ->setTitle('@studiometa/ui');
     }
 
     public function configureMenuItems(): iterable
@@ -34,8 +34,8 @@ class DashboardController extends AbstractDashboardController
         return [
             MenuItem::linktoRoute('Retourner au site', 'fas fa-home', 'homepage'),
             MenuItem::section('Démos'),
-            MenuItem::linkToCrud('Démo', 'fas fa-list', Demo::class),
-            MenuItem::linkToCrud('Catégorie', 'fas fa-list', Category::class)
+            MenuItem::linkToCrud('Démos', 'fas fa-list', Demo::class),
+            MenuItem::linkToCrud('Catégories', 'fas fa-list', Category::class)
         ];
     }
 }
