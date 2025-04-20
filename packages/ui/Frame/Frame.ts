@@ -6,16 +6,6 @@ import { FrameForm } from './FrameForm.js';
 import { FrameTarget } from './FrameTarget.js';
 
 /**
- * Get the scroll position.
- */
-function getScrollPosition() {
-  return {
-    left: window.pageXOffset,
-    top: window.pageYOffset,
-  };
-}
-
-/**
  * The fetch cache.
  */
 const cache: Map<
@@ -89,6 +79,16 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   }
 
   /**
+   * Get the scroll position.
+   */
+  get scrollPosition() {
+    return {
+      left: window.pageXOffset,
+      top: window.pageYOffset,
+    };
+  }
+
+  /**
    * Get direct `FrameTarget` children.
    */
   get directChildrenFrameTarget(): FrameTarget[] {
@@ -108,7 +108,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     history.replaceState(
       {
         ...history.state,
-        scroll: getScrollPosition(),
+        scroll: this.scrollPosition,
       },
       '',
     );
