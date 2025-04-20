@@ -22,4 +22,14 @@ export class FrameAnchor<T extends BaseProps = BaseProps> extends Base<T & Frame
   get href(): string {
     return this.$el.href;
   }
+
+  /**
+   * Prevent change of URL on click.
+   * @param {{ event: MouseEvent }} props
+   */
+  onClick({ event }: { event: MouseEvent }) {
+    // @todo detect modifier key to open link in another tab or window
+    // @todo detect left/right click
+    event.preventDefault();
+  }
 }

@@ -22,4 +22,9 @@ export class FrameForm<T extends BaseProps = BaseProps> extends Base<T & FrameFo
   get action(): string {
     return this.$el.action;
   }
+
+  onSubmit({ event }: { event: SubmitEvent }) {
+    // @todo detect modifier keys?
+    event.preventDefault();
+  }
 }

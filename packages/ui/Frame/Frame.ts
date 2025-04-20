@@ -109,14 +109,11 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   /**
    * Prevent click on `FrameAnchor`.
    */
-  onFrameAnchorClick({ target, event }: { event: MouseEvent, target: FrameAnchor }) {
+  onFrameAnchorClick({ target, event }: { event: MouseEvent; target: FrameAnchor }) {
     // Prevent propagation of nested frames
     if (!isDirectChild(this, 'Frame', 'FrameAnchor', target)) {
       return;
     }
-
-    this.$log('onAFrameClick', target, event);
-    event.preventDefault();
 
     // Do nothing when clicking links on the same page
     // @todo handle hash change
@@ -130,14 +127,12 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   /**
    * Prevent submit on forms.
    */
-  onFrameFormSubmit({ event, target }: { event: SubmitEvent, target: FrameForm }) {
+  onFrameFormSubmit({ event, target }: { event: SubmitEvent; target: FrameForm }) {
     // Prevent propagation of nested frames
     if (!isDirectChild(this, 'Frame', 'FrameForm', target)) {
       return;
     }
 
-    this.$log('onFrameFormFrameSubmit', target, event);
-    event.preventDefault();
     const url = new URL(target.action);
 
     if (target.$el.method === 'get') {
