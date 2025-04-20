@@ -41,6 +41,11 @@ export interface FrameProps extends BaseProps {
  */
 export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps> {
   /**
+   * Declare the `this.constructor` type
+   * @see https://github.com/microsoft/TypeScript/issues/3841#issuecomment-2381594311
+   */
+  declare ['constructor']: typeof Frame;
+  /**
    * Config.
    */
   static config: BaseConfig = {
@@ -63,6 +68,16 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     },
     options: {
       history: Boolean,
+    },
+  };
+
+  /**
+   * Default fetch options.
+   * @type {RequestInit}
+   */
+  static fetchOptions: RequestInit = {
+    headers: {
+      'x-requested-by': 'studiometa/ui/Frame',
     },
   };
 
@@ -223,6 +238,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
       const promise = fetch(url, {
         method: 'post',
         body: formData,
+        ...this.constructor.fetchOptions,
       }).then((response) => response.text());
 
       const content = await promise;
@@ -239,7 +255,9 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
       return cached.content;
     }
 
-    const promise = fetch(url).then((response) => response.text());
+    const promise = fetch(url, {
+      ...this.constructor.fetchOptions,
+    }).then((response) => response.text());
 
     try {
       cache.set(url, {
