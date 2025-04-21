@@ -1,4 +1,4 @@
-import { Base, isDirectChild, getDirectChildren } from '@studiometa/js-toolkit';
+import { Base, isDirectChild, getDirectChildren, getClosestParent } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { nextFrame, historyPush } from '@studiometa/js-toolkit/utils';
 import { FrameAnchor } from './FrameAnchor.js';
@@ -126,7 +126,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    */
   onFrameAnchorClick({ target, event }: { event: MouseEvent; target: FrameAnchor }) {
     // Prevent propagation of nested frames
-    if (!isDirectChild(this, 'Frame', 'FrameAnchor', target)) {
+    if (getClosestParent(target, this.constructor) !== this) {
       return;
     }
 
@@ -144,7 +144,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    */
   onFrameFormSubmit({ event, target }: { event: SubmitEvent; target: FrameForm }) {
     // Prevent propagation of nested frames
-    if (!isDirectChild(this, 'Frame', 'FrameForm', target)) {
+    if (getClosestParent(target, this.constructor) !== this) {
       return;
     }
 
