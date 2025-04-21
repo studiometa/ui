@@ -20,7 +20,6 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
   static config: BaseConfig = {
     ...Transition.config,
     name: 'FrameTarget',
-    log: true,
     options: {
       ...Transition.config.options,
       mode: {
@@ -30,14 +29,6 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
       id: String,
     },
   };
-
-  /**
-   * Insert modes.
-   */
-  static __INSERT_MODES = {
-    prepend: 'afterbegin',
-    append: 'beforeend',
-  } as const;
 
   /**
    * Override options.
@@ -64,10 +55,17 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
   async enter() {
     this.$log('enter');
 
-    const { enterFrom: from, enterActive: active, enterTo: to, leaveTo, enterKeep } = this.$options;
+    const {
+      mode,
+      enterFrom: from,
+      enterActive: active,
+      enterTo: to,
+      leaveTo,
+      enterKeep,
+    } = this.$options;
     const transitionStyles = { from, active, to };
 
-    switch (this.$options.mode) {
+    switch (mode) {
       case 'append':
       case 'prepend':
         await Promise.all(
@@ -89,26 +87,31 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
 
   /**
    * Update the content from the new target.
-   * @param   {FrameTarget} newTarget The instance of the new target.
+   * @param   {Element|null} content The instance of the new target.
    * @returns {void}
    */
-  updateContent(newTarget: FrameTarget) {
+  updateContent(content: Element = null) {
+    const { mode, enterFrom } = this.$options;
+
+    if (!content) {
+      return;
+    }
+
+    const children = Array.from(content.children);
+
     // @todo manage 'prepend' and 'append' transition
     // only the new content should have the transition
     // - add the leaveTo and enterFrom classes to all `newTarget.children`
     // - or wrap the new content in a custom div ?
-    switch (this.$options.mode) {
+    switch (mode) {
       case 'prepend':
       case 'append':
-        addClass(Array.from(newTarget.$el.children), this.$options.enterFrom.split(' '));
-        this.$el.insertAdjacentHTML(
-          FrameTarget.__INSERT_MODES[this.$options.mode],
-          newTarget.$el.innerHTML,
-        );
+        addClass(children, enterFrom.split(' '));
+        this.$el[mode](...children);
         break;
       case 'replace':
       default:
-        this.$el.innerHTML = newTarget.$el.innerHTML;
+        this.$el.replaceChildren(...children);
         break;
     }
   }

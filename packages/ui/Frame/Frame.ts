@@ -92,7 +92,13 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    * Get direct `FrameTarget` children.
    */
   get directChildrenFrameTarget(): FrameTarget[] {
-    return getDirectChildren(this, 'Frame', 'FrameTarget');
+    const frameTargets = [];
+    for (const frameTarget of this.$children.FrameTarget) {
+      if (getClosestParent(frameTarget, this.constructor) === this) {
+        frameTargets.push(frameTarget);
+      }
+    }
+    return frameTargets;
   }
 
   /**
@@ -164,79 +170,90 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   /**
    * Parge an HTML string into a DOM object.
    */
-  parseHTML(string = '') {
+  async parseHTML(string = '') {
     return new DOMParser().parseFromString(string, 'text/html');
   }
 
-  /**
-   * Go to the given url.
-   */
-  async goTo(url: string, formData: FormData = null, scroll: { top: number; left: number } = null) {
-    this.$log('goTo', url);
-    const parsedUrl = new URL(url);
+  async parseUrl(url: string) {
+    let parsedUrl = new URL(url);
 
     if (parsedUrl.origin !== window.location.origin) {
       throw new Error('Cross origin request are not allowed.');
     }
 
-    this.$emit('before-fetch', url);
+    return parsedUrl;
+  }
 
-    // @todo add option to use content as is or to parse it and extract the new frame
-    const content = await this.fetch(url, formData);
-    const doc = this.parseHTML(content);
-    const el = doc.querySelector(`#${this.id}`);
-    // @todo manage el === null
-    const newFrame = new Frame(el as HTMLElement);
-    newFrame.__children.registerAll();
+  async parse(url: URL, content: string) {
+    this.$emit('parse', url, content);
+    return this.parseHTML(content);
+  }
 
-    this.$emit('after-fetch', url, content);
-
-    this.$emit('before-leave');
-    // Leave all
+  async leave() {
     await Promise.all(this.directChildrenFrameTarget.map((target) => target.leave()));
+  }
 
-    this.$emit('after-leave');
-    this.$emit('before-content');
-
+  async content(doc: Document) {
     // Update content
-    // @todo insert non existing FrameTarget as well
-    this.directChildrenFrameTarget.map((target, index) =>
-      target.updateContent(newFrame.directChildrenFrameTarget[index]),
-    );
+    for (const frameTarget of this.directChildrenFrameTarget) {
+      const { id } = frameTarget;
+      const newContent = doc.querySelector(`#${frameTarget.id}`);
+      frameTarget.updateContent(newContent);
+    }
+  }
 
+  async history(url: URL, doc: Document, formData: FormData = null) {
     // Push history
     if (this.$options.history && formData === null) {
       document.title = doc.title;
-      historyPush({ path: parsedUrl.pathname, search: parsedUrl.searchParams });
+      historyPush({ path: url.pathname, search: url.searchParams });
     }
+  }
 
+  async scroll(scroll: { top: number; left: number } = null) {
     if (scroll) {
       document.scrollingElement.scrollTop = scroll.top;
       document.scrollingElement.scrollLeft = scroll.left;
     }
+  }
 
+  async update() {
     // Update components
     await nextFrame();
     this.$root.$update();
     await nextFrame();
+  }
 
-    this.$emit('after-content');
-    this.$emit('before-enter');
-
-    // Enter all
+  async enter() {
     await Promise.all(this.directChildrenFrameTarget.map((target) => target.enter()));
+  }
 
-    this.$emit('after-enter');
+  /**
+   * Go to the given url.
+   * @todo implement a "bag" to save current data and avoid having to pass params to each method
+   */
+  async goTo(url: string, formData: FormData = null, scroll: { top: number; left: number } = null) {
+    const parsedUrl = await this.parseUrl(url);
+    // @todo add option to use content as is or to parse it and extract the new frame
+    const content = await this.fetch(parsedUrl, formData);
+    const doc = await this.parse(parsedUrl, content);
+
+    await this.leave();
+    await this.content(doc);
+    await this.history(parsedUrl, doc, formData);
+    await this.scroll(scroll);
+    await this.update();
+    await this.enter();
   }
 
   /**
    * Fetch the given url.
    */
-  async fetch(url: string, formData: FormData = null): Promise<string> {
+  async fetch(url: URL, formData: FormData = null): Promise<string> {
     // @note skip cache for POST requests.
     if (formData) {
       const promise = fetch(url, {
-        method: 'post',
+        method: 'POST',
         body: formData,
         ...this.constructor.fetchOptions,
       }).then((response) => response.text());
@@ -245,7 +262,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
       return content;
     }
 
-    const cached = cache.get(url);
+    const cached = cache.get(url.toString());
 
     if (cached) {
       if (cached.status === 'pending') {
@@ -260,7 +277,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     }).then((response) => response.text());
 
     try {
-      cache.set(url, {
+      cache.set(url.toString(), {
         promise,
         status: 'pending',
         content: undefined,
@@ -268,7 +285,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
 
       const content = await promise;
 
-      cache.set(url, {
+      cache.set(url.toString(), {
         promise,
         status: 'resolved',
         content,
@@ -276,7 +293,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
 
       return content;
     } catch (err) {
-      cache.set(url, {
+      cache.set(url.toString(), {
         promise,
         status: 'error',
         content: err,
