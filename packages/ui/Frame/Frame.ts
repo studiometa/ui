@@ -13,6 +13,12 @@ const cache: Map<
   { promise: Promise<string>; status: 'pending' | 'resolved' | 'error'; content: string }
 > = new Map();
 
+export type FrameGoToParams = {
+  url: string | URL;
+  formData?: FormData;
+  scroll?: { top: number; left: number };
+};
+
 export interface FrameProps extends BaseProps {
   $children: {
     FrameAnchor: FrameAnchor[];
@@ -40,16 +46,6 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    */
   static config: BaseConfig = {
     name: 'Frame',
-    emits: [
-      'before-fetch',
-      'after-fetch',
-      'before-leave',
-      'after-leave',
-      'before-content',
-      'after-content',
-      'before-enter',
-      'after-enter',
-    ],
     components: {
       FrameAnchor,
       FrameForm,
@@ -58,16 +54,6 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     },
     options: {
       history: Boolean,
-    },
-  };
-
-  /**
-   * Default fetch options.
-   * @type {RequestInit}
-   */
-  static fetchOptions: RequestInit = {
-    headers: {
-      'x-requested-by': 'studiometa/ui/Frame',
     },
   };
 
@@ -124,7 +110,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    * Go to the previous URL on `popstate` event.
    */
   onWindowPopstate({ event }: { event: PopStateEvent }) {
-    this.goTo(window.location.href, null, event.state);
+    this.goTo({ url: window.location.href, scroll: event.state });
   }
 
   /**
@@ -142,7 +128,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
       return;
     }
 
-    this.goTo(target.href);
+    this.goTo({ url: target.href });
   }
 
   /**
@@ -157,13 +143,12 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     const url = new URL(target.action);
 
     if (target.$el.method === 'get') {
-      // @ts-ignore
-      url.search = new URLSearchParams(new FormData(target.$el)).toString();
-      this.goTo(url.toString());
+      url.search = new URLSearchParams(new FormData(target.$el).toString()).toString();
+      this.goTo({ url: url });
     }
 
     if (target.$el.method === 'post') {
-      this.goTo(url.toString(), new FormData(target.$el));
+      this.goTo({ url, formData: new FormData(target.$el) });
     }
   }
 
@@ -174,7 +159,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     return new DOMParser().parseFromString(string, 'text/html');
   }
 
-  async parseUrl(url: string) {
+  async parseUrl(url: URL | string) {
     let parsedUrl = new URL(url);
 
     if (parsedUrl.origin !== window.location.origin) {
@@ -185,7 +170,6 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   }
 
   async parse(url: URL, content: string) {
-    this.$emit('parse', url, content);
     return this.parseHTML(content);
   }
 
@@ -231,8 +215,9 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   /**
    * Go to the given url.
    * @todo implement a "bag" to save current data and avoid having to pass params to each method
+   * @todo implement AbortSignal to cancel previous pending requests
    */
-  async goTo(url: string, formData: FormData = null, scroll: { top: number; left: number } = null) {
+  async goTo({ url, formData = null, scroll = null }: FrameGoToParams) {
     const parsedUrl = await this.parseUrl(url);
     // @todo add option to use content as is or to parse it and extract the new frame
     const content = await this.fetch(parsedUrl, formData);
@@ -250,12 +235,16 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    * Fetch the given url.
    */
   async fetch(url: URL, formData: FormData = null): Promise<string> {
+    const headers = {
+      'x-requested-by': 'studiometa/ui/Frame',
+    };
+
     // @note skip cache for POST requests.
     if (formData) {
       const promise = fetch(url, {
         method: 'POST',
         body: formData,
-        ...this.constructor.fetchOptions,
+        headers,
       }).then((response) => response.text());
 
       const content = await promise;
@@ -272,9 +261,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
       return cached.content;
     }
 
-    const promise = fetch(url, {
-      ...this.constructor.fetchOptions,
-    }).then((response) => response.text());
+    const promise = fetch(url, { headers }).then((response) => response.text());
 
     try {
       cache.set(url.toString(), {
