@@ -88,9 +88,9 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   }
 
   /**
-   * Prevent scroll top on unload.
+   * Prevent scroll top on pagehide.
    */
-  onWindowUnload() {
+  onWindowPagehide() {
     const { history } = window;
 
     if (!history.state) {
