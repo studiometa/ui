@@ -1,6 +1,7 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { addClass, transition } from '@studiometa/js-toolkit/utils';
 import { Transition } from '../Transition/index.js';
+import morphdom from 'morphdom';
 
 export interface FrameTargetProps extends BaseProps {
   $options: {
@@ -33,7 +34,7 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
   /**
    * Override options.
    */
-  // @ts-ignore
+  // @ts-expect-error $options is always a getter.
   get $options() {
     const options = super.$options;
 
@@ -46,7 +47,7 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
    * Get uniq ID.
    */
   get id(): string {
-    return this.$options.id ?? this.$el.id;
+    return this.$options.id || this.$el.id;
   }
 
   /**
@@ -85,24 +86,31 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
     }
   }
 
+  async leave() {
+    this.$log('leave');
+
+    // Leave transitions are active only for the replace mode by default.
+    if (this.$options.mode !== 'replace') {
+      return;
+    }
+
+    return super.leave();
+  }
+
   /**
    * Update the content from the new target.
-   * @param   {Element|null} content The instance of the new target.
-   * @returns {void}
    */
-  updateContent(content: Element = null) {
+  async updateContent(content: Element = null) {
     const { mode, enterFrom } = this.$options;
 
     if (!content) {
       return;
     }
 
+    await this.leave();
+
     const children = Array.from(content.children);
 
-    // @todo manage 'prepend' and 'append' transition
-    // only the new content should have the transition
-    // - add the leaveTo and enterFrom classes to all `newTarget.children`
-    // - or wrap the new content in a custom div ?
     switch (mode) {
       case 'prepend':
       case 'append':
@@ -111,8 +119,12 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
         break;
       case 'replace':
       default:
-        this.$el.replaceChildren(...children);
+        // Using morphdom allows us to keep state for the DOM node that do not changes,
+        // for example keeping the focus in an input element at the right place
+        morphdom(this.$el, content);
         break;
     }
+
+    await this.enter();
   }
 }

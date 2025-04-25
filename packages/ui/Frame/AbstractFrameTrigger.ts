@@ -1,0 +1,87 @@
+import { Base, getClosestParent } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { Frame } from './Frame.js';
+
+export interface AbstractFrameTriggerProps extends BaseProps {
+  $el: HTMLFormElement | HTMLAnchorElement;
+  $options: {
+    requestInit: RequestInit;
+    headers: Record<string, string>;
+    history: boolean;
+  };
+}
+
+/**
+ * AbstractFrameTrigger class.
+ */
+export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
+  T & AbstractFrameTriggerProps
+> {
+  /**
+   * Config.
+   */
+  static config: BaseConfig = {
+    name: 'AbstractFrameTrigger',
+    emits: ['frame-fetch', 'frame-content', 'frame-error'],
+    options: {
+      requestInit: Object,
+      headers: Object,
+      history: Boolean,
+    },
+  };
+
+  /**
+   * The parent Frame.
+   */
+  get frame(): Frame {
+    return getClosestParent(this, Frame);
+  }
+
+  /**
+   * The URL to use for the request.
+   */
+  get url(): string | URL {
+    return this.$el instanceof HTMLFormElement ? this.$el.action : this.$el.href;
+  }
+
+  /**
+   * Option for the fetch request.
+   */
+  get requestInit(): RequestInit {
+    return {
+      ...this.$options.requestInit,
+      headers: {
+        ...this.$options.requestInit.headers,
+        ...this.$options.headers,
+      },
+    };
+  }
+
+  async fetch() {
+    const { requestInit } = this;
+    const url = new URL(this.url);
+    this.$log('fetch', url, requestInit);
+    this.$emit('frame-fetch', url, requestInit);
+
+    this.frame.abortController.abort();
+    this.frame.abortController = new AbortController();
+    requestInit.signal = this.frame.abortController.signal;
+
+    try {
+      const content = await fetch(url, requestInit).then((response) => response.text());
+      this.content(url, content);
+    } catch (error) {
+      this.error(url, error);
+    }
+  }
+
+  async content(url: URL, content: string) {
+    this.$log('content', url, content);
+    this.$emit('frame-content', url, content);
+  }
+
+  async error(url: URL, error: Error) {
+    this.$log('error', url, error);
+    this.$emit('frame-error', url, error);
+  }
+}

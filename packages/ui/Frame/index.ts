@@ -1,3 +1,4 @@
+export * from './AbstractFrameTrigger.js';
 export * from './Frame.js';
 export * from './FrameAnchor.js';
 export * from './FrameForm.js';

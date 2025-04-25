@@ -1,5 +1,5 @@
-import { Base } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { AbstractFrameTrigger } from './AbstractFrameTrigger.js';
 
 export interface FrameAnchorProps extends BaseProps {
   $el: HTMLAnchorElement;
@@ -8,7 +8,9 @@ export interface FrameAnchorProps extends BaseProps {
 /**
  * FrameAnchor class.
  */
-export class FrameAnchor<T extends BaseProps = BaseProps> extends Base<T & FrameAnchorProps> {
+export class FrameAnchor<T extends BaseProps = BaseProps> extends AbstractFrameTrigger<
+  T & FrameAnchorProps
+> {
   /**
    * Config.
    */
@@ -17,19 +19,12 @@ export class FrameAnchor<T extends BaseProps = BaseProps> extends Base<T & Frame
   };
 
   /**
-   * Get the URL.
+   * Prevent click.
+   * @todo test modifier keys on click
    */
-  get href(): string {
-    return this.$el.href;
-  }
-
-  /**
-   * Prevent change of URL on click.
-   * @param {{ event: MouseEvent }} props
-   */
-  onClick({ event }: { event: MouseEvent }) {
-    // @todo detect modifier key to open link in another tab or window
-    // @todo detect left/right click
+  onClick({ event }: { event: MouseEvent; target: FrameAnchor }) {
+    this.$log('click');
     event.preventDefault();
+    this.fetch();
   }
 }
