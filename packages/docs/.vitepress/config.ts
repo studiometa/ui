@@ -155,6 +155,10 @@ function generateSidebarLinksFromPath(
     link: withLeadingSlash(entry.replace(/\/index\.md$/, '/').replace(/\.md$/, '.html')),
     items: entry.endsWith('/index.md')
       ? [
+          ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*/index.md'), {
+            extractTitle: true,
+            collapsed: true,
+          }),
           ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*[!index]*.md'), {
             extractTitle: true,
           }),
