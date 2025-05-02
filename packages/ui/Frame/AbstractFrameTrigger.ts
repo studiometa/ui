@@ -31,6 +31,13 @@ export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
   };
 
   /**
+   * The client used for the fetch request.
+   */
+  get client(): typeof fetch {
+    return window.fetch.bind(window);
+  }
+
+  /**
    * The parent Frame.
    */
   get frame(): Frame {
@@ -68,7 +75,7 @@ export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
     requestInit.signal = this.frame.abortController.signal;
 
     try {
-      const content = await fetch(url, requestInit).then((response) => response.text());
+      const content = await this.client(url, requestInit).then((response) => response.text());
       this.content(url, content);
     } catch (error) {
       this.error(url, error);
