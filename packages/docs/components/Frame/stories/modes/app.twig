@@ -4,9 +4,9 @@
       data-component="FrameTarget"
       id="my-target"
       data-option-enter-from="translate-y-4 opacity-0"
-      data-option-enter-active="transition"
-      data-option-leave-active="transition"
-      data-option-leave-to="translate-y-4 opacity-0">
+      data-option-enter-active="transition duration-500 ease-out-expo"
+      data-option-leave-active="transition duration-500 ease-out-expo"
+      data-option-leave-to="-translate-y-4 opacity-0">
       <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
     </div>
     <div
@@ -14,9 +14,7 @@
       id="my-target-append"
       data-option-mode="append"
       data-option-enter-from="translate-y-4 opacity-0"
-      data-option-enter-active="transition"
-      data-option-leave-active="transition"
-      data-option-leave-to="translate-y-4 opacity-0">
+      data-option-enter-active="transition duration-500 ease-out-expo">
       <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
     </div>
     <div
@@ -24,9 +22,9 @@
       id="my-target-prepend"
       data-option-mode="prepend"
       data-option-enter-from="-translate-y-4 opacity-0"
-      data-option-enter-active="transition"
-      data-option-leave-active="transition"
-      data-option-leave-to="-translate-y-4 opacity-0">
+      data-option-enter-active="transition duration-500 ease-out-expo"
+      data-option-leave-active="transition duration-500 ease-out-expo"
+      data-option-leave-to="-translate-y-full">
       <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
     </div>
   {% endverbatim %}
@@ -54,9 +52,9 @@
       data-component="FrameTarget"
       id="my-target"
       data-option-enter-from="translate-y-4 opacity-0"
-      data-option-enter-active="transition"
-      data-option-leave-active="transition"
-      data-option-leave-to="translate-y-4 opacity-0">
+      data-option-enter-active="transition duration-500 ease-out-expo"
+      data-option-leave-active="transition duration-500 ease-out-expo"
+      data-option-leave-to="-translate-y-4 opacity-0">
       <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
     </div>
     <div
@@ -64,9 +62,7 @@
       id="my-target-append"
       data-option-mode="append"
       data-option-enter-from="translate-y-4 opacity-0"
-      data-option-enter-active="transition"
-      data-option-leave-active="transition"
-      data-option-leave-to="translate-y-4 opacity-0">
+      data-option-enter-active="transition duration-500 ease-out-expo">
       <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
     </div>
     <div
@@ -74,9 +70,9 @@
       id="my-target-prepend"
       data-option-mode="prepend"
       data-option-enter-from="-translate-y-4 opacity-0"
-      data-option-enter-active="transition"
-      data-option-leave-active="transition"
-      data-option-leave-to="-translate-y-4 opacity-0">
+      data-option-enter-active="transition duration-500 ease-out-expo"
+      data-option-leave-active="transition duration-500 ease-out-expo"
+      data-option-leave-from="-translate-y-full">
       <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
     </div>
   </div>
