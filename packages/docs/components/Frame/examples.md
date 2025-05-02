@@ -6,10 +6,11 @@ title: Frame examples
 
 ## Simple
 
-Navigating between two pages.
+Intercepting clicks on links, displaying a loader and updating the targets' content.
 
 <PreviewPlayground
   :html="() => import('./stories/simple/app.twig')"
+  :css="() => import('./stories/simple/app.css?raw')"
   :script="() => import('./stories/simple/app.js?raw')"
   />
 

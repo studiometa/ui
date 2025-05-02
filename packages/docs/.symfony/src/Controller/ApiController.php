@@ -20,6 +20,10 @@ final class ApiController extends AbstractController
             die('Nothing to display.');
         }
 
+        if ($request->get('wait')) {
+            sleep((int)$request->get('wait'));
+        }
+
         if (!empty($tpl)) {
             return $this->render(
                 'render-from-tpl.html.twig',

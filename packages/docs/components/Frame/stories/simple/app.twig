@@ -31,7 +31,7 @@
 {%- endset -%}
 
 <div data-component="Frame" id="frame" class="flex flex-col gap-8 max-w-xl">
-  <nav class="flex align-center gap-4">
+  <nav class="flex items-center gap-4">
     {{
       include(
         '@ui/Button/StyledButton.twig',
@@ -40,6 +40,9 @@
           href: twig_toolkit_url('/api').withQueryParameter(
             'content',
             page_a_content
+          ).withQueryParameter(
+            'wait',
+            1
           ),
           attr: {
             data_component: 'FrameAnchor'
@@ -56,6 +59,9 @@
           href: twig_toolkit_url('/api').withQueryParameter(
             'content',
             page_b_content
+          ).withQueryParameter(
+            'wait',
+            1
           ),
           attr: {
             data_component: 'FrameAnchor'
@@ -63,6 +69,14 @@
         }
       )
     }}
+    <div data-component="FrameLoader"
+      data-option-enter-from="opacity-0 scale-0"
+      data-option-enter-active="transition"
+      data-option-leave-to="opacity-0 scale-0"
+      data-option-leave-active="transition"
+      class="opacity-0 scale-0">
+      <div class="w-4 h-4 border-2 rounded-full border-current border-t-transparent animate-loader"></div>
+    </div>
   </nav>
   {{ page_a_content|raw }}
 </div>
