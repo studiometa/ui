@@ -108,14 +108,13 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
     }
 
     await this.leave();
-
     const children = Array.from(content.children);
 
     switch (mode) {
       case 'prepend':
       case 'append':
-        addClass(children, enterFrom.split(' '));
-        this.$el[mode](...children);
+        addClass(children, enterFrom.split(' ').filter(Boolean));
+        this.$el[mode](...Array.from(content.childNodes));
         break;
       case 'replace':
       default:
