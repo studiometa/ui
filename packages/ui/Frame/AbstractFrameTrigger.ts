@@ -55,9 +55,14 @@ export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
    * Option for the fetch request.
    */
   get requestInit(): RequestInit {
+    const requestedBy = '@studiometa/ui/Frame';
+
     return {
       ...this.$options.requestInit,
       headers: {
+        Accept: 'text/*',
+        'X-Requested-By': requestedBy,
+        'User-Agent': `${navigator.userAgent} ${requestedBy}`,
         ...this.$options.requestInit.headers,
         ...this.$options.headers,
       },
