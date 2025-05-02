@@ -1,0 +1,68 @@
+{%- set page_b_content -%}
+  <main data-component="FrameTarget"
+    id="content"
+    data-option-enter-from="transform translate-y-4 opacity-0"
+    data-option-enter-active="transition duration-500 ease-out-expo"
+    data-option-leave-active="transition duration-500 ease-in-expo"
+    data-option-leave-to="transform translate-y-4 opacity-0">
+    <h1 class="text-xl font-bold">Page B</h1>
+    <p class="my-4">Hello world from page B!</p>
+  </main>
+{%- endset -%}
+
+{%- set page_a_content -%}
+  <main data-component="FrameTarget"
+    id="content"
+    data-option-enter-from="transform translate-y-4 opacity-0"
+    data-option-enter-active="transition duration-500 ease-out-expo"
+    data-option-leave-active="transition duration-500 ease-in-expo"
+    data-option-leave-to="transform translate-y-4 opacity-0">
+    <h1 class="text-xl font-bold">Page A</h1>
+    <p class="my-4">
+      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+      tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+      veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+      commodo consequat. Duis aute irure dolor in reprehenderit in voluptate
+      velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
+      cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
+      est laborum.
+    </p>
+  </main>
+{%- endset -%}
+
+<div data-component="Frame" id="frame" class="flex flex-col gap-8 max-w-xl">
+  <nav class="flex align-center gap-4">
+    {{
+      include(
+        '@ui/Button/StyledButton.twig',
+        {
+          label: 'Page A',
+          href: twig_toolkit_url('/api').withQueryParameter(
+            'content',
+            page_a_content
+          ),
+          attr: {
+            data_component: 'FrameAnchor'
+          }
+        }
+      )
+    }}
+
+    {{
+      include(
+        '@ui/Button/StyledButton.twig',
+        {
+          label: 'Page B',
+          href: twig_toolkit_url('/api').withQueryParameter(
+            'content',
+            page_b_content
+          ),
+          attr: {
+            data_component: 'FrameAnchor'
+          }
+        }
+      )
+    }}
+  </nav>
+  {{ page_a_content|raw }}
+</div>
