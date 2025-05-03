@@ -8,8 +8,8 @@ import {
   intersectionObserverAfterEachCallback,
   unmockImageLoad,
   mockImageLoad,
+  resizeWindow,
 } from '#test-utils';
-import { resizeWindow } from '../__utils__/resizeWindow';
 
 beforeAll(() => {
   intersectionObserverBeforeAllCallback();
