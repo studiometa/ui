@@ -179,11 +179,9 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
       };
 
       const content = await this.client(url, init).then((response) => response.text());
-      this.endFetch();
-      await this.content(url, content, init);
+      await Promise.all([this.content(url, content, init), this.endFetch()]);
     } catch (error) {
-      this.endFetch();
-      await this.error(url, error);
+      await Promise.all([this.error(url, error), this.endFetch()]);
     }
   }
 
