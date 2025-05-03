@@ -202,7 +202,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
         historyPush({ path: url.pathname, search: url.searchParams });
       }
       domScheduler.write(() => {
-        document.title = doc.title;
+        if (doc.title) document.title = doc.title;
       });
     }
 
