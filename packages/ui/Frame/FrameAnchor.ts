@@ -31,7 +31,7 @@ export class FrameAnchor<T extends BaseProps = BaseProps> extends AbstractFrameT
       this.$el.target !== '_blank'
     ) {
       event.preventDefault();
-      this.fetch();
+      this.trigger();
     }
   }
 }

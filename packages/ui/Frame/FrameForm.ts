@@ -32,7 +32,7 @@ export class FrameForm<T extends BaseProps = BaseProps> extends AbstractFrameTri
   /**
    * Add params to the requested URL for GET submissions.
    */
-  get url(): string | URL {
+  get url(): URL {
     const url = new URL(this.$el.action);
 
     if (this.method === 'get') {
@@ -68,7 +68,7 @@ export class FrameForm<T extends BaseProps = BaseProps> extends AbstractFrameTri
   onSubmit({ event }: { event: SubmitEvent; target: FrameForm }) {
     if (this.$el.target !== '_blank') {
       event.preventDefault();
-      this.fetch();
+      this.trigger();
     }
   }
 }

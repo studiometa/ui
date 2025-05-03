@@ -15,6 +15,8 @@ export interface FrameProps extends BaseProps {
   };
   $options: {
     history: boolean;
+    requestInit: RequestInit;
+    headers: Record<string, string>;
   };
 }
 
@@ -27,6 +29,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    */
   static config: BaseConfig = {
     name: 'Frame',
+    emits: ['frame-fetch', 'frame-content', 'frame-error'],
     components: {
       FrameAnchor,
       FrameForm,
@@ -35,6 +38,8 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     },
     options: {
       history: Boolean,
+      requestInit: Object,
+      headers: Object,
     },
   };
 
@@ -49,10 +54,48 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   abortController = new AbortController();
 
   /**
+   * Header names.
+   * @type {Object}
+   */
+  headerNames = {
+    ACCEPT: 'accept',
+    X_REQUESTED_BY: 'x-requested-by',
+    X_TRIGGERED_BY: 'x-triggered-by',
+    USER_AGENT: 'user-agent',
+  } as const;
+
+  /**
    * Get uniq id.
    */
   get id() {
     return this.$el.id;
+  }
+
+  /**
+   * The client used for the fetch request.
+   */
+  get client(): typeof fetch {
+    return window.fetch.bind(window);
+  }
+
+  /**
+   * Default request init.
+   */
+  get requestInit(): RequestInit {
+    const { headerNames } = this;
+    const { requestInit, headers } = this.$options;
+    const requestedBy = '@studiometa/ui/Frame';
+
+    return {
+      ...requestInit,
+      headers: {
+        [headerNames.ACCEPT]: 'text/*',
+        [headerNames.X_REQUESTED_BY]: requestedBy,
+        [headerNames.USER_AGENT]: `${navigator.userAgent} ${requestedBy}`,
+        ...requestInit.headers,
+        ...headers,
+      },
+    };
   }
 
   /**
@@ -69,37 +112,34 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   }
 
   /**
-   * Start on frame-fetch.
+   * Fetch new content on frame-trigger.
    */
-  onFrameAnchorFrameFetch() {
-    this.start();
+  onFrameAnchorFrameTrigger({ args: [url, requestInit] }: { args: [URL, RequestInit] }) {
+    this.fetch(url, requestInit);
   }
 
   /**
-   * Start on frame-fetch.
+   * Fetch new content on frame-trigger.
    */
-  onFrameFormFrameFetch() {
-    this.start();
+  onFrameFormFrameTrigger({ args: [url, requestInit] }: { args: [URL, RequestInit] }) {
+    this.fetch(url, requestInit);
   }
 
   /**
-   * Update content on frame-content.
+   * Update content on history back/forward navigation.
    */
-  onFrameAnchorFrameContent({ args: [url, content] }: { args: [URL, string] }) {
-    this.content(url, content);
-  }
-
-  /**
-   * Update content on frame-content.
-   */
-  onFrameFormFrameContent({ args: [url, content] }: { args: [URL, string] }) {
-    this.content(url, content);
+  onWindowPopstate() {
+    this.fetch(new URL(window.location.href), {
+      headers: {
+        [this.headerNames.X_TRIGGERED_BY]: 'popstate',
+      },
+    });
   }
 
   /**
    * Start workflow.
    */
-  async start() {
+  async startFetch() {
     this.$log('start');
     for (const loader of this.getDirectChildren('FrameLoader')) {
       loader.enter();
@@ -109,7 +149,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   /**
    * End workflow.
    */
-  async end() {
+  async endFetch() {
     this.$log('end');
     for (const loader of this.getDirectChildren('FrameLoader')) {
       loader.leave();
@@ -117,10 +157,42 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   }
 
   /**
+   * Fetch given url.
+   */
+  async fetch(url: URL, requestInit: RequestInit = {}) {
+    this.startFetch();
+
+    this.$log('fetch', url, requestInit);
+    this.$emit('frame-fetch', url, requestInit);
+
+    try {
+      this.abortController.abort();
+      this.abortController = new AbortController();
+      const init = {
+        ...this.requestInit,
+        ...requestInit,
+        headers: {
+          ...this.requestInit.headers,
+          ...requestInit.headers,
+        },
+        signal: this.abortController.signal,
+      };
+
+      const content = await this.client(url, init).then((response) => response.text());
+      this.endFetch();
+      await this.content(url, content, init);
+    } catch (error) {
+      this.endFetch();
+      await this.error(url, error);
+    }
+  }
+
+  /**
    * Dispatch the contents to update to their matching FrameTarget.
    */
-  async content(url: URL, content: string, { withHistory = true } = {}) {
-    this.$log('content', content);
+  async content(url: URL, content: string, requestInit: RequestInit) {
+    this.$log('content', url, content);
+    this.$emit('frame-content', url, content);
 
     const doc = this.domParser.parseFromString(content, 'text/html');
     const el = doc.querySelector(`#${this.id}`) ?? doc;
@@ -128,14 +200,13 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
 
     // @todo inject styles and scripts from new <head>
     if (this.$options.history) {
-      if (withHistory) historyPush({ path: url.pathname, search: url.searchParams });
+      if (requestInit?.headers?.[this.headerNames.X_TRIGGERED_BY] !== 'popstate') {
+        historyPush({ path: url.pathname, search: url.searchParams });
+      }
       domScheduler.write(() => {
         document.title = doc.title;
       });
     }
-
-    // End the workflow before updating the content (or after?)
-    this.end();
 
     for (const frameTarget of this.getDirectChildren('FrameTarget')) {
       promises.push(frameTarget.updateContent(el.querySelector(`#${frameTarget.id}`)));
@@ -150,17 +221,10 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   }
 
   /**
-   * Update content on history back/forward navigation.
+   * Handle errors.
    */
-  async onWindowPopstate() {
-    const url = new URL(window.location.href);
-
-    try {
-      this.start();
-      const content = await fetch(url).then((response) => response.text());
-      await this.content(url, content, { withHistory: false });
-    } catch (error) {
-      this.$log('error', url, error);
-    }
+  async error(url: URL, error: Error) {
+    this.$log('error', url, error);
+    this.$emit('frame-error', url, error);
   }
 }
