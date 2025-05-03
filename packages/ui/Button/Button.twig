@@ -9,7 +9,6 @@
  * @param array $attr
  * @param string $icon
  * @param array  $icon_attr
- * @param array|string $icon_classes
  * @param 'start'|'end' $icon_position
  * @param boolean $icon_only
  */
@@ -40,7 +39,6 @@
 
 {% set rendered_icon %}
   {% block icon %}
-    {# @TODO: Breaking change -> Delete icon_classes to use only icon_attr #}
     {% include '@ui/Icon/Icon.twig' with {
       name: icon ?? '',
       attr: merge_html_attributes(
@@ -52,7 +50,7 @@
           }
         },
         {
-          class: icon_classes ?? '',
+          class: '',
         },
       )
     } %}
