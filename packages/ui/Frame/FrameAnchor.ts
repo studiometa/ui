@@ -20,11 +20,18 @@ export class FrameAnchor<T extends BaseProps = BaseProps> extends AbstractFrameT
 
   /**
    * Prevent click.
-   * @todo test modifier keys on click
    */
   onClick({ event }: { event: MouseEvent; target: FrameAnchor }) {
-    this.$log('click');
-    event.preventDefault();
-    this.fetch();
+    if (
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !event.altKey &&
+      !event.metaKey &&
+      event.button === 0 &&
+      this.$el.target !== '_blank'
+    ) {
+      event.preventDefault();
+      this.fetch();
+    }
   }
 }
