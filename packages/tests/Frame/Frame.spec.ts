@@ -173,6 +173,42 @@ describe('The Frame class', () => {
     });
   });
 
-  it.todo('should trigger a root update', async () => {});
-  it.todo('should handle errors', async () => {});
+  it('should trigger a root update', async () => {
+    const div = h('div', { id: 'frame' });
+    const frame = new Frame(div);
+    await mount(frame);
+
+    const updateSpy = vi.spyOn(frame.$root, '$update');
+
+    await frame.content(new URL('http://localhost/'), '<div id="frame">new content</div>', {});
+
+    expect(updateSpy).toHaveBeenCalledOnce();
+    updateSpy.mockRestore();
+  });
+
+  it('should handle errors', async () => {
+    const div = h('div', { id: 'frame' });
+    const frame = new Frame(div);
+    await mount(frame);
+
+    const errorSpy = vi.spyOn(frame, 'error');
+
+    const fetchError = new Error('Fetch failed');
+    const clientSpy = vi.spyOn(frame, 'client');
+    clientSpy.mockImplementation(() => Promise.reject(fetchError));
+
+    const url = new URL('https://localhost');
+    const fn = vi.fn();
+    frame.$on('frame-error', (event: CustomEvent) => fn(...event.detail));
+
+    await frame.fetch(url);
+
+    expect(errorSpy).toHaveBeenCalledOnce();
+    expect(errorSpy).toHaveBeenCalledWith(url, fetchError);
+    expect(fn).toHaveBeenCalledOnce();
+    expect(fn).toHaveBeenCalledWith(url, fetchError);
+
+    errorSpy.mockRestore();
+    clientSpy.mockRestore();
+  });
 });
