@@ -1,6 +1,6 @@
 import { Base, getClosestParent } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { Frame } from './Frame.js';
+import type { Frame } from './Frame.js';
 
 export interface AbstractFrameTriggerProps extends BaseProps {
   $el: HTMLFormElement | HTMLAnchorElement;
@@ -41,7 +41,7 @@ export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
    * The parent Frame.
    */
   get frame(): Frame {
-    return getClosestParent(this, Frame);
+    return getClosestParent(this, this.$parent.constructor as typeof Frame);
   }
 
   /**
