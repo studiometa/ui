@@ -11,6 +11,7 @@ Intercepting clicks on links, displaying a loader and updating the targets' cont
 <PreviewPlayground
   :html="() => import('./stories/simple/app.twig')"
   :css="() => import('./stories/simple/app.css?raw')"
+  :css-editor="false"
   :script="() => import('./stories/simple/app.js?raw')"
   />
 
@@ -21,4 +22,13 @@ In the following example, we implement three different `FrameTarget` components,
 <PreviewPlayground
   :html="() => import('./stories/modes/app.twig')"
   :script="() => import('./stories/modes/app.js?raw')"
+  />
+
+## Form
+
+<PreviewPlayground
+  :html="() => import('./stories/form/app.twig')"
+  :css="() => import('./stories/simple/app.css?raw')"
+  :css-editor="false"
+  :script="() => import('./stories/form/app.js?raw')"
   />

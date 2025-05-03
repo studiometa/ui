@@ -1,0 +1,17 @@
+html.dark {
+  background-color: #222;
+  color: #eee;
+}
+
+body {
+  padding: 1rem;
+}
+
+@keyframes loader {
+  0% { transform: rotate(0) }
+  100% { transform: rotate(720deg) }
+}
+
+.animate-loader {
+  animation: loader 1s ease-in-out infinite;
+}
