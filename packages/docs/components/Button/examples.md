@@ -4,18 +4,10 @@ title: Button examples
 
 # Examples
 
-## Primary
+## Styled buttons
 
-<PreviewPlayground :html="() => import('./stories/primary/app.twig')" />
+<PreviewPlayground :html="() => import('./stories/styled/app.twig')" />
 
-## Primary rounded
+## Rounded styled buttons
 
-<PreviewPlayground :html="() => import('./stories/primary-rounded/app.twig')" />
-
-## Secondary
-
-<PreviewPlayground :html="() => import('./stories/secondary/app.twig')" />
-
-## Secondary rounded
-
-<PreviewPlayground :html="() => import('./stories/secondary-rounded/app.twig')" />
+<PreviewPlayground :html="() => import('./stories/styled-rounded/app.twig')" />
