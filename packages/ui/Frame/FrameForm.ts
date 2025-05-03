@@ -47,7 +47,7 @@ export class FrameForm<T extends BaseProps = BaseProps> extends AbstractFrameTri
    * Add body to the request for POST submissions.
    */
   get requestInit(): RequestInit {
-    const requestInit = super.requestInit;
+    const requestInit = { ...super.requestInit };
     requestInit.headers ??= {};
 
     for (const header of this.$refs.headers) {
