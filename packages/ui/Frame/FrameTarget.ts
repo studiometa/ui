@@ -1,5 +1,4 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { addClass, transition } from '@studiometa/js-toolkit/utils';
 import { Transition } from '../Transition/index.js';
 import morphdom from 'morphdom';
 
