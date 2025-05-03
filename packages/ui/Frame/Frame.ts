@@ -55,7 +55,6 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
 
   /**
    * Header names.
-   * @type {Object}
    */
   headerNames = {
     ACCEPT: 'accept',
