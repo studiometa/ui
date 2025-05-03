@@ -7,12 +7,12 @@ export function h<T extends keyof HTMLElementTagNameMap = 'div'>(
 ): HTMLElementTagNameMap[T];
 export function h<T extends keyof HTMLElementTagNameMap = 'div'>(
   tag: T,
-  attributes?: Record<string, string>,
+  attributes?: Record<string, any>,
   children?: (string | Node)[],
 ): HTMLElementTagNameMap[T];
 export function h<T extends keyof HTMLElementTagNameMap = 'div'>(
   tag: T,
-  attributes: Record<string, string> = {},
+  attributes: Record<string, any> = {},
   children: (string | Node)[] = null,
 ): HTMLElementTagNameMap[T] {
   const el = document.createElement(tag);
@@ -23,7 +23,7 @@ export function h<T extends keyof HTMLElementTagNameMap = 'div'>(
   }
 
   for (const [name, value] of Object.entries(attributes)) {
-    el.setAttribute(name.replaceAll(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(), value);
+    el.setAttribute(name.replaceAll(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(), typeof value === 'string' ? value : JSON.stringify(value));
   }
 
   if (children) {
