@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Base, getInstanceFromElement } from '@studiometa/js-toolkit';
-import { Frame } from '@studiometa/ui';
+import { Frame, FrameLoader } from '@studiometa/ui';
 import { h, mount } from '#test-utils';
 
 describe('The Frame class', () => {
@@ -74,10 +74,105 @@ describe('The Frame class', () => {
     expect(spy).toHaveBeenCalledTimes(2);
   });
 
-  it.todo('should listen to the window popstate events', async () => {});
-  it.todo('should trigger its FrameLoader child components', async () => {});
-  it.todo('should fetch content', async () => {});
-  it.todo('should trigger content update on its FrameTarget child components', async () => {});
+  it('should listen to the window popstate events', async () => {
+    const frame = new Frame(h('div'));
+    const spy = vi.spyOn(frame, 'fetch');
+    spy.mockImplementation(() => Promise.resolve());
+    await mount(frame);
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy.mock.lastCall).toEqual([
+      new URL(window.location.href),
+      {
+        headers: {
+          [frame.headerNames.X_TRIGGERED_BY]: 'popstate',
+        },
+      },
+    ]);
+  });
+
+  it('should trigger its FrameLoader child components', async () => {
+    const loader = h('div', { dataComponent: 'FrameLoader' });
+    const div = h('div', [loader]);
+    const frame = new Frame(div);
+    await mount(frame);
+
+    const frameLoader = getInstanceFromElement(loader, FrameLoader);
+    const enterSpy = vi.spyOn(frameLoader, 'enter');
+    const leaveSpy = vi.spyOn(frameLoader, 'leave');
+    await frame.startFetch();
+    expect(enterSpy).toHaveBeenCalledOnce();
+    expect(leaveSpy).not.toHaveBeenCalledOnce();
+    await frame.endFetch();
+    expect(enterSpy).toHaveBeenCalledOnce();
+    expect(leaveSpy).toHaveBeenCalledOnce();
+  });
+
+  it('should trigger content update on its FrameTarget child components', async () => {
+    const target = h('div', { dataComponent: 'FrameTarget', id: 'foo' }, ['hello world']);
+    const div = h('div', { id: 'frame' }, [target]);
+    const frame = new Frame(div);
+    await mount(frame);
+
+    await frame.content(
+      new URL(`http://localhost/?foo=bar`),
+      '<div data-component="FrameTarget" id="foo">Lorem ipsum</div>',
+      {},
+    );
+    expect(target.textContent).toBe('Lorem ipsum');
+  });
+
+  it('should have an `history` option', async () => {
+    const div = h('div', { id: 'frame', dataOptionHistory: true });
+    const frame = new Frame(div);
+    const historySpy = vi.spyOn(window.history, 'pushState');
+    historySpy.mockImplementation(() => undefined);
+
+    await mount(frame);
+    await frame.content(
+      new URL(`http://localhost/?foo=bar`),
+      '<head><title>foo</title></head><body><div data-component="FrameTarget" id="foo">Lorem ipsum</div></body>',
+      {},
+    );
+
+    expect(historySpy).toHaveBeenCalledOnce();
+    expect(historySpy).toHaveBeenLastCalledWith({}, '', '/?foo=bar');
+    expect(document.title).toBe('foo');
+
+    await frame.content(
+      new URL(`http://localhost/`),
+      '<head><title>bar</title></head><body><div data-component="FrameTarget" id="foo">Lorem ipsum</div></body>',
+      {
+        headers: {
+          [frame.headerNames.X_TRIGGERED_BY]: 'popstate',
+        },
+      },
+    );
+    expect(historySpy).toHaveBeenCalledOnce();
+    expect(document.title).toBe('bar');
+
+    historySpy.mockRestore();
+  });
+
+  it('should fetch content', async () => {
+    const div = h('div', { id: 'frame' });
+    const frame = new Frame(div);
+    const clientSpy = vi.spyOn(frame, 'client');
+    clientSpy.mockImplementation(() => Promise.resolve(new Response('hello world')));
+    const contentSpy = vi.spyOn(frame, 'content');
+    contentSpy.mockImplementation(() => Promise.resolve());
+    await mount(frame);
+
+    const url = new URL('https://localhost');
+    await frame.fetch(url);
+    expect(contentSpy).toHaveBeenCalledOnce();
+    expect(contentSpy).toHaveBeenLastCalledWith(url, 'hello world', {
+      ...frame.requestInit,
+      signal: frame.abortController.signal,
+    });
+  });
+
   it.todo('should trigger a root update', async () => {});
   it.todo('should handle errors', async () => {});
 });
