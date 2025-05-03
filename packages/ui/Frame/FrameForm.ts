@@ -64,11 +64,11 @@ export class FrameForm<T extends BaseProps = BaseProps> extends AbstractFrameTri
 
   /**
    * Prevent submit on forms.
-   * @todo test modifier keys on submit
    */
   onSubmit({ event }: { event: SubmitEvent; target: FrameForm }) {
-    this.$log('submit', event);
-    event.preventDefault();
-    this.fetch();
+    if (this.$el.target !== '_blank') {
+      event.preventDefault();
+      this.fetch();
+    }
   }
 }
