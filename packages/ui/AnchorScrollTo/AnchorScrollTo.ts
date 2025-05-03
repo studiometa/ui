@@ -16,9 +16,8 @@ export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<Anchor
 
   /**
    * Get the target selector.
-   * @returns {string}
    */
-  get targetSelector() {
+  get targetSelector(): Parameters<typeof scrollTo>[0] {
     return this.$el.hash;
   }
 

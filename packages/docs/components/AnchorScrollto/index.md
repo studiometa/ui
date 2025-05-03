@@ -2,7 +2,7 @@
 badges: [JS]
 ---
 
-# AnchorScrollTo (todo) <Badges :texts="$frontmatter.badges" />
+# AnchorScrollTo <Badges :texts="$frontmatter.badges" />
 
 The `AnchorScrollTo` atom is a small interface to the [`scrollTo` utility function](https://js-toolkit.studiometa.dev/utils/scrollTo.html) from the [@studiometa/js-toolkit package](https://js-toolkit.studiometa.dev).
 
@@ -27,7 +27,7 @@ class App extends Base {
   static config = {
     name: 'App',
     components: {
-      'a[href^="#"]': AnchorScrollTo
+      'a[href^="#"]': AnchorScrollTo,
     },
   };
 }
