@@ -1,0 +1,83 @@
+import { describe, it, expect, vi } from 'vitest';
+import { Base, getInstanceFromElement } from '@studiometa/js-toolkit';
+import { Frame } from '@studiometa/ui';
+import { h, mount } from '#test-utils';
+
+describe('The Frame class', () => {
+  it('should have an `id` getter', async () => {
+    const div = h('div', { id: 'foo' });
+    const frameTarget = new Frame(div);
+    await mount(frameTarget);
+    expect(frameTarget.id).toBe(div.id);
+  });
+
+  it('should have a `client` getter', async () => {
+    const frameTarget = new Frame(h('div'));
+    const spy = vi.spyOn(window, 'fetch');
+    spy.mockImplementation(() => Promise.resolve(new Response('hi')));
+
+    await frameTarget.client('#');
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith('#');
+    spy.mockRestore();
+  });
+
+  it('should have a `requestInit` getter', async () => {
+    const init = { method: 'post' };
+    const headers = { 'x-foo': 'bar' };
+    const div = h('div', { id: 'foo', dataOptionRequestInit: init, dataOptionHeaders: headers });
+    const frameTarget = new Frame(div);
+    await mount(frameTarget);
+    expect(frameTarget.requestInit).toEqual({
+      method: 'post',
+      headers: {
+        accept: 'text/*',
+        'user-agent': `${navigator.userAgent} @studiometa/ui/Frame`,
+        'x-requested-by': '@studiometa/ui/Frame',
+        'x-foo': 'bar',
+      },
+    });
+  });
+
+  it('should be able to get its direct children', async () => {
+    const nestedAnchor = h('a', { dataComponent: 'FrameAnchor', id: 'nested-anchor' });
+    const nestedFrame = h('div', { dataComponent: 'Frame', id: 'nested-frame' }, [nestedAnchor]);
+    const anchor = h('a', { dataComponent: 'FrameAnchor', id: 'anchor' });
+    const frame = h('div', { dataComponent: 'Frame', id: 'frame' }, [anchor, nestedFrame]);
+    const div = h('div', [frame]);
+
+    class App extends Base {
+      static config = {
+        name: 'App',
+        components: {
+          Frame,
+        },
+      };
+    }
+
+    await mount(new App(div));
+    expect(getInstanceFromElement(frame, Frame).getDirectChildren('FrameAnchor')).toHaveLength(1);
+  });
+
+  it('should listen to the frame-trigger events', async () => {
+    const anchor = h('a', { dataComponent: 'FrameAnchor', href: '#' });
+    const form = h('form', { dataComponent: 'FrameForm', href: '#' });
+    const div = h('div', { id: 'frame' }, [anchor, form]);
+    const frame = new Frame(div);
+    const spy = vi.spyOn(frame, 'fetch');
+    spy.mockImplementation(() => Promise.resolve());
+
+    await mount(frame);
+    anchor.dispatchEvent(new MouseEvent('click'));
+    expect(spy).toHaveBeenCalledOnce();
+    form.dispatchEvent(new SubmitEvent('submit'));
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+
+  it.todo('should listen to the window popstate events', async () => {});
+  it.todo('should trigger its FrameLoader child components', async () => {});
+  it.todo('should fetch content', async () => {});
+  it.todo('should trigger content update on its FrameTarget child components', async () => {});
+  it.todo('should trigger a root update', async () => {});
+  it.todo('should handle errors', async () => {});
+});

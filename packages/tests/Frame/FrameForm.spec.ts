@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { FrameForm } from '@studiometa/ui';
 import { h, mount } from '#test-utils';
 
-describe('The AbstractFrameTrigger class', () => {
+describe('The FrameForm class', () => {
   it('should have an `method` getter', async () => {
     const formA = new FrameForm(h('form'));
     expect(formA.method).toBe('get');

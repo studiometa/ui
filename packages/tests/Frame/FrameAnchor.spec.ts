@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { FrameAnchor } from '@studiometa/ui';
 import { h, mount } from '#test-utils';
 
-describe('The AbstractFrameTrigger class', () => {
+describe('The FrameAnchor class', () => {
   it('should trigger when the link is clicked', async () => {
     const anchor = h('a', { href: '/#' });
     const frameAnchor = new FrameAnchor(anchor);

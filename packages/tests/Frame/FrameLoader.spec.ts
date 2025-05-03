@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { FrameLoader } from '@studiometa/ui';
 import { h, mount } from '#test-utils';
 
-describe('The AbstractFrameTrigger class', () => {
+describe('The FrameLoader class', () => {
   it('should always have the `...Keep` options active', async () => {
     const div = h('div');
     const frameLoader = new FrameLoader(div);
