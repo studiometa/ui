@@ -5,7 +5,6 @@ import morphdom from 'morphdom';
 export interface FrameTargetProps extends BaseProps {
   $options: {
     mode: 'replace' | 'prepend' | 'append';
-    id: string;
   };
 }
 
@@ -25,7 +24,6 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
         type: String,
         default: 'replace', // or 'prepend' or 'append'
       },
-      id: String,
     },
   };
 
@@ -42,7 +40,7 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
    * Get uniq ID.
    */
   get id(): string {
-    return this.$options.id || this.$el.id;
+    return this.$el.id;
   }
 
   /**
