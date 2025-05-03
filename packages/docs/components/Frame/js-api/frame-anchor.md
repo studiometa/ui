@@ -4,6 +4,8 @@ title: FrameAnchor
 
 # FrameAnchor
 
+The `FrameAnchor` component extends the [abstract `AbstractFrameTrigger` component](./abstract-frame-trigger.md) and inherits from its APIs.
+
 ## Options
 
 ### `history`

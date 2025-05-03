@@ -21,7 +21,8 @@ export interface FrameProps extends BaseProps {
 }
 
 /**
- * Class.
+ * Frame class.
+ * @see https://ui.studiometa.dev/-/components/Frame/
  */
 export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps> {
   /**
