@@ -16,9 +16,9 @@
 
 {% set theme = theme|default('primary') %}
 
-{% set size = size ?? 'l' %}
+{% set size = size ?? 'm' %}
 {% if size not in ['s', 'm', 'l'] %}
-  {% set size = 'l' %}
+  {% set size = 'm' %}
 {% endif %}
 
 {% set theme_shared = [
