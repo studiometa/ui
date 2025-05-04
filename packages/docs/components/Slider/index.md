@@ -7,7 +7,15 @@ badges: [JS]
 ## Table of content
 
 - [Examples](./examples.md)
-- [JS API](./js-api.md)
+- [JS API](./js-api/index.md)
+  - [Slider](./js-api/slider.md)
+  - [SliderBtn](./js-api/slider-btn.md)
+  - [SliderCount](./js-api/slider-count.md)
+  - [SliderDots](./js-api/slider-dots.md)
+  - [SliderDrag](./js-api/slider-drag.md)
+  - [SliderItem](./js-api/slider-item.md)
+  - [SliderProgress](./js-api/slider-progress.md)
+
 
 ## Usage
 
@@ -28,8 +36,6 @@ class App extends Base {
 
 export default createApp(App);
 ```
-
-### Additionnal features
 
 By default, the `SliderItem` and `SliderDrag` components are included in the `Slider`. You can add more controls with the following components:
 
