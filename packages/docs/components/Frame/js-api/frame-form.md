@@ -23,7 +23,7 @@ It will trigger a request on its parent [`Frame` component](./frame.md) when its
 ### `requestInit`
 
 - Return: `RequestInit`
-- Default: the parent `requestInit` with additionnal headers from the [`headers[]` refs](@todo) and the form data as body if the [`method`](#method) is `post`
+- Default: the parent `requestInit` with additionnal headers from the [`headers[]` refs](#headers) and the form data as body if the [`method`](#method) is `post`
 
 ## Refs
 
