@@ -23,10 +23,8 @@ export class SliderCount<T extends BaseProps = BaseProps> extends AbstractSlider
 
   /**
    * Update the current counter indicator.
-   * @param   {number} index The new active index.
-   * @returns {void}
    */
   update(index: number) {
-    this.$refs.current.innerHTML = `${index + 1}`;
+    this.$refs.current.textContent = `${index + 1}`;
   }
 }
