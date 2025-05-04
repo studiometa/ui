@@ -14,6 +14,7 @@ badges: [JS]
   - [FrameForm](./js-api/frame-form.md)
   - [FrameLoader](./js-api/frame-loader.md)
   - [FrameTarget](./js-api/frame-target.md)
+  - [FrameTriggerLoader](./js-api/frame-trigger-loader.md)
 
 ## Usage
 
@@ -30,7 +31,7 @@ class App extends Base {
     name: 'App',
     components: {
       Frame,
-    }
+    },
   };
 }
 
@@ -47,9 +48,15 @@ Orchestrate the mechanic of request handling, updating the browser history, etc.
     Loading...
   </div>
   <a data-component="FrameAnchor" href="https://fqdn.com?param1=foo&param2=bar">
+    <span
+      data-component="FrameTriggerLoader"
+      data-option-enter-from="hidden"
+      data-option-leave-to="hidden">
+      Loading...
+    </span>
     My foo bar link
   </a>
-  <form data-component="FrameForm" action="https://..." method="GET">
+  <form data-component="FrameForm" action="https://fqdn.com" method="POST">
     <!-- ... -->
   </form>
   <div data-component="FrameTarget" id="my-target">
@@ -58,13 +65,17 @@ Orchestrate the mechanic of request handling, updating the browser history, etc.
 </div>
 ```
 
+::: warning ❗ Important
+The root element of a `Frame` component **must have an `id` attribute**. It is used to map new content to the existing one.
+:::
+
 ### FrameForm
 
 The `FrameForm` component should **only be used on a `HTMLFormElement`**. It will use the standard `<form>` APIs to send a request:
 
 - the [`action` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/form#action) defines the URL
 - the [`method` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/form#method) defines the method (only `GET` or `POST` methods are supported for now)
-- the named `<input>` and other form elements inside the form will be used either as query parameters for `GET` requests or as the request body for `POST` requests
+- the named `<input>`, `<select>` and other form elements inside the form will be used either as query parameters for `GET` requests or as the request body for `POST` requests
 
 The following example will send a GET request to `https://fqdn.com/my/endpoint?firstname=Jean-Claude&lastname=Van Damme`.
 
@@ -94,23 +105,22 @@ The root element of a `FrameTarget` component **must have an `id` attribute**. I
 This component can be used to intercept navigation via URL links.
 
 ```html
-<a data-component="FrameAnchor" href="https://fqdn.com?param1=foo&param2=bar">
-  My foo bar link
-</a>
+<a data-component="FrameAnchor" href="https://fqdn.com?param1=foo&param2=bar">My foo bar link</a>
 ```
 
 ::: warning ❗ Important
 The root element of a `FrameAnchor` component **must be an `<a>` element**.
 :::
 
-When clicking on this `FrameAnchor` a fetch request, will be send using this `href` attribute and GET attributes `param1` and `params2` will be send as well.
+When clicking on this `FrameAnchor` a fetch request will be send to the URL defined by the `href` attribute.
 
 ### FrameLoader
 
 The `FrameLoader` component can be used to display a loader during the AJAX request.
 
 ```html
-<div data-component="FrameLoader"
+<div
+  data-component="FrameLoader"
   data-option-enter-from="opacity-0"
   data-option-enter-active="transition"
   data-option-leave-active="transition"
@@ -118,3 +128,26 @@ The `FrameLoader` component can be used to display a loader during the AJAX requ
   Loading...
 </div>
 ```
+
+### FrameTriggerLoader
+
+Like the `FrameLoader` component, the `FrameTriggerLoader` component can be used to display a loader during a request. It will be attached to the closest trigger component (`FrameAnchor` or `FrameForm`) and displayed only when the request being made comes from this trigger.
+
+```html {2-8}
+<a data-component="FrameAnchor" href="/some/path">
+  <span
+    data-component="FrameTriggerLoader"
+    data-option-enter-from="opacity-0"
+    data-option-enter-active="transition"
+    data-option-leave-active="transition"
+    data-option-leave-to="opacity-0">
+    Loading...
+  </span>
+
+  Click me!
+</a>
+```
+
+::: warning ❗ Important
+The `FrameTriggerLoader` should be placed inside a `FrameForm` or `FrameAnchor` component, it will have no effect otherwise.
+:::

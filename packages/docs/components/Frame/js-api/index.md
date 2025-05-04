@@ -10,3 +10,4 @@ title: Frame JS API
 - [FrameForm](./frame-form.md)
 - [FrameLoader](./frame-loader.md)
 - [FrameTarget](./frame-target.md)
+- [FrameTriggerLoader](./frame-trigger-loader.md)

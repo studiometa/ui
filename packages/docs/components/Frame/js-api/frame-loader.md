@@ -4,25 +4,10 @@ title: FrameLoader
 
 # FrameLoader
 
-## Options
+The `FrameLoader` component extends the [`Transition` component](/components/Transition/) and inherits its APIs, with the exception of the [`enterKeep`](/components/Transition/js-api.md#enterkeep) and [`leaveKeep`](/components/Transition/js-api.md#/components/Transition/js-api.md#enterkeep) options which are force to be always `true`.
 
-### `history`
+The `enter()` method of the component will be called by the parent `Frame` component when a request is started, the `leave()` method when the request has ended, be it successfully or with an error.
 
-- Type: `boolean`
-- Default: `false`
-
-Use this options to update browser history when performing a request. See [historyPush](https://js-toolkit.studiometa.dev/utils/history/historyPush.html#historypush)
-This option only work for GET requests.
-
-## Emits
-
-The component emit the following events :
-
-- `before-fetch`
-- `after-fetch`
-- `before-leave`
-- `after-leave`
-- `before-content`
-- `after-content`
-- `before-enter`
-- `after-enter`
+::: tip Fine grain loaders
+If you need a loader which is displayed only for a request coming from a specific trigger (a [`FrameForm`](./frame-form.md) or [`FrameAnchor`](./frame-anchor.md) component), have a look at the [`FrameTriggerLoader` component](./frame-trigger-loader.md).
+:::

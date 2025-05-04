@@ -6,25 +6,4 @@ title: FrameAnchor
 
 The `FrameAnchor` component extends the [abstract `AbstractFrameTrigger` component](./abstract-frame-trigger.md) and inherits from its APIs.
 
-## Options
-
-### `history`
-
-- Type: `boolean`
-- Default: `false`
-
-Use this options to update browser history when performing a request. See [historyPush](https://js-toolkit.studiometa.dev/utils/history/historyPush.html#historypush)
-This option only work for GET requests.
-
-## Emits
-
-The component emit the following events :
-
-- `before-fetch`
-- `after-fetch`
-- `before-leave`
-- `after-leave`
-- `before-content`
-- `after-content`
-- `before-enter`
-- `after-enter`
+It will trigger a request on its parent [`Frame` component](./frame.md) when its root `<a>` element is clicked, if no modifier key is pressed while clicking (i.e. to open a link in a new tab or window) and if the target of the link is not `_blank`.
