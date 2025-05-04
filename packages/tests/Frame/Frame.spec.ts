@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Base, getInstanceFromElement } from '@studiometa/js-toolkit';
-import { Frame, FrameLoader } from '@studiometa/ui';
+import { Frame, FrameAnchor, FrameLoader } from '@studiometa/ui';
 import { h, mount } from '#test-utils';
 
 describe('The Frame class', () => {
@@ -219,5 +219,20 @@ describe('The Frame class', () => {
 
     errorSpy.mockRestore();
     clientSpy.mockRestore();
+  });
+
+  it('should dispatch its event to the source trigger instance', async () => {
+    const anchor = h('a', { dataComponent: 'FrameAnchor' });
+    const div = h('div', { id: 'frame' }, [anchor]);
+    const frame = new Frame(div);
+    await mount(frame);
+
+    const frameAnchor = getInstanceFromElement(anchor, FrameAnchor);
+    for (const event of Frame.config.emits) {
+      const fn = vi.fn();
+      frameAnchor.$on(event, (event: CustomEvent) => fn(...event.detail));
+      frame.emitSync(event, frameAnchor, 'foo');
+      expect(fn).toHaveBeenCalledWith('foo');
+    }
   });
 });
