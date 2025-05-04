@@ -41,7 +41,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
    */
   static config: BaseConfig = {
     name: 'Slider',
-    refs: ['wrapper', 'debug'],
+    refs: ['wrapper'],
     emits: ['goto', 'index'],
     components: {
       SliderItem,
