@@ -298,20 +298,15 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Go to the given index.
    */
-  goTo(index: number, { withInstantMove = true } = {}) {
+  goTo(index: number) {
     if (index < 0 || index > this.indexMax) {
       throw new Error('Index out of bound.');
     }
 
-    const currentState = this.getStateValueByMode(this.currentState.x);
     const state = this.getStateValueByMode(this.states[index].x);
 
     for (const item of this.$children.SliderItem) {
-      // Better perfs when going fast through the slides
-      if (currentState !== state && withInstantMove) {
-        item.moveInstantly(currentState);
-      }
-      nextFrame(() => item.move(state));
+      item.move(state);
     }
 
     this.currentIndex = index;
@@ -369,7 +364,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     const closestIndex = absoluteDifferencesBetweenDistanceAndState.indexOf(minimumDifference);
 
     if (this.$options.fitBounds) {
-      this.goTo(closestIndex, { withInstantMove: false });
+      this.goTo(closestIndex);
     } else {
       if (this.$options.contain) {
         finalX = Math.min(this.containMinState, finalX);
