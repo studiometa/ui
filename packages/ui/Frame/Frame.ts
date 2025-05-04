@@ -143,7 +143,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    */
   onFrameFetchBefore() {
     for (const loader of this.getDirectChildren('FrameLoader')) {
-        loader.enter();
+      loader.enter();
     }
   }
 
@@ -156,16 +156,16 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     }
   }
 
+  emitSync(event: string, trigger: FrameForm | FrameAnchor = null, ...args: any[]) {
+    this.$emit(event, ...args);
+    trigger?.$emit(event, ...args);
+  }
+
   /**
    * Fetch given url.
    */
   async fetch(url: URL, requestInit: FrameRequestInit = {}) {
-    this.$emit(EVENTS.FETCH_BEFORE, url, requestInit);
-    requestInit.trigger?.$emit(EVENTS.FETCH_BEFORE, url, requestInit);
-
-    this.$log('fetch', url, requestInit);
-    this.$emit(EVENTS.FETCH, url, requestInit);
-    requestInit.trigger?.$emit(EVENTS.FETCH, url, requestInit);
+    this.emitSync(EVENTS.FETCH_BEFORE, requestInit.trigger, url, requestInit);
 
     this.abortController.abort();
     this.abortController = new AbortController();
@@ -179,14 +179,15 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
       signal: this.abortController.signal,
     };
 
+    this.$log('fetch', url, init);
+    this.emitSync(EVENTS.FETCH, init.trigger, url, init);
+
     try {
       const content = await this.client(url, init).then((response) => response.text());
-      this.$emit(EVENTS.FETCH_AFTER, url, requestInit, content);
-      requestInit.trigger?.$emit(EVENTS.FETCH_AFTER, url, requestInit, content);
+      this.emitSync(EVENTS.FETCH_AFTER, init.trigger, url, requestInit, content);
       this.content(url, init, content);
     } catch (error) {
-      this.$emit(EVENTS.FETCH_AFTER, url, requestInit, error);
-      requestInit.trigger?.$emit(EVENTS.FETCH_AFTER, url, requestInit, error);
+      this.emitSync(EVENTS.FETCH_AFTER, init.trigger, url, requestInit, error);
       this.error(url, init, error);
     }
   }
@@ -196,8 +197,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    */
   async content(url: URL, requestInit: FrameRequestInit, content: string) {
     this.$log('content', url, content);
-    this.$emit(EVENTS.CONTENT, url, requestInit, content);
-    requestInit.trigger?.$emit(EVENTS.CONTENT, url, requestInit, content);
+    this.emitSync(EVENTS.CONTENT, requestInit.trigger, url, requestInit, content);
 
     const doc = this.domParser.parseFromString(content, 'text/html');
     const el = doc.querySelector(`#${this.id}`) ?? doc;
@@ -219,8 +219,7 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
 
     await Promise.all(promises);
 
-    this.$emit(EVENTS.CONTENT_AFTER, url, requestInit, content);
-    requestInit.trigger?.$emit(EVENTS.CONTENT_AFTER, url, requestInit, content);
+    this.emitSync(EVENTS.CONTENT_AFTER, requestInit.trigger, url, requestInit, content);
 
     // We need to update the root instance to make sure newly inserted
     // components are correctly detected and mounted. This avoid having
@@ -233,7 +232,6 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    */
   async error(url: URL, requestInit: FrameRequestInit, error: Error) {
     this.$log('error', url, requestInit, error);
-    this.$emit(EVENTS.ERROR, url, requestInit, error);
-    requestInit.trigger?.$emit(EVENTS.ERROR, url, requestInit, error);
+    this.emitSync(EVENTS.ERROR, requestInit.trigger, url, requestInit, error);
   }
 }
