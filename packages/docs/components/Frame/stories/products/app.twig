@@ -1,8 +1,5 @@
 {% set count = 12 %}
-<div data-component="Frame Action"
-  id="frame"
-  data-option-log
-  data-option-on:frame-content="Panel -> target.open()">
+<div data-component="Frame" id="frame" data-option-log>
   <header class="flex gap-4 justify-between p-4">
     <h1 class="font-bold">My shop</h1>
     <div data-component="FrameLoader"
@@ -57,7 +54,11 @@
       {% endblock %}
       {% block content %}
         <div data-component="FrameTarget"
-          id="cart-content">
+          id="cart-content"
+          data-option-enter-from="opacity-0"
+          data-option-enter-active="transition ease-in-out"
+          data-option-leave-active="transition ease-in-out"
+          data-option-leave-to="opacity-0">
           <p class="opacity-50">Your cart is empty.</p>
         </div>
       {% endblock %}
@@ -85,18 +86,29 @@
         }}
         <div class="flex gap-4 justify-between items-baseline">
           <div>
-            <a href="/api?product={{ loop.index }}"
+            <a data-component="Action"
+              data-option-on:click.prevent
+              href="#"
               class="inline-block border-b after:absolute after:inset-0">
               Item #{{ loop.index }}
             </a>
             <br /> {{ price }}
           </div>
-          <form data-component="FrameForm" action="/api" method="POST">
+          <form data-component="FrameForm Action"
+            action="/api"
+            method="POST"
+            data-option-on:frame-content="Panel -> target.open()"
+            class="flex items-center gap-2">
             {%- set cart_content -%}
               <span data-component="FrameTarget" id="cart-summary">
                 Cart: 1
               </span>
-              <div data-component="FrameTarget" id="cart-content">
+              <div data-component="FrameTarget"
+                id="cart-content"
+                data-option-enter-from="opacity-0"
+                data-option-enter-active="transition ease-in-out"
+                data-option-leave-active="transition ease-in-out"
+                data-option-leave-to="opacity-0">
                 <article class="flex justify-between gap-4">
                   <div>
                     <a href="#" class="inline-block border-b">
@@ -104,16 +116,41 @@
                     </a>
                   </div>
                   <span class="ml-auto">{{ price }}</span>
-                  <form data-component="FrameForm" action="/api" method="POST">
+                  <form data-component="FrameForm Action"
+                    action="/api"
+                    method="POST"
+                    class="flex items-center gap-2">
                     <input type="hidden" name="wait" value="1" />
                     <textarea class="hidden" readonly name="content">
                       <span data-component="FrameTarget" id="cart-summary">
                         Cart: 0
                       </span><div data-component="FrameTarget"
-                        id="cart-content">
+                        id="cart-content"
+                        data-option-enter-from="opacity-0"
+                        data-option-enter-active="transition ease-in-out"
+                        data-option-leave-active="transition ease-in-out"
+                        data-option-leave-to="opacity-0">
                         <p class="opacity-50">Your cart is empty.</p>
                       </div>
                     </textarea>
+                    <div data-component="FrameLoaderTrigger"
+                      data-option-enter-from="opacity-0 scale-0"
+                      data-option-enter-active="transition duration-500 ease-out-expo"
+                      data-option-leave-active="transition duration-500 ease-in-expo"
+                      data-option-leave-to="opacity-0 scale-0"
+                      class="flex items-center mr-auto opacity-0 scale-0">
+                      {{
+                        include(
+                          '@ui/Icon/Icon.twig',
+                          {
+                            name: 'svg-spinners:ring-resize',
+                            attr: {
+                              class: 'block h-[0.6lh] [&>svg]:w-full [&>svg]:h-full'
+                            }
+                          }
+                        )
+                      }}
+                    </div>
                     <button type="submit"
                       class="relative inline-block border-b">
                       Remove
@@ -126,6 +163,25 @@
             <textarea readonly class="hidden" name="content">
               {{ cart_content|e('html') }}
             </textarea>
+
+            <div data-component="FrameLoaderTrigger"
+              data-option-enter-from="opacity-0 scale-0"
+              data-option-enter-active="transition duration-500 ease-out-expo"
+              data-option-leave-active="transition duration-500 ease-in-expo"
+              data-option-leave-to="opacity-0 scale-0"
+              class="flex items-center mr-auto opacity-0 scale-0">
+              {{
+                include(
+                  '@ui/Icon/Icon.twig',
+                  {
+                    name: 'svg-spinners:ring-resize',
+                    attr: {
+                      class: 'block h-[0.6lh] [&>svg]:w-full [&>svg]:h-full'
+                    }
+                  }
+                )
+              }}
+            </div>
             <button type="submit" class="relative inline-block border-b">
               Add to cart
             </button>
