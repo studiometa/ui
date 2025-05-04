@@ -4,6 +4,7 @@ import * as components from '@studiometa/ui';
 test('components exports', () => {
   expect(Object.keys(components).toSorted()).toMatchInlineSnapshot(`
     [
+      "AbstractFrameTrigger",
       "AbstractPrefetch",
       "AbstractScrollAnimation",
       "AbstractSliderChild",
@@ -29,7 +30,9 @@ test('components exports', () => {
       "Frame",
       "FrameAnchor",
       "FrameForm",
+      "FrameLoader",
       "FrameTarget",
+      "FrameTriggerLoader",
       "LargeText",
       "LazyInclude",
       "Menu",

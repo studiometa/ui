@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { Transition } from '@studiometa/ui';
 import { mount, h } from '#test-utils';
 
@@ -13,14 +13,9 @@ describe('The Transition component', () => {
     const opts = { dataOptionGroup: 'group' };
     const transitionA = new Transition(h('div', opts));
     const transitionB = new Transition(h('div', opts));
-    const enterMock = vi.spyOn(transitionA, 'enter');
-    const leaveMock = vi.spyOn(transitionA, 'enter');
 
     await mount(transitionA, transitionB);
     expect(transitionA.$options.group).toBe(transitionB.$options.group);
-    await transitionB.enter();
-    expect(enterMock).toHaveBeenCalledOnce();
-    await transitionB.leave();
-    expect(leaveMock).toHaveBeenCalledOnce();
+    expect(transitionA.targets).toEqual(transitionB.targets);
   });
 });

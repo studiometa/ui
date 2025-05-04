@@ -1,0 +1,43 @@
+{% set initial_value %}
+{% verbatim %}
+<div class="p-6 rounded bg-green-200">
+  The date is <strong>{{ 'now'|date('F j, Y H:i:s') }}</strong>.
+</div>
+{% endverbatim %}
+{% endset %}
+
+<div data-component="Frame" id="frame" class="grid gap-8 max-w-2xl">
+
+  <form data-component="FrameForm" action="/api" method="POST"
+    class="grid gap-4"
+    data-ref="App.form">
+    <input type="hidden" name="wait" value="1">
+    <textarea
+      class="w-full py-4 px-6 border rounded resize-none font-mono text-sm"
+      rows="10"
+      data-component="DataModel Action"
+      data-option-on:input="FrameForm -> target.$el.requestSubmit()"
+      data-option-group="content">{{ initial_value }}</textarea>
+    <textarea
+      class="hidden"
+      data-component="DataComputed"
+      data-option-group="content"
+      type="text"
+      data-option-compute="`<div data-component='FrameTarget' id='target'>${value}</div>`"
+      name="content"
+      readonly><div data-component='FrameTarget' id='target'>{{ initial_value }}</div></textarea>
+    <div class="flex items-center gap-8">
+      {{ include('@ui/Button/StyledButton.twig', { label: 'Submit', icon: 'mdi:send', attr: { type: 'submit' } }) }}
+      <div data-component="FrameLoader"
+        data-option-enter-from="opacity-0 scale-0"
+        data-option-enter-active="transition"
+        data-option-leave-to="opacity-0 scale-0"
+        data-option-leave-active="transition"
+        class="opacity-0 scale-0">
+        <div class="w-4 h-4 border-2 rounded-full border-current border-t-transparent animate-loader"></div>
+      </div>
+    </div>
+  </form>
+
+  <div data-component="FrameTarget" id="target"></div>
+</div>

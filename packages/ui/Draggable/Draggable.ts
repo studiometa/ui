@@ -1,6 +1,6 @@
 import { Base, withDrag } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig, DragServiceProps } from '@studiometa/js-toolkit';
-import { matrix } from '@studiometa/js-toolkit/utils';
+import { domScheduler, transform } from '@studiometa/js-toolkit/utils';
 
 /**
  * Draggable class.
@@ -46,6 +46,11 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base)<T
     this.x = this.originX + props.x - props.origin.x;
     this.y = this.originY + props.y - props.origin.y;
 
-    this.$el.style.transform = matrix({ translateX: this.x, translateY: this.y });
+    domScheduler.write(() => {
+      transform(this.$el, {
+        x: this.x,
+        y: this.y,
+      });
+    });
   }
 }

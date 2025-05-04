@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Draggable } from '@studiometa/ui';
 
-function createEvent(type, data = {}, options = {}) {
+function createEvent(type: string, data = {}, options = {}) {
   const event = new Event(type, options);
   Object.entries(data).forEach(([name, value]) => {
     event[name] = value;
@@ -20,7 +20,7 @@ describe('The Draggable component', () => {
     div.dispatchEvent(createEvent('pointerdown', { x: 0, y: 0, button: 0 }));
     document.dispatchEvent(createEvent('mousemove', { clientX: 10, clientY: 10 }));
     await vi.advanceTimersByTimeAsync(16);
-    expect(div.style.transform).toBe('matrix(1, 0, 0, 1, 10, 10)');
+    expect(div.style.transform).toBe('translate3d(10px, 10px, 0px)');
     vi.useRealTimers();
   });
 });

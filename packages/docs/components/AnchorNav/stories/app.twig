@@ -1,37 +1,45 @@
-{% set section_length = 3 %}
+{% set count = 3 %}
+{% set sizes = ['40vh', '60vh', '80vh', '100vh'] %}
 
-<div data-component="AnchorNav" class="flex items-start relative">
-  <nav class="bg-blue-200 p-2 w-1/3 sticky flex flex-col top-4">
-    <ul>
-      {% for item in 1..section_length %}
-        <li class="my-4">
-          <a href="#item-{{ loop.index }}"
-            data-component="AnchorNavLink"
-            data-option-enter-to="bg-pink-200"
-            data-option-enter-active="transition-all duration-500 ease-out-expo"
-            data-option-enter-keep
-            class="py-2 px-2 bg-blue-200">
-            item-{{ loop.index }}
-          </a>
+<div class="flex items-center justify-center w-full h-screen">
+  ↓ Scroll down
+</div>
+<div data-component="AnchorNav">
+  <nav class="z-1 fixed top-8 left-1/2 -translate-x-1/2 flex py-2 px-3 bg-gray-100 dark:bg-black rounded-full shadow">
+    <ul class="flex gap-3">
+      {% for item in 1..count %}
+        <li>
+          {{
+            include('@ui/Button/StyledButtonRounded.twig', {
+              label: 'Section #' ~ loop.index,
+              href: '#item-' ~ loop.index,
+              size: 's',
+              attr: {
+                class: 'whitespace-nowrap',
+                data_component: 'AnchorNavLink',
+                data_option_enter_to: '!bg-green-600 dark:!text-white',
+                data_option_enter_active: 'transition duration-500 ease-in-out',
+                data_option_enter_keep: true,
+              },
+            })
+          }}
         </li>
       {% endfor %}
     </ul>
   </nav>
-  <div class="w-2/3">
-    {% for item in 1..section_length %}
-      <section class="relative bg-purple-200 h-[300px]">
-        <div data-component="AnchorNavTarget"
-        data-option-intersection-observer='{
-          "threshold": 0.5,
-          "rootMargin": "0% 0px -30% 0px"
-        }'
+  <div class="grid gap-8 p-4 w-full">
+    {% for item in 1..count %}
+      <section
+        data-component="AnchorNavTarget"
+        data-option-intersection-observer="{{ { threshold: 0.5, rootMargin: '0px 0px -25% 0px' }|json_encode }}"
         id="item-{{ loop.index }}"
-        class="bg-pink-200 h-[150px]">
-          Item-{{ loop.index }}
-        </div>
+        class="flex items-center justify-center bg-green-{{ loop.index }}00 h-[{{ random(sizes) }}] text-black">
+        Section #{{ loop.index }}
       </section>
     {% endfor %}
   </div>
 </div>
 
-<div class="h-screen"></div>
+<div class="flex items-center justify-center w-full h-screen">
+  ↑ Scroll up
+</div>

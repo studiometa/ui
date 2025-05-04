@@ -1,0 +1,79 @@
+{%- set content -%}
+  {% verbatim %}
+    <div
+      data-component="FrameTarget"
+      id="my-target"
+      data-option-enter-from="translate-y-4 opacity-0"
+      data-option-enter-active="transition duration-500 ease-out-expo"
+      data-option-leave-active="transition duration-500 ease-out-expo"
+      data-option-leave-to="-translate-y-4 opacity-0">
+      <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
+    </div>
+    <div
+      data-component="FrameTarget"
+      id="my-target-append"
+      data-option-mode="append"
+      data-option-enter-from="translate-y-4 opacity-0"
+      data-option-enter-active="transition duration-500 ease-out-expo">
+      <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
+    </div>
+    <div
+      data-component="FrameTarget"
+      id="my-target-prepend"
+      data-option-mode="prepend"
+      data-option-enter-from="-translate-y-4 opacity-0"
+      data-option-enter-active="transition duration-500 ease-out-expo"
+      data-option-leave-active="transition duration-500 ease-out-expo"
+      data-option-leave-to="-translate-y-full">
+      <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
+    </div>
+  {% endverbatim %}
+{%- endset -%}
+
+<div data-component="Frame" id="my-frame" data-option-log class="grid gap-8 p-8">
+  <div>
+    {{
+      include(
+        '@ui/Button/StyledButton.twig',
+        {
+          label: 'Click me',
+          icon: 'mdi:mouse-left-click',
+          icon_position: 'end',
+          href: twig_toolkit_url('/api').withQueryParameter('content', content),
+          attr: {
+            data_component: 'FrameAnchor',
+          },
+        }
+      )
+    }}
+  </div>
+  <div class="grid grid-cols-3 gap-8">
+    <div
+      data-component="FrameTarget"
+      id="my-target"
+      data-option-enter-from="translate-y-4 opacity-0"
+      data-option-enter-active="transition duration-500 ease-out-expo"
+      data-option-leave-active="transition duration-500 ease-out-expo"
+      data-option-leave-to="-translate-y-4 opacity-0">
+      <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
+    </div>
+    <div
+      data-component="FrameTarget"
+      id="my-target-append"
+      data-option-mode="append"
+      data-option-enter-from="translate-y-4 opacity-0"
+      data-option-enter-active="transition duration-500 ease-out-expo">
+      <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
+    </div>
+    <div
+      data-component="FrameTarget"
+      id="my-target-prepend"
+      data-option-mode="prepend"
+      data-option-enter-from="-translate-y-4 opacity-0"
+      data-option-enter-active="transition duration-500 ease-out-expo"
+      data-option-leave-active="transition duration-500 ease-out-expo"
+      data-option-leave-from="-translate-y-full">
+      <div>{{ 'now'|date('F j, Y H:i:s') }}</div>
+    </div>
+  </div>
+</div>

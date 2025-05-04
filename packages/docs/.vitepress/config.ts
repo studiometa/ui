@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
 import { defineConfig } from 'vitepress';
+import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
 import { withLeadingSlash, withLeadingCharacters } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
 import pkg from '../package.json' with { type: 'json' };
@@ -17,10 +18,19 @@ export default defineConfig({
   head: [
     [
       'script',
-      { defer: '', 'data-domain': 'ui.studiometa.dev', src: 'https://plausible.io/js/script.outbound-links.js' },
+      {
+        defer: '',
+        'data-domain': 'ui.studiometa.dev',
+        src: 'https://plausible.io/js/script.outbound-links.js',
+      },
     ],
     ['link', { rel: 'icon', type: 'image/x-icon', href: '/-/logo.png' }],
   ],
+  markdown: {
+    codeTransformers: [transformerTwoslash()],
+    // Explicitly load these languages for types hightlighting
+    languages: ['js', 'jsx', 'ts', 'tsx'],
+  },
   sitemap: {
     hostname: 'https://ui.studiometa.dev/',
     transformItems(items) {
@@ -155,10 +165,14 @@ function generateSidebarLinksFromPath(
     link: withLeadingSlash(entry.replace(/\/index\.md$/, '/').replace(/\.md$/, '.html')),
     items: entry.endsWith('/index.md')
       ? [
+          ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*/index.md'), {
+            extractTitle: true,
+            collapsed: true,
+          }),
           ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*[!index]*.md'), {
             extractTitle: true,
           }),
-        ]
+        ].sort((a, b) => a.text.localeCompare(b.text))
       : [],
     collapsed,
   }));

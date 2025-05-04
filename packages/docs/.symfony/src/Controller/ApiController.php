@@ -14,10 +14,14 @@ final class ApiController extends AbstractController
     {
         $query = $request->query;
         $path = $query->get('path');
-        $tpl = $request->getContent();
+        $tpl = $request->isMethod('POST') ? $request->request->get('content') ?? $request->getContent() : $request->get('content');
 
         if (empty($path) && empty($tpl)) {
             die('Nothing to display.');
+        }
+
+        if ($request->get('wait')) {
+            sleep((int)$request->get('wait'));
         }
 
         if (!empty($tpl)) {

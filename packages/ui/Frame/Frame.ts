@@ -1,43 +1,30 @@
-import { Base, isDirectChild, getDirectChildren } from '@studiometa/js-toolkit';
+import { Base, getClosestParent } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { nextFrame, historyPush } from '@studiometa/js-toolkit/utils';
+import { domScheduler, historyPush } from '@studiometa/js-toolkit/utils';
 import { FrameAnchor } from './FrameAnchor.js';
 import { FrameForm } from './FrameForm.js';
 import { FrameTarget } from './FrameTarget.js';
-
-/**
- * Get the scroll position.
- */
-function getScrollPosition() {
-  return {
-    left: window.pageXOffset,
-    top: window.pageYOffset,
-  };
-}
-
-/**
- * The fetch cache.
- */
-const cache: Map<
-  string,
-  { promise: Promise<string>; status: 'pending' | 'resolved' | 'error'; content: string }
-> = new Map();
+import { FrameLoader } from './FrameLoader.js';
+import type { FrameRequestInit, FrameTriggerEvent } from './types.js';
+import { EVENTS } from './utils.js';
 
 export interface FrameProps extends BaseProps {
   $children: {
     FrameAnchor: FrameAnchor[];
     FrameForm: FrameForm[];
     FrameTarget: FrameTarget[];
-    // eslint-disable-next-line no-use-before-define
-    Frame: Frame[];
+    FrameLoader: FrameLoader[];
   };
   $options: {
     history: boolean;
+    requestInit: RequestInit;
+    headers: Record<string, string>;
   };
 }
 
 /**
- * Class.
+ * Frame class.
+ * @see https://ui.studiometa.dev/-/components/Frame/
  */
 export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps> {
   /**
@@ -45,26 +32,39 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
    */
   static config: BaseConfig = {
     name: 'Frame',
-    emits: [
-      'before-fetch',
-      'after-fetch',
-      'before-leave',
-      'after-leave',
-      'before-content',
-      'after-content',
-      'before-enter',
-      'after-enter',
-    ],
+    emits: Object.values(EVENTS),
     components: {
       FrameAnchor,
       FrameForm,
       FrameTarget,
-      Frame,
+      FrameLoader,
     },
     options: {
       history: Boolean,
+      requestInit: Object,
+      headers: Object,
     },
   };
+
+  /**
+   * DOM Parser to parse the new content to be injected.
+   */
+  domParser = new DOMParser();
+
+  /**
+   * Abort controller to prevent multiple simultaneous fetches.
+   */
+  abortController = new AbortController();
+
+  /**
+   * Header names.
+   */
+  headerNames = {
+    ACCEPT: 'accept',
+    X_REQUESTED_BY: 'x-requested-by',
+    X_TRIGGERED_BY: 'x-triggered-by',
+    USER_AGENT: 'user-agent',
+  } as const;
 
   /**
    * Get uniq id.
@@ -74,202 +74,164 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
   }
 
   /**
-   * Get direct `FrameTarget` children.
+   * The client used for the fetch request.
    */
-  get directChildrenFrameTarget(): FrameTarget[] {
-    return getDirectChildren(this, 'Frame', 'FrameTarget');
+  get client(): typeof fetch {
+    return window.fetch.bind(window);
   }
 
   /**
-   * Prevent scroll top on unload.
+   * Default request init.
    */
-  onWindowUnload() {
-    const { history } = window;
+  get requestInit(): RequestInit {
+    const { headerNames } = this;
+    const { requestInit, headers } = this.$options;
+    const requestedBy = '@studiometa/ui/Frame';
 
-    if (!history.state) {
-      return;
-    }
-
-    history.replaceState(
-      {
-        ...history.state,
-        scroll: getScrollPosition(),
+    return {
+      ...requestInit,
+      headers: {
+        [headerNames.ACCEPT]: 'text/*',
+        [headerNames.X_REQUESTED_BY]: requestedBy,
+        [headerNames.USER_AGENT]: `${navigator.userAgent} ${requestedBy}`,
+        ...requestInit.headers,
+        ...headers,
       },
-      '',
-    );
+    };
   }
 
   /**
-   * Go to the previous URL on `popstate` event.
+   * Get chidlren limited to the current instance.
    */
-  onWindowPopstate({ event }: { event: PopStateEvent }) {
-    this.goTo(window.location.href, null, event.state);
-  }
-
-  /**
-   * Prevent click on `FrameAnchor`.
-   */
-  onFrameAnchorClick({ target, event }: { event: MouseEvent, target: FrameAnchor }) {
-    // Prevent propagation of nested frames
-    if (!isDirectChild(this, 'Frame', 'FrameAnchor', target)) {
-      return;
-    }
-
-    this.$log('onAFrameClick', target, event);
-    event.preventDefault();
-
-    // Do nothing when clicking links on the same page
-    // @todo handle hash change
-    if (target.href === window.location.href) {
-      return;
-    }
-
-    this.goTo(target.href);
-  }
-
-  /**
-   * Prevent submit on forms.
-   */
-  onFrameFormSubmit({ event, target }: { event: SubmitEvent, target: FrameForm }) {
-    // Prevent propagation of nested frames
-    if (!isDirectChild(this, 'Frame', 'FrameForm', target)) {
-      return;
-    }
-
-    this.$log('onFrameFormFrameSubmit', target, event);
-    event.preventDefault();
-    const url = new URL(target.action);
-
-    if (target.$el.method === 'get') {
-      // @ts-ignore
-      url.search = new URLSearchParams(new FormData(target.$el)).toString();
-      this.goTo(url.toString());
-    }
-
-    if (target.$el.method === 'post') {
-      this.goTo(url.toString(), new FormData(target.$el));
-    }
-  }
-
-  /**
-   * Parge an HTML string into a DOM object.
-   */
-  parseHTML(string = '') {
-    return new DOMParser().parseFromString(string, 'text/html');
-  }
-
-  /**
-   * Go to the given url.
-   */
-  async goTo(url: string, formData: FormData = null, scroll: { top: number; left: number } = null) {
-    this.$log('goTo', url);
-    const parsedUrl = new URL(url);
-
-    if (parsedUrl.origin !== window.location.origin) {
-      throw new Error('Cross origin request are not allowed.');
-    }
-
-    this.$emit('before-fetch', url);
-
-    // @todo add option to use content as is or to parse it and extract the new frame
-    const content = await this.fetch(url, formData);
-    const doc = this.parseHTML(content);
-    const el = doc.querySelector(`#${this.id}`);
-    // @todo manage el === null
-    const newFrame = new Frame(el as HTMLElement);
-    newFrame.__children.registerAll();
-
-    this.$emit('after-fetch', url, content);
-
-    this.$emit('before-leave');
-    // Leave all
-    await Promise.all(this.directChildrenFrameTarget.map((target) => target.leave()));
-
-    this.$emit('after-leave');
-    this.$emit('before-content');
-
-    // Update content
-    // @todo insert non existing FrameTarget as well
-    this.directChildrenFrameTarget.map((target, index) =>
-      target.updateContent(newFrame.directChildrenFrameTarget[index]),
-    );
-
-    // Push history
-    if (this.$options.history && formData === null) {
-      document.title = doc.title;
-      historyPush({ path: parsedUrl.pathname, search: parsedUrl.searchParams });
-    }
-
-    if (scroll) {
-      document.scrollingElement.scrollTop = scroll.top;
-      document.scrollingElement.scrollLeft = scroll.left;
-    }
-
-    // Update components
-    await nextFrame();
-    this.$root.$update();
-    await nextFrame();
-
-    this.$emit('after-content');
-    this.$emit('before-enter');
-
-    // Enter all
-    await Promise.all(this.directChildrenFrameTarget.map((target) => target.enter()));
-
-    this.$emit('after-enter');
-  }
-
-  /**
-   * Fetch the given url.
-   */
-  async fetch(url: string, formData: FormData = null): Promise<string> {
-    // @note skip cache for POST requests.
-    if (formData) {
-      const promise = fetch(url, {
-        method: 'post',
-        body: formData,
-      }).then((response) => response.text());
-
-      const content = await promise;
-      return content;
-    }
-
-    const cached = cache.get(url);
-
-    if (cached) {
-      if (cached.status === 'pending') {
-        return cached.promise;
+  getDirectChildren(name: keyof FrameProps['$children']) {
+    const children = [];
+    for (const child of this.$children[name]) {
+      if (getClosestParent(child, this.constructor) === this) {
+        children.push(child);
       }
-
-      return cached.content;
     }
+    return children;
+  }
 
-    const promise = fetch(url).then((response) => response.text());
+  /**
+   * Fetch new content on frame-trigger.
+   */
+  onFrameAnchorFrameTrigger({ args: [url, requestInit] }: { args: FrameTriggerEvent['detail'] }) {
+    this.fetch(url, requestInit);
+  }
+
+  /**
+   * Fetch new content on frame-trigger.
+   */
+  onFrameFormFrameTrigger({ args: [url, requestInit] }: { args: [URL, FrameRequestInit] }) {
+    this.fetch(url, requestInit);
+  }
+
+  /**
+   * Update content on history back/forward navigation.
+   */
+  onWindowPopstate() {
+    this.fetch(new URL(window.location.href), {
+      headers: {
+        [this.headerNames.X_TRIGGERED_BY]: 'popstate',
+      },
+    });
+  }
+
+  /**
+   * Trigger FrameLoaders enter.
+   */
+  onFrameFetchBefore() {
+    for (const loader of this.getDirectChildren('FrameLoader')) {
+      loader.enter();
+    }
+  }
+
+  /**
+   * Trigger FrameLoaders leave.
+   */
+  onFrameFetchAfter() {
+    for (const loader of this.getDirectChildren('FrameLoader')) {
+      loader.leave();
+    }
+  }
+
+  emitSync(event: string, trigger: FrameForm | FrameAnchor = null, ...args: any[]) {
+    this.$emit(event, ...args);
+    trigger?.$emit(event, ...args);
+  }
+
+  /**
+   * Fetch given url.
+   */
+  async fetch(url: URL, requestInit: FrameRequestInit = {}) {
+    this.emitSync(EVENTS.FETCH_BEFORE, requestInit.trigger, url, requestInit);
+
+    this.abortController.abort();
+    this.abortController = new AbortController();
+    const init = {
+      ...this.requestInit,
+      ...requestInit,
+      headers: {
+        ...this.requestInit.headers,
+        ...requestInit.headers,
+      },
+      signal: this.abortController.signal,
+    };
+
+    this.$log('fetch', url, init);
+    this.emitSync(EVENTS.FETCH, init.trigger, url, init);
 
     try {
-      cache.set(url, {
-        promise,
-        status: 'pending',
-        content: undefined,
-      });
-
-      const content = await promise;
-
-      cache.set(url, {
-        promise,
-        status: 'resolved',
-        content,
-      });
-
-      return content;
-    } catch (err) {
-      cache.set(url, {
-        promise,
-        status: 'error',
-        content: err,
-      });
-
-      return err;
+      const content = await this.client(url, init).then((response) => response.text());
+      this.emitSync(EVENTS.FETCH_AFTER, init.trigger, url, requestInit, content);
+      this.content(url, init, content);
+    } catch (error) {
+      this.emitSync(EVENTS.FETCH_AFTER, init.trigger, url, requestInit, error);
+      this.error(url, init, error);
     }
+  }
+
+  /**
+   * Dispatch the contents to update to their matching FrameTarget.
+   */
+  async content(url: URL, requestInit: FrameRequestInit, content: string) {
+    this.$log('content', url, content);
+    this.emitSync(EVENTS.CONTENT, requestInit.trigger, url, requestInit, content);
+
+    const doc = this.domParser.parseFromString(content, 'text/html');
+    const el = doc.querySelector(`#${this.id}`) ?? doc;
+    const promises = [];
+
+    // @todo inject styles and scripts from new <head>
+    if (this.$options.history) {
+      if (requestInit?.headers?.[this.headerNames.X_TRIGGERED_BY] !== 'popstate') {
+        historyPush({ path: url.pathname, search: url.searchParams });
+      }
+      domScheduler.write(() => {
+        if (doc.title) document.title = doc.title;
+      });
+    }
+
+    for (const frameTarget of this.getDirectChildren('FrameTarget')) {
+      promises.push(frameTarget.updateContent(el.querySelector(`#${frameTarget.id}`)));
+    }
+
+    await Promise.all(promises);
+
+    this.emitSync(EVENTS.CONTENT_AFTER, requestInit.trigger, url, requestInit, content);
+
+    // We need to update the root instance to make sure newly inserted
+    // components are correctly detected and mounted. This avoid having
+    // to declare all potentials component as children of the Frame component.
+    await this.$root.$update();
+  }
+
+  /**
+   * Handle errors.
+   */
+  async error(url: URL, requestInit: FrameRequestInit, error: Error) {
+    this.$log('error', url, requestInit, error);
+    this.emitSync(EVENTS.ERROR, requestInit.trigger, url, requestInit, error);
   }
 }

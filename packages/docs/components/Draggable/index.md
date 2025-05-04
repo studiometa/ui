@@ -2,9 +2,18 @@
 badges: [JS]
 ---
 
-# Draggable (todo) <Badges :texts="$frontmatter.badges" />
+# Draggable <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 
-- [Examples](./examples)
-- [JS API](./js-api)
+- [Examples](./examples.md)
+- [JS API](./js-api.md)
+
+## Usage
+
+Use this component to add drag capabilities to the root element.
+
+<PreviewPlayground
+  :html="() => import('./stories/app.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />

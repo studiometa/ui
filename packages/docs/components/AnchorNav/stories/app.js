@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file */
 import { Base, createApp } from '@studiometa/js-toolkit';
 import { AnchorNav } from '@studiometa/ui';
 
