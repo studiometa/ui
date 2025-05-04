@@ -21,6 +21,7 @@
     "docs:dev": "npm run dev -w @studiometa/ui-docs",
     "docs:build": "npm run build -w @studiometa/ui-docs",
     "play:dev": "npm run dev -w @studiometa/ui-playground",
+    "play:watch": "npm run watch -w @studiometa/ui-playground",
     "play:build": "npm run build -w @studiometa/ui-playground",
     "postversion": "node scripts/update-composer-version.js",
     "postinstall": "patch-package"
