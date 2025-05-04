@@ -1,0 +1,16 @@
+html.dark {
+  background-color: #222;
+  color: #eee;
+}
+
+body {
+  padding: 1rem;
+}
+
+.z-above {
+  z-index: 1;
+}
+
+.z-under {
+  z-index: -1;
+}

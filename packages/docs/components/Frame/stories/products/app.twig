@@ -1,0 +1,137 @@
+{% set count = 12 %}
+<div data-component="Frame Action"
+  id="frame"
+  data-option-log
+  data-option-on:frame-content="Panel -> target.open()">
+  <header class="flex gap-4 justify-between p-4">
+    <h1 class="font-bold">My shop</h1>
+    <div data-component="FrameLoader"
+      data-option-enter-from="opacity-0 scale-0"
+      data-option-enter-active="transition duration-500 ease-out-expo"
+      data-option-leave-active="transition duration-500 ease-in-expo"
+      data-option-leave-to="opacity-0 scale-0"
+      class="flex items-center mr-auto opacity-0 scale-0">
+      {{
+        include(
+          '@ui/Icon/Icon.twig',
+          {
+            name: 'svg-spinners:ring-resize',
+            attr: {
+              class: 'block h-[0.6lh] [&>svg]:w-full [&>svg]:h-full'
+            }
+          }
+        )
+      }}
+    </div>
+    {% embed '@ui/Panel/Panel.twig'
+      with {
+        position: 'right',
+        attr: {
+          class: 'z-10'
+        },
+        overlay_attr: {
+          class: 'z-under absolute inset-0 bg-white bg-opacity-20'
+        },
+        container_attr: {
+          class: 'bg-white h-screen border-l'
+        },
+        content_attr: {
+          class: 'p-8 w-screen max-w-sm'
+        }
+      } only
+    %}
+      {% block open %}
+        <button data-ref="open[]"
+          href="#/api?cart"
+          class="inline-flex gap-2 items-center border-b">
+          <span data-component="FrameTarget" id="cart-summary">Cart: 0</span>
+        </button>
+      {% endblock %}
+      {% block close %}
+        <div class="flex justify-end p-8 pb-0">
+          <button data-ref="close[]"
+            class="inline-flex gap-2 items-center border-b">
+            Close
+          </button>
+        </div>
+      {% endblock %}
+      {% block content %}
+        <div data-component="FrameTarget"
+          id="cart-content">
+          <p class="opacity-50">Your cart is empty.</p>
+        </div>
+      {% endblock %}
+    {% endembed %}
+  </header>
+  <main class="grid xs:grid-cols-2 m:grid-cols-3 xl:grid-cols-4 gap-8 p-4">
+    {% for article in 1..count %}
+      {% set price = random(1, 4) ~ '00 €' %}
+      <article class="relative grid gap-4">
+        {{
+          include(
+            '@ui/Figure/Figure.twig',
+            {
+              src: 'https://picsum.photos/seed/KEY/300/200'|replace({
+                KEY: loop.index + 10
+              }),
+              width: 300,
+              height: 200,
+              fit: 'cover',
+              attr: {
+                class: 'rounded overflow-hidden'
+              }
+            }
+          )
+        }}
+        <div class="flex gap-4 justify-between items-baseline">
+          <div>
+            <a href="/api?product={{ loop.index }}"
+              class="inline-block border-b after:absolute after:inset-0">
+              Item #{{ loop.index }}
+            </a>
+            <br /> {{ price }}
+          </div>
+          <form data-component="FrameForm" action="/api" method="POST">
+            {%- set cart_content -%}
+              <span data-component="FrameTarget" id="cart-summary">
+                Cart: 1
+              </span>
+              <div data-component="FrameTarget" id="cart-content">
+                <article class="flex justify-between gap-4">
+                  <div>
+                    <a href="#" class="inline-block border-b">
+                      Item #{{ loop.index }}
+                    </a>
+                  </div>
+                  <span class="ml-auto">{{ price }}</span>
+                  <form data-component="FrameForm" action="/api" method="POST">
+                    <input type="hidden" name="wait" value="1" />
+                    <textarea class="hidden" readonly name="content">
+                      <span data-component="FrameTarget" id="cart-summary">
+                        Cart: 0
+                      </span><div data-component="FrameTarget"
+                        id="cart-content">
+                        <p class="opacity-50">Your cart is empty.</p>
+                      </div>
+                    </textarea>
+                    <button type="submit"
+                      class="relative inline-block border-b">
+                      Remove
+                    </button>
+                  </form>
+                </article>
+              </div>
+            {%- endset -%}
+            <input type="hidden" name="wait" value="1" />
+            <textarea readonly class="hidden" name="content">
+              {{ cart_content|e('html') }}
+            </textarea>
+            <button type="submit" class="relative inline-block border-b">
+              Add to cart
+            </button>
+          </form>
+        </div>
+      </article>
+    {% endfor %}
+  </main>
+</div>

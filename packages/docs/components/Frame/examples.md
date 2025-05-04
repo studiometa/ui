@@ -32,3 +32,12 @@ In the following example, we implement three different `FrameTarget` components,
   :css-editor="false"
   :script="() => import('./stories/form/app.js?raw')"
   />
+
+## Adding a product to a cart
+
+<PreviewPlayground
+  :html="() => import('./stories/products/app.twig')"
+  :script="() => import('./stories/products/app.js?raw')"
+  :css="() => import('./stories/products/app.css?raw')"
+  :css-editor="false"
+  />
