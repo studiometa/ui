@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { getInstanceFromElement } from '@studiometa/js-toolkit';
-import { AbstractFrameTrigger, FrameLoader, FrameTriggerLoader } from '@studiometa/ui';
+import { AbstractFrameTrigger, FrameTriggerLoader } from '@studiometa/ui';
 import { h, mount } from '#test-utils';
 
 describe('The AbstractFrameTrigger class', () => {

@@ -1,4 +1,4 @@
-import { Base, getClosestParent, withName } from '@studiometa/js-toolkit';
+import { Base, getClosestParent } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import type { FrameRequestInit } from './types.js';
 import { EVENTS } from './utils.js';
