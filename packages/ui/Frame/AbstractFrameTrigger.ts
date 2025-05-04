@@ -11,6 +11,8 @@ export interface AbstractFrameTriggerProps extends BaseProps {
 
 /**
  * AbstractFrameTrigger class.
+ * @todo add `frame-fetch`, `frame-content`, `frame-error` (and maybe more) events to be able to listen to specific
+ * requests with the `Action` component
  */
 export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
   T & AbstractFrameTriggerProps
