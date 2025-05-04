@@ -5,7 +5,7 @@ import type {
   DragServiceProps,
   KeyServiceProps,
 } from '@studiometa/js-toolkit';
-import { clamp, inertiaFinalValue, nextFrame, isDev } from '@studiometa/js-toolkit/utils';
+import { clamp, inertiaFinalValue, nextFrame } from '@studiometa/js-toolkit/utils';
 import { SliderDrag } from './SliderDrag.js';
 import { SliderItem } from './SliderItem.js';
 
@@ -222,11 +222,8 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
         });
       }
 
-      if (mode === 'center' && isDev) {
-        console.warn(
-          `[${this.$id}]`,
-          'The `center` mode is not yet compatible with the `contain` mode.',
-        );
+      if (mode === 'center') {
+        this.$warn('The `center` mode is not yet compatible with the `contain` mode.');
       }
     }
 
