@@ -35,7 +35,7 @@ describe('The FrameForm class', () => {
     const input = h('input', {
       type: 'hidden',
       dataRef: 'headers[]',
-      name: 'x-custom-header',
+      dataName: 'x-custom-header',
       value: 'bar',
     });
     const form = h('form', { action: 'http://localhost/', method: 'POST' }, [input]);
