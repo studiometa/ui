@@ -16,10 +16,8 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
    * Config.
    */
   static config: BaseConfig = {
-    ...Transition.config,
     name: 'FrameTarget',
     options: {
-      ...Transition.config.options,
       mode: {
         type: String,
         default: 'replace', // or 'prepend' or 'append'
