@@ -51,7 +51,9 @@ export class FrameForm<T extends BaseProps = BaseProps> extends AbstractFrameTri
     requestInit.headers ??= {};
 
     for (const header of this.$refs.headers) {
-      requestInit.headers[header.name] = header.value;
+      if (header.dataset.name && header.value) {
+        requestInit.headers[header.dataset.name] = header.value;
+      }
     }
 
     if (this.method === 'post') {
