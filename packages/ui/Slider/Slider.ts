@@ -31,7 +31,8 @@ export interface SliderProps extends BaseProps {
 }
 
 /**
- * Orchestrate the slider items state transition.
+ * Slider class.
+ * @see https://ui.studiometa.dev/-/components/Slider/
  * @todo a11y
  */
 export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProps> {
@@ -55,33 +56,29 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     },
   };
 
+  /**
+   * Distance on the x axis.
+   * @private
+   */
   __distanceX = 0;
 
+  /**
+   * Initial x position.
+   * @private
+   */
   __initialX = 0;
 
   /**
    * Index of the current active slide.
+   * @private
    */
   __currentIndex = 0;
 
+  /**
+   * Drag state.
+   * @private
+   */
   __isDragging = false;
-
-  /**
-   * Get the current index.
-   */
-  get currentIndex() {
-    return this.__currentIndex;
-  }
-
-  /**
-   * Set the current index and emit the `index` event.
-   */
-  set currentIndex(value: number) {
-    this.currentSliderItem.disactivate();
-    this.$emit('index', value);
-    this.__currentIndex = value;
-    this.currentSliderItem.activate();
-  }
 
   /**
    * Store all the states.
@@ -101,6 +98,23 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
    * Wether or not the wrapper is focused.
    */
   hasFocus = false;
+
+  /**
+   * Get the current index.
+   */
+  get currentIndex() {
+    return this.__currentIndex;
+  }
+
+  /**
+   * Set the current index and emit the `index` event.
+   */
+  set currentIndex(value: number) {
+    this.currentSliderItem.disactivate();
+    this.$emit('index', value);
+    this.__currentIndex = value;
+    this.currentSliderItem.activate();
+  }
 
   /**
    * Get the current state.

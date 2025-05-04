@@ -30,8 +30,6 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
 
   /**
    * Update attributes.
-   * @param   {number} index
-   * @returns {void}
    */
   update(index: number) {
     if (isDev && this.$options.contain && !this.$parent.$options.contain) {
@@ -58,7 +56,6 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
 
   /**
    * Go prev or next on click.
-   * @returns {void}
    */
   onClick() {
     const { prev, next } = this.$options;

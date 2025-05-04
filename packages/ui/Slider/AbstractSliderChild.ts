@@ -1,5 +1,5 @@
 import { Base } from '@studiometa/js-toolkit';
-import type { BaseProps, BaseConfig, BaseInterface } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { nextFrame, domScheduler, isFunction } from '@studiometa/js-toolkit/utils';
 import { Slider } from './Slider.js';
 
@@ -10,10 +10,9 @@ export interface AbstractSliderChildProps extends BaseProps {
 /**
  * AbstractSliderChild class.
  */
-export class AbstractSliderChild<T extends BaseProps = BaseProps>
-  extends Base<T & AbstractSliderChildProps>
-  implements BaseInterface
-{
+export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<
+  T & AbstractSliderChildProps
+> {
   /**
    * Config.
    */
@@ -69,13 +68,10 @@ export class AbstractSliderChild<T extends BaseProps = BaseProps>
     }
   }
 
-  // eslint-disable-next-line jsdoc/require-returns-check
   /**
    * Update the child component with the given index.
-   * @param   {number} index The new active index.
-   * @returns {void|(()=>void)}
    */
-  update(index): void | (() => void) {
+  update(index: number): void | (() => void) {
     throw new Error(`The \`AbstractSliderChild.update(${index})\` method must be implemented.`);
   }
 }
