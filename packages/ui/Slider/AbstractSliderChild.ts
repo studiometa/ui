@@ -1,7 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { nextFrame, domScheduler, isFunction } from '@studiometa/js-toolkit/utils';
-import { Slider } from './Slider.js';
+import type { Slider } from './Slider.js';
 
 export interface AbstractSliderChildProps extends BaseProps {
   $parent: Slider;
@@ -24,12 +24,6 @@ export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<
    * Listen to the `goto` event of the parent on mount.
    */
   mounted() {
-    if (!(this.$parent instanceof Slider)) {
-      throw new Error(
-        `The \`${this.$options.name}\` component must be a direct child of a \`Slider\` component.`,
-      );
-    }
-
     this.$parent.$on('index', this);
   }
 
@@ -51,10 +45,8 @@ export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<
 
   /**
    * Dispatch event.
-   * @param   {CustomEvent} event
-   * @returns {void}
    */
-  handleEvent(event) {
+  handleEvent(event: CustomEvent) {
     if (event.type === 'index') {
       domScheduler.read(() => {
         const callback = this.update(event.detail[0]);
