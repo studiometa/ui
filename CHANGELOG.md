@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **StyledButton:** add a `size` parameter ([#378](https://github.com/studiometa/ui/pull/378), [9f24dee](https://github.com/studiometa/ui/commit/9f24dee))
+
+### Fixed
+
+- **DataBind:** fix binding on textarea ([#378](https://github.com/studiometa/ui/pull/378), [9d8879f](https://github.com/studiometa/ui/commit/9d8879f))
+
+### Changed
+
+- ⚠️ **Frame:** refactor components for better usability ([#378](https://github.com/studiometa/ui/pull/378))
+- **Transition:** refactor group syncing to fix flickering ([#378](https://github.com/studiometa/ui/pull/378), [902cd6c](https://github.com/studiometa/ui/commit/902cd6c))
+- **Draggable:** improve performance by preventing layout thrashing ([#378](https://github.com/studiometa/ui/pull/378), [83c2095](https://github.com/studiometa/ui/commit/83c2095))
+- **StyledButton:** change default size of styled button ([#378](https://github.com/studiometa/ui/pull/378), [d4d975d](https://github.com/studiometa/ui/commit/d4d975d))
+
+### Removed
+
+- ⚠️ **Button:** remove the `icon_classes` parameter ([#378](https://github.com/studiometa/ui/pull/378), [42bb524](https://github.com/studiometa/ui/commit/42bb524))
+
 ## [v1.0.0-rc.0](https://github.com/studiometa/ui/compare/1.0.0-beta.1..1.0.0-rc.0) (2025-04-16)
 
 ### Changed
