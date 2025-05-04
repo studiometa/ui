@@ -101,10 +101,10 @@ describe('The Frame class', () => {
     const frameLoader = getInstanceFromElement(loader, FrameLoader);
     const enterSpy = vi.spyOn(frameLoader, 'enter');
     const leaveSpy = vi.spyOn(frameLoader, 'leave');
-    await frame.startFetch();
+    frame.$emit('frame-fetch-before');
     expect(enterSpy).toHaveBeenCalledOnce();
     expect(leaveSpy).not.toHaveBeenCalledOnce();
-    await frame.endFetch();
+    frame.$emit('frame-fetch-after');
     expect(enterSpy).toHaveBeenCalledOnce();
     expect(leaveSpy).toHaveBeenCalledOnce();
   });
@@ -117,8 +117,8 @@ describe('The Frame class', () => {
 
     await frame.content(
       new URL(`http://localhost/?foo=bar`),
-      '<div data-component="FrameTarget" id="foo">Lorem ipsum</div>',
       {},
+      '<div data-component="FrameTarget" id="foo">Lorem ipsum</div>',
     );
     expect(target.textContent).toBe('Lorem ipsum');
   });
@@ -132,8 +132,8 @@ describe('The Frame class', () => {
     await mount(frame);
     await frame.content(
       new URL(`http://localhost/?foo=bar`),
-      '<head><title>foo</title></head><body><div data-component="FrameTarget" id="foo">Lorem ipsum</div></body>',
       {},
+      '<head><title>foo</title></head><body><div data-component="FrameTarget" id="foo">Lorem ipsum</div></body>',
     );
 
     expect(historySpy).toHaveBeenCalledOnce();
@@ -142,12 +142,12 @@ describe('The Frame class', () => {
 
     await frame.content(
       new URL(`http://localhost/`),
-      '<head><title>bar</title></head><body><div data-component="FrameTarget" id="foo">Lorem ipsum</div></body>',
       {
         headers: {
           [frame.headerNames.X_TRIGGERED_BY]: 'popstate',
         },
       },
+      '<head><title>bar</title></head><body><div data-component="FrameTarget" id="foo">Lorem ipsum</div></body>',
     );
     expect(historySpy).toHaveBeenCalledOnce();
     expect(document.title).toBe('bar');
@@ -167,10 +167,14 @@ describe('The Frame class', () => {
     const url = new URL('https://localhost');
     await frame.fetch(url);
     expect(contentSpy).toHaveBeenCalledOnce();
-    expect(contentSpy).toHaveBeenLastCalledWith(url, 'hello world', {
-      ...frame.requestInit,
-      signal: frame.abortController.signal,
-    });
+    expect(contentSpy).toHaveBeenLastCalledWith(
+      url,
+      {
+        ...frame.requestInit,
+        signal: frame.abortController.signal,
+      },
+      'hello world',
+    );
   });
 
   it('should trigger a root update', async () => {
@@ -180,7 +184,7 @@ describe('The Frame class', () => {
 
     const updateSpy = vi.spyOn(frame.$root, '$update');
 
-    await frame.content(new URL('http://localhost/'), '<div id="frame">new content</div>', {});
+    await frame.content(new URL('http://localhost/'), {}, '<div id="frame">new content</div>');
 
     expect(updateSpy).toHaveBeenCalledOnce();
     updateSpy.mockRestore();
@@ -203,10 +207,15 @@ describe('The Frame class', () => {
 
     await frame.fetch(url);
 
+    const params = [
+      url,
+      { ...frame.requestInit, signal: frame.abortController.signal },
+      fetchError,
+    ];
     expect(errorSpy).toHaveBeenCalledOnce();
-    expect(errorSpy).toHaveBeenCalledWith(url, fetchError);
+    expect(errorSpy.mock.lastCall).toEqual(params);
     expect(fn).toHaveBeenCalledOnce();
-    expect(fn).toHaveBeenCalledWith(url, fetchError);
+    expect(fn.mock.lastCall).toEqual(params);
 
     errorSpy.mockRestore();
     clientSpy.mockRestore();

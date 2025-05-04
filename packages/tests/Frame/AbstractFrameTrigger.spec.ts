@@ -16,14 +16,13 @@ describe('The AbstractFrameTrigger class', () => {
     trigger.$on('frame-trigger', (event: CustomEvent) => fn(...event.detail));
     trigger.trigger();
     expect(fn).toHaveBeenCalledOnce();
-    expect(fn.mock.lastCall).toMatchInlineSnapshot(`
-      [
-        "http://localhost/",
-        {
-          "headers": {},
-        },
-      ]
-    `);
+    expect(fn.mock.lastCall).toEqual([
+      new URL('http://localhost/'),
+      {
+        headers: {},
+        trigger,
+      },
+    ]);
   });
 
   it('should have a `requestInit` option', () => {
