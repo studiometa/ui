@@ -14,17 +14,13 @@ const folders = fs
 export default {
   presets: [defaultConfig, tailwindConfig],
   content: [
+    ...folders.map((folder) => path.relative(__dirname, path.resolve(folder, '**/*.md'))),
     ...folders.map((folder) => path.relative(__dirname, path.resolve(folder, '**/*.js'))),
     ...folders.map((folder) => path.relative(__dirname, path.resolve(folder, '**/*.vue'))),
     ...folders.map((folder) => path.relative(__dirname, path.resolve(folder, '**/*.twig'))),
-    './.vitepress/**/*.js',
-    './.vitepress/**/*.vue',
-    './.vitepress/**/*.ts',
-    './**/*.md',
-    './**/*.vue',
-    './**/*.js',
-    './**/*.html',
-    './**/*.twig',
+    './.vitepress/theme/**/*.js',
+    './.vitepress/theme/**/*.vue',
+    './.vitepress/theme/**/*.ts',
   ],
   theme: {
     extend: {

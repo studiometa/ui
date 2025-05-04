@@ -7,8 +7,6 @@ import IframePreviewPlayground from './components/IframePreviewPlayground.vue';
 import TableOfContent from './components/TableOfContent.vue';
 import './custom.css';
 
-import '@shikijs/vitepress-twoslash/style.css';
-
 export default {
   extends: DefaultTheme,
   enhanceApp({ app }) {
