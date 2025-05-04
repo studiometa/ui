@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { AbstractFrameTrigger } from '@studiometa/ui';
-import { h } from '#test-utils';
+import { getInstanceFromElement } from '@studiometa/js-toolkit';
+import { AbstractFrameTrigger, FrameLoader, FrameTriggerLoader } from '@studiometa/ui';
+import { h, mount } from '#test-utils';
 
 describe('The AbstractFrameTrigger class', () => {
   it('should have an `url` getter', async () => {
@@ -39,5 +40,22 @@ describe('The AbstractFrameTrigger class', () => {
       h('a', { href: 'http://localhost', dataOptionHeaders }),
     );
     expect(trigger.requestInit.headers).toEqual(dataOptionHeaders);
+  });
+
+  it('should trigger its FrameLoader child components', async () => {
+    const loader = h('div', { dataComponent: 'FrameTriggerLoader' });
+    const div = h('div', [loader]);
+    const frameTrigger = new AbstractFrameTrigger(div);
+    await mount(frameTrigger);
+
+    const frameTriggerLoader = getInstanceFromElement(loader, FrameTriggerLoader);
+    const enterSpy = vi.spyOn(frameTriggerLoader, 'enter');
+    const leaveSpy = vi.spyOn(frameTriggerLoader, 'leave');
+    frameTrigger.$emit('frame-fetch-before');
+    expect(enterSpy).toHaveBeenCalledOnce();
+    expect(leaveSpy).not.toHaveBeenCalledOnce();
+    frameTrigger.$emit('frame-fetch-after');
+    expect(enterSpy).toHaveBeenCalledOnce();
+    expect(leaveSpy).toHaveBeenCalledOnce();
   });
 });

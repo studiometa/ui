@@ -32,6 +32,7 @@ test('components exports', () => {
       "FrameForm",
       "FrameLoader",
       "FrameTarget",
+      "FrameTriggerLoader",
       "LargeText",
       "LazyInclude",
       "Menu",
