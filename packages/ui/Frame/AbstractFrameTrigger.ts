@@ -2,7 +2,7 @@ import { Base, getClosestParent, withName } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import type { FrameRequestInit } from './types.js';
 import { EVENTS } from './utils.js';
-import { FrameLoader } from './FrameLoader.js';
+import { FrameTriggerLoader } from './FrameTriggerLoader.js';
 
 export interface AbstractFrameTriggerProps extends BaseProps {
   $el: HTMLFormElement | HTMLAnchorElement;
@@ -11,7 +11,7 @@ export interface AbstractFrameTriggerProps extends BaseProps {
     headers: Record<string, string>;
   };
   $children: {
-    FrameLoaderTrigger: FrameLoader[];
+    FrameTriggerLoader: FrameTriggerLoader[];
   };
 }
 
@@ -32,7 +32,7 @@ export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
       headers: Object,
     },
     components: {
-      FrameLoaderTrigger: withName(FrameLoader, 'FrameLoaderTrigger'),
+      FrameTriggerLoader,
     },
   };
 
@@ -64,7 +64,7 @@ export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
    * Trigger FrameLoaders enter.
    */
   onFrameFetchBefore() {
-    for (const loader of this.$children.FrameLoaderTrigger) {
+    for (const loader of this.$children.FrameTriggerLoader) {
       if (getClosestParent(loader, this.constructor) === this) {
         loader.enter();
       }
@@ -75,7 +75,7 @@ export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
    * Trigger FrameLoaders leave.
    */
   onFrameFetchAfter() {
-    for (const loader of this.$children.FrameLoaderTrigger) {
+    for (const loader of this.$children.FrameTriggerLoader) {
       if (getClosestParent(loader, this.constructor) === this) {
         loader.leave();
       }
