@@ -33,7 +33,7 @@ export class SliderDots<
   /**
    * The current active index.
    */
-  currentIndex = 0;
+  currentIndex = -1;
 
   /**
    * Update dots classes according to the new index.
@@ -41,9 +41,11 @@ export class SliderDots<
    * @returns {void}
    */
   update(index: number) {
-    this.leave(this.$refs.dots[this.currentIndex]);
-    this.enter(this.$refs.dots[index]);
-    this.currentIndex = index;
+    if (index !== this.currentIndex) {
+      this.leave(this.$refs.dots[this.currentIndex]);
+      this.enter(this.$refs.dots[index]);
+      this.currentIndex = index;
+    }
   }
 
   /**
