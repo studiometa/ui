@@ -1,36 +1,27 @@
-import { Base, withIntersectionObserver } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { damp, domScheduler, transform } from '@studiometa/js-toolkit/utils';
 
+export interface SliderItemProps extends BaseProps {}
+
 /**
- * Manage a slider item and its state transition.
+ * SliderItem class.
  */
-export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectionObserver(Base, {
-  threshold: [0, 1],
-})<T> {
+export class SliderItem<T extends BaseProps = BaseProps> extends Base<T & SliderItemProps> {
   /**
    * Config.
    */
   static config: BaseConfig = {
     name: 'SliderItem',
-    emits: ['is-fully-visible', 'is-partially-visible', 'is-hidden'],
   };
 
   /**
-   * Wether the SliderItem is visible or not.
-   * @type {boolean}
-   */
-  isVisible = false;
-
-  /**
    * The SliderItem `x` position.
-   * @type {number}
    */
   x = 0;
 
   /**
    * The smoothed `x` position.
-   * @type {number}
    */
   dampedX = 0;
 
@@ -48,8 +39,14 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
     height: number;
   };
 
+  /**
+   * Wether the slider item size should be evaluated or not.
+   */
   shouldEvaluateRect = false;
 
+  /**
+   * Size of the slider item.
+   */
   get rect() {
     if (!this.__rect || this.shouldEvaluateRect) {
       this.shouldEvaluateRect = false;
@@ -88,26 +85,10 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
   }
 
   /**
-   * Intersected hook.
-   */
-  intersected([{ intersectionRatio, isIntersecting }]: IntersectionObserverEntry[]) {
-    if (intersectionRatio >= 1) {
-      this.$emit('is-fully-visible');
-    } else if (intersectionRatio > 0) {
-      this.$emit('is-partially-visible');
-    } else {
-      this.$emit('is-hidden');
-    }
-
-    this.isVisible = isIntersecting;
-  }
-
-  /**
    * Ticked hook.
    * @todo create AbstractSliderItem with `render` method
    * @todo add state to SliderItem
    * @todo add origin to SliderItem
-   * @returns {void}
    */
   ticked() {
     this.dampedX = damp(this.x, this.dampedX, 0.1, 0.00001);
@@ -168,29 +149,5 @@ export class SliderItem<T extends BaseProps = BaseProps> extends withIntersectio
     domScheduler.write(() => {
       transform(this.$el, { x: this.dampedX });
     });
-  }
-
-  /**
-   * Check if SliderItem is partially visible for the given target position.
-   */
-  willBeVisible(targetPosition: number) {
-    return (
-      this.rect.x + targetPosition < window.innerWidth * 1.5 &&
-      this.rect.x + targetPosition + this.rect.width > window.innerWidth * -0.5
-    );
-  }
-
-  /**
-   * Check if SliderItem is fully visible for the given target position.
-   * @param   {number} targetPosition
-   * @returns {boolean}
-   */
-  willBeFullyVisible(targetPosition) {
-    return (
-      this.rect.x + targetPosition < window.innerWidth &&
-      this.rect.x + targetPosition > 0 &&
-      this.rect.x + targetPosition + this.rect.width < window.innerWidth &&
-      this.rect.x + targetPosition + this.rect.width > 0
-    );
   }
 }

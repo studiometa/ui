@@ -99,7 +99,6 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
 
   /**
    * Wether or not the wrapper is focused.
-   * @type {boolean}
    */
   hasFocus = false;
 
@@ -240,7 +239,6 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   mounted() {
     this.states = this.getStates();
     this.setAccessibilityAttributes();
-    this.prepareInvisibleItems();
     this.goTo(this.currentIndex);
   }
 
@@ -251,7 +249,6 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     nextFrame(() => {
       this.states = this.getStates();
       nextFrame(() => {
-        this.prepareInvisibleItems();
         this.goTo(this.currentIndex);
       });
     });
@@ -297,19 +294,14 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
 
     const currentState = this.getStateValueByMode(this.currentState.x);
     const state = this.getStateValueByMode(this.states[index].x);
-    const itemsToMove = this.getVisibleItems(state);
-    const invisibleItemsToMoveInstantly = this.getInvisibleItems(state);
 
-    itemsToMove.forEach((item) => {
+    for (const item of this.$children.SliderItem) {
       // Better perfs when going fast through the slides
       if (currentState !== state && withInstantMove) {
         item.moveInstantly(currentState);
       }
       nextFrame(() => item.move(state));
-    });
-    invisibleItemsToMoveInstantly.forEach((item) => {
-      item.moveInstantly(state);
-    });
+    }
 
     this.currentIndex = index;
     this.$emit('goto', index);
@@ -335,9 +327,9 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
 
     this.__distanceX = this.__initialX + props.distance.x * this.$options.sensitivity;
 
-    this.getVisibleItems(this.__distanceX).forEach((item) => {
+    for (const item of this.$children.SliderItem) {
       item.moveInstantly(this.__distanceX);
-    });
+    }
   }
 
   /**
@@ -372,9 +364,9 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
         finalX = Math.min(this.containMinState, finalX);
         finalX = Math.max(this.containMaxState, finalX);
       }
-      this.$children.SliderItem.forEach((item) => {
+      for (const item of this.$children.SliderItem) {
         item.move(finalX);
-      });
+      }
       this.currentIndex = closestIndex;
     }
   }
@@ -404,75 +396,5 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
         this.goNext();
       }
     }
-  }
-
-  /**
-   * Prepare invisible items.
-   */
-  prepareInvisibleItems() {
-    const state = this.states[this.currentIndex];
-    const nextItemsToPrepare = [];
-    const previousItemsToPrepare = [];
-
-    this.getInvisibleItems(this.getStateValueByMode(state.x)).forEach((item, i) => {
-      if (i > this.currentIndex) {
-        nextItemsToPrepare.push(item);
-        return;
-      }
-
-      if (i < this.currentIndex) {
-        previousItemsToPrepare.push(item);
-      }
-    });
-
-    nextItemsToPrepare.forEach((item) => {
-      const invisibleState = this.getStateWhereItemWillBeInvisible(item);
-      if (invisibleState) {
-        item.moveInstantly(this.getStateValueByMode(invisibleState.x));
-      }
-    });
-
-    previousItemsToPrepare.forEach((item) => {
-      const invisibleState = this.getStateWhereItemWillBeInvisible(item, { reversed: true });
-      if (invisibleState) {
-        item.moveInstantly(this.getStateValueByMode(invisibleState.x));
-      }
-    });
-  }
-
-  /**
-   * Get the state where the given item will be visible.
-   */
-  getStateWhereItemWillBeInvisible(item: SliderItem, { reversed = false } = {}): SliderState {
-    const visibleStates = this.states.filter((state) =>
-      item.willBeVisible(this.getStateValueByMode(state.x)),
-    );
-    const firstVisibleState = visibleStates[0];
-    const lastVisibleState = visibleStates.at(-1);
-    const firstVisibleStateIndex = this.states.findIndex(
-      (state) =>
-        this.getStateValueByMode(state.x) === this.getStateValueByMode(firstVisibleState.x),
-    );
-    const lastVisibleStateIndex = this.states.findIndex((state) => state.x === lastVisibleState.x);
-
-    return reversed
-      ? this.states[lastVisibleStateIndex + 1]
-      : this.states[firstVisibleStateIndex - 1];
-  }
-
-  /**
-   * Get the visible slides for the given position.
-   */
-  getVisibleItems(target: number) {
-    return this.$children.SliderItem.filter((item) => item.isVisible || item.willBeVisible(target));
-  }
-
-  /**
-   * Get the invisible slides for the given position.
-   */
-  getInvisibleItems(target: number) {
-    return this.$children.SliderItem.filter(
-      (item) => !item.isVisible && !item.willBeVisible(target),
-    );
   }
 }
