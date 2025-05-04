@@ -1,3 +1,4 @@
+import { domScheduler } from '@studiometa/js-toolkit/utils';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractSliderChild } from './AbstractSliderChild.js';
 
@@ -25,6 +26,8 @@ export class SliderCount<T extends BaseProps = BaseProps> extends AbstractSlider
    * Update the current counter indicator.
    */
   update(index: number) {
-    this.$refs.current.textContent = `${index + 1}`;
+    domScheduler.write(() => {
+      this.$refs.current.textContent = `${index + 1}`;
+    });
   }
 }
