@@ -4,10 +4,9 @@
 [![NPM Next Version](https://img.shields.io/npm/v/@studiometa/ui/next?style=flat&colorB=3e63dd&colorA=414853)](https://www.npmjs.com/package/@studiometa/ui/v/next)
 [![Downloads](https://img.shields.io/npm/dm/@studiometa/ui?style=flat&colorB=3e63dd&colorA=414853)](https://www.npmjs.com/package/@studiometa/ui/)
 [![Size](https://img.shields.io/bundlephobia/minzip/@studiometa/ui?style=flat&colorB=3e63dd&colorA=414853&label=size)](https://bundlephobia.com/package/@studiometa/ui)
-[![Dependency Status](https://img.shields.io/librariesio/release/npm/@studiometa/ui?style=flat&colorB=3e63dd&colorA=414853)](https://david-dm.org/studiometa/js-toolkit)
 ![Codecov](https://img.shields.io/codecov/c/github/studiometa/ui?style=flat&colorB=3e63dd&colorA=414853)
 
-> 📦 A set of opiniated, unstyled and accessible components based on [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit)
+> 📦 A set of opiniated, unstyled and accessible JS and/or Twig components powered by [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit) and [studiometa/twig-toolkit](https://github.com/studiometa/twig-toolkit).
 
 ## Installation
 
@@ -17,7 +16,7 @@ Install the latest version via NPM:
 npm install @studiometa/ui
 ```
 
-If you need the Twig template as well, install the Twig extension via Composer and load it in your application:
+If you need the Twig templates as well, install the Twig extension via Composer and load it in your application:
 
 ```bash
 composer require studiometa/ui
@@ -29,18 +28,23 @@ Import the components from the package as needed:
 
 ```js
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { Modal } from '@studiometa/ui';
+import { Action, Frame, Modal, ScrollAnimation, ScrollReveal, Slider } from '@studiometa/ui';
 
 class App extends Base {
   static config = {
     name: 'App',
     components: {
+      Action,
+      Frame,
       Modal,
-    }
-  }
+      ScrollAnimation,
+      ScrollReveal,
+      Slider,
+    },
+  };
 }
 
-export default createApp(App, document.body);
+export default createApp(App);
 ```
 
 Heads up to [ui.studiometa.dev](https://ui.studiometa.dev) for more informations.
