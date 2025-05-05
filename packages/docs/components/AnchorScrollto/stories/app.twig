@@ -1,0 +1,42 @@
+{% set count = 3 %}
+{% set sizes = ['40vh', '60vh', '80vh', '100vh'] %}
+
+<div class="flex items-center justify-center w-full h-screen">
+  ↓ Scroll down
+</div>
+
+<nav class="z-1 fixed top-8 left-1/2 -translate-x-1/2 flex py-2 px-3 bg-gray-100 dark:bg-black rounded-full shadow">
+  <ul class="flex gap-3">
+    {% for item in 1..count %}
+      <li>
+        {{
+          include(
+            '@ui/Button/StyledButtonRounded.twig',
+            {
+              label: 'Section #' ~ loop.index,
+              href: '#item-' ~ loop.index,
+              size: 's',
+              attr: {
+                class: 'whitespace-nowrap'
+              }
+            }
+          )
+        }}
+      </li>
+    {% endfor %}
+  </ul>
+</nav>
+<div class="grid gap-8 p-4 w-full">
+  {% for item in 1..count %}
+    <section id="item-{{ loop.index }}"
+      class="flex items-center justify-center bg-green-{{ loop.index }}00 h-[{{
+      random(
+        sizes
+      )
+      }}] text-black">
+      Section #{{ loop.index }}
+    </section>
+  {% endfor %}
+</div>
+
+<div class="flex items-center justify-center w-full h-screen">↑ Scroll up</div>

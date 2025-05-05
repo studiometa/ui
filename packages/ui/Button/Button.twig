@@ -9,7 +9,6 @@
  * @param array $attr
  * @param string $icon
  * @param array  $icon_attr
- * @param array|string $icon_classes
  * @param 'start'|'end' $icon_position
  * @param boolean $icon_only
  */
@@ -34,26 +33,30 @@
       href: tag == 'a' and href is defined ? href : false,
       aria_label: icon_only ? label : false
     },
-    { class: ['btn'] }
+    {
+      class: ['btn']
+    }
   )
 %}
 
 {% set rendered_icon %}
   {% block icon %}
-    {# @TODO: Breaking change -> Delete icon_classes to use only icon_attr #}
     {% include '@ui/Icon/Icon.twig' with {
       name: icon ?? '',
       attr: merge_html_attributes(
         icon_attr ?? null,
         {
-          class: {
-            'mr-3': not icon_only and icon_position == 'start',
-            'ml-3': not icon_only and icon_position == 'end',
-          }
+          class: [
+            'h-[0.75lh]',
+            {
+              'mr-3': not icon_only and icon_position == 'start',
+              'ml-3': not icon_only and icon_position == 'end'
+            }
+          ]
         },
         {
-          class: icon_classes ?? '',
-        },
+          class: '[&>svg]:w-full [&>svg]:h-full'
+        }
       )
     } %}
   {% endblock %}

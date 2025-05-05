@@ -1,4 +1,3 @@
-import { isDev } from '@studiometa/js-toolkit/utils';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractSliderChild } from './AbstractSliderChild.js';
 
@@ -30,13 +29,11 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
 
   /**
    * Update attributes.
-   * @param   {number} index
-   * @returns {void}
    */
   update(index: number) {
-    if (isDev && this.$options.contain && !this.$parent.$options.contain) {
-      console.warn(
-        `[${this.$id}] The contain option will only works if the parent Slider also has the contain option.`,
+    if (this.$options.contain && !this.$parent.$options.contain) {
+      this.$warn(
+        `The contain option will only works if the parent Slider also has the contain option.`,
       );
     }
 
@@ -58,7 +55,6 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
 
   /**
    * Go prev or next on click.
-   * @returns {void}
    */
   onClick() {
     const { prev, next } = this.$options;

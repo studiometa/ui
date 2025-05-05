@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui",
-  "version": "1.0.0-rc.0",
+  "version": "1.0.0-rc.1",
   "description": "A set of opiniated, unstyled and accessible components",
   "publishConfig": {
     "access": "public"
@@ -29,10 +29,11 @@
   },
   "homepage": "https://github.com/studiometa/ui#readme",
   "dependencies": {
-    "deepmerge": "^4.3.1"
+    "deepmerge": "^4.3.1",
+    "morphdom": "^2.7.5"
   },
   "devDependencies": {
-    "@studiometa/js-toolkit": "^3.0.0"
+    "@studiometa/js-toolkit": "3.0.2"
   },
   "peerDependencies": {
     "@studiometa/js-toolkit": "^3.0.0"

@@ -1,0 +1,66 @@
+{% for size in ['s', 'm', 'l'] %}
+  <div class="grid gap-4 p-10">
+    {% for theme in ['primary', 'secondary', 'tertiary'] %}
+      <div class="flex items-center flex-wrap gap-4 text-center">
+        {{
+          include(
+            '@ui/Button/StyledButton.twig',
+            {
+              label: theme|capitalize
+            }
+          )
+        }}
+        {{
+          include(
+            '@ui/Button/StyledButton.twig',
+            {
+              label: theme|capitalize,
+              attr: {
+                disabled: true
+              }
+            }
+          )
+        }}
+        {{
+          include(
+            '@ui/Button/StyledButton.twig',
+            {
+              label: theme|capitalize,
+              icon: 'mdi:globe'
+            }
+          )
+        }}
+        {{
+          include(
+            '@ui/Button/StyledButton.twig',
+            {
+              label: theme|capitalize,
+              icon: 'mdi:globe',
+              icon_position: 'start'
+            }
+          )
+        }}
+        {{
+          include(
+            '@ui/Button/StyledButton.twig',
+            {
+              label: theme|capitalize,
+              icon: 'mdi:globe',
+              icon_position: 'end'
+            }
+          )
+        }}
+        {{
+          include(
+            '@ui/Button/StyledButton.twig',
+            {
+              label: theme|capitalize,
+              icon: 'mdi:globe',
+              icon_only: true
+            }
+          )
+        }}
+      </div>
+    {% endfor %}
+  </div>
+{% endfor %}

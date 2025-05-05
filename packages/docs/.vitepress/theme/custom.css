@@ -1,6 +1,7 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+@import '@shikijs/vitepress-twoslash/style.css';
 
 .curtain {
   display: none !important;

@@ -27,6 +27,7 @@ export default defineWebpackConfig({
         '@studiometa/js-toolkit': '/-/play/static/js-toolkit.js',
         '@studiometa/ui': '/-/play/static/ui/index.js',
         deepmerge: '/-/play/static/deepmerge.js',
+        morphdom: '/-/play/static/morphdom.js',
       },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}

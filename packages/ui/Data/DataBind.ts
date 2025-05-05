@@ -49,7 +49,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
     }
 
     const { target } = this;
-    if (target instanceof HTMLInputElement) {
+    if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
       return 'value';
     }
 

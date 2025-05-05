@@ -1,5 +1,5 @@
-import { Base } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { AbstractFrameTrigger } from './AbstractFrameTrigger.js';
 
 export interface FrameAnchorProps extends BaseProps {
   $el: HTMLAnchorElement;
@@ -8,7 +8,9 @@ export interface FrameAnchorProps extends BaseProps {
 /**
  * FrameAnchor class.
  */
-export class FrameAnchor<T extends BaseProps = BaseProps> extends Base<T & FrameAnchorProps> {
+export class FrameAnchor<T extends BaseProps = BaseProps> extends AbstractFrameTrigger<
+  T & FrameAnchorProps
+> {
   /**
    * Config.
    */
@@ -17,9 +19,19 @@ export class FrameAnchor<T extends BaseProps = BaseProps> extends Base<T & Frame
   };
 
   /**
-   * Get the URL.
+   * Prevent click.
    */
-  get href(): string {
-    return this.$el.href;
+  onClick({ event }: { event: MouseEvent; target: FrameAnchor }) {
+    if (
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !event.altKey &&
+      !event.metaKey &&
+      event.button === 0 &&
+      this.$el.target !== '_blank'
+    ) {
+      event.preventDefault();
+      this.trigger();
+    }
   }
 }

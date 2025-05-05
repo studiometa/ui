@@ -24,7 +24,6 @@ export class SliderDots<
 
   /**
    * Get target.
-   * @returns {HTMLButtonElement[]}
    */
   get target() {
     return this.$refs.dots;
@@ -33,17 +32,17 @@ export class SliderDots<
   /**
    * The current active index.
    */
-  currentIndex = 0;
+  currentIndex = -1;
 
   /**
    * Update dots classes according to the new index.
-   * @param   {number} index
-   * @returns {void}
    */
   update(index: number) {
-    this.leave(this.$refs.dots[this.currentIndex]);
-    this.enter(this.$refs.dots[index]);
-    this.currentIndex = index;
+    if (index !== this.currentIndex) {
+      this.leave(this.$refs.dots[this.currentIndex]);
+      this.enter(this.$refs.dots[index]);
+      this.currentIndex = index;
+    }
   }
 
   /**
