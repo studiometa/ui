@@ -6,7 +6,7 @@
 [![Size](https://img.shields.io/bundlephobia/minzip/@studiometa/ui?style=flat&colorB=3e63dd&colorA=414853&label=size)](https://bundlephobia.com/package/@studiometa/ui)
 ![Codecov](https://img.shields.io/codecov/c/github/studiometa/ui?style=flat&colorB=3e63dd&colorA=414853)
 
-> 📦 A set of opiniated, unstyled and accessible JS and/or Twig components powered by [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit) and [studiometa/twig-toolkit](https://github.com/studiometa/twig-toolkit).
+> 📦 A set of JS and/or Twig components powered by [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit), [studiometa/twig-toolkit](https://github.com/studiometa/twig-toolkit) and [Tailwind CSS](https://tailwindcss.com/).
 
 ## Installation
 
