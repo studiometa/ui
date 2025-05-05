@@ -5,7 +5,7 @@ import type {
   DragServiceProps,
   KeyServiceProps,
 } from '@studiometa/js-toolkit';
-import { clamp, inertiaFinalValue, nextFrame, isDev } from '@studiometa/js-toolkit/utils';
+import { clamp, inertiaFinalValue, nextFrame } from '@studiometa/js-toolkit/utils';
 import { SliderDrag } from './SliderDrag.js';
 import { SliderItem } from './SliderItem.js';
 
@@ -31,7 +31,8 @@ export interface SliderProps extends BaseProps {
 }
 
 /**
- * Orchestrate the slider items state transition.
+ * Slider class.
+ * @see https://ui.studiometa.dev/-/components/Slider/
  * @todo a11y
  */
 export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProps> {
@@ -40,7 +41,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
    */
   static config: BaseConfig = {
     name: 'Slider',
-    refs: ['wrapper', 'debug'],
+    refs: ['wrapper'],
     emits: ['goto', 'index'],
     components: {
       SliderItem,
@@ -55,33 +56,29 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     },
   };
 
+  /**
+   * Distance on the x axis.
+   * @private
+   */
   __distanceX = 0;
 
+  /**
+   * Initial x position.
+   * @private
+   */
   __initialX = 0;
 
   /**
    * Index of the current active slide.
+   * @private
    */
   __currentIndex = 0;
 
+  /**
+   * Drag state.
+   * @private
+   */
   __isDragging = false;
-
-  /**
-   * Get the current index.
-   */
-  get currentIndex() {
-    return this.__currentIndex;
-  }
-
-  /**
-   * Set the current index and emit the `index` event.
-   */
-  set currentIndex(value: number) {
-    this.currentSliderItem.disactivate();
-    this.$emit('index', value);
-    this.__currentIndex = value;
-    this.currentSliderItem.activate();
-  }
 
   /**
    * Store all the states.
@@ -99,9 +96,25 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
 
   /**
    * Wether or not the wrapper is focused.
-   * @type {boolean}
    */
   hasFocus = false;
+
+  /**
+   * Get the current index.
+   */
+  get currentIndex() {
+    return this.__currentIndex;
+  }
+
+  /**
+   * Set the current index and emit the `index` event.
+   */
+  set currentIndex(value: number) {
+    this.currentSliderItem.disactivate();
+    this.$emit('index', value);
+    this.__currentIndex = value;
+    this.currentSliderItem.activate();
+  }
 
   /**
    * Get the current state.
@@ -209,11 +222,8 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
         });
       }
 
-      if (mode === 'center' && isDev) {
-        console.warn(
-          `[${this.$id}]`,
-          'The `center` mode is not yet compatible with the `contain` mode.',
-        );
+      if (mode === 'center') {
+        this.$warn('The `center` mode is not yet compatible with the `contain` mode.');
       }
     }
 
@@ -240,7 +250,6 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   mounted() {
     this.states = this.getStates();
     this.setAccessibilityAttributes();
-    this.prepareInvisibleItems();
     this.goTo(this.currentIndex);
   }
 
@@ -251,7 +260,6 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     nextFrame(() => {
       this.states = this.getStates();
       nextFrame(() => {
-        this.prepareInvisibleItems();
         this.goTo(this.currentIndex);
       });
     });
@@ -290,26 +298,16 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Go to the given index.
    */
-  goTo(index: number, { withInstantMove = true } = {}) {
+  goTo(index: number) {
     if (index < 0 || index > this.indexMax) {
       throw new Error('Index out of bound.');
     }
 
-    const currentState = this.getStateValueByMode(this.currentState.x);
     const state = this.getStateValueByMode(this.states[index].x);
-    const itemsToMove = this.getVisibleItems(state);
-    const invisibleItemsToMoveInstantly = this.getInvisibleItems(state);
 
-    itemsToMove.forEach((item) => {
-      // Better perfs when going fast through the slides
-      if (currentState !== state && withInstantMove) {
-        item.moveInstantly(currentState);
-      }
-      nextFrame(() => item.move(state));
-    });
-    invisibleItemsToMoveInstantly.forEach((item) => {
-      item.moveInstantly(state);
-    });
+    for (const item of this.$children.SliderItem) {
+      item.move(state);
+    }
 
     this.currentIndex = index;
     this.$emit('goto', index);
@@ -335,9 +333,9 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
 
     this.__distanceX = this.__initialX + props.distance.x * this.$options.sensitivity;
 
-    this.getVisibleItems(this.__distanceX).forEach((item) => {
+    for (const item of this.$children.SliderItem) {
       item.moveInstantly(this.__distanceX);
-    });
+    }
   }
 
   /**
@@ -366,15 +364,15 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     const closestIndex = absoluteDifferencesBetweenDistanceAndState.indexOf(minimumDifference);
 
     if (this.$options.fitBounds) {
-      this.goTo(closestIndex, { withInstantMove: false });
+      this.goTo(closestIndex);
     } else {
       if (this.$options.contain) {
         finalX = Math.min(this.containMinState, finalX);
         finalX = Math.max(this.containMaxState, finalX);
       }
-      this.$children.SliderItem.forEach((item) => {
+      for (const item of this.$children.SliderItem) {
         item.move(finalX);
-      });
+      }
       this.currentIndex = closestIndex;
     }
   }
@@ -404,75 +402,5 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
         this.goNext();
       }
     }
-  }
-
-  /**
-   * Prepare invisible items.
-   */
-  prepareInvisibleItems() {
-    const state = this.states[this.currentIndex];
-    const nextItemsToPrepare = [];
-    const previousItemsToPrepare = [];
-
-    this.getInvisibleItems(this.getStateValueByMode(state.x)).forEach((item, i) => {
-      if (i > this.currentIndex) {
-        nextItemsToPrepare.push(item);
-        return;
-      }
-
-      if (i < this.currentIndex) {
-        previousItemsToPrepare.push(item);
-      }
-    });
-
-    nextItemsToPrepare.forEach((item) => {
-      const invisibleState = this.getStateWhereItemWillBeInvisible(item);
-      if (invisibleState) {
-        item.moveInstantly(this.getStateValueByMode(invisibleState.x));
-      }
-    });
-
-    previousItemsToPrepare.forEach((item) => {
-      const invisibleState = this.getStateWhereItemWillBeInvisible(item, { reversed: true });
-      if (invisibleState) {
-        item.moveInstantly(this.getStateValueByMode(invisibleState.x));
-      }
-    });
-  }
-
-  /**
-   * Get the state where the given item will be visible.
-   */
-  getStateWhereItemWillBeInvisible(item: SliderItem, { reversed = false } = {}): SliderState {
-    const visibleStates = this.states.filter((state) =>
-      item.willBeVisible(this.getStateValueByMode(state.x)),
-    );
-    const firstVisibleState = visibleStates[0];
-    const lastVisibleState = visibleStates.at(-1);
-    const firstVisibleStateIndex = this.states.findIndex(
-      (state) =>
-        this.getStateValueByMode(state.x) === this.getStateValueByMode(firstVisibleState.x),
-    );
-    const lastVisibleStateIndex = this.states.findIndex((state) => state.x === lastVisibleState.x);
-
-    return reversed
-      ? this.states[lastVisibleStateIndex + 1]
-      : this.states[firstVisibleStateIndex - 1];
-  }
-
-  /**
-   * Get the visible slides for the given position.
-   */
-  getVisibleItems(target: number) {
-    return this.$children.SliderItem.filter((item) => item.isVisible || item.willBeVisible(target));
-  }
-
-  /**
-   * Get the invisible slides for the given position.
-   */
-  getInvisibleItems(target: number) {
-    return this.$children.SliderItem.filter(
-      (item) => !item.isVisible && !item.willBeVisible(target),
-    );
   }
 }

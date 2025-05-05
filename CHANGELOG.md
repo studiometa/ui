@@ -12,10 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- **Slider:** fix a bug where dots transition were triggered without changing slide ([#382](https://github.com/studiometa/ui/pull/382), [21c552a](https://github.com/studiometa/ui/commit/21c552a))
 - **DataBind:** fix binding on textarea ([#378](https://github.com/studiometa/ui/pull/378), [9d8879f](https://github.com/studiometa/ui/commit/9d8879f))
 
 ### Changed
 
+- **Slider:** improve performance of the `SliderCount` component ([#382](https://github.com/studiometa/ui/pull/382), [ddecd7d](https://github.com/studiometa/ui/commit/ddecd7d), [da7e5b6](https://github.com/studiometa/ui/commit/da7e5b6))
 - ⚠️ **Frame:** refactor components for better usability ([#378](https://github.com/studiometa/ui/pull/378))
 - **Transition:** refactor group syncing to fix flickering ([#378](https://github.com/studiometa/ui/pull/378), [902cd6c](https://github.com/studiometa/ui/commit/902cd6c))
 - **Draggable:** improve performance by preventing layout thrashing ([#378](https://github.com/studiometa/ui/pull/378), [83c2095](https://github.com/studiometa/ui/commit/83c2095))
@@ -23,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Removed
 
+- ⚠️ **Slider:** remove complex calculation from the Slider component ([#382](https://github.com/studiometa/ui/pull/382), [74e2638](https://github.com/studiometa/ui/commit/74e2638))
 - ⚠️ **Button:** remove the `icon_classes` parameter ([#378](https://github.com/studiometa/ui/pull/378), [42bb524](https://github.com/studiometa/ui/commit/42bb524))
 
 ## [v1.0.0-rc.0](https://github.com/studiometa/ui/compare/1.0.0-beta.1..1.0.0-rc.0) (2025-04-16)
