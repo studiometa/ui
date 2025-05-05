@@ -21,7 +21,9 @@ badges: [JS]
 
 Use the `Slider` component to display items on a X axis and enable indexed navigation between them.
 
-```js twoslash
+::: code-group
+
+```js twoslash [app.js]
 import { Base, createApp } from '@studiometa/js-toolkit';
 import { Slider } from '@studiometa/ui';
 
@@ -36,6 +38,20 @@ class App extends Base {
 
 export default createApp(App);
 ```
+
+```twig [slider.twig]
+<div data-component="Slider">
+  <div data-ref="wrapper" data-component="SliderDrag" class="whitespace-nowrap">
+    {% for item in 1..4 %}
+      <div data-component="SliderItem" class="inline-block">
+        #{{ item }}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+```
+
+:::
 
 By default, the `SliderItem` and `SliderDrag` components are included in the `Slider`. You can add more controls with the following components:
 
