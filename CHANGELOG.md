@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-rc.1](https://github.com/studiometa/ui/compare/1.0.0-rc.0..1.0.0-rc.1) (2025-05-05)
+
 ### Added
 
 - **StyledButton:** add a `size` parameter ([#378](https://github.com/studiometa/ui/pull/378), [9f24dee](https://github.com/studiometa/ui/commit/9f24dee))
