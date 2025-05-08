@@ -94,10 +94,10 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
     const xMax = xMin + offsetWidth - parent.offsetWidth;
 
     return {
-      yMin,
-      yMax,
-      xMin,
-      xMax,
+      yMin: yMin * -1,
+      yMax: yMax * -1,
+      xMin: xMin * -1,
+      xMax: xMax * -1,
     };
   }
 
