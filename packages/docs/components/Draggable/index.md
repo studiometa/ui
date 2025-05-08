@@ -11,7 +11,7 @@ badges: [JS]
 
 ## Usage
 
-Use this component to add drag capabilities to the root element.
+Use this component to add drag capabilities to an element, with optional fitting in bounds.
 
 <PreviewPlayground
   :html="() => import('./stories/app.twig')"
