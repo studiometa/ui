@@ -9,9 +9,9 @@ describe('The Draggable component', () => {
     const div = h('div', [target]);
     const draggable = new Draggable(div);
     await mount(draggable);
-    draggable.x = 10;
-    draggable.y = 10;
-    while (draggable.dampedX !== draggable.x) {
+    draggable.props.x = 10;
+    draggable.props.y = 10;
+    while (draggable.props.dampedX !== draggable.props.x) {
       draggable.render();
     }
     await wait(1);
@@ -19,9 +19,9 @@ describe('The Draggable component', () => {
 
     draggable.$options.x = false;
     draggable.$options.y = false;
-    draggable.x = 20;
-    draggable.y = 20;
-    while (draggable.dampedX !== draggable.x) {
+    draggable.props.x = 20;
+    draggable.props.y = 20;
+    while (draggable.props.dampedX !== draggable.props.x) {
       draggable.render();
     }
     await wait(1);
@@ -42,14 +42,14 @@ describe('The Draggable component', () => {
       yMax: 100,
     }));
 
-    draggable.x = 200;
-    draggable.y = 200;
+    draggable.props.x = 200;
+    draggable.props.y = 200;
 
     // @ts-expect-error
     draggable.dragged({ mode: DragService.MODES.DROP });
 
-    expect(draggable.x).toBe(100);
-    expect(draggable.y).toBe(100);
+    expect(draggable.props.x).toBe(100);
+    expect(draggable.props.y).toBe(100);
   });
 
   it('should handle drag service modes correctly', async () => {
@@ -77,31 +77,28 @@ describe('The Draggable component', () => {
 
     // Test START mode
     draggable.dragged({ ...dragProps, mode: DragService.MODES.START });
-    expect(draggable.originX).toBe(draggable.x);
-    expect(draggable.originY).toBe(draggable.y);
+    expect(draggable.props.originX).toBe(draggable.props.x);
+    expect(draggable.props.originY).toBe(draggable.props.y);
     expect(draggable.dampFactor).toBe(draggable.$options.sensitivity);
-    expect(fn).toHaveBeenLastCalledWith('drag-start', {
-      ...dragProps,
-      mode: DragService.MODES.START,
-    });
+    expect(fn).toHaveBeenLastCalledWith('drag-start', draggable.props);
 
     // Test DRAG mode
     draggable.dragged({ ...dragProps, mode: DragService.MODES.DRAG, x: 50, y: 50 });
-    expect(draggable.x).toBe(50);
-    expect(draggable.y).toBe(50);
-    expect(fn).toHaveBeenLastCalledWith('drag-drag', { ...dragProps, mode: DragService.MODES.DRAG, x: 50, y: 50 });
+    expect(draggable.props.x).toBe(50);
+    expect(draggable.props.y).toBe(50);
+    expect(fn).toHaveBeenLastCalledWith('drag-drag', draggable.props);
 
     // Test INERTIA mode without fitBounds
     draggable.dragged({ ...dragProps, mode: DragService.MODES.INERTIA, x: 100, y: 100 });
-    expect(draggable.x).toBe(100);
-    expect(draggable.y).toBe(100);
-    expect(fn).toHaveBeenLastCalledWith('drag-inertia', { ...dragProps, mode: DragService.MODES.INERTIA, x: 100, y: 100 });
+    expect(draggable.props.x).toBe(100);
+    expect(draggable.props.y).toBe(100);
+    expect(fn).toHaveBeenLastCalledWith('drag-inertia', draggable.props);
 
     // Test DROP mode with fitBounds
     draggable.$options.fitBounds = true;
     draggable.dragged({ ...dragProps, mode: DragService.MODES.DROP, x: 100, y: 100 });
     expect(draggable.dampFactor).toBe(draggable.$options.dropSensitivity);
-    expect(fn).toHaveBeenLastCalledWith('drag-drop', { ...dragProps, mode: DragService.MODES.DROP, x: 100, y: 100 });
+    expect(fn).toHaveBeenLastCalledWith('drag-drop', draggable.props);
   });
 
   it('should handle ticked service correctly', async () => {
@@ -115,10 +112,10 @@ describe('The Draggable component', () => {
     const disableSpy = vi.spyOn(draggable.$services, 'disable');
 
     // Initial state
-    draggable.x = 100;
-    draggable.y = 100;
-    draggable.dampedX = 0;
-    draggable.dampedY = 0;
+    draggable.props.x = 100;
+    draggable.props.y = 100;
+    draggable.props.dampedX = 0;
+    draggable.props.dampedY = 0;
 
     // First tick
     draggable.ticked();
@@ -126,8 +123,8 @@ describe('The Draggable component', () => {
     expect(disableSpy).not.toHaveBeenCalled();
 
     // When damped values match target values
-    draggable.dampedX = 100;
-    draggable.dampedY = 100;
+    draggable.props.dampedX = 100;
+    draggable.props.dampedY = 100;
     draggable.ticked();
     expect(disableSpy).toHaveBeenCalledWith('ticked');
   });
@@ -212,11 +209,14 @@ describe('The Draggable component', () => {
     const draggable = new Draggable(div);
     await mount(draggable);
 
-    draggable.x = 100;
-    draggable.y = 100;
+    draggable.props.x = 100;
+    draggable.props.y = 100;
 
     // Wait for damped values to match
-    while (draggable.dampedX !== draggable.x || draggable.dampedY !== draggable.y) {
+    while (
+      draggable.props.dampedX !== draggable.props.x ||
+      draggable.props.dampedY !== draggable.props.y
+    ) {
       draggable.render();
     }
     await wait(1);
