@@ -16,6 +16,16 @@ describe('The Draggable component', () => {
     }
     await wait(1);
     expect(target.style.transform).toBe('translate3d(10px, 10px, 0px)');
+
+    draggable.$options.x = false;
+    draggable.$options.y = false;
+    draggable.x = 20;
+    draggable.y = 20;
+    while (draggable.dampedX !== draggable.x) {
+      draggable.render();
+    }
+    await wait(1);
+    expect(target.style.transform).toBe('translate3d(0px, 0px, 0px)');
   });
 
   it('should respect clamp x and y to the bounding limits', async () => {
@@ -70,6 +80,11 @@ describe('The Draggable component', () => {
     draggable.dragged({ ...dragProps, mode: DragService.MODES.DRAG, x: 50, y: 50 });
     expect(draggable.x).toBe(50);
     expect(draggable.y).toBe(50);
+
+    // Test INERTIA mode without fitBounds
+    draggable.dragged({ ...dragProps, mode: DragService.MODES.INERTIA, x: 100, y: 100 });
+    expect(draggable.x).toBe(100);
+    expect(draggable.y).toBe(100);
 
     // Test DROP mode with fitBounds
     draggable.$options.fitBounds = true;
@@ -128,30 +143,73 @@ describe('The Draggable component', () => {
     const draggable = new Draggable(div);
     await mount(draggable);
 
-    const parentSpy = vi.spyOn(draggable, 'parent', 'get');
-    const targetSpy = vi.spyOn(draggable, 'target', 'get');
-
-    // @ts-expect-error
-    parentSpy.mockImplementation(() => ({
+    const parentSpies = {};
+    const parentOffsets = {
       offsetTop: 0,
       offsetLeft: 0,
       offsetHeight: 100,
       offsetWidth: 100,
-    }));
+    };
 
-    // @ts-expect-error
-    targetSpy.mockImplementation(() => ({
+    for (const [name, value] of Object.entries(parentOffsets) as [
+      keyof typeof parentOffsets,
+      number,
+    ][]) {
+      const mock = vi.spyOn(draggable.parent, name, 'get');
+      mock.mockImplementation(() => value);
+      parentSpies[name] = mock;
+    }
+
+    const targetSpies = {};
+    const targetOffsets = {
       offsetTop: 10,
       offsetHeight: 10,
       offsetLeft: 10,
       offsetWidth: 10,
-      offsetParent: div,
-    }));
+    };
 
-    const { bounds } = draggable;
-    expect(bounds.xMin).toBe(-10);
-    expect(bounds.yMin).toBe(-10);
-    expect(bounds.xMax).toBe(80);
-    expect(bounds.yMax).toBe(80);
+    for (const [name, value] of Object.entries(targetOffsets) as [
+      keyof typeof targetOffsets,
+      number,
+    ][]) {
+      const mock = vi.spyOn(draggable.target, name, 'get');
+      mock.mockImplementation(() => value);
+      targetSpies[name] = mock;
+    }
+
+    // @ts-expect-error
+    draggable.target.offsetParent = div;
+
+
+    expect(draggable.bounds.xMin).toBe(-10);
+    expect(draggable.bounds.yMin).toBe(-10);
+    expect(draggable.bounds.xMax).toBe(80);
+    expect(draggable.bounds.yMax).toBe(80);
+
+    // @ts-expect-error
+    draggable.target.offsetParent = document.body;
+
+    expect(draggable.bounds.xMin).toBe(-10);
+    expect(draggable.bounds.yMin).toBe(-10);
+    expect(draggable.bounds.xMax).toBe(80);
+    expect(draggable.bounds.yMax).toBe(80);
+  });
+
+  it('should initialize with x and y options', async () => {
+    const target = h('div', { dataRef: 'target' });
+    const div = h('div', { dataOptionNoX: true, dataOptionNoY: true }, [target]);
+    const draggable = new Draggable(div);
+    await mount(draggable);
+
+    draggable.x = 100;
+    draggable.y = 100;
+
+    // Wait for damped values to match
+    while (draggable.dampedX !== draggable.x || draggable.dampedY !== draggable.y) {
+      draggable.render();
+    }
+    await wait(1);
+
+    expect(target.style.transform).toBe('translate3d(0px, 0px, 0px)');
   });
 });
