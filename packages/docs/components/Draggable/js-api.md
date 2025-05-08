@@ -72,3 +72,40 @@ The element used to calculate the bound limits when the [`fitBounds` option](#fi
 - Returns: `void`
 
 Update the target position.
+
+## Emits
+
+### `drag-start`
+
+- Parameters:
+  - `props` (`DragServiceProps`): props for the [drag service](https://js-toolkit.studiometa.dev/api/services/useDrag.html#props)
+
+Emitted when the drag starts (pointer down).
+
+### `drag-drag`
+
+- Parameters:
+  - `props` (`DragServiceProps`): props for the [drag service](https://js-toolkit.studiometa.dev/api/services/useDrag.html#props)
+
+Emitted while the drag is moving (pointer move).
+
+### `drag-drop`
+
+- Parameters:
+  - `props` (`DragServiceProps`): props for the [drag service](https://js-toolkit.studiometa.dev/api/services/useDrag.html#props)
+
+Emitted when the drag stops (pointer up).
+
+### `drag-inertia`
+
+- Parameters:
+  - `props` (`DragServiceProps`): props for the [drag service](https://js-toolkit.studiometa.dev/api/services/useDrag.html#props)
+
+Emitted when the drag target is moving with inertia.
+
+### `drag-stop`
+
+- Parameters:
+  - `props` (`DragServiceProps`): props for the [drag service](https://js-toolkit.studiometa.dev/api/services/useDrag.html#props)
+
+Emitted when the drag target has settled its position.
