@@ -7,6 +7,8 @@ export interface DraggableProps extends BaseProps {
     target: HTMLElement;
   };
   $options: {
+    x: boolean;
+    y: boolean;
     fitBounds: boolean;
     sensitivity: number;
     dropSensitivity: number;
@@ -27,6 +29,14 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
     name: 'DraggableElement',
     refs: ['target'],
     options: {
+      x: {
+        type: Boolean,
+        default: true,
+      },
+      y: {
+        type: Boolean,
+        default: true,
+      },
       fitBounds: Boolean,
       sensitivity: { type: Number, default: 0.5 },
       dropSensitivity: { type: Number, default: 0.1 },
@@ -137,10 +147,13 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
     this.dampedX = damp(this.x, this.dampedX, this.dampFactor);
     this.dampedY = damp(this.y, this.dampedY, this.dampFactor);
 
-    domScheduler.write(() => {
-      transform(this.target, {
-        x: this.dampedX,
-        y: this.dampedY,
+    domScheduler.read(() => {
+      const { x, y } = this.$options;
+      domScheduler.write(() => {
+        transform(this.target, {
+          x: x ? this.dampedX : 0,
+          y: y ? this.dampedY : 0,
+        });
       });
     });
   }
