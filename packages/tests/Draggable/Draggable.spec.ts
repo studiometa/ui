@@ -20,14 +20,35 @@ describe('The Draggable component', () => {
 
   it('should respect fitBounds option', async () => {
     const target = h('div', { dataRef: 'target', style: 'width: 100px; height: 100px;' });
-    const div = h('div', { style: 'width: 200px; height: 200px;' }, [target]);
-    const draggable = new Draggable(div, { fitBounds: true });
+    const div = h('div', {
+      'data-option-fit-bounds': true,
+      style: 'width: 200px; height: 200px;'
+    }, [target]);
+    const draggable = new Draggable(div);
     await mount(draggable);
     
     // Try to move beyond bounds
     draggable.x = 150;
     draggable.y = 150;
-    draggable.render();
+
+    // Trigger DROP mode to apply bounds clamping
+    draggable.dragged({
+      mode: DragService.MODES.DROP,
+      target: draggable.target,
+      isGrabbing: true,
+      hasInertia: false,
+      delta: { x: 0, y: 0 },
+      origin: { x: 0, y: 0 },
+      distance: { x: 0, y: 0 },
+      final: { x: 0, y: 0 },
+      x: 150,
+      y: 150,
+    });
+
+    // Wait for damped values to match
+    while (draggable.dampedX !== draggable.x || draggable.dampedY !== draggable.y) {
+      draggable.render();
+    }
     await wait(1);
     
     // Should be clamped to bounds
@@ -46,7 +67,6 @@ describe('The Draggable component', () => {
       isGrabbing: true,
       hasInertia: false,
       delta: { x: 0, y: 0 },
-      velocity: { x: 0, y: 0 },
       origin: { x: 0, y: 0 },
       distance: { x: 0, y: 0 },
       final: { x: 0, y: 0 },
@@ -99,24 +119,53 @@ describe('The Draggable component', () => {
 
   it('should handle different sensitivity values', async () => {
     const target = h('div', { dataRef: 'target' });
-    const div = h('div', [target]);
-    const draggable = new Draggable(div, { sensitivity: 0.8, dropSensitivity: 0.2 });
+    const div = h('div', {
+      'data-option-sensitivity': 0.8,
+      'data-option-drop-sensitivity': 0.2,
+    }, [target]);
+    const draggable = new Draggable(div);
     await mount(draggable);
+
+    // Wait for component to be fully initialized
+    await wait(1);
 
     expect(draggable.$options.sensitivity).toBe(0.8);
     expect(draggable.$options.dropSensitivity).toBe(0.2);
   });
 
   it('should correctly calculate bounds', async () => {
-    const target = h('div', { dataRef: 'target', style: 'width: 100px; height: 100px; position: absolute; top: 50px; left: 50px;' });
-    const div = h('div', { style: 'width: 200px; height: 200px; position: relative;' }, [target]);
+    // Create a container to hold our test elements
+    const container = h('div', { style: 'position: relative; width: 500px; height: 500px;' });
+    document.body.appendChild(container);
+
+    const target = h('div', {
+      dataRef: 'target',
+      style: 'width: 100px; height: 100px; position: absolute; top: 50px; left: 50px;'
+    });
+    const div = h('div', {
+      style: 'width: 200px; height: 200px; position: relative;'
+    }, [target]);
+
+    // Add elements to the container
+    container.appendChild(div);
+
     const draggable = new Draggable(div);
     await mount(draggable);
+
+    // Force layout calculation
+    div.getBoundingClientRect();
+    target.getBoundingClientRect();
+
+    // Wait for component to be fully initialized and DOM to be ready
+    await wait(1);
 
     const bounds = draggable.bounds;
     expect(bounds.xMin).toBe(50);
     expect(bounds.yMin).toBe(50);
     expect(bounds.xMax).toBe(-50); // 50 + 100 - 200
     expect(bounds.yMax).toBe(-50); // 50 + 100 - 200
+
+    // Clean up
+    document.body.removeChild(container);
   });
 });
