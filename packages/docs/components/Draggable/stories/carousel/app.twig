@@ -1,0 +1,24 @@
+<div class="flex items-center justify-center min-h-screen p-10 overflow-hidden">
+  <div data-component="Draggable"
+    data-option-fit-bounds
+    data-option-no-y
+    class="relative flex items-center justify-start w-full max-w-4xl h-96 bg-gray-100 dark:bg-white dark:bg-opacity-20 rounded">
+    <div data-ref="target"
+      class="flex gap-4 cursor-grab active:cursor-grabbing select-none">
+      {% for item in 1..6 %}
+        <div class="w-96 rounded overflow-hidden">
+          {{
+            include(
+              '@ui/Figure/Figure.twig',
+              {
+                src: "https://picsum.photos/seed/#{loop.index * 10}/600/400",
+                width: 600,
+                height: 400,
+              }
+            )
+          }}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>

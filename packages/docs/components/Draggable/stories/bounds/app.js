@@ -1,11 +1,12 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { Draggable } from '@studiometa/ui';
+import { Draggable, Figure } from '@studiometa/ui';
 
 class App extends Base {
   static config = {
     name: 'App',
     components: {
       Draggable,
+      Figure,
     },
   };
 }
