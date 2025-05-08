@@ -43,6 +43,14 @@ A number between in the range `0–1` used to smoothen the transition between ea
 
 A number between in the range `0–1` used to smoothen the transition between each position when the drag has ended and inertia is active.
 
+## Properties
+
+### `props`
+
+- Type: `{ x: number, y: number, originX: number, originY: number, dampedX: number, dampedY: number }`
+
+The values used to calculate and render the dragged element.
+
 ## Getters
 
 ### `target`
@@ -78,34 +86,41 @@ Update the target position.
 ### `drag-start`
 
 - Parameters:
-  - `props` (`DragServiceProps`): props for the [drag service](https://js-toolkit.studiometa.dev/api/services/useDrag.html#props)
+  - `props` (`typeof this.props`): the [`props` property](#props) of the instance
 
 Emitted when the drag starts (pointer down).
 
 ### `drag-drag`
 
 - Parameters:
-  - `props` (`DragServiceProps`): props for the [drag service](https://js-toolkit.studiometa.dev/api/services/useDrag.html#props)
+  - `props` (`typeof this.props`): the [`props` property](#props) of the instance
 
 Emitted while the drag is moving (pointer move).
 
 ### `drag-drop`
 
 - Parameters:
-  - `props` (`DragServiceProps`): props for the [drag service](https://js-toolkit.studiometa.dev/api/services/useDrag.html#props)
+  - `props` (`typeof this.props`): the [`props` property](#props) of the instance
 
 Emitted when the drag stops (pointer up).
 
 ### `drag-inertia`
 
 - Parameters:
-  - `props` (`DragServiceProps`): props for the [drag service](https://js-toolkit.studiometa.dev/api/services/useDrag.html#props)
+  - `props` (`typeof this.props`): the [`props` property](#props) of the instance
 
 Emitted when the drag target is moving with inertia.
 
 ### `drag-stop`
 
 - Parameters:
-  - `props` (`DragServiceProps`): props for the [drag service](https://js-toolkit.studiometa.dev/api/services/useDrag.html#props)
+  - `props` (`typeof this.props`): the [`props` property](#props) of the instance
 
-Emitted when the drag target has settled its position.
+Emitted when the drag target has settled its position when the [`fitBounds` option](#fitbounds) is not enabled.
+
+### `drag-fit`
+
+- Parameters:
+  - `props` (`typeof this.props`): the [`props` property](#props) of the instance
+
+Emitted when the drag target has settled its position when the [`fitBounds` option](#fitbounds) is enabled.
