@@ -1,26 +1,19 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Draggable } from '@studiometa/ui';
-
-function createEvent(type: string, data = {}, options = {}) {
-  const event = new Event(type, options);
-  Object.entries(data).forEach(([name, value]) => {
-    event[name] = value;
-  });
-
-  return event;
-}
+import { h, mount, wait } from '#test-utils';
 
 describe('The Draggable component', () => {
-  it('should move its root element', async () => {
-    const div = document.createElement('div');
+  it('should move its target ref', async () => {
+    const target = h('div', { dataRef: 'target' });
+    const div = h('div', [target]);
     const draggable = new Draggable(div);
-    vi.useFakeTimers();
-    draggable.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    div.dispatchEvent(createEvent('pointerdown', { x: 0, y: 0, button: 0 }));
-    document.dispatchEvent(createEvent('mousemove', { clientX: 10, clientY: 10 }));
-    await vi.advanceTimersByTimeAsync(16);
-    expect(div.style.transform).toBe('translate3d(10px, 10px, 0px)');
-    vi.useRealTimers();
+    await mount(draggable);
+    draggable.x = 10;
+    draggable.y = 10;
+    while (draggable.dampedX !== draggable.x) {
+      draggable.render();
+    }
+    await wait(1);
+    expect(target.style.transform).toBe('translate3d(10px, 10px, 0px)');
   });
 });
