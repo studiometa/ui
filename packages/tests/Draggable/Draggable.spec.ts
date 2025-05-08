@@ -46,7 +46,11 @@ describe('The Draggable component', () => {
     draggable.props.y = 200;
 
     // @ts-expect-error
-    draggable.dragged({ mode: DragService.MODES.DROP });
+    draggable.dragged({
+      mode: DragService.MODES.DROP,
+      final: { x: 200, y: 200 },
+      origin: { x: 0, y: 0 },
+    });
 
     expect(draggable.props.x).toBe(100);
     expect(draggable.props.y).toBe(100);
