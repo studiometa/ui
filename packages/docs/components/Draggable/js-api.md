@@ -6,28 +6,69 @@ title: Draggable JS API
 
 The `Draggable` component uses the [`withDrag` decorator](https://js-toolkit.studiometa.dev/api/decorators/withDrag.html) of the [`@studiometa/js-toolkit` package](https://js-toolkit.studiometa.dev) and inherits from all of its APIs.
 
-## Properties
+## Options
 
 ### `x`
 
-- Type: `number`
+- Type: `boolean`
+- Default: `true`
 
-The horizontal position.
+Enable/disable moving the [`target` ref](#target) on the `x` axis. Defaults to `true`, use the `data-option-no-x` attribute to disable it.
 
 ### `y`
 
+- Type: `boolean`
+- Default: `true`
+
+Enable/disable moving the [`target` ref](#target) on the `y` axis. Defaults to `true`, use the `data-option-no-y` attribute to disable it.
+
+### `fitBounds`
+
+- Type: `boolean`
+- Default: `false`
+
+Wether or not to force the [`target` ref](#target) to stay in the root element's bounds. Use the `data-option-fit-bounds` attribute to enable it.
+
+### `sensitivity`
+
 - Type: `number`
+- Default: `0.5`
 
-The vertical transformation.
+A number between in the range `0–1` used to smoothen the transition between each position.
 
-### `originX`
-
-- Type: `number`
-
-The horizontal origin.
-
-### `originY`
+### `dropSensitivity`
 
 - Type: `number`
+- Default: `0.1`
 
-The vertical origin.
+A number between in the range `0–1` used to smoothen the transition between each position when the drag has ended and inertia is active.
+
+## Getters
+
+### `target`
+
+- Return: `HTMLElement`
+- Default: `this.$refs.target`
+
+The element that will move when the drag is happening.
+
+### `parent`
+
+- Return: `HTMLElement`
+- Default: `this.$el`
+
+The element used to calculate the bound limits when the [`fitBounds` option](#fitbounds) is enabled.
+
+### `bounds`
+
+- Return: `{ yMin: number, yMax: number, xMin: number, xMax: number }`
+- Default: the minimum and maximum position for the `target` element to stay in the `parent` bounds
+
+## Methods
+
+### `render()`
+
+- Parameters: none
+- Returns: `void`
+
+Update the target position.

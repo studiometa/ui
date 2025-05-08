@@ -11,7 +11,33 @@ badges: [JS]
 
 ## Usage
 
-Use this component to add drag capabilities to an element, with optional fitting in bounds.
+Use this component to add drag capabilities to an element.
+
+::: code-group
+
+```js twoslash [app.js]
+import { Base, createApp } from '@studiometa/js-toolkit';
+import { Draggable } from '@studiometa/ui';
+
+class App extends Base {
+  static config = {
+    name: 'App',
+    components: {
+      Draggable,
+    },
+  };
+}
+
+export default createApp(App);
+```
+
+```html [index.html]
+<div data-component="Draggable">
+  <div data-ref="target">
+    ...
+  </div>
+</div>
+```
 
 <PreviewPlayground
   :html="() => import('./stories/app.twig')"
