@@ -58,6 +58,11 @@ describe('The Draggable component', () => {
     const draggable = new Draggable(div);
     await mount(draggable);
 
+    const fn = vi.fn();
+    for (const event of Draggable.config.emits) {
+      draggable.$on(event, ({ detail: [props] }: CustomEvent) => fn(event, props));
+    }
+
     const dragProps = {
       target: draggable.target,
       isGrabbing: true,
@@ -75,21 +80,28 @@ describe('The Draggable component', () => {
     expect(draggable.originX).toBe(draggable.x);
     expect(draggable.originY).toBe(draggable.y);
     expect(draggable.dampFactor).toBe(draggable.$options.sensitivity);
+    expect(fn).toHaveBeenLastCalledWith('drag-start', {
+      ...dragProps,
+      mode: DragService.MODES.START,
+    });
 
     // Test DRAG mode
     draggable.dragged({ ...dragProps, mode: DragService.MODES.DRAG, x: 50, y: 50 });
     expect(draggable.x).toBe(50);
     expect(draggable.y).toBe(50);
+    expect(fn).toHaveBeenLastCalledWith('drag-drag', { ...dragProps, mode: DragService.MODES.DRAG, x: 50, y: 50 });
 
     // Test INERTIA mode without fitBounds
     draggable.dragged({ ...dragProps, mode: DragService.MODES.INERTIA, x: 100, y: 100 });
     expect(draggable.x).toBe(100);
     expect(draggable.y).toBe(100);
+    expect(fn).toHaveBeenLastCalledWith('drag-inertia', { ...dragProps, mode: DragService.MODES.INERTIA, x: 100, y: 100 });
 
     // Test DROP mode with fitBounds
     draggable.$options.fitBounds = true;
     draggable.dragged({ ...dragProps, mode: DragService.MODES.DROP, x: 100, y: 100 });
     expect(draggable.dampFactor).toBe(draggable.$options.dropSensitivity);
+    expect(fn).toHaveBeenLastCalledWith('drag-drop', { ...dragProps, mode: DragService.MODES.DROP, x: 100, y: 100 });
   });
 
   it('should handle ticked service correctly', async () => {
@@ -179,7 +191,6 @@ describe('The Draggable component', () => {
 
     // @ts-expect-error
     draggable.target.offsetParent = div;
-
 
     expect(draggable.bounds.xMin).toBe(-10);
     expect(draggable.bounds.yMin).toBe(-10);
