@@ -28,7 +28,7 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   static config: BaseConfig = {
     name: 'DraggableElement',
     refs: ['target'],
-    emits: ['drag-start', 'drag-drag', 'drag-drop', 'drag-inertia', 'drag-stop'],
+    emits: ['drag-start', 'drag-drag', 'drag-drop', 'drag-inertia', 'drag-stop', 'drag-fit'],
     options: {
       x: {
         type: Boolean,
@@ -45,34 +45,16 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   };
 
   /**
-   * Horizontal transformation.
+   * Props for the target position.
    */
-  x = 0;
-
-  /**
-   * Vertical transformation.
-   */
-  y = 0;
-
-  /**
-   * Horizontal position origin.
-   */
-  originX = 0;
-
-  /**
-   * Vertical position origin.
-   */
-  originY = 0;
-
-  /**
-   * Smoothed horizontal transformation.
-   */
-  dampedX = 0;
-
-  /**
-   * Smoothed vertical transformation.
-   */
-  dampedY = 0;
+  props = {
+    x: 0,
+    y: 0,
+    originX: 0,
+    originY: 0,
+    dampedX: 0,
+    dampedY: 0,
+  };
 
   /**
    * Smooth factor.
@@ -116,46 +98,48 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
    * Drag service hook.
    */
   dragged(props: DragServiceProps) {
-    this.$emit(`drag-${props.mode}`, props);
+    this.$emit(`drag-${props.mode}`, this.props);
 
     if (props.mode === DragService.MODES.START) {
-      this.originX = this.x;
-      this.originY = this.y;
+      this.props.originX = this.props.x;
+      this.props.originY = this.props.y;
       this.dampFactor = this.$options.sensitivity;
       this.render();
     } else if (
       props.mode === DragService.MODES.DRAG ||
       (props.mode === DragService.MODES.INERTIA && !this.$options.fitBounds)
     ) {
-      this.x = this.originX + props.x - props.origin.x;
-      this.y = this.originY + props.y - props.origin.y;
+      this.props.x = this.props.originX + props.x - props.origin.x;
+      this.props.y = this.props.originY + props.y - props.origin.y;
       this.render();
     } else if (props.mode === DragService.MODES.DROP && this.$options.fitBounds) {
       const { bounds } = this;
-      this.x = clamp(this.x, bounds.xMin, bounds.xMax);
-      this.y = clamp(this.y, bounds.yMin, bounds.yMax);
+      this.props.x = clamp(this.props.x, bounds.xMin, bounds.xMax);
+      this.props.y = clamp(this.props.y, bounds.yMin, bounds.yMax);
       this.dampFactor = this.$options.dropSensitivity;
       this.$services.enable('ticked');
     }
   }
 
   ticked() {
+    this.$emit(`drag-inertia`, this.props);
     this.render();
-    if (this.dampedX === this.x && this.dampedY === this.y) {
+    if (this.props.dampedX === this.props.x && this.props.dampedY === this.props.y) {
       this.$services.disable('ticked');
+      this.$emit('drag-fit', this.props);
     }
   }
 
   render() {
-    this.dampedX = damp(this.x, this.dampedX, this.dampFactor);
-    this.dampedY = damp(this.y, this.dampedY, this.dampFactor);
+    this.props.dampedX = damp(this.props.x, this.props.dampedX, this.dampFactor);
+    this.props.dampedY = damp(this.props.y, this.props.dampedY, this.dampFactor);
 
     domScheduler.read(() => {
       const { x, y } = this.$options;
       domScheduler.write(() => {
         transform(this.target, {
-          x: x ? this.dampedX : 0,
-          y: y ? this.dampedY : 0,
+          x: x ? this.props.dampedX : 0,
+          y: y ? this.props.dampedY : 0,
         });
       });
     });
