@@ -28,6 +28,7 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   static config: BaseConfig = {
     name: 'DraggableElement',
     refs: ['target'],
+    emits: ['drag-start', 'drag-drag', 'drag-drop', 'drag-inertia', 'drag-stop'],
     options: {
       x: {
         type: Boolean,
@@ -115,6 +116,8 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
    * Drag service hook.
    */
   dragged(props: DragServiceProps) {
+    this.$emit(`drag-${props.mode}`, props);
+
     if (props.mode === DragService.MODES.START) {
       this.originX = this.x;
       this.originY = this.y;
