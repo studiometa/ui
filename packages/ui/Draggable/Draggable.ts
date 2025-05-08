@@ -114,8 +114,16 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
       this.render();
     } else if (props.mode === DragService.MODES.DROP && this.$options.fitBounds) {
       const { bounds } = this;
-      this.props.x = clamp(this.props.x, bounds.xMin, bounds.xMax);
-      this.props.y = clamp(this.props.y, bounds.yMin, bounds.yMax);
+      this.props.x = clamp(
+        this.props.originX + props.final.x - props.origin.x,
+        bounds.xMin,
+        bounds.xMax,
+      );
+      this.props.y = clamp(
+        this.props.originY + props.final.y - props.origin.y,
+        bounds.yMin,
+        bounds.yMax,
+      );
       this.dampFactor = this.$options.dropSensitivity;
       this.$services.enable('ticked');
     }
