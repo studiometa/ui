@@ -48,6 +48,7 @@ describe('The Draggable component', () => {
     // @ts-expect-error
     draggable.dragged({
       mode: DragService.MODES.DROP,
+      MODES: DragService.MODES,
       final: { x: 200, y: 200 },
       origin: { x: 0, y: 0 },
     });
@@ -69,6 +70,7 @@ describe('The Draggable component', () => {
 
     const dragProps = {
       target: draggable.target,
+      MODES: DragService.MODES,
       isGrabbing: true,
       hasInertia: false,
       x: 0,
