@@ -1,4 +1,4 @@
-import { Base, withDrag, DragService } from '@studiometa/js-toolkit';
+import { Base, withDrag } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig, DragServiceProps } from '@studiometa/js-toolkit';
 import { domScheduler, transform, damp, clamp } from '@studiometa/js-toolkit/utils';
 
@@ -100,19 +100,19 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   dragged(props: DragServiceProps) {
     this.$emit(`drag-${props.mode}`, this.props);
 
-    if (props.mode === DragService.MODES.START) {
+    if (props.mode === props.MODES.START) {
       this.props.originX = this.props.x;
       this.props.originY = this.props.y;
       this.dampFactor = this.$options.sensitivity;
       this.render();
     } else if (
-      props.mode === DragService.MODES.DRAG ||
-      (props.mode === DragService.MODES.INERTIA && !this.$options.fitBounds)
+      props.mode === props.MODES.DRAG ||
+      (props.mode === props.MODES.INERTIA && !this.$options.fitBounds)
     ) {
       this.props.x = this.props.originX + props.x - props.origin.x;
       this.props.y = this.props.originY + props.y - props.origin.y;
       this.render();
-    } else if (props.mode === DragService.MODES.DROP && this.$options.fitBounds) {
+    } else if (props.mode === props.MODES.DROP && this.$options.fitBounds) {
       const { bounds } = this;
       this.props.x = clamp(
         this.props.originX + props.final.x - props.origin.x,
