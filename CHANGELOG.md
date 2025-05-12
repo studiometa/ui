@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Frame:** fix accessing refs and components if they are not present ([#393](https://github.com/studiometa/ui/pull/393), [c997008](https://github.com/studiometa/ui/commit/c997008))
 
+### Dependencies
+
+- Update dependency [@studiometa/js-toolkit](https://github.com/studiometa/js-toolkit) to v3.0.4 ([#395](https://github.com/studiometa/ui/pull/395), [8819913](https://github.com/studiometa/ui/commit/8819913))
+
 ## [v1.0.0-rc.1](https://github.com/studiometa/ui/compare/1.0.0-rc.0..1.0.0-rc.1) (2025-05-05)
 
 ### Added
