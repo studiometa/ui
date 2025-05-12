@@ -1,6 +1,6 @@
 import { Base, withDrag } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig, DragServiceProps } from '@studiometa/js-toolkit';
-import { domScheduler, transform, damp, clamp } from '@studiometa/js-toolkit/utils';
+import { domScheduler, transform, damp, clamp, getOffsetSizes } from '@studiometa/js-toolkit/utils';
 
 export interface DraggableProps extends BaseProps {
   $refs: {
@@ -79,12 +79,12 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
    * The bounds values.
    */
   get bounds() {
-    const { target, parent } = this;
-    const { offsetTop, offsetHeight, offsetLeft, offsetWidth, offsetParent } = target;
-    const yMin = offsetParent === parent ? offsetTop : offsetTop - parent.offsetTop;
-    const xMin = offsetParent === parent ? offsetLeft : offsetLeft - parent.offsetLeft;
-    const yMax = yMin + offsetHeight - parent.offsetHeight;
-    const xMax = xMin + offsetWidth - parent.offsetWidth;
+    const targetSizes = getOffsetSizes(this.target);
+    const parentSizes = getOffsetSizes(this.parent);
+    const xMin = targetSizes.x - parentSizes.x;
+    const yMin = targetSizes.y - parentSizes.y;
+    const xMax = xMin + targetSizes.width - parentSizes.width;
+    const yMax = yMin + targetSizes.height - parentSizes.height;
 
     return {
       yMin: yMin * -1,
