@@ -50,7 +50,7 @@ describe('The FrameForm class', () => {
     const fn = vi.fn();
     frameForm.$on('frame-trigger', (event: CustomEvent) => fn(event));
     await mount(frameForm);
-    const event = new SubmitEvent('submit')
+    const event = new SubmitEvent('submit');
     const spy = vi.spyOn(event, 'preventDefault');
     form.dispatchEvent(event);
     expect(fn).toHaveBeenCalledOnce();
@@ -59,5 +59,18 @@ describe('The FrameForm class', () => {
     form.dispatchEvent(event);
     expect(fn).toHaveBeenCalledOnce();
     expect(spy).toHaveBeenCalledOnce();
+  });
+
+  it('should not fail if headers[] refs are not present', async () => {
+    class Foo extends FrameForm {
+      static config = {
+        name: 'Foo',
+        refs: [],
+      };
+    }
+
+    const form = h('form');
+    const frameForm = new Foo(form);
+    expect(() => frameForm.requestInit).not.toThrow();
   });
 });

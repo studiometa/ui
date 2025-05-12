@@ -64,9 +64,11 @@ export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
    * Trigger FrameLoaders enter.
    */
   onFrameFetchBefore() {
-    for (const loader of this.$children.FrameTriggerLoader) {
-      if (getClosestParent(loader, this.constructor) === this) {
-        loader.enter();
+    if (this.$children.FrameTriggerLoader) {
+      for (const loader of this.$children.FrameTriggerLoader) {
+        if (getClosestParent(loader, this.constructor) === this) {
+          loader.enter();
+        }
       }
     }
   }
@@ -75,9 +77,11 @@ export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
    * Trigger FrameLoaders leave.
    */
   onFrameFetchAfter() {
-    for (const loader of this.$children.FrameTriggerLoader) {
-      if (getClosestParent(loader, this.constructor) === this) {
-        loader.leave();
+    if (this.$children.FrameTriggerLoader) {
+      for (const loader of this.$children.FrameTriggerLoader) {
+        if (getClosestParent(loader, this.constructor) === this) {
+          loader.leave();
+        }
       }
     }
   }
