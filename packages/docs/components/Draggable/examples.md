@@ -32,3 +32,14 @@ By disabling drag on the `y` axis with the `data-option-no-y` attribute and with
   :css="() => import('./stories/carousel/app.css?raw')"
   :css-editor="false"
   />
+
+## Dynamic parent
+
+By default, the [`parent` getter](./js-api.md#parent) returns the component's root element. The getter can be overriden to get a dynamic parent that will be resolved when dropping the element defined by the [`target` getter](./js-api.md#target).
+
+In the following example, the [`Action` component](../Action/index.md) is used to toggle the `ring` class on each colored square when they are clicked. The `Draggable` component is extended to override the `parent` getter to find the first element in the DOM with the `ring` class and use it as a basis to calculate the bounds.
+
+<PreviewPlayground
+  :html="() => import('./stories/dynamic-parent/app.twig')"
+  :script="() => import('./stories/dynamic-parent/app.js?raw')"
+  />
