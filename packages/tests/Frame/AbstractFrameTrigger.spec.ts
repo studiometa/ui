@@ -58,4 +58,18 @@ describe('The AbstractFrameTrigger class', () => {
     expect(enterSpy).toHaveBeenCalledOnce();
     expect(leaveSpy).toHaveBeenCalledOnce();
   });
+
+  it('should not fail if FrameTriggerLoader componens are not present', async () => {
+    class Foo extends AbstractFrameTrigger {
+      static config = {
+        name: 'Foo',
+        components: {},
+      };
+    }
+
+    const form = h('form');
+    const frameForm = new Foo(form);
+    expect(() => frameForm.onFrameFetchBefore()).not.toThrow();
+    expect(() => frameForm.onFrameFetchAfter()).not.toThrow();
+  });
 });
