@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-rc.2](https://github.com/studiometa/ui/compare/1.0.0-rc.1..1.0.0-rc.2) (2025-05-12)
+
 ### Changed
 
 - ⚠️ **Draggable:** refactor component to add support for bounds, axis options and events ([#388](https://github.com/studiometa/ui/pull/388))
