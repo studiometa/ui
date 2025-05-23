@@ -1,0 +1,118 @@
+<div class="grid gap-10">
+  <div class="flex items-center justify-center w-full gap-10">
+    <div class="grid gap-2">
+      <p>Default</p>
+      <div data-component="Hoverable"
+        class="relative w-64 h-64 overflow-hidden bg-gray-300">
+        <div class="z-10 absolute inset-0 ring"></div>
+        <div data-ref="target"
+          class="absolute w-[120%] h-[120%] self-center justify-self-center pointer-events-none">
+          {% include '@ui/Figure/Figure.twig' with {
+            src: 'https://picsum.photos/600/600',
+            width: 600,
+            height: 600,
+            fit: 'cover',
+            absolute: true,
+            attr: {
+              data_option_enter_from: 'opacity-0'
+            },
+            inner_attr: {
+              class: 'bg-vp-bg'
+            },
+            img_attr: {
+              class: 'opacity-0 transform'
+            }
+          } only %}
+        </div>
+      </div>
+    </div>
+
+    <div class="grid gap-2">
+      <p>Reversed</p>
+      <div data-component="Hoverable"
+        data-option-reversed
+        class="relative w-64 h-64 overflow-hidden bg-gray-300">
+        <div class="z-10 absolute inset-0 ring"></div>
+        <div data-ref="target"
+          class="absolute w-[120%] h-[120%] self-center justify-self-center pointer-events-none">
+          {% include '@ui/Figure/Figure.twig' with {
+            src: 'https://picsum.photos/600/600',
+            width: 600,
+            height: 600,
+            fit: 'cover',
+            absolute: true,
+            attr: {
+              data_option_enter_from: 'opacity-0'
+            },
+            inner_attr: {
+              class: 'bg-vp-bg'
+            },
+            img_attr: {
+              class: 'opacity-0 transform'
+            }
+          } only %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="flex items-center justify-center w-full gap-10">
+    <div class="grid gap-2">
+      <p>Contained</p>
+      <div data-component="Hoverable"
+        data-option-contained
+        class="relative w-64 h-64 overflow-hidden bg-gray-300">
+        <div class="z-10 absolute inset-0 ring"></div>
+        <div data-ref="target"
+          class="absolute w-[120%] h-[120%] self-center justify-self-center pointer-events-none">
+          {% include '@ui/Figure/Figure.twig' with {
+            src: 'https://picsum.photos/600/600',
+            width: 600,
+            height: 600,
+            fit: 'cover',
+            absolute: true,
+            attr: {
+              data_option_enter_from: 'opacity-0'
+            },
+            inner_attr: {
+              class: 'bg-vp-bg'
+            },
+            img_attr: {
+              class: 'opacity-0 transform'
+            }
+          } only %}
+        </div>
+      </div>
+    </div>
+    <div class="grid gap-2">
+      <p>Reversed & Contained</p>
+      <div data-component="Hoverable"
+        data-option-contained
+        data-option-reversed
+        class="relative w-64 h-64 overflow-hidden bg-gray-300">
+        <div class="z-10 absolute inset-0 ring"></div>
+        <div data-ref="target"
+          class="absolute w-[120%] h-[120%] self-center justify-self-center pointer-events-none">
+          {% include '@ui/Figure/Figure.twig' with {
+            src: 'https://picsum.photos/600/600',
+            width: 600,
+            height: 600,
+            fit: 'cover',
+            absolute: true,
+            attr: {
+              data_option_enter_from: 'opacity-0'
+            },
+            inner_attr: {
+              class: 'bg-vp-bg'
+            },
+            img_attr: {
+              class: 'opacity-0 transform'
+            }
+          } only %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="flex items-center justify-center w-full h-[50vh]">
+  ↓ Scroll down
+</div>
