@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-rc.3](https://github.com/studiometa/ui/compare/1.0.0-rc.2..1.0.0-rc.3) (2025-05-23)
+
+### Added
+
+- Add a new `Hoverable` component ([#401](https://github.com/studiometa/ui/pull/401), [2bced85](https://github.com/studiometa/ui/commit/2bced85))
+
 ## [v1.0.0-rc.2](https://github.com/studiometa/ui/compare/1.0.0-rc.1..1.0.0-rc.2) (2025-05-12)
 
 ### Changed
