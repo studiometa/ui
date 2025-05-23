@@ -33,6 +33,7 @@ test('components exports', () => {
       "FrameLoader",
       "FrameTarget",
       "FrameTriggerLoader",
+      "Hoverable",
       "LargeText",
       "LazyInclude",
       "Menu",
