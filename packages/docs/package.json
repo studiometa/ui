@@ -14,7 +14,7 @@
     "@studiometa/js-toolkit": "^3.0.4"
   },
   "devDependencies": {
-    "@iconify-json/octicon": "1.2.5",
+    "@iconify-json/octicon": "1.2.6",
     "@shikijs/vitepress-twoslash": "3.4.2",
     "@studiometa/playground": "0.1.5",
     "@studiometa/tailwind-config": "2.1.0",
