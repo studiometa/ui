@@ -14,14 +14,11 @@ export class MenuBtn<T extends BaseProps = BaseProps> extends Base<T> {
 
   /**
    * Wether the button is hovered or not.
-   * @type {boolean}
    */
   isHover = false;
 
   /**
    * Dispatch the mouseenter event.
-   * @param   {MouseEvent} event
-   * @returns {void}
    */
   onMouseenter({ event }: { event: MouseEvent }) {
     this.isHover = true;
@@ -30,8 +27,6 @@ export class MenuBtn<T extends BaseProps = BaseProps> extends Base<T> {
 
   /**
    * Dispatch the mouseleave event.
-   * @param   {MouseEvent} event
-   * @returns {void}
    */
   onMouseleave({ event }: { event: MouseEvent }) {
     this.isHover = false;

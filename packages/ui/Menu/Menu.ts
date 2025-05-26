@@ -8,7 +8,7 @@ export interface MenuProps extends BaseProps {
   $children: {
     // eslint-disable-next-line no-use-before-define
     Menu: Menu[];
-    MenutBtn: MenuBtn[];
+    MenuBtn: MenuBtn[];
     MenuList: MenuList[];
   };
   $options: {
