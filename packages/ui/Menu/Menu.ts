@@ -1,4 +1,4 @@
-import { Base, isDirectChild, getDirectChildren } from '@studiometa/js-toolkit';
+import { Base, getDirectChildren, getClosestParent } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps, KeyServiceProps } from '@studiometa/js-toolkit';
 import { nextTick } from '@studiometa/js-toolkit/utils';
 import { MenuBtn } from './MenuBtn.js';
@@ -103,10 +103,21 @@ export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
   }
 
   /**
+   * Close menu list on click outside.
+   */
+  onDocumentClick({ event }: { event: MouseEvent }) {
+    if (this.shouldReactOnClick && !this.$el.contains(event.target as Node)) {
+      this.close();
+    }
+  }
+
+  /**
    * Toggle menu items on button click.
    */
   onMenuBtnClick({ event, target }: { event: MouseEvent; target: MenuBtn }) {
-    if (isDirectChild(this, 'Menu', 'MenuBtn', target) && this.shouldReactOnClick) {
+    if (!this.shouldReactOnClick) return;
+
+    if (getClosestParent(target, this.constructor) === this) {
       event.preventDefault();
       this.toggle();
     }

@@ -19,15 +19,6 @@ export class MenuBtn<T extends BaseProps = BaseProps> extends Base<T> {
   isHover = false;
 
   /**
-   * Dispatch the click event.
-   * @param   {MouseEvent} event
-   * @returns {void}
-   */
-  onClick({ event }: { event: MouseEvent }) {
-    event.stopPropagation();
-  }
-
-  /**
    * Dispatch the mouseenter event.
    * @param   {MouseEvent} event
    * @returns {void}

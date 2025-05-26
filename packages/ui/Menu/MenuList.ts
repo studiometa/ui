@@ -90,15 +90,6 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
       return;
     }
 
-    // @todo Remove event listener when the close method is called.
-    const clickOutsideHandler = (event) => {
-      if (!this.$el.contains(event.target)) {
-        document.removeEventListener('click', clickOutsideHandler);
-        this.close();
-      }
-    };
-    document.addEventListener('click', clickOutsideHandler);
-
     this.__updateTabIndexes('open');
     this.$el.setAttribute('aria-hidden', 'false');
     this.isOpen = true;
