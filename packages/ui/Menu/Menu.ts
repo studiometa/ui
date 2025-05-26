@@ -1,4 +1,4 @@
-import { Base, getDirectChildren, getClosestParent } from '@studiometa/js-toolkit';
+import { Base, getClosestParent } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps, KeyServiceProps } from '@studiometa/js-toolkit';
 import { nextTick } from '@studiometa/js-toolkit/utils';
 import { MenuBtn } from './MenuBtn.js';
@@ -42,14 +42,22 @@ export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
    * Get the first `MenuList` instance.
    */
   get menuList(): MenuList {
-    return getDirectChildren<MenuList>(this, 'Menu', 'MenuList')[0];
+    for (const menuList of this.$children.MenuList) {
+      if (getClosestParent(menuList, this.constructor) === this) {
+        return menuList;
+      }
+    }
   }
 
   /**
    * Get the first `MenuBtn` instance.
    */
   get menuBtn(): MenuBtn {
-    return getDirectChildren<MenuBtn>(this, 'Menu', 'MenuBtn')[0];
+    for (const menuBtn of this.$children.MenuBtn) {
+      if (getClosestParent(menuBtn, this.constructor) === this) {
+        return menuBtn;
+      }
+    }
   }
 
   /**
@@ -166,11 +174,11 @@ export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
    * Close other non-parent menu items on menu items open.
    */
   onMenuListItemsOpen({ target }: { target: MenuList }) {
-    this.$children.MenuList.forEach((menuItem) => {
-      if (!menuItem.$el.contains(target.$el)) {
-        menuItem.close();
+    for (const menuList of this.$children.MenuList) {
+      if (!menuList.$el.contains(target.$el)) {
+        menuList.close();
       }
-    });
+    }
   }
 
   /**
