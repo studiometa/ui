@@ -1,4 +1,5 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { getInstanceFromElement } from '@studiometa/js-toolkit';
 import { Transition } from '../Transition/index.js';
 
 const FOCUSABLE_ELEMENTS = [
@@ -136,7 +137,7 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
   }
 
   /**
-   * Update `tabindex` attribute of child focusable elements.
+   * Update `tabindex` attribute of children focusable elements.
    * @private
    */
   __updateTabIndexes(mode: 'open' | 'close' = 'open') {
@@ -157,12 +158,14 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
    */
   __isFocusableElementFromThisMenuList(item: HTMLElement): boolean {
     let ancestor = item.parentElement;
+    let maybeInstance =null
 
     // @ts-ignore
-    while (ancestor && (!ancestor.__base__ || !ancestor.__base__.has(this.constructor))) {
+    while (!maybeInstance) {
+      maybeInstance = getInstanceFromElement(ancestor, this.constructor);
       ancestor = ancestor.parentElement;
     }
 
-    return ancestor === null || ancestor === this.$el;
+    return maybeInstance === this;
   }
 }
