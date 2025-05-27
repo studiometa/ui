@@ -10,4 +10,4 @@ class App extends Base {
   };
 }
 
-createApp(App, document.body);
+createApp(App);
