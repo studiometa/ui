@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-workspace",
-  "version": "1.0.0-rc.3",
+  "version": "1.0.0-rc.4",
   "type": "module",
   "private": true,
   "workspaces": [
@@ -31,7 +31,7 @@
     "esbuild": "0.25.4",
     "fast-glob": "3.3.3",
     "gzip-size": "7.0.0",
-    "oxlint": "0.16.10",
+    "oxlint": "0.16.11",
     "prettier": "3.5.3",
     "typescript": "5.8.3"
   },

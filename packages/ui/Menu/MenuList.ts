@@ -1,4 +1,5 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { getInstanceFromElement } from '@studiometa/js-toolkit';
 import { Transition } from '../Transition/index.js';
 
 const FOCUSABLE_ELEMENTS = [
@@ -90,15 +91,6 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
       return;
     }
 
-    // @todo Remove event listener when the close method is called.
-    const clickOutsideHandler = (event) => {
-      if (!this.$el.contains(event.target)) {
-        document.removeEventListener('click', clickOutsideHandler);
-        this.close();
-      }
-    };
-    document.addEventListener('click', clickOutsideHandler);
-
     this.__updateTabIndexes('open');
     this.$el.setAttribute('aria-hidden', 'false');
     this.isOpen = true;
@@ -115,9 +107,9 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
     }
 
     // Close child menu items.
-    this.$children.MenuList.forEach((menuItem) => {
-      menuItem.close();
-    });
+    for (const menuList of this.$children.MenuList) {
+      menuList.close();
+    }
 
     if (
       document.activeElement instanceof HTMLElement &&
@@ -145,35 +137,35 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
   }
 
   /**
-   * Update `tabindex` attribute of child focusable elements.
+   * Update `tabindex` attribute of children focusable elements.
    * @private
    */
   __updateTabIndexes(mode: 'open' | 'close' = 'open') {
-    const focusableItems = Array.from(this.$el.querySelectorAll(FOCUSABLE_ELEMENTS)).filter(
-      (item) => this.__filterFocusableItems(item as HTMLElement),
-    );
-
-    focusableItems.forEach((item) => {
-      if (mode === 'close') {
-        item.setAttribute('tabindex', '-1');
-      } else {
-        item.removeAttribute('tabindex');
+    for (const item of Array.from(this.$el.querySelectorAll(FOCUSABLE_ELEMENTS))) {
+      if (this.__isFocusableElementFromThisMenuList(item as HTMLElement)) {
+        if (mode === 'close') {
+          item.setAttribute('tabindex', '-1');
+        } else {
+          item.removeAttribute('tabindex');
+        }
       }
-    });
+    }
   }
 
   /**
    * Filter out items which are inside a child `MenuList` instance.
    * @private
    */
-  __filterFocusableItems(item: HTMLElement): boolean {
+  __isFocusableElementFromThisMenuList(item: HTMLElement): boolean {
     let ancestor = item.parentElement;
+    let maybeInstance =null
 
     // @ts-ignore
-    while (ancestor && (!ancestor.__base__ || !ancestor.__base__.has(this.constructor))) {
+    while (!maybeInstance) {
+      maybeInstance = getInstanceFromElement(ancestor, this.constructor);
       ancestor = ancestor.parentElement;
     }
 
-    return ancestor === null || ancestor === this.$el;
+    return maybeInstance === this;
   }
 }

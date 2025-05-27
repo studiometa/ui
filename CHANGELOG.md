@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-rc.4](https://github.com/studiometa/ui/compare/1.0.0-rc.3..1.0.0-rc.4) (2025-05-27)
+
+### Fixed
+
+- **Menu:**
+  - Fix detection of ancestor ([#403](https://github.com/studiometa/ui/pull/403), [a99610c](https://github.com/studiometa/ui/commit/a99610c))
+  - Fix closing of menu on click outside ([#403](https://github.com/studiometa/ui/pull/403), [923566e](https://github.com/studiometa/ui/commit/923566e))
+
 ## [v1.0.0-rc.3](https://github.com/studiometa/ui/compare/1.0.0-rc.2..1.0.0-rc.3) (2025-05-23)
 
 ### Added
