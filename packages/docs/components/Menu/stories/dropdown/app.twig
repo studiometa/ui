@@ -1,44 +1,34 @@
-<style>
-  a { color: inherit; text-decoration: none; }
-  a:focus, button:focus { outline: none; }
-  ul { list-style-type: none; padding: 0; }
-</style>
-
 <nav data-component="Menu" class="relative inline-block">
   {% include '@ui/Button/StyledButton.twig' with {
     label: 'Dropdown',
     attr: {
-      data_component: 'MenuBtn',
+      data_component: 'MenuBtn'
     }
   } %}
   <div data-component="MenuList"
-    data-option-enter-to="is-open"
+    data-option-enter-from="transform scale-95 opacity-0 pointer-events-none"
     data-option-enter-active="transition duration-200 ease-out-expo"
     data-option-leave-active="transition duration-200 ease-out-expo"
     data-option-leave-to="transform scale-95 opacity-0 pointer-events-none"
     class="z-10 absolute top-full left-0 origin-top-left transform scale-95 opacity-0 pointer-events-none">
-    <ul class="mt-2 whitespace-nowrap shadow-md rounded bg-gray-100 overflow-hidden">
+    <ul class="mt-2 whitespace-nowrap shadow-md rounded bg-white">
       <li data-component="Menu">
-        <a data-component="MenuBtn"
-          class="relative block p-4 bg-white hover:bg-blue-300 focus:ring-2 ring-inset"
-          href="#">
+        <button data-component="MenuBtn"
+          class="relative block w-full text-left p-4 bg-white hover:bg-gray-100 rounded outline-none focus:z-10 focus:ring-[3px]">
           Action #1 Edit
-        </a>
-
+        </button>
       </li>
       <li data-component="Menu">
-        <a data-component="MenuBtn"
-          class="relative block p-4 bg-white hover:bg-blue-300 focus:ring-2 ring-inset"
-          href="#">
+        <button data-component="MenuBtn"
+          class="relative block w-full text-left p-4 bg-white hover:bg-gray-100 rounded outline-none focus:z-10 focus:ring-[3px]">
           Action #2 Duplicate
-        </a>
+        </button>
       </li>
       <li data-component="Menu">
-        <a data-component="MenuBtn"
-          class="relative block p-4 bg-white hover:bg-blue-300 focus:ring-2 ring-inset"
-          href="#">
+        <button data-component="MenuBtn"
+          class="relative block w-full text-left p-4 bg-white hover:bg-gray-100 rounded outline-none focus:z-10 focus:ring-[3px]">
           Action #3 Delete
-        </a>
+        </button>
       </li>
     </ul>
   </div>
