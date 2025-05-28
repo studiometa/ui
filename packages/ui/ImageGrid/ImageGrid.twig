@@ -16,7 +16,7 @@
 
 {% set attributes = merge_html_attributes(attr ?? null, { class: 'image-grid' }) %}
 {% set inner_attributes =
-  merge_html_attributes(inner_attr ?? null, { class: 'image-grid__inner s:grid grid-cols-12 gap-10' })
+  merge_html_attributes(inner_attr ?? null, { class: 'image-grid__inner grid s:grid-cols-12 gap-10' })
 %}
 
 <div {{ html_attributes(attributes) }}>
@@ -28,8 +28,8 @@
       }, {
         class: {
           's:col-span-7': modulo == 1 or modulo == 4,
-          's:col-span-5 mt-10': modulo == 2,
-          's:col-span-5 mt-10 clear-m-left': modulo == 3 and not loop.last,
+          's:col-span-5 s:mt-10': modulo == 2,
+          's:col-span-5 s:mt-10 clear-m-left': modulo == 3 and not loop.last,
           's:col-start-2 s:col-end-11': modulo == 0 or (modulo in [0,3] and loop.last),
           's:col-start-2 s:col-end-13': loop.first and loop.last
         }
