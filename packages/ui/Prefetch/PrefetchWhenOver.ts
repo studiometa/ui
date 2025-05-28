@@ -3,6 +3,7 @@ import { AbstractPrefetch } from './AbstractPrefetch.js';
 
 /**
  * PrefetchWhenOver class.
+ * @see https://ui.studiometa.dev/-/components/Prefetch/
  */
 export class PrefetchWhenOver<T extends BaseProps = BaseProps> extends AbstractPrefetch<T> {
   /**
@@ -17,6 +18,6 @@ export class PrefetchWhenOver<T extends BaseProps = BaseProps> extends AbstractP
    * Prefetch on mouseenter.
    */
   onMouseenter() {
-    this.prefetch(new URL(this.$el.href));
+    this.prefetch();
   }
 }
