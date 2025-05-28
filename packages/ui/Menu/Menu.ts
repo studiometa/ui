@@ -28,7 +28,6 @@ export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
     components: {
       MenuBtn,
       MenuList,
-      Menu,
     },
     options: {
       mode: {
