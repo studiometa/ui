@@ -1,16 +1,27 @@
-<style>
-  a { color: inherit; text-decoration: none; }
-  a:focus { z-index: 1; position: relative; }
-  ul { list-style-type: none; padding: 0; margin: 0; }
-</style>
+<fieldset class="flex gap-2 mb-4">
+  <p>Mode:</p>
+  <label>
+    <input data-component="Action"
+      data-option-on:input="Menu -> target.$options.mode = action.$el.value"
+      type="radio" name="mode" value="hover" checked>
+    hover
+  </label>
+  <label>
+    <input data-component="Action"
+      data-option-on:input="Menu -> target.$options.mode = action.$el.value"
+      type="radio" name="mode" value="click">
+    click
+  </label>
+</fieldset>
+
 
 <nav>
   <ul class="relative w-full flex items-center justify-around">
-    {% for item in 1..5 %}
+    {% for item in 1..3 %}
       <li data-component="Menu" data-option-mode="hover" class="flex-grow">
-        <a data-component="MenuBtn" class="block p-4 text-center bg-gray-200 hover:bg-gray-300" href="#">
+        <button data-component="MenuBtn" class="block w-full p-4 text-center bg-gray-200 hover:bg-gray-300" href="#">
           Item #{{ item }}
-        </a>
+        </button>
         <div data-component="MenuList"
           data-option-enter-active="transition duration-200 ease-out-expo"
           data-option-leave-active="transition duration-200 ease-out-expo"
@@ -20,7 +31,7 @@
           <ul class="w-1/3">
             {% for subitem in 1..3 %}
               <li data-component="Menu" data-option-mode="hover">
-                <a data-component="MenuBtn" class="block p-4 bg-gray-200 hover:bg-gray-300" href="#">
+                <a data-component="MenuBtn" class="block w-full p-4 bg-gray-200 hover:bg-gray-300" href="#">
                   SubItem #{{ item }}.{{ subitem }}
                 </a>
                 <div data-component="MenuList"
