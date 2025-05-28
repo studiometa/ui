@@ -11,6 +11,9 @@
  *   Custom attributes for the inner element.
  * @param array $image_attr
  *   Custom attributes for the images' elements.
+ *
+ * @block $image
+ *   A block to customize the image output. Defaults to using the `Figure` component.
  */
 #}
 
@@ -35,7 +38,9 @@
         }
       }) %}
       <div {{ html_attributes(image_attributes) }}>
-        {% include '@ui/Figure/Figure.twig' with image only %}
+        {% block image %}
+          {% include '@ui/Figure/Figure.twig' with image only %}
+        {% endblock %}
       </div>
     {% endfor %}
   </div>
