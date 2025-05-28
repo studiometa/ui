@@ -11,12 +11,15 @@
  *   Custom attributes for the inner element.
  * @param array $image_attr
  *   Custom attributes for the images' elements.
+ *
+ * @block $image
+ *   A block to customize the image output. Defaults to using the `Figure` component.
  */
 #}
 
 {% set attributes = merge_html_attributes(attr ?? null, { class: 'image-grid' }) %}
 {% set inner_attributes =
-  merge_html_attributes(inner_attr ?? null, { class: 'image-grid__inner s:grid grid-cols-12 gap-10' })
+  merge_html_attributes(inner_attr ?? null, { class: 'image-grid__inner grid s:grid-cols-12 gap-10' })
 %}
 
 <div {{ html_attributes(attributes) }}>
@@ -28,14 +31,16 @@
       }, {
         class: {
           's:col-span-7': modulo == 1 or modulo == 4,
-          's:col-span-5 mt-10': modulo == 2,
-          's:col-span-5 mt-10 clear-m-left': modulo == 3 and not loop.last,
+          's:col-span-5 s:mt-10': modulo == 2,
+          's:col-span-5 s:mt-10 clear-m-left': modulo == 3 and not loop.last,
           's:col-start-2 s:col-end-11': modulo == 0 or (modulo in [0,3] and loop.last),
           's:col-start-2 s:col-end-13': loop.first and loop.last
         }
       }) %}
       <div {{ html_attributes(image_attributes) }}>
-        {% include '@ui/Figure/Figure.twig' with image only %}
+        {% block image %}
+          {% include '@ui/Figure/Figure.twig' with image only %}
+        {% endblock %}
       </div>
     {% endfor %}
   </div>
