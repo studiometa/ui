@@ -1,19 +1,14 @@
-import { withResponsiveOptions, Base, createApp } from '@studiometa/js-toolkit@2.11';
+import { Base, createApp, withResponsiveOptions } from '@studiometa/js-toolkit';
 import { Menu as MenuCore } from '@studiometa/ui';
 
-class Menu extends withResponsiveOptions(MenuCore) {
+class Menu extends withResponsiveOptions(MenuCore, {
+  responsiveOptions: ['mode'],
+}) {
   static config = {
-    ...MenuCore.config,
+    name: 'Menu',
     components: {
       ...MenuCore.config.components,
       Menu,
-    },
-    options: {
-      ...MenuCore.config.options,
-      mode: {
-        ...MenuCore.config.options.mode,
-        responsive: true,
-      },
     },
   };
 }
@@ -27,4 +22,4 @@ class App extends Base {
   };
 }
 
-createApp(App, document.body);
+createApp(App);

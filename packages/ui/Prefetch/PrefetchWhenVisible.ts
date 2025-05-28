@@ -4,6 +4,7 @@ import { AbstractPrefetch } from './AbstractPrefetch.js';
 
 /**
  * PrefetchWhenVisible class.
+ * @see https://ui.studiometa.dev/-/components/Prefetch/
  */
 export class PrefetchWhenVisible extends withMountWhenInView<AbstractPrefetch>(AbstractPrefetch) {
   /**
@@ -18,6 +19,6 @@ export class PrefetchWhenVisible extends withMountWhenInView<AbstractPrefetch>(A
    * Prefetch on mount.
    */
   mounted() {
-    this.prefetch(new URL(this.$el.href));
+    this.prefetch();
   }
 }

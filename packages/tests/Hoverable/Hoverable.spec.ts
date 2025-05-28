@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { PointerServiceProps } from '@studiometa/js-toolkit';
 import { Hoverable } from '@studiometa/ui';
-import { h, mount, wait } from '#test-utils';
+import { h, mount } from '#test-utils';
 
 function pointerProgress(x: number, y: number) {
   return {

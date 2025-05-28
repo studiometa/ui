@@ -1,6 +1,6 @@
 {
   "name": "studiometa/ui",
-  "version": "1.0.0-rc.4",
+  "version": "1.0.0-rc.5",
   "description": "A set of opiniated, unstyled and accessible components.",
   "license": "MIT",
   "require": {

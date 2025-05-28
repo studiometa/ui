@@ -10,6 +10,7 @@ export interface AbstractPrefetchProps extends BaseProps {
 
 /**
  * AbstractPrefetch class.
+ * @see https://ui.studiometa.dev/-/components/Prefetch/
  */
 export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   T & AbstractPrefetchProps
@@ -19,6 +20,7 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
    */
   static config: BaseConfig = {
     name: 'AbstractPrefetch',
+    emits: ['prefetched'],
     options: {
       prefetch: {
         type: Boolean,
@@ -33,9 +35,19 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   static prefetchedUrls: Set<string> = new Set();
 
   /**
-   * Is the given anchor prefetchable?
+   * Get the URL to prefetch.
    */
-  isPrefetchable(url: URL): boolean {
+  get url(): URL | null {
+    const { href } = this.$el;
+    return href ? new URL(href) : null;
+  }
+
+  /**
+   * Is the URL prefetchable?
+   */
+  get isPrefetchable(): boolean {
+    const { url } = this;
+
     if (!url || !url.href) {
       return false;
     }
@@ -48,11 +60,7 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
       return false;
     }
 
-    if (!['http:', 'https:'].includes(url.protocol)) {
-      return false;
-    }
-
-    if (url.protocol === 'http:' && window.location.protocol === 'https:') {
+    if (url.href === window.location.href) {
       return false;
     }
 
@@ -67,24 +75,25 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   }
 
   /**
-   * Prefetch the given URL and terminate the component.
+   * Prefetch the URL.
    */
-  prefetch(url: URL) {
+  prefetch() {
+    const { url } = this;
+
     if (AbstractPrefetch.prefetchedUrls.has(url.href)) {
       return;
     }
 
-    if (!this.isPrefetchable(url)) {
+    if (!this.isPrefetchable) {
       return;
     }
 
     const prefetcher = document.createElement('link');
     prefetcher.rel = 'prefetch';
     prefetcher.href = url.href;
+    prefetcher.addEventListener('load', () => this.$emit('prefetched', url));
     document.head.append(prefetcher);
 
     AbstractPrefetch.prefetchedUrls.add(url.href);
-
-    this.$terminate();
   }
 }

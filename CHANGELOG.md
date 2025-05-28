@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-rc.5](https://github.com/studiometa/ui/compare/1.0.0-rc.4..1.0.0-rc.5) (2025-05-28)
+
+### Added
+
+- **Prefetch:** add a `prefetched` event ([#409](https://github.com/studiometa/ui/pull/409), [27c91a8](https://github.com/studiometa/ui/commit/27c91a8))
+
+### Modified
+
+- **Prefetch:** refactor the prefetch components `AbstractPrefetch`, `PrefetchWhenOver` and `PrefetchWhenVisible` ([#409](https://github.com/studiometa/ui/pull/409), [fbf5a25](https://github.com/studiometa/ui/commit/fbf5a25))
+
+### Fixed
+
+- **Menu:** fix a bug when the Menu is extended ([#406](https://github.com/studiometa/ui/pull/406), [c9d083d](https://github.com/studiometa/ui/commit/c9d083d))
+
 ## [v1.0.0-rc.4](https://github.com/studiometa/ui/compare/1.0.0-rc.3..1.0.0-rc.4) (2025-05-27)
 
 ### Fixed
