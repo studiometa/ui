@@ -19,6 +19,7 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
    */
   static config: BaseConfig = {
     name: 'AbstractPrefetch',
+    emits: ['prefetched'],
     options: {
       prefetch: {
         type: Boolean,
@@ -89,6 +90,7 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
     const prefetcher = document.createElement('link');
     prefetcher.rel = 'prefetch';
     prefetcher.href = url.href;
+    prefetcher.addEventListener('load', () => this.$emit('prefetched', url));
     document.head.append(prefetcher);
 
     AbstractPrefetch.prefetchedUrls.add(url.href);
