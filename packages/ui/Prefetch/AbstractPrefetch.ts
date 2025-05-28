@@ -33,9 +33,19 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   static prefetchedUrls: Set<string> = new Set();
 
   /**
+   * URL to prefetch.
+   */
+  get url(): URL | null {
+    const { href } = this.$el;
+    return href ? new URL(href) : null;
+  }
+
+  /**
    * Is the given anchor prefetchable?
    */
-  isPrefetchable(url: URL): boolean {
+  get isPrefetchable(): boolean {
+    const { url } = this;
+
     if (!url || !url.href) {
       return false;
     }
@@ -48,11 +58,7 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
       return false;
     }
 
-    if (!['http:', 'https:'].includes(url.protocol)) {
-      return false;
-    }
-
-    if (url.protocol === 'http:' && window.location.protocol === 'https:') {
+    if (url.href === window.location.href) {
       return false;
     }
 
@@ -69,12 +75,14 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   /**
    * Prefetch the given URL and terminate the component.
    */
-  prefetch(url: URL) {
+  prefetch() {
+    const { url } = this;
+
     if (AbstractPrefetch.prefetchedUrls.has(url.href)) {
       return;
     }
 
-    if (!this.isPrefetchable(url)) {
+    if (!this.isPrefetchable) {
       return;
     }
 
@@ -84,7 +92,5 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
     document.head.append(prefetcher);
 
     AbstractPrefetch.prefetchedUrls.add(url.href);
-
-    this.$terminate();
   }
 }

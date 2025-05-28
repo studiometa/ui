@@ -18,6 +18,6 @@ export class PrefetchWhenVisible extends withMountWhenInView<AbstractPrefetch>(A
    * Prefetch on mount.
    */
   mounted() {
-    this.prefetch(new URL(this.$el.href));
+    this.prefetch();
   }
 }

@@ -17,6 +17,6 @@ export class PrefetchWhenOver<T extends BaseProps = BaseProps> extends AbstractP
    * Prefetch on mouseenter.
    */
   onMouseenter() {
-    this.prefetch(new URL(this.$el.href));
+    this.prefetch();
   }
 }
