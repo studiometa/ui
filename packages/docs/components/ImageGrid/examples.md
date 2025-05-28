@@ -20,3 +20,10 @@ title: ImageGrid examples
   :script="() => import('./stories/app.js?raw')"
   />
 
+## With scroll reveal transitions
+
+<PreviewPlayground
+  :zoom="0.8"
+  :html="() => import('./stories/block-image/app.twig')"
+  :script="() => import('./stories/block-image/app.js?raw')"
+  />
