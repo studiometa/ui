@@ -10,6 +10,7 @@ export interface AbstractPrefetchProps extends BaseProps {
 
 /**
  * AbstractPrefetch class.
+ * @see https://ui.studiometa.dev/-/components/Prefetch/
  */
 export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   T & AbstractPrefetchProps
@@ -34,7 +35,7 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   static prefetchedUrls: Set<string> = new Set();
 
   /**
-   * URL to prefetch.
+   * Get the URL to prefetch.
    */
   get url(): URL | null {
     const { href } = this.$el;
@@ -42,7 +43,7 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   }
 
   /**
-   * Is the given anchor prefetchable?
+   * Is the URL prefetchable?
    */
   get isPrefetchable(): boolean {
     const { url } = this;
@@ -74,7 +75,7 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   }
 
   /**
-   * Prefetch the given URL and terminate the component.
+   * Prefetch the URL.
    */
   prefetch() {
     const { url } = this;

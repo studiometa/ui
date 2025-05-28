@@ -4,6 +4,7 @@ import { AbstractPrefetch } from './AbstractPrefetch.js';
 
 /**
  * PrefetchWhenVisible class.
+ * @see https://ui.studiometa.dev/-/components/Prefetch/
  */
 export class PrefetchWhenVisible extends withMountWhenInView<AbstractPrefetch>(AbstractPrefetch) {
   /**
