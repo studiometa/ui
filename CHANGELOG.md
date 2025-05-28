@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- **Menu:** fix a bug when the Menu is extended ([#406](https://github.com/studiometa/ui/pull/406), [c9d083d](https://github.com/studiometa/ui/commit/c9d083d))
+
 ## [v1.0.0-rc.4](https://github.com/studiometa/ui/compare/1.0.0-rc.3..1.0.0-rc.4) (2025-05-27)
 
 ### Fixed
