@@ -17,15 +17,15 @@
     "nelmio/cors-bundle": "^2.4.0",
     "stof/doctrine-extensions-bundle": "^1.11",
     "studiometa/twig-toolkit": "^2.0",
-    "symfony/console": "7.2.*",
-    "symfony/dotenv": "7.2.*",
+    "symfony/console": "7.3.*",
+    "symfony/dotenv": "7.3.*",
     "symfony/flex": "^2.4.1",
-    "symfony/framework-bundle": "7.2.*",
-    "symfony/http-client": "7.2.*",
+    "symfony/framework-bundle": "7.3.*",
+    "symfony/http-client": "7.3.*",
     "symfony/maker-bundle": "^1.61",
-    "symfony/runtime": "7.2.*",
-    "symfony/twig-bundle": "7.2.*",
-    "symfony/yaml": "7.2.*",
+    "symfony/runtime": "7.3.*",
+    "symfony/twig-bundle": "7.3.*",
+    "symfony/yaml": "7.3.*",
     "twig/extra-bundle": "^2.12|^3.0",
     "twig/twig": "^3.19.0"
   },
@@ -75,7 +75,7 @@
   "extra": {
     "symfony": {
       "allow-contrib": false,
-      "require": "7.2.*"
+      "require": "7.3.*"
     }
   }
 }
