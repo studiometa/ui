@@ -26,7 +26,7 @@
   {% if ':' in name %}
     {{ meta_icon(name) }}
   {% else %}
-    {{ source('@svg/%s.svg'|format(name), ignore_missing = true) }}
+    {{ source('@svg/%s.svg'|format(name), true) }}
   {% endif %}
 {%- endset -%}
 
