@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-rc.6](https://github.com/studiometa/ui/compare/1.0.0-rc.5..1.0.0-rc.6) (2025-06-05)
+
+### Added
+
+- **ImageGrid:** add an `image` block ([#411](https://github.com/studiometa/ui/pull/411), [f128a88](https://github.com/studiometa/ui/commit/f128a88))
+
+### Fixed
+
+- **ImageGrid:** fix responsive ([#411](https://github.com/studiometa/ui/pull/411), [dffda1e](https://github.com/studiometa/ui/commit/dffda1e))
+- Fix some Twig JS incompatibilities ([#416](https://github.com/studiometa/ui/pull/416), [60c7faa](https://github.com/studiometa/ui/commit/60c7faa))
+
 ## [v1.0.0-rc.5](https://github.com/studiometa/ui/compare/1.0.0-rc.4..1.0.0-rc.5) (2025-05-28)
 
 ### Added

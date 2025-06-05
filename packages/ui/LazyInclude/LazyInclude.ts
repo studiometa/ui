@@ -37,7 +37,7 @@ export class LazyInclude<T extends BaseProps = BaseProps>
    */
   mounted() {
     if (!this.$options.src) {
-      this.$log('The `src` option is missing. Define it with the `data-option-src` attribute');
+      this.$warn('The `src` option is missing. Define it with the `data-option-src` attribute');
       return;
     }
 

@@ -32,7 +32,7 @@
 
 {% set position_factor = attributes.data_option_sensitivity is defined
   and attributes.data_option_sensitivity < 0
-  ? - 100
+  ? 0 - 100
   : 100
 %}
 
