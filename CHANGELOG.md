@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-rc.6](https://github.com/studiometa/ui/compare/1.0.0-rc.5..1.0.0-rc.6) (2025-06-05)
+
 ### Added
 
 - **ImageGrid:** add an `image` block ([#411](https://github.com/studiometa/ui/pull/411), [f128a88](https://github.com/studiometa/ui/commit/f128a88))
