@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "18b576e29dc95b917c3c62f19968be53",
+    "content-hash": "4cf2705c251727119dadde395cffe555",
     "packages": [
         {
             "name": "iconify/json",
@@ -310,16 +310,16 @@
         },
         {
             "name": "studiometa/twig-toolkit",
-            "version": "2.0.1",
+            "version": "2.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/studiometa/twig-toolkit.git",
-                "reference": "10edd5e39eb08575cb1e99f1cb8b7eb575f49aa9"
+                "reference": "496f06f2c35006397ca7d4f6a81fc358a8137207"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/studiometa/twig-toolkit/zipball/10edd5e39eb08575cb1e99f1cb8b7eb575f49aa9",
-                "reference": "10edd5e39eb08575cb1e99f1cb8b7eb575f49aa9",
+                "url": "https://api.github.com/repos/studiometa/twig-toolkit/zipball/496f06f2c35006397ca7d4f6a81fc358a8137207",
+                "reference": "496f06f2c35006397ca7d4f6a81fc358a8137207",
                 "shasum": ""
             },
             "require": {
@@ -347,9 +347,9 @@
             "description": "A set of useful extension and components for Twig.",
             "support": {
                 "issues": "https://github.com/studiometa/twig-toolkit/issues",
-                "source": "https://github.com/studiometa/twig-toolkit/tree/2.0.1"
+                "source": "https://github.com/studiometa/twig-toolkit/tree/2.1.1"
             },
-            "time": "2025-01-27T08:09:51+00:00"
+            "time": "2025-06-19T08:21:34+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
