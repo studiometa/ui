@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Add support for fallback images ([#196](https://github.com/studiometa/ui/pull/196), [4e64628](https://github.com/studiometa/ui/commit/4e64628))
+
+### Changed
+
+- Update studiometa/twig-toolkit v2.0 → v2.1 ([#196](https://github.com/studiometa/ui/pull/196), [83ec85a](https://github.com/studiometa/ui/commit/83ec85a))
+
 ## [v1.0.0-rc.6](https://github.com/studiometa/ui/compare/1.0.0-rc.5..1.0.0-rc.6) (2025-06-05)
 
 ### Added
