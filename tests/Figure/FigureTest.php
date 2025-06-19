@@ -21,3 +21,14 @@ test('it renders a lazy image by default', function () {
         } %}
     ");
 });
+
+test('it can render a lazy image with fallback', function () {
+    assertTwigMatchesSnapshot("
+        {% include '@ui/Figure/Figure.twig' with {
+            src: 'https://picsum.photos/400/400',
+            width: 400,
+            height: 400,
+            lazy_fallback: true
+        } %}
+    ");
+});
