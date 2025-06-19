@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Add support for fallback images ([#196](https://github.com/studiometa/ui/pull/196), [4e64628](https://github.com/studiometa/ui/commit/4e64628))
+- **Figure:** add support for fallback images ([#196](https://github.com/studiometa/ui/pull/196), [4e64628](https://github.com/studiometa/ui/commit/4e64628))
 
 ### Changed
 
