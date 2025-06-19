@@ -10,6 +10,8 @@ on:
 jobs:
   unit_node:
     runs-on: macos-latest
+    env:
+      NODE_VERSION: 22
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,9 +36,10 @@ jobs:
       - name: Run tests
         run: npm run test -- -- --coverage.enabled
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          env_vars: NODE_VERSION
           directory: ./packages/coverage
           flags: unittests
           fail_ci_if_error: false
@@ -88,7 +91,7 @@ jobs:
         run: php -v && XDEBUG_MODE=coverage ./vendor/bin/pest --coverage --coverage-clover='coverage.xml'
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           env_vars: PHP_VERSION

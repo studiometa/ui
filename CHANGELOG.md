@@ -6,9 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0-rc.7](https://github.com/studiometa/ui/compare/1.0.0-rc.6..1.0.0-rc.7) (2025-06-19)
+
 ### Added
 
-- Add support for fallback images ([#196](https://github.com/studiometa/ui/pull/196), [4e64628](https://github.com/studiometa/ui/commit/4e64628))
+- **Figure:** add support for fallback images ([#196](https://github.com/studiometa/ui/pull/196), [4e64628](https://github.com/studiometa/ui/commit/4e64628))
 
 ### Changed
 
