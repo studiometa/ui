@@ -2,23 +2,9 @@ import { Base } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { Sentinel } from '../Sentinel/index.js';
 
-/**
- * @typedef {object} StickyRefs
- * @property {HTMLElement} inner
- * @property {HTMLElement} sentinelRef
- */
-
-/**
- * @typedef {object} StickyPrivateInterface
- * @property {StickyRefs} $refs
- * @property {{ zIndex: number, hideWhenUp: boolean, hideWhenDown: boolean }} $options
- * @property {{ Sentinel: Sentinel[] }} $children
- */
-
 export interface StickyProps extends BaseProps {
   $refs: {
     inner: HTMLElement;
-    sentinelRef: HTMLElement;
   };
   $options: {
     zIndex: number;
@@ -39,7 +25,7 @@ export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProp
    */
   static config: BaseConfig = {
     name: 'Sticky',
-    refs: ['inner', 'sentinelRef'],
+    refs: ['inner'],
     components: {
       Sentinel,
     },
@@ -81,6 +67,13 @@ export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProp
    */
   get instances(): Sticky[] {
     return Array.from(Sticky.instances);
+  }
+
+  /**
+   * Get the sentinel instance.
+   */
+  get sentinel(): Sentinel {
+    return this.$children.Sentinel[0];
   }
 
   /**
@@ -174,7 +167,7 @@ export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProp
       )
       .reduce((acc, instance) => acc + instance.$el.offsetHeight, 0);
 
-    this.$refs.sentinelRef.style.height = `${height + 1}px`;
+    this.sentinel.$el.style.height = `${height + 1}px`;
     this.$el.style.top = `${height}px`;
     this.$el.style.zIndex = String(this.$options.zIndex - index);
   }
