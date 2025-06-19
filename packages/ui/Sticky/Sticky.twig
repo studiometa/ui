@@ -13,16 +13,28 @@
  */
 #}
 
-{% set default_attributes = { data_component: 'Sticky', class: 'z-10 sticky top-0 w-full' } %}
-{% set attributes = attr|default({})|merge_html_attributes(default_attributes) %}
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    {
+      data_component: 'Sticky',
+      class: 'z-10 sticky top-0 w-full'
+    }
+  )
+%}
 
-{% set default_inner_attributes = { data_ref: 'inner', class:'transition duration-500 ease-out-expo' } %}
-{% set inner_attributes = inner_attr|default({})|merge_html_attributes(default_inner_attributes) %}
+{% set inner_attributes =
+  merge_html_attributes(
+    inner_attr ?? null,
+    {
+      data_ref: 'inner',
+      class: 'transition duration-500 ease-out-expo'
+    }
+  )
+%}
 
 <div {{ html_attributes(attributes) }}>
-  <div data-ref="sentinelRef"
-    data-component="Sentinel"
-    class="absolute bottom-full w-full h-px pointer-events-none"></div>
+  <div data-component="Sentinel" class="absolute bottom-full w-full h-px pointer-events-none"></div>
   <div {{ html_attributes(inner_attributes) }}>
     {% block content %}
       {{ content ?? '' }}

@@ -3,7 +3,6 @@
   class="figure w-full"
   data-option-domain="test.twic.pics"
   data-option-path="path"
-  style=""
   data-option-lazy>
   <div class="figure__inner relative w-full h-0" style="padding-top: 100%">
     <img

@@ -2,14 +2,9 @@
 badges: [JS]
 ---
 
-# Sentinel (todo) <Badges :texts="$frontmatter.badges" />
+# Sentinel <Badges :texts="$frontmatter.badges" />
 
 The `Sentinel` primitive — whose name is inspired by a [Google Developer article](https://developers.google.com/web/updates/2017/09/sticky-headers) — will help you react to an element's visbility.
-
-## Table of content
-
-- [Examples](./examples)
-- [JS API](./js-api)
 
 ## Usage
 

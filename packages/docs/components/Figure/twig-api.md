@@ -55,6 +55,13 @@ Configure the `sizes` attribute of the image.
 
 Configure the type of loading for the image. Defaults to `true` which requires the `Figure` JavaScript component to be loaded in your project.
 
+### `lazy_fallback`
+
+- Type: `boolean`
+- Default: `false`
+
+Use this parameter to add an image inside a `<noscript>` tag for SEO purpose when using the [`lazy` mode](#lazy).
+
 ### `caption`
 
 - Type: `string`

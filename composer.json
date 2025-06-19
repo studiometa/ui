@@ -1,13 +1,13 @@
 {
   "name": "studiometa/ui",
-  "version": "1.0.0-rc.6",
+  "version": "1.0.0-rc.7",
   "description": "A set of opiniated, unstyled and accessible components.",
   "license": "MIT",
   "require": {
     "php": "^8.1",
     "iconify/json": "^2.2",
     "iconify/json-tools": "^1.0",
-    "studiometa/twig-toolkit": "^2.0",
+    "studiometa/twig-toolkit": "^2.1.1",
     "twig/twig": "^3.19.0"
   },
   "require-dev": {

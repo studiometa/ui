@@ -2,10 +2,10 @@
 badges: [JS, Twig]
 ---
 
-# Sticky (todo) <Badges :texts="$frontmatter.badges" />
+# Sticky <Badges :texts="$frontmatter.badges" />
 
 ## Table of content
 
-- [Examples](./examples)
-- [JS API](./js-api)
-- [Twig API](./twig-api)
+- [Examples](./examples.md)
+- [JS API](./js-api.md)
+- [Twig API](./twig-api.md)
