@@ -1,0 +1,59 @@
+{% set colors = ['red', 'green', 'blue', 'purple'] %}
+{% set count = 5 %}
+
+<div data-component="Carousel"
+  class="flex items-center justify-start gap-10 p-10"
+  data-option-axis="y">
+  <div data-component="CarouselWrapper CarouselDrag"
+    class="grid gap-4 w-[max-content] h-52 overflow-y-auto snap-y snap-mandatory"
+    style="scrollbar-width: none;">
+    {% for i in 1..count %}
+      {% set color = colors[loop.index0 % (colors|length)] %}
+      <div data-component="CarouselItem"
+        class="
+          snap-center shrink-0 flex items-center justify-center self-center justify-self-center
+          w-24 h-24 bg-{{
+        color
+        }}-400 ring-inset ring-{{
+        color
+        }}-600
+          ring
+          text-white font-bold rounded-xl
+        "
+        style="--tw-ring-opacity: var(--carousel-item-active, 0)">
+        N°{{ i }}
+      </div>
+    {% endfor %}
+  </div>
+  <div data-component="CarouselProgress"
+    class="relative h-52 w-2 rounded-full bg-gray-200 overflow-hidden">
+    <div style="--tw-translate-y: calc((var(--carousel-progress, 0) - 1) * 100%)"
+      class="absolute inset-0 -translate-y-full bg-black rounded-full"></div>
+  </div>
+  <nav class="grid items-center justify-center gap-2">
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: '↑',
+      attr: {
+        data_component: 'CarouselBtn',
+        data_option_action: 'prev'
+      }
+    } %}
+    {% for i in 1..count %}
+      {% include '@ui/Button/StyledButton.twig' with {
+        label: i,
+        theme: 'secondary',
+        attr: {
+          data_component: 'CarouselBtn',
+          data_option_action: loop.index0
+        }
+      } %}
+    {% endfor %}
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: '↓',
+      attr: {
+        data_component: 'CarouselBtn',
+        data_option_action: 'next'
+      }
+    } %}
+  </nav>
+</div>

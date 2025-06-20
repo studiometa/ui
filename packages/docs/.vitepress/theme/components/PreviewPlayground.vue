@@ -71,8 +71,8 @@
       url.searchParams.set('style', css.value);
     }
 
-    url.searchParams.set('html-editor', html.value !== defaultContent ? 'true' : 'false');
-    url.searchParams.set('script-editor', script.value !== defaultContent ? 'true' : 'false');
+    url.searchParams.set('html-editor', props.htmlEditor === null && html.value !== defaultContent ? 'true' : String(props.htmlEditor));
+    url.searchParams.set('script-editor', props.scriptEditor === null && script.value !== defaultContent ? 'true' : String(props.scriptEditor));
     url.searchParams.set(
       'style-editor',
       css.value !== defaultContent && [true, null].includes(props.cssEditor) ? 'true' : 'false',
