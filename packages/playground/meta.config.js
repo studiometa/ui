@@ -28,6 +28,7 @@ export default defineWebpackConfig({
         '@studiometa/ui': '/-/play/static/ui/index.js',
         deepmerge: '/-/play/static/deepmerge.js',
         morphdom: '/-/play/static/morphdom.js',
+        'compute-scroll-into-view': '/-/play/static/compute-scroll-into-view.js',
       },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
