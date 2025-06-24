@@ -30,7 +30,7 @@ export class Carousel<T extends BaseProps = BaseProps> extends Base<T & Carousel
    * Config.
    */
   static config: BaseConfig = {
-    name: 'Slider',
+    name: 'Carousel',
     components: {
       CarouselBtn,
       CarouselDrag,
@@ -113,6 +113,11 @@ export class Carousel<T extends BaseProps = BaseProps> extends Base<T & Carousel
   }
 
   /**
+   * Previous progress value.
+   */
+  previousProgress = -1;
+
+  /**
    * Progress from 0 to 1.
    */
   get progress() {
@@ -154,6 +159,14 @@ export class Carousel<T extends BaseProps = BaseProps> extends Base<T & Carousel
     this.$log('goTo', index);
     this.index = index;
     this.$emit('go-to', index);
-    this.$emit('progress', this.progress);
+  }
+
+  ticked() {
+    if (this.progress != this.previousProgress) {
+      this.previousProgress = this.progress;
+      this.$emit('progress', this.progress);
+    } else {
+      this.$services.disable('ticked');
+    }
   }
 }

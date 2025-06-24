@@ -47,7 +47,7 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends AbstractCa
     );
 
     carousel.index = minDiffIndex;
-    carousel.$emit('progress', this.progress);
+    this.carousel.$services.enable('ticked');
   }
 
   /**

@@ -1,5 +1,6 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import type { ScrollAction } from 'compute-scroll-into-view';
+import { domScheduler } from '@studiometa/js-toolkit/utils';
 import { compute } from 'compute-scroll-into-view';
 import { AbstractCarouselChild } from './AbstractCarouselChild.js';
 
@@ -40,19 +41,21 @@ export class CarouselItem<T extends BaseProps = BaseProps> extends AbstractCarou
     return state;
   }
 
-  timer: number;
-
   /**
    * Update the item's state on parent carousel progress.
    * @todo a11y
    */
   onParentCarouselProgress() {
-    window.clearTimeout(this.timer);
-    this.timer = window.setTimeout(() => {
-      this.$el.style.setProperty(
-        '--carousel-item-active',
-        String(Number(this.index === this.carousel.index)),
-      );
-    }, 16);
+    domScheduler.read(() => {
+      const { index } = this;
+      const { index: carouselIndex } = this.carousel;
+
+      domScheduler.write(() => {
+        this.$el.style.setProperty(
+          '--carousel-item-active',
+          String(Number(index === carouselIndex)),
+        );
+      });
+    });
   }
 }

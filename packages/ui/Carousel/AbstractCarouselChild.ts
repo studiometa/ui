@@ -52,21 +52,23 @@ export class AbstractCarouselChild<T extends BaseProps = BaseProps> extends Base
    * Mounted hook.
    */
   mounted() {
-    if (!this.carousel) {
+    const { carousel } = this;
+
+    if (!carousel) {
       this.$warn('Could not find a parent slider, not mounting.');
       this.$destroy();
       return;
     }
 
-    this.carousel.$on('go-to', this);
-    this.carousel.$on('progress', this);
+    carousel.$on('go-to', this);
+    carousel.$on('progress', this);
   }
 
   /**
    * Destroyed hook.
    */
   destroyed() {
-    this.carousel?.$off('go-to', this);
-    this.carousel?.$off('progress', this);
+    this.carousel?.$off?.('go-to', this);
+    this.carousel?.$off?.('progress', this);
   }
 }
