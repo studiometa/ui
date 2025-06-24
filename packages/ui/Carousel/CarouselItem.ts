@@ -29,16 +29,28 @@ export class CarouselItem<T extends BaseProps = BaseProps> extends AbstractCarou
     return this.carousel.$children.CarouselItem.indexOf(this);
   }
 
+  __state: ScrollAction;
+  __shouldEvaluateState = true;
+
   /**
    * The item's active state descriptor.
    */
   get state(): ScrollAction {
-    const [state] = compute(this.$el, {
-      block: 'center',
-      inline: 'center',
-      boundary: this.carousel.wrapper.$el,
-    });
-    return state;
+    if (this.__shouldEvaluateState) {
+      const [state] = compute(this.$el, {
+        block: 'center',
+        inline: 'center',
+        boundary: this.carousel.wrapper.$el,
+      });
+      this.__state = state;
+      this.__shouldEvaluateState = false;
+    }
+
+    return this.__state;
+  }
+
+  resized() {
+    this.__shouldEvaluateState = true;
   }
 
   /**
