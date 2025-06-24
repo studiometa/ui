@@ -159,6 +159,7 @@ export class Carousel<T extends BaseProps = BaseProps> extends Base<T & Carousel
     this.$log('goTo', index);
     this.index = index;
     this.$emit('go-to', index);
+    this.$services.enable('ticked');
   }
 
   ticked() {
