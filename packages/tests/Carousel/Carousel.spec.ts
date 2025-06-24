@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Carousel } from '@studiometa/ui';
-import { h, mount } from '#test-utils';
+import { h, mount, wait } from '#test-utils';
 
 describe('The Carousel class', () => {
   it('should have an axis option', async () => {
@@ -24,7 +24,9 @@ describe('The Carousel class', () => {
     carousel.goTo(0);
     expect(goToFn).toHaveBeenCalledOnce();
     expect(goToFn.mock.lastCall[0].detail).toEqual([0]);
+    await wait();
     expect(progressFn).toHaveBeenCalledOnce();
+    progressFn.mockClear();
     carousel.goTo(1);
     expect(goToFn.mock.lastCall[0].detail).toEqual([1]);
   });

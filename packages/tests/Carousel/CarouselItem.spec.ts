@@ -41,4 +41,21 @@ describe('The CarouselItem class', () => {
     await wait(20);
     expect(div.style.getPropertyValue('--carousel-item-active')).toBe('0');
   });
+
+  it('should reset its state on window resize', async () => {
+    vi.mock('compute-scroll-into-view', () => ({
+      compute: (target: Element) => [{ el: target, top: 0, left: 0 }],
+    }));
+    const item = h('div', { dataComponent: 'CarouselItem' });
+    const wrapper = h('div', { dataComponent: 'CarouselWrapper' }, [item]);
+    const div = h('div', [wrapper]);
+    const carousel = new Carousel(div);
+    await mount(carousel);
+    const carouselItem = getInstanceFromElement(item, CarouselItem);
+    const { state } = carouselItem;
+    expect(carouselItem.state).toBe(state);
+    carouselItem.resized();
+    expect(carouselItem.state).not.toBe(state);
+    expect(carouselItem.state).toEqual(state);
+  });
 });

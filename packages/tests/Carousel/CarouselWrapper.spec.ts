@@ -50,7 +50,9 @@ describe('The CarouselWrapper class', () => {
     const carouselWrapper = new CarouselWrapper(div);
     const mock = {
       index: 0,
-      $emit: vi.fn(),
+      $services: {
+        enable: vi.fn(),
+      },
       items: [
         {
           state: {
@@ -78,7 +80,7 @@ describe('The CarouselWrapper class', () => {
     carouselWrapper.onScroll();
 
     expect(mock.index).toBe(0);
-    expect(mock.$emit).toHaveBeenCalledExactlyOnceWith('progress', 0);
+    expect(mock.$services.enable).toHaveBeenCalledExactlyOnceWith('ticked');
 
     vi.spyOn(div, 'scrollLeft', 'get').mockImplementation(() => -100);
     vi.spyOn(div, 'scrollTop', 'get').mockImplementation(() => -100);
