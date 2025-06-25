@@ -20,7 +20,6 @@ test('components exports', () => {
       "CarouselBtn",
       "CarouselDrag",
       "CarouselItem",
-      "CarouselProgress",
       "CarouselWrapper",
       "CircularMarquee",
       "Cursor",
