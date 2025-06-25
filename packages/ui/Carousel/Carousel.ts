@@ -3,7 +3,6 @@ import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { CarouselBtn } from './CarouselBtn.js';
 import { CarouselDrag } from './CarouselDrag.js';
 import { CarouselItem } from './CarouselItem.js';
-import { CarouselProgress } from './CarouselProgress.js';
 import { CarouselWrapper } from './CarouselWrapper.js';
 
 /**
@@ -14,7 +13,6 @@ export interface CarouselProps {
     CarouselBtn: CarouselBtn[];
     CarouselDrag: CarouselDrag[];
     CarouselItem: CarouselItem[];
-    CarouselProgress: CarouselProgress[];
     CarouselWrapper: CarouselWrapper[];
   };
   $options: {
@@ -35,7 +33,6 @@ export class Carousel<T extends BaseProps = BaseProps> extends Base<T & Carousel
       CarouselBtn,
       CarouselDrag,
       CarouselItem,
-      CarouselProgress,
       CarouselWrapper,
     },
     options: {
@@ -166,6 +163,7 @@ export class Carousel<T extends BaseProps = BaseProps> extends Base<T & Carousel
     if (this.progress != this.previousProgress) {
       this.previousProgress = this.progress;
       this.$emit('progress', this.progress);
+      this.$el.style.setProperty('--carousel-progress', String(this.progress));
     } else {
       this.$services.disable('ticked');
     }
