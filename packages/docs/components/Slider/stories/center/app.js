@@ -1,7 +1,7 @@
-/* eslint-disable max-classes-per-file */
 import { Base, createApp } from '@studiometa/js-toolkit';
+import { Figure } from '@studiometa/ui';
+
 import {
-  Figure,
   Slider as SliderCore,
   SliderBtn,
   SliderCount,
@@ -9,11 +9,9 @@ import {
   SliderDrag,
   SliderItem,
   SliderProgress,
+  SliderWheel,
 } from '@studiometa/ui';
 
-/**
- *
- */
 class Slider extends SliderCore {
   static config = {
     components: {
@@ -23,13 +21,11 @@ class Slider extends SliderCore {
       SliderDrag,
       SliderItem,
       SliderProgress,
+      SliderWheel,
     },
   };
 }
 
-/**
- *
- */
 class App extends Base {
   static config = {
     name: 'App',
@@ -40,4 +36,4 @@ class App extends Base {
   };
 }
 
-createApp(App, document.body);
+createApp(App);

@@ -1,5 +1,3 @@
-/* eslint-disable require-jsdoc */
-/* eslint-disable max-classes-per-file */
 import { Base, createApp } from '@studiometa/js-toolkit';
 import { Figure } from '@studiometa/ui';
 
@@ -11,6 +9,7 @@ import {
   SliderDrag,
   SliderItem,
   SliderProgress,
+  SliderWheel,
 } from '@studiometa/ui';
 
 class Slider extends SliderCore {
@@ -22,6 +21,7 @@ class Slider extends SliderCore {
       SliderDrag,
       SliderItem,
       SliderProgress,
+      SliderWheel,
     },
   };
 }
@@ -36,4 +36,4 @@ class App extends Base {
   };
 }
 
-createApp(App, document.body);
+createApp(App);

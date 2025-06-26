@@ -1,22 +1,12 @@
 {% set slides = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] %}
 {% set widths = ['w-96', 'w-80', 'w-72', 'w-64'] %}
 
-<style type="text/css">
-  .is-active {
-    box-shadow: 0 0 0 3px rgb(59 130 246);
-  }
-
-  html {
-    overflow: hidden;
-  }
-</style>
-
 <div data-component="Slider"
   data-option-mode="center"
   data-option-fit-bounds
   data-option-contain
   class="space-y-4 p-10">
-  <div data-component="SliderDrag"
+  <div data-component="SliderDrag SliderWheel"
     data-ref="wrapper"
     tabindex="0"
     class="space-x-12 whitespace-nowrap select-none">
