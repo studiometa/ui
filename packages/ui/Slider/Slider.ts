@@ -5,7 +5,7 @@ import type {
   DragServiceProps,
   KeyServiceProps,
 } from '@studiometa/js-toolkit';
-import { clamp, inertiaFinalValue, nextFrame } from '@studiometa/js-toolkit/utils';
+import { clamp, inertiaFinalValue, map, nextFrame } from '@studiometa/js-toolkit/utils';
 import { SliderDrag } from './SliderDrag.js';
 import { SliderItem } from './SliderItem.js';
 
@@ -304,6 +304,13 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     }
 
     const state = this.getStateValueByMode(this.states[index].x);
+    const progress = map(
+      state,
+      this.getStateValueByMode(this.firstState.x),
+      this.getStateValueByMode(this.lastState.x),
+      0,
+      1,
+    );
 
     for (const item of this.$children.SliderItem) {
       item.move(state);
@@ -311,6 +318,8 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
 
     this.currentIndex = index;
     this.$emit('goto', index);
+    this.$el.style.setProperty('--slider-index', String(index));
+    this.$el.style.setProperty('--slider-wrapper-progress', String(progress));
   }
 
   /**
