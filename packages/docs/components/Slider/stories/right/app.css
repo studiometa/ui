@@ -3,12 +3,8 @@ html.dark {
   color: #eee;
 }
 
-html {
-  overflow: hidden;
-}
-
 body {
-  padding: 1rem;
+  overflow-x: hidden;
 }
 
 .is-active {

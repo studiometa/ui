@@ -5,7 +5,7 @@
   data-option-mode="left"
   data-option-fit-bounds
   data-option-contain
-  class="space-y-4 p-10">
+  class="space-y-4 p-4">
   <div data-component="SliderDrag SliderWheel"
     data-ref="wrapper"
     tabindex="0"
@@ -13,7 +13,7 @@
     {% for slide in slides %}
       {% set width = widths[loop.index0 % widths|length] %}
       <div data-component="SliderItem" class="inline-block rounded" style="contain: content;">
-        <div class="flex items-center justify-center {{ width }} h-48 bg-blue-200 rounded">
+        <div class="flex items-center justify-center {{ width }} max-w-[60vw] h-48 bg-blue-200 rounded">
           {% include '@ui/Figure/Figure.twig' with {
             src: 'https://picsum.photos/400/400?rand=' ~ slide,
             width: 200,
