@@ -6,3 +6,4 @@ export * from './SliderDrag.js';
 export * from './SliderItem.js';
 export * from './SliderProgress.js';
 export * from './SliderDots.js';
+export * from './SliderWheel.js';
