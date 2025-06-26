@@ -336,10 +336,6 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
    * Listen to the Draggable `drag` event.
    */
   onSliderDragDrag({ args: [props] }: { args: [DragServiceProps] }) {
-    if (Math.abs(props.delta.y) > Math.abs(props.delta.x)) {
-      return;
-    }
-
     this.__distanceX = this.__initialX + props.distance.x * this.$options.sensitivity;
 
     for (const item of this.$children.SliderItem) {
@@ -354,11 +350,8 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     if (!this.__isDragging) {
       return;
     }
-    this.__isDragging = false;
 
-    if (Math.abs(props.delta.y) > Math.abs(props.delta.x)) {
-      return;
-    }
+    this.__isDragging = false;
 
     let finalX = clamp(
       inertiaFinalValue(this.__distanceX, props.delta.x * this.$options.dropSensitivity),
