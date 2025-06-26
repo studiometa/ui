@@ -31,16 +31,19 @@ export class SliderWheel<T extends BaseProps = BaseProps> extends withMountOnMed
 
   /**
    * Are we currently wheeling?
+   * @private
    */
   __isWheeling = false;
 
   /**
    * Timer to detect wheel end.
+   * @private
    */
   __timer = -1;
 
   /**
    * Distance to move each item.
+   * @private
    */
   __distanceX = 0;
 
