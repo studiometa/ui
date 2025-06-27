@@ -5,6 +5,9 @@ import type { Slider } from './Slider.js';
 
 export interface SliderWheelProps {
   $parent: Slider;
+  $options: {
+    fitBounds: boolean;
+  };
 }
 
 /**
@@ -22,6 +25,9 @@ export class SliderWheel<T extends BaseProps = BaseProps> extends withMountOnMed
   static config: BaseConfig = {
     name: 'SliderWheel',
     emits: ['wheel-start', 'wheel-speedup', 'wheel-top', 'wheel-slowdown', 'wheel-end'],
+    options: {
+      fitBounds: Boolean,
+    },
   };
 
   /**
@@ -123,7 +129,7 @@ export class SliderWheel<T extends BaseProps = BaseProps> extends withMountOnMed
     const closestIndex = absoluteDifferencesBetweenDistanceAndState.indexOf(minimumDifference);
 
     // wether to respect fitbounds or not
-    if (false && slider.$options.fitBounds) {
+    if (this.$options.fitBounds && slider.$options.fitBounds) {
       slider.goTo(closestIndex);
     } else {
       if (slider.$options.contain) {
