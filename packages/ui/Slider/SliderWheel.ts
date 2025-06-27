@@ -24,7 +24,14 @@ export class SliderWheel<T extends BaseProps = BaseProps> extends withMountOnMed
    */
   static config: BaseConfig = {
     name: 'SliderWheel',
-    emits: ['wheel-start', 'wheel-speedup', 'wheel-top', 'wheel-slowdown', 'wheel-end'],
+    emits: [
+      'wheel-start',
+      'wheel-wheel',
+      'wheel-speedup',
+      'wheel-top',
+      'wheel-slowdown',
+      'wheel-end',
+    ],
     options: {
       fitBounds: Boolean,
     },
@@ -84,6 +91,7 @@ export class SliderWheel<T extends BaseProps = BaseProps> extends withMountOnMed
       this.$emit('wheel-top', this.__previousEvent);
     }
 
+    this.$emit('wheel-wheel', event);
     this.$emit(isDecreasing ? 'wheel-slowdown' : 'wheel-speedup', event);
     this.__isDecreasing = isDecreasing;
     this.__previousEvent = event;
@@ -104,12 +112,20 @@ export class SliderWheel<T extends BaseProps = BaseProps> extends withMountOnMed
     this.__distanceX = this.slider.currentSliderItem ? this.slider.currentSliderItem.x : 0;
   }
 
-  onWheelSpeedup({ args: [event] }) {
-    this.__distanceX = this.__distanceX - event.deltaX;
-  }
+  onWheelWheel({ args: [event] }) {
+    const { slider } = this;
+    const distance = this.__distanceX - event.deltaX;
+    const clampedDistance = clamp(
+      distance,
+      slider.getStateValueByMode(slider.firstState.x),
+      slider.getStateValueByMode(slider.lastState.x),
+    );
 
-  onWheelSlowdown({ args: [event] }) {
-    this.__distanceX = this.__distanceX - event.deltaX;
+    if (distance !== clampedDistance) {
+      this.__distanceX = this.__distanceX - event.deltaX * 0.25;
+    } else {
+      this.__distanceX = distance;
+    }
   }
 
   onWheelEnd({ args: [event] }) {
