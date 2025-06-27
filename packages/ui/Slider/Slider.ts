@@ -114,6 +114,21 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     this.$emit('index', value);
     this.__currentIndex = value;
     this.currentSliderItem.activate();
+    this.$el.style.setProperty('--slider-index', String(value));
+    this.$el.style.setProperty('--slider-contain-progress', String(this.containProgress));
+  }
+
+  /**
+   * Contain progress.
+   */
+  get containProgress() {
+    return map(
+      this.getStateValueByMode(this.currentState.x),
+      this.getStateValueByMode(this.firstState.x),
+      this.getStateValueByMode(this.lastState.x),
+      0,
+      1,
+    );
   }
 
   /**
@@ -304,13 +319,6 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     }
 
     const state = this.getStateValueByMode(this.states[index].x);
-    const progress = map(
-      state,
-      this.getStateValueByMode(this.firstState.x),
-      this.getStateValueByMode(this.lastState.x),
-      0,
-      1,
-    );
 
     for (const item of this.$children.SliderItem) {
       item.move(state);
@@ -318,8 +326,6 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
 
     this.currentIndex = index;
     this.$emit('goto', index);
-    this.$el.style.setProperty('--slider-index', String(index));
-    this.$el.style.setProperty('--slider-contain-progress', String(progress));
   }
 
   /**
