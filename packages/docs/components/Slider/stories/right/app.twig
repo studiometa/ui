@@ -32,36 +32,79 @@
     {% endfor %}
   </div>
 
+<div class="grid gap-4">
+  <div>SliderBtn</div>
   <div class="flex items-center gap-4">
     {% include '@ui/Button/StyledButton.twig' with {
       label: 'Previous',
       attr: { data_component: 'SliderBtn', data_option_prev: true }
     } %}
+    {% for slide in slides %}
+      {% include '@ui/Button/StyledButton.twig' with {
+        label: loop.index,
+        theme: 'secondary',
+        attr: { data_component: 'SliderBtn', data_option_index: loop.index0 }
+      } %}
+    {% endfor %}
     {% include '@ui/Button/StyledButton.twig' with {
       label: 'Next',
       attr: { data_component: 'SliderBtn', data_option_next: true }
     } %}
+  </div>
+  <div>SliderBtn contain</div>
+  <div class="flex items-center gap-4">
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: 'Previous',
+      attr: { data_component: 'SliderBtn', data_option_prev: true, data_option_contain: true }
+    } %}
+    {% for slide in slides %}
+      {% include '@ui/Button/StyledButton.twig' with {
+        label: loop.index,
+        theme: 'secondary',
+        attr: { data_component: 'SliderBtn', data_option_index: loop.index0 }
+      } %}
+    {% endfor %}
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: 'Next',
+      attr: { data_component: 'SliderBtn', data_option_next: true, data_option_contain: true }
+    } %}
+  </div>
+  </div>
+  <div class="grid items-center gap-4">
+    <div>SliderProgress</div>
     <div data-component="SliderProgress"
       class="w-full rounded bg-blue-200 overflow-hidden">
       <div class="w-full h-2 bg-blue-500 rounded origin-left transition ease-out"
         data-ref="progress"></div>
     </div>
+    <div class="whitespace-nowrap">Contain progress</div>
+    <div class="w-full rounded bg-blue-200 overflow-hidden">
+      <div class="w-full h-2 bg-blue-500 rounded origin-left transition ease-out -translate-x-full"
+        style="--tw-translate-x: calc((1 - var(--slider-contain-progress, 0)) * -100%)">
+      </div>
+    </div>
+  </div>
+  <div class="grid items-center gap-4">
+    <div>SliderCount</div>
     <div data-component="SliderCount" class="whitespace-nowrap">
       <span data-ref="current">1</span> / {{ slides|length }}
     </div>
+    <div>SliderDots</div>
+    <div data-component="SliderDots"
+      data-option-enter-to="is-active"
+      data-option-enter-keep
+      class="space-x-4">
+      {% for slide in slides %}
+        <button type="button" data-ref="dots[]" class="rounded-full">
+          <span class="block w-2 h-2 bg-blue-200 rounded-full"></span>
+          <span class="sr-only">Go to slide #{{ loop.index }}</span>
+        </button>
+      {% endfor %}
+    </div>
   </div>
-  <div data-component="SliderDots"
-    data-option-enter-to="is-active"
-    data-option-enter-keep
-    class="space-x-4">
-    {% for slide in slides %}
-      <button type="button" data-ref="dots[]" class="rounded-full">
-        <span class="block w-2 h-2 bg-blue-200 rounded-full"></span>
-        <span class="sr-only">Go to slide #{{ loop.index }}</span>
-      </button>
-    {% endfor %}
-  </div>
-  <div class="relative">
+  <div class="grid gap-4">
+    <div>Advanced usage of SliderProgress with SliderDots</div>
+    <div class="relative">
     <div data-component="SliderProgress"
       class="w-full rounded bg-blue-200 overflow-hidden">
       <div class="w-full h-2 bg-blue-500 rounded origin-left transition duration-500 ease-out-expo"
@@ -84,5 +127,5 @@
   </div>
   <pre data-ref="debug"></pre>
 </div>
-
+</div>
 <div class="h-screen"></div>
