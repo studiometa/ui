@@ -5,6 +5,7 @@ export interface SliderBtnProps extends BaseProps {
   $options: {
     prev: boolean;
     next: boolean;
+    index: number;
     contain: boolean;
   };
 }
@@ -23,6 +24,10 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
     options: {
       prev: Boolean,
       next: Boolean,
+      index: {
+        type: Number,
+        default: -1,
+      },
       contain: Boolean,
     },
   };
@@ -31,6 +36,9 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
    * Update attributes.
    */
   update(index: number) {
+    const { contain, prev, next } = this.$options;
+    const { $parent } = this;
+
     if (this.$options.contain && !this.$parent.$options.contain) {
       this.$warn(
         `The contain option will only works if the parent Slider also has the contain option.`,
@@ -38,15 +46,11 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
     }
 
     const isContainMaxState =
-      this.$options.contain &&
-      this.$parent.$options.contain &&
-      this.$parent.containMaxState ===
-        this.$parent.getStates()[index].x[this.$parent.$options.mode];
+      contain &&
+      $parent.$options.contain &&
+      $parent.containMaxState === $parent.getStateValueByMode($parent.currentState.x);
 
-    if (
-      (index === 0 && this.$options.prev) ||
-      ((index === this.$parent.indexMax || isContainMaxState) && this.$options.next)
-    ) {
+    if ((prev && index === 0) || (next && (index === $parent.indexMax || isContainMaxState))) {
       this.$el.setAttribute('disabled', '');
     } else {
       this.$el.removeAttribute('disabled');
@@ -57,12 +61,14 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
    * Go prev or next on click.
    */
   onClick() {
-    const { prev, next } = this.$options;
+    const { prev, next, index } = this.$options;
 
     if (prev) {
       this.$parent.goPrev();
     } else if (next) {
       this.$parent.goNext();
+    } else if (index >= 0) {
+      this.$parent.goTo(index);
     }
   }
 }
