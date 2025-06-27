@@ -331,7 +331,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Listen to the Draggable `start` event.
    */
-  onSliderDragStart() {
+  onSliderDragDragStart() {
     this.__initialX = this.currentSliderItem ? this.currentSliderItem.x : 0;
     this.__distanceX = this.__initialX;
 
@@ -341,7 +341,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Listen to the Draggable `drag` event.
    */
-  onSliderDragDrag({ args: [props] }: { args: [DragServiceProps] }) {
+  onSliderDragDragDrag({ args: [props] }: { args: [DragServiceProps] }) {
     this.__distanceX = this.__initialX + props.distance.x * this.$options.sensitivity;
 
     for (const item of this.$children.SliderItem) {
@@ -352,7 +352,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   /**
    * Listen to the Draggable `drop` event and find the new active slide.
    */
-  onSliderDragDrop({ args: [props] }: { args: [DragServiceProps] }) {
+  onSliderDragDragDrop({ args: [props] }: { args: [DragServiceProps] }) {
     if (!this.__isDragging) {
       return;
     }

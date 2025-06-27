@@ -18,7 +18,7 @@ export class SliderDrag<T extends BaseProps = BaseProps> extends withDrag(Base)<
    */
   static config: BaseConfig = {
     name: 'SliderDrag',
-    emits: ['start', 'drag', 'drop', 'inertia', 'stop'],
+    emits: ['drag-start', 'drag-drag', 'drag-drop', 'drag-inertia', 'drag-stop'],
     options: {
       scrollLockThreshold: {
         type: Number,
@@ -52,6 +52,6 @@ export class SliderDrag<T extends BaseProps = BaseProps> extends withDrag(Base)<
    * Emit drag events.
    */
   dragged(props: DragServiceProps) {
-    this.$emit(props.mode, props);
+    this.$emit(`drag-${props.mode}`, props);
   }
 }
