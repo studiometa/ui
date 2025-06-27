@@ -58,6 +58,7 @@ test('components exports', () => {
       "SliderDrag",
       "SliderItem",
       "SliderProgress",
+      "SliderWheel",
       "Sticky",
       "Tabs",
       "Target",
