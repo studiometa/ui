@@ -1,0 +1,67 @@
+name: deploy
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+      PR_ID: ${{ github.ref_name }}
+    steps:
+      - name: Branch name
+        run: echo running on branch ${BRANCH_NAME} for pull request ${PR_ID}
+      - name: deploy-ddev
+        uses: garygrossgarten/github-action-ssh@0.8.0
+        with:
+          command: |
+
+            REF="${{ github.ref_name }}"
+            BRANCH="${{ github.head_ref || github.ref_name }}"
+            DIRNAME="ui"
+
+            if [[ $REF =~ ^[0-9]+/merge$  ]]
+            then
+              DIRNAME="preview-${REF/\/merge/}--ui"
+            fi
+
+            PROJECT_PATH="~/www/$DIRNAME"
+
+            if [[ $DIRNAME == "ui" && $BRANCH != "develop" ]]
+            then
+              echo "project not ok, exiting..."
+              exit
+            fi
+
+            if [[ ! $DIRNAME =~ ^preview-[0-9]+--ui$ ]]
+            then
+              echo "preview not ok, exiting..."
+              exit
+            fi
+
+            if [[ ! -d $PROJECT_PATH ]]
+            then
+              git clone --branch $BRANCH --depth 1 https://github.com/studiometa/ui.git $PROJECT_PATH
+              cd $PROJECT_PATH
+              echo "name: ${DIRNAME}" > .ddev/config.local.yaml
+              ddev start &
+              wait $!
+            else
+              cd $PROJECT_PATH
+              git stash
+              git pull --ff-only || git pull --rebase
+            fi
+
+            docker run --rm -u $(id -u):$(id -g) -v $PROJECT_PATH:/app -w /app webdevops/php-dev:8.3 composer i --no-dev --optimize-autoloader --working-dir=/app/packages/docs/.symfony
+            docker run --rm -u $(id -u):$(id -g) -v $PROJECT_PATH:/app -w /app node:22 npm i --no-audit --no-progress --no-fund
+            docker run --rm -u $(id -u):$(id -g) -v $PROJECT_PATH:/app -w /app node:22 npm run docs:build
+
+          host: ${{ secrets.DDEV_HOST }}
+          username: ${{ secrets.DDEV_USER }}
+          privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
+        env:
+          CI: true
