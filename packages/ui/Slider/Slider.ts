@@ -319,7 +319,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     this.currentIndex = index;
     this.$emit('goto', index);
     this.$el.style.setProperty('--slider-index', String(index));
-    this.$el.style.setProperty('--slider-wrapper-progress', String(progress));
+    this.$el.style.setProperty('--slider-contain-progress', String(progress));
   }
 
   /**
