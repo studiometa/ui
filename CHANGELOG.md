@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **FrameTarget**: differentiate `morph` and `replace` modes ([#394](https://github.com/studiometa/ui/issues/394), [#423](https://github.com/studiometa/ui/pull/423), [65315b8](https://github.com/studiometa/ui/commit/65315b8))
+
 ## [v1.0.0-rc.7](https://github.com/studiometa/ui/compare/1.0.0-rc.6..1.0.0-rc.7) (2025-06-19)
 
 ### Added
