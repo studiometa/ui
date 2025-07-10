@@ -81,7 +81,6 @@ describe('The FrameTarget class', () => {
     const frameTarget = new FrameTarget(div);
     await mount(frameTarget);
 
-    const originalElement = div.querySelector('#original');
     const spy = vi.spyOn(div, 'replaceChildren');
 
     const newContent = h('div', { id: 'foo', dataOptionMode: 'replace' }, [
