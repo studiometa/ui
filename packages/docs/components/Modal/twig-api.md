@@ -16,42 +16,42 @@ Customize the root element attributes.
 
 - Type: `array`
 
-Customize the modal element attributes.
+Customize the modal element attributes. The modal element is the main container that covers the full viewport.
 
 ### `overlay_attr`
 
 - Type: `array`
 
-Customize the overlay element attributes.
+Customize the overlay background element attributes. The overlay provides the semi-transparent background behind the modal content.
 
-### `wrapper_atrr`
-
-- Type: `array`
-
-Customize the wrapper element attributes.
-
-### `container_atrr`
+### `wrapper_attr`
 
 - Type: `array`
 
-Customize the container element attributes.
+Customize the wrapper element attributes. The wrapper centers the modal content within the viewport.
 
-### `content_atrr`
+### `container_attr`
 
 - Type: `array`
 
-Customize the content element attributes.
+Customize the container element attributes. The container holds the actual modal content and handles scrolling.
+
+### `content_attr`
+
+- Type: `array`
+
+Customize the content element attributes. The content element wraps the modal's inner content.
 
 ## Blocks
 
 ### `open`
 
-Customize the open trigger button.
+Customize the open trigger button. By default, renders a Button component with `data-ref="open[]"` and label "Open".
 
 ### `close`
 
-Customize the close trigger button.
+Customize the close trigger button. By default, renders a Button component positioned absolutely in the top-right corner with `data-ref="close[]"` and label "Close".
 
 ### `content`
 
-Set the modal's content.
+Set the modal's content. This is where you place the main content of your modal dialog.
