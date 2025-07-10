@@ -4,7 +4,7 @@ import morphdom from 'morphdom';
 
 export interface FrameTargetProps extends BaseProps {
   $options: {
-    mode: 'replace' | 'prepend' | 'append';
+    mode: 'replace' | 'prepend' | 'append' | 'morph';
   };
 }
 
@@ -32,6 +32,7 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
     APPEND: 'append',
     PREPEND: 'prepend',
     REPLACE: 'replace',
+    MORPH: 'morph',
   } as const;
 
   /**
@@ -50,15 +51,16 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
     }
 
     const { mode } = this.$options;
+    const { $el, modes } = this;
 
     // In append or prepend mode, the leave transition can be used to
     // move the exisiting children of the root element, with the leave
     // transition being applied in parallel of the enter transition.
-    if (mode === this.modes.APPEND || mode === this.modes.PREPEND) {
-      const leaveTargets = Array.from(this.$el.children) as HTMLElement[];
+    if (mode === modes.APPEND || mode === modes.PREPEND) {
+      const leaveTargets = Array.from($el.children) as HTMLElement[];
       const enterTargets = Array.from(content.children) as HTMLElement[];
 
-      this.$el[mode](...Array.from(content.childNodes));
+      $el[mode](...Array.from(content.childNodes));
 
       await Promise.all([
         this.leave(leaveTargets),
@@ -66,7 +68,11 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
       ]);
     } else {
       await this.leave();
-      morphdom(this.$el, content);
+      if (mode === modes.MORPH) {
+        morphdom($el, content);
+      } else {
+        $el.replaceChildren(content);
+      }
       await this.enter();
     }
   }
