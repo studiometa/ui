@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
   "license": "MIT",
