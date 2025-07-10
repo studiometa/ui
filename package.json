@@ -27,12 +27,12 @@
     "postinstall": "patch-package"
   },
   "devDependencies": {
-    "@studiometa/prettier-config": "4.1.0",
-    "esbuild": "0.25.5",
+    "@studiometa/prettier-config": "4.2.0",
+    "esbuild": "0.25.6",
     "fast-glob": "3.3.3",
     "gzip-size": "7.0.0",
-    "oxlint": "0.18.1",
-    "prettier": "3.5.3",
+    "oxlint": "1.6.0",
+    "prettier": "3.6.2",
     "typescript": "5.8.3"
   },
   "dependencies": {
