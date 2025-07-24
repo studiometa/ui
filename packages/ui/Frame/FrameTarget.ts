@@ -71,7 +71,7 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
       if (mode === modes.MORPH) {
         morphdom($el, content);
       } else {
-        $el.replaceChildren(content);
+        $el.replaceChildren(...Array.from(content.childNodes));
       }
       await this.enter();
     }

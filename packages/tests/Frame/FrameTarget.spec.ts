@@ -68,7 +68,7 @@ describe('The FrameTarget class', () => {
     ]);
 
     await frameTarget.updateContent(newContent);
-    
+
     expect(div.querySelector('p')?.textContent).toBe('Updated content');
     expect(div.querySelector('span.keep')?.textContent).toBe('Keep this');
     expect(div.querySelector('div')?.textContent).toBe('New element');
@@ -83,12 +83,11 @@ describe('The FrameTarget class', () => {
 
     const spy = vi.spyOn(div, 'replaceChildren');
 
-    const newContent = h('div', { id: 'foo', dataOptionMode: 'replace' }, [
-      h('p', { id: 'new' }, ['New content']),
-    ]);
+    const newContent = h('p', { id: 'new' }, ['New content']);
+    const newDiv = h('div', { id: 'foo', dataOptionMode: 'replace' }, [newContent]);
 
-    await frameTarget.updateContent(newContent);
-    
+    await frameTarget.updateContent(newDiv);
+
     expect(spy).toHaveBeenCalledWith(newContent);
     expect(div.querySelector('#new')?.textContent).toBe('New content');
     expect(div.querySelector('#original')).toBeNull();
