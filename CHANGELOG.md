@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.1](https://github.com/studiometa/ui/compare/1.0.0..1.0.1) (2025-07-24)
+
+### Fixed
+
+- **FrameTarget:** fix a bug where the new root was inserted as a child of the current one ([167064a](https://github.com/studiometa/ui/commit/167064a))
+
 ## [v1.0.0](https://github.com/studiometa/ui/compare/1.0.0-rc.7..1.0.0) (2025-07-24)
 
 ### Added
