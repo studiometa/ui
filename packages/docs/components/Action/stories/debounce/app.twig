@@ -1,0 +1,15 @@
+<button
+  data-component="Action"
+  data-option-on:click="target.$el.textContent = 'clicked'"
+  data-option-on:click.debounce="target.$el.textContent = 'debounced 100ms'"
+  class="block mb-4 px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
+  click me
+</button>
+
+<button
+  data-component="Action"
+  data-option-on:click="target.$el.textContent = 'clicked'"
+  data-option-on:click.debounce500="target.$el.textContent = 'debounced 500ms'"
+  class="block mb-4 px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
+  click me
+</button>

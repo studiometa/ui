@@ -17,3 +17,12 @@ title: Action examples
   :html="() => import('./stories/prevent-default/app.twig')"
   :script="() => import('./stories/prevent-default/app.js?raw')"
   />
+
+## Debounce modifier
+
+Use the `debounce` modifier to prevent firing the action's effect too often.
+
+<PreviewPlayground
+  :html="() => import('./stories/debounce/app.twig')"
+  :script="() => import('./stories/debounce/app.js?raw')"
+  />

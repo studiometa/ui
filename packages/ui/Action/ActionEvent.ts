@@ -10,12 +10,17 @@ const TARGET_REGEX = /([a-zA-Z]+)(\((.*)\))?/;
 
 const effectCache = new Map<string, Function>();
 
-export type Modifiers = 'prevent' | 'stop' | 'once' | 'passive' | 'capture';
+export type Modifiers = 'prevent' | 'stop' | 'once' | 'passive' | 'capture' | 'debounce';
 
 export class ActionEvent<T extends Base> {
   static modifierSeparator = '.';
   static targetSeparator = ' ';
   static effectSeparator = '->';
+
+  /**
+   * Timer for debouncing event handling.
+   */
+  private debounceTimer?: number;
 
   /**
    * The Action instance.
@@ -31,6 +36,11 @@ export class ActionEvent<T extends Base> {
    * The modifiers to apply to the event.
    */
   modifiers: Modifiers[];
+
+  /**
+   * The debounce delay in milliseconds.
+   */
+  debounceDelay: number = 100;
 
   /**
    * Target definition.
@@ -53,7 +63,19 @@ export class ActionEvent<T extends Base> {
     this.action = action;
     const [event, ...modifiers] = eventDefinition.split(ActionEvent.modifierSeparator);
     this.event = event;
-    this.modifiers = modifiers as Modifiers[];
+
+    // Process modifiers and extract debounce delay if present
+    const processedModifiers: Modifiers[] = [];
+    for (const modifier of modifiers) {
+      if (modifier.startsWith('debounce')) {
+        processedModifiers.push('debounce');
+        this.debounceDelay = parseInt(modifier.replace('debounce', '') || '100');
+      } else {
+        processedModifiers.push(modifier as Modifiers);
+      }
+    }
+
+    this.modifiers = processedModifiers;
 
     let effect = effectDefinition;
     let targetDefinition = '';
@@ -129,6 +151,20 @@ export class ActionEvent<T extends Base> {
       event.stopPropagation();
     }
 
+    if (modifiers.includes('debounce')) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = window.setTimeout(() => {
+        this.executeEffect(targets, effect, event);
+      }, this.debounceDelay);
+    } else {
+      this.executeEffect(targets, effect, event);
+    }
+  }
+
+  /**
+   * Execute the effect for all targets.
+   */
+  private executeEffect(targets: Array<Record<string, Base>>, effect: Function, event: Event) {
     for (const target of targets) {
       try {
         const [currentTarget] = Object.values(target).flat();
@@ -158,6 +194,7 @@ export class ActionEvent<T extends Base> {
    * Unbind the event from the given Action instance root element.
    */
   detachEvent() {
+    clearTimeout(this.debounceTimer);
     this.action.$el.removeEventListener(this.event, this);
   }
 }
