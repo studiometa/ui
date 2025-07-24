@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.0.0](https://github.com/studiometa/ui/compare/1.0.0-rc.7..1.0.0) (2025-07-24)
+
+### Added
+
+- **Action:** add support for a `debounce[<delay>]` modifier ([#424](https://github.com/studiometa/ui/issues/424), [#425](https://github.com/studiometa/ui/pull/425), [428b8de](https://github.com/studiometa/ui/commit/428b8de))
+
+### Changed
+
+- **FrameTarget**: differentiate `morph` and `replace` modes ([#394](https://github.com/studiometa/ui/issues/394), [#423](https://github.com/studiometa/ui/pull/423), [65315b8](https://github.com/studiometa/ui/commit/65315b8))
+- Update @studiometa/js-toolkit v3.0.4 → v3.0.5 ([23b798d](https://github.com/studiometa/ui/commit/23b798d))
+
 ## [v1.0.0-rc.7](https://github.com/studiometa/ui/compare/1.0.0-rc.6..1.0.0-rc.7) (2025-06-19)
 
 ### Added

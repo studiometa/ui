@@ -52,4 +52,45 @@ describe('The FrameTarget class', () => {
     await frameTarget.updateContent(null);
     expect(spy).not.toHaveBeenCalled();
   });
+
+  it('should be able to morph content', async () => {
+    const div = h('div', { id: 'foo', dataOptionMode: 'morph' }, [
+      h('p', {}, ['Original content']),
+      h('span', { class: 'keep' }, ['Keep this']),
+    ]);
+    const frameTarget = new FrameTarget(div);
+    await mount(frameTarget);
+
+    const newContent = h('div', { id: 'foo', dataOptionMode: 'morph' }, [
+      h('p', {}, ['Updated content']),
+      h('span', { class: 'keep' }, ['Keep this']),
+      h('div', {}, ['New element']),
+    ]);
+
+    await frameTarget.updateContent(newContent);
+    
+    expect(div.querySelector('p')?.textContent).toBe('Updated content');
+    expect(div.querySelector('span.keep')?.textContent).toBe('Keep this');
+    expect(div.querySelector('div')?.textContent).toBe('New element');
+  });
+
+  it('should use replaceChildren for replace mode', async () => {
+    const div = h('div', { id: 'foo', dataOptionMode: 'replace' }, [
+      h('p', { id: 'original' }, ['Original content']),
+    ]);
+    const frameTarget = new FrameTarget(div);
+    await mount(frameTarget);
+
+    const spy = vi.spyOn(div, 'replaceChildren');
+
+    const newContent = h('div', { id: 'foo', dataOptionMode: 'replace' }, [
+      h('p', { id: 'new' }, ['New content']),
+    ]);
+
+    await frameTarget.updateContent(newContent);
+    
+    expect(spy).toHaveBeenCalledWith(newContent);
+    expect(div.querySelector('#new')?.textContent).toBe('New content');
+    expect(div.querySelector('#original')).toBeNull();
+  });
 });

@@ -19,6 +19,8 @@ Use this option to change the event that will trigger the [effect callback](#eff
 - `passive` to register the handler with passive mode enabled
 - `once` to trigger the handler only once
 - `capture` to register the handle in capture mode
+- `debounce` to debounce the event handler with a 100ms delay by default
+- `debounce<delay>` to debounce the event handler with a custom delay in milliseconds (e.g., `debounce300`)
 
 Modifiers can be chained with a `.` as separator:
 

@@ -1,10 +1,11 @@
 {
   "name": "@studiometa/ui-tests",
-  "version": "1.0.0-rc.7",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
   "license": "MIT",

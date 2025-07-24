@@ -116,5 +116,13 @@ createApp(App);`,
         ],
       }),
     );
+
+    config.optimization.splitChunks.cacheGroups = {
+      vendors: {
+        test: /[\\/]node_modules[\\/](?!.*\.css$)/,
+        name: 'vendors',
+        chunks: 'initial',
+      },
+    };
   },
 });

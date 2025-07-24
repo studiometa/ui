@@ -113,4 +113,55 @@ describe('The Action component', () => {
     expect(warnSpy).toHaveBeenCalledTimes(1);
     warnSpy.mockRestore();
   });
+
+  it('should debounce events with default delay', async () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(console, 'log');
+    spy.mockImplementation(() => {});
+    
+    const action = new Action(h('div'));
+    const actionEvent = new ActionEvent(action, 'click.debounce', 'console.log("debounced")');
+    
+    // Trigger multiple events quickly
+    actionEvent.handleEvent(new Event('click'));
+    actionEvent.handleEvent(new Event('click'));
+    actionEvent.handleEvent(new Event('click'));
+    
+    // Should not be called immediately
+    expect(spy).toHaveBeenCalledTimes(0);
+    
+    // Fast forward 50ms (less than default 100ms)
+    vi.advanceTimersByTime(50);
+    expect(spy).toHaveBeenCalledTimes(0);
+    
+    // Fast forward another 50ms (total 100ms)
+    vi.advanceTimersByTime(50);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith('debounced');
+    
+    spy.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it('should debounce events with custom delay', async () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(console, 'log');
+    spy.mockImplementation(() => {});
+    
+    const action = new Action(h('div'));
+    const actionEvent = new ActionEvent(action, 'click.debounce300', 'console.log("debounced")');
+    
+    actionEvent.handleEvent(new Event('click'));
+    
+    // Should not be called after 100ms
+    vi.advanceTimersByTime(100);
+    expect(spy).toHaveBeenCalledTimes(0);
+    
+    // Should be called after 300ms total
+    vi.advanceTimersByTime(200);
+    expect(spy).toHaveBeenCalledTimes(1);
+    
+    spy.mockRestore();
+    vi.useRealTimers();
+  });
 });
