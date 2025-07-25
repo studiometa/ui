@@ -13,10 +13,9 @@ class App extends Base {
 
   onAddClick() {
     this.$children.MapboxMap[0].$el.append(
-      createElement('div', {
+      createElement('template', {
         dataComponent: 'MapboxMarker',
-        dataOptionLat: randomInt(-50, 50),
-        dataOptionLng: randomInt(-50, 50),
+        dataOptionLngLat: JSON.stringify([randomInt(-50, 50), randomInt(-50, 50)]),
       }),
     );
     this.$children.MapboxMap[0].$update();
