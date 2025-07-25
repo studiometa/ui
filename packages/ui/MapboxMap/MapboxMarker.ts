@@ -1,21 +1,28 @@
-import { Base, type BaseProps, type BaseConfig, getClosestParent } from '@studiometa/js-toolkit';
+import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
 import { Marker } from 'mapbox-gl';
-import { MapboxMap } from './MapboxMap.js';
+import { AbstractMapboxMapChild, AbstractMapboxMapChildProps } from './AbstractMapboxMapChild.js';
 
-export interface MapboxMarkerProps extends BaseProps {
+export interface MapboxMarkerProps extends AbstractMapboxMapChildProps {
   $options: {
-    lng: number;
-    lat: number;
+    lngLat: [number, number];
     markerOptions: any;
   };
 }
 
-export class MapboxMarker<T extends BaseProps = BaseProps> extends Base<T & MapboxMarkerProps> {
+/**
+ * Add a marker to Mapbox map.
+ * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ */
+export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapboxMapChild<
+  T & MapboxMarkerProps
+> {
   static config: BaseConfig = {
     name: 'MapboxMarker',
     options: {
-      lng: Number,
-      lat: Number,
+      lngLat: {
+        type: Array,
+        default: () => [0, 0],
+      },
       // Marker options. (https://docs.mapbox.com/mapbox-gl-js/api/markers#marker)
       markerOptions: Object,
     },
@@ -31,10 +38,6 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends Base<T & Mapb
     return this.__marker;
   }
 
-  get map() {
-    return getClosestParent(this, MapboxMap)?.map;
-  }
-
   get markerOptions() {
     if (this.$options.markerOptions) {
       return this.$options.markerOptions;
@@ -43,12 +46,8 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends Base<T & Mapb
     return {};
   }
 
-  get lngLat(): [number, number] {
-    return [this.$options.lng, this.$options.lat];
-  }
-
   mounted() {
-    this.marker.setLngLat(this.lngLat).addTo(this.map);
+    this.marker.setLngLat(this.$options.lngLat).addTo(this.map);
   }
 
   destroyed() {
