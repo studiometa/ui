@@ -25,8 +25,9 @@ export default defineWebpackConfig({
         '@motionone/easing',
         'deepmerge',
         'morphdom',
+        'mapbox-gl',
         { specifier: '@studiometa/js-toolkit', esmSh: { bundle: false } },
-        { specifier: '@studiometa/js-toolkit/utils', esmSh: { bundle: false } },
+        { specifier: '@studiometa/js-toolkit/utils', esmSh: { bundle: false } }, 9acbc63 (Update docs)
         {
           specifier: '@studiometa/ui',
           source: '../ui/**/*.ts',

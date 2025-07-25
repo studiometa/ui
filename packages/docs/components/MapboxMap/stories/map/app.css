@@ -1,0 +1,10 @@
+@import 'https://esm.sh/mapbox-gl@3.13.0/dist/mapbox-gl.css';
+
+html.dark {
+  background-color: #222;
+  color: #eee;
+}
+
+body {
+  padding: 1rem;
+}
