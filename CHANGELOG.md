@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Add an Indexable primitive component and a withIndex decorator ([#491](https://github.com/studiometa/ui/pull/491), [0394a1df](https://github.com/studiometa/ui/commit/0394a1df))
+
 ## [v1.8.0](https://github.com/studiometa/ui/compare/1.7.0..1.8.0) (2026-03-25)
 
 ### Added
