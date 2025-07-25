@@ -1,17 +1,15 @@
-import {
-  Base,
-  type BaseConfig,
-  type BaseConstructor,
-  type BaseProps,
-} from '@studiometa/js-toolkit';
+import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { Map } from 'mapbox-gl';
 import { MapboxMarker } from './MapboxMarker.js';
 import { MapboxPopup } from './MapboxPopup.js';
+import { MapboxNavigationControl } from './MapboxNavigationControl.js';
+import { MapboxGeolocateControl } from './MapboxGeolocateControl.js';
+import { resolveWhenMapboxMapIsLoaded } from './utils.js';
 
 export interface MapboxMapProps extends BaseProps {
   $refs: {
     container: HTMLElement;
-  },
+  };
   $children: {
     MapboxMarker: MapboxMarker[];
   };
@@ -22,25 +20,14 @@ export interface MapboxMapProps extends BaseProps {
   };
 }
 
-function resolveWhenMapIsLoaded<T extends BaseConstructor>(Component: T) {
-  return (mapboxMap: MapboxMap): Promise<T> => {
-    return new Promise((resolve) => {
-      if (mapboxMap.isLoaded) {
-        resolve(Component);
-      } else {
-        mapboxMap.$on(
-          'map-load',
-          () => {
-            resolve(Component);
-          },
-          { once: true },
-        );
-      }
-    });
-  };
-}
-
+/**
+ * Display a Mapbox GL map.
+ * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ */
 export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxMapProps> {
+  /**
+   * Config.
+   */
   static config: BaseConfig = {
     name: 'MapboxMap',
     emits: ['map-load'],
@@ -48,40 +35,57 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
     options: {
       accessToken: String,
       zoom: Number,
-      center: { type: Array, default: () => [0, 0] },
+      center: {
+        type: Array,
+        default: () => [0, 0],
+      },
     },
     components: {
-      MapboxMarker: resolveWhenMapIsLoaded(MapboxMarker),
-      MapboxPopup: resolveWhenMapIsLoaded(MapboxPopup),
+      MapboxMarker: resolveWhenMapboxMapIsLoaded(MapboxMarker),
+      MapboxPopup: resolveWhenMapboxMapIsLoaded(MapboxPopup),
+      MapboxNavigationControl: resolveWhenMapboxMapIsLoaded(MapboxNavigationControl),
+      MapboxGeolocateControl: resolveWhenMapboxMapIsLoaded(MapboxGeolocateControl),
     },
   };
 
+  /**
+   * Is the map loaded?
+   */
   isLoaded = false;
 
+  /**
+   * Map instance.
+   * @private
+   */
   __map: Map;
 
+  /**
+   * The mapbox Map instance.
+   */
   get map() {
     if (!this.__map) {
-      this.__map = new Map(this.mapboxOptions);
+      this.__map = new Map({
+        container: this.$refs.container ?? this.$el,
+        ...this.$options,
+      });
     }
 
     return this.__map;
   }
 
-  get mapboxOptions() {
-    return {
-      container: this.$refs.container ?? this.$el,
-      ...this.$options,
-    };
-  }
-
-  async mounted() {
+  /**
+   * Mounted hook.
+   */
+  mounted() {
     this.map.on('load', () => {
       this.isLoaded = true;
       this.$emit('map-load', this.map);
     });
   }
 
+  /**
+   * Destroyed hook.
+   */
   destroyed() {
     this.map?.remove();
     this.__map = undefined;
