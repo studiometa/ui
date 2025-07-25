@@ -46,15 +46,15 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends AbstractCa
       isHorizontal ? $el.scrollLeft : $el.scrollTop,
     );
 
-    carousel.index = minDiffIndex;
+    carousel.currentIndex = minDiffIndex;
     this.carousel.$services.enable('ticked');
   }
 
   /**
    * Scroll to the new item on parent carousel go-to event.
    */
-  onParentCarouselGoTo() {
-    const { state } = this.carousel.items[this.carousel.index];
+  onParentCarouselIndex() {
+    const { state } = this.carousel.items[this.carousel.currentIndex];
     if (state) {
       this.$el.scrollTo({ left: state.left, top: state.top, behavior: 'smooth' });
     }

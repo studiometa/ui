@@ -15,7 +15,7 @@ describe('The CarouselBtn class', () => {
       const carouselBtn = new CarouselBtn(btn);
 
       const spy = vi.spyOn(carousel, method);
-      spy.mockImplementation(() => {});
+      spy.mockImplementation(() => Promise.resolve());
       carouselBtn.onClick();
       expect(spy).toHaveBeenCalledOnce();
     });
@@ -34,7 +34,7 @@ describe('The CarouselBtn class', () => {
       const carouselBtn = new CarouselBtn(btn);
       const spy = vi.spyOn(carouselBtn, 'carousel', 'get');
       // @ts-expect-error mock is partial
-      spy.mockImplementation(() => ({ index, lastIndex }));
+      spy.mockImplementation(() => ({ currentIndex: index, lastIndex }));
       carouselBtn.onParentCarouselProgress();
       expect(btn.disabled).toBe(isDisabled);
     });

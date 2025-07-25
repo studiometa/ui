@@ -1,5 +1,6 @@
-import { Base } from '@studiometa/js-toolkit';
-import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import type { BaseConfig } from '@studiometa/js-toolkit';
+import type { IndexableInstructions, IndexableProps } from '../decorators/index.js';
+import { Indexable } from '../Indexable/index.js';
 import { CarouselBtn } from './CarouselBtn.js';
 import { CarouselDrag } from './CarouselDrag.js';
 import { CarouselItem } from './CarouselItem.js';
@@ -23,7 +24,7 @@ export interface CarouselProps {
 /**
  * Carousel class.
  */
-export class Carousel<T extends BaseProps = BaseProps> extends Base<T & CarouselProps> {
+export class Carousel<T extends IndexableProps = IndexableProps> extends Indexable<T & CarouselProps> {
   /**
    * Config.
    */
@@ -36,50 +37,11 @@ export class Carousel<T extends BaseProps = BaseProps> extends Base<T & Carousel
       CarouselWrapper,
     },
     options: {
+      ...Indexable.config.options,
       axis: { type: String, default: 'x' },
     },
-    emits: ['go-to', 'progress'],
+    emits: [...(Indexable.config.emits || []), 'progress'],
   };
-
-  /**
-   * Carousel index.
-   */
-  __index = 0;
-
-  /**
-   * Get current index.
-   */
-  get index() {
-    return this.__index;
-  }
-
-  /**
-   * Set current index.
-   */
-  set index(value) {
-    this.__index = value;
-  }
-
-  /**
-   * Previous index.
-   */
-  get prevIndex() {
-    return Math.max(this.index - 1, 0);
-  }
-
-  /**
-   * Next index.
-   */
-  get nextIndex() {
-    return Math.min(this.index + 1, this.lastIndex);
-  }
-
-  /**
-   * Last index.
-   */
-  get lastIndex() {
-    return this.items.length - 1;
-  }
 
   /**
    * Is the carousel horizontal?
@@ -100,6 +62,13 @@ export class Carousel<T extends BaseProps = BaseProps> extends Base<T & Carousel
    */
   get items() {
     return this.$children.CarouselItem;
+  }
+
+  /**
+   * Get the carousel's length.
+   */
+  get length() {
+    return this.items?.length || 0;
   }
 
   /**
@@ -125,38 +94,23 @@ export class Carousel<T extends BaseProps = BaseProps> extends Base<T & Carousel
    * Mounted hook.
    */
   mounted() {
-    this.goTo(this.index);
+    this.goTo(this.currentIndex);
   }
 
   /**
    * Resized hook.
    */
   resized() {
-    this.goTo(this.index);
-  }
-
-  /**
-   * Go to the previous item.
-   */
-  goPrev() {
-    this.goTo(this.prevIndex);
-  }
-
-  /**
-   * Go to the next item.
-   */
-  goNext() {
-    this.goTo(this.nextIndex);
+    this.goTo(this.currentIndex);
   }
 
   /**
    * Go to the given item.
    */
-  goTo(index: number) {
-    this.$log('goTo', index);
-    this.index = index;
-    this.$emit('go-to', index);
+  goTo(indexOrInstruction: number | IndexableInstructions) {
+    this.$log('goTo', indexOrInstruction);
     this.$services.enable('ticked');
+    return super.goTo(indexOrInstruction);
   }
 
   ticked() {

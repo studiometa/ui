@@ -10,5 +10,6 @@ export class Indexable<T extends BaseProps = BaseProps> extends withIndex<Base>(
    */
   static config: BaseConfig = {
     name: 'Indexable',
+    emits: ['index']
   };
 }

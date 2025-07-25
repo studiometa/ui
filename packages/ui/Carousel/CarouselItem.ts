@@ -60,7 +60,7 @@ export class CarouselItem<T extends BaseProps = BaseProps> extends AbstractCarou
   onParentCarouselProgress() {
     domScheduler.read(() => {
       const { index } = this;
-      const { index: carouselIndex } = this.carousel;
+      const { currentIndex: carouselIndex } = this.carousel;
 
       domScheduler.write(() => {
         this.$el.style.setProperty(

@@ -28,14 +28,14 @@ describe('The CarouselItem class', () => {
     const carouselItem = new CarouselItem(div);
     vi.spyOn(carouselItem, 'index', 'get').mockImplementation(() => 0);
     // @ts-expect-error partial mock
-    vi.spyOn(carouselItem, 'carousel', 'get').mockImplementation(() => ({ index: 0 }));
+    vi.spyOn(carouselItem, 'carousel', 'get').mockImplementation(() => ({ currentIndex: 0 }));
 
     carouselItem.onParentCarouselProgress();
     await wait(20);
     expect(div.style.getPropertyValue('--carousel-item-active')).toBe('1');
 
     // @ts-expect-error partial mock
-    vi.spyOn(carouselItem, 'carousel', 'get').mockImplementation(() => ({ index: 1 }));
+    vi.spyOn(carouselItem, 'carousel', 'get').mockImplementation(() => ({ currentIndex: 1 }));
     carouselItem.onParentCarouselProgress();
     expect(div.style.getPropertyValue('--carousel-item-active')).toBe('1');
     await wait(20);

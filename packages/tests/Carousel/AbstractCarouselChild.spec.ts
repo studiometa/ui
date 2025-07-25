@@ -19,7 +19,7 @@ describe('The AbstractCarouselChild class', () => {
     expect(child.carousel).toBe(carousel);
     const spy = vi.spyOn(child, '$emit');
 
-    for (const eventName of ['go-to', 'progress']) {
+    for (const eventName of ['index', 'progress']) {
       carousel.$emit(eventName, 0);
       expect(spy).toHaveBeenCalledExactlyOnceWith(`parent-carousel-${eventName}`, 0);
       spy.mockClear();
@@ -28,7 +28,7 @@ describe('The AbstractCarouselChild class', () => {
     await destroy(child);
     spy.mockClear();
 
-    for (const eventName of ['go-to', 'progress']) {
+    for (const eventName of ['index', 'progress']) {
       carousel.$emit(eventName, 0);
       expect(spy).not.toHaveBeenCalled();
       spy.mockClear();

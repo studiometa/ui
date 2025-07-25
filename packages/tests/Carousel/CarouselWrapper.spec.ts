@@ -49,7 +49,7 @@ describe('The CarouselWrapper class', () => {
     const div = h('div');
     const carouselWrapper = new CarouselWrapper(div);
     const mock = {
-      index: 0,
+      currentIndex: 0,
       $services: {
         enable: vi.fn(),
       },
@@ -79,14 +79,14 @@ describe('The CarouselWrapper class', () => {
 
     carouselWrapper.onScroll();
 
-    expect(mock.index).toBe(0);
+    expect(mock.currentIndex).toBe(0);
     expect(mock.$services.enable).toHaveBeenCalledExactlyOnceWith('ticked');
 
     vi.spyOn(div, 'scrollLeft', 'get').mockImplementation(() => -100);
     vi.spyOn(div, 'scrollTop', 'get').mockImplementation(() => -100);
     carouselWrapper.onScroll();
 
-    expect(mock.index).toBe(1);
+    expect(mock.currentIndex).toBe(1);
 
     vi.spyOn(carouselWrapper, 'isHorizontal', 'get').mockImplementation(() => false);
     vi.spyOn(carouselWrapper, 'isVertical', 'get').mockImplementation(() => true);
@@ -94,14 +94,14 @@ describe('The CarouselWrapper class', () => {
     vi.spyOn(div, 'scrollTop', 'get').mockImplementation(() => -90);
     carouselWrapper.onScroll();
 
-    expect(mock.index).toBe(1);
+    expect(mock.currentIndex).toBe(1);
   });
 
   it('should scroll to the matching item when the carousel goes to', async () => {
     const div = h('div');
     const carouselWrapper = new CarouselWrapper(div);
     const mock = {
-      index: 0,
+      currentIndex: 0,
       items: [
         {
           state: {
@@ -122,7 +122,7 @@ describe('The CarouselWrapper class', () => {
     carousel.mockImplementation(() => mock);
 
     const spy = vi.spyOn(div, 'scrollTo');
-    carouselWrapper.onParentCarouselGoTo();
+    carouselWrapper.onParentCarouselIndex();
     expect(spy).toHaveBeenCalledExactlyOnceWith({
       left: 0,
       top: 0,
@@ -130,9 +130,9 @@ describe('The CarouselWrapper class', () => {
     });
     spy.mockClear();
 
-    mock.index = 1;
+    mock.currentIndex = 1;
 
-    carouselWrapper.onParentCarouselGoTo();
+    carouselWrapper.onParentCarouselIndex();
     expect(spy).toHaveBeenCalledExactlyOnceWith({
       left: -100,
       top: -100,

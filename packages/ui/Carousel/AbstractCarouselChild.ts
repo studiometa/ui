@@ -11,7 +11,7 @@ export class AbstractCarouselChild<T extends BaseProps = BaseProps> extends Base
    */
   static config: BaseConfig = {
     name: 'AbstractCarouselChild',
-    emits: ['parent-carousel-go-to', 'parent-carousel-progress'],
+    emits: ['parent-carousel-index', 'parent-carousel-progress'],
   };
 
   /**
@@ -41,7 +41,7 @@ export class AbstractCarouselChild<T extends BaseProps = BaseProps> extends Base
    */
   handleEvent(event: CustomEvent) {
     switch (event.type) {
-      case 'go-to':
+      case 'index':
       case 'progress':
         this.$emit(`parent-carousel-${event.type}`, ...event.detail);
         break;
@@ -60,7 +60,7 @@ export class AbstractCarouselChild<T extends BaseProps = BaseProps> extends Base
       return;
     }
 
-    carousel.$on('go-to', this);
+    carousel.$on('index', this);
     carousel.$on('progress', this);
   }
 
@@ -68,7 +68,7 @@ export class AbstractCarouselChild<T extends BaseProps = BaseProps> extends Base
    * Destroyed hook.
    */
   destroyed() {
-    this.carousel?.$off?.('go-to', this);
+    this.carousel?.$off?.('index', this);
     this.carousel?.$off?.('progress', this);
   }
 }

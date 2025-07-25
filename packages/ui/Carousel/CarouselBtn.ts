@@ -48,11 +48,11 @@ export class CarouselBtn<T extends BaseProps = BaseProps> extends AbstractCarous
    */
   onParentCarouselProgress() {
     const { action } = this.$options;
-    const { index, lastIndex } = this.carousel;
+    const { currentIndex, lastIndex } = this.carousel;
     const shouldDisable =
-      (action === 'next' && index === lastIndex) ||
-      (action === 'prev' && index === 0) ||
-      Number(action) === index;
+      (action === 'next' && currentIndex === lastIndex) ||
+      (action === 'prev' && currentIndex === 0) ||
+      Number(action) === currentIndex;
 
     this.$el.disabled = shouldDisable;
   }
