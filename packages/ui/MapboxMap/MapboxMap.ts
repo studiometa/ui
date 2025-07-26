@@ -4,6 +4,7 @@ import { MapboxMarker } from './MapboxMarker.js';
 import { MapboxPopup } from './MapboxPopup.js';
 import { MapboxNavigationControl } from './MapboxNavigationControl.js';
 import { MapboxGeolocateControl } from './MapboxGeolocateControl.js';
+import { MapboxGeocoder } from './MapboxGeocoder.js';
 import { resolveWhenMapboxMapIsLoaded } from './utils.js';
 
 export interface MapboxMapProps extends BaseProps {
@@ -41,10 +42,11 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
       },
     },
     components: {
-      MapboxMarker: resolveWhenMapboxMapIsLoaded(MapboxMarker),
-      MapboxPopup: resolveWhenMapboxMapIsLoaded(MapboxPopup),
-      MapboxNavigationControl: resolveWhenMapboxMapIsLoaded(MapboxNavigationControl),
+      MapboxGeocoder: resolveWhenMapboxMapIsLoaded(MapboxGeocoder),
       MapboxGeolocateControl: resolveWhenMapboxMapIsLoaded(MapboxGeolocateControl),
+      MapboxMarker: resolveWhenMapboxMapIsLoaded(MapboxMarker),
+      MapboxNavigationControl: resolveWhenMapboxMapIsLoaded(MapboxNavigationControl),
+      MapboxPopup: resolveWhenMapboxMapIsLoaded(MapboxPopup),
     },
   };
 

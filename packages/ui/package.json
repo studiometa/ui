@@ -33,10 +33,13 @@
     "morphdom": "^2.7.5"
   },
   "devDependencies": {
+    "@mapbox/mapbox-gl-geocoder": "^5.1.0",
     "@studiometa/js-toolkit": "3.0.5",
+    "@types/mapbox__mapbox-gl-geocoder": "^5.0.0",
     "mapbox-gl": "^3.13.0"
   },
   "peerDependencies": {
+    "@mapbox/mapbox-gl-geocoder": "^5.1.0",
     "@studiometa/js-toolkit": "^3.0.5",
     "mapbox-gl": "^3.13.0"
   }
