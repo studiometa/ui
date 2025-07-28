@@ -2,11 +2,14 @@ import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractMapboxMapChild, AbstractMapboxMapChildProps } from './AbstractMapboxMapChild.js';
 import GeocoderControl from '@mapbox/mapbox-gl-geocoder';
 import * as mapboxgl from 'mapbox-gl';
-import type { ControlPosition } from 'mapbox-gl';
+import type { Map } from 'mapbox-gl';
 
 export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
   $options: {
-    position: ControlPosition;
+    /**
+     * Wether to add the geocoder to the map or to the component's root element.
+     */
+    addToMap: boolean;
     /**
      * All MapboxGeocoder options, except the non serializable ones.
      * @see https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md#parameters
@@ -28,10 +31,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
   static config: BaseConfig = {
     name: 'MapboxGeocoder',
     options: {
-      position: {
-        type: String,
-        default: 'top-right',
-      },
+      addToMap: Boolean,
       options: Object,
     },
   };
@@ -51,10 +51,23 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
     return this.__control;
   }
 
-  mounted() {
-    this.map.addControl(this.control, this.$options.position);
+  /**
+   * Target element for the geocoder.
+   */
+  get target(): Map | HTMLElement | string {
+    return this.$options.addToMap ? this.map : this.$el;
   }
 
+  /**
+   * Mounted hook.
+   */
+  mounted() {
+    this.control.addTo(this.target);
+  }
+
+  /**
+   * Destroyed hook.
+   */
   destroyed() {
     this.map.removeControl(this.control);
     this.__control = undefined;
