@@ -1,0 +1,21 @@
+diff --git a/node_modules/@studiometa/js-toolkit/Base/utils.js b/node_modules/@studiometa/js-toolkit/Base/utils.js
+index 5c98cca..a50002a 100644
+--- a/node_modules/@studiometa/js-toolkit/Base/utils.js
++++ b/node_modules/@studiometa/js-toolkit/Base/utils.js
+@@ -36,13 +36,14 @@ function getSelector(nameOrSelector) {
+ }
+ function getComponentElements(nameOrSelector, element = document) {
+   const selector = getSelector(nameOrSelector);
++  const el = element instanceof HTMLTemplateElement ? element.content : element;
+   let elements = [];
+   try {
+-    elements = Array.from(element.querySelectorAll(selector));
++    elements = Array.from(el.querySelectorAll(selector));
+   } catch {
+   }
+   if (elements.length === 0 && nameOrSelector[0] === nameOrSelector[0].toLowerCase()) {
+-    elements = Array.from(element.querySelectorAll(nameOrSelector));
++    elements = Array.from(el.querySelectorAll(nameOrSelector));
+   }
+   return elements;
+ }
