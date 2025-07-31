@@ -34,7 +34,7 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
    * Config.
    */
   static config: BaseConfig = {
-    name: 'DraggableElement',
+    name: 'Draggable',
     refs: ['target'],
     emits: [
       'drag-start',
