@@ -1,9 +1,6 @@
 import { getClosestParent, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { Popup, PopupOptions } from 'mapbox-gl';
-import {
-  AbstractMapboxMapChild,
-  type AbstractMapboxMapChildProps,
-} from './AbstractMapboxMapChild.js';
+import { AbstractMapboxMapChild } from './AbstractMapboxMapChild.js';
 import { MapboxMap } from './MapboxMap.js';
 import { MapboxMarker } from './MapboxMarker.js';
 
@@ -60,16 +57,19 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
   }
 
   mounted() {
-    this.popup.setLngLat(this.$options.lngLat);
+    const { popup, $el, map, $parent, $options } = this;
 
-    if (this.$el.content.childNodes.length === 1) {
-      this.popup.setDOMContent(this.$el.content.firstChild);
-    } else if (this.$el.content.childNodes.length > 1) {
-      this.popup.setHTML(this.$el.innerHTML);
+    popup.setLngLat($options.lngLat);
+    const el = $el instanceof HTMLTemplateElement ? $el.content : $el;
+
+    if (el.childNodes.length === 1) {
+      popup.setDOMContent(el.firstChild);
+    } else if (el.childNodes.length > 1) {
+      popup.setHTML($el.innerHTML);
     }
 
-    if (this.map && this.$parent instanceof MapboxMap) {
-      this.popup.addTo(this.map);
+    if (map && $parent instanceof MapboxMap) {
+      popup.addTo(map);
     }
   }
 
