@@ -1,5 +1,9 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { createElement, randomInt, randomItem } from '@studiometa/js-toolkit/utils';
+import {
+  createElement,
+  randomInt,
+  randomItem,
+} from '@studiometa/js-toolkit/utils';
 import { MapboxMap } from '@studiometa/ui';
 
 class App extends Base {
@@ -13,16 +17,33 @@ class App extends Base {
 
   onAddClick() {
     this.$children.MapboxMap[0].$el.append(
-      createElement('template', {
-        dataComponent: 'MapboxMarker',
-        dataOptionLngLat: JSON.stringify([randomInt(-50, 50), randomInt(-50, 50)]),
-      }),
+      createElement(
+        'template',
+        {
+          dataComponent: 'MapboxMarker',
+          dataOptionLngLat: JSON.stringify([
+            randomInt(-50, 50),
+            randomInt(-50, 50),
+          ]),
+        },
+        [
+          createElement(
+            'template',
+            {
+              dataComponent: 'MapboxPopup',
+            },
+            'Hello world',
+          ),
+        ],
+      ),
     );
     this.$children.MapboxMap[0].$update();
   }
 
   onRemoveClick() {
-    const marker = randomItem(this.$children.MapboxMap[0].$children.MapboxMarker);
+    const marker = randomItem(
+      this.$children.MapboxMap[0].$children.MapboxMarker,
+    );
     marker?.$el.remove();
   }
 }
