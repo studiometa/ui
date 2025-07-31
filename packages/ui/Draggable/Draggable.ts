@@ -95,22 +95,45 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   }
 
   /**
-   * The bounds values.
+   * Draggable area bounds.
+   * @private Use the `bounds` getter instead.
+   */
+  __bounds: {
+    yMin: number;
+    yMax: number;
+    xMin: number;
+    xMax: number;
+  };
+
+  /**
+   * Draggable area bounds.
    */
   get bounds() {
-    const targetSizes = getOffsetSizes(this.target);
-    const parentSizes = getOffsetSizes(this.parent);
-    const xMin = targetSizes.x - parentSizes.x;
-    const yMin = targetSizes.y - parentSizes.y;
-    const xMax = xMin + targetSizes.width - parentSizes.width;
-    const yMax = yMin + targetSizes.height - parentSizes.height;
+    if (!this.__bounds) {
+      const targetSizes = getOffsetSizes(this.target);
+      const parentSizes = getOffsetSizes(this.parent);
+      const xMin = targetSizes.x - parentSizes.x;
+      const yMin = targetSizes.y - parentSizes.y;
+      const xMax = xMin + targetSizes.width - parentSizes.width;
+      const yMax = yMin + targetSizes.height - parentSizes.height;
 
-    return {
-      yMin: yMin * -1,
-      yMax: yMax * -1,
-      xMin: xMin * -1,
-      xMax: xMax * -1,
-    };
+      this.__bounds = {
+        yMin: yMin * -1,
+        yMax: yMax * -1,
+        xMin: xMin * -1,
+        xMax: xMax * -1,
+      };
+    }
+
+    return this.__bounds;
+  }
+
+  /**
+   * Resized hook.
+   * Reset bounds on resize.
+   */
+  resized() {
+    this.__bounds = null;
   }
 
   /**
