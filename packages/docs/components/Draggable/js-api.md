@@ -27,7 +27,14 @@ Enable/disable moving the [`target` ref](#target) on the `y` axis. Defaults to `
 - Type: `boolean`
 - Default: `false`
 
-Wether or not to force the [`target` ref](#target) to stay in the root element's bounds. Use the `data-option-fit-bounds` attribute to enable it.
+Wether or not to force the [`target` ref](#target) to always come back in the root element's bounds. Use the `data-option-fit-bounds` attribute to enable it.
+
+### `strictFitBounds`
+
+- Type: `boolean`
+- Default: `false`
+
+Wether or not to force the [`target` ref](#target) to strictly stay in the root element's bounds. Use the `data-option-strict-fit-bounds` attribute to enable it.
 
 ### `sensitivity`
 
@@ -47,7 +54,7 @@ A number between in the range `0–1` used to smoothen the transition between ea
 
 ### `props`
 
-- Type: `{ x: number, y: number, originX: number, originY: number, dampedX: number, dampedY: number }`
+- Type: `{ x: number, y: number, originX: number, originY: number, dampedX: number, dampedY: number , progressX: number, progressY: number }`
 
 The values used to calculate and render the dragged element.
 
@@ -124,3 +131,10 @@ Emitted when the drag target has settled its position when the [`fitBounds` opti
   - `props` (`typeof this.props`): the [`props` property](#props) of the instance
 
 Emitted when the drag target has settled its position when the [`fitBounds` option](#fitbounds) is enabled.
+
+### `drag-render`
+
+- Parameters:$
+  - `props` (`typeof this.props`): the [`props` property](#props) of the instance
+
+Emitted after the DOM has been updated.

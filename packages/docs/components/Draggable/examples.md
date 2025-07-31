@@ -22,6 +22,17 @@ Use the `data-option-fit-bounds` attribute to keep the draggable target in the c
   :css-editor="false"
   />
 
+## Strict fit bounds
+
+Use the `data-option-strict-fit-bounds` attribute to keep the draggable target in the component's root element bounds.
+
+<PreviewPlayground
+  :html="() => import('./stories/strict-bounds/app.twig')"
+  :script="() => import('./stories/strict-bounds/app.js?raw')"
+  :css="() => import('./stories/strict-bounds/app.css?raw')"
+  :css-editor="false"
+  />
+
 ## Carousel like
 
 By disabling drag on the `y` axis with the `data-option-no-y` attribute and with the `data-option-fit-bounds` option enabled, we can begin implementing a draggable carousel.
