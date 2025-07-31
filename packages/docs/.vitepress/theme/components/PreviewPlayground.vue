@@ -23,9 +23,9 @@
   }
 
   const props = withDefaults(defineProps<Props>(), {
-    scriptEditor: null,
-    htmlEditor: null,
-    cssEditor: null,
+    scriptEditor: false,
+    htmlEditor: false,
+    cssEditor: false,
     height: '60vh',
     zoom: 0.9,
   });
@@ -71,11 +71,17 @@
       url.searchParams.set('style', css.value);
     }
 
-    url.searchParams.set('html-editor', html.value !== defaultContent ? 'true' : 'false');
-    url.searchParams.set('script-editor', script.value !== defaultContent ? 'true' : 'false');
+    url.searchParams.set(
+      'html-editor',
+      props.htmlEditor !== false && html.value !== defaultContent ? 'true' : 'false',
+    );
+    url.searchParams.set(
+      'script-editor',
+      props.scriptEditor !== false && script.value !== defaultContent ? 'true' : 'false',
+    );
     url.searchParams.set(
       'style-editor',
-      css.value !== defaultContent && [true, null].includes(props.cssEditor) ? 'true' : 'false',
+      props.cssEditor !== false && css.value !== defaultContent ? 'true' : 'false',
     );
 
     url.searchParams.set('theme', isDark.value ? 'dark' : 'light');
