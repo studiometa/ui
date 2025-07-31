@@ -28,6 +28,8 @@ export default defineWebpackConfig({
         '@studiometa/ui': '/-/play/static/ui/index.js',
         deepmerge: '/-/play/static/deepmerge.js',
         morphdom: '/-/play/static/morphdom.js',
+        'mapbox-gl': '/-/play/static/mapbox-gl.js',
+        '@mapbox/mapbox-gl-geocoder': '/-/play/static/mapbox-gl-geocoder.js',
       },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
