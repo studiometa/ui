@@ -1,5 +1,3 @@
-/* eslint-disable require-jsdoc */
-/* eslint-disable max-classes-per-file */
 import { Base, createApp } from '@studiometa/js-toolkit';
 import { Figure } from '@studiometa/ui';
 
@@ -15,6 +13,7 @@ import {
 
 class Slider extends SliderCore {
   static config = {
+    name: 'Slider',
     components: {
       SliderBtn,
       SliderCount,
@@ -36,4 +35,4 @@ class App extends Base {
   };
 }
 
-createApp(App, document.body);
+createApp(App);

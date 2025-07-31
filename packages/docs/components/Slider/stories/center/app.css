@@ -1,0 +1,18 @@
+html {
+  overflow-x: hidden;
+}
+
+html.dark {
+  background-color: #222;
+  color: #eee;
+}
+
+body {
+  padding: 1rem;
+}
+
+.is-active {
+  box-shadow: 0 0 0 3px rgb(59 130 246);
+}
+
+
