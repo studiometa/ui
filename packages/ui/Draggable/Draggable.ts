@@ -10,6 +10,7 @@ export interface DraggableProps extends BaseProps {
     x: boolean;
     y: boolean;
     fitBounds: boolean;
+    strictFitBounds: boolean;
     sensitivity: number;
     dropSensitivity: number;
   };
@@ -39,6 +40,7 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
         default: true,
       },
       fitBounds: Boolean,
+      strictFitBounds: Boolean,
       sensitivity: { type: Number, default: 0.5 },
       dropSensitivity: { type: Number, default: 0.1 },
     },
@@ -99,21 +101,28 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
    */
   dragged(props: DragServiceProps) {
     this.$emit(`drag-${props.mode}`, this.props);
+    const { fitBounds, strictFitBounds, sensitivity, dropSensitivity } = this.$options;
+    const { bounds } = this;
 
     if (props.mode === props.MODES.START) {
       this.props.originX = this.props.x;
       this.props.originY = this.props.y;
-      this.dampFactor = this.$options.sensitivity;
+      this.dampFactor = sensitivity;
       this.render();
     } else if (
       props.mode === props.MODES.DRAG ||
-      (props.mode === props.MODES.INERTIA && !this.$options.fitBounds)
+      (props.mode === props.MODES.INERTIA && !fitBounds)
     ) {
       this.props.x = this.props.originX + props.x - props.origin.x;
       this.props.y = this.props.originY + props.y - props.origin.y;
+
+      if (strictFitBounds) {
+        this.props.x = clamp(this.props.x, bounds.xMin, bounds.xMax);
+        this.props.y = clamp(this.props.y, bounds.yMin, bounds.yMax);
+      }
+
       this.render();
-    } else if (props.mode === props.MODES.DROP && this.$options.fitBounds) {
-      const { bounds } = this;
+    } else if (props.mode === props.MODES.DROP && fitBounds) {
       this.props.x = clamp(
         this.props.originX + props.final.x - props.origin.x,
         bounds.xMin,
@@ -124,7 +133,7 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
         bounds.yMin,
         bounds.yMax,
       );
-      this.dampFactor = this.$options.dropSensitivity;
+      this.dampFactor = dropSensitivity;
       this.$services.enable('ticked');
     }
   }
