@@ -1,6 +1,13 @@
 import { Base, withDrag } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig, DragServiceProps } from '@studiometa/js-toolkit';
-import { domScheduler, transform, damp, clamp, getOffsetSizes } from '@studiometa/js-toolkit/utils';
+import {
+  clamp,
+  damp,
+  domScheduler,
+  getOffsetSizes,
+  map,
+  transform,
+} from '@studiometa/js-toolkit/utils';
 
 export interface DraggableProps extends BaseProps {
   $refs: {
@@ -29,7 +36,15 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   static config: BaseConfig = {
     name: 'DraggableElement',
     refs: ['target'],
-    emits: ['drag-start', 'drag-drag', 'drag-drop', 'drag-inertia', 'drag-stop', 'drag-fit'],
+    emits: [
+      'drag-start',
+      'drag-drag',
+      'drag-drop',
+      'drag-inertia',
+      'drag-stop',
+      'drag-fit',
+      'drag-render',
+    ],
     options: {
       x: {
         type: Boolean,
@@ -52,6 +67,8 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   props = {
     x: 0,
     y: 0,
+    progressX: 0,
+    progressY: 0,
     originX: 0,
     originY: 0,
     dampedX: 0,
@@ -148,16 +165,24 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   }
 
   render() {
-    this.props.dampedX = damp(this.props.x, this.props.dampedX, this.dampFactor);
-    this.props.dampedY = damp(this.props.y, this.props.dampedY, this.dampFactor);
+    const { props } = this;
+    props.dampedX = damp(props.x, props.dampedX, this.dampFactor);
+    props.dampedY = damp(props.y, props.dampedY, this.dampFactor);
 
     domScheduler.read(() => {
+      const { bounds } = this;
       const { x, y } = this.$options;
+
       domScheduler.write(() => {
+        props.progressX = map(props.x, bounds.xMin, bounds.xMax, 0, 1);
+        props.progressY = map(props.y, bounds.yMin, bounds.yMax, 0, 1);
+
         transform(this.target, {
-          x: x ? this.props.dampedX : 0,
-          y: y ? this.props.dampedY : 0,
+          x: x ? props.dampedX : 0,
+          y: y ? props.dampedY : 0,
         });
+
+        this.$emit('drag-render', this.props);
       });
     });
   }
