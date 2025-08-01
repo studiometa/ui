@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Draggable:**
+  - Add a `margin` option ([#429](https://github.com/studiometa/ui/pull/429), [fa243ae](https://github.com/studiometa/ui/commit/fa243ae))
+  - Add progress information ([#429](https://github.com/studiometa/ui/pull/429), [02fb7d7](https://github.com/studiometa/ui/commit/02fb7d7))
+  - Add a `strictFitBounds` option to prevent overflow ([#429](https://github.com/studiometa/ui/pull/429), [fec07f3](https://github.com/studiometa/ui/commit/fec07f3))
+
+### Changed
+
+- **Draggable:** improve bounds read performance ([#429](https://github.com/studiometa/ui/pull/429), [5cd76d2](https://github.com/studiometa/ui/commit/5cd76d2))
+
+### Fixed
+
+- **Draggable:** fix the name of the component ([#429](https://github.com/studiometa/ui/pull/429), [c498d5b](https://github.com/studiometa/ui/commit/c498d5b))
+
 ## [v1.0.1](https://github.com/studiometa/ui/compare/1.0.0..1.0.1) (2025-07-24)
 
 ### Fixed
