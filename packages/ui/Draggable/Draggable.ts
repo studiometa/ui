@@ -20,6 +20,7 @@ export interface DraggableProps extends BaseProps {
     strictFitBounds: boolean;
     sensitivity: number;
     dropSensitivity: number;
+    margin: string;
   };
 }
 
@@ -58,6 +59,7 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
       strictFitBounds: Boolean,
       sensitivity: { type: Number, default: 0.5 },
       dropSensitivity: { type: Number, default: 0.1 },
+      margin: { type: String, default: '0' },
     },
   };
 
@@ -106,22 +108,72 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   };
 
   /**
+   * Cached margin values.
+   * @private
+   */
+  __margin: { top: number; right: number; bottom: number; left: number };
+
+  /**
+   * Cached margin option for invalidation.
+   * @private
+   */
+  __marginOption: string;
+
+  /**
+   * Offset from the bounds.
+   */
+  get margin() {
+    const marginOption = this.$options.margin;
+
+    if (this.__margin && this.__marginOption === marginOption) {
+      return this.__margin;
+    }
+
+    const values = marginOption.split(' ').map(Number);
+    let [top = 0] = values;
+    let right = top;
+    let bottom = top;
+    let left = top;
+
+    switch (values.length) {
+      case 4:
+        [top, right, bottom, left] = values;
+        break;
+      case 3:
+        [top, right, bottom] = values;
+        left = right;
+        break;
+      case 2:
+        [top, right] = values;
+        left = right;
+        bottom = top;
+        break;
+    }
+
+    this.__margin = { top, right, bottom, left };
+    this.__marginOption = marginOption;
+
+    return this.__margin;
+  }
+
+  /**
    * Draggable area bounds.
    */
   get bounds() {
     if (!this.__bounds) {
-      const targetSizes = getOffsetSizes(this.target);
-      const parentSizes = getOffsetSizes(this.parent);
+      const { target, parent, margin } = this;
+      const targetSizes = getOffsetSizes(target);
+      const parentSizes = getOffsetSizes(parent);
       const xMin = targetSizes.x - parentSizes.x;
       const yMin = targetSizes.y - parentSizes.y;
       const xMax = xMin + targetSizes.width - parentSizes.width;
       const yMax = yMin + targetSizes.height - parentSizes.height;
 
       this.__bounds = {
-        yMin: yMin * -1,
-        yMax: yMax * -1,
-        xMin: xMin * -1,
-        xMax: xMax * -1,
+        yMin: (yMin - margin.top) * -1,
+        yMax: (yMax + margin.bottom) * -1,
+        xMin: (xMin - margin.left) * -1,
+        xMax: (xMax + margin.right) * -1,
       };
     }
 
