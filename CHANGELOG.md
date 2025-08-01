@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.1.0](https://github.com/studiometa/ui/compare/1.0.1..1.1.0) (2025-08-01)
+
 ### Added
 
 - **Draggable:**
@@ -16,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - **Draggable:** improve bounds read performance ([#429](https://github.com/studiometa/ui/pull/429), [5cd76d2](https://github.com/studiometa/ui/commit/5cd76d2))
+- **Slider:** update demos to use `flex` instead of `inline-block` ([8327203](https://github.com/studiometa/ui/commit/8327203))
+- Disable editors by default for the documentation previews ([3e22d57](https://github.com/studiometa/ui/commit/3e22d57))
+- Update devDependencies ([#419](https://github.com/studiometa/ui/pull/419), [5c66eda](https://github.com/studiometa/ui/commit/5c66eda))
+- Update docs devDependencies ([#420](https://github.com/studiometa/ui/pull/420), [be70089](https://github.com/studiometa/ui/commit/be70089))
 
 ### Fixed
 
