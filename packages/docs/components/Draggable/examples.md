@@ -13,13 +13,32 @@ title: Draggable examples
 
 ## Fit bounds
 
-Use the `data-option-fit-bounds` attribute to keep the draggable target in the component's root element bounds.
+Use the `data-option-fit-bounds` attribute to keep the draggable target in the component's root element bounds on drop.
 
 <PreviewPlayground
   :html="() => import('./stories/bounds/app.twig')"
   :script="() => import('./stories/bounds/app.js?raw')"
   :css="() => import('./stories/bounds/app.css?raw')"
-  :css-editor="false"
+  />
+
+## Strict fit bounds
+
+Use the `data-option-strict-fit-bounds` attribute to keep the draggable target in the component's root element bounds.
+
+<PreviewPlayground
+  :html="() => import('./stories/strict-bounds/app.twig')"
+  :script="() => import('./stories/strict-bounds/app.js?raw')"
+  :css="() => import('./stories/strict-bounds/app.css?raw')"
+  />
+
+## Margin
+
+Use the `data-option-margin` attribute to configure inner or outer margins.
+
+<PreviewPlayground
+  :html="() => import('./stories/margin/app.twig')"
+  :script="() => import('./stories/margin/app.js?raw')"
+  :css="() => import('./stories/margin/app.css?raw')"
   />
 
 ## Carousel like
@@ -30,7 +49,6 @@ By disabling drag on the `y` axis with the `data-option-no-y` attribute and with
   :html="() => import('./stories/carousel/app.twig')"
   :script="() => import('./stories/carousel/app.js?raw')"
   :css="() => import('./stories/carousel/app.css?raw')"
-  :css-editor="false"
   />
 
 ## Dynamic parent

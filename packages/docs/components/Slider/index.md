@@ -41,9 +41,9 @@ export default createApp(App);
 
 ```twig [slider.twig]
 <div data-component="Slider">
-  <div data-ref="wrapper" data-component="SliderDrag" class="whitespace-nowrap">
+  <div data-ref="wrapper" data-component="SliderDrag" class="flex gap-4">
     {% for item in 1..4 %}
-      <div data-component="SliderItem" class="inline-block">
+      <div data-component="SliderItem" class="grow-0 shrink-0">
         #{{ item }}
       </div>
     {% endfor %}
