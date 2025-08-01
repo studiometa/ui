@@ -36,6 +36,37 @@ Wether or not to force the [`target` ref](#target) to always come back in the ro
 
 Wether or not to force the [`target` ref](#target) to strictly stay in the root element's bounds. Use the `data-option-strict-fit-bounds` attribute to enable it.
 
+### `margin`
+
+- Type: `string`
+- Default: `'0'`
+
+Define margins for the bounds. It follows the notation from the `margin` CSS declaration, meaning that it is possible to define different margins for top, right, bottom and left bounds.
+
+The values are unitless and in pixels.
+
+```html
+<!-- Add a 10px inner margin -->
+<div data-component="Draggable"
+  data-option-margin="10">
+</div>
+
+<!-- Add a 10px inner inline margin -->
+<div data-component="Draggable"
+  data-option-margin="0 10">
+</div>
+
+<!-- Add a 10px inner inline margin and 10px bottom margin -->
+<div data-component="Draggable"
+  data-option-margin="0 10 10">
+</div>
+
+<!-- Add a 10px outer margin -->
+<div data-component="Draggable"
+  data-option-margin="-10 -10 -10 -10">
+</div>
+```
+
 ### `sensitivity`
 
 - Type: `number`
