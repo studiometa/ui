@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.1.1](https://github.com/studiometa/ui/compare/1.1.0..1.1.1) (2025-08-14)
+
+### Fixed
+
+- Fix accordion triggering submit when used inside a form ([#433](https://github.com/studiometa/ui/issues/433), [#434](https://github.com/studiometa/ui/pull/434), [37617c1](https://github.com/studiometa/ui/commit/37617c1))
+
 ## [v1.1.0](https://github.com/studiometa/ui/compare/1.0.1..1.1.0) (2025-08-01)
 
 ### Added
