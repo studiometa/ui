@@ -5,6 +5,7 @@ import {
   damp,
   domScheduler,
   getOffsetSizes,
+  isArray,
   map,
   transform,
 } from '@studiometa/js-toolkit/utils';
@@ -21,6 +22,7 @@ export interface DraggableProps extends BaseProps {
     sensitivity: number;
     dropSensitivity: number;
     margin: string;
+    snap: number[];
   };
 }
 
@@ -60,6 +62,7 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
       sensitivity: { type: Number, default: 0.5 },
       dropSensitivity: { type: Number, default: 0.1 },
       margin: { type: String, default: '0' },
+      snap: Array,
     },
   };
 
@@ -158,16 +161,17 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
 
   /**
    * Draggable area bounds.
+   * @todo add support for custom origin: default in bounds, center center, etc.
    */
   get bounds() {
     if (!this.__bounds) {
       const { target, parent, margin } = this;
       const targetSizes = getOffsetSizes(target);
       const parentSizes = getOffsetSizes(parent);
-      const xMin = targetSizes.x - parentSizes.x;
-      const yMin = targetSizes.y - parentSizes.y;
-      const xMax = xMin + targetSizes.width - parentSizes.width;
-      const yMax = yMin + targetSizes.height - parentSizes.height;
+      let xMin = targetSizes.x - parentSizes.x;
+      let yMin = targetSizes.y - parentSizes.y;
+      let xMax = xMin + targetSizes.width - parentSizes.width;
+      let yMax = yMin + targetSizes.height - parentSizes.height;
 
       this.__bounds = {
         yMin: (yMin - margin.top) * -1,
@@ -193,7 +197,7 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
    */
   dragged(props: DragServiceProps) {
     this.$emit(`drag-${props.mode}`, this.props);
-    const { fitBounds, strictFitBounds, sensitivity, dropSensitivity } = this.$options;
+    const { fitBounds, strictFitBounds, sensitivity, dropSensitivity, snap } = this.$options;
     const { bounds } = this;
 
     if (props.mode === props.MODES.START) {
@@ -215,21 +219,46 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
 
       this.render();
     } else if (props.mode === props.MODES.DROP && fitBounds) {
-      this.props.x = clamp(
-        this.props.originX + props.final.x - props.origin.x,
-        bounds.xMin,
-        bounds.xMax,
-      );
-      this.props.y = clamp(
-        this.props.originY + props.final.y - props.origin.y,
-        bounds.yMin,
-        bounds.yMax,
-      );
+      let x = clamp(this.props.originX + props.final.x - props.origin.x, bounds.xMin, bounds.xMax);
+      let y = clamp(this.props.originY + props.final.y - props.origin.y, bounds.yMin, bounds.yMax);
+
+      if (snap.length) {
+        x = this.snap(x, bounds.xMin, bounds.xMax, isArray(snap[0]) ? snap[0] : snap);
+        y = this.snap(y, bounds.yMin, bounds.yMax, isArray(snap[1]) ? snap[1] : snap);
+      }
+
+      this.props.x = x;
+      this.props.y = y;
+
       this.dampFactor = dropSensitivity;
       this.$services.enable('ticked');
     }
   }
 
+  /**
+   * Snap a value to  the given list of 0-1 positions between min and max.
+   * @private
+   */
+  snap(value: number, min: number, max: number, snap: number[]): number {
+    const positions = snap.map((step) => min + (max - min) * step);
+
+    let closest = positions[0];
+    let minDistance = Math.abs(value - closest);
+
+    for (const position of positions) {
+      const distance = Math.abs(value - position);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closest = position;
+      }
+    }
+
+    return closest;
+  }
+
+  /**
+   * Ticked hook.
+   */
   ticked() {
     this.$emit(`drag-inertia`, this.props);
     this.render();
@@ -239,6 +268,9 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
     }
   }
 
+  /**
+   * Render the draggable element.
+   */
   render() {
     const { props } = this;
     props.dampedX = damp(props.x, props.dampedX, this.dampFactor);
@@ -249,8 +281,8 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
       const { x, y } = this.$options;
 
       domScheduler.write(() => {
-        props.progressX = map(props.x, bounds.xMin, bounds.xMax, 0, 1);
-        props.progressY = map(props.y, bounds.yMin, bounds.yMax, 0, 1);
+        props.progressX = map(props.dampedX, bounds.xMin, bounds.xMax, 0, 1);
+        props.progressY = map(props.dampedY, bounds.yMin, bounds.yMax, 0, 1);
 
         transform(this.target, {
           x: x ? props.dampedX : 0,
