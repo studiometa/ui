@@ -11,6 +11,7 @@ use Twig\Loader\FilesystemLoader;
 use Studiometa\TwigToolkit\Extension as TwigToolkitExtension;
 use Studiometa\Ui\TwigFunctions\TwigFunctionProvider;
 use Studiometa\Ui\TwigFunctions\Icon;
+use Studiometa\Ui\TwigFunctions\PlayRangeStagger;
 
 /**
  * Twig extension class.
@@ -62,6 +63,7 @@ class Extension extends TwigToolkitExtension
             parent::getFunctions(),
             TwigFunctionProvider::provide(
                 Icon::class,
+                PlayRangeStagger::class,
             ),
         );
     }
