@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - **ScrollAnimation:** refactor for better performance ([#438](https://github.com/studiometa/ui/pull/438), [60c4647](https://github.com/studiometa/ui/commit/60c4647))
+- Update devDependencies ([#430](https://github.com/studiometa/ui/pull/430), [d5edf66](https://github.com/studiometa/ui/commit/d5edf66))
+- Update docs devDependencies ([#432](https://github.com/studiometa/ui/pull/432), [02599f9](https://github.com/studiometa/ui/commit/02599f9))
 
 ### Fixed
 
