@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { wait } from './wait.js';
 
 type Item = {
   callback: IntersectionObserverCallback;
@@ -108,7 +109,7 @@ export function intersectionMockInstance(element: Element): IntersectionObserver
 /**
  * Set the `isIntersecting` for the IntersectionObserver of a specific element.
  */
-export function mockIsIntersecting(element: Element, isIntersecting: boolean) {
+export async function mockIsIntersecting(element: Element, isIntersecting: boolean) {
   const observer = intersectionMockInstance(element);
   if (!observer) {
     throw new Error(
@@ -119,4 +120,6 @@ export function mockIsIntersecting(element: Element, isIntersecting: boolean) {
   if (item) {
     triggerIntersection([element], isIntersecting, observer, item);
   }
+
+  await wait(10);
 }
