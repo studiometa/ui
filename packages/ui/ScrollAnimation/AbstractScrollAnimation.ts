@@ -1,11 +1,11 @@
 import { Base, withFreezedOptions } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig, ScrollInViewProps } from '@studiometa/js-toolkit';
-import { map, clamp, animate } from '@studiometa/js-toolkit/utils';
+import { map, clamp01, animate } from '@studiometa/js-toolkit/utils';
 import type { Keyframe } from '@studiometa/js-toolkit/utils';
 
 export interface AbstractScrollAnimationProps extends BaseProps {
   $options: {
-    playRange: [number, number];
+    playRange: [number, number] | [number, number, number];
     from: Keyframe;
     to: Keyframe;
     keyframes: Keyframe[];
@@ -75,16 +75,28 @@ export class AbstractScrollAnimation<
     return animation;
   }
 
-  scrolledInView(props: ScrollInViewProps) {
-    const progress = map(
-      clamp(props.dampedProgress.y, this.$options.playRange[0], this.$options.playRange[1]),
-      this.$options.playRange[0],
-      this.$options.playRange[1],
-      0,
-      1,
-    );
+  get playRange(): [number, number] {
+    const { playRange } = this.$options;
 
-    this.render(progress);
+    let start = 0;
+    let end = 1;
+
+    if (playRange.length === 3) {
+      const [index, length, step] = playRange;
+      const clampedStep = clamp01(step);
+      const duration = Math.max(0, 1 - clampedStep * (length - 1));
+      start = clampedStep * index;
+      end = Math.min(1, start + duration);
+    } else if (playRange.length === 2) {
+      [start, end] = playRange;
+    }
+
+    return [start, end];
+  }
+
+  scrolledInView({ dampedProgress }: ScrollInViewProps) {
+    const [start, end] = this.playRange;
+    this.render(clamp01(map(dampedProgress.y, start, end, 0, 1)));
   }
 
   /**

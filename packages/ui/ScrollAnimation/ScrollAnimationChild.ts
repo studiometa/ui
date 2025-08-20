@@ -4,7 +4,7 @@ import type {
   ScrollInViewProps,
   WithScrolledInViewProps,
 } from '@studiometa/js-toolkit';
-import { damp, clamp01 } from '@studiometa/js-toolkit/utils';
+import { damp, clamp01, domScheduler } from '@studiometa/js-toolkit/utils';
 import { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
 
 export interface ScrollAnimationChildProps extends BaseProps {
@@ -75,14 +75,16 @@ export class ScrollAnimationChild<T extends BaseProps = BaseProps> extends Abstr
    * Compute local damped progress.
    */
   scrolledInView(props: ScrollInViewProps) {
-    const { dampFactor, dampPrecision } = this.$options;
+    domScheduler.read(() => {
+      const { dampFactor, dampPrecision } = this.$options;
+      updateProps(this, props, dampFactor, dampPrecision, 'x');
+      updateProps(this, props, dampFactor, dampPrecision, 'y');
+      props.dampedCurrent = this.dampedCurrent;
+      props.dampedProgress = this.dampedProgress;
+    });
 
-    updateProps(this, props, dampFactor, dampPrecision, 'x');
-    updateProps(this, props, dampFactor, dampPrecision, 'y');
-
-    props.dampedCurrent = this.dampedCurrent;
-    props.dampedProgress = this.dampedProgress;
-
-    super.scrolledInView(props);
+    domScheduler.write(() => {
+      super.scrolledInView(props);
+    });
   }
 }

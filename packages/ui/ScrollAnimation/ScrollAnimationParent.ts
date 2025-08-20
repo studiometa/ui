@@ -29,8 +29,8 @@ export class ScrollAnimationParent<T extends BaseProps = BaseProps> extends with
    * Scrolled in view hook.
    */
   scrolledInView(props: ScrollInViewProps) {
-    this.$children.ScrollAnimationChild.forEach((child) => {
+    for (const child of this.$children.ScrollAnimationChild) {
       child.scrolledInView(props);
-    });
+    }
   }
 }
