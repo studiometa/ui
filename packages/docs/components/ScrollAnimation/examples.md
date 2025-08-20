@@ -22,6 +22,24 @@ title: ScrollAnimation examples
   :script="() => import('./stories/parent/app.js?raw')"
   />
 
+## Staggered animation
+
+Use the `data-option-play-range` attribute with a value following the pattern `[index, length, step]` to add a staggered effect on multiple components.
+
+<PreviewPlayground
+  :html="() => import('./stories/staggered/app.twig')"
+  :script="() => import('./stories/staggered/app.js?raw')"
+  />
+
+## Sequentially played animation
+
+Like the [staggered animation](#staggered-animation), use the pattern `[index, length, step]` for the `data-option-play-range` attribute, but set the `step` value to be `1 / length` to make each animation in the staggered list play one after another.
+
+<PreviewPlayground
+  :html="() => import('./stories/sequence/app.twig')"
+  :script="() => import('./stories/sequence/app.js?raw')"
+  />
+
 ## Parallax
 
 You can easily implement a parallax effect with images by combining the `ScrollAnimation` class with the [Figure component](/components/Figure/).
