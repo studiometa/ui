@@ -5,7 +5,7 @@ import type { Keyframe } from '@studiometa/js-toolkit/utils';
 
 export interface AbstractScrollAnimationProps extends BaseProps {
   $options: {
-    playRange: [number, number];
+    playRange: [number, number] | [number, number, number];
     from: Keyframe;
     to: Keyframe;
     keyframes: Keyframe[];
@@ -76,7 +76,22 @@ export class AbstractScrollAnimation<
   }
 
   get playRange(): [number, number] {
-    return this.$options.playRange;
+    const { playRange } = this.$options;
+
+    let start = 0;
+    let end = 1;
+
+    if (playRange.length === 3) {
+      const [index, length, step] = playRange;
+      const clampedStep = clamp01(step);
+      const duration = Math.max(0, 1 - clampedStep * (length - 1));
+      start = clampedStep * index;
+      end = Math.min(1, start + duration);
+    } else if (playRange.length === 2) {
+      [start, end] = playRange;
+    }
+
+    return [start, end];
   }
 
   scrolledInView({ dampedProgress }: ScrollInViewProps) {
