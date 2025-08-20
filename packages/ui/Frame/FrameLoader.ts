@@ -20,7 +20,6 @@ export class FrameLoader<T extends BaseProps = BaseProps> extends Transition<T &
     name: 'FrameLoader',
   };
 
-  // @ts-expect-error this is fine.
   get $options() {
     const options = super.$options;
 
