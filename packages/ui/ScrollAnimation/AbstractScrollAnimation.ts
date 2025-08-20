@@ -1,6 +1,6 @@
 import { Base, withFreezedOptions } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig, ScrollInViewProps } from '@studiometa/js-toolkit';
-import { map, clamp, animate } from '@studiometa/js-toolkit/utils';
+import { map, clamp01, animate } from '@studiometa/js-toolkit/utils';
 import type { Keyframe } from '@studiometa/js-toolkit/utils';
 
 export interface AbstractScrollAnimationProps extends BaseProps {
@@ -75,16 +75,13 @@ export class AbstractScrollAnimation<
     return animation;
   }
 
-  scrolledInView(props: ScrollInViewProps) {
-    const progress = map(
-      clamp(props.dampedProgress.y, this.$options.playRange[0], this.$options.playRange[1]),
-      this.$options.playRange[0],
-      this.$options.playRange[1],
-      0,
-      1,
-    );
+  get playRange(): [number, number] {
+    return this.$options.playRange;
+  }
 
-    this.render(progress);
+  scrolledInView({ dampedProgress }: ScrollInViewProps) {
+    const [start, end] = this.playRange;
+    this.render(clamp01(map(dampedProgress.y, start, end, 0, 1)));
   }
 
   /**
