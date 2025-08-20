@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **ScrollAnimation:** add support for staggered play range ([#438](https://github.com/studiometa/ui/pull/438), [90da410](https://github.com/studiometa/ui/commit/90da410))
+
+### Changed
+
+- **ScrollAnimation:** refactor for better performance ([#438](https://github.com/studiometa/ui/pull/438), [60c4647](https://github.com/studiometa/ui/commit/60c4647))
+
+### Fixed
+
+- **ScrollAnimation:** fix a bug where children could be out of sync ([#439](https://github.com/studiometa/ui/issues/439), [#438](https://github.com/studiometa/ui/pull/438), [e7790e6](https://github.com/studiometa/ui/commit/e7790e6))
+
 ## [v1.1.1](https://github.com/studiometa/ui/compare/1.1.0..1.1.1) (2025-08-14)
 
 ### Fixed
