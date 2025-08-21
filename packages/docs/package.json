@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-docs",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,8 +14,8 @@
     "@studiometa/js-toolkit": "^3.0.5"
   },
   "devDependencies": {
-    "@iconify-json/octicon": "1.2.9",
-    "@shikijs/vitepress-twoslash": "3.8.1",
+    "@iconify-json/octicon": "1.2.10",
+    "@shikijs/vitepress-twoslash": "3.9.2",
     "@studiometa/playground": "0.1.5",
     "@studiometa/tailwind-config": "2.1.0",
     "@vueuse/components": "13.6.0",
@@ -25,6 +25,6 @@
     "tailwindcss": "3.4.17",
     "unplugin-icons": "22.2.0",
     "unplugin-vue-components": "28.8.0",
-    "vitepress": "2.0.0-alpha.9"
+    "vitepress": "2.0.0-alpha.11"
   }
 }
