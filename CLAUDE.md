@@ -7,6 +7,12 @@
 - The main NPM package is `@studiometa/ui` and lives in `./packages/ui`
 - A Composer package providing a Twig extension can be found in `./packages/twig-extension`
 
+## Development
+
+- Start the project locally with `ddev start`, the URL is `https://ui.ddev.site`
+- Start the docs development server with `npm run docs:dev`
+- Build the docs with `npm run docs:build`
+
 ## Tests
 
 - Tests for the TypeScript components exported by the `@studiometa/ui` packages are managed by Vitest and are located in the `./packages/tests` folder, they can be run with the `npm run test` command or `npm run test -- -- <vitest args>` from the root of the project
