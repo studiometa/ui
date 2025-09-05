@@ -3,7 +3,7 @@
 ## Project structure
 
 - Monorepo managed by NPM with packages in the `./packages` folder
-- NPM packages in this repository are ESM only
+- NPM packages in this repository are ESM only, CJS should never be used
 - The main NPM package is `@studiometa/ui` and lives in `./packages/ui`
 - A Composer package providing a Twig extension can be found in `./packages/twig-extension`
 
@@ -25,3 +25,7 @@
 - Use `npm run lint` for TypeScript code quality
 - Use `composer lint` to check for PHP Code Quality
 - Use `composer fix` to fix fixable code quality errors reported by the `composer lint` command
+
+## Playground
+
+If you see a link to `https://ui.studiometa.dev/-/play/`, it is a link to the playground for all components. You can either visit the page to see how it renders, or directly extract the content from the URL query string stored in the URL hash. The content is encoded and zipped, you can unzip it with the `unzip` export from the `@studiometa/playground` NPM package.
