@@ -91,7 +91,14 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePoin
   /**
    * Update props when the mouse moves.
    */
-  movedrelative({ progress }: PointerServiceProps) {
+  movedrelative({ progress }: PointerServiceProps, isControlled?: boolean) {
+    // When controlled externally, allow the update
+    // When not controlled, proceed with normal behavior (isControlled is undefined)
+    // When controlled is false, it means we want to prevent default behavior
+    if (isControlled === false) {
+      return;
+    }
+
     const { bounds, props } = this;
     const { reversed, contained } = this.$options;
     const { x, y } = progress;
