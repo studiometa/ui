@@ -4,7 +4,7 @@
   import { UseElementVisibility } from '@vueuse/components';
   import { useData } from 'vitepress';
   import { isFunction, isString } from '@studiometa/js-toolkit/utils';
-  import { zip } from '@studiometa/playground/dist/lib/utils/zip.js';
+  import { zip } from '@studiometa/playground';
   import Loader from './Loader.vue';
   import ControlButton from './PreviewControlButton.vue';
 
