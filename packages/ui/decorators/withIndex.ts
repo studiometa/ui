@@ -256,5 +256,6 @@ export function withIndex<S extends Base>(
     }
   }
 
+  // @ts-ignore
   return Indexable;
 }
