@@ -114,7 +114,7 @@ export class Carousel<T extends IndexableProps = IndexableProps> extends Indexab
   }
 
   ticked() {
-    if (this.progress != this.previousProgress) {
+    if (this.progress !== this.previousProgress) {
       this.previousProgress = this.progress;
       this.$emit('progress', this.progress);
       this.$el.style.setProperty('--carousel-progress', String(this.progress));
