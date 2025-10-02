@@ -107,15 +107,18 @@ export interface IndexableInterface extends BaseInterface {
   goPrev(): Promise<void>;
 }
 
+export interface IndexableConstructor {
+  MODES: typeof INDEXABLE_MODES;
+  INSTRUCTIONS: typeof INDEXABLE_INSTRUCTIONS;
+  new (): IndexableInterface;
+}
+
 /**
  * Extend a class to add index management.
  */
 export function withIndex<S extends Base>(
   BaseClass: typeof Base,
-): BaseDecorator<IndexableInterface, S, IndexableProps> & {
-  MODES: typeof INDEXABLE_MODES;
-  INSTRUCTIONS: typeof INDEXABLE_INSTRUCTIONS;
-} {
+): BaseDecorator<IndexableInterface, S, IndexableProps> {
   /**
    * Class.
    */
@@ -135,6 +138,10 @@ export function withIndex<S extends Base>(
       },
     };
 
+    static MODES = INDEXABLE_MODES;
+
+    static INSTRUCTIONS = INDEXABLE_INSTRUCTIONS;
+
     __index = 0;
 
     get isReverse() {
@@ -146,17 +153,11 @@ export function withIndex<S extends Base>(
     }
 
     get mode() {
-      const { mode } = this.$options;
-
-      if (!Object.values(INDEXABLE_MODES).includes(mode)) {
-        return INDEXABLE_MODES.NORMAL;
-      }
-
-      return mode;
+      return Indexable.MODES[this.$options.mode.toUpperCase()] ?? Indexable.MODES.NORMAL;
     }
 
     set mode(value) {
-      this.$options.mode = Object.values(INDEXABLE_MODES).includes(value) ? value : INDEXABLE_MODES.NORMAL;
+      this.$options.mode = Indexable.MODES[value.toUpperCase()] ?? Indexable.MODES.NORMAL;
     }
 
     get length() {
@@ -178,7 +179,7 @@ export function withIndex<S extends Base>(
 
     set currentIndex(value) {
       switch (this.mode) {
-        case INDEXABLE_MODES.ALTERNATE:
+        case Indexable.MODES.ALTERNATE:
           if (Math.floor(value/this.length) % 2 !== 0) {
             this.isReverse = !this.isReverse;
           }
@@ -186,10 +187,10 @@ export function withIndex<S extends Base>(
           const cycleIndex = Math.abs(value) % cycleLength;
           this.__index = Math.min(cycleIndex, cycleLength - cycleIndex);
           break;
-        case INDEXABLE_MODES.INFINITE:
+        case Indexable.MODES.INFINITE:
           this.__index = (value + this.length) % this.length
           break;
-        case INDEXABLE_MODES.NORMAL:
+        case Indexable.MODES.NORMAL:
         default:
           this.__index = clamp(value, this.minIndex, this.maxIndex);
           break;
@@ -207,34 +208,34 @@ export function withIndex<S extends Base>(
 
     get prevIndex() {
       let rawIndex = this.isReverse ? this.currentIndex + 1 : this.currentIndex - 1;
-      if (this.mode === INDEXABLE_MODES.ALTERNATE && (rawIndex > this.maxIndex || rawIndex < this.minIndex)) {
+      if (this.mode === Indexable.MODES.ALTERNATE && (rawIndex > this.maxIndex || rawIndex < this.minIndex)) {
         this.isReverse = !this.isReverse;
         rawIndex = this.isReverse ? this.currentIndex + 1 : this.currentIndex - 1;
       }
-      return this.mode === INDEXABLE_MODES.NORMAL ? clamp(rawIndex, this.minIndex, this.maxIndex) : (rawIndex + this.length) % this.length;
+      return this.mode === Indexable.MODES.NORMAL ? clamp(rawIndex, this.minIndex, this.maxIndex) : (rawIndex + this.length) % this.length;
     }
 
     get nextIndex() {
       let rawIndex = this.isReverse ? this.currentIndex - 1 : this.currentIndex + 1;
-      if (this.mode === INDEXABLE_MODES.ALTERNATE && (rawIndex > this.maxIndex || rawIndex < this.minIndex)) {
+      if (this.mode === Indexable.MODES.ALTERNATE && (rawIndex > this.maxIndex || rawIndex < this.minIndex)) {
         this.isReverse = !this.isReverse;
         rawIndex = this.isReverse ? this.currentIndex - 1 : this.currentIndex + 1;
       }
-      return this.mode === INDEXABLE_MODES.NORMAL ? clamp(rawIndex, this.minIndex, this.maxIndex) : (rawIndex + this.length) % this.length;
+      return this.mode === Indexable.MODES.NORMAL ? clamp(rawIndex, this.minIndex, this.maxIndex) : (rawIndex + this.length) % this.length;
     }
 
     goTo(indexOrInstruction) {
       if (isString(indexOrInstruction)) {
         switch (indexOrInstruction) {
-          case INDEXABLE_INSTRUCTIONS.NEXT:
+          case Indexable.INSTRUCTIONS.NEXT:
             return this.goTo(this.nextIndex);
-          case INDEXABLE_INSTRUCTIONS.PREVIOUS:
+          case Indexable.INSTRUCTIONS.PREVIOUS:
             return this.goTo(this.prevIndex);
-          case INDEXABLE_INSTRUCTIONS.FIRST:
+          case Indexable.INSTRUCTIONS.FIRST:
             return this.goTo(this.firstIndex);
-          case INDEXABLE_INSTRUCTIONS.LAST:
+          case Indexable.INSTRUCTIONS.LAST:
             return this.goTo(this.lastIndex);
-          case INDEXABLE_INSTRUCTIONS.RANDOM:
+          case Indexable.INSTRUCTIONS.RANDOM:
             // @TODO: eventually store previous indexes to avoid duplicates
             return this.goTo(randomInt(this.minIndex, this.maxIndex));
           default:
@@ -255,10 +256,5 @@ export function withIndex<S extends Base>(
     }
   }
 
-  // Add constants as static properties to the returned class
-  const IndexableWithConstants = Indexable as any;
-  IndexableWithConstants.MODES = INDEXABLE_MODES;
-  IndexableWithConstants.INSTRUCTIONS = INDEXABLE_INSTRUCTIONS;
-
-  return IndexableWithConstants;
+  return Indexable;
 }

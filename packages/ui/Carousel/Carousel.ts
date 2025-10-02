@@ -40,7 +40,7 @@ export class Carousel<T extends IndexableProps = IndexableProps> extends Indexab
       ...Indexable.config.options,
       axis: { type: String, default: 'x' },
     },
-    emits: [...(Indexable.config.emits || []), 'progress'],
+    emits: ['progress'],
   };
 
   /**
