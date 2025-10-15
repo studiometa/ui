@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { FrameTarget } from '@studiometa/ui';
+import { Window } from 'happy-dom';
 import { h, mount } from '#test-utils';
 
 describe('The FrameTarget class', () => {
@@ -91,5 +92,89 @@ describe('The FrameTarget class', () => {
     expect(spy).toHaveBeenCalledWith(newContent);
     expect(div.querySelector('#new')?.textContent).toBe('New content');
     expect(div.querySelector('#original')).toBeNull();
+  });
+
+  it('should replace script element with inline content', async () => {
+    const { document } = new Window({
+      settings: {
+        enableJavaScriptEvaluation: true,
+        suppressInsecureJavaScriptEnvironmentWarning: true,
+      },
+    });
+    const div = h('div', { id: 'foo' }, ['Hello world']);
+    // @ts-expect-error HTMLElement is Node.
+    document.body.appendChild(div);
+    const frameTarget = new FrameTarget(div);
+    await mount(frameTarget);
+
+    await frameTarget.updateContent(
+      h('div', { id: 'foo' }, [
+        h('script', { type: 'text/javascript' }, [
+          'document.querySelector("#foo")?.classList.add("foo")',
+        ]),
+      ]),
+    );
+
+    expect(div.classList.contains('foo')).toBe(true);
+  });
+
+  it('should replace script element with src', async () => {
+    const { document } = new Window({
+      settings: {
+        enableJavaScriptEvaluation: true,
+        suppressInsecureJavaScriptEnvironmentWarning: true,
+      },
+    });
+    const div = h('div', { id: 'foo' }, ['Hello world']);
+    // @ts-expect-error HTMLElement is Node.
+    document.body.appendChild(div);
+    const frameTarget = new FrameTarget(div);
+    await mount(frameTarget);
+
+    await frameTarget.updateContent(
+      h('div', { id: 'foo' }, [
+        h('script', {
+          type: 'text/javascript',
+          src: 'data:text/javascript,document.querySelector("#foo")?.classList.add("foo")',
+        }),
+      ]),
+    );
+
+    expect(div.classList.contains('foo')).toBe(true);
+  });
+
+  it('should append or prepend script element', async () => {
+    const spy = vi.spyOn(console, 'log');
+    spy.mockImplementation(() => {});
+    const { document } = new Window({
+      console,
+      settings: {
+        enableJavaScriptEvaluation: true,
+        suppressInsecureJavaScriptEnvironmentWarning: true,
+      },
+    });
+    const div = h('div', { id: 'foo', dataOptionMode: 'append' }, ['Hello world']);
+    // @ts-expect-error HTMLElement is Node.
+    document.body.appendChild(div);
+    const frameTarget = new FrameTarget(div);
+    await mount(frameTarget);
+
+    await frameTarget.updateContent(
+      h('div', { id: 'foo' }, [h('script', { type: 'text/javascript' }, ['console.log("one")'])]),
+    );
+
+    expect(spy).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalledWith('one');
+    spy.mockClear()
+
+    await frameTarget.updateContent(
+      h('div', { id: 'foo' }, [h('script', { type: 'text/javascript' }, ['console.log("two")'])]),
+    );
+    expect(new Set(spy.mock.calls.flat())).toMatchInlineSnapshot(`
+      Set {
+        "two",
+      }
+    `);
+    spy.mockRestore()
   });
 });

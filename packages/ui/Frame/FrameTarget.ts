@@ -43,6 +43,13 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
   }
 
   /**
+   * Get child `<script>` elements.
+   */
+  get __scripts() {
+    return Array.from(this.$el.querySelectorAll('script'));
+  }
+
+  /**
    * Update the content from the new target.
    */
   async updateContent(content: Element = null) {
@@ -51,7 +58,7 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
     }
 
     const { mode } = this.$options;
-    const { $el, modes } = this;
+    const { $el, modes, __scripts: previousScripts } = this;
 
     // In append or prepend mode, the leave transition can be used to
     // move the exisiting children of the root element, with the leave
@@ -61,11 +68,8 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
       const enterTargets = Array.from(content.children) as HTMLElement[];
 
       $el[mode](...Array.from(content.childNodes));
-
-      await Promise.all([
-        this.leave(leaveTargets),
-        this.enter(enterTargets),
-      ]);
+      this.adoptNewScripts(this.__scripts, previousScripts);
+      await Promise.all([this.leave(leaveTargets), this.enter(enterTargets)]);
     } else {
       await this.leave();
       if (mode === modes.MORPH) {
@@ -73,7 +77,31 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
       } else {
         $el.replaceChildren(...Array.from(content.childNodes));
       }
+      this.adoptNewScripts(this.__scripts, previousScripts);
       await this.enter();
     }
+  }
+
+  adoptNewScripts(scripts: HTMLScriptElement[], oldScripts: HTMLScriptElement[]) {
+    for (const script of scripts) {
+      if (oldScripts.includes(script)) continue;
+      this.adoptNewScript(script);
+    }
+  }
+
+  adoptNewScript(script: HTMLScriptElement) {
+    const newScript = document.createElement('script');
+
+    for (const attribute of script.getAttributeNames()) {
+      newScript.setAttribute(attribute, script.getAttribute(attribute));
+    }
+
+    if (script.src) {
+      newScript.src = script.src;
+    } else if (script.textContent) {
+      newScript.textContent = script.textContent;
+    }
+
+    script.replaceWith(newScript);
   }
 }
