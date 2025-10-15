@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **FrameTarget:** add support for `<script>` element injection ([#449](https://github.com/studiometa/ui/pull/449), [a597952](https://github.com/studiometa/ui/commit/a597952))
+
 ## [v1.2.0](https://github.com/studiometa/ui/compare/1.1.1..1.2.0) (2025-08-20)
 
 ### Added
