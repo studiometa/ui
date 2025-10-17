@@ -2,8 +2,6 @@ twig:
     default_path: '%kernel.project_dir%/../ui/'
     paths:
         '%kernel.project_dir%/templates': ~
-    globals:
-        fos_csrf_provider: "@security.csrf.token_manager"
 
 when@test:
     twig:

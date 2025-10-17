@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Slider:** fix a bug where the slider can get stuck when dragging vertically ([#451](https://github.com/studiometa/ui/pull/451), [6955e5a](https://github.com/studiometa/ui/commit/6955e5a))
 
+### Removed
+
+- Remove demos from the documentation ([#452](https://github.com/studiometa/ui/pull/452), [954cb04](https://github.com/studiometa/ui/commit/954cb04))
+
 ## [v1.2.0](https://github.com/studiometa/ui/compare/1.1.1..1.2.0) (2025-08-20)
 
 ### Added
