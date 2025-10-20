@@ -9,7 +9,7 @@
     "build": "meta build"
   },
   "dependencies": {
-    "@studiometa/playground": "0.1.5",
+    "@studiometa/playground": "0.2.1",
     "copy-webpack-plugin": "^13.0.0"
   }
 }
