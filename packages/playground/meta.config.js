@@ -24,8 +24,9 @@ export default defineWebpackConfig({
         html: resolve('./lib/twig-loader.js'),
       },
       importMap: {
-        '@studiometa/js-toolkit/utils': '/-/play/static/js-toolkit/utils/index.js',
+        '@motionone/easing': '/-/play/static/motionone-easing.js',
         '@studiometa/js-toolkit': '/-/play/static/js-toolkit/index.js',
+        '@studiometa/js-toolkit/utils': '/-/play/static/js-toolkit/utils/index.js',
         '@studiometa/ui': '/-/play/static/ui/index.js',
         deepmerge: '/-/play/static/deepmerge.js',
         morphdom: '/-/play/static/morphdom.js',
