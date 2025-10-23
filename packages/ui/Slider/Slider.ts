@@ -32,7 +32,7 @@ export interface SliderProps extends BaseProps {
 
 /**
  * Slider class.
- * @see https://ui.studiometa.dev/-/components/Slider/
+ * @link https://ui.studiometa.dev/-/components/Slider/
  * @todo a11y
  */
 export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProps> {

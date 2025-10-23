@@ -3,7 +3,7 @@ import { AbstractPrefetch } from './AbstractPrefetch.js';
 
 /**
  * PrefetchWhenOver class.
- * @see https://ui.studiometa.dev/-/components/Prefetch/
+ * @link https://ui.studiometa.dev/-/components/Prefetch/
  */
 export class PrefetchWhenOver<T extends BaseProps = BaseProps> extends AbstractPrefetch<T> {
   /**

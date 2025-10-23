@@ -33,7 +33,7 @@ export class FigureShopify<T extends BaseProps = BaseProps> extends AbstractFigu
 
   /**
    * Format the source for Shopify CDN API.
-   * @see https://shopify.dev/docs/api/liquid/filters/image_url
+   * @link https://shopify.dev/docs/api/liquid/filters/image_url
    */
   formatSrc(src: string): string {
     const { crop, step } = this.$options;
