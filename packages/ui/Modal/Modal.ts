@@ -44,6 +44,7 @@ export interface ModalProps extends BaseProps {
 
 /**
  * Modal class.
+ * @link https://ui.studiometa.dev/-/components/Modal/
  */
 export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps> {
   /**

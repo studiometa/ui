@@ -12,6 +12,7 @@ const DEFAULT_POSITION = 'left';
 
 /**
  * Panel class.
+ * @link https://ui.studiometa.dev/-/components/Panel/
  */
 export class Panel<T extends BaseProps = BaseProps> extends Modal<T & PanelProps> {
   /**

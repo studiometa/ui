@@ -26,6 +26,7 @@ export interface TabsProps extends BaseProps {
 
 /**
  * Tabs class.
+ * @link https://ui.studiometa.dev/-/components/Tabs/
  */
 export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {
   /**

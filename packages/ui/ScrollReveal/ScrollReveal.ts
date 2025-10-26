@@ -13,6 +13,7 @@ export interface ScrollRevealProps extends BaseProps {
 
 /**
  * ScrollReveal class.
+ * @link https://ui.studiometa.dev/-/components/ScrollReveal/
  */
 export class ScrollReveal<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(
   Transition,

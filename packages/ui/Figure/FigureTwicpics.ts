@@ -24,6 +24,7 @@ const isBot = /bot|crawl|slurp|spider/i.test(navigator.userAgent);
 
 /**
  * FigureTwicpics class.
+ * @link https://ui.studiometa.dev/-/components/FigureTwicpics/
  */
 export class FigureTwicpics<T extends BaseProps = BaseProps> extends AbstractFigureDynamic<
   T & FigureTwicpicsProps
