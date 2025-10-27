@@ -54,7 +54,14 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
 
     const { target } = this;
     if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-      return 'value';
+      switch (target.type) {
+        case 'number':
+          return 'valueAsNumber';
+        case 'date':
+          return 'valueAsDate';
+        default:
+          return 'value';
+      }
     }
 
     return 'textContent';
