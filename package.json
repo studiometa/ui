@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "test": "npm run test -w @studiometa/ui-tests",
+    "test:watch": "npm run test:watch -w @studiometa/ui-tests",
     "build": "rm -rf dist && npm run build:pkg && npm run build:sizes && npm run build:types && npm run build:twig && npm run build:cp-files",
     "build:cp-files": "cat packages/ui/package.json | sed 's/index\\.ts/index\\.js/' > dist/package.json && cat dist/package.json && cp LICENSE.md dist/ && cp README.md dist/",
     "build:twig": "rsync -avh --include='*/' --include='**/*.twig' --exclude='*' --prune-empty-dirs packages/ui/ dist/",
