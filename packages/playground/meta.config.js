@@ -1,4 +1,5 @@
 import { resolve, join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
 import CopyPlugin from 'copy-webpack-plugin';
 import esbuild from 'esbuild';
@@ -23,8 +24,9 @@ export default defineWebpackConfig({
         html: resolve('./lib/twig-loader.js'),
       },
       importMap: {
-        '@studiometa/js-toolkit/utils': '/-/play/static/js-toolkit-utils.js',
-        '@studiometa/js-toolkit': '/-/play/static/js-toolkit.js',
+        '@motionone/easing': '/-/play/static/motionone-easing.js',
+        '@studiometa/js-toolkit': '/-/play/static/js-toolkit/index.js',
+        '@studiometa/js-toolkit/utils': '/-/play/static/js-toolkit/utils/index.js',
         '@studiometa/ui': '/-/play/static/ui/index.js',
         deepmerge: '/-/play/static/deepmerge.js',
         morphdom: '/-/play/static/morphdom.js',
@@ -61,6 +63,17 @@ createApp(App);`,
     config.plugins.push(
       new CopyPlugin({
         patterns: [
+          {
+            from:
+              dirname(fileURLToPath(import.meta.resolve('@studiometa/js-toolkit'))) +
+              '/**/*.{js,ts,map}',
+            context: dirname(fileURLToPath(import.meta.resolve('@studiometa/js-toolkit'))),
+            to: join(config.output.path, 'static/js-toolkit/[path][name][ext]'),
+            toType: 'template',
+            info: {
+              minimized: true,
+            },
+          },
           {
             from: './static/*.js',
             to: config.output.path,

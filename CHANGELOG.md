@@ -14,12 +14,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Slider:** fix a bug where the slider can get stuck when dragging vertically ([#451](https://github.com/studiometa/ui/pull/451), [6955e5a](https://github.com/studiometa/ui/commit/6955e5a))
 
+### Changed
+
+- Migrate to tsgo ([#460](https://github.com/studiometa/ui/pull/460), [4a8a565](https://github.com/studiometa/ui/commit/4a8a565))
+
 ### Removed
 
 - Remove demos from the documentation ([#452](https://github.com/studiometa/ui/pull/452), [954cb04](https://github.com/studiometa/ui/commit/954cb04))
 
 ### Dependencies
 
+- Update @studiometa/playground v0.1.5 → v0.2.1 ([#460](https://github.com/studiometa/ui/pull/460), [119d2cb](https://github.com/studiometa/ui/commit/119d2cb))
 - Update dependency @studiometa/js-toolkit to v3.2.0 ([#457](https://github.com/studiometa/ui/pull/457), [a310b09](https://github.com/studiometa/ui/commit/a310b09))
 
 ## [v1.2.0](https://github.com/studiometa/ui/compare/1.1.1..1.2.0) (2025-08-20)

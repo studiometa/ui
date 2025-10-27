@@ -12,12 +12,12 @@
     "build": "rm -rf dist && npm run build:pkg && npm run build:sizes && npm run build:types && npm run build:twig && npm run build:cp-files",
     "build:cp-files": "cat packages/ui/package.json | sed 's/index\\.ts/index\\.js/' > dist/package.json && cat dist/package.json && cp LICENSE.md dist/ && cp README.md dist/",
     "build:twig": "rsync -avh --include='*/' --include='**/*.twig' --exclude='*' --prune-empty-dirs packages/ui/ dist/",
-    "build:types": "tsc --build tsconfig.build.json",
+    "build:types": "tsgo --build tsconfig.build.json",
     "build:pkg": "node scripts/build.js",
     "build:sizes": "node scripts/sizes.js",
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
     "lint:static": "oxlint",
-    "lint:types": "tsc --build tsconfig.lint.json",
+    "lint:types": "tsgo --build tsconfig.lint.json",
     "lint:prettier": "prettier --check --cache packages/docs/**/*.md",
     "docs:dev": "npm run dev -w @studiometa/ui-docs",
     "docs:build": "npm run build -w @studiometa/ui-docs",
@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@studiometa/prettier-config": "4.4.0",
+    "@typescript/native-preview": "7.0.0-dev.20251027.1",
     "esbuild": "0.25.11",
     "fast-glob": "3.3.3",
     "gzip-size": "7.0.0",
@@ -37,6 +38,6 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "patch-package": "^8.0.0"
+    "patch-package": "8.0.1"
   }
 }

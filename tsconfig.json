@@ -10,7 +10,6 @@
     "noImplicitThis": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "baseUrl": "./packages/ui/",
     "skipLibCheck": true,
     "paths": {
       "#private/*": ["./*"],
