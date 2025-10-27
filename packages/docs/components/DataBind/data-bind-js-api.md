@@ -14,6 +14,15 @@ The `DataBind` component can be used to keep a value in sync between multiple DO
 - Type: `string`
 - Default: `'textContent'`
 
+The default value for the `prop` options depends on the type of the targeted element. If the element is an input, a textearea or a select, the default prop will be one of the following:
+
+- `valueAsDate` for `<input type="date">`
+- `valueAsNumber` from `<input type="number">`
+- `value` for all other inputs
+- for `<select>` elements, the prop option is not used and the value will always be the selected option(s)
+
+If the option is explicitly set with the `data-option-prop` attribute, it will override the default behavior.
+
 ### `group`
 
 - Type: `string`
