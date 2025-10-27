@@ -38,6 +38,6 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "patch-package": "^8.0.0"
+    "patch-package": "8.0.1"
   }
 }
