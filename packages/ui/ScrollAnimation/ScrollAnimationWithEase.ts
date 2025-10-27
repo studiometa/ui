@@ -1,3 +1,4 @@
+import { type BaseConfig } from '@studiometa/js-toolkit';
 import { ScrollAnimation } from './ScrollAnimation.js';
 import { animationScrollWithEase } from './animationScrollWithEase.js';
 
@@ -8,7 +9,7 @@ export class ScrollAnimationWithEase extends animationScrollWithEase(ScrollAnima
   /**
    * Config.
    */
-  static config = {
+  static config: BaseConfig = {
     ...ScrollAnimation.config,
     name: 'ScrollAnimationWithEase',
   };
