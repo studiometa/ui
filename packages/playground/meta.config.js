@@ -66,7 +66,7 @@ createApp(App);`,
           {
             from:
               dirname(fileURLToPath(import.meta.resolve('@studiometa/js-toolkit'))) +
-              '/**/*.{js,ts}',
+              '/**/*.{js,ts,map}',
             context: dirname(fileURLToPath(import.meta.resolve('@studiometa/js-toolkit'))),
             to: join(config.output.path, 'static/js-toolkit/[path][name][ext]'),
             toType: 'template',
