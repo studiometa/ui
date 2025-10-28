@@ -23,6 +23,13 @@ The default value for the `prop` options depends on the type of the targeted ele
 
 If the option is explicitly set with the `data-option-prop` attribute, it will override the default behavior.
 
+### `immediate`
+
+- Type: `boolean`
+- Default: `false`
+
+Use the `data-option-immediate` attribute on a `DataBind` component to propage its value on mount to other components in the same group.
+
 ### `group`
 
 - Type: `string`
