@@ -1,0 +1,20 @@
+<div class="flex flex-col gap-4">
+  <input
+    data-component="DataModel"
+    data-option-group="counter"
+    type="range"
+    value="10"
+    min="0"
+    max="100"
+    step="1" />
+  <p>
+    Count:
+    <span data-component="DataBind" data-option-group="counter">10</span>
+  </p>
+  <p>
+    Double:
+    <span data-component="DataComputed" data-option-group="counter" data-option-compute="value * 2">
+      20
+    </span>
+  </p>
+</div>

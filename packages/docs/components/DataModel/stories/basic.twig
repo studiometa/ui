@@ -1,0 +1,25 @@
+<div data-component="DataEffect"
+  data-option-group="msg"
+  data-option-effect="target.classList.toggle('bg-red-400', value.length > 15)"
+  class="flex flex-col gap-4 bg-opacity-50">
+  <input
+    data-component="DataModel"
+    data-option-group="msg"
+    data-option-main
+    value="Hello world"
+    class="p-4 bg-transparent ring rounded" />
+  <h1
+    data-component="DataBind DataEffect"
+    data-option-group="msg"
+    data-option-effect="target.classList.toggle('text-red-600', value.length > 15)"
+    class="text-4xl font-bold">
+    Hello world
+  </h1>
+  <p
+    data-component="DataComputed"
+    data-option-compute="`Length: ${value.length}`"
+    data-option-group="msg"
+    class="text-xl">
+    Lengh: 11
+  </p>
+</div>

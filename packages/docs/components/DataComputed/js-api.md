@@ -5,7 +5,7 @@ outline: deep
 
 # DataComputed JS API
 
-The `DataComputed` component extends the [`DataBind` component](./data-bind-js-api.html), it inherits from its API.
+The `DataComputed` component extends the [`DataBind` component](../DataBind/js-api.md), it inherits from its API.
 
 ## Options
 
