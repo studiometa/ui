@@ -1,5 +1,6 @@
 import { it, describe, expect, vi } from 'vitest';
 import { DataBind, DataComputed, DataEffect } from '@studiometa/ui';
+import { nextTick } from '@studiometa/js-toolkit/utils';
 import { destroy, hConnected as h, mount } from '#test-utils';
 
 describe('The DataBind component', () => {
@@ -229,5 +230,20 @@ describe('The DataBind component', () => {
     bind2.value = new Date('2025-01-03');
     expect(bind1.value).toEqual(new Date('2025-01-02'));
     expect(bind2.value).toEqual(new Date('2025-01-03'));
+  });
+
+  it('should propagate its value on mount when the immediate option is enabled', async () => {
+    const bind1 = new DataBind(
+      h('input', {
+        type: 'text',
+        dataOptionGroup: 'immediate',
+        value: 'foo',
+        dataOptionImmediate: true,
+      }),
+    );
+    const bind2 = new DataBind(h('input', { type: 'text', dataOptionGroup: 'immediate' }));
+    await mount(bind1, bind2);
+    await nextTick();
+    expect(bind2.value).toBe('foo');
   });
 });
