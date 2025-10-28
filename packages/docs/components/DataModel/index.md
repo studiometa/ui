@@ -8,8 +8,8 @@ Use the `DataModel`.
 
 ## Table of content
 
-- [Examples](./examples.html)
-- [JavaScript API](./js-api.html)
+- [Examples](./examples.md)
+- [JavaScript API](./js-api.md)
 
 ## Usage
 

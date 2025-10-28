@@ -8,8 +8,8 @@ The `MapboxStaticMap` component can be used to display custom maps anywhere, wit
 
 ## Table of content
 
-- [Examples](./examples.html)
-- [Twig API](./twig-api.html)
+- [Examples](./examples.md)
+- [Twig API](./twig-api.md)
 
 ## Usage
 

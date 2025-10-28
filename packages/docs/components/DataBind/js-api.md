@@ -37,7 +37,7 @@ Use the `data-option-immediate` attribute on a `DataBind` component to propage i
 
 The `group` option is used to group instances together. All related instances will be updated when the value changes.
 
-When using it with multiple checkboxes or select multiple, use the `[]` suffix to push each selected value in an array. See the [checkboxes example](/components/DataBind/examples.html#checkboxes) for more details on how this works.
+When using it with multiple checkboxes or select multiple, use the `[]` suffix to push each selected value in an array. See the [checkboxes example](/components/DataBind/examples.md#checkboxes) for more details on how this works.
 
 ## Properties
 

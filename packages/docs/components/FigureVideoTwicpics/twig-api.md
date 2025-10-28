@@ -5,7 +5,7 @@ outline: deep
 
 # Twig API
 
-The `FigureVideoTwicpics` template extends the [`FigureVideo` template](/components/FigureVideo/twig-api.html) and adds support for TwicPics API.
+The `FigureVideoTwicpics` template extends the [`FigureVideo` template](/components/FigureVideo/twig-api.md) and adds support for TwicPics API.
 
 ## Parameters
 

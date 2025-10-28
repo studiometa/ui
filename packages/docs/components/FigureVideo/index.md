@@ -8,9 +8,9 @@ Use the `FigureVideo` component to display loop, muted & autoplay decorative vid
 
 ## Table of content
 
-- [Examples](./examples.html)
-- [JS API](./js-api.html)
-- [Twig API](./twig-api.html)
+- [Examples](./examples.md)
+- [JS API](./js-api.md)
+- [Twig API](./twig-api.md)
 
 ## Usage
 

@@ -8,8 +8,8 @@ Use the `DataBind`, `DataModel`, `DataEffect` and `DataComputed` components to b
 
 ## Table of content
 
-- [Examples](./examples.html)
-- [JavaScript API](./data-computed-js-api.html)
+- [Examples](./examples.md)
+- [JavaScript API](./js-api.md)
 
 ## Usage
 

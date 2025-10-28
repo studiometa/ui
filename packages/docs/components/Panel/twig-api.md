@@ -4,7 +4,7 @@ title: Panel Twig API
 
 # Twig API
 
-The `Panel` component extends the [`Modal` component](/components/Modal/twig-api.html) and inherits all its parameters and blocks.
+The `Panel` component extends the [`Modal` component](/components/Modal/twig-api.md) and inherits all its parameters and blocks.
 
 ## Parameters
 
@@ -28,7 +28,7 @@ Customize the wrapper element attributes. The wrapper positioning is automatical
 
 ## Inherited Parameters
 
-All parameters from the [Modal component](/components/Modal/twig-api.html) are available:
+All parameters from the [Modal component](/components/Modal/twig-api.md) are available:
 
 - `attr` - Root element attributes
 - `modal_attr` - Modal container attributes
@@ -38,13 +38,13 @@ All parameters from the [Modal component](/components/Modal/twig-api.html) are a
 
 ## Blocks
 
-All blocks from the [Modal component](/components/Modal/twig-api.html) are inherited:
+All blocks from the [Modal component](/components/Modal/twig-api.md) are inherited:
 
 ### `open`
 
 Customize the open trigger button.
 
-### `close` 
+### `close`
 
 Customize the close trigger button.
 
