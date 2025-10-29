@@ -8,9 +8,9 @@ Use the `FigureTwicpics` component to display images with the Twicpics API.
 
 ## Table of content
 
-- [Examples](./examples.html)
-- [JS API](./js-api.html)
-- [Twig API](./twig-api.html)
+- [Examples](./examples.md)
+- [JS API](./js-api.md)
+- [Twig API](./twig-api.md)
 
 ## Usage
 
@@ -107,7 +107,7 @@ This approach is a replacement of defining the domain and path in JavaScript des
 
 ### Using placeholders
 
-By default, the `FigureTwicpics` component uses an blank SVG placeholder as the source of the image. This can be customized with the [`twic_placeholder` parameter](/components/FigureTwicpics/twig-api.html#twic-placeholder).
+By default, the `FigureTwicpics` component uses an blank SVG placeholder as the source of the image. This can be customized with the [`twic_placeholder` parameter](/components/FigureTwicpics/twig-api.md#twic-placeholder).
 
 ```twig {4,10-12}
 {# Will display a blurred version of the image #}

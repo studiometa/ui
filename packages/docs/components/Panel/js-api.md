@@ -4,7 +4,7 @@ title: Panel JS API
 
 # JS API
 
-The `Panel` component extends the [`Modal`](/components/Modal/js-api.html) component and inherits all its features.
+The `Panel` component extends the [`Modal`](/components/Modal/js-api.md) component and inherits all its features.
 
 ## Options
 

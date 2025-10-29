@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- **DataBind:** add support for immediate propagation on mount ([#280](https://github.com/studiometa/ui/issues/280), [#461](https://github.com/studiometa/ui/pull/461), [71b0225](https://github.com/studiometa/ui/commit/71b0225))
+- **DataBind:** add a namespace to groups ([#461](https://github.com/studiometa/ui/pull/461), [2557c81](https://github.com/studiometa/ui/commit/2557c81))
 - **FrameTarget:** add support for `<script>` element injection ([#449](https://github.com/studiometa/ui/pull/449), [a597952](https://github.com/studiometa/ui/commit/a597952))
 
 ### Fixed
@@ -16,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- Update @studiometa/js-toolkit 3.2.0 → 3.3.0 ([#461](https://github.com/studiometa/ui/pull/461), [1cdcbbd](https://github.com/studiometa/ui/commit/1cdcbbd))
 - **DataBind:** improve default types for values on `<input type="number">` and `<input type="date">` ([#266](https://github.com/studiometa/ui/issues/266), [#450](https://github.com/studiometa/ui/pull/450), [70ba74c](https://github.com/studiometa/ui/commit/70ba74c))
 - Migrate to tsgo ([#460](https://github.com/studiometa/ui/pull/460), [4a8a565](https://github.com/studiometa/ui/commit/4a8a565))
 

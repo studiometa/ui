@@ -1,0 +1,18 @@
+<div class="grid gap-4 max-w-sm">
+  <!-- Two ways binding on the "text" group for the input's value -->
+  <input
+    type="text"
+    placeholder="..."
+    data-component="DataModel"
+    data-option-group="text"
+    class="p-2 border border-current/20 rounded" />
+
+  <!-- Update the text content with the input's value in UPPERCASE -->
+  <div
+    data-component="DataComputed"
+    data-option-group="text"
+    data-option-compute="value ? value.toUpperCase() : '...'"
+    class="p-2 bg-gray-500/10 rounded">
+    ...
+  </div>
+</div>

@@ -5,7 +5,7 @@ outline: deep
 
 # JS API
 
-The `FigureVideoTwicpics` class extends the [`FigureVideo` class](/components/FigureVideo/js-api.html) and adds support for TwicPics API.
+The `FigureVideoTwicpics` class extends the [`FigureVideo` class](/components/FigureVideo/js-api.md) and adds support for TwicPics API.
 
 ## Options
 

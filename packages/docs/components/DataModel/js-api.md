@@ -5,7 +5,7 @@ outline: deep
 
 # DataModel JS API
 
-The `DataModel` component have the same public API as the [`DataBind` component](./data-bind-js-api.html).
+The `DataModel` component have the same public API as the [`DataBind` component](../DataBind/js-api.md).
 
 This component will [dispatch](#dispatch) its current value to all other related instances within the same group when the `input` event is triggered on its root element.
 

@@ -17,6 +17,7 @@
     height?: string;
     zoom?: string | number;
     noControls?: boolean;
+    header?: string;
   }
 
   const props = withDefaults(defineProps<Props>(), {
@@ -69,6 +70,10 @@
     url.searchParams.set('script-editor', 'false');
     url.searchParams.set('style-editor', 'false');
     url.searchParams.set('theme', isDark.value ? 'dark' : 'light');
+
+    if (props.header) {
+      url.searchParams.set('header', props.header);
+    }
 
     const newUrl = new URL(url);
     // Move URL search params to hash

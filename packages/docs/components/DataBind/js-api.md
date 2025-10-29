@@ -3,7 +3,7 @@ title: DataBind JavaScript API
 outline: deep
 ---
 
-# DataBind JS API
+# JS API
 
 The `DataBind` component can be used to keep a value in sync between multiple DOM elements.
 
@@ -23,6 +23,13 @@ The default value for the `prop` options depends on the type of the targeted ele
 
 If the option is explicitly set with the `data-option-prop` attribute, it will override the default behavior.
 
+### `immediate`
+
+- Type: `boolean`
+- Default: `false`
+
+Use the `data-option-immediate` attribute on a `DataBind` component to propage its value on mount to other components in the same group.
+
 ### `group`
 
 - Type: `string`
@@ -30,7 +37,7 @@ If the option is explicitly set with the `data-option-prop` attribute, it will o
 
 The `group` option is used to group instances together. All related instances will be updated when the value changes.
 
-When using it with multiple checkboxes or select multiple, use the `[]` suffix to push each selected value in an array. See the [checkboxes example](/components/DataBind/examples.html#checkboxes) for more details on how this works.
+When using it with multiple checkboxes or select multiple, use the `[]` suffix to push each selected value in an array. See the [checkboxes example](/components/DataBind/examples.md#checkboxes) for more details on how this works.
 
 ## Properties
 
