@@ -33,9 +33,9 @@
     "morphdom": "^2.7.5"
   },
   "devDependencies": {
-    "@studiometa/js-toolkit": "3.2.0"
+    "@studiometa/js-toolkit": "3.3.0"
   },
   "peerDependencies": {
-    "@studiometa/js-toolkit": "^3.0.5"
+    "@studiometa/js-toolkit": "^3.3.0"
   }
 }
