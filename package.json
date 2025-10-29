@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-workspace",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "type": "module",
   "private": true,
   "workspaces": [
@@ -24,7 +24,7 @@
     "play:dev": "npm run dev -w @studiometa/ui-playground",
     "play:watch": "npm run watch -w @studiometa/ui-playground",
     "play:build": "npm run build -w @studiometa/ui-playground",
-    "postversion": "npm version -ws $npm_package_version && node scripts/update-composer-version.js",
+    "postversion": "npm version --workspaces $npm_package_version && node scripts/update-composer-version.js",
     "postinstall": "patch-package"
   },
   "devDependencies": {
