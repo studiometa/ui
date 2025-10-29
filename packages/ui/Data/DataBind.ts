@@ -24,22 +24,6 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   };
 
   /**
-   * Temporary override of the `$group` getter.
-   * @todo remove override when https://github.com/studiometa/js-toolkit/issues/680 is fixed.
-   */
-  get $group() {
-    const instances = super.$group as Set<this>;
-
-    for (const instance of instances) {
-      if (!instance.$el.isConnected) {
-        instances.delete(instance);
-      }
-    }
-
-    return instances;
-  }
-
-  /**
    * @deprecated Use the `$group` getter instead.
    */
   get relatedInstances() {
