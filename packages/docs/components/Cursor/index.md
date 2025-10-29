@@ -8,9 +8,9 @@ Use the cursor component to easily add a custom cursor to your project.
 
 ## Table of content
 
-- [Examples](./examples.html)
-- [JS API](./js-api.html)
-- [Twig API](./twig-api.html)
+- [Examples](./examples.md)
+- [JS API](./js-api.md)
+- [Twig API](./twig-api.md)
 
 ## Usage
 

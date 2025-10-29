@@ -74,10 +74,6 @@ export default defineConfig({
         link: '/components/',
       },
       {
-        text: 'Demos',
-        link: '/demos/',
-      },
-      {
         text: 'Playground',
         link: process.env.NODE_ENV === 'development' ? '/play/index.html' : '/play/',
         target: '_blank',
@@ -90,7 +86,6 @@ export default defineConfig({
     sidebar: {
       '/components/': getComponentsSidebar(),
       '/': getGuideSidebar(),
-      '/demos/': await getDemoSidebar(),
     },
   },
 });
@@ -126,31 +121,6 @@ function getComponentsSidebar() {
       }),
     },
   ];
-}
-
-async function getDemoSidebar() {
-  return [
-    {
-      text: 'Demos',
-      link: '/demos/',
-      items: await getDemoItems(),
-      collapsed: false,
-    },
-  ];
-}
-
-async function getDemoItems() {
-  const data = await fetch(`https://ui.studiometa.dev/api/demos/`)
-    .then((response) => response.json())
-    .catch((error) => console.log(error));
-
-  return data.map((el) => {
-    return {
-      text: el.title,
-      lastUpdated: el.updated_at,
-      link: '/demos/' + el.slug,
-    };
-  });
 }
 
 function generateSidebarLinksFromPath(

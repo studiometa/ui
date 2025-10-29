@@ -12,20 +12,15 @@
 
   interface Props {
     script?: CodeProp;
-    scriptEditor?: boolean;
     html?: CodeProp;
-    htmlEditor?: boolean;
     css?: CodeProp;
-    cssEditor?: boolean;
     height?: string;
     zoom?: string | number;
     noControls?: boolean;
+    header?: string;
   }
 
   const props = withDefaults(defineProps<Props>(), {
-    scriptEditor: false,
-    htmlEditor: false,
-    cssEditor: false,
     height: '60vh',
     zoom: 0.9,
   });
@@ -71,20 +66,14 @@
       url.searchParams.set('style', css.value);
     }
 
-    url.searchParams.set(
-      'html-editor',
-      props.htmlEditor !== false && html.value !== defaultContent ? 'true' : 'false',
-    );
-    url.searchParams.set(
-      'script-editor',
-      props.scriptEditor !== false && script.value !== defaultContent ? 'true' : 'false',
-    );
-    url.searchParams.set(
-      'style-editor',
-      props.cssEditor !== false && css.value !== defaultContent ? 'true' : 'false',
-    );
-
+    url.searchParams.set('html-editor', 'false');
+    url.searchParams.set('script-editor', 'false');
+    url.searchParams.set('style-editor', 'false');
     url.searchParams.set('theme', isDark.value ? 'dark' : 'light');
+
+    if (props.header) {
+      url.searchParams.set('header', props.header);
+    }
 
     const newUrl = new URL(url);
     // Move URL search params to hash
@@ -97,17 +86,12 @@
   const isLoading = ref(true);
   const iframe = ref();
   const scale = ref(Number(props.zoom));
-  const iframeKey = ref(script.value + html.value);
+  const iframeKey = ref(script.value + html.value + isDark.value);
   const withControls = computed(() => !props.noControls);
-
-  watch(isDark, (newValue) => {
-    const theme = newValue ? 'dark' : 'light';
-    iframe.value.contentDocument.querySelector(`#theme-${theme}`)?.click();
-  });
 
   function reloadIframe() {
     isLoading.value = true;
-    iframeKey.value = script.value + html.value + performance.now();
+    iframeKey.value = script.value + html.value + isDark.value + performance.now();
   }
 
   /**
@@ -155,7 +139,7 @@
             <span class="sr-only">Reset zoom</span>
             <i-octicon-x-circle-16 class="block w-4 h-4" />
           </ControlButton>
-          <ControlButton :href="src" target="_blank" rel="noopener" title="Open in a new window">
+          <ControlButton :href="src?.replace('embed=true', '')" target="_blank" rel="noopener" title="Open in a new window">
             <span class="sr-only">Open in a new window</span>
             <i-octicon-link-external-16 class="block w-4 h-4" />
           </ControlButton>

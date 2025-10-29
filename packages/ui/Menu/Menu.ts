@@ -18,6 +18,7 @@ export interface MenuProps extends BaseProps {
 
 /**
  * Menu class.
+ * @link https://ui.studiometa.dev/-/components/Menu/
  */
 export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
   /**

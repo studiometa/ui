@@ -5,7 +5,7 @@ outline: deep
 
 # Twig API
 
-The `FigureTwicpics` template extends the [`Figure` template](/components/Figure/twig-api.html) and adds support for TwicPics API.
+The `FigureTwicpics` template extends the [`Figure` template](/components/Figure/twig-api.md) and adds support for TwicPics API.
 
 ## Parameters
 

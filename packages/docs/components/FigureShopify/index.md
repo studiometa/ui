@@ -8,8 +8,8 @@ Use the `FigureShopify` component to display responsive images with [Shopify CDN
 
 ## Table of content
 
-- [Examples](./examples.html)
-- [JS API](./js-api.html)
+- [Examples](./examples.md)
+- [JS API](./js-api.md)
 
 ## Usage
 

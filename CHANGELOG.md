@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.3.0](https://github.com/studiometa/ui/compare/1.2.0..1.3.0) (2025-10-29)
+
+### Added
+
+- **DataBind:** add support for immediate propagation on mount ([#280](https://github.com/studiometa/ui/issues/280), [#461](https://github.com/studiometa/ui/pull/461), [71b0225](https://github.com/studiometa/ui/commit/71b0225))
+- **DataBind:** add a namespace to groups ([#461](https://github.com/studiometa/ui/pull/461), [2557c81](https://github.com/studiometa/ui/commit/2557c81))
+- **FrameTarget:** add support for `<script>` element injection ([#449](https://github.com/studiometa/ui/pull/449), [a597952](https://github.com/studiometa/ui/commit/a597952))
+
+### Fixed
+
+- **Slider:** fix a bug where the slider can get stuck when dragging vertically ([#451](https://github.com/studiometa/ui/pull/451), [6955e5a](https://github.com/studiometa/ui/commit/6955e5a))
+
+### Changed
+
+- **DataBind:** improve default types for values on `<input type="number">` and `<input type="date">` ([#266](https://github.com/studiometa/ui/issues/266), [#450](https://github.com/studiometa/ui/pull/450), [70ba74c](https://github.com/studiometa/ui/commit/70ba74c))
+- Migrate to tsgo ([#460](https://github.com/studiometa/ui/pull/460), [4a8a565](https://github.com/studiometa/ui/commit/4a8a565))
+
+### Removed
+
+- Remove demos from the documentation ([#452](https://github.com/studiometa/ui/pull/452), [954cb04](https://github.com/studiometa/ui/commit/954cb04))
+
+### Dependencies
+
+- Update @studiometa/playground v0.1.5 → v0.2.1 ([#460](https://github.com/studiometa/ui/pull/460), [119d2cb](https://github.com/studiometa/ui/commit/119d2cb))
+- Update @studiometa/js-toolkit v3.1.1 → v3.3.0 ([#457](https://github.com/studiometa/ui/pull/457), [a310b09](https://github.com/studiometa/ui/commit/a310b09), [#461](https://github.com/studiometa/ui/pull/461), [1cdcbbd](https://github.com/studiometa/ui/commit/1cdcbbd))
+
 ## [v1.2.0](https://github.com/studiometa/ui/compare/1.1.1..1.2.0) (2025-08-20)
 
 ### Added

@@ -8,8 +8,8 @@ The `Action` atom is a component who trigger an action on other components.
 
 ## Table of content
 
-- [Examples](./examples.html)
-- [JS API](./js-api.html)
+- [Examples](./examples.md)
+- [JS API](./js-api.md)
 
 ## Usage
 
@@ -55,7 +55,7 @@ The `Target` component is a companion of the `Action` component that can be used
 
 ### Listening to multiple events
 
-The advanced HTML [option `on:<event>[.<modifier>]`](./js-api.html#on-event-modifier) can be used to listen to multiple events on a single `Action` component.
+The advanced HTML [option `on:<event>[.<modifier>]`](./js-api.md#on-event-modifier) can be used to listen to multiple events on a single `Action` component.
 
 <PreviewPlayground
   :html="() => import('./stories/multiple-events/app.twig')"

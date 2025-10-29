@@ -1,0 +1,26 @@
+diff --git a/node_modules/@studiometa/playground/dist/front/js/components/Editor.js b/node_modules/@studiometa/playground/dist/front/js/components/Editor.js
+index ecb578e..58bf164 100644
+--- a/node_modules/@studiometa/playground/dist/front/js/components/Editor.js
++++ b/node_modules/@studiometa/playground/dist/front/js/components/Editor.js
+@@ -42,7 +42,7 @@ class Editor extends Base {
+       tabSize: 2,
+       theme: await themeIsDark() ? "vs-dark" : "vs"
+     });
+-    const disposeHTML = emmetHTML(this.monaco, ["html"]);
++    const disposeHTML = emmetHTML(this.monaco, ["html", "twig"]);
+     const disposeCSS = emmetCSS(this.monaco, ["css"]);
+     addJsAutocompletion(this.monaco.languages);
+     this.$on(
+diff --git a/node_modules/@studiometa/playground/dist/front/js/components/HtmlEditor.js b/node_modules/@studiometa/playground/dist/front/js/components/HtmlEditor.js
+index 94b975f..5ae8c22 100644
+--- a/node_modules/@studiometa/playground/dist/front/js/components/HtmlEditor.js
++++ b/node_modules/@studiometa/playground/dist/front/js/components/HtmlEditor.js
+@@ -2,7 +2,7 @@ import { getHtml, setHtml } from "../store/index.js";
+ import Editor from "./Editor.js";
+ class HtmlEditor extends Editor {
+   get language() {
+-    return "html";
++    return "twig";
+   }
+   async getInitialValue() {
+     return getHtml();

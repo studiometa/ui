@@ -13,7 +13,7 @@ title: Transition examples
 
 ## Group
 
-Use the [`group` option](/components/Transition/js-api.html#group) to keep multiple instances in sync. In the example below, the buttons only control the first component, the second one is synced with the `data-option-group` attribute.
+Use the [`group` option](/components/Transition/js-api.md#group) to keep multiple instances in sync. In the example below, the buttons only control the first component, the second one is synced with the `data-option-group` attribute.
 
 <PreviewPlayground
   :html="() => import('./stories/group/app.twig')"

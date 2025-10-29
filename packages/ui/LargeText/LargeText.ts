@@ -14,7 +14,8 @@ export interface LargeTextProps extends BaseProps {
 }
 
 /**
- * Large text class.
+ * LargeText class.
+ * @link https://ui.studiometa.dev/-/components/LargeText/
  */
 export class LargeText<T extends BaseProps = BaseProps>
   extends withMountWhenInView(Base, { rootMargin: '50%' })<T & LargeTextProps>

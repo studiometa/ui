@@ -10,7 +10,7 @@ type Item = {
 /**
  * Thanks to the react-intersecton-observer package for this IntersectionObserver mock!
  *
- * @see https://github.com/thebuilder/react-intersection-observer/blob/master/src/test-utils.ts
+ * @link https://github.com/thebuilder/react-intersection-observer/blob/master/src/test-utils.ts
  */
 const observers: Map<IntersectionObserver, Item> = new Map();
 

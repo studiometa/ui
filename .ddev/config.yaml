@@ -6,6 +6,7 @@ webserver_type: nginx-fpm
 xdebug_enabled: false
 additional_hostnames: []
 additional_fqdns: []
+omit_containers: [db]
 database:
     type: mariadb
     version: "10.11"
@@ -14,7 +15,6 @@ hooks:
         - composer: install -d packages/docs/.symfony/
 upload_dirs:
     - /-/
-    - /bundles/
 use_dns_when_possible: true
 composer_version: "2"
 web_environment: []

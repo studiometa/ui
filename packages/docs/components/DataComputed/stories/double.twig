@@ -1,0 +1,11 @@
+<div class="flex flex-col gap-4 bg-opacity-50">
+  <input
+    data-component="DataModel"
+    data-option-group="msg"
+    value="1"
+    type="number"
+    class="p-4 bg-transparent ring rounded" />
+  <p class="text-xl">
+    Double: <span data-component="DataComputed" data-option-compute="(value || 0) * 2" data-option-group="msg">2</span>
+  </p>
+</div>

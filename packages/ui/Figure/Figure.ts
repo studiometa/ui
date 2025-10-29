@@ -6,7 +6,7 @@ export interface FigureProps extends AbstractFigureProps {}
 
 /**
  * Figure class.
- * @see https://ui.studiometa.dev/-/components/Figure/
+ * @link https://ui.studiometa.dev/-/components/Figure/
  */
 export class Figure<T extends BaseProps = BaseProps> extends AbstractFigure<T> {
   /**

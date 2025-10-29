@@ -8,7 +8,8 @@ export interface CircularMarqueeProps extends BaseProps {
 }
 
 /**
- * CircularMarquee component
+ * CircularMarquee class.
+ * @link https://ui.studiometa.dev/-/components/CircularMarquee/
  */
 export class CircularMarquee extends Base<CircularMarqueeProps> {
   /**

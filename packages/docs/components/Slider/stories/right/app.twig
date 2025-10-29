@@ -5,11 +5,11 @@
   data-option-mode="right"
   data-option-fit-bounds
   data-option-contain
-  class="grid grid-cols-1 gap-10 p-10">
+  class="grid grid-cols-1 gap-4 s:gap-10 p-4 s:p-10 overflow-hidden">
   <div data-component="SliderDrag"
     data-ref="wrapper"
     tabindex="0"
-    class="flex items-center gap-12 select-none">
+    class="flex items-center gap-4 s:gap-10 select-none">
     {% for slide in 1..slides %}
       {% set width = random(sizes) %}
       {% set height = random(sizes) %}
@@ -95,7 +95,6 @@
       {% endfor %}
     </div>
   </div>
-  <pre data-ref="debug"></pre>
 </div>
 
 <div class="h-screen"></div>

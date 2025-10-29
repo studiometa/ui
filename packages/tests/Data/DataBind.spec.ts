@@ -1,5 +1,6 @@
 import { it, describe, expect, vi } from 'vitest';
 import { DataBind, DataComputed, DataEffect } from '@studiometa/ui';
+import { nextTick } from '@studiometa/js-toolkit/utils';
 import { destroy, hConnected as h, mount } from '#test-utils';
 
 describe('The DataBind component', () => {
@@ -203,5 +204,46 @@ describe('The DataBind component', () => {
     expect(inputA.isConnected).toBe(true);
     expect(inputB.isConnected).toBe(false);
     expect(instanceA.value).toEqual(['foo']);
+  });
+
+  it('should return value as number for input[type="number"] by default', async () => {
+    const bind1 = new DataBind(h('input', { type: 'number', dataOptionGroup: 'one' }));
+    const bind2 = new DataBind(h('input', { type: 'number', value: '1', dataOptionGroup: 'two' }));
+    await mount(bind1, bind2);
+    expect(bind1.value).toBeNaN();
+    expect(bind2.value).toBe(1);
+    bind1.value = 10;
+    bind2.value = '20';
+    expect(bind1.value).toBe(10);
+    expect(bind2.value).toBe(20);
+  });
+
+  it('should return value as date for input[type="date"] by default', async () => {
+    const bind1 = new DataBind(h('input', { type: 'date', dataOptionGroup: 'one' }));
+    const bind2 = new DataBind(
+      h('input', { type: 'date', value: '2025-01-01', dataOptionGroup: 'two' }),
+    );
+    await mount(bind1, bind2);
+    expect(bind1.value).toBeNull();
+    expect(bind2.value).toEqual(new Date('2025-01-01'));
+    bind1.value = new Date('2025-01-02');
+    bind2.value = new Date('2025-01-03');
+    expect(bind1.value).toEqual(new Date('2025-01-02'));
+    expect(bind2.value).toEqual(new Date('2025-01-03'));
+  });
+
+  it('should propagate its value on mount when the immediate option is enabled', async () => {
+    const bind1 = new DataBind(
+      h('input', {
+        type: 'text',
+        dataOptionGroup: 'immediate',
+        value: 'foo',
+        dataOptionImmediate: true,
+      }),
+    );
+    const bind2 = new DataBind(h('input', { type: 'text', dataOptionGroup: 'immediate' }));
+    await mount(bind1, bind2);
+    await nextTick();
+    expect(bind2.value).toBe('foo');
   });
 });

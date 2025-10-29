@@ -27,7 +27,7 @@ export interface HoverableProps extends BaseProps {
 
 /**
  * Hoverable class.
- * @see https://ui.studiometa.dev/-/components/Hoverable/
+ * @link https://ui.studiometa.dev/-/components/Hoverable/
  */
 export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePointer(Base)<
   T & HoverableProps

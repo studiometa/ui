@@ -14,6 +14,7 @@ export interface LazyIncludeProps extends BaseProps {
 
 /**
  * LazyInclude class.
+ * @link https://ui.studiometa.dev/-/components/LazyInclude/
  */
 export class LazyInclude<T extends BaseProps = BaseProps>
   extends Base<T & LazyIncludeProps>

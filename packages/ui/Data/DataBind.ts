@@ -1,38 +1,33 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base, withGroup } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { isArray } from '@studiometa/js-toolkit/utils';
+import { isArray, nextTick } from '@studiometa/js-toolkit/utils';
 import { isInput, isCheckbox, isSelect } from './utils.js';
-
-const groups = new Map<string, Set<DataBind>>();
 
 export interface DataBindProps extends BaseProps {
   $options: {
     prop: string;
-    group: string;
+    immediate: boolean;
   };
 }
 
-export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProps & T> {
+/**
+ * DataBind class.
+ * @link https://ui.studiometa.dev/-/components/DataBind/
+ */
+export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, 'data:')<DataBindProps & T> {
   static config: BaseConfig = {
     name: 'DataBind',
     options: {
       prop: String,
-      group: String,
+      immediate: Boolean,
     },
   };
 
+  /**
+   * @deprecated Use the `$group` getter instead.
+   */
   get relatedInstances() {
-    const { group } = this.$options;
-
-    const instances = groups.get(group) ?? groups.set(group, new Set()).get(group);
-
-    for (const instance of instances) {
-      if (!instance.$el.isConnected) {
-        instances.delete(instance);
-      }
-    }
-
-    return instances;
+    return this.$group as Set<this>;
   }
 
   get multiple() {
@@ -50,7 +45,14 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
 
     const { target } = this;
     if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-      return 'value';
+      switch (target.type) {
+        case 'number':
+          return 'valueAsNumber';
+        case 'date':
+          return 'valueAsDate';
+        default:
+          return 'value';
+      }
     }
 
     return 'textContent';
@@ -69,7 +71,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
 
     if (isSelect(target)) {
       if (multiple) {
-        const values = [];
+        const values = [] as string[];
         // @ts-ignore
         for (const option of target.options) {
           if (option.selected) {
@@ -81,7 +83,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
       }
 
       const option = target.options.item(target.selectedIndex);
-      return option.value;
+      return option?.value;
     }
 
     if (isCheckbox(target)) {
@@ -137,10 +139,10 @@ export class DataBind<T extends BaseProps = BaseProps> extends Base<DataBindProp
   }
 
   mounted() {
-    this.relatedInstances.add(this);
-  }
-
-  destroyed() {
-    this.relatedInstances.delete(this);
+    if (this.$options.immediate) {
+      nextTick().then(() => {
+        this.set(this.get());
+      });
+    }
   }
 }

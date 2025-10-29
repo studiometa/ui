@@ -32,7 +32,7 @@ export interface SliderProps extends BaseProps {
 
 /**
  * Slider class.
- * @see https://ui.studiometa.dev/-/components/Slider/
+ * @link https://ui.studiometa.dev/-/components/Slider/
  * @todo a11y
  */
 export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProps> {
@@ -73,12 +73,6 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
    * @private
    */
   __currentIndex = 0;
-
-  /**
-   * Drag state.
-   * @private
-   */
-  __isDragging = false;
 
   /**
    * Store all the states.
@@ -319,18 +313,12 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   onSliderDragStart() {
     this.__initialX = this.currentSliderItem ? this.currentSliderItem.x : 0;
     this.__distanceX = this.__initialX;
-
-    this.__isDragging = true;
   }
 
   /**
    * Listen to the Draggable `drag` event.
    */
   onSliderDragDrag({ args: [props] }: { args: [DragServiceProps] }) {
-    if (Math.abs(props.delta.y) > Math.abs(props.delta.x)) {
-      return;
-    }
-
     this.__distanceX = this.__initialX + props.distance.x * this.$options.sensitivity;
 
     for (const item of this.$children.SliderItem) {
@@ -342,15 +330,6 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
    * Listen to the Draggable `drop` event and find the new active slide.
    */
   onSliderDragDrop({ args: [props] }: { args: [DragServiceProps] }) {
-    if (!this.__isDragging) {
-      return;
-    }
-    this.__isDragging = false;
-
-    if (Math.abs(props.delta.y) > Math.abs(props.delta.x)) {
-      return;
-    }
-
     let finalX = clamp(
       inertiaFinalValue(this.__distanceX, props.delta.x * this.$options.dropSensitivity),
       this.getStateValueByMode(this.firstState.x),
