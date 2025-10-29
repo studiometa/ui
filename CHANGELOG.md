@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.3.0](https://github.com/studiometa/ui/compare/1.2.0..1.3.0) (2025-10-29)
+
 ### Added
 
 - **DataBind:** add support for immediate propagation on mount ([#280](https://github.com/studiometa/ui/issues/280), [#461](https://github.com/studiometa/ui/pull/461), [71b0225](https://github.com/studiometa/ui/commit/71b0225))
@@ -18,8 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- Update @studiometa/js-toolkit 3.2.0 → 3.3.0 ([#461](https://github.com/studiometa/ui/pull/461), [1cdcbbd](https://github.com/studiometa/ui/commit/1cdcbbd))
 - **DataBind:** improve default types for values on `<input type="number">` and `<input type="date">` ([#266](https://github.com/studiometa/ui/issues/266), [#450](https://github.com/studiometa/ui/pull/450), [70ba74c](https://github.com/studiometa/ui/commit/70ba74c))
+- Update @studiometa/js-toolkit 3.2.0 → 3.3.0 ([#461](https://github.com/studiometa/ui/pull/461), [1cdcbbd](https://github.com/studiometa/ui/commit/1cdcbbd))
 - Migrate to tsgo ([#460](https://github.com/studiometa/ui/pull/460), [4a8a565](https://github.com/studiometa/ui/commit/4a8a565))
 
 ### Removed
