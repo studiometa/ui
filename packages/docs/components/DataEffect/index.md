@@ -4,18 +4,40 @@ badges: [JS]
 
 # DataEffect <Badges :texts="$frontmatter.badges" />
 
-Use the `DataEffect`.
+Use the `DataEffect` component to execute side effects when the value of the `Data...` components group changes. This component extends the [`DataBind` component](../DataBind/index.md), so it inherits from its API.
 
 ## Table of content
 
-- [Examples](./examples.md)
 - [JavaScript API](./js-api.md)
 
 ## Usage
 
-Import the components in your main app and use the `DataModel` component on HTML form elements and the `DataBind` and `DataComputed` components on other elements that need to be updated accordingly. The `DataEffect` component can be used to execute side effects when the value changes.
+::: code-group
+
+```html {5,7} [index.html]
+<!-- Two ways binding on the "text" group for the input's value -->
+<!-- And show an alert if the content of the input is too loong -->
+<input
+  type="text"
+  data-component="DataModel DataEffect"
+  data-option-group="text"
+  data-option-effect="value.length > 20 && alert('Too long')" />
+```
+
+```js [app.js] twoslash
+import { registerComponent } from '@studiometa/js-toolkit';
+import { DataModel, DataEffect } from '@studiometa/ui';
+
+registerComponent(DataModel);
+registerComponent(DataEffect);
+```
+
+:::
 
 <PreviewPlayground
-  :html="() => import('./stories/basic.twig')"
-  :script="() => import('./stories/app.js?raw')"
+  height="300px"
+  zoom="1"
+  header="hidden"
+  :html="() => import('./stories/too-long.twig')"
+  :script="() => import('./stories/too-long.js?raw')"
   />

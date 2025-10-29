@@ -4,32 +4,18 @@ title: DataBind, DataModel, DataEffect and DataComputed examples
 
 # Examples
 
-## Checkbox
+## Basic example
 
 <PreviewPlayground
-  :html="() => import('./stories/checkbox.twig')"
-  :script="() => import('./stories/app.js?raw')"
+  :html="() => import('./stories/basic.twig')"
+  :script="() => import('./stories/basic.js?raw')"
   />
 
-## Checkboxes
+## Double computed example
 
-When working with multiple checkboxes, it can be useful to store the value in an array rather than a simple boolean indicating if the checkbox is checked. Checkboxes sharing the same value will be synced and checked or unchecked together.
-
-<PreviewPlayground
-  :html="() => import('./stories/checkboxes.twig')"
-  :script="() => import('./stories/app.js?raw')"
-  />
-
-## Select
+In this example, we set the value of the `data-option-compute` attribute to `(value || 0) * 2`. By using a number input, the `value` is automatically casted to a number (or `NaN` if the input is empty), so we can simply multiply it by 2 to get the desired result.
 
 <PreviewPlayground
-  :html="() => import('./stories/select.twig')"
-  :script="() => import('./stories/app.js?raw')"
-  />
-
-## Select multiple
-
-<PreviewPlayground
-  :html="() => import('./stories/select-multiple.twig')"
-  :script="() => import('./stories/app.js?raw')"
+  :html="() => import('./stories/double.twig')"
+  :script="() => import('./stories/double.js?raw')"
   />

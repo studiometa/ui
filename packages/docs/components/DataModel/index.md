@@ -4,7 +4,7 @@ badges: [JS]
 
 # DataModel <Badges :texts="$frontmatter.badges" />
 
-Use the `DataModel`.
+Use the `DataModel` component to create a two-way binding of a property of HTML form elements. This component should be used alongside the [`DataBind`](../DataBind/index.md), [`DataComputed`](../DataComputed/index.md) and [`DataEffect`](../DataEffect/index.md) components to update other elements accordingly.
 
 ## Table of content
 

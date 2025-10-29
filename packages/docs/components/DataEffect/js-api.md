@@ -18,6 +18,8 @@ Use this option to define a piece of JavaScript code to be executed when the val
 
 **Example**
 
+In the following example, the counter text color is changed based on the input's length:
+
 <PreviewPlayground
   :html="() => import('./stories/effect-example.twig')"
   :script="() => import('./stories/effect-example.js?raw')"

@@ -4,7 +4,7 @@ badges: [JS]
 
 # DataComputed <Badges :texts="$frontmatter.badges" />
 
-Use the `DataBind`, `DataModel`, `DataEffect` and `DataComputed` components to bind and synchronize data between DOM elements.
+Use the `DataComputed` component to create a one-way binding of a property of the targeted DOM element with a computed value. This component extends the [`DataBind` component](../DataBind/index.md), so it inherits from its API.
 
 ## Table of content
 
@@ -13,9 +13,47 @@ Use the `DataBind`, `DataModel`, `DataEffect` and `DataComputed` components to b
 
 ## Usage
 
-Import the components in your main app and use the `DataModel` component on HTML form elements and the `DataBind` and `DataComputed` components on other elements that need to be updated accordingly. The `DataEffect` component can be used to execute side effects when the value changes.
+### Basic usage to transform a value
+
+Use the `DataComputed` component alongside the [`DataModel` component](../DataModel/index.md) to create a two-way binding with a computed value.
+
+::: code-group
+
+```html [index.html]
+<!-- Two ways binding on the "text" group for the input's value -->
+<input type="text" data-component="DataModel" data-option-group="text" />
+
+<!-- Update the text content with the input's value in UPPERCASE -->
+<div
+  data-component="DataComputed"
+  data-option-group="text"
+  data-option-compute="value.toUpperCase()">
+  ...
+</div>
+```
+
+```js [app.js] twoslash
+import { registerComponent } from '@studiometa/js-toolkit';
+import { DataModel, DataComputed } from '@studiometa/ui';
+
+registerComponent(DataModel);
+registerComponent(DataComputed);
+```
+
+:::
 
 <PreviewPlayground
-  :html="() => import('./stories/basic.twig')"
-  :script="() => import('./stories/app.js?raw')"
+  height="300px"
+  zoom="1"
+  header="hidden"
+  :html="() => import('./stories/uppercase.twig')"
+  :script="() => import('./stories/uppercase.js?raw')"
+  />
+
+
+### Double computed value
+
+<PreviewPlayground
+  :html="() => import('./stories/compute-example.twig')"
+  :script="() => import('./stories/compute-example.js?raw')"
   />

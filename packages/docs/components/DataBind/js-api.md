@@ -3,7 +3,7 @@ title: DataBind JavaScript API
 outline: deep
 ---
 
-# DataBind JS API
+# JS API
 
 The `DataBind` component can be used to keep a value in sync between multiple DOM elements.
 
