@@ -14,7 +14,7 @@ export interface DataBindProps extends BaseProps {
  * DataBind class.
  * @link https://ui.studiometa.dev/-/components/DataBind/
  */
-export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base)<DataBindProps & T> {
+export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, 'data:')<DataBindProps & T> {
   static config: BaseConfig = {
     name: 'DataBind',
     options: {
