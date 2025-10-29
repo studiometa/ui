@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@iconify-json/octicon": "1.2.16",
-    "@shikijs/vitepress-twoslash": "3.13.0",
+    "@shikijs/vitepress-twoslash": "3.14.0",
     "@studiometa/playground": "0.2.1",
     "@studiometa/tailwind-config": "2.1.0",
     "@vueuse/components": "13.9.0",
