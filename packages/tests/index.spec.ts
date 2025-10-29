@@ -4,6 +4,7 @@ import * as components from '@studiometa/ui';
 test('components exports', () => {
   expect(Object.keys(components).toSorted()).toMatchInlineSnapshot(`
     [
+      "AbstractCarouselChild",
       "AbstractFrameTrigger",
       "AbstractPrefetch",
       "AbstractScrollAnimation",
@@ -15,6 +16,11 @@ test('components exports', () => {
       "AnchorNavLink",
       "AnchorNavTarget",
       "AnchorScrollTo",
+      "Carousel",
+      "CarouselBtn",
+      "CarouselDrag",
+      "CarouselItem",
+      "CarouselWrapper",
       "CircularMarquee",
       "Cursor",
       "DataBind",
@@ -34,6 +40,7 @@ test('components exports', () => {
       "FrameTarget",
       "FrameTriggerLoader",
       "Hoverable",
+      "Indexable",
       "LargeText",
       "LazyInclude",
       "Menu",
@@ -64,6 +71,7 @@ test('components exports', () => {
       "Transition",
       "animationScrollWithEase",
       "withDeprecation",
+      "withIndex",
       "withTransition",
     ]
   `);
