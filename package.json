@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@studiometa/prettier-config": "4.4.0",
-    "@typescript/native-preview": "7.0.0-dev.20251027.1",
+    "@typescript/native-preview": "7.0.0-dev.20251029.1",
     "esbuild": "0.25.11",
     "fast-glob": "3.3.3",
     "gzip-size": "7.0.0",
