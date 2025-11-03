@@ -22,6 +22,7 @@ test('components exports', () => {
       "DataEffect",
       "DataModel",
       "Draggable",
+      "Fetch",
       "Figure",
       "FigureShopify",
       "FigureTwicpics",
