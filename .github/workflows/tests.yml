@@ -11,12 +11,12 @@ jobs:
   unit_node:
     runs-on: macos-latest
     env:
-      NODE_VERSION: 22
+      NODE_VERSION: 24
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
       - name: Get npm cache directory
         id: npm-cache-dir
@@ -58,7 +58,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
 
       - run: npx bun install
