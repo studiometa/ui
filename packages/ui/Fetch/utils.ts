@@ -21,3 +21,10 @@ export function adoptNewScript(script: HTMLScriptElement) {
 
   script.replaceWith(newScript);
 }
+
+export function getScripts(el: HTMLElement): Set<HTMLScriptElement> {
+  return el.tagName === 'SCRIPT'
+    ? new Set([el as HTMLScriptElement])
+    : // @ts-expect-error querySelectoAll is iterable.
+      new Set(el.querySelectorAll('script'));
+}

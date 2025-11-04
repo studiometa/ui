@@ -1,7 +1,7 @@
 import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { domScheduler, historyPush, isFunction } from '@studiometa/js-toolkit/utils';
 import morphdom from 'morphdom';
-import { adoptNewScripts } from './utils.js';
+import { adoptNewScripts, getScripts } from './utils.js';
 
 export interface FetchProps extends BaseProps {
   $el: HTMLAnchorElement | HTMLFormElement;
@@ -13,6 +13,7 @@ export interface FetchProps extends BaseProps {
     requestInit: RequestInit;
     headers: Record<string, string>;
     mode: 'replace' | 'prepend' | 'append' | 'morph';
+    selector: string;
   };
 }
 
@@ -70,6 +71,10 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
       },
       requestInit: Object,
       headers: Object,
+      selector: {
+        type: String,
+        default: '[id]',
+      },
     },
   };
 
@@ -265,21 +270,18 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
    */
   __updateDOM(fragment: Document) {
     const { FETCH_MODES } = this.constructor;
-    const { mode } = this.$options;
+    const { mode, selector } = this.$options;
 
-    // @ts-expect-error querySelectoAll is iterable.
-    for (const newElement of fragment.querySelectorAll('[id]')) {
-      const oldElement: HTMLElement = document.querySelector(`[id="${newElement.id}"]`);
+    // @ts-expect-error querySelectorAll is iterable in the browser
+    for (const newElement of fragment.querySelectorAll<HTMLElement>(selector)) {
+      const oldElement: HTMLElement = document.querySelector<HTMLElement>(
+        `[id="${newElement.id}"]`,
+      );
 
       if (!oldElement) {
         continue;
       }
 
-      const getScripts = (el: HTMLElement): Set<HTMLScriptElement> =>
-        el.tagName === 'SCRIPT'
-          ? new Set([el as HTMLScriptElement])
-          : // @ts-expect-error querySelectoAll is iterable.
-            new Set(el.querySelectorAll('script'));
       const oldScripts = getScripts(oldElement);
 
       switch (mode) {
