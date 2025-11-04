@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.4.0](https://github.com/studiometa/ui/compare/1.3.0..1.4.0) (2025-11-04)
+
+### Added
+
+- Add a [`Fetch` component](https://ui.studiometa.dev/-/components/Fetch/) ([#448](https://github.com/studiometa/ui/issues/448), [#465](https://github.com/studiometa/ui/pull/465), [0b67c03](https://github.com/studiometa/ui/commit/0b67c03))
+
+### Fixed
+
+- Fix compatibility with Tailwind v4 ([#466](https://github.com/studiometa/ui/pull/466), [94b4e05](https://github.com/studiometa/ui/commit/94b4e05))
+
 ## [v1.3.0](https://github.com/studiometa/ui/compare/1.2.0..1.3.0) (2025-10-29)
 
 ### Added

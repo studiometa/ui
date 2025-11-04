@@ -12,8 +12,8 @@
     "moduleResolution": "node",
     "skipLibCheck": true,
     "paths": {
-      "#private/*": ["./*"],
-      "#test-utils": ["../tests/__utils__/index.ts"]
+      "#private/*": ["./packages/ui/*"],
+      "#test-utils": ["./packages/tests/__utils__/index.ts"]
     }
   },
   "include": [

@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-workspace",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "type": "module",
   "private": true,
   "workspaces": [
@@ -34,8 +34,7 @@
     "fast-glob": "3.3.3",
     "gzip-size": "7.0.0",
     "oxlint": "1.24.0",
-    "prettier": "3.6.2",
-    "typescript": "5.9.3"
+    "prettier": "3.6.2"
   },
   "dependencies": {
     "patch-package": "8.0.1"

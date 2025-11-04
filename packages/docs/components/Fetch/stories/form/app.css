@@ -1,0 +1,44 @@
+html.dark {
+  background-color: #222;
+  color: #eee;
+}
+
+body {
+  padding: 1rem;
+}
+
+@keyframes loader {
+  0% { transform: rotate(0) }
+  100% { transform: rotate(720deg) }
+}
+
+.animate-loader {
+  animation: loader 1s ease-in-out infinite;
+}
+
+#target strong {
+  view-transition-name: target;
+}
+
+::view-transition-old(target) {
+  animation: transition-out 0.3s ease-in-out;
+}
+
+
+::view-transition-new(target) {
+  animation: transition-in 0.3s ease-in-out;
+}
+
+@keyframes transition-out {
+  to {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes transition-in {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
