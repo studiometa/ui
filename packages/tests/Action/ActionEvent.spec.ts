@@ -106,7 +106,7 @@ describe('The Action component', () => {
 
   it('should warn when the effect throws an error', async () => {
     const action = new Action(h('div'));
-    const warnSpy = vi.spyOn(action, '$warn');
+    const warnSpy = vi.spyOn(action, '$warn', 'get');
     const actionEvent = new ActionEvent(action, 'click', '() => consol.log()');
     actionEvent.attachEvent();
     action.$el.dispatchEvent(new Event('click'));

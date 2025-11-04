@@ -21,7 +21,7 @@ export function intersectionObserverBeforeAllCallback() {
    * know which elements to trigger the event on.
    */
   globalThis.IntersectionObserver = vi.fn(
-    (cb: IntersectionObserverCallback, options: IntersectionObserverInit = {}) => {
+    function (cb: IntersectionObserverCallback, options: IntersectionObserverInit = {}) {
       const item: Item = {
         callback: cb,
         elements: new Set(),

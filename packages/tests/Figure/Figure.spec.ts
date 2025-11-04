@@ -46,7 +46,7 @@ describe('The Figure component', () => {
   it('should warn if the `img` ref is misconfigured', async () => {
     const div = h('div');
     const instance = new Figure(div);
-    const warnSpy = vi.spyOn(instance, '$warn');
+    const warnSpy = vi.spyOn(instance, '$warn', 'get');
     mockIsIntersecting(div, true);
     await wait(10);
     expect(warnSpy).toHaveBeenCalledOnce();
