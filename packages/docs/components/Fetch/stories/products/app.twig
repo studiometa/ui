@@ -1,0 +1,221 @@
+{% set count = 12 %}
+
+<div
+  data-component="Action"
+  data-option-on:fetch-before="Transition(#global-loader) -> target.enter()"
+  data-option-on:fetch-after="Transition(#global-loader) -> target.leave()">
+  <header class="flex gap-4 justify-between p-4">
+    <h1 class="font-bold">My shop</h1>
+    <div
+      data-component="Transition"
+      data-option-enter-from="opacity-0 scale-0"
+      data-option-enter-active="transition duration-500 ease-out-expo"
+      data-option-leave-active="transition duration-500 ease-in-expo"
+      data-option-leave-to="opacity-0 scale-0"
+      data-option-leave-keep
+      class="flex items-center mr-auto opacity-0 scale-0"
+      id="global-loader">
+      {{
+        include(
+          '@ui/Icon/Icon.twig',
+          {
+            name: 'svg-spinners:ring-resize',
+            attr: {
+              class: 'block h-[0.6lh] [&>svg]:w-full [&>svg]:h-full'
+            }
+          }
+        )
+      }}
+    </div>
+    {% embed '@ui/Panel/Panel.twig'
+      with {
+        position: 'right',
+        attr: {
+          class: 'z-10'
+        },
+        overlay_attr: {
+          class: '-z-10 absolute inset-0 bg-white/20 dark:bg-black/50'
+        },
+        container_attr: {
+          class: 'bg-white dark:bg-zinc-800 h-screen border-l border-zinc-200 dark:border-zinc-700'
+        },
+        content_attr: {
+          class: 'p-8 w-screen max-w-sm'
+        }
+      } only
+    %}
+      {% block open %}
+        <button
+          data-ref="open[]"
+          href="#/api?cart"
+          class="inline-flex gap-2 items-center border-b">
+          <span id="cart-summary">Cart: 0</span>
+        </button>
+      {% endblock %}
+      {% block close %}
+        <div class="flex justify-end p-8 pb-0">
+          <button
+            data-ref="close[]"
+            class="inline-flex gap-2 items-center border-b">
+            Close
+          </button>
+        </div>
+      {% endblock %}
+      {% block content %}
+        <div id="cart-content">
+          <p class="opacity-50">
+            Your cart is empty.
+          </p>
+        </div>
+      {% endblock %}
+    {% endembed %}
+  </header>
+  <main class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4">
+    {% for article in 1..count %}
+      {% set price = random(1, 4) ~ '00 €' %}
+      <article class="relative grid gap-4">
+        {{
+          include(
+            '@ui/Figure/Figure.twig',
+            {
+              src: 'https://picsum.photos/seed/KEY/300/200'|replace({
+                KEY: loop.index + 10
+              }),
+              width: 300,
+              height: 200,
+              fit: 'cover',
+              attr: {
+                class: 'rounded overflow-hidden'
+              }
+            }
+          )
+        }}
+        <div class="flex gap-4 justify-between items-baseline">
+          <div>
+            <a
+              data-component="Action"
+              data-option-on:click.prevent
+              href="#"
+              class="inline-block border-b after:absolute after:inset-0">
+              Item #{{ loop.index }}
+            </a>
+            <br /> {{ price }}
+          </div>
+          <form
+            data-component="Fetch Action"
+            action="/api"
+            method="POST"
+            data-option-on:fetch-before="Transition(#add-to-cart-loader-{{
+            loop.index
+            }}) -> target.enter()"
+            data-option-on:fetch-after="Transition(#add-to-cart-loader-{{
+            loop.index
+            }}) -> target.leave()"
+            data-option-on:fetch-update="Panel -> target.open()"
+            class="flex items-center gap-2">
+            {%- set cart_content -%}
+              <span id="cart-summary">Cart: 1</span>
+              <div
+                id="cart-content"
+                data-option-enter-from="opacity-0"
+                data-option-enter-active="transition ease-in-out"
+                data-option-leave-active="transition ease-in-out"
+                data-option-leave-to="opacity-0">
+                <article class="flex justify-between gap-4">
+                  <div>
+                    <a
+                      data-component="Action"
+                      data-option-on:click.prevent
+                      href="#"
+                      class="inline-block border-b">
+                      Item #{{ loop.index }}
+                    </a>
+                  </div>
+                  <span class="ml-auto">{{ price }}</span>
+                  <form
+                    data-component="Fetch Action"
+                    data-option-on:fetch-before="Transition(#cart-loader) -> target.enter()"
+                    data-option-on:fetch-after="Transition(#cart-loader) -> target.leave()"
+                    action="/api"
+                    method="POST"
+                    class="flex items-center gap-2">
+                    <input type="hidden" name="wait" value="1" />
+                    <textarea class="hidden" readonly name="content">
+                      <span data-component="FrameTarget" id="cart-summary">
+                        Cart: 0
+                      </span><div
+                        id="cart-content"
+                        data-option-enter-from="opacity-0"
+                        data-option-enter-active="transition ease-in-out"
+                        data-option-leave-active="transition ease-in-out"
+                        data-option-leave-to="opacity-0">
+                        <p class="opacity-50">
+                          Your cart is empty.
+                        </p>
+                      </div>
+                    </textarea>
+                    <div
+                      data-component="Transition"
+                      id="cart-loader"
+                      data-option-enter-from="opacity-0 scale-0"
+                      data-option-enter-active="transition duration-500 ease-out-expo"
+                      data-option-leave-active="transition duration-500 ease-in-expo"
+                      data-option-leave-to="opacity-0 scale-0"
+                      data-option-leave-keep
+                      class="flex items-center mr-auto opacity-0 scale-0">
+                      {{
+                        include(
+                          '@ui/Icon/Icon.twig',
+                          {
+                            name: 'svg-spinners:ring-resize',
+                            attr: {
+                              class: 'block h-[0.6lh] [&>svg]:w-full [&>svg]:h-full'
+                            }
+                          }
+                        )
+                      }}
+                    </div>
+                    <button
+                      type="submit"
+                      class="relative inline-block border-b">
+                      Remove
+                    </button>
+                  </form>
+                </article>
+              </div>
+            {%- endset -%}
+            <input type="hidden" name="wait" value="1" />
+            <textarea readonly class="hidden" name="content">
+              {{ cart_content|e('html') }}
+            </textarea>
+
+            <div
+              data-component="Transition"
+              id="add-to-cart-loader-{{ loop.index }}"
+              data-option-enter-from="opacity-0 scale-0"
+              data-option-enter-active="transition duration-500 ease-out-expo"
+              data-option-leave-active="transition duration-500 ease-in-expo"
+              data-option-leave-to="opacity-0 scale-0"
+              data-option-leave-keep
+              class="flex items-center mr-auto opacity-0 scale-0">
+              {{
+                include(
+                  '@ui/Icon/Icon.twig',
+                  {
+                    name: 'svg-spinners:ring-resize',
+                    attr: {
+                      class: 'block h-[0.6lh] [&>svg]:w-full [&>svg]:h-full'
+                    }
+                  }
+                )
+              }}
+            </div>
+            <button type="submit" class="relative inline-block border-b">
+              Add to cart
+            </button>
+          </form>
+        </div>
+      </article>
+    {% endfor %}
+  </main>
+</div>
