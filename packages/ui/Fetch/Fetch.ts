@@ -1,6 +1,7 @@
 import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { domScheduler, historyPush, isFunction } from '@studiometa/js-toolkit/utils';
 import morphdom from 'morphdom';
+import { adoptNewScripts  } from './utils.js';
 
 export interface FetchProps extends BaseProps {
   $el: HTMLAnchorElement | HTMLFormElement;
@@ -300,7 +301,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
           ? new Set([newElement as HTMLScriptElement])
           : new Set(newElement.querySelectorAll('script'));
 
-      this.adoptNewScripts(newScripts, oldScripts);
+      adoptNewScripts(newScripts, oldScripts);
     }
   }
 
@@ -343,29 +344,8 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
   /**
    * Handle errors.
    */
-  async error(url: URL, requestInit: RequestInit, error: Error) {
+  error(url: URL, requestInit: RequestInit, error: Error) {
     this.$log('error', url, requestInit, error);
     this.$emit(this.constructor.FETCH_EVENTS.ERROR, this, url, requestInit, error);
-  }
-
-  adoptNewScripts(scripts: Set<HTMLScriptElement>, oldScripts: Set<HTMLScriptElement>) {
-    for (const script of scripts) {
-      if (oldScripts.has(script)) continue;
-      this.adoptNewScript(script);
-    }
-  }
-
-  adoptNewScript(script: HTMLScriptElement) {
-    const newScript = document.createElement('script');
-
-    for (const attribute of script.getAttributeNames()) {
-      newScript.setAttribute(attribute, script.getAttribute(attribute));
-    }
-
-    if (script.textContent) {
-      newScript.textContent = script.textContent;
-    }
-
-    script.replaceWith(newScript);
   }
 }
