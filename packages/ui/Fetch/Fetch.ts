@@ -1,7 +1,7 @@
 import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { domScheduler, historyPush, isFunction } from '@studiometa/js-toolkit/utils';
 import morphdom from 'morphdom';
-import { adoptNewScripts  } from './utils.js';
+import { adoptNewScripts } from './utils.js';
 
 export interface FetchProps extends BaseProps {
   $el: HTMLAnchorElement | HTMLFormElement;
@@ -269,39 +269,38 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
 
     // @ts-expect-error querySelectoAll is iterable.
     for (const newElement of fragment.querySelectorAll('[id]')) {
-      const oldElement = document.querySelector(`[id="${newElement.id}"]`);
+      const oldElement: HTMLElement = document.querySelector(`[id="${newElement.id}"]`);
+
       if (!oldElement) {
         continue;
       }
 
-      const oldScripts: Set<HTMLScriptElement> =
-        newElement.tagName === 'SCRIPT'
-          ? new Set([oldElement as HTMLScriptElement])
+      const getScripts = (el: HTMLElement): Set<HTMLScriptElement> =>
+        el.tagName === 'SCRIPT'
+          ? new Set([el as HTMLScriptElement])
           : // @ts-expect-error querySelectoAll is iterable.
-            new Set(oldElement.querySelectorAll('script'));
+            new Set(el.querySelectorAll('script'));
+      const oldScripts = getScripts(oldElement);
 
       switch (mode) {
         case FETCH_MODES.APPEND:
           oldElement.append(...newElement.childNodes);
+          adoptNewScripts(getScripts(oldElement), oldScripts);
           break;
         case FETCH_MODES.PREPEND:
           oldElement.prepend(...newElement.childNodes);
+          adoptNewScripts(getScripts(oldElement), oldScripts);
           break;
         case FETCH_MODES.MORPH:
           morphdom(oldElement, newElement);
+          adoptNewScripts(getScripts(oldElement), oldScripts);
           break;
         case FETCH_MODES.REPLACE:
         default:
           oldElement.replaceWith(newElement);
+          adoptNewScripts(getScripts(newElement), oldScripts);
           break;
       }
-
-      const newScripts: Set<HTMLScriptElement> =
-        newElement.tagName === 'SCRIPT'
-          ? new Set([newElement as HTMLScriptElement])
-          : new Set(newElement.querySelectorAll('script'));
-
-      adoptNewScripts(newScripts, oldScripts);
     }
   }
 
