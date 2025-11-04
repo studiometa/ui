@@ -39,13 +39,14 @@
 
 {% set theme_primary = [
   'text-white bg-black dark:text-black dark:bg-white',
-  'hover:bg-opacity-75 disabled:bg-opacity-50'
+  'hover:bg-black/75 dark:hover:bg-white/75',
+  'disabled:bg-black/50 dark:disabled:bg-white/50',
 ] %}
 
 {% set theme_secondary = [
-  'ring ring-inset ring-2 ring-black dark:ring-white ring-opacity-25 dark:ring-opacity-25',
+  'ring ring-inset ring-2 ring-black/25 dark:ring-white/25',
   {
-    'hover:ring-opacity-100': (attr is defined and attr.disabled is not defined)
+    'hover:ring-black dark:hover:ring-white': (attr is defined and attr.disabled is not defined)
       or attr is not defined
   }
 ] %}

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix compatibility with Tailwind v4 ([#466](https://github.com/studiometa/ui/pull/466), [94b4e05](https://github.com/studiometa/ui/commit/94b4e05))
+
 ## [v1.3.0](https://github.com/studiometa/ui/compare/1.2.0..1.3.0) (2025-10-29)
 
 ### Added

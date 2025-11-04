@@ -87,6 +87,7 @@ export class Panel<T extends BaseProps = BaseProps> extends Modal<T & PanelProps
         },
         to: {
           transform: 'none',
+          translate: 'none',
         },
       },
       'keep',
@@ -117,6 +118,7 @@ export class Panel<T extends BaseProps = BaseProps> extends Modal<T & PanelProps
         {
           from: {
             transform: 'none',
+            translate: 'none',
           },
           to: {
             transform: this.containerOffset,
