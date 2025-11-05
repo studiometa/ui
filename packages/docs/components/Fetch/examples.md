@@ -38,3 +38,10 @@ Modes are configured with the [`data-option-mode` attribute](./js-api.md#mode).
   :html="() => import('./stories/products/app.twig')"
   :script="() => import('./stories/products/app.js?raw')"
   />
+
+## Error handling
+
+<PreviewPlayground
+  :html="() => import('./stories/error/app.twig')"
+  :script="() => import('./stories/error/app.ts?raw')"
+  />

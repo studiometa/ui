@@ -35,9 +35,7 @@ Given the following HTML:
 And the following response from the `/some-content` endpoint:
 
 ```html
-<div id="content">
-  Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-</div>
+<div id="content">Lorem ipsum dolor sit amet, consectetur adipisicing elit.</div>
 
 Some extra content.
 ```
@@ -48,7 +46,8 @@ Clicking on the link will dispatch a background fetch request and will replace t
 <a data-component="Fetch" href="/some-content">Click me</a>
 
 <div id="content">
-  Lorem ipsum dolor sit amet, consectetur adipisicing elit. <!-- [!code ++] -->
+  Lorem ipsum dolor sit amet, consectetur adipisicing elit.
+  <!-- [!code ++] -->
 </div>
 ```
 
@@ -85,7 +84,7 @@ Use the [`Action`](../Action/index.md) and [`Transition`](../Transition/index.md
 <div id="content"></div>
 ```
 
-```js twoslash [app.js]
+```js twoslash [app.ts]
 import { registerComponent } from '@studiometa/js-toolkit';
 import { Action, Fetch, Transition } from '@studiometa/ui';
 
@@ -105,11 +104,9 @@ The [events](./js-api.md#events) sent by the `Fetch` component are configured to
   data-component="Action"
   data-option-on:before-fetch="Transition(#fetch-loader) -> target.enter()"
   data-option-on:after-fetch="Transition(#fetch-loader) -> target.leave()">
-  ...
-    ...
-      <a data-component="Fetch" href="/page/2">Next page</a>
-    ...
-  ...
+  ... ...
+  <a data-component="Fetch" href="/page/2">Next page</a>
+  ... ...
 </main>
 
 <div
@@ -132,7 +129,6 @@ The `Fetch` component is compatible with the [View Transition API](https://devel
   animation: transition-out 1s ease-in-out;
 }
 
-
 ::view-transition-new(root) {
   animation: transition-in 1s ease-in-out;
 }
@@ -153,3 +149,29 @@ The `Fetch` component is compatible with the [View Transition API](https://devel
 ::: tip Disabling View Transitions
 You can disable view transitions with the [`data-option-no-view-transition` attribute](./js-api.md#viewtransition).
 :::
+
+### Error handling
+
+The `Fetch` components catches request errors and emits a [`fetch-error` event](./js-api.md#fetch-error) which can be used to display meaningful information.
+
+::: code-group
+
+```html [index.html] {3}
+<main
+  data-component="Action"
+  data-option-on:fetch-error="alert(event.detail[0].error)">
+  <a href="/" data-component="Fetch">Home</a>
+</main>
+```
+
+```js twoslash [app.ts]
+import { registerComponent } from '@studiometa/js-toolkit';
+import { Action, Fetch } from '@studiometa/ui';
+
+registerComponent(Action);
+registerComponent(Fetch);
+```
+
+:::
+
+See the [error handling example](./examples.md#error-handling) for more detailed usage.
