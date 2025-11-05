@@ -147,11 +147,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
       },
     };
 
-    if (headerRefs) {
-      for (const header of headerRefs) {
-        if (header.dataset.name && header.value) {
-          normalizedRequestInit.headers[header.dataset.name] = header.value;
-        }
+    for (const header of headerRefs) {
+      if (header.dataset.name && header.value) {
+        normalizedRequestInit.headers[header.dataset.name] = header.value;
       }
     }
 
