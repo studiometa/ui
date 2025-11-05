@@ -111,6 +111,20 @@ To avoid adding the header to the form data, use the `data-name` attribute to sp
 
 The example above will add a `x-my-token: some-not-sensible-token` header to the triggered request.
 
+## Methods
+
+### `abort(reason?: any)`
+
+Abort the current request.
+
+**Parameters**
+
+- `reason` (`any`): the reason why the operation was aborted
+
+::: tip
+Using an `Error` instance as the `reason` parameter of the `abort(reason?: any)` method will trigger the [`fetch-error` event](#fetch-error) along the [`fetch-abort` event](#fetch-abort).
+:::
+
 ## Events
 
 All events from the `Fetch` component bubble up the DOM tree, so they can be listened to from any parent element.
@@ -207,5 +221,5 @@ Emitted when the fetch request has been aborted.
   - `instance` (`Fetch`): the `Fetch` instance emitting the event
   - `url` (`URL`): the URL that was fetched
   - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
-  - `error` (`Error`): the error object thrown by the failing request
+  - `reason` (`any`): the reason the request was aborted
 

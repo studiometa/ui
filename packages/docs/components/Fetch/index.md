@@ -157,9 +157,7 @@ The `Fetch` components catches request errors and emits a [`fetch-error` event](
 ::: code-group
 
 ```html [index.html] {3}
-<main
-  data-component="Action"
-  data-option-on:fetch-error="alert(event.detail[0].error)">
+<main data-component="Action" data-option-on:fetch-error="alert(event.detail[0].error)">
   <a href="/" data-component="Fetch">Home</a>
 </main>
 ```
@@ -174,4 +172,34 @@ registerComponent(Fetch);
 
 :::
 
-See the [error handling example](./examples.md#error-handling) for more detailed usage.
+See the [error handling example](./examples.md#error-handling) for detailed usage.
+
+### Cancel a request
+
+The [`abort` method](./js-api.md#abort-reason-any) can be used to cancel a pending request.
+
+::: code-group
+
+```html [index.html] {3,7-8}
+<main
+  data-component="Action"
+  data-option-on:fetch-abort="alert('Request was aborted')">
+  <a href="/" data-component="Fetch">Home</a>
+
+  <button
+    data-component="Action"
+    data-option-on:click="Fetch -> target.abort()">
+    Cancel request
+  </button>
+</main>
+```
+
+```js twoslash [app.ts]
+import { registerComponent } from '@studiometa/js-toolkit';
+import { Action, Fetch } from '@studiometa/ui';
+
+registerComponent(Action);
+registerComponent(Fetch);
+```
+
+See the [cancelling a request example](./examples.md#cancelling-a-request) for detailed usage.
