@@ -51,8 +51,10 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
 
     if (on) {
       const { target, effect } = this.$options;
-      const effectDefinition = target ? `${target}${ActionEvent.effectSeparator}${effect}` : effect;
-      this.__actionEvents.add(new ActionEvent(this, on, effectDefinition));
+      if (effect) {
+        const effectDefinition = target ? `${target}${ActionEvent.effectSeparator}${effect}` : effect;
+        this.__actionEvents.add(new ActionEvent(this, on, effectDefinition));
+      }
     }
 
     return this.__actionEvents;
