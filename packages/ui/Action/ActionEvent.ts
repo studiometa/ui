@@ -4,7 +4,6 @@ import { isFunction } from '@studiometa/js-toolkit/utils';
 
 /**
  * Extract component name and an optional additional selector from a string.
- * @type {RegExp}
  */
 const TARGET_REGEX = /([a-zA-Z]+)(\((.*)\))?/;
 
@@ -97,7 +96,7 @@ export class ActionEvent<T extends Base> {
     if (!effectCache.has(effectDefinition)) {
       effectCache.set(
         effectDefinition,
-        new Function('ctx', 'event', 'target', 'action', 'self', `return ${effectDefinition}`),
+        new Function('ctx', 'event', 'target', 'action', 'self', '$el', `return ${effectDefinition}`),
       );
     }
 
@@ -165,15 +164,18 @@ export class ActionEvent<T extends Base> {
    * Execute the effect for all targets.
    */
   private executeEffect(targets: Array<Record<string, Base>>, effect: Function, event: Event) {
+    const { action } = this;
+
     for (const target of targets) {
       try {
         const [currentTarget] = Object.values(target).flat();
-        const value = effect(target, event, currentTarget, this.action, this.action);
+        const args = [target, event, currentTarget, action, action, currentTarget.$el];
+        const value = effect.apply(action.$el, args);
         if (isFunction(value)) {
-          value(target, event, currentTarget, this.action, this.action);
+          value.apply(action.$el, args);
         }
       } catch (err) {
-        this.action.$warn(err);
+        action.$warn(err);
       }
     }
   }
