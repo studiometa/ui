@@ -337,6 +337,30 @@ describe('The Fetch class', () => {
     });
   });
 
+  describe('abort method', () => {
+    it('should abort the current request', async () => {
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const updateSpy = vi.spyOn(fetch, 'update');
+
+      const clientSpy = vi.fn(
+        (url, { signal }) =>
+          new Promise((resolve, reject) => {
+            signal.addEventListener('abort', () => {
+              reject(new DOMException('Aborted', 'AbortError'));
+            });
+          }),
+      );
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+
+      await mount(fetch);
+      setTimeout(() => fetch.abort(), 1);
+      await fetch.fetch(new URL('https://example.com'));
+
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('update method', () => {
     it('should emit before-update event', async () => {
       const anchor = h('a', { href: 'https://example.com' });
@@ -746,17 +770,16 @@ describe('The Fetch class', () => {
       expect(fn).toHaveBeenCalled();
     });
 
-    it('should emit fetch-abort on abort error', async () => {
+    it('should emit fetch-abort on abort', async () => {
       const anchor = h('a', { href: 'https://example.com' });
       const fetch = new Fetch(anchor);
       const fn = vi.fn();
       fetch.$on('fetch-abort', (event: CustomEvent) => fn(...event.detail));
 
-      const abortController = new AbortController();
       const clientSpy = vi.fn(
-        () =>
+        (url, { signal }) =>
           new Promise((resolve, reject) => {
-            abortController.signal.addEventListener('abort', () => {
+            signal.addEventListener('abort', () => {
               reject(new DOMException('Aborted', 'AbortError'));
             });
           }),
@@ -764,7 +787,7 @@ describe('The Fetch class', () => {
       vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
 
       await mount(fetch);
-      setTimeout(() => abortController.abort(), 1);
+      setTimeout(() => fetch.abort(), 1);
       await fetch.fetch(new URL('https://example.com'));
 
       expect(fn).toHaveBeenCalled();
