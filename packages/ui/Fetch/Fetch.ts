@@ -274,9 +274,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
 
     // @ts-expect-error querySelectorAll is iterable in the browser
     for (const newElement of fragment.querySelectorAll<HTMLElement>(selector)) {
-      const oldElement: HTMLElement = document.querySelector<HTMLElement>(
-        `[id="${newElement.id}"]`,
-      );
+      const oldElement = newElement.id && document.getElementById(newElement.id);
 
       if (!oldElement || oldElement === newElement) {
         continue;
