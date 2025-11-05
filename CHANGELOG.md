@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **Fetch:** remove an unnecessary check ([#469](https://github.com/studiometa/ui/pull/469), [74f8b9c](https://github.com/studiometa/ui/commit/74f8b9c))
+- **Fetch:** improve performance ([#469](https://github.com/studiometa/ui/pull/469), [8a389ae](https://github.com/studiometa/ui/commit/8a389ae))
+- **Fetch:** skip already updated elements ([#469](https://github.com/studiometa/ui/pull/469), [8aef550](https://github.com/studiometa/ui/commit/8aef550))
+
 ## [v1.4.0](https://github.com/studiometa/ui/compare/1.3.0..1.4.0) (2025-11-04)
 
 ### Added
