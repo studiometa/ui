@@ -260,8 +260,8 @@ describe('The Fetch class', () => {
       const fn = vi.fn();
       fetch.$on('fetch-before', (event: CustomEvent) => fn(...event.detail));
 
-      const clientSpy = vi.spyOn(fetch, 'client');
-      clientSpy.mockImplementation(() => Promise.resolve(new Response('content')));
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
 
       await mount(fetch);
       await fetch.fetch(new URL('https://example.com'));
@@ -275,8 +275,8 @@ describe('The Fetch class', () => {
       const fn = vi.fn();
       fetch.$on('fetch-fetch', (event: CustomEvent) => fn(...event.detail));
 
-      const clientSpy = vi.spyOn(fetch, 'client');
-      clientSpy.mockImplementation(() => Promise.resolve(new Response('content')));
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
 
       await mount(fetch);
       await fetch.fetch(new URL('https://example.com'));
@@ -290,8 +290,8 @@ describe('The Fetch class', () => {
       const fn = vi.fn();
       fetch.$on('fetch-after', (event: CustomEvent) => fn(...event.detail));
 
-      const clientSpy = vi.spyOn(fetch, 'client');
-      clientSpy.mockImplementation(() => Promise.resolve(new Response('content')));
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
 
       await mount(fetch);
       await fetch.fetch(new URL('https://example.com'));
@@ -302,8 +302,8 @@ describe('The Fetch class', () => {
     it('should call the client with correct URL and options', async () => {
       const anchor = h('a', { href: 'https://example.com' });
       const fetch = new Fetch(anchor);
-      const clientSpy = vi.spyOn(fetch, 'client');
-      clientSpy.mockImplementation(() => Promise.resolve(new Response('content')));
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
 
       await mount(fetch);
       const url = new URL('https://example.com/test');
@@ -319,8 +319,8 @@ describe('The Fetch class', () => {
       const anchor = h('a', { href: 'https://example.com' });
       const fetch = new Fetch(anchor);
 
-      const clientSpy = vi.spyOn(fetch, 'client');
-      clientSpy.mockImplementation(() => new Promise(() => {})); // Never resolves
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
 
       await mount(fetch);
 
@@ -334,6 +334,30 @@ describe('The Fetch class', () => {
       fetch.fetch(new URL('https://example.com'));
 
       expect(abortSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('abort method', () => {
+    it('should abort the current request', async () => {
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const updateSpy = vi.spyOn(fetch, 'update');
+
+      const clientSpy = vi.fn(
+        (url, { signal }) =>
+          new Promise((resolve, reject) => {
+            signal.addEventListener('abort', () => {
+              reject(new DOMException('Aborted', 'AbortError'));
+            });
+          }),
+      );
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+
+      await mount(fetch);
+      setTimeout(() => fetch.abort(), 1);
+      await fetch.fetch(new URL('https://example.com'));
+
+      expect(updateSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -679,19 +703,40 @@ describe('The Fetch class', () => {
       const fn = vi.fn();
       fetch.$on('fetch-error', (event: CustomEvent) => fn(...event.detail));
 
-      const clientSpy = vi.spyOn(fetch, 'client');
       const fetchError = new Error('Network error');
-      clientSpy.mockImplementation(() => Promise.reject(fetchError));
+      const clientSpy = vi.fn(() => Promise.reject(fetchError));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
 
       await mount(fetch);
       await fetch.fetch(new URL('https://example.com'));
 
-      expect(fn).toHaveBeenCalledWith(
-        expect.any(Fetch),
-        expect.any(URL),
-        expect.any(Object),
-        fetchError,
-      );
+      expect(fn).toHaveBeenCalledWith({
+        error: fetchError,
+        instance: expect.any(Fetch),
+        url: expect.any(URL),
+        requestInit: expect.any(Object),
+      });
+    });
+
+    it('should emit error event on response ko', async () => {
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const fn = vi.fn();
+      fetch.$on('fetch-error', (event: CustomEvent) => fn(...event.detail));
+
+      const fetchResponse = new Response('Network error', { status: 404 });
+      const clientSpy = vi.fn(() => Promise.resolve(fetchResponse));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+
+      await mount(fetch);
+      await fetch.fetch(new URL('https://example.com'));
+
+      expect(fn).toHaveBeenCalledWith({
+        error: expect.any(Error),
+        instance: expect.any(Fetch),
+        url: expect.any(URL),
+        requestInit: expect.any(Object),
+      });
     });
 
     it('should call error method on fetch failure', async () => {
@@ -699,9 +744,9 @@ describe('The Fetch class', () => {
       const fetch = new Fetch(anchor);
       const errorSpy = vi.spyOn(fetch, 'error');
 
-      const clientSpy = vi.spyOn(fetch, 'client');
       const fetchError = new Error('Network error');
-      clientSpy.mockImplementation(() => Promise.reject(fetchError));
+      const clientSpy = vi.fn(() => Promise.reject(fetchError));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
 
       await mount(fetch);
       await fetch.fetch(new URL('https://example.com'));
@@ -715,10 +760,34 @@ describe('The Fetch class', () => {
       const fn = vi.fn();
       fetch.$on('fetch-after', (event: CustomEvent) => fn(...event.detail));
 
-      const clientSpy = vi.spyOn(fetch, 'client');
-      clientSpy.mockImplementation(() => Promise.reject(new Error('Network error')));
+      const fetchError = new Error('Network error');
+      const clientSpy = vi.fn(() => Promise.reject(fetchError));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
 
       await mount(fetch);
+      await fetch.fetch(new URL('https://example.com'));
+
+      expect(fn).toHaveBeenCalled();
+    });
+
+    it('should emit fetch-abort on abort', async () => {
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const fn = vi.fn();
+      fetch.$on('fetch-abort', (event: CustomEvent) => fn(...event.detail));
+
+      const clientSpy = vi.fn(
+        (url, { signal }) =>
+          new Promise((resolve, reject) => {
+            signal.addEventListener('abort', () => {
+              reject(new DOMException('Aborted', 'AbortError'));
+            });
+          }),
+      );
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+
+      await mount(fetch);
+      setTimeout(() => fetch.abort(), 1);
       await fetch.fetch(new URL('https://example.com'));
 
       expect(fn).toHaveBeenCalled();
@@ -735,8 +804,8 @@ describe('The Fetch class', () => {
         fetch.$on(event as string, () => eventLog.push(event));
       }
 
-      const clientSpy = vi.spyOn(fetch, 'client');
-      clientSpy.mockImplementation(() => Promise.resolve(new Response('content')));
+      const clientSpy = vi.spyOn(fetch, 'client', 'get');
+      clientSpy.mockImplementation(() => () => Promise.resolve(new Response('content')));
 
       await mount(fetch);
       await fetch.fetch(new URL('https://example.com'));
@@ -757,7 +826,7 @@ describe('The Fetch class', () => {
       document.body.appendChild(anchor);
       document.body.addEventListener('fetch-before', fn);
 
-      const clientSpy = vi.spyOn(fetch, 'client');
+      const clientSpy = vi.spyOn(fetch, 'client', 'get');
       clientSpy.mockImplementation(() => Promise.resolve(new Response('content')));
 
       await mount(fetch);

@@ -111,6 +111,20 @@ To avoid adding the header to the form data, use the `data-name` attribute to sp
 
 The example above will add a `x-my-token: some-not-sensible-token` header to the triggered request.
 
+## Methods
+
+### `abort(reason?: any)`
+
+Abort the current request.
+
+**Parameters**
+
+- `reason` (`any`): the reason why the operation was aborted
+
+::: tip
+Using an `Error` instance as the `reason` parameter of the `abort(reason?: any)` method will trigger the [`fetch-error` event](#fetch-error) along the [`fetch-abort` event](#fetch-abort).
+:::
+
 ## Events
 
 All events from the `Fetch` component bubble up the DOM tree, so they can be listened to from any parent element.
@@ -119,74 +133,93 @@ All events from the `Fetch` component bubble up the DOM tree, so they can be lis
 
 Emitted before the fetch request is sent.
 
-**Parameters**
+**Payload**
 
-- `this` (`Fetch`): the `Fetch` instance emitting the event
-- `url` (`URL`): the URL that will be fetched
-- `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+- `ctx` (`Object`): context for the event with the following properties
+  - `instance` (`Fetch`): the `Fetch` instance emitting the event
+  - `url` (`URL`): the URL that will be fetched
+  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
 
 ### `fetch-fetch`
 
 Emitted when the fetch request is sent.
 
-**Parameters**
+**Payload**
 
-- `this` (`Fetch`): the `Fetch` instance emitting the event
-- `url` (`URL`): the URL that will be fetched
-- `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+- `ctx` (`Object`): context for the event with the following properties
+  - `instance` (`Fetch`): the `Fetch` instance emitting the event
+  - `url` (`URL`): the URL that will be fetched
+  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
 
 ### `fetch-after`
 
 Emitted after the fetch request is finished, wether it is successful or not.
 
-**Parameters**
+**Payload**
 
-- `this` (`Fetch`): the `Fetch` instance emitting the event
-- `url` (`URL`): the URL that was fetched
-- `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
-- `content` (`string | void`): the content of the response if the request succeeded
+- `ctx` (`Object`): context for the event with the following properties
+  - `instance` (`Fetch`): the `Fetch` instance emitting the event
+  - `url` (`URL`): the URL that was fetched
+  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+  - `content` (`string | void`): the content of the response if the request succeeded
 
 ### `fetch-update-before`
 
 Emitted before the DOM is updated.
 
-**Parameters**
+**Payload**
 
-- `this` (`Fetch`): the `Fetch` instance emitting the event
-- `url` (`URL`): the URL that was fetched
-- `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
-- `content` (`string`): the content of the response
+- `ctx` (`Object`): context for the event with the following properties
+  - `instance` (`Fetch`): the `Fetch` instance emitting the event
+  - `url` (`URL`): the URL that was fetched
+  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+  - `content` (`string`): the content of the response
 
 ### `fetch-update`
 
 Emitted when the DOM is updated.
 
-**Parameters**
+**Payload**
 
-- `this` (`Fetch`): the `Fetch` instance emitting the event
-- `url` (`URL`): the URL that was fetched
-- `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
-- `document` (`Document`): the content of the response, parsed with a [DOMParse](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser)
+- `ctx` (`Object`): context for the event with the following properties
+  - `instance` (`Fetch`): the `Fetch` instance emitting the event
+  - `url` (`URL`): the URL that was fetched
+  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+  - `document` (`Document`): the content of the response, parsed with a [DOMParse](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser)
 
 ### `fetch-update-after`
 
 Emitted when the DOM has been updated.
 
-**Parameters**
+**Payload**
 
-- `this` (`Fetch`): the `Fetch` instance emitting the event
-- `url` (`URL`): the URL that was fetched
-- `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
-- `document` (`Document`): the content of the response, parsed with a [DOMParse](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser)
+- `ctx` (`Object`): context for the event with the following properties
+  - `instance` (`Fetch`): the `Fetch` instance emitting the event
+  - `url` (`URL`): the URL that was fetched
+  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+  - `document` (`Document`): the content of the response, parsed with a [DOMParse](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser)
 
 ### `fetch-error`
 
 Emitted when the fetch request failed.
 
-**Parameters**
+**Payload**
 
-- `this` (`Fetch`): the `Fetch` instance emitting the event
-- `url` (`URL`): the URL that was fetched
-- `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
-- `error` (`Error`): the error object thrown by the failing request
+- `ctx` (`Object`): context for the event with the following properties
+  - `instance` (`Fetch`): the `Fetch` instance emitting the event
+  - `url` (`URL`): the URL that was fetched
+  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+  - `error` (`Error`): the error object thrown by the failing request
+
+### `fetch-abort`
+
+Emitted when the fetch request has been aborted.
+
+**Payload**
+
+- `ctx` (`Object`): context for the event with the following properties
+  - `instance` (`Fetch`): the `Fetch` instance emitting the event
+  - `url` (`URL`): the URL that was fetched
+  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+  - `reason` (`any`): the reason the request was aborted
 
