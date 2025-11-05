@@ -441,12 +441,50 @@ describe('The Fetch class', () => {
       const fetch = new Fetch(anchor);
 
       await mount(fetch);
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div><div id="other">other content</div>');
+      await fetch.update(
+        new URL('https://example.com'),
+        {},
+        '<div id="test">new content</div><div id="other">other content</div>',
+      );
 
       const element = document.getElementById('test');
       expect(element?.textContent).toBe('new content');
 
       container.remove();
+    });
+
+    it('should not inject already injected new DOM elements', async () => {
+      const container = h('div', { id: 'container' }, [
+        'container content',
+        h('div', { id: 'test' }, ['old content']),
+      ]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+
+      await mount(fetch);
+      await fetch.update(
+        new URL('https://example.com'),
+        {},
+        `
+          <div id="container" class="foo">
+            new container content
+            <div id="test">new content</div>
+            <div id="other">other content</div>
+          </div>`,
+      );
+
+      const newContainer = document.getElementById('container');
+      expect(newContainer.outerHTML).toMatchInlineSnapshot(`
+        "<div id="container" class="foo">
+                    new container content
+                    <div id="test">new content</div>
+                    <div id="other">other content</div>
+                  </div>"
+      `);
+
+      newContainer.remove();
     });
 
     it('should update DOM with replace mode (default)', async () => {
@@ -739,6 +777,10 @@ describe('The Fetch class', () => {
         dataName: 'x-custom',
         value: 'custom-value',
       });
+      const otherInput = h('input', {
+        dataRef: 'headers[]',
+        value: 'other-value',
+      });
       const form = h(
         'form',
         {
@@ -746,7 +788,7 @@ describe('The Fetch class', () => {
           method: 'post',
           dataOptionHeaders: { 'x-option': 'option-value' },
         },
-        [headerInput],
+        [headerInput, otherInput],
       );
       const fetch = new Fetch(form);
 
