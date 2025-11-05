@@ -83,14 +83,26 @@ describe('The Action component', () => {
     await reset();
   });
 
-  it('should trigger the effect with ctx, target, event, action and $el parameters', async () => {
+  it('should trigger the effect with the right parameters', async () => {
     const { action, foo, fooFn, reset } = await getContext({
       target: 'Foo',
       effect: 'target.fn(this, ...arguments)',
     });
     const event = new Event('click');
     action.$el.dispatchEvent(event);
-    expect(fooFn).toHaveBeenCalledWith(action.$el, { Foo: foo }, event, foo, action, action, foo.$el);
+    expect(fooFn).toHaveBeenCalledWith(action.$el, { Foo: foo }, event, foo, action, action, foo.$el, action);
+    await reset();
+  });
+
+  it('should trigger the effect with all instances mounted on the action element', async () => {
+    const { action, fooFn, reset, Bar, root } = await getContext({
+      target: 'Foo',
+      effect: 'target.fn(Action, Bar)',
+    });
+    const bar = new Bar(root);
+    await mount(bar);
+    action.$el.dispatchEvent(new Event('click'));
+    expect(fooFn).toHaveBeenCalledWith(action, bar);
     await reset();
   });
 
@@ -102,7 +114,7 @@ describe('The Action component', () => {
     const event = new Event('click');
     action.$el.dispatchEvent(event);
     console.info(fooFn.mock.calls.at(-1).length);
-    expect(fooFn).toHaveBeenCalledWith(action.$el, { Foo: foo }, event, foo, action, action, foo.$el);
+    expect(fooFn).toHaveBeenCalledWith(action.$el, { Foo: foo }, event, foo, action, action, foo.$el, action);
     await reset();
   });
 
