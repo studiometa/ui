@@ -364,4 +364,11 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
     this.$log('error', url, requestInit, error);
     this.$emit(this.constructor.FETCH_EVENTS.ERROR, { instance: this, url, requestInit, error });
   }
+
+  /**
+   * Abort the current request.
+   */
+  abort(reason?: any) {
+    this.__abortController.abort(reason);
+  }
 }
