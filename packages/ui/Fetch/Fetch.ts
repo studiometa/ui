@@ -278,7 +278,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
         `[id="${newElement.id}"]`,
       );
 
-      if (!oldElement) {
+      if (!oldElement || oldElement === newElement) {
         continue;
       }
 
