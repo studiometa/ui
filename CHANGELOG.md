@@ -6,11 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Fetch:** add an `abort(reason?: any)` method ([#470](https://github.com/studiometa/ui/pull/470), [8aaf46f](https://github.com/studiometa/ui/commit/8aaf46f))
+
 ### Changed
 
+- **Fetch:** improve error handling ([#470](https://github.com/studiometa/ui/pull/470), [028e4ca](https://github.com/studiometa/ui/commit/028e4ca))
 - **Fetch:** remove an unnecessary check ([#469](https://github.com/studiometa/ui/pull/469), [74f8b9c](https://github.com/studiometa/ui/commit/74f8b9c))
 - **Fetch:** improve performance ([#469](https://github.com/studiometa/ui/pull/469), [8a389ae](https://github.com/studiometa/ui/commit/8a389ae))
 - **Fetch:** skip already updated elements ([#469](https://github.com/studiometa/ui/pull/469), [8aef550](https://github.com/studiometa/ui/commit/8aef550))
+
+### Fixed
+
+- **Fetch:** fix default client ([#470](https://github.com/studiometa/ui/pull/470), [6aa32e0](https://github.com/studiometa/ui/commit/6aa32e0))
 
 ## [v1.4.0](https://github.com/studiometa/ui/compare/1.3.0..1.4.0) (2025-11-04)
 
