@@ -102,10 +102,16 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
   __abortController = new AbortController();
 
   /**
+   * Client.
+   * @internal
+   */
+  __client: typeof fetch;
+
+  /**
    * The client used for the fetch request.
    */
   get client(): typeof fetch {
-    return window.fetch.bind(window);
+    return (this.__client ??= window.fetch.bind(window));
   }
 
   /**
