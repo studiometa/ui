@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.5.0](https://github.com/studiometa/ui/compare/1.4.0..1.5.0) (2025-11-06)
+
 ### Added
 
 - **Action:** add support for `this` and `$el` parameters in effects (#468, [#471](https://github.com/studiometa/ui/pull/471), [9605b7b](https://github.com/studiometa/ui/commit/9605b7b))
