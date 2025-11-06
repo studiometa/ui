@@ -122,10 +122,14 @@ In the following example, the effect callback will only be triggered on the `Foo
 
 The `effect` option must be used to define a small piece of JavaScript that will be executed in the context of the current target. The following variables are available:
 
+- `this` (`HTMLElement`): the current element
 - `ctx` (`Record<name, Base>`): the current targeted component in an object with a uniq key being its name set in the static `config.name` property and the value being the component instance
 - `event` (`Event`): the event that triggered the action
 - `target` (`Base`): a direct reference to the current targeted component
 - `action` (`Base`): a direct reference to the current action component
+- `$el` (`HTMLElement`): a direct reference to the targeted element
+- `Action` (`Base`): a direct reference to the current action component
+- `<Name>` (`Base`): a direct reference to the `Name` component mounted on the current element
 
 #### Simple effect vs callback effect
 
@@ -144,6 +148,57 @@ The effect can also define an arrow function which will be executed as well. The
   Click me
 </button>
 ```
+
+#### Accessing the current element
+
+Use `this` to access the current element:
+
+```html {3-4}
+<button
+  data-component="Action"
+  data-option-effect="this.classList.toggle('bg-red')"
+  class="bg-red">
+  Click me
+</button>
+```
+
+#### Accessing the target element
+
+Use `$el` to access the current element:
+
+```html {3-4}
+<button
+  data-component="Action"
+  data-option-target="Target"
+  data-option-effect="$el.classList.toggle('bg-red')">
+  Click me
+</button>
+
+<div data-component="Target" class="bg-red">...</div>
+```
+
+#### Accessing the current instances mounted on the current element
+
+Use the name of the component mounted on the current element to get access to its instance.
+
+```html {3}
+<button
+  data-component="Action Transition"
+  data-option-effect="Transition.enter()">
+  Click me
+</button>
+```
+
+By default, the `Action` variabl will always refer to the current `Action` instance of the current element. The following example will log `true` when the button is clicked:
+
+```html {3}
+<button
+  data-component="Action"
+  data-option-effect="console.log(Action.$el === this)">
+  Click me
+</button>
+```
+
 
 #### Advanced usage with destructuration
 
