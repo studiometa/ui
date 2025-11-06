@@ -73,6 +73,16 @@ describe('The Fetch class', () => {
       expect(fetch.requestInit.body).toBeInstanceOf(FormData);
     });
 
+    it('should NOT include form data in requestInit for GET forms', async () => {
+      const input = h('input', { name: 'test', value: 'value' });
+      const form = h('form', { action: 'https://example.com/submit', method: 'get' }, [input]);
+      const fetch = new Fetch(form);
+      await mount(fetch);
+
+      expect(fetch.requestInit.method).toBe('get');
+      expect(fetch.requestInit.body).toBeUndefined();
+    });
+
     it('should have an `isLink` getter', async () => {
       const anchor = h('a', { href: 'https://example.com' });
       const form = h('form', { action: 'https://example.com' });

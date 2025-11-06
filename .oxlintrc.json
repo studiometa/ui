@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["vitest", "import", "promise", "regex", "jsdoc"],
+  "rules": {
+    "func-style": ["warn", "declaration"],
+    "no-floating-promises": "allow",
+    "no-default-export": "allow",
+    "no-ternary": "allow",
+    "sort-keys": "allow",
+    "no-named-export": "allow",
+    "no-unassigned-import": [
+      "warn",
+      {
+        "allow": ["**/*.css"]
+      }
+    ]
+  },
+  "settings": {
+    "jsdoc": {
+      "tagNamePreference": {
+        "link": "link"
+      }
+    },
+    "vitest": {
+      "typecheck": true
+    }
+  }
+}
