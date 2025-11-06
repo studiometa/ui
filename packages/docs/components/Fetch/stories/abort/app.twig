@@ -1,0 +1,118 @@
+{%- set page_b_content -%}
+  <main id="content" class="max-w-xl">
+    <h1 class="text-xl font-bold">Page B</h1>
+    <p class="my-4">
+      Hello world from page B!
+    </p>
+  </main>
+{%- endset -%}
+
+{%- set page_a_content -%}
+  <main id="content" class="max-w-xl">
+    <h1 class="text-xl font-bold">Page A</h1>
+    <p class="my-4">
+      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+      tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+      veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+      commodo consequat.
+    </p>
+  </main>
+{%- endset -%}
+
+<div
+  data-component="Action"
+  data-option-on:fetch-before="Transition(#loader) -> target.enter()"
+  data-option-on:fetch-after="Transition(#loader) -> target.leave()"
+  data-option-on:fetch-abort="DataBind(#toaster) -> target.value += `${event.detail[0].reason}\n`"
+  class="flex flex-col gap-4">
+  <nav class="flex items-center gap-4">
+    {{
+      include(
+        '@ui/Button/StyledButton.twig',
+        {
+          label: 'Page A',
+          href: twig_toolkit_url('/api').withQueryParameter(
+            'content',
+            page_a_content
+          ).withQueryParameter(
+            'wait',
+            2
+          ),
+          attr: {
+            data_component: 'Fetch'
+          }
+        }
+      )
+    }}
+
+    {{
+      include(
+        '@ui/Button/StyledButton.twig',
+        {
+          label: 'Page B',
+          href: twig_toolkit_url('/api').withQueryParameter(
+            'content',
+            page_b_content
+          ).withQueryParameter(
+            'wait',
+            2
+          ),
+          attr: {
+            data_component: 'Fetch'
+          }
+        }
+      )
+    }}
+
+    <div
+      id="loader"
+      data-component="Transition"
+      data-option-enter-from="opacity-0 scale-0"
+      data-option-leave-to="opacity-0 scale-0"
+      data-option-leave-keep
+      class="transition opacity-0 scale-0">
+      <div
+        class="w-4 h-4 border-2 rounded-full border-current border-t-transparent animate-spin"></div>
+    </div>
+  </nav>
+  <div class="flex items-center gap-4">
+    {{
+      include(
+        '@ui/Button/StyledButton.twig',
+        {
+          label: 'Cancel request',
+          theme: 'secondary',
+          icon: 'mdi:cancel',
+          attr: {
+            data_component: 'Action',
+            data_option_target: 'Fetch',
+            data_option_effect: 'target.abort()'
+          }
+        }
+      )
+    }}
+
+    {{
+      include(
+        '@ui/Button/StyledButton.twig',
+        {
+          label: 'Cancel request (custom reason)',
+          theme: 'secondary',
+          icon: 'mdi:cancel',
+          attr: {
+            data_component: 'Action',
+            data_option_target: 'Fetch',
+            data_option_effect: 'target.abort("Canceled by user.")'
+          }
+        }
+      )
+    }}
+  </div>
+  {{ page_a_content|raw }}
+</div>
+
+<div
+  data-component="DataBind"
+  data-option-group="toaster"
+  id="toaster"
+  class="whitespace-pre p-4 bg-zinc-100 rounded empty:hidden"></div>

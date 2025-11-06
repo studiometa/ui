@@ -4,7 +4,6 @@ import { isFunction } from '@studiometa/js-toolkit/utils';
 
 /**
  * Extract component name and an optional additional selector from a string.
- * @type {RegExp}
  */
 const TARGET_REGEX = /([a-zA-Z]+)(\((.*)\))?/;
 
@@ -93,15 +92,24 @@ export class ActionEvent<T extends Base> {
    */
   get effect() {
     const { effectDefinition } = this;
+    const keys = Array.from(this.instances.keys());
+    const cacheKey = effectDefinition + keys.join('');
 
-    if (!effectCache.has(effectDefinition)) {
-      effectCache.set(
-        effectDefinition,
-        new Function('ctx', 'event', 'target', 'action', 'self', `return ${effectDefinition}`),
-      );
+    if (!effectCache.has(cacheKey)) {
+      const args = [
+        'ctx',
+        'event',
+        'target',
+        'action',
+        'self',
+        '$el',
+        ...keys,
+        `return ${effectDefinition}`,
+      ];
+      effectCache.set(cacheKey, new Function(...args));
     }
 
-    return effectCache.get(effectDefinition) as Function;
+    return effectCache.get(cacheKey) as Function;
   }
 
   /**
@@ -138,6 +146,22 @@ export class ActionEvent<T extends Base> {
   }
 
   /**
+   * Get instances mounted on the action element.
+   * @internal
+   */
+  get instances() {
+    const { $el } = this.action;
+    const instances = new Map<string, Base>();
+    for (const instance of getInstances()) {
+      if (instance.$el === $el) {
+        instances.set(instance.$config.name, instance);
+      }
+    }
+
+    return instances;
+  }
+
+  /**
    * Handle the defined event and trigger the effect for each defined target.
    */
   handleEvent(event: Event) {
@@ -164,16 +188,27 @@ export class ActionEvent<T extends Base> {
   /**
    * Execute the effect for all targets.
    */
-  private executeEffect(targets: Array<Record<string, Base>>, effect: Function, event: Event) {
+  executeEffect(targets: Array<Record<string, Base>>, effect: Function, event: Event) {
+    const { action } = this;
+
     for (const target of targets) {
       try {
         const [currentTarget] = Object.values(target).flat();
-        const value = effect(target, event, currentTarget, this.action, this.action);
+        const args = [
+          target,
+          event,
+          currentTarget,
+          action,
+          action,
+          currentTarget.$el,
+          ...this.instances.values(),
+        ];
+        const value = effect.apply(action.$el, args);
         if (isFunction(value)) {
-          value(target, event, currentTarget, this.action, this.action);
+          value.apply(action.$el, args);
         }
       } catch (err) {
-        this.action.$warn(err);
+        action.$warn(err);
       }
     }
   }

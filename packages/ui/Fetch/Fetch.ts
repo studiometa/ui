@@ -44,6 +44,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
     UPDATE: 'fetch-update',
     AFTER_UPDATE: 'fetch-update-after',
     ERROR: 'fetch-error',
+    ABORT: 'fetch-abort',
   } as const;
 
   /**
@@ -102,10 +103,16 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
   __abortController = new AbortController();
 
   /**
+   * Client.
+   * @internal
+   */
+  __client: typeof fetch;
+
+  /**
    * The client used for the fetch request.
    */
   get client(): typeof fetch {
-    return window.fetch.bind(window);
+    return (this.__client ??= window.fetch.bind(window));
   }
 
   /**
@@ -147,11 +154,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
       },
     };
 
-    if (headerRefs) {
-      for (const header of headerRefs) {
-        if (header.dataset.name && header.value) {
-          normalizedRequestInit.headers[header.dataset.name] = header.value;
-        }
+    for (const header of headerRefs) {
+      if (header.dataset.name && header.value) {
+        normalizedRequestInit.headers[header.dataset.name] = header.value;
       }
     }
 
@@ -237,10 +242,14 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
    */
   async fetch(url: URL, requestInit: RequestInit = {}) {
     const { FETCH_EVENTS } = this.constructor;
-    this.$emit(FETCH_EVENTS.BEFORE_FETCH, this, url, requestInit);
+    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url, requestInit });
 
     this.__abortController.abort();
-    this.__abortController = new AbortController();
+    const newController = new AbortController();
+    newController.signal.addEventListener('abort', () => {
+      this.$emit(FETCH_EVENTS.ABORT, { instance: this, url, requestInit, reason: newController.signal.reason })
+    });
+    this.__abortController = newController;
     const init = {
       ...this.requestInit,
       ...requestInit,
@@ -248,18 +257,24 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
         ...this.requestInit.headers,
         ...requestInit.headers,
       },
-      signal: this.__abortController.signal,
+      signal: newController.signal,
     };
 
     this.$log('fetch', url, init);
-    this.$emit(FETCH_EVENTS.FETCH, this, url, requestInit);
+    this.$emit(FETCH_EVENTS.FETCH, { instance: this, url, requestInit: init });
 
     try {
-      const content = await this.client(url, init).then((response) => response.text());
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, this, url, requestInit, content);
+      const response = await this.client(url, init);
+
+      if (!response.ok) {
+        throw new Error(`Fetch failed with status ${response.status}`);
+      }
+
+      const content = await response.text();
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit, content });
       this.update(url, init, content);
     } catch (error) {
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, this, url, requestInit);
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit, error });
       this.error(url, init, error);
     }
   }
@@ -274,11 +289,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
 
     // @ts-expect-error querySelectorAll is iterable in the browser
     for (const newElement of fragment.querySelectorAll<HTMLElement>(selector)) {
-      const oldElement: HTMLElement = document.querySelector<HTMLElement>(
-        `[id="${newElement.id}"]`,
-      );
+      const oldElement = newElement.id && document.getElementById(newElement.id);
 
-      if (!oldElement) {
+      if (!oldElement || oldElement === newElement) {
         continue;
       }
 
@@ -314,7 +327,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
     const { history } = this.$options;
 
     this.$log('content', url, content);
-    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, this, url, requestInit, content);
+    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { instance: this, url, requestInit, content });
 
     const fragment = this.__domParser.parseFromString(content, 'text/html');
 
@@ -329,7 +342,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
       });
     }
 
-    this.$emit(FETCH_EVENTS.UPDATE, this, url, requestInit, fragment);
+    this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, fragment });
 
     if (isFunction(document.startViewTransition)) {
       await document.startViewTransition(() => {
@@ -339,14 +352,23 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
       this.__updateDOM(fragment);
     }
 
-    this.$emit(FETCH_EVENTS.AFTER_UPDATE, this, url, requestInit, fragment);
+    this.$emit(FETCH_EVENTS.AFTER_UPDATE, { instance: this, url, requestInit, fragment });
   }
 
   /**
    * Handle errors.
    */
   error(url: URL, requestInit: RequestInit, error: Error) {
+    if (error.name === 'AbortError') return;
+
     this.$log('error', url, requestInit, error);
-    this.$emit(this.constructor.FETCH_EVENTS.ERROR, this, url, requestInit, error);
+    this.$emit(this.constructor.FETCH_EVENTS.ERROR, { instance: this, url, requestInit, error });
+  }
+
+  /**
+   * Abort the current request.
+   */
+  abort(reason?: any) {
+    this.__abortController.abort(reason);
   }
 }

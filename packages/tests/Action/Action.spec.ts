@@ -83,30 +83,38 @@ describe('The Action component', () => {
     await reset();
   });
 
-  it('should trigger the effect with ctx, target, event and action parameters', async () => {
+  it('should trigger the effect with the right parameters', async () => {
     const { action, foo, fooFn, reset } = await getContext({
       target: 'Foo',
-      effect: 'target.fn(ctx, event, target, action)',
+      effect: 'target.fn(this, ...arguments)',
     });
     const event = new Event('click');
     action.$el.dispatchEvent(event);
-    const [target] = Array.from(action.actionEvents)[0].targets
-    expect(fooFn).toHaveBeenCalledWith(target, event, foo, action);
+    expect(fooFn).toHaveBeenCalledWith(action.$el, { Foo: foo }, event, foo, action, action, foo.$el, action);
     await reset();
   });
 
-  it('should trigger the effect returned function with ctx, target and event parameters', async () => {
-    const { action, foo, reset } = await getContext({
+  it('should trigger the effect with all instances mounted on the action element', async () => {
+    const { action, fooFn, reset, Bar, root } = await getContext({
       target: 'Foo',
-      effect:
-        '(_ctx, _event, _target) => target.$update(ctx, _ctx, event, _event, target, _target)',
+      effect: 'target.fn(Action, Bar)',
     });
-    const spy = vi.spyOn(foo, '$update');
+    const bar = new Bar(root);
+    await mount(bar);
+    action.$el.dispatchEvent(new Event('click'));
+    expect(fooFn).toHaveBeenCalledWith(action, bar);
+    await reset();
+  });
+
+  it('should trigger the effect returned function with the right parameters', async () => {
+    const { action, foo, fooFn, reset } = await getContext({
+      target: 'Foo',
+      effect: 'function() { target.fn(this, ...arguments); }',
+    });
     const event = new Event('click');
     action.$el.dispatchEvent(event);
-    const [target] = Array.from(action.actionEvents)[0].targets
-    expect(spy).toHaveBeenCalledWith(target, target, event, event, foo, foo);
-    spy.mockRestore();
+    console.info(fooFn.mock.calls.at(-1).length);
+    expect(fooFn).toHaveBeenCalledWith(action.$el, { Foo: foo }, event, foo, action, action, foo.$el, action);
     await reset();
   });
 
@@ -116,7 +124,7 @@ describe('The Action component', () => {
       'data-option-on:click': 'target.$el.id = "foo"',
     });
     const action = new Action(div);
-    await mount(action)
+    await mount(action);
     expect(action.$el.id).toBe('bar');
     action.$el.dispatchEvent(new Event('click'));
     expect(action.$el.id).toBe('foo');
@@ -134,7 +142,7 @@ describe('The Action component', () => {
       `,
     });
     const action = new Action(div);
-    await mount(action)
+    await mount(action);
     expect(action.$el.id).toBe('bar');
     action.$el.dispatchEvent(new Event('click'));
     expect(action.$el.id).toBe('foo');

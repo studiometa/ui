@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.5.0](https://github.com/studiometa/ui/compare/1.4.0..1.5.0) (2025-11-06)
+
+### Added
+
+- **Action:** add support for `this` and `$el` parameters in effects (#468, [#471](https://github.com/studiometa/ui/pull/471), [9605b7b](https://github.com/studiometa/ui/commit/9605b7b))
+- **Fetch:** add an `abort(reason?: any)` method ([#470](https://github.com/studiometa/ui/pull/470), [8aaf46f](https://github.com/studiometa/ui/commit/8aaf46f))
+- **Action:** expose instances from the action element to the effect function ([#468](https://github.com/studiometa/ui/issues/468), [#471](https://github.com/studiometa/ui/pull/471), [0e56735](https://github.com/studiometa/ui/commit/0e56735))
+
+### Changed
+
+- **Fetch:** improve error handling ([#470](https://github.com/studiometa/ui/pull/470), [028e4ca](https://github.com/studiometa/ui/commit/028e4ca))
+- **Fetch:** remove an unnecessary check ([#469](https://github.com/studiometa/ui/pull/469), [74f8b9c](https://github.com/studiometa/ui/commit/74f8b9c))
+- **Fetch:** improve performance ([#469](https://github.com/studiometa/ui/pull/469), [8a389ae](https://github.com/studiometa/ui/commit/8a389ae))
+- **Fetch:** skip already updated elements ([#469](https://github.com/studiometa/ui/pull/469), [8aef550](https://github.com/studiometa/ui/commit/8aef550))
+
+### Fixed
+
+- **Action:** fix a bug where empty effects were created ([#471](https://github.com/studiometa/ui/pull/471), [c222e2d](https://github.com/studiometa/ui/commit/c222e2d))
+- **Fetch:** fix default client ([#470](https://github.com/studiometa/ui/pull/470), [6aa32e0](https://github.com/studiometa/ui/commit/6aa32e0))
+
 ## [v1.4.0](https://github.com/studiometa/ui/compare/1.3.0..1.4.0) (2025-11-04)
 
 ### Added
