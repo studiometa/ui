@@ -162,8 +162,11 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
 
     if (isForm) {
       const form = $el as HTMLFormElement;
-      normalizedRequestInit.method = form.method;
-      normalizedRequestInit.body = new FormData(form);
+      const method = form.method.toLowerCase();
+      normalizedRequestInit.method = method;
+      if (method === 'post') {
+        normalizedRequestInit.body = new FormData(form);
+      }
     }
 
     return normalizedRequestInit;

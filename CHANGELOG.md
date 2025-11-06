@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.5.1](https://github.com/studiometa/ui/compare/1.5.0..1.5.1) (2025-11-06)
+
+### Fixed
+
+- **Fetch:** fix fetch GET request having a body ([#473](https://github.com/studiometa/ui/pull/473), [f8e9a15](https://github.com/studiometa/ui/commit/f8e9a15))
+
 ## [v1.5.0](https://github.com/studiometa/ui/compare/1.4.0..1.5.0) (2025-11-06)
 
 ### Added
