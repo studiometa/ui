@@ -16,7 +16,7 @@
     "build:pkg": "node scripts/build.js",
     "build:sizes": "node scripts/sizes.js",
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
-    "lint:static": "oxlint",
+    "lint:static": "oxlint --tsconfig ./tsconfig.json --type-aware",
     "lint:types": "tsgo --build tsconfig.lint.json",
     "lint:prettier": "prettier --check --cache packages/docs/**/*.md",
     "docs:dev": "npm run dev -w @studiometa/ui-docs",
@@ -34,6 +34,7 @@
     "fast-glob": "3.3.3",
     "gzip-size": "7.0.0",
     "oxlint": "1.25.0",
+    "oxlint-tsgolint": "0.5.0",
     "prettier": "3.6.2"
   },
   "dependencies": {
