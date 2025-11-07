@@ -294,6 +294,27 @@ describe('The Fetch class', () => {
       expect(fn).toHaveBeenCalled();
     });
 
+    it('should emit fetch-response event', async () => {
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const fn = vi.fn();
+      fetch.$on('fetch-response', (event: CustomEvent) => fn(...event.detail));
+
+      const response = new Response('content');
+      const clientSpy = vi.fn(() => Promise.resolve(response));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+
+      await mount(fetch);
+      await fetch.fetch(new URL('https://example.com'));
+
+      expect(fn).toHaveBeenCalledWith({
+        response,
+        instance: expect.any(Fetch),
+        url: expect.any(URL),
+        requestInit: expect.any(Object),
+      });
+    });
+
     it('should emit after-fetch event', async () => {
       const anchor = h('a', { href: 'https://example.com' });
       const fetch = new Fetch(anchor);
