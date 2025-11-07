@@ -781,6 +781,37 @@ describe('The Fetch class', () => {
       delete (document as any).startViewTransition;
       container.remove();
     });
+
+    it('should not use View Transition API if disabled', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com', dataOptionNoViewTransition: '' });
+      const fetch = new Fetch(anchor);
+
+      await mount(fetch);
+
+      const updateDOMSpy = vi.spyOn(fetch, '__updateDOM');
+      const transitionSpy = vi.fn((callback: () => void) => {
+        callback();
+        return {
+          ready: Promise.resolve(),
+        };
+      });
+      Object.defineProperty(document, 'startViewTransition', {
+        value: transitionSpy,
+        configurable: true,
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(transitionSpy).not.toHaveBeenCalled();
+      expect(updateDOMSpy).toHaveBeenCalled();
+
+      // Clean up
+      delete (document as any).startViewTransition;
+      container.remove();
+    });
   });
 
   describe('error handling', () => {
