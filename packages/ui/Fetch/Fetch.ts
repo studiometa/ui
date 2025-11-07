@@ -276,10 +276,10 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
       }
 
       const content = await response.text();
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit, content });
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit: init, content });
       this.update(url, init, content);
     } catch (error) {
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit, error });
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit: init, error });
       this.error(url, init, error);
     }
   }
