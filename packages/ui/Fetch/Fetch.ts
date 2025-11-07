@@ -1,4 +1,4 @@
-import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
+import { Base, type BaseConfig, type BaseProps, BaseInterface } from '@studiometa/js-toolkit';
 import { domScheduler, historyPush, isFunction } from '@studiometa/js-toolkit/utils';
 import morphdom from 'morphdom';
 import { adoptNewScripts, getScripts } from './utils.js';
@@ -14,6 +14,7 @@ export interface FetchProps extends BaseProps {
     headers: Record<string, string>;
     mode: 'replace' | 'prepend' | 'append' | 'morph';
     selector: string;
+    response: string;
   };
 }
 
@@ -26,7 +27,7 @@ export type FetchConstructor<T extends Fetch = Fetch> = {
  * Fetch class.
  * @link https://ui.studiometa.dev/-/components/Fetch/
  */
-export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps> {
+export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps> implements BaseInterface {
   /**
    * Declare the `this.constructor` type
    * @link https://github.com/microsoft/TypeScript/issues/3841#issuecomment-2381594311
@@ -77,6 +78,10 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
         type: String,
         default: '[id]',
       },
+      response:{
+        type: String,
+        default: 'response.text()',
+      }
     },
   };
 
@@ -275,7 +280,8 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
         throw new Error(`Fetch failed with status ${response.status}`);
       }
 
-      const content = await response.text();
+      const fn = new Function('response', 'url', 'requestInit', 'self', `return ${this.$options.response}`);
+      const content = await fn.call(this, response, url, requestInit, self);
       this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit: init, content });
       this.update(url, init, content);
     } catch (error) {
