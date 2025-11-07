@@ -366,6 +366,62 @@ describe('The Fetch class', () => {
 
       expect(abortSpy).toHaveBeenCalled();
     });
+
+    it('should use the response option to extract content', async () => {
+      const anchor = h('a', {
+        href: 'https://example.com',
+        dataOptionResponse: 'response.json().then((data) => data.content)',
+      });
+      const fetch = new Fetch(anchor);
+      const response = Response.json({
+        content: '<div>content</div>',
+      });
+
+      const responseSpy = vi.spyOn(response, 'json');
+      const clientSpy = vi.fn(() => Promise.resolve(response));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+      const updateSpy = vi.spyOn(fetch, 'update');
+
+      await mount(fetch);
+      const url = new URL('https://example.com');
+      await fetch.fetch(url);
+
+      expect(responseSpy).toHaveBeenCalled();
+      expect(updateSpy).toHaveBeenCalledWith(url, expect.any(Object), '<div>content</div>');
+    });
+
+    it('should catch errors from the response option callback', async () => {
+      const anchor = h('a', {
+        href: 'https://example.com',
+        dataOptionResponse: 'response.json().then(({ foo }) => foo.content)',
+      });
+      const fetch = new Fetch(anchor);
+      const response = Response.json({
+        content: '<div>content</div>',
+      });
+      const responseSpy = vi.spyOn(response, 'json');
+      const clientSpy = vi.fn(() => Promise.resolve(response));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+      const updateSpy = vi.spyOn(fetch, 'update');
+
+      const fn = vi.fn();
+      fetch.$on('fetch-error', (event: CustomEvent) => fn(...event.detail));
+
+      await mount(fetch);
+      const url = new URL('https://example.com');
+      await fetch.fetch(url);
+
+      expect(responseSpy).toHaveBeenCalled();
+      expect(updateSpy).not.toHaveBeenCalled();
+
+      expect(fn).toHaveBeenCalledWith({
+        // TypeError: Cannot read properties of undefined (reading 'content')
+        error: expect.any(TypeError),
+        instance: expect.any(Fetch),
+        url: expect.any(URL),
+        requestInit: expect.any(Object),
+      });
+    });
   });
 
   describe('abort method', () => {
