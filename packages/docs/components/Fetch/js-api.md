@@ -64,10 +64,43 @@ Use this option to add custom headers to the fetch request.
 Use this option to disable support for the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API).
 
 ```html
-<a href="/path" data-component="Fetch" data-option-no-view-transition>
-  Fetch
-</a>
+<a href="/path" data-component="Fetch" data-option-no-view-transition>Fetch</a>
 ```
+
+### `response`
+
+- Type: `string`
+- Default: `response.text()`
+
+Use this option to customize how the response's body is parsed.
+
+This option is useful when you do not have control over an API and need to extract HTML content from an `application/json` response.
+
+::: code-group
+
+```html [form.html] {3}
+<form
+  data-component="Fetch"
+  data-option-response="response.json().then((data) => data.rendered_content)"
+  action="/api/json">
+  <button type="submit">Submit</button>
+</form>
+
+<!--
+The following element will be updated with HTML from the
+`rendered_content` property of the /api/json endpoint.
+-->
+<div id="content"></div>
+```
+
+```json [/api/json]
+{
+  "status": "ok",
+  "rendered_content": "<div id=\"content\">content</div>"
+}
+```
+
+:::
 
 ## Getters
 
@@ -234,4 +267,3 @@ Emitted when the fetch request has been aborted.
   - `url` (`URL`): the URL that was fetched
   - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
   - `reason` (`any`): the reason the request was aborted
-
