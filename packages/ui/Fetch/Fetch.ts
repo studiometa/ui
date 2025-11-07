@@ -39,6 +39,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
   static FETCH_EVENTS = {
     BEFORE_FETCH: 'fetch-before',
     FETCH: 'fetch-fetch',
+    RESPONSE: 'fetch-response',
     AFTER_FETCH: 'fetch-after',
     BEFORE_UPDATE: 'fetch-update-before',
     UPDATE: 'fetch-update',
@@ -268,6 +269,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<T & FetchProps>
 
     try {
       const response = await this.client(url, init);
+      this.$emit(FETCH_EVENTS.RESPONSE, { instance: this, url, requestInit: init, response });
 
       if (!response.ok) {
         throw new Error(`Fetch failed with status ${response.status}`);
