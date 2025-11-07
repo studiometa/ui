@@ -151,6 +151,18 @@ Emitted when the fetch request is sent.
   - `url` (`URL`): the URL that will be fetched
   - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
 
+### `fetch-response`
+
+Emitted when the fetch request returned a response, before extracting its body, and before throwing if `response.ok !== true`.
+
+**Payload**
+
+- `ctx` (`Object`): context for the event with the following properties
+  - `response` (`Response`): the `Response` object returned by the `fetch` request
+  - `instance` (`Fetch`): the `Fetch` instance emitting the event
+  - `url` (`URL`): the URL that will be fetched
+  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+
 ### `fetch-after`
 
 Emitted after the fetch request is finished, wether it is successful or not.
