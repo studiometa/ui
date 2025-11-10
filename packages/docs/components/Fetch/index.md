@@ -34,22 +34,27 @@ Given the following HTML:
 
 And the following response from the `/some-content` endpoint:
 
+<!-- prettier-ignore-start -->
 ```html
-<div id="content">Lorem ipsum dolor sit amet, consectetur adipisicing elit.</div>
+<div id="content">
+  Lorem ipsum dolor sit amet, consectetur adipisicing elit.
+</div>
 
 Some extra content.
 ```
+<!-- prettier-ignore-end -->
 
 Clicking on the link will dispatch a background fetch request and will replace the `<div id="content"></div>` element with the new content from the fetch response. The page will have the following HTML after:
 
+<!-- prettier-ignore-start -->
 ```html
 <a data-component="Fetch" href="/some-content">Click me</a>
 
 <div id="content">
-  Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-  <!-- [!code ++] -->
+  Lorem ipsum dolor sit amet, consectetur adipisicing elit. <!-- [!code ++] -->
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 ::: warning 💡 Important
 We use `id` attributes to detect which content from the response should be used and injected in the DOM. Any content from the response not nested in a parent with an `id` attribute will be discarded.
@@ -66,9 +71,9 @@ Use the [`Action`](../Action/index.md) and [`Transition`](../Transition/index.md
   href="/"
   data-component="Fetch Action"
   data-option-history
-  data-option-on:before-fetch="Transition(#foo) -> transition.enter()"
-  data-option-on:after-fetch="Transition(#foo) -> transition.leave()"
-  data-option-on:fetch-error="alert('error')">
+  data-on:before-fetch="Transition(#foo) -> transition.enter()"
+  data-on:after-fetch="Transition(#foo) -> transition.leave()"
+  data-on:fetch-error="alert('error')">
   Click me
 </a>
 
@@ -102,8 +107,8 @@ The [events](./js-api.md#events) sent by the `Fetch` component are configured to
 ```html
 <main
   data-component="Action"
-  data-option-on:before-fetch="Transition(#fetch-loader) -> target.enter()"
-  data-option-on:after-fetch="Transition(#fetch-loader) -> target.leave()">
+  data-on:before-fetch="Transition(#fetch-loader) -> target.enter()"
+  data-on:after-fetch="Transition(#fetch-loader) -> target.leave()">
   ... ...
   <a data-component="Fetch" href="/page/2">Next page</a>
   ... ...
@@ -156,11 +161,15 @@ The `Fetch` components catches request errors and emits a [`fetch-error` event](
 
 ::: code-group
 
+<!-- prettier-ignore-start -->
 ```html [index.html] {3}
-<main data-component="Action" data-option-on:fetch-error="alert(event.detail[0].error)">
+<main
+  data-component="Action"
+  data-on:fetch-error="alert(event.detail[0].error)">
   <a href="/" data-component="Fetch">Home</a>
 </main>
 ```
+<!-- prettier-ignore-end -->
 
 ```js twoslash [app.ts]
 import { registerComponent } from '@studiometa/js-toolkit';
@@ -174,25 +183,27 @@ registerComponent(Fetch);
 
 See the [error handling example](./examples.md#error-handling) for detailed usage.
 
-### Cancel a request
+### Cancelling a request
 
 The [`abort` method](./js-api.md#abort-reason-any) can be used to cancel a pending request.
 
 ::: code-group
 
+<!-- prettier-ignore-start -->
 ```html [index.html] {3,7-8}
 <main
   data-component="Action"
-  data-option-on:fetch-abort="alert('Request was aborted')">
+  data-on:fetch-abort="alert('Request was aborted')">
   <a href="/" data-component="Fetch">Home</a>
 
   <button
     data-component="Action"
-    data-option-on:click="Fetch -> target.abort()">
+    data-on:click="Fetch -> target.abort()">
     Cancel request
   </button>
 </main>
 ```
+<!-- prettier-ignore-end -->
 
 ```js twoslash [app.ts]
 import { registerComponent } from '@studiometa/js-toolkit';
@@ -202,4 +213,44 @@ registerComponent(Action);
 registerComponent(Fetch);
 ```
 
+:::
+
+
 See the [cancelling a request example](./examples.md#cancelling-a-request) for detailed usage.
+
+### Handling JSON response
+
+If you need to fetch an API whose content-type is `application/json`, you can use the [`data-option-response` option](./js-api.md#response) to extract the content that will be inserted in the DOM from the JSON object.
+
+::: code-group
+
+<!-- prettier-ignore-start -->
+```html [index.html] {3-4}
+<form
+  action="/api/msg"
+  data-component="Fetch"
+  data-option-response="response.json().then((data) => data.rendered)">
+  <input type="text" name="msg" value="Hello world!">
+  <button type="submit">
+    Submit
+  </button>
+</form>
+
+<div id="content">...</div>
+```
+<!-- prettier-ignore-end -->
+
+```json [/api/msg]
+{
+  "rendered": "<div id=\"content\">Hello world!</div>"
+}
+```
+
+```ts [app.ts] twoslash
+import { registerComponent } from '@studiometa/js-toolkit';
+import { Fetch } from '@studiometa/ui';
+
+registerComponent(Fetch);
+```
+
+:::
