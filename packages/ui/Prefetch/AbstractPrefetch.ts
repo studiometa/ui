@@ -10,7 +10,7 @@ export interface AbstractPrefetchProps extends BaseProps {
 
 /**
  * AbstractPrefetch class.
- * @link https://ui.studiometa.dev/-/components/Prefetch/
+ * @link https://ui.studiometa.dev/components/Prefetch/
  */
 export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   T & AbstractPrefetchProps

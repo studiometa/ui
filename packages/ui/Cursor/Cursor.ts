@@ -17,7 +17,7 @@ export interface CursorProps extends BaseProps {
 
 /**
  * Cursor class.
- * @link https://ui.studiometa.dev/-/components/Cursor/
+ * @link https://ui.studiometa.dev/components/Cursor/
  */
 export class Cursor<T extends BaseProps = BaseProps> extends Base<CursorProps & T> {
   static config: BaseConfig = {

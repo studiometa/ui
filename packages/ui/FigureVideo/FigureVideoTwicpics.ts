@@ -34,7 +34,7 @@ function normalizeSize(that: FigureVideoTwicpics, prop: string): number {
  * FigureVideoTwicpics class.
  *
  * Manager lazyloading image sources.
- * @link https://ui.studiometa.dev/-/components/FigureVideoTwicpics/
+ * @link https://ui.studiometa.dev/components/FigureVideoTwicpics/
  */
 export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends FigureVideo<
   T & FigureVideoTwicpicsProps

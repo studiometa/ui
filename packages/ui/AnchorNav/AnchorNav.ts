@@ -12,7 +12,7 @@ export interface AnchorNavProps extends BaseProps {
 
 /**
  * AnchorNav class.
- * @link https://ui.studiometa.dev/-/components/AnchorNav/
+ * @link https://ui.studiometa.dev/components/AnchorNav/
  */
 export class AnchorNav<T extends BaseProps = BaseProps> extends Base<T & AnchorNavProps> {
   /**

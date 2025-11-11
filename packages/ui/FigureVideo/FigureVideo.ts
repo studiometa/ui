@@ -14,7 +14,7 @@ export interface FigureVideoProps extends BaseProps {
 
 /**
  * FigureVideo class.
- * @link https://ui.studiometa.dev/-/components/FigureVideo/
+ * @link https://ui.studiometa.dev/components/FigureVideo/
  */
 export class FigureVideo<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(
   Transition,

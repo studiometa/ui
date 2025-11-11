@@ -8,7 +8,7 @@ export interface AnchorScrollToProps extends BaseProps {
 
 /**
  * AnchorScrollTo class.
- * @link https://ui.studiometa.dev/-/components/AnchorScrollto/
+ * @link https://ui.studiometa.dev/components/AnchorScrollto/
  */
 export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<AnchorScrollToProps & T> {
   static config: BaseConfig = {

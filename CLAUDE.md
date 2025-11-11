@@ -28,4 +28,4 @@
 
 ## Playground
 
-If you see a link to `https://ui.studiometa.dev/-/play/`, it is a link to the playground for all components. You can either visit the page to see how it renders, or directly extract the content from the URL query string stored in the URL hash. The content is encoded and zipped, you can unzip it with the `unzip` export from the `@studiometa/playground` NPM package.
+If you see a link to `https://ui.studiometa.dev/play/`, it is a link to the playground for all components. You can either visit the page to see how it renders, or directly extract the content from the URL query string stored in the URL hash. The content is encoded and zipped, you can unzip it with the `unzip` export from the `@studiometa/playground` NPM package.
