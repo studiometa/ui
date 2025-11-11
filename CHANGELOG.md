@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.7.0](https://github.com/studiometa/ui/compare/1.6.0..1.7.0) (2025-11-11)
+
 ### Added
 
 - **Transition:** add events ([#484](https://github.com/studiometa/ui/pull/484), [e213ee1](https://github.com/studiometa/ui/commit/e213ee1))
