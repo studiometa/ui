@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import Components from 'unplugin-vue-components/vite';
+import llmstxt from 'vitepress-plugin-llms';
 
 /**
  * Import match as plain text.
@@ -27,6 +28,9 @@ function plainText(match) {
 
 const config = defineConfig({
   plugins: [
+    llmstxt({
+      stripHTML: false,
+    }),
     plainText(/\.twig$/),
     Components({
       resolvers: IconsResolver(),

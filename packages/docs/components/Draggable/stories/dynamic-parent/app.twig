@@ -9,7 +9,7 @@
   </div>
   {% for color in ['red', 'green', 'blue'] %}
     <div data-component="Action"
-      data-option-on:click="Action -> target.$el.classList.toggle('ring', target.$el === event.target)"
+      data-on:click="Action -> target.$el.classList.toggle('ring', target.$el === event.target)"
       class="flex items-center justify-center w-32 h-32 bg-{{ color }}-400 rounded ring-{{ color }}-600">Click me</div>
   {% endfor %}
 </div>

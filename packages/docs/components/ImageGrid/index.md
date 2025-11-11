@@ -25,11 +25,23 @@ Use this component directly in your Twig templates by providing it with an array
 } %}
 ```
 
+<llm-exclude>
 <PreviewPlayground
   :zoom="0.8"
   :html="() => import('./stories/3-images/app.twig')"
   :script="() => import('./stories/app.js?raw')"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/3-images/app.twig
+<<< ./stories/app.js
+
+:::
+
+</llm-only>
 
 ### Customizing the image output
 
@@ -39,8 +51,20 @@ In the following example, we wrap each image in a [`ScrollReveal` component](../
 
 <<< ./stories/block-image/app.twig{18-25}
 
+<llm-exclude>
 <PreviewPlayground
   :zoom="0.8"
   :html="() => import('./stories/block-image/app.twig')"
   :script="() => import('./stories/block-image/app.js?raw')"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/block-image/app.twig
+<<< ./stories/block-image/app.js
+
+:::
+
+</llm-only>

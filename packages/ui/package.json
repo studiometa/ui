@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "A set of opiniated, unstyled and accessible components",
   "publishConfig": {
     "access": "public"
@@ -33,7 +33,7 @@
     "morphdom": "^2.7.5"
   },
   "devDependencies": {
-    "@studiometa/js-toolkit": "3.4.0"
+    "@studiometa/js-toolkit": "3.4.1"
   },
   "peerDependencies": {
     "@studiometa/js-toolkit": "^3.4.0"

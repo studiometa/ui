@@ -2,8 +2,8 @@
 
 <div
   data-component="Action"
-  data-option-on:fetch-before="Transition(#global-loader) -> target.enter()"
-  data-option-on:fetch-after="Transition(#global-loader) -> target.leave()">
+  data-on:fetch-before="Transition(#global-loader) -> target.enter()"
+  data-on:fetch-after="Transition(#global-loader) -> target.leave()">
   <header class="flex gap-4 justify-between p-4">
     <h1 class="font-bold">My shop</h1>
     <div
@@ -94,7 +94,7 @@
           <div>
             <a
               data-component="Action"
-              data-option-on:click.prevent
+              data-on:click.prevent
               href="#"
               class="inline-block border-b after:absolute after:inset-0">
               Item #{{ loop.index }}
@@ -105,13 +105,13 @@
             data-component="Fetch Action"
             action="/api"
             method="POST"
-            data-option-on:fetch-before="Transition(#add-to-cart-loader-{{
+            data-on:fetch-before="Transition(#add-to-cart-loader-{{
             loop.index
             }}) -> target.enter()"
-            data-option-on:fetch-after="Transition(#add-to-cart-loader-{{
+            data-on:fetch-after="Transition(#add-to-cart-loader-{{
             loop.index
             }}) -> target.leave()"
-            data-option-on:fetch-update="Panel -> target.open()"
+            data-on:fetch-update="Panel -> target.open()"
             class="flex items-center gap-2">
             {%- set cart_content -%}
               <span id="cart-summary">Cart: 1</span>
@@ -125,7 +125,7 @@
                   <div>
                     <a
                       data-component="Action"
-                      data-option-on:click.prevent
+                      data-on:click.prevent
                       href="#"
                       class="inline-block border-b">
                       Item #{{ loop.index }}
@@ -134,8 +134,8 @@
                   <span class="ml-auto">{{ price }}</span>
                   <form
                     data-component="Fetch Action"
-                    data-option-on:fetch-before="Transition(#cart-loader) -> target.enter()"
-                    data-option-on:fetch-after="Transition(#cart-loader) -> target.leave()"
+                    data-on:fetch-before="Transition(#cart-loader) -> target.enter()"
+                    data-on:fetch-after="Transition(#cart-loader) -> target.leave()"
                     action="/api"
                     method="POST"
                     class="flex items-center gap-2">

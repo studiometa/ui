@@ -227,8 +227,8 @@ This option can be used to combine the [`on`](#on), [`target`](#target) and [`ef
 ```html {3}
 <button
   data-component="Action"
-  data-option-on:click.stop="target.$el.textContent = 'Clicked'"
-  data-option-on:mouseenter="target.$el.textContent = 'Hovered'">
+  data-on:click.stop="target.$el.textContent = 'Clicked'"
+  data-on:mouseenter="target.$el.textContent = 'Hovered'">
   Hover and click me
 </button>
 ```

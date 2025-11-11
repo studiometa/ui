@@ -45,10 +45,22 @@ export default createApp(App);
 </nav>
 ```
 
+<llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/dropdown/app.twig')"
   :script="() => import('./stories/dropdown/app.js?raw')"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/dropdown/app.twig
+<<< ./stories/dropdown/app.js
+
+:::
+
+</llm-only>
 
 
 ::: warning HTML Structure

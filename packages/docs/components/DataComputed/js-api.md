@@ -18,10 +18,22 @@ Use this option to define a piece of JavaScript code to transform the value befo
 
 **Example**
 
+<llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/compute-example.twig')"
   :script="() => import('./stories/compute-example.js?raw')"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/compute-example.twig
+<<< ./stories/compute-example.js
+
+:::
+
+</llm-only>
 
 ## Methods
 

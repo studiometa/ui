@@ -121,7 +121,7 @@ describe('The Action component', () => {
   it('should listen to advanced configured events', async () => {
     const div = h('div', {
       id: 'bar',
-      'data-option-on:click': 'target.$el.id = "foo"',
+      'data-on:click': 'target.$el.id = "foo"',
     });
     const action = new Action(div);
     await mount(action);
@@ -133,7 +133,7 @@ describe('The Action component', () => {
   it('should work with multiline effects', async () => {
     const div = h('div', {
       id: 'bar',
-      'data-option-on:click': `
+      'data-on:click': `
         Action(#bar)
         ->
         target.$el.id = true

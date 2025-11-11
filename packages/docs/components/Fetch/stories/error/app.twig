@@ -21,9 +21,9 @@
 
 <div
   data-component="Action"
-  data-option-on:fetch-before="Transition(#loader) -> target.enter()"
-  data-option-on:fetch-after="Transition(#loader) -> target.leave()"
-  data-option-on:fetch-error="DataBind(#toaster) -> target.value += event.detail[0].error.message + '\n'"
+  data-on:fetch-before="Transition(#loader) -> target.enter()"
+  data-on:fetch-after="Transition(#loader) -> target.leave()"
+  data-on:fetch-error="DataBind(#toaster) -> target.value += event.detail[0].error.message + '\n'"
   class="flex flex-col gap-8 max-w-xl">
   <nav class="flex items-center gap-4">
     {{
@@ -81,4 +81,4 @@
   data-component="DataBind"
   data-option-group="toaster"
   id="toaster"
-  class="whitespace-pre"></div>
+  class="whitespace-pre p-4 bg-zinc-100 rounded empty:hidden"></div>

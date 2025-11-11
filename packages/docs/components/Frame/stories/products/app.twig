@@ -87,7 +87,7 @@
         <div class="flex gap-4 justify-between items-baseline">
           <div>
             <a data-component="Action"
-              data-option-on:click.prevent
+              data-on:click.prevent
               href="#"
               class="inline-block border-b after:absolute after:inset-0">
               Item #{{ loop.index }}
@@ -97,7 +97,7 @@
           <form data-component="FrameForm Action"
             action="/api"
             method="POST"
-            data-option-on:frame-content="Panel -> target.open()"
+            data-on:frame-content="Panel -> target.open()"
             class="flex items-center gap-2">
             {%- set cart_content -%}
               <span data-component="FrameTarget" id="cart-summary">
@@ -111,7 +111,7 @@
                 data-option-leave-to="opacity-0">
                 <article class="flex justify-between gap-4">
                   <div>
-                    <a data-component="Action" data-option-on:click.prevent href="#" class="inline-block border-b">
+                    <a data-component="Action" data-on:click.prevent href="#" class="inline-block border-b">
                       Item #{{ loop.index }}
                     </a>
                   </div>
