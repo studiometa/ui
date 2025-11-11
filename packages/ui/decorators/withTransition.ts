@@ -32,6 +32,11 @@ export interface TransitionInterface extends BaseInterface {
    */
   get targets(): HTMLElement[];
   /**
+   * Current state.
+   * @internal
+   */
+  state: null | 'entering' | 'leaving';
+  /**
    * Trigger the enter transition.
    */
   enter(target?: HTMLElement | HTMLElement[]): Promise<void>;
@@ -39,6 +44,11 @@ export interface TransitionInterface extends BaseInterface {
    * Trigger the leave transition.
    */
   leave(target?: HTMLElement | HTMLElement[]): Promise<void>;
+  /**
+   * Toggle the leave or enter transition.
+   * Defaults to the enter transition if no transition has been triggered yet.
+   */
+  toggle(target?: HTMLElement | HTMLElement[]): Promise<void>;
 }
 
 /**
