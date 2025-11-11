@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.6.0](https://github.com/studiometa/ui/compare/1.5.1..1.6.0) (2025-11-11)
+
 ### Added
 
 - **Fetch:** add a `response` option to allow changing body extraction ([#477](https://github.com/studiometa/ui/issues/477), [#478](https://github.com/studiometa/ui/pull/478), [09cefc7](https://github.com/studiometa/ui/commit/09cefc7))
