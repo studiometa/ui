@@ -5,7 +5,7 @@ import { AccordionItem } from './AccordionItem.js';
 
 /**
  * Accordion class.
- * @link https://ui.studiometa.dev/-/components/Accordion/
+ * @link https://ui.studiometa.dev/components/Accordion/
  */
 export class Accordion<T extends BaseProps = BaseProps> extends AccordionCore<T & AccordionProps> {
   static config: BaseConfig = {

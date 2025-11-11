@@ -47,7 +47,7 @@
       {% block open %}
         <button
           data-ref="open[]"
-          href="#/api?cart"
+          href="#/api/?cart"
           class="inline-flex gap-2 items-center border-b">
           <span id="cart-summary">Cart: 0</span>
         </button>
@@ -103,7 +103,7 @@
           </div>
           <form
             data-component="Fetch Action"
-            action="/api"
+            action="/api/"
             method="POST"
             data-on:fetch-before="Transition(#add-to-cart-loader-{{
             loop.index
@@ -136,7 +136,7 @@
                     data-component="Fetch Action"
                     data-on:fetch-before="Transition(#cart-loader) -> target.enter()"
                     data-on:fetch-after="Transition(#cart-loader) -> target.leave()"
-                    action="/api"
+                    action="/api/"
                     method="POST"
                     class="flex items-center gap-2">
                     <input type="hidden" name="wait" value="1" />

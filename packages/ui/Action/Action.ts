@@ -13,7 +13,7 @@ export interface ActionProps extends BaseProps {
 
 /**
  * Action class.
- * @link https://ui.studiometa.dev/-/components/Action/
+ * @link https://ui.studiometa.dev/components/Action/
  */
 export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & T> {
   static config: BaseConfig = {

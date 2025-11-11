@@ -18,7 +18,7 @@ export interface StickyProps extends BaseProps {
 
 /**
  * Sticky class.
- * @link https://ui.studiometa.dev/-/components/Sticky/
+ * @link https://ui.studiometa.dev/components/Sticky/
  */
 export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProps> {
   /**

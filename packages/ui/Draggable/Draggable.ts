@@ -26,7 +26,7 @@ export interface DraggableProps extends BaseProps {
 
 /**
  * Draggable class.
- * @link https://ui.studiometa.dev/-/components/Draggable/
+ * @link https://ui.studiometa.dev/components/Draggable/
  */
 export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   // @ts-expect-error draggable is instance of Draggable.

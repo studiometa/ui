@@ -10,7 +10,7 @@ export interface ScrollAnimationProps extends BaseProps {
 
 /**
  * ScrollAnimation class.
- * @link https://ui.studiometa.dev/-/components/ScrollAnimation/
+ * @link https://ui.studiometa.dev/components/ScrollAnimation/
  */
 export class ScrollAnimation<
   T extends BaseProps = BaseProps,

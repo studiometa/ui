@@ -12,7 +12,7 @@ export interface FigureShopifyProps extends BaseProps {
  * FigureShopify class.
  *
  * Manager lazyloading image sources.
- * @link https://ui.studiometa.dev/-/components/FigureShopify/
+ * @link https://ui.studiometa.dev/components/FigureShopify/
  */
 export class FigureShopify<T extends BaseProps = BaseProps> extends AbstractFigureDynamic<
   T & FigureShopifyProps

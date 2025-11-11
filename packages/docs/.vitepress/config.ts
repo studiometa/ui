@@ -12,8 +12,6 @@ export default defineConfig({
   title: '@studiometa/ui',
   description: 'A feature-rich library of primitives and components built with ♥️ by Studio Meta',
   lastUpdated: true,
-  base: '/-/',
-  outDir: './.symfony/public/-',
   srcExclude: ['**/.symfony/**'],
   head: [
     [
@@ -24,7 +22,7 @@ export default defineConfig({
         src: 'https://plausible.io/js/script.outbound-links.js',
       },
     ],
-    ['link', { rel: 'icon', type: 'image/x-icon', href: '/-/logo.png' }],
+    ['link', { rel: 'icon', type: 'image/x-icon', href: '/logo.png' }],
   ],
   markdown: {
     codeTransformers: [transformerTwoslash()],
@@ -44,7 +42,7 @@ export default defineConfig({
       // Add base URL
       return items.map((item) => ({
         ...item,
-        url: withLeadingCharacters(item.url, '-/'),
+        url: item.url,
       }));
     },
   },

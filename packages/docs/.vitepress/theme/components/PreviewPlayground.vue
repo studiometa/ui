@@ -56,7 +56,7 @@
 
     const url = new URL(
       // @ts-ignore
-      import.meta.env.DEV ? '/-/play/index.html' : '/-/play/',
+      import.meta.env.DEV ? '/play/index.html' : '/play/',
       'http://localhost',
     );
 

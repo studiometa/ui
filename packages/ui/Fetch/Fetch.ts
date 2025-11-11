@@ -26,7 +26,7 @@ export type FetchConstructor<T extends Fetch = Fetch> = {
 
 /**
  * Fetch class.
- * @link https://ui.studiometa.dev/-/components/Fetch/
+ * @link https://ui.studiometa.dev/components/Fetch/
  */
 export class Fetch<T extends BaseProps = BaseProps>
   extends Base<T & FetchProps>

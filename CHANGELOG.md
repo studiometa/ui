@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.7.0](https://github.com/studiometa/ui/compare/1.6.0..1.7.0) (2025-11-11)
+
+### Added
+
+- **Transition:** add events ([#484](https://github.com/studiometa/ui/pull/484), [e213ee1](https://github.com/studiometa/ui/commit/e213ee1))
+- **Transition:** add a `toggle()` method ([#381](https://github.com/studiometa/ui/issues/381), [#484](https://github.com/studiometa/ui/pull/484), [6cd23a1](https://github.com/studiometa/ui/commit/6cd23a1))
+
+### Changed
+
+- Serve `.md` files as plain text if requested ([7e7d17e](https://github.com/studiometa/ui/commit/7e7d17e))
+- Remove the `/-/` prefix from the docs ([dbc2654](https://github.com/studiometa/ui/commit/dbc2654))
+
 ## [v1.6.0](https://github.com/studiometa/ui/compare/1.5.1..1.6.0) (2025-11-11)
 
 ### Added
@@ -48,7 +60,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Add a [`Fetch` component](https://ui.studiometa.dev/-/components/Fetch/) ([#448](https://github.com/studiometa/ui/issues/448), [#465](https://github.com/studiometa/ui/pull/465), [0b67c03](https://github.com/studiometa/ui/commit/0b67c03))
+- Add a [`Fetch` component](https://ui.studiometa.dev/components/Fetch/) ([#448](https://github.com/studiometa/ui/issues/448), [#465](https://github.com/studiometa/ui/pull/465), [0b67c03](https://github.com/studiometa/ui/commit/0b67c03))
 
 ### Fixed
 
@@ -323,7 +335,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Add a [FigureShopify](https://ui.studiometa.dev/-/components/FigureShopify/) component ([#303](https://github.com/studiometa/ui/pull/303))
+- Add a [FigureShopify](https://ui.studiometa.dev/components/FigureShopify/) component ([#303](https://github.com/studiometa/ui/pull/303))
 - **Transition:** add support for grouped transitions ([#305](https://github.com/studiometa/ui/issues/305), [#306](https://github.com/studiometa/ui/pull/306), [be85501](https://github.com/studiometa/ui/commit/be85501))
 
 ## [v1.0.0-alpha.8](https://github.com/studiometa/ui/compare/1.0.0-alpha.7..1.0.0-alpha.8) (2024-09-25)

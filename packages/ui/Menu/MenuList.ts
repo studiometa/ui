@@ -128,6 +128,7 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
   /**
    * Toggle the menu items.
    */
+  // @ts-expect-error MenuList.toggle() must override Transition.toggle().
   toggle() {
     if (this.isOpen) {
       this.close();

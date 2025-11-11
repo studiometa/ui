@@ -4,7 +4,7 @@ badges: [JS]
 
 # Transition <Badges :texts="$frontmatter.badges" />
 
-The Transition primitive should be used when creating components which can switch between two states (often visible/hidden). It implements the [`transition` utility](https://js-toolkit.studiometa.dev/utils/css/transition.html) from the [@studiometa/js-toolkit package](https://js-toolkit.studiometa.dev) and provides configuration via `data-option-...` attributes and actions with the `leave` and `leave` methods which trigger the transition between the two states of the component.
+The Transition primitive should be used when creating components which can switch between two states (often visible/hidden). It implements the [`transition` utility](https://js-toolkit.studiometa.dev/utils/css/transition.html) from the [@studiometa/js-toolkit package](https://js-toolkit.studiometa.dev) and provides configuration via `data-option-...` attributes and actions with the `enter`, `leave` and `toggle` methods which trigger the transition between the two states of the component.
 
 It is available as a `Transition` component as well as a `withTransition(Base)` decorator.
 

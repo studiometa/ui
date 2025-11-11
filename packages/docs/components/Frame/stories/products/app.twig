@@ -39,7 +39,7 @@
     %}
       {% block open %}
         <button data-ref="open[]"
-          href="#/api?cart"
+          href="#/api/?cart"
           class="inline-flex gap-2 items-center border-b">
           <span data-component="FrameTarget" id="cart-summary">Cart: 0</span>
         </button>
@@ -95,7 +95,7 @@
             <br /> {{ price }}
           </div>
           <form data-component="FrameForm Action"
-            action="/api"
+            action="/api/"
             method="POST"
             data-on:frame-content="Panel -> target.open()"
             class="flex items-center gap-2">
@@ -117,7 +117,7 @@
                   </div>
                   <span class="ml-auto">{{ price }}</span>
                   <form data-component="FrameForm Action"
-                    action="/api"
+                    action="/api/"
                     method="POST"
                     class="flex items-center gap-2">
                     <input type="hidden" name="wait" value="1" />

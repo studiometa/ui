@@ -16,7 +16,7 @@
         '@ui/Button/StyledButton.twig',
         {
           label: mode|capitalize,
-          href: twig_toolkit_url('/api').withQueryParameter('content', content),
+          href: twig_toolkit_url('/api/').withQueryParameter('content', content),
           attr: {
             data_component: 'Fetch',
             data_option_mode: mode,
