@@ -148,6 +148,13 @@ Define a group to sync `enter` and `leave` transition between multiple instances
 
 A getter returning the target element for the transition. Defaults to the components root element `this.$el`.
 
+### `state`
+
+- Type: `'entering' | 'leaving' | null`
+- Default: `null`
+
+The current state of the transition. Will be `'entering'` when an enter transition is in progress, `'leaving'` when a leave transition is in progress, or `null` when no transition is active.
+
 ## Methods
 
 ### `enter`
@@ -161,3 +168,48 @@ Trigger the enter transition.
 - Returns `Promise<void>`
 
 Trigger the leave transition.
+
+### `toggle`
+
+- Signature: `toggle(target?: HTMLElement | HTMLElement[]): Promise<void>`
+- Returns `Promise<void>`
+
+Toggle between enter and leave transitions. If the component is currently leaving (or has never transitioned), it will enter. If it's currently entering, it will leave.
+
+```js
+const transition = new Transition(el);
+
+await transition.toggle(); // Triggers enter
+await transition.toggle(); // Triggers leave
+await transition.toggle(); // Triggers enter again
+```
+
+## Events
+
+### `transition-toggle`
+
+Emitted when the toggle method is called.
+
+### `transition-enter`
+
+Emitted when the enter transition is triggered.
+
+### `transition-enter-start`
+
+Emitted at the start of the enter transition, before the transition classes are applied.
+
+### `transition-enter-end`
+
+Emitted when the enter transition completes.
+
+### `transition-leave`
+
+Emitted when the leave transition is triggered.
+
+### `transition-leave-start`
+
+Emitted at the start of the leave transition, before the transition classes are applied.
+
+### `transition-leave-end`
+
+Emitted when the leave transition completes.
