@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Transition:** add events ([#484](https://github.com/studiometa/ui/pull/484), [e213ee1](https://github.com/studiometa/ui/commit/e213ee1))
+- **Transition:** add a `toggle()` method ([#381](https://github.com/studiometa/ui/issues/381), [#484](https://github.com/studiometa/ui/pull/484), [6cd23a1](https://github.com/studiometa/ui/commit/6cd23a1))
+
 ## [v1.6.0](https://github.com/studiometa/ui/compare/1.5.1..1.6.0) (2025-11-11)
 
 ### Added
