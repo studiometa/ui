@@ -24,12 +24,12 @@ export default defineWebpackConfig({
         html: resolve('./lib/twig-loader.js'),
       },
       importMap: {
-        '@motionone/easing': '/-/play/static/motionone-easing.js',
-        '@studiometa/js-toolkit': '/-/play/static/js-toolkit/index.js',
-        '@studiometa/js-toolkit/utils': '/-/play/static/js-toolkit/utils/index.js',
-        '@studiometa/ui': '/-/play/static/ui/index.js',
-        deepmerge: '/-/play/static/deepmerge.js',
-        morphdom: '/-/play/static/morphdom.js',
+        '@motionone/easing': '/play/static/motionone-easing.js',
+        '@studiometa/js-toolkit': '/play/static/js-toolkit/index.js',
+        '@studiometa/js-toolkit/utils': '/play/static/js-toolkit/utils/index.js',
+        '@studiometa/ui': '/play/static/ui/index.js',
+        deepmerge: '/play/static/deepmerge.js',
+        morphdom: '/play/static/morphdom.js',
       },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
@@ -57,7 +57,7 @@ createApp(App);`,
     }),
   ],
   webpack(config) {
-    config.output.publicPath = '/-/play/';
+    config.output.publicPath = '/play/';
     config.output.path = resolve('../docs/public/play/');
 
     config.plugins.push(

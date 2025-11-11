@@ -8,7 +8,8 @@
     "dev:playground": "npm run watch --workspace=@studiometa/ui-playground",
     "dev:vitepress": "vitepress dev .",
     "prebuild": "npm run build --workspace=@studiometa/ui-playground",
-    "build": "vitepress build ."
+    "build": "vitepress build .",
+    "postbuild": "ln -sf ../../../api/public .vitepress/dist/api"
   },
   "dependencies": {
     "@studiometa/js-toolkit": "3.4.1"

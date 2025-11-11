@@ -28,8 +28,8 @@ services:
         public: false
         arguments:
             - '@twig.loader'
-            - '%kernel.project_dir%/../../ui/'
-            - '%kernel.project_dir%/../../ui/svg'
+            - '%kernel.project_dir%/../ui/'
+            - '%kernel.project_dir%/../ui/svg'
         tags:
             - { name: twig.extension }
 

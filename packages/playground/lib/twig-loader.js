@@ -19,7 +19,7 @@ export default async function twigLoader(content) {
 
   controller = new AbortController();
 
-  return fetch('/api', {
+  return fetch('/api/', {
     method: 'POST',
     body: content,
     signal: controller.signal,

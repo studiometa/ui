@@ -1,6 +1,6 @@
 name: ui
 type: php
-docroot: packages/docs/.symfony/public
+docroot: packages/docs/.vitepress/dist/
 php_version: "8.3"
 webserver_type: nginx-fpm
 xdebug_enabled: false
@@ -12,9 +12,7 @@ database:
     version: "10.11"
 hooks:
     post-start:
-        - composer: install -d packages/docs/.symfony/
-upload_dirs:
-    - /-/
+        - composer: install -d packages/api/
 use_dns_when_possible: true
 composer_version: "2"
 web_environment: []

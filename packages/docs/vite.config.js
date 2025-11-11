@@ -39,7 +39,7 @@ const config = defineConfig({
   ],
   server: {
     proxy: {
-      '/api': {
+      '/api/': {
         target: 'https://ui.ddev.site',
         changeOrigin: true,
         secure: false,

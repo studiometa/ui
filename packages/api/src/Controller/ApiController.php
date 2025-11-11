@@ -9,7 +9,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 final class ApiController extends AbstractController
 {
-    #[Route('/api', methods: ['GET', 'POST'], name: 'api')]
+    #[Route('/', methods: ['GET', 'POST'], name: 'api')]
     public function index(Request $request): Response
     {
         $query = $request->query;
@@ -37,7 +37,7 @@ final class ApiController extends AbstractController
         return $this->render($query->get('path'), $query->all());
     }
 
-    #[Route('/api/source', methods: ['GET'], name: 'api-source')]
+    #[Route('/source', methods: ['GET'], name: 'api-source')]
     public function source(Request $request): Response
     {
         $query = $request->query;
@@ -47,7 +47,7 @@ final class ApiController extends AbstractController
             die('Nothing to display.');
         }
 
-        $file_path =  __DIR__ . '/../../../ui/' . $path;
+        $file_path =  __DIR__ . '/../../ui/' . $path;
 
         if (!file_exists($file_path)) {
             die('No file found for "' . $path . '".');
