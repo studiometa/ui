@@ -294,6 +294,27 @@ describe('The Fetch class', () => {
       expect(fn).toHaveBeenCalled();
     });
 
+    it('should emit fetch-response event', async () => {
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const fn = vi.fn();
+      fetch.$on('fetch-response', (event: CustomEvent) => fn(...event.detail));
+
+      const response = new Response('content');
+      const clientSpy = vi.fn(() => Promise.resolve(response));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+
+      await mount(fetch);
+      await fetch.fetch(new URL('https://example.com'));
+
+      expect(fn).toHaveBeenCalledWith({
+        response,
+        instance: expect.any(Fetch),
+        url: expect.any(URL),
+        requestInit: expect.any(Object),
+      });
+    });
+
     it('should emit after-fetch event', async () => {
       const anchor = h('a', { href: 'https://example.com' });
       const fetch = new Fetch(anchor);
@@ -344,6 +365,62 @@ describe('The Fetch class', () => {
       fetch.fetch(new URL('https://example.com'));
 
       expect(abortSpy).toHaveBeenCalled();
+    });
+
+    it('should use the response option to extract content', async () => {
+      const anchor = h('a', {
+        href: 'https://example.com',
+        dataOptionResponse: 'response.json().then((data) => data.content)',
+      });
+      const fetch = new Fetch(anchor);
+      const response = Response.json({
+        content: '<div>content</div>',
+      });
+
+      const responseSpy = vi.spyOn(response, 'json');
+      const clientSpy = vi.fn(() => Promise.resolve(response));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+      const updateSpy = vi.spyOn(fetch, 'update');
+
+      await mount(fetch);
+      const url = new URL('https://example.com');
+      await fetch.fetch(url);
+
+      expect(responseSpy).toHaveBeenCalled();
+      expect(updateSpy).toHaveBeenCalledWith(url, expect.any(Object), '<div>content</div>');
+    });
+
+    it('should catch errors from the response option callback', async () => {
+      const anchor = h('a', {
+        href: 'https://example.com',
+        dataOptionResponse: 'response.json().then(({ foo }) => foo.content)',
+      });
+      const fetch = new Fetch(anchor);
+      const response = Response.json({
+        content: '<div>content</div>',
+      });
+      const responseSpy = vi.spyOn(response, 'json');
+      const clientSpy = vi.fn(() => Promise.resolve(response));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+      const updateSpy = vi.spyOn(fetch, 'update');
+
+      const fn = vi.fn();
+      fetch.$on('fetch-error', (event: CustomEvent) => fn(...event.detail));
+
+      await mount(fetch);
+      const url = new URL('https://example.com');
+      await fetch.fetch(url);
+
+      expect(responseSpy).toHaveBeenCalled();
+      expect(updateSpy).not.toHaveBeenCalled();
+
+      expect(fn).toHaveBeenCalledWith({
+        // TypeError: Cannot read properties of undefined (reading 'content')
+        error: expect.any(TypeError),
+        instance: expect.any(Fetch),
+        url: expect.any(URL),
+        requestInit: expect.any(Object),
+      });
     });
   });
 
@@ -698,6 +775,37 @@ describe('The Fetch class', () => {
       await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
 
       expect(transitionSpy).toHaveBeenCalled();
+      expect(updateDOMSpy).toHaveBeenCalled();
+
+      // Clean up
+      delete (document as any).startViewTransition;
+      container.remove();
+    });
+
+    it('should not use View Transition API if disabled', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com', dataOptionNoViewTransition: '' });
+      const fetch = new Fetch(anchor);
+
+      await mount(fetch);
+
+      const updateDOMSpy = vi.spyOn(fetch, '__updateDOM');
+      const transitionSpy = vi.fn((callback: () => void) => {
+        callback();
+        return {
+          ready: Promise.resolve(),
+        };
+      });
+      Object.defineProperty(document, 'startViewTransition', {
+        value: transitionSpy,
+        configurable: true,
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(transitionSpy).not.toHaveBeenCalled();
       expect(updateDOMSpy).toHaveBeenCalled();
 
       // Clean up

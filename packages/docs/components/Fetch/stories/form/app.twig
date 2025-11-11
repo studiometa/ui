@@ -9,9 +9,9 @@
 <div class="grid gap-8 max-w-2xl">
 
   <form data-component="Fetch Action"
-    data-option-on:mounted="setTimeout(() => target.$el.requestSubmit())"
-    data-option-on:fetch-before="Transition(#loader) -> target.enter()"
-    data-option-on:fetch-after="Transition(#loader) -> target.leave()"
+    data-on:mounted="setTimeout(() => target.$el.requestSubmit())"
+    data-on:fetch-before="Transition(#loader) -> target.enter()"
+    data-on:fetch-after="Transition(#loader) -> target.leave()"
     class="grid gap-4"
     action="/api"
     method="POST"
@@ -21,7 +21,7 @@
       class="w-full py-4 px-6 border border-current/20 rounded resize-none font-mono text-sm"
       rows="10"
       data-component="DataModel Action"
-      data-option-on:input="Fetch(#form) -> target.$el.requestSubmit()"
+      data-on:input="Fetch(#form) -> target.$el.requestSubmit()"
       data-option-group="content">{{ initial_value }}</textarea>
     <textarea
       class="hidden"

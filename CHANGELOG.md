@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Fetch:** add a `response` option to allow changing body extraction ([#477](https://github.com/studiometa/ui/issues/477), [#478](https://github.com/studiometa/ui/pull/478), [09cefc7](https://github.com/studiometa/ui/commit/09cefc7))
+- **Fetch:** add a `fetch-response` event ([#476](https://github.com/studiometa/ui/issues/476), [#478](https://github.com/studiometa/ui/pull/478), [1e4ca10](https://github.com/studiometa/ui/commit/1e4ca10))
+
+### Fixed
+
+- **Fetch:** fix `viewTransition` option missing ([#478](https://github.com/studiometa/ui/pull/478), [ae9374f](https://github.com/studiometa/ui/commit/ae9374f))
+- **Fetch:** fix using the correct `requestInit` in events ([#478](https://github.com/studiometa/ui/pull/478), [a4e0ae5](https://github.com/studiometa/ui/commit/a4e0ae5))
+
 ## [v1.5.1](https://github.com/studiometa/ui/compare/1.5.0..1.5.1) (2025-11-06)
 
 ### Fixed

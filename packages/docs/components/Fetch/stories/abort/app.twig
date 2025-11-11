@@ -21,9 +21,9 @@
 
 <div
   data-component="Action"
-  data-option-on:fetch-before="Transition(#loader) -> target.enter()"
-  data-option-on:fetch-after="Transition(#loader) -> target.leave()"
-  data-option-on:fetch-abort="DataBind(#toaster) -> target.value += `${event.detail[0].reason}\n`"
+  data-on:fetch-before="Transition(#loader) -> target.enter()"
+  data-on:fetch-after="Transition(#loader) -> target.leave()"
+  data-on:fetch-abort="DataBind(#toaster) -> target.value += `${event.detail[0].reason}\n`"
   class="flex flex-col gap-4">
   <nav class="flex items-center gap-4">
     {{

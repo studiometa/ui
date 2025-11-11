@@ -21,8 +21,8 @@
 
 <div
   data-component="Action"
-  data-option-on:fetch-before="Transition(#loader) -> target.enter()"
-  data-option-on:fetch-after="Transition(#loader) -> target.leave()"
+  data-on:fetch-before="Transition(#loader) -> target.enter()"
+  data-on:fetch-after="Transition(#loader) -> target.leave()"
   class="flex flex-col gap-8 max-w-xl">
   <nav class="flex items-center gap-4">
     {{
