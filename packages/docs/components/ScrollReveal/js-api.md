@@ -34,11 +34,23 @@ If no target ref is found, the component will default to applying the transition
 
 Scroll down and up in the example below to see the bug in action:
 
+<llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/no-target-ref/app.twig')"
   :script="() => import('./stories/no-target-ref/app.js?raw')"
   height="400px"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/no-target-ref/app.twig
+<<< ./stories/no-target-ref/app.js
+
+:::
+
+</llm-only>
 
 It is recommended to always define a `target` ref to avoid such cases.
 :::

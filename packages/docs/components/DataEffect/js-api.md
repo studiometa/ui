@@ -20,7 +20,19 @@ Use this option to define a piece of JavaScript code to be executed when the val
 
 In the following example, the counter text color is changed based on the input's length:
 
+<llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/effect-example.twig')"
   :script="() => import('./stories/effect-example.js?raw')"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/effect-example.twig
+<<< ./stories/effect-example.js
+
+:::
+
+</llm-only>

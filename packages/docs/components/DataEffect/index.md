@@ -34,6 +34,7 @@ registerComponent(DataEffect);
 
 :::
 
+<llm-exclude>
 <PreviewPlayground
   height="300px"
   zoom="1"
@@ -41,3 +42,14 @@ registerComponent(DataEffect);
   :html="() => import('./stories/too-long.twig')"
   :script="() => import('./stories/too-long.js?raw')"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/too-long.twig
+<<< ./stories/too-long.js
+
+:::
+
+</llm-only>

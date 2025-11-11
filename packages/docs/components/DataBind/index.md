@@ -45,7 +45,19 @@ registerComponent(DataBind);
 
 The whole family of `Data...` components can be used to create reactivity in your HTML with only a few `data-...` attributes.
 
+<llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/basic.twig')"
   :script="() => import('./stories/basic.js?raw')"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/basic.twig
+<<< ./stories/basic.js
+
+:::
+
+</llm-only>

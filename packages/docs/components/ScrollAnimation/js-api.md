@@ -57,19 +57,43 @@ Staggered scroll animation can be created by giving 3 numbers to the `playRange`
 
 The following example uses Twig `loop.index0` and `loop.length` variables to generate `data-option-play-range` attributes with a staggered effect.
 
+<llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/staggered/app.twig')"
   :script="() => import('./stories/staggered/app.js?raw')"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/staggered/app.twig
+<<< ./stories/staggered/app.js
+
+:::
+
+</llm-only>
 
 #### Sequentially ordered animation
 
 Use the `[index, length, step]` format for the `data-option-play-range` attribute value with a `step` value set to `1 / length` to make each animation play sequentially.
 
+<llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/sequence/app.twig')"
   :script="() => import('./stories/sequence/app.js?raw')"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/sequence/app.twig
+<<< ./stories/sequence/app.js
+
+:::
+
+</llm-only>
 
 ### `from`
 

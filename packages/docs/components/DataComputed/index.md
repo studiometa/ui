@@ -42,6 +42,7 @@ registerComponent(DataComputed);
 
 :::
 
+<llm-exclude>
 <PreviewPlayground
   height="300px"
   zoom="1"
@@ -49,11 +50,34 @@ registerComponent(DataComputed);
   :html="() => import('./stories/uppercase.twig')"
   :script="() => import('./stories/uppercase.js?raw')"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/uppercase.twig
+<<< ./stories/uppercase.js
+
+:::
+
+</llm-only>
 
 
 ### Double computed value
 
+<llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/compute-example.twig')"
   :script="() => import('./stories/compute-example.js?raw')"
   />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/compute-example.twig
+<<< ./stories/compute-example.js
+
+:::
+
+</llm-only>
