@@ -4,14 +4,14 @@
       label: 'Enter',
       attr: {
         data_component: 'Action',
-        'data-option-on:click': 'Transition(#one) -> target.enter()'
+        'data-on:click': 'Transition(#one) -> target.enter()'
       }
     } %}
     {% include '@ui/Button/StyledButton.twig' with {
       label: 'Leave',
       attr: {
         data_component: 'Action',
-        'data-option-on:click': 'Transition(#one) -> target.leave()'
+        'data-on:click': 'Transition(#one) -> target.leave()'
       }
     } %}
   </div>
