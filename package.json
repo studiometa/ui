@@ -29,12 +29,12 @@
   },
   "devDependencies": {
     "@studiometa/prettier-config": "4.4.0",
-    "@typescript/native-preview": "7.0.0-dev.20251108.1",
-    "esbuild": "0.25.12",
+    "@typescript/native-preview": "7.0.0-dev.20251112.1",
+    "esbuild": "0.27.0",
     "fast-glob": "3.3.3",
     "gzip-size": "7.0.0",
-    "oxlint": "1.26.0",
-    "oxlint-tsgolint": "0.5.1",
+    "oxlint": "1.28.0",
+    "oxlint-tsgolint": "0.6.0",
     "prettier": "3.6.2"
   },
   "dependencies": {
