@@ -12,7 +12,7 @@
     "postbuild": "ln -sf ../../../api/public .vitepress/dist/api"
   },
   "dependencies": {
-    "@studiometa/js-toolkit": "3.4.1"
+    "@studiometa/js-toolkit": "3.4.3"
   },
   "devDependencies": {
     "@iconify-json/octicon": "1.2.17",
