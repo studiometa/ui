@@ -40,11 +40,11 @@
   }
 ] %}
 
-<div class="max-w-2xl l:max-w-5xl mx-auto" data-component="ParallaxParent">
+<div class="max-w-2xl l:max-w-5xl mx-auto" data-component="ParallaxTimeline">
   {% include '@ui/ImageGrid/ImageGrid.twig' with {
     images: images,
     image_attr: {
-      data_component: 'ParallaxChild',
+      data_component: 'ParallaxTarget',
       data_option_from: { y: [-20, '%'] },
       data_option_to: { y: [20, '%'] },
       class: 'h-fit overflow-hidden',

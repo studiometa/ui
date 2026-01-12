@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **ScrollAnimation:** refactor exports ([#494](https://github.com/studiometa/ui/pull/494), [a5d0e29](https://github.com/studiometa/ui/commit/a5d0e29))
+
 ## [v1.7.0](https://github.com/studiometa/ui/compare/1.6.0..1.7.0) (2025-11-11)
 
 ### Added

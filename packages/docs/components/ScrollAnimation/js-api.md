@@ -230,3 +230,109 @@ The element being animated (either the `target` ref or the component's root elem
 - Type: `Animation`
 
 The animation instance created from the keyframes and easing options. See [`animate` documentation](https://js-toolkit.studiometa.dev/utils/css/animate.html).
+
+---
+
+## ScrollAnimationTimeline
+
+A parent component that manages scroll-based animations for its children `ScrollAnimationTarget` components.
+
+### Usage
+
+```js
+import { Base, createApp } from '@studiometa/js-toolkit';
+import { ScrollAnimationTimeline, ScrollAnimationTarget } from '@studiometa/ui';
+
+class App extends Base {
+  static config = {
+    name: 'App',
+    components: {
+      ScrollAnimationTimeline,
+      ScrollAnimationTarget,
+    },
+  };
+}
+
+export default createApp(App, document.body);
+```
+
+```html
+<div data-component="ScrollAnimationTimeline">
+  <div
+    data-component="ScrollAnimationTarget"
+    data-option-from='{"opacity": 0}'
+    data-option-to='{"opacity": 1}'
+  >
+    <div data-ref="target">Content</div>
+  </div>
+</div>
+```
+
+### Children Components
+
+#### `ScrollAnimationTarget`
+
+- Type: `ScrollAnimationTarget[]`
+
+Array of child animation targets that will be animated based on the scroll progress of the timeline.
+
+---
+
+## ScrollAnimationTarget
+
+A component that animates based on scroll progress from a parent `ScrollAnimationTimeline`. Each target can have its own animation keyframes and play range.
+
+### Usage
+
+```html
+<div data-component="ScrollAnimationTimeline">
+  <div
+    data-component="ScrollAnimationTarget"
+    data-option-from='{"opacity": 0, "translateY": "100px"}'
+    data-option-to='{"opacity": 1, "translateY": "0px"}'
+    data-option-play-range='[0, 0.5]'
+  >
+    <div data-ref="target">First element</div>
+  </div>
+  <div
+    data-component="ScrollAnimationTarget"
+    data-option-from='{"opacity": 0, "translateY": "100px"}'
+    data-option-to='{"opacity": 1, "translateY": "0px"}'
+    data-option-play-range='[0.5, 1]'
+  >
+    <div data-ref="target">Second element</div>
+  </div>
+</div>
+```
+
+### Options
+
+`ScrollAnimationTarget` inherits all options from `ScrollAnimation` and adds:
+
+#### `dampFactor`
+
+- Type: `number`
+- Default: `0.1`
+
+Damping factor for smooth scroll animations. Lower values create smoother, slower animations.
+
+#### `dampPrecision`
+
+- Type: `number`
+- Default: `0.001`
+
+Precision threshold for damping calculations. Lower values increase precision but may impact performance.
+
+### Properties
+
+#### `dampedCurrent`
+
+- Type: `{ x: number, y: number }`
+
+Current damped scroll position values for both axes.
+
+#### `dampedProgress`
+
+- Type: `{ x: number, y: number }`
+
+Current damped progress values (0-1) for both axes.

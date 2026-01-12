@@ -1,10 +1,10 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { Figure, ScrollAnimationChild, ScrollAnimationParent } from '@studiometa/ui';
+import { Figure, ScrollAnimationTarget, ScrollAnimationTimeline } from '@studiometa/ui';
 
-class ParallaxChild extends ScrollAnimationChild {
+class ParallaxTarget extends ScrollAnimationTarget {
   static config = {
-    ...ScrollAnimationChild.config,
-    name: 'ParallaxChild',
+    ...ScrollAnimationTarget.config,
+    name: 'ParallaxTarget',
     components: {
       Figure,
     },
@@ -15,12 +15,12 @@ class ParallaxChild extends ScrollAnimationChild {
   }
 }
 
-class ParallaxParent extends ScrollAnimationParent {
+class ParallaxTimeline extends ScrollAnimationTimeline {
   static config = {
-    ...ScrollAnimationParent.config,
-    name: 'ParallaxParent',
+    ...ScrollAnimationTimeline.config,
+    name: 'ParallaxTimeline',
     components: {
-      ParallaxChild,
+      ParallaxTarget,
     },
   };
 
@@ -29,7 +29,7 @@ class ParallaxParent extends ScrollAnimationParent {
   }
 
   scrolledInView(props) {
-    this.$children.ParallaxChild.forEach((child) => {
+    this.$children.ParallaxTarget.forEach((child) => {
       child.scrolledInView(props);
     });
   }
@@ -39,7 +39,7 @@ class App extends Base {
   static config = {
     name: 'App',
     components: {
-      ParallaxParent,
+      ParallaxTimeline,
     },
   };
 }

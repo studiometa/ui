@@ -25,7 +25,9 @@ title: ScrollAnimation examples
 
 </llm-only>
 
-## Parent driven animation
+## Timeline driven animation
+
+Coordinate multiple animations using `ScrollAnimationTimeline` with `ScrollAnimationTarget` children.
 
 <llm-exclude>
 <PreviewPlayground
@@ -111,11 +113,11 @@ Here, we even use the [ImageGrid organism](/components/ImageGrid/) to quickly ha
 
 </llm-only>
 
-## Parallax with a parent
+## Parallax with a timeline
 
-It might be sometimes interesting to use the parent ↔ child logic of the `ScrollAnimation` component to improve performance, as only the parent progression in the viewport is watched.
+It might be sometimes interesting to use the timeline ↔ target logic of the `ScrollAnimation` component to improve performance, as only the timeline progression in the viewport is watched.
 
-The resulting effect is different as each child animation is driven by the parent one, but it is still interesting.
+The resulting effect is different as each target animation is driven by the timeline, but it is still interesting.
 
 <llm-exclude>
 <PreviewPlayground
