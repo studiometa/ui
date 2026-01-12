@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { ScrollAnimationTimeline, ScrollAnimationTarget } from '@studiometa/ui';
+import { domScheduler } from '@studiometa/js-toolkit/utils';
 import {
   h,
+  destroy,
   mockIsIntersecting,
   intersectionObserverBeforeAllCallback,
   intersectionObserverAfterEachCallback,
@@ -89,5 +91,49 @@ describe('ScrollAnimationTimeline', () => {
 
   it('should be extended from withScrolledInView(Base)', () => {
     expect(parent.scrolledInView).toBeDefined();
+  });
+
+  it('should not share dampedProgress between children', async () => {
+    parentElement = h('div');
+    childElement1 = h('div', {
+      'data-component': 'ScrollAnimationTarget',
+      'data-option-damp-factor': '0.1',
+    });
+    childElement2 = h('div', {
+      'data-component': 'ScrollAnimationTarget',
+      'data-option-damp-factor': '1',
+    });
+
+    parentElement.appendChild(childElement1);
+    parentElement.appendChild(childElement2);
+
+    const timeline = new ScrollAnimationTimeline(parentElement);
+    await mockIsIntersecting(parentElement, true);
+
+    const child1 = timeline.$children.ScrollAnimationTarget[0];
+    const child2 = timeline.$children.ScrollAnimationTarget[1];
+
+    const child1RenderSpy = vi.spyOn(child1, 'render');
+    const child2RenderSpy = vi.spyOn(child2, 'render');
+
+    const mockProps = {
+      current: { x: 0, y: 100 },
+      start: { x: 0, y: 0 },
+      end: { x: 0, y: 1000 },
+      progress: { x: 0, y: 0.1 },
+      dampedCurrent: { x: 0, y: 0 },
+      dampedProgress: { x: 0, y: 0 },
+    };
+
+    timeline.scrolledInView(mockProps as any);
+
+    // Wait for domScheduler
+    await new Promise((resolve) => domScheduler.read(() => domScheduler.write(resolve)));
+
+    expect(child1RenderSpy).toHaveBeenCalledWith(0.01);
+    expect(child2RenderSpy).toHaveBeenCalledWith(0.1);
+
+    await mockIsIntersecting(parentElement, false);
+    await destroy(timeline);
   });
 });
