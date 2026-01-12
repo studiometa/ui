@@ -93,12 +93,14 @@ export class ScrollAnimationChild<T extends BaseProps = BaseProps> extends Abstr
       const { dampFactor, dampPrecision } = this.$options;
       updateProps(this, props, dampFactor, dampPrecision, 'x');
       updateProps(this, props, dampFactor, dampPrecision, 'y');
-      props.dampedCurrent = this.dampedCurrent;
-      props.dampedProgress = this.dampedProgress;
     });
 
     domScheduler.write(() => {
-      super.scrolledInView(props);
+      super.scrolledInView({
+        ...props,
+        dampedCurrent: this.dampedCurrent,
+        dampedProgress: this.dampedProgress,
+      });
     });
   }
 }
