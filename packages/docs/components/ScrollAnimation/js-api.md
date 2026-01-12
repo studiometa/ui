@@ -223,7 +223,7 @@ Manually render the animation at a specific progress value.
 
 - Type: `HTMLElement`
 
-The element being animated (either the `target` ref or the component's root element).
+The element being animated. For `ScrollAnimationTarget`, it defaults to the component's root element (`$el`). For the legacy `ScrollAnimation`, it uses the `target` ref if provided.
 
 ### `animation`
 
@@ -263,7 +263,7 @@ export default createApp(App, document.body);
     data-option-from='{"opacity": 0}'
     data-option-to='{"opacity": 1}'
   >
-    <div data-ref="target">Content</div>
+    Content
   </div>
 </div>
 ```
@@ -292,7 +292,7 @@ A component that animates based on scroll progress from a parent `ScrollAnimatio
     data-option-to='{"opacity": 1, "translateY": "0px"}'
     data-option-play-range='[0, 0.5]'
   >
-    <div data-ref="target">First element</div>
+    First element
   </div>
   <div
     data-component="ScrollAnimationTarget"
@@ -300,14 +300,14 @@ A component that animates based on scroll progress from a parent `ScrollAnimatio
     data-option-to='{"opacity": 1, "translateY": "0px"}'
     data-option-play-range='[0.5, 1]'
   >
-    <div data-ref="target">Second element</div>
+    Second element
   </div>
 </div>
 ```
 
 ### Options
 
-`ScrollAnimationTarget` inherits all options from `ScrollAnimation` and adds:
+`ScrollAnimationTarget` inherits all options from the base animation class and adds:
 
 #### `dampFactor`
 
