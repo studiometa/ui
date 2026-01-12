@@ -4,16 +4,16 @@ import type {
   ScrollInViewProps,
   WithScrolledInViewProps,
 } from '@studiometa/js-toolkit';
-import { damp, clamp01, domScheduler, isDev } from '@studiometa/js-toolkit/utils';
+import { damp, clamp01, domScheduler } from '@studiometa/js-toolkit/utils';
 import { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
 
-export interface ScrollAnimationChildProps extends BaseProps {
+export interface ScrollAnimationTargetProps extends BaseProps {
   $options: WithScrolledInViewProps['$options'];
 }
 
 function updateProps(
   // eslint-disable-next-line no-use-before-define
-  that: ScrollAnimationChild,
+  that: ScrollAnimationTarget,
   props: ScrollInViewProps,
   dampFactor: number,
   dampPrecision: number,
@@ -31,19 +31,34 @@ function updateProps(
 }
 
 /**
- * ScrollAnimationChild class.
+ * ScrollAnimationTarget class.
  *
- * @deprecated Use `ScrollAnimationTarget` instead.
+ * A component that animates based on scroll progress from a parent `ScrollAnimationTimeline`.
+ * Each target can have its own animation keyframes and play range.
+ *
+ * @example
+ * ```html
+ * <div data-component="ScrollAnimationTimeline">
+ *   <div
+ *     data-component="ScrollAnimationTarget"
+ *     data-option-from='{"opacity": 0, "transform": "translateY(20px)"}'
+ *     data-option-to='{"opacity": 1, "transform": "translateY(0)"}'
+ *     data-option-play-range='[0, 0.5]'
+ *   >
+ *     Animated content
+ *   </div>
+ * </div>
+ * ```
  */
-export class ScrollAnimationChild<T extends BaseProps = BaseProps> extends AbstractScrollAnimation<
-  T & ScrollAnimationChildProps
+export class ScrollAnimationTarget<T extends BaseProps = BaseProps> extends AbstractScrollAnimation<
+  T & ScrollAnimationTargetProps
 > {
   /**
    * Config.
    */
   static config: BaseConfig = {
-    name: 'ScrollAnimationChild',
     ...AbstractScrollAnimation.config,
+    name: 'ScrollAnimationTarget',
     options: {
       ...AbstractScrollAnimation.config.options,
       dampFactor: {
@@ -72,18 +87,6 @@ export class ScrollAnimationChild<T extends BaseProps = BaseProps> extends Abstr
     x: 0,
     y: 0,
   };
-
-  /**
-   * Display deprecation warning.
-   */
-  mounted() {
-    if (isDev) {
-      console.warn(
-        `The ${this.$options.name} component is deprecated.`,
-        '\nUse `ScrollAnimationTarget` instead.',
-      );
-    }
-  }
 
   /**
    * Compute local damped progress.

@@ -1,5 +1,10 @@
 # @studiometa/ui packages
 
+## Commit messages
+
+- Use English for commit messages
+- Use simple verb-first sentences (e.g., "Add...", "Fix...", "Refactor...")
+
 ## Project structure
 
 - Monorepo managed by NPM with packages in the `./packages` folder
