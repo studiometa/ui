@@ -78,7 +78,10 @@ export default defineConfig({
       },
       {
         text: `<span class="VPBadge font-bold bg-[var(--vp-button-brand-bg)] text-[var(--vp-button-brand-text)]">v${pkg.version}</span>`,
-        items: [{ text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' }],
+        items: [
+          { text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' },
+          { text: 'Migration guides', link: '/migration-guides/' },
+        ],
       },
     ],
     sidebar: {
