@@ -144,22 +144,149 @@ Use the `withScrollAnimationDebug` decorator and the `debug` option to display v
 
 ## Offset
 
-Use the `offset` option on `ScrollAnimationTimeline` to control when the animation starts and ends relative to the viewport. This is useful when a section is at the top, center, or bottom of a page.
+Use the `offset` option on `ScrollAnimationTimeline` to control when the animation starts and ends relative to the viewport.
+
+The offset format is `"<targetStart> <viewportStart> / <targetEnd> <viewportEnd>"` where:
+- `targetStart` / `targetEnd`: position on the timeline element (`start` = top, `center` = middle, `end` = bottom)
+- `viewportStart` / `viewportEnd`: position on the viewport (`start` = top, `center` = middle, `end` = bottom)
+
+You can use named values (`start`, `center`, `end`), numbers between 0 and 1, or percentages.
+
+### Default offset
+
+**Value:** `"start end / end start"` (default)
+
+The animation **starts** when the **start (top) of the timeline** reaches the **end (bottom) of the viewport**.
+The animation **ends** when the **end (bottom) of the timeline** reaches the **start (top) of the viewport**.
+
+This means the animation plays while any part of the timeline is visible in the viewport.
 
 <llm-exclude>
 <PreviewPlayground
-  :html="() => import('./stories/offset/app.twig')"
+  :html="() => import('./stories/offset-default/app.twig')"
   css=" "
   :css-editor="false"
-  :script="() => import('./stories/offset/app.js?raw')"
+  :script="() => import('./stories/offset-default/app.js?raw')"
   />
 </llm-exclude>
 <llm-only>
 
 :::code-group
 
-<<< ./stories/offset/app.twig
-<<< ./stories/offset/app.js
+<<< ./stories/offset-default/app.twig
+<<< ./stories/offset-default/app.js
+
+:::
+
+</llm-only>
+
+### Centered offset
+
+**Value:** `"start center / end center"`
+
+The animation **starts** when the **start (top) of the timeline** reaches the **center of the viewport**.
+The animation **ends** when the **end (bottom) of the timeline** reaches the **center of the viewport**.
+
+This means the animation plays while the timeline crosses the middle of the screen.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/offset-center/app.twig')"
+  css=" "
+  :css-editor="false"
+  :script="() => import('./stories/offset-center/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/offset-center/app.twig
+<<< ./stories/offset-center/app.js
+
+:::
+
+</llm-only>
+
+### Top section offset
+
+**Value:** `"start start / end start"`
+
+The animation **starts** when the **start (top) of the timeline** reaches the **start (top) of the viewport**.
+The animation **ends** when the **end (bottom) of the timeline** reaches the **start (top) of the viewport**.
+
+This means the animation plays while the timeline is pinned at the top of the viewport.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/offset-top/app.twig')"
+  css=" "
+  :css-editor="false"
+  :script="() => import('./stories/offset-top/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/offset-top/app.twig
+<<< ./stories/offset-top/app.js
+
+:::
+
+</llm-only>
+
+### Numbered offset
+
+**Value:** `"0 0.8 / 1 0.2"`
+
+The animation **starts** when the **start (0 = top) of the timeline** reaches **80% (0.8) from the top of the viewport**.
+The animation **ends** when the **end (1 = bottom) of the timeline** reaches **20% (0.2) from the top of the viewport**.
+
+Using numbers between 0 and 1 gives you precise control over the trigger positions.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/offset-numbered/app.twig')"
+  css=" "
+  :css-editor="false"
+  :script="() => import('./stories/offset-numbered/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/offset-numbered/app.twig
+<<< ./stories/offset-numbered/app.js
+
+:::
+
+</llm-only>
+
+### Percentage offset
+
+**Value:** `"0 75% / 100% 25%"`
+
+The animation **starts** when the **start (0 = top) of the timeline** reaches **75% from the top of the viewport**.
+The animation **ends** when the **end (100% = bottom) of the timeline** reaches **25% from the top of the viewport**.
+
+Percentages work the same as numbers but can be more readable.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/offset-percentage/app.twig')"
+  css=" "
+  :css-editor="false"
+  :script="() => import('./stories/offset-percentage/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/offset-percentage/app.twig
+<<< ./stories/offset-percentage/app.js
 
 :::
 
