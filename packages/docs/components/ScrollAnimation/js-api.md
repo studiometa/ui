@@ -8,6 +8,8 @@ title: ScrollAnimation JS API
 
 A parent component that manages scroll-based animations for its children `ScrollAnimationTarget` components. The timeline watches for its position in the viewport and propagates the scroll progress to all its children.
 
+This component is based on the [`withScrolledInView`](https://js-toolkit.studiometa.dev/api/decorators/withScrolledInView.html) decorator from the `@studiometa/js-toolkit` package and inherits all of its options.
+
 ### Usage
 
 ```js
