@@ -144,7 +144,7 @@ Use the `withScrollAnimationDebug` decorator and the `debug` option to display v
 
 ## Offset
 
-Use the `offset` option on `ScrollAnimationTimeline` to control when the animation starts and ends relative to the viewport.
+Use the [`offset` option](/components/ScrollAnimation/js-api.html#offset) on `ScrollAnimationTimeline` to control when the animation starts and ends relative to the viewport.
 
 The offset format is `"<targetStart> <viewportStart> / <targetEnd> <viewportEnd>"` where:
 - `targetStart` / `targetEnd`: position on the timeline element (`start` = top, `center` = middle, `end` = bottom)
