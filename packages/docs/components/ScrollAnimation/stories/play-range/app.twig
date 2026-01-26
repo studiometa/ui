@@ -1,0 +1,39 @@
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll down ↓
+</div>
+
+<div data-component="ScrollAnimationTimeline" class="h-[400vh]">
+  <div class="sticky top-0 flex gap-8 items-center justify-center w-full h-screen">
+    <div class="text-center">
+      <div
+        data-component="ScrollAnimationTarget"
+        data-option-play-range="[0, 0.3]"
+        data-option-from="{{ { opacity: 0, scale: 0.5 }|json_encode }}"
+        data-option-to="{{ { opacity: 1, scale: 1 }|json_encode }}"
+        class="w-32 h-32 rounded-2xl bg-blue-500"></div>
+      <p class="mt-4 text-sm text-gray-600">[0, 0.3]</p>
+    </div>
+    <div class="text-center">
+      <div
+        data-component="ScrollAnimationTarget"
+        data-option-play-range="[0.35, 0.65]"
+        data-option-from="{{ { opacity: 0, scale: 0.5 }|json_encode }}"
+        data-option-to="{{ { opacity: 1, scale: 1 }|json_encode }}"
+        class="w-32 h-32 rounded-2xl bg-green-500"></div>
+      <p class="mt-4 text-sm text-gray-600">[0.35, 0.65]</p>
+    </div>
+    <div class="text-center">
+      <div
+        data-component="ScrollAnimationTarget"
+        data-option-play-range="[0.7, 1]"
+        data-option-from="{{ { opacity: 0, scale: 0.5 }|json_encode }}"
+        data-option-to="{{ { opacity: 1, scale: 1 }|json_encode }}"
+        class="w-32 h-32 rounded-2xl bg-red-500"></div>
+      <p class="mt-4 text-sm text-gray-600">[0.7, 1]</p>
+    </div>
+  </div>
+</div>
+
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll up ↑
+</div>
