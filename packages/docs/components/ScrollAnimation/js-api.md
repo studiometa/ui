@@ -149,18 +149,18 @@ Each point accepts the following values:
 
 <llm-exclude>
 <PreviewPlayground
-  :html="() => import('./stories/offset/app.twig')"
+  :html="() => import('./stories/offset-default/app.twig')"
   css=" "
   :css-editor="false"
-  :script="() => import('./stories/offset/app.js?raw')"
+  :script="() => import('./stories/offset-default/app.js?raw')"
   />
 </llm-exclude>
 <llm-only>
 
 :::code-group
 
-<<< ./stories/offset/app.twig
-<<< ./stories/offset/app.js
+<<< ./stories/offset-default/app.twig
+<<< ./stories/offset-default/app.js
 
 :::
 
