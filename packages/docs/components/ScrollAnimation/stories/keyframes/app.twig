@@ -1,0 +1,21 @@
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll down ↓
+</div>
+
+<div data-component="ScrollAnimationTimeline" class="h-[400vh]">
+  <div class="sticky top-0 flex items-center justify-center w-full h-screen">
+    <div
+      data-component="ScrollAnimationTarget"
+      data-option-keyframes="{{ [
+        { opacity: 0, x: -200, scale: 0.5 },
+        { opacity: 1, x: 0, scale: 1, offset: 0.4 },
+        { opacity: 1, x: 0, scale: 1, rotate: 0, offset: 0.6 },
+        { opacity: 0, x: 200, scale: 0.5, rotate: 180 }
+      ]|json_encode }}"
+      class="w-48 h-48 rounded-2xl bg-blue-500"></div>
+  </div>
+</div>
+
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll up ↑
+</div>
