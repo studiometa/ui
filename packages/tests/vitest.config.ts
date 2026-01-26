@@ -14,6 +14,6 @@ export default defineConfig({
       include: ['ui/**/*.ts'],
       exclude: ['**/tests/**/*.ts', '**/ui/**/index.ts'],
     },
-    exclude: ['**/.symfony/vendor/**'],
+    exclude: ['**/.symfony/vendor/**', '**/api/vendor/**'],
   },
 });

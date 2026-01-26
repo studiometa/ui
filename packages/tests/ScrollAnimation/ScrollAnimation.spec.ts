@@ -7,7 +7,7 @@ import {
   intersectionObserverAfterEachCallback,
 } from '#test-utils';
 
-describe('ScrollAnimation', () => {
+describe('ScrollAnimation (deprecated)', () => {
   let element: HTMLDivElement;
   let targetElement: HTMLDivElement;
   let animation: ScrollAnimation;

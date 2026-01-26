@@ -49,6 +49,8 @@ test('components exports', () => {
       "ScrollAnimationChild",
       "ScrollAnimationChildWithEase",
       "ScrollAnimationParent",
+      "ScrollAnimationTarget",
+      "ScrollAnimationTimeline",
       "ScrollAnimationWithEase",
       "ScrollReveal",
       "Sentinel",

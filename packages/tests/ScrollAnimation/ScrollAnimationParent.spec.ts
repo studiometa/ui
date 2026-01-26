@@ -7,7 +7,7 @@ import {
   intersectionObserverAfterEachCallback,
 } from '#test-utils';
 
-describe('ScrollAnimationParent', () => {
+describe('ScrollAnimationParent (deprecated)', () => {
   let parentElement: HTMLDivElement;
   let childElement1: HTMLDivElement;
   let childElement2: HTMLDivElement;

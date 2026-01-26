@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { ScrollAnimationChild } from '@studiometa/ui';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { ScrollAnimationChildWithEase } from '@studiometa/ui';
 import { h, mount, destroy } from '#test-utils';
 
-describe('ScrollAnimationChild (deprecated)', () => {
+describe('ScrollAnimationChildWithEase (deprecated)', () => {
   let element: HTMLDivElement;
-  let animation: ScrollAnimationChild;
+  let animation: ScrollAnimationChildWithEase;
 
   beforeEach(async () => {
     element = h('div');
-    animation = new ScrollAnimationChild(element);
+    animation = new ScrollAnimationChildWithEase(element);
     await mount(animation);
   });
 
@@ -17,9 +17,9 @@ describe('ScrollAnimationChild (deprecated)', () => {
   });
 
   it('should have the correct config', () => {
-    expect(ScrollAnimationChild.config.name).toBe('AbstractScrollAnimation');
-    expect(ScrollAnimationChild.config.options.dampFactor.default).toBe(0.1);
-    expect(ScrollAnimationChild.config.options.dampPrecision.default).toBe(0.001);
+    expect(ScrollAnimationChildWithEase.config.name).toBe('ScrollAnimationChildWithEase');
+    expect(ScrollAnimationChildWithEase.config.options.dampFactor.default).toBe(0.1);
+    expect(ScrollAnimationChildWithEase.config.options.dampPrecision.default).toBe(0.001);
   });
 
   it('should initialize with correct default damped values', () => {
