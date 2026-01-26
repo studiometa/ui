@@ -23,6 +23,7 @@ HTMLElement references for tab content panels. Each panel corresponds to a tab b
 
 Configure the styles for different tab states. Available references are `btn` and `content`, each supporting `open`, `active`, and `closed` style states.
 
+<!-- prettier-ignore-start -->
 ```html
 data-option-styles='{
   "btn": {
@@ -35,6 +36,7 @@ data-option-styles='{
   }
 }'
 ```
+<!-- prettier-ignore-end -->
 
 ## Methods
 
@@ -69,6 +71,7 @@ Emitted when a tab is disabled. The event data contains the disabled tab item.
 - Type: `TabItem[]`
 
 Array of tab items, each containing:
+
 - `btn` (HTMLElement) - The tab button element
 - `content` (HTMLElement) - The tab content element
 - `isEnabled` (boolean) - Whether the tab is currently enabled

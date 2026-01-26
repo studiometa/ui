@@ -72,7 +72,6 @@ And specify an additional selector to filter the targeted components:
 
 </llm-only>
 
-
 ### Simple usage with the `Target` component
 
 The `Target` component is a companion of the `Action` component that can be used to easily target other DOM elements without creating specific component.

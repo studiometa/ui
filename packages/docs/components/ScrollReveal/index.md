@@ -35,8 +35,7 @@ export default createApp(App);
 <div
   data-component="ScrollReveal"
   data-option-enter-from="opacity-0"
-  data-option-enter-active="transition"
->
+  data-option-enter-active="transition">
   <div data-ref="target" class="opacity-0">...</div>
 </div>
 ```

@@ -9,6 +9,7 @@ This component can be used to add drag capabilities to the slider. It should wra
     <div data-component="SliderItem"></div>
     ...
   </div>
+</div>
 ```
 
 This component uses the [`withDrag` decorator](https://js-toolkit.studiometa.dev/api/decorators/withDrag.html) and inherits from its APIs.

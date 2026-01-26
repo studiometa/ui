@@ -14,12 +14,14 @@ outline: deep
 
 Defines the classes that describe the initial state of the enter transition.
 
+<!-- prettier-ignore-start -->
 ```html {2}
 <div data-component="Transition"
   data-option-enter-from="opacity-0">
   ...
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 ### `enterActive`
 
@@ -28,12 +30,14 @@ Defines the classes that describe the initial state of the enter transition.
 
 Defines the classes that describe the transitioning state of the enter transition.
 
+<!-- prettier-ignore-start -->
 ```html {2}
 <div data-component="Transition"
   data-option-enter-active="transition duration-500">
   ...
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 ### `enterTo`
 
@@ -42,12 +46,14 @@ Defines the classes that describe the transitioning state of the enter transitio
 
 Defines the classes that describe the end state of the enter transition.
 
+<!-- prettier-ignore-start -->
 ```html {2}
 <div data-component="Transition"
   data-option-enter-to="opacity-90">
   ...
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 ### `enterKeep`
 
@@ -56,12 +62,14 @@ Defines the classes that describe the end state of the enter transition.
 
 Configure wether or not the `enterTo` classes should be kept on the target element at the end of the enter transition.
 
+<!-- prettier-ignore-start -->
 ```html {2}
 <div data-component="Transition"
   data-option-enter-keep>
   ...
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 ### `leaveFrom`
 
@@ -70,12 +78,14 @@ Configure wether or not the `enterTo` classes should be kept on the target eleme
 
 Defines the classes that describe the initial state of the leave transition.
 
+<!-- prettier-ignore-start -->
 ```html {2}
 <div data-component="Transition"
   data-option-leave-from="opacity-0">
   ...
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 ### `leaveActive`
 
@@ -84,12 +94,14 @@ Defines the classes that describe the initial state of the leave transition.
 
 Defines the classes that describe the transitioning state of the leave transition.
 
+<!-- prettier-ignore-start -->
 ```html {2}
 <div data-component="Transition"
   data-option-leave-active="transition duration-500">
   ...
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 ### `leaveTo`
 
@@ -98,12 +110,14 @@ Defines the classes that describe the transitioning state of the leave transitio
 
 Defines the classes that describe the end state of the leave transition.
 
+<!-- prettier-ignore-start -->
 ```html {2}
 <div data-component="Transition"
   data-option-leave-to="opacity-90">
   ...
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 ### `leaveKeep`
 
@@ -112,13 +126,14 @@ Defines the classes that describe the end state of the leave transition.
 
 Configure wether or not the `leaveTo` classes should be kept on the target element at the end of the leave transition.
 
+<!-- prettier-ignore-start -->
 ```html {2}
 <div data-component="Transition"
   data-option-leave-keep>
   ...
 </div>
 ```
-
+<!-- prettier-ignore-end -->
 
 ### `group`
 
@@ -127,6 +142,7 @@ Configure wether or not the `leaveTo` classes should be kept on the target eleme
 
 Define a group to sync `enter` and `leave` transition between multiple instances.
 
+<!-- prettier-ignore-start -->
 ```html {2,7}
 <div data-component="Transition"
   data-option-group="my-group">
@@ -138,7 +154,7 @@ Define a group to sync `enter` and `leave` transition between multiple instances
   ...
 </div>
 ```
-
+<!-- prettier-ignore-end -->
 
 ## Properties
 

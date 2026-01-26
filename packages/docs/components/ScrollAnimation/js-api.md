@@ -32,8 +32,7 @@ export default createApp(App, document.body);
   <div
     data-component="ScrollAnimationTarget"
     data-option-from='{"opacity": 0}'
-    data-option-to='{"opacity": 1}'
-  >
+    data-option-to='{"opacity": 1}'>
     Content
   </div>
 </div>
@@ -61,16 +60,14 @@ A component that animates based on scroll progress from a parent `ScrollAnimatio
     data-component="ScrollAnimationTarget"
     data-option-from='{"opacity": 0, "y": 100}'
     data-option-to='{"opacity": 1, "y": 0}'
-    data-option-play-range='[0, 0.5]'
-  >
+    data-option-play-range="[0, 0.5]">
     First element
   </div>
   <div
     data-component="ScrollAnimationTarget"
     data-option-from='{"opacity": 0, "y": 100}'
     data-option-to='{"opacity": 1, "y": 0}'
-    data-option-play-range='[0.5, 1]'
-  >
+    data-option-play-range="[0.5, 1]">
     Second element
   </div>
 </div>
@@ -85,6 +82,7 @@ A component that animates based on scroll progress from a parent `ScrollAnimatio
 
 Define the scroll progress range when the animation should play. Values between 0 and 1, where 0 is when the timeline enters the viewport and 1 is when it exits.
 
+<!-- prettier-ignore-start -->
 ```html {4,11}
 <div data-component="ScrollAnimationTimeline">
   <div
@@ -99,6 +97,7 @@ Define the scroll progress range when the animation should play. Values between 
   </div>
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 ##### Staggered animation
 
@@ -108,6 +107,7 @@ Staggered scroll animation can be created by giving 3 numbers to the `playRange`
 - `length`: the length of the staggered items
 - `step`: the delay to apply between each item in the staggered list
 
+<!-- prettier-ignore-start -->
 ```html {4,10}
 <div data-component="ScrollAnimationTimeline">
   <div
@@ -122,6 +122,7 @@ Staggered scroll animation can be created by giving 3 numbers to the `playRange`
   </div>
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 The following example uses Twig `loop.index0` and `loop.length` variables to generate `data-option-play-range` attributes with a staggered effect.
 
@@ -170,6 +171,7 @@ Use the `[index, length, step]` format for the `data-option-play-range` attribut
 
 Initial keyframe for the animation. Define CSS properties as key-value pairs.
 
+<!-- prettier-ignore-start -->
 ```html {4}
 <div data-component="ScrollAnimationTimeline">
   <div
@@ -179,6 +181,7 @@ Initial keyframe for the animation. Define CSS properties as key-value pairs.
   </div>
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 #### `to`
 
@@ -187,6 +190,7 @@ Initial keyframe for the animation. Define CSS properties as key-value pairs.
 
 Final keyframe for the animation. Define CSS properties as key-value pairs.
 
+<!-- prettier-ignore-start -->
 ```html {4}
 <div data-component="ScrollAnimationTimeline">
   <div
@@ -196,6 +200,7 @@ Final keyframe for the animation. Define CSS properties as key-value pairs.
   </div>
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 #### `keyframes`
 
@@ -244,6 +249,7 @@ interface KeyFrame extends TransformProps {
 
 Cubic-bezier easing values for the animation timing.
 
+<!-- prettier-ignore-start -->
 ```html {4}
 <div data-component="ScrollAnimationTimeline">
   <div
@@ -253,6 +259,7 @@ Cubic-bezier easing values for the animation timing.
   </div>
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 ##### Common easing values
 
@@ -373,11 +380,8 @@ A standalone component that watches its own position in the viewport and animate
 <div
   data-component="ScrollAnimation"
   data-option-from='{"opacity": 0, "y": 100}'
-  data-option-to='{"opacity": 1, "y": 0}'
->
-  <div data-ref="target">
-    Content to animate
-  </div>
+  data-option-to='{"opacity": 1, "y": 0}'>
+  <div data-ref="target">Content to animate</div>
 </div>
 ```
 

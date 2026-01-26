@@ -62,7 +62,6 @@ export default createApp(App);
 
 </llm-only>
 
-
 ::: warning HTML Structure
 
 A `Menu` component should only have one direct `MenuList` child and one direct `MenuBtn` child. In case of advanced menus, the `Menu` components can be nested inside one another.
@@ -70,6 +69,7 @@ A `Menu` component should only have one direct `MenuList` child and one direct `
 :::
 
 ::: details Example of a nested `Menu` tree
+
 ```
 ┌ Menu
 ├─ MenuBtn

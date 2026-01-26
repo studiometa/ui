@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
 import { defineConfig } from 'vitepress';
 import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
-import { withLeadingSlash, withLeadingCharacters } from '@studiometa/js-toolkit/utils';
+import { withLeadingSlash } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
 import pkg from '../package.json' with { type: 'json' };
 

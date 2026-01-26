@@ -1,6 +1,6 @@
-# v1.0 → v2.0
+# v1.x → v2.x
 
-You will find on this page documentation on all the breaking changes included in the v2.0 of the package.
+You will find on this page documentation on all the breaking changes included in the v2.x of the package.
 
 [[toc]]
 
@@ -10,14 +10,14 @@ The `ScrollAnimation` family of components has been refactored for better perfor
 
 ### Summary of component renames
 
-| v1.0 (deprecated)             | v2.0 (new)                                          |
-| ----------------------------- | --------------------------------------------------- |
-| `ScrollAnimation`             | `ScrollAnimationTimeline` + `ScrollAnimationTarget` |
-| `ScrollAnimationParent`       | `ScrollAnimationTimeline`                           |
-| `ScrollAnimationChild`        | `ScrollAnimationTarget`                             |
-| `ScrollAnimationChildWithEase`| `ScrollAnimationTarget` with `dampFactor` option    |
-| `ScrollAnimationWithEase`     | `ScrollAnimationTimeline` + `ScrollAnimationTarget` |
-| `animationScrollWithEase`     | Extend `ScrollAnimationTarget` instead              |
+| v1.x (deprecated)              | v2.x (new)                                          |
+| ------------------------------ | --------------------------------------------------- |
+| `ScrollAnimation`              | `ScrollAnimationTimeline` + `ScrollAnimationTarget` |
+| `ScrollAnimationParent`        | `ScrollAnimationTimeline`                           |
+| `ScrollAnimationChild`         | `ScrollAnimationTarget`                             |
+| `ScrollAnimationChildWithEase` | `ScrollAnimationTarget` with `dampFactor` option    |
+| `ScrollAnimationWithEase`      | `ScrollAnimationTimeline` + `ScrollAnimationTarget` |
+| `animationScrollWithEase`      | Extend `ScrollAnimationTarget` instead              |
 
 ### Benefits of the new API
 
@@ -33,17 +33,14 @@ The refactored API provides several benefits:
 
 The standalone `ScrollAnimation` component has been removed. Use `ScrollAnimationTimeline` with `ScrollAnimationTarget` children instead.
 
-**Before (v1.0):**
+**Before (v1.x):**
 
 ```html
 <div
   data-component="ScrollAnimation"
   data-option-from='{"opacity": 0, "y": 100}'
-  data-option-to='{"opacity": 1, "y": 0}'
->
-  <div data-ref="target">
-    Content to animate
-  </div>
+  data-option-to='{"opacity": 1, "y": 0}'>
+  <div data-ref="target">Content to animate</div>
 </div>
 ```
 
@@ -63,15 +60,14 @@ class App extends Base {
 export default createApp(App, document.body);
 ```
 
-**After (v2.0):**
+**After (v2.x):**
 
 ```html
 <div data-component="ScrollAnimationTimeline">
   <div
     data-component="ScrollAnimationTarget"
     data-option-from='{"opacity": 0, "y": 100}'
-    data-option-to='{"opacity": 1, "y": 0}'
-  >
+    data-option-to='{"opacity": 1, "y": 0}'>
     Content to animate
   </div>
 </div>
@@ -95,22 +91,22 @@ export default createApp(App, document.body);
 ```
 
 ::: tip Key differences
+
 - The `target` ref is no longer needed — `ScrollAnimationTarget` animates itself
 - Animation options (`from`, `to`, `playRange`, etc.) are now on `ScrollAnimationTarget`
 - Multiple targets can share the same timeline for coordinated animations
+
 :::
 
 ### Replace `ScrollAnimationParent` with `ScrollAnimationTimeline`
 
 The `ScrollAnimationParent` component has been renamed to `ScrollAnimationTimeline`.
 
-**Before (v1.0):**
+**Before (v1.x):**
 
 ```html
 <div data-component="ScrollAnimationParent">
-  <div data-component="ScrollAnimationChild" data-option-from='{"opacity": 0}'>
-    ...
-  </div>
+  <div data-component="ScrollAnimationChild" data-option-from='{"opacity": 0}'>...</div>
 </div>
 ```
 
@@ -118,13 +114,11 @@ The `ScrollAnimationParent` component has been renamed to `ScrollAnimationTimeli
 import { ScrollAnimationParent, ScrollAnimationChild } from '@studiometa/ui';
 ```
 
-**After (v2.0):**
+**After (v2.x):**
 
 ```html
 <div data-component="ScrollAnimationTimeline">
-  <div data-component="ScrollAnimationTarget" data-option-from='{"opacity": 0}'>
-    ...
-  </div>
+  <div data-component="ScrollAnimationTarget" data-option-from='{"opacity": 0}'>...</div>
 </div>
 ```
 
@@ -152,13 +146,11 @@ The `ScrollAnimationChild` component has been renamed to `ScrollAnimationTarget`
 
 The `ScrollAnimationChildWithEase` component has been removed. Use `ScrollAnimationTarget` with the `dampFactor` option instead.
 
-**Before (v1.0):**
+**Before (v1.x):**
 
 ```html
 <div data-component="ScrollAnimationParent">
-  <div data-component="ScrollAnimationChildWithEase" data-option-from='{"opacity": 0}'>
-    ...
-  </div>
+  <div data-component="ScrollAnimationChildWithEase" data-option-from='{"opacity": 0}'>...</div>
 </div>
 ```
 
@@ -166,15 +158,14 @@ The `ScrollAnimationChildWithEase` component has been removed. Use `ScrollAnimat
 import { ScrollAnimationChildWithEase } from '@studiometa/ui';
 ```
 
-**After (v2.0):**
+**After (v2.x):**
 
 ```html
 <div data-component="ScrollAnimationTimeline">
   <div
     data-component="ScrollAnimationTarget"
     data-option-damp-factor="0.1"
-    data-option-from='{"opacity": 0}'
-  >
+    data-option-from='{"opacity": 0}'>
     ...
   </div>
 </div>
@@ -192,26 +183,22 @@ Each `ScrollAnimationTarget` can have its own `dampFactor` value, allowing for d
 
 The `ScrollAnimationWithEase` component has been removed. Use `ScrollAnimationTimeline` with `ScrollAnimationTarget` children that have the `dampFactor` option.
 
-**Before (v1.0):**
+**Before (v1.x):**
 
 ```html
-<div
-  data-component="ScrollAnimationWithEase"
-  data-option-from='{"opacity": 0}'
->
+<div data-component="ScrollAnimationWithEase" data-option-from='{"opacity": 0}'>
   <div data-ref="target">...</div>
 </div>
 ```
 
-**After (v2.0):**
+**After (v2.x):**
 
 ```html
 <div data-component="ScrollAnimationTimeline">
   <div
     data-component="ScrollAnimationTarget"
     data-option-damp-factor="0.1"
-    data-option-from='{"opacity": 0}'
-  >
+    data-option-from='{"opacity": 0}'>
     ...
   </div>
 </div>
@@ -221,7 +208,7 @@ The `ScrollAnimationWithEase` component has been removed. Use `ScrollAnimationTi
 
 The `animationScrollWithEase` decorator has been removed without a direct replacement. If you were using it to create custom scroll animation components, extend `ScrollAnimationTarget` instead.
 
-**Before (v1.0):**
+**Before (v1.x):**
 
 ```js
 import { Base } from '@studiometa/js-toolkit';
@@ -232,7 +219,7 @@ class MyScrollAnimation extends animationScrollWithEase(Base) {
 }
 ```
 
-**After (v2.0):**
+**After (v2.x):**
 
 ```js
 import { ScrollAnimationTarget } from '@studiometa/ui';

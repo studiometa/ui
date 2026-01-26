@@ -16,7 +16,7 @@ The `Panel` component extends the [`Modal` component](/components/Modal/twig-api
 Define from which edge of the screen the panel slides in. This affects the panel positioning, sizing, and animation direction:
 
 - `'top'`: Panel slides down from the top edge, full width
-- `'right'`: Panel slides in from the right edge, full height  
+- `'right'`: Panel slides in from the right edge, full height
 - `'bottom'`: Panel slides up from the bottom edge, full width
 - `'left'`: Panel slides in from the left edge, full height
 
@@ -32,7 +32,7 @@ All parameters from the [Modal component](/components/Modal/twig-api.md) are ava
 
 - `attr` - Root element attributes
 - `modal_attr` - Modal container attributes
-- `overlay_attr` - Background overlay attributes  
+- `overlay_attr` - Background overlay attributes
 - `container_attr` - Content container attributes
 - `content_attr` - Inner content attributes
 

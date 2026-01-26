@@ -47,24 +47,16 @@ The values are unitless and in pixels.
 
 ```html
 <!-- Add a 10px inner margin -->
-<div data-component="Draggable"
-  data-option-margin="10">
-</div>
+<div data-component="Draggable" data-option-margin="10"></div>
 
 <!-- Add a 10px inner inline margin -->
-<div data-component="Draggable"
-  data-option-margin="0 10">
-</div>
+<div data-component="Draggable" data-option-margin="0 10"></div>
 
 <!-- Add a 10px inner inline margin and 10px bottom margin -->
-<div data-component="Draggable"
-  data-option-margin="0 10 10">
-</div>
+<div data-component="Draggable" data-option-margin="0 10 10"></div>
 
 <!-- Add a 10px outer margin -->
-<div data-component="Draggable"
-  data-option-margin="-10 -10 -10 -10">
-</div>
+<div data-component="Draggable" data-option-margin="-10 -10 -10 -10"></div>
 ```
 
 ### `sensitivity`

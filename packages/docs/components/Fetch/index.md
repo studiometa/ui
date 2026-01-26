@@ -215,7 +215,6 @@ registerComponent(Fetch);
 
 :::
 
-
 See the [cancelling a request example](./examples.md#cancelling-a-request) for detailed usage.
 
 ### Handling JSON response

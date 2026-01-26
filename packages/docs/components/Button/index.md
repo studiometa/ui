@@ -18,4 +18,3 @@ Once the [package installed](/guide/installation/), simply include the template 
 ```twig
 {% include '@ui-pkg/Button/Button.twig' %}
 ```
-

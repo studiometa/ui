@@ -75,6 +75,7 @@ Wether to enable the display of the figure inline or not. When `inline`, the roo
 - Type: `string`
 
 Use a custom placeholder instead of the generic placeholder:
+
 ```twig
 {%- set placeholder_markup -%}
   <svg xmlns="http://www.w3.org/2000/svg"

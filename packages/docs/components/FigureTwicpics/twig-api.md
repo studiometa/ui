@@ -28,6 +28,7 @@ Use this parameter to configure your Twicpics path.
 Use this parameter to customise the placeholder used when lazyloading images. It can either be one of the preview type provided by TwicPics, or an object defining custom transforms like the [`twic_transform` parameter](#twic-transform).
 
 **Examples**
+
 ```twig
 {# Will display a blurred version of the image #}
 {% include '@ui/Figure/FigureTwicpics.twig' with {
@@ -60,4 +61,3 @@ Use this parameter to define custom transforms that should be used on the image.
   }
 } %}
 ```
-

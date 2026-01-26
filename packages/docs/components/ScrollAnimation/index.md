@@ -15,7 +15,7 @@ The `ScrollAnimation` component creates scroll-driven animations that respond to
 
 For the best performance and flexibility, use `ScrollAnimationTimeline` with `ScrollAnimationTarget` children:
 
-```js{2,8-9}
+```js {2,8-9}
 import { Base, createApp } from '@studiometa/js-toolkit';
 import { ScrollAnimationTimeline, ScrollAnimationTarget } from '@studiometa/ui';
 
@@ -38,16 +38,14 @@ export default createApp(App, document.body);
     data-component="ScrollAnimationTarget"
     data-option-from='{"opacity": 0, "translateY": "100px"}'
     data-option-to='{"opacity": 1, "translateY": "0px"}'
-    data-option-play-range='[0, 0.5]'
-  >
+    data-option-play-range="[0, 0.5]">
     First element
   </div>
   <div
     data-component="ScrollAnimationTarget"
     data-option-from='{"opacity": 0, "translateY": "100px"}'
     data-option-to='{"opacity": 1, "translateY": "0px"}'
-    data-option-play-range='[0.5, 1]'
-  >
+    data-option-play-range="[0.5, 1]">
     Second element
   </div>
 </div>
@@ -77,11 +75,8 @@ export default createApp(App, document.body);
 <div
   data-component="ScrollAnimation"
   data-option-from='{"opacity": 0, "translateY": "100px"}'
-  data-option-to='{"opacity": 1, "translateY": "0px"}'
->
-  <div data-ref="target">
-    Content to animate
-  </div>
+  data-option-to='{"opacity": 1, "translateY": "0px"}'>
+  <div data-ref="target">Content to animate</div>
 </div>
 ```
 
@@ -99,6 +94,7 @@ export default createApp(App, document.body);
 ## Deprecated components
 
 :::warning Deprecated
+
 The following components are deprecated and will be removed in a future version. Use `ScrollAnimationTimeline` and `ScrollAnimationTarget` instead:
 
 - `ScrollAnimation` → use `ScrollAnimationTimeline` and `ScrollAnimationTarget`
@@ -107,5 +103,5 @@ The following components are deprecated and will be removed in a future version.
 - `ScrollAnimationChildWithEase` → use `ScrollAnimationTarget`
 - `ScrollAnimationWithEase` → use `ScrollAnimationTimeline` and `ScrollAnimationTarget`
 - `animationScrollWithEase` → no replacement
-:::
 
+:::

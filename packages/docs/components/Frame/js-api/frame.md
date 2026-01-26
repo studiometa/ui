@@ -47,7 +47,7 @@ Use this options to update the browser's history when performing a request. The 
 By default, the following custom headers will be added:
 
 - `user-agent`: it will uses the current browser user-agent information with an additional `@studiometa/ui/Frame` suffix.
--  `x-requested-by: @studiometa/ui/Frame`
+- `x-requested-by: @studiometa/ui/Frame`
 
 ## Emits
 
