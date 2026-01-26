@@ -1,8 +1,11 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import Components from 'unplugin-vue-components/vite';
 import llmstxt from 'vitepress-plugin-llms';
+import sirv from 'sirv';
 
 /**
  * Import match as plain text.
@@ -26,8 +29,34 @@ function plainText(match) {
   };
 }
 
+/**
+ * Serve the playground static files from the public directory.
+ * This is needed because VitePress intercepts requests to /play/* and renders
+ * them as pages instead of serving the static files.
+ * @returns {import('vite').Plugin}
+ */
+function servePlayground() {
+  const publicDir = resolve(import.meta.dirname, 'public');
+  const playDir = resolve(publicDir, 'play');
+
+  return {
+    name: 'serve-playground',
+    configureServer(server) {
+      // Only add middleware if the play directory exists
+      if (!existsSync(playDir)) {
+        return;
+      }
+
+      // Serve files from public/play at /play
+      const serve = sirv(playDir, { dev: true, etag: true });
+      server.middlewares.use('/play', serve);
+    },
+  };
+}
+
 const config = defineConfig({
   plugins: [
+    servePlayground(),
     llmstxt({
       stripHTML: false,
     }),
