@@ -67,6 +67,7 @@ test('components exports', () => {
       "Transition",
       "animationScrollWithEase",
       "withDeprecation",
+      "withScrollAnimationDebug",
       "withTransition",
     ]
   `);
