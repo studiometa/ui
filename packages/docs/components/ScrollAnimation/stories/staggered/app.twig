@@ -12,12 +12,12 @@
 </div>
 
 <div
-  data-component="ScrollAnimationParent"
+  data-component="ScrollAnimationTimeline"
   class="relative w-full h-[500vh]">
   <div class="sticky top-0 flex gap-10 items-center justify-center w-full h-screen">
     {% for index in 1..total %}
       <div
-        data-component="ScrollAnimationChild"
+        data-component="ScrollAnimationTarget"
         {{
           html_attributes({
             data_option_play_range: [loop.index0, loop.length, 0.02],

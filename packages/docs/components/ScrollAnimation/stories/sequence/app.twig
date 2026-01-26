@@ -9,13 +9,13 @@
 </div>
 
 <div
-  data-component="ScrollAnimationParent"
+  data-component="ScrollAnimationTimeline"
   data-option-offset="start start / end end"
   class="w-full h-[600vh]">
   <div class="sticky top-0 grid grid-cols-1 grid-rows-1 items-center w-full h-screen p-20">
     {% for item in items %}
       <div
-        data-component="ScrollAnimationChild"
+        data-component="ScrollAnimationTarget"
         {{ html_attributes({
           data_option_play_range: [loop.index0 , loop.length, 1 / loop.length],
           data_option_keyframes: [

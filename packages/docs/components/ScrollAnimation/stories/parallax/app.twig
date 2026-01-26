@@ -1,5 +1,5 @@
-<div class="flex items-start justify-center h-96 p-10 opacity-80">
-  Scroll down
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll down ↓
 </div>
 
 {% set img_attr = {
@@ -40,7 +40,7 @@
   }
 ] %}
 
-<div class="max-w-2xl l:max-w-5xl mx-auto">
+<div class="px-10 m:px-20 l:px-0 max-w-2xl l:max-w-5xl mx-auto">
   {% include '@ui/ImageGrid/ImageGrid.twig' with {
     images: images,
     image_attr: {
@@ -54,6 +54,6 @@
   } %}
 </div>
 
-<div class="flex items-end justify-center h-96 p-10 opacity-80">
-  Scroll up
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll up ↑
 </div>
