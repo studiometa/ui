@@ -40,6 +40,132 @@ export default createApp(App, document.body);
 </div>
 ```
 
+### Options
+
+#### `debug`
+
+- Type: `boolean`
+- Default: `false`
+
+Enable debug mode to display visual markers showing the scroll animation's start/end positions and current progress. This is useful during development to understand how the scroll animation is triggered.
+
+:::warning
+To use the debug option, you must wrap your `ScrollAnimationTimeline` with the `withScrollAnimationDebug` decorator. This allows the debug code to be tree-shaken from production bundles.
+:::
+
+When enabled, the following elements are displayed:
+- A dashed outline around the timeline element
+- Start and end markers on the right side of the viewport
+- A progress bar and percentage indicator
+
+```js {5,12}
+import { Base, createApp } from '@studiometa/js-toolkit';
+import {
+  ScrollAnimationTimeline,
+  ScrollAnimationTarget,
+  withScrollAnimationDebug,
+} from '@studiometa/ui';
+
+class App extends Base {
+  static config = {
+    name: 'App',
+    components: {
+      ScrollAnimationTimeline: withScrollAnimationDebug(ScrollAnimationTimeline),
+      ScrollAnimationTarget,
+    },
+  };
+}
+```
+
+<!-- prettier-ignore-start -->
+```html {2}
+<div data-component="ScrollAnimationTimeline"
+  data-option-debug>
+  <div data-component="ScrollAnimationTarget" ...>
+    ...
+  </div>
+</div>
+```
+<!-- prettier-ignore-end -->
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/debug/app.twig')"
+  css=" "
+  :css-editor="false"
+  :script="() => import('./stories/debug/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/debug/app.twig
+<<< ./stories/debug/app.js
+
+:::
+
+</llm-only>
+
+#### `offset`
+
+- Type: `string`
+- Default: `"start end / end start"`
+
+Defines the limits used to calculate the progress of the scroll. The value is a string composed of two parts separated by a slash (`/`). Each part defines the point on which the progress calculation should be based.
+
+```
+<targetStart> <viewportStart> / <targetEnd> <viewportEnd>
+```
+
+The default value `start end / end start` could be read as: calculate the progress of the target from when the **start** of the target crosses the **end** of the viewport to when the **end** of the target crosses the **start** of the viewport.
+
+Each point accepts the following values:
+
+- A **number** between `0` and `1`
+- A **named string**, either `start`, `end` or `center` which will be mapped to values between `0` and `1`
+- A **string** representing a CSS value with one of the following unit: `%`, `px`, `vw`, `vh`, `vmin`, `vmax`
+
+**Common offset patterns:**
+
+| Offset | Description |
+| ------ | ----------- |
+| `"start end / end start"` | Default. Animation plays while element is visible in viewport |
+| `"start center / end center"` | Animation plays while element crosses the center of viewport |
+| `"start start / end start"` | Animation plays while element is at the top of viewport |
+| `"start end / end end"` | Animation plays while element is at the bottom of viewport |
+| `"start start / end end"` | Animation plays from when element enters until it completely leaves |
+
+<!-- prettier-ignore-start -->
+```html {2}
+<div data-component="ScrollAnimationTimeline"
+  data-option-offset="start center / end center">
+  <div data-component="ScrollAnimationTarget" ...>
+    Animates as element crosses viewport center
+  </div>
+</div>
+```
+<!-- prettier-ignore-end -->
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/offset/app.twig')"
+  css=" "
+  :css-editor="false"
+  :script="() => import('./stories/offset/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/offset/app.twig
+<<< ./stories/offset/app.js
+
+:::
+
+</llm-only>
+
 ### Children Components
 
 #### `ScrollAnimationTarget`
@@ -404,3 +530,61 @@ The `ScrollAnimation` component supports the same options as `ScrollAnimationTar
 - [`to`](#to)
 - [`keyframes`](#keyframes)
 - [`easing`](#easing)
+
+---
+
+## withScrollAnimationDebug
+
+A decorator that adds debug capabilities to `ScrollAnimationTimeline`. When the `debug` option is enabled, it displays visual markers to help understand how the scroll animation is triggered.
+
+This decorator is exported separately to allow tree-shaking the debug code from production bundles.
+
+### Usage
+
+```js
+import { Base, createApp } from '@studiometa/js-toolkit';
+import {
+  ScrollAnimationTimeline,
+  ScrollAnimationTarget,
+  withScrollAnimationDebug,
+} from '@studiometa/ui';
+
+class App extends Base {
+  static config = {
+    name: 'App',
+    components: {
+      ScrollAnimationTimeline: withScrollAnimationDebug(ScrollAnimationTimeline),
+      ScrollAnimationTarget,
+    },
+  };
+}
+
+export default createApp(App);
+```
+
+```html
+<div data-component="ScrollAnimationTimeline" data-option-debug>
+  <div data-component="ScrollAnimationTarget" ...>
+    ...
+  </div>
+</div>
+```
+
+### Debug features
+
+When the `debug` option is enabled on a `ScrollAnimationTimeline` component wrapped with this decorator:
+
+- **Outline**: A dashed border around the timeline element
+- **Start marker**: A horizontal line showing where in the viewport the animation starts
+- **End marker**: A horizontal line showing where in the viewport the animation ends
+- **Progress indicator**: A progress bar and percentage showing the current scroll progress
+
+Each timeline gets a different color for easy identification when multiple timelines are on the same page.
+
+### Parameters
+
+- `BaseClass` (`typeof ScrollAnimationTimeline`): The `ScrollAnimationTimeline` class to decorate
+
+### Return value
+
+- `typeof ScrollAnimationTimeline`: The decorated class with debug capabilities
