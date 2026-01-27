@@ -1,4 +1,11 @@
-import type { Base, BaseProps, BaseConfig, ScrollInViewProps } from '@studiometa/js-toolkit';
+import type {
+  Base,
+  BaseProps,
+  BaseConfig,
+  BaseInterface,
+  BaseDecorator,
+  ScrollInViewProps,
+} from '@studiometa/js-toolkit';
 import { createElement } from '@studiometa/js-toolkit/utils';
 
 /**
@@ -283,6 +290,9 @@ export interface WithScrollAnimationDebugProps extends BaseProps {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface WithScrollAnimationDebugInterface extends BaseInterface {}
+
 /**
  * Add debug capabilities to a ScrollAnimationTimeline component.
  *
@@ -301,12 +311,15 @@ export interface WithScrollAnimationDebugProps extends BaseProps {
  * }
  * ```
  */
-export function withScrollAnimationDebug<
-  S extends Base,
-  T extends typeof Base<BaseProps & WithScrollAnimationDebugProps>,
->(BaseClass: T): T {
-  // @ts-expect-error - Dynamic class extension
-  return class extends BaseClass {
+export function withScrollAnimationDebug<S extends Base>(
+  BaseClass: typeof Base,
+): BaseDecorator<WithScrollAnimationDebugInterface, S, WithScrollAnimationDebugProps> {
+  /**
+   * Class.
+   */
+  class WithScrollAnimationDebug<T extends BaseProps = BaseProps> extends BaseClass<
+    T & WithScrollAnimationDebugProps
+  > {
     static config: BaseConfig = {
       ...BaseClass.config,
       name: BaseClass.config.name,
@@ -354,7 +367,7 @@ export function withScrollAnimationDebug<
     /**
      * Initialize debug elements.
      */
-    private __initDebug() {
+    __initDebug() {
       debugIdCounter += 1;
       debugInstanceCount += 1;
       this.__debugId = `timeline-${debugIdCounter}`;
@@ -391,7 +404,7 @@ export function withScrollAnimationDebug<
     /**
      * Destroy debug elements.
      */
-    private __destroyDebug() {
+    __destroyDebug() {
       if (this.__debugElements) {
         this.__debugElements.wrapper.remove();
         this.__debugElements.progress.remove();
@@ -413,7 +426,7 @@ export function withScrollAnimationDebug<
     /**
      * Update debug progress.
      */
-    private __updateDebug(props: ScrollInViewProps) {
+    __updateDebug(props: ScrollInViewProps) {
       if (!this.__debugElements) return;
 
       const { progressBar, progressText } = this.__debugElements;
@@ -435,5 +448,8 @@ export function withScrollAnimationDebug<
       // @ts-expect-error - Calling parent method
       super.scrolledInView(props);
     }
-  };
+  }
+
+  // @ts-ignore
+  return WithScrollAnimationDebug;
 }
