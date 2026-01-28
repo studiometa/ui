@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AbstractScrollAnimation } from '@studiometa/ui';
+import { nextTick } from '@studiometa/js-toolkit/utils';
 import { h, mount, destroy } from '#test-utils';
 
 class TestScrollAnimation extends AbstractScrollAnimation {
@@ -125,5 +126,79 @@ describe('AbstractScrollAnimation', () => {
 
     animation.render(0.75);
     expect(progressSpy).toHaveBeenCalledWith(0.75);
+  });
+
+  it('should track progress in render method', () => {
+    const progressSpy = vi.fn();
+    const mockAnimation = { progress: progressSpy };
+    
+    Object.defineProperty(animation, 'animation', {
+      value: mockAnimation,
+      configurable: true,
+    });
+
+    expect(animation.progress).toBe(0);
+    animation.render(0.75);
+    expect(animation.progress).toBe(0.75);
+  });
+
+  it('should restore animation state on mount', async () => {
+    const testElement = h('div', {
+      dataOptionFrom: JSON.stringify({ opacity: 0 }),
+      dataOptionTo: JSON.stringify({ opacity: 1 }),
+    });
+    const testAnimation = new TestScrollAnimation(testElement);
+    await mount(testAnimation);
+    
+    // Simulate partial progress closer to end
+    testAnimation.render(0.6);
+    expect(testAnimation.progress).toBe(0.6);
+    
+    // Destroy rounds progress to nearest boundary (1)
+    await destroy(testAnimation);
+    await nextTick();
+    expect(testAnimation.progress).toBe(1);
+
+    // Remount restores the completed progress
+    await mount(testAnimation);
+    expect(testAnimation.progress).toBe(1);
+  });
+
+  it('should complete animation to nearest boundary on destroy', async () => {
+    const testElement = h('div', {
+      dataOptionFrom: JSON.stringify({ opacity: 0 }),
+      dataOptionTo: JSON.stringify({ opacity: 1 }),
+    });
+    const testAnimation = new TestScrollAnimation(testElement);
+    await mount(testAnimation);
+    
+    // Simulate partial progress closer to 1
+    testAnimation.render(0.8);
+    expect(testAnimation.progress).toBe(0.8);
+    
+    // Destroy should trigger completion to nearest boundary (1)
+    await destroy(testAnimation);
+    await nextTick();
+    
+    expect(testAnimation.progress).toBe(1);
+  });
+
+  it('should complete animation to 0 when progress is closer to start', async () => {
+    const testElement = h('div', {
+      dataOptionFrom: JSON.stringify({ opacity: 0 }),
+      dataOptionTo: JSON.stringify({ opacity: 1 }),
+    });
+    const testAnimation = new TestScrollAnimation(testElement);
+    await mount(testAnimation);
+    
+    // Simulate partial progress closer to 0
+    testAnimation.render(0.3);
+    expect(testAnimation.progress).toBe(0.3);
+    
+    // Destroy should trigger completion to nearest boundary (0)
+    await destroy(testAnimation);
+    await nextTick();
+    
+    expect(testAnimation.progress).toBe(0);
   });
 });
