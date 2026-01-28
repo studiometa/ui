@@ -33,9 +33,7 @@ export default createApp(App);
 
 ```html [index.html]
 <div data-component="Hoverable" class="relative w-96 h-96">
-  <div data-ref="target" class="absolute w-[120%] h-[120%]">
-    ...
-  </div>
+  <div data-ref="target" class="absolute w-[120%] h-[120%]">...</div>
 </div>
 ```
 

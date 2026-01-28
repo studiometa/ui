@@ -3,6 +3,7 @@ title: AnchorScrollTo JS API
 ---
 
 # JS API
+
 ## Getter
 
 ### `targetSelector`

@@ -1,5 +1,5 @@
 import type { BaseConfig, BaseProps, BaseDecorator, BaseInterface } from '@studiometa/js-toolkit';
-import { ease } from '@studiometa/js-toolkit/utils';
+import { ease, isDev } from '@studiometa/js-toolkit/utils';
 import type { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
 
 const regex = /ease([A-Z])/;
@@ -20,6 +20,8 @@ export interface AnimationScrollWithEaseInterface extends BaseInterface {}
 
 /**
  * Extend a `ScrollAnimation` component to use easings.
+ *
+ * @deprecated This decorator is deprecated. Easing can be applied directly via CSS or animation options.
  */
 export function animationScrollWithEase<S extends AbstractScrollAnimation>(
   ScrollAnimation: typeof AbstractScrollAnimation,
@@ -39,6 +41,18 @@ export function animationScrollWithEase<S extends AbstractScrollAnimation>(
         },
       },
     };
+
+    /**
+     * Display a deprecation warning.
+     */
+    mounted() {
+      if (isDev) {
+        console.warn(
+          `The animationScrollWithEase decorator is deprecated.`,
+          '\nEasing can be applied directly via CSS or animation options.',
+        );
+      }
+    }
 
     /**
      * Eases the progress value.

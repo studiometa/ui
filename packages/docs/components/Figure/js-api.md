@@ -16,7 +16,6 @@ The `Figure` component extends the [`Transition` primitive](/components/Transiti
 
 Use this options to enable lazy loading while reading the source from the `data-src` attribute of the [`img` ref](#img).
 
-
 ## Refs
 
 ### `img`

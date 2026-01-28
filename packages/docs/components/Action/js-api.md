@@ -24,6 +24,7 @@ Use this option to change the event that will trigger the [effect callback](#eff
 
 Modifiers can be chained with a `.` as separator:
 
+<!-- prettier-ignore-start -->
 ```html {3}
 <button
   data-component="Action"
@@ -31,6 +32,7 @@ Modifiers can be chained with a `.` as separator:
   Click me
 </button>
 ```
+<!-- prettier-ignore-end -->
 
 ### `target`
 
@@ -53,6 +55,7 @@ class Foo extends Base {
   };
 }
 ```
+
 :::
 
 #### No target
@@ -72,48 +75,37 @@ By not defining the `target` option, the default target will be the current `Act
 
 The following configuration will use all `Foo` components as targets, the effect callback will be triggered for each and every one of them.
 
+<!-- prettier-ignore-start -->
 ```html {3}
-<button
-  data-component="Action"
-  data-option-target="Foo">
-  Click me
-</button>
+<button data-component="Action" data-option-target="Foo">Click me</button>
 ```
+<!-- prettier-ignore-end -->
 
 #### Multiple targets
 
+<!-- prettier-ignore-start -->
 ```html {3}
-<button
-  data-component="Action"
-  data-option-target="Foo Bar">
-  Click me
-</button>
+<button data-component="Action" data-option-target="Foo Bar">Click me</button>
 ```
+<!-- prettier-ignore-end -->
 
 #### Reduce the list of target with a selector
 
 In the following example, the effect callback will only be triggered on the `Foo` component with the `foo` id.
 
-```html {3,9}
+<!-- prettier-ignore-start -->
+```html {3,7}
 <button
   data-component="Action"
   data-option-target="Foo(#foo)">
   Click me
 </button>
 
-<div
-  data-component="Foo"
-  id="foo">
-  ...
-</div>
+<div data-component="Foo" id="foo">...</div>
 
-<div
-  data-component="Foo"
-  id="bar">
-  ...
-</div>
+<div data-component="Foo" id="bar">...</div>
 ```
-
+<!-- prettier-ignore-end -->
 
 ### `effect`
 
@@ -135,6 +127,7 @@ The `effect` option must be used to define a small piece of JavaScript that will
 
 The effect can also define an arrow function which will be executed as well. The following examples are similar:
 
+<!-- prettier-ignore-start -->
 ```html {3,9}
 <button
   data-component="Action"
@@ -148,11 +141,13 @@ The effect can also define an arrow function which will be executed as well. The
   Click me
 </button>
 ```
+<!-- prettier-ignore-end -->
 
 #### Accessing the current element
 
 Use `this` to access the current element:
 
+<!-- prettier-ignore-start -->
 ```html {3-4}
 <button
   data-component="Action"
@@ -161,11 +156,13 @@ Use `this` to access the current element:
   Click me
 </button>
 ```
+<!-- prettier-ignore-end -->
 
 #### Accessing the target element
 
 Use `$el` to access the current element:
 
+<!-- prettier-ignore-start -->
 ```html {3-4}
 <button
   data-component="Action"
@@ -176,11 +173,13 @@ Use `$el` to access the current element:
 
 <div data-component="Target" class="bg-red">...</div>
 ```
+<!-- prettier-ignore-end -->
 
 #### Accessing the current instances mounted on the current element
 
 Use the name of the component mounted on the current element to get access to its instance.
 
+<!-- prettier-ignore-start -->
 ```html {3}
 <button
   data-component="Action Transition"
@@ -188,9 +187,11 @@ Use the name of the component mounted on the current element to get access to it
   Click me
 </button>
 ```
+<!-- prettier-ignore-end -->
 
 By default, the `Action` variabl will always refer to the current `Action` instance of the current element. The following example will log `true` when the button is clicked:
 
+<!-- prettier-ignore-start -->
 ```html {3}
 <button
   data-component="Action"
@@ -198,7 +199,7 @@ By default, the `Action` variabl will always refer to the current `Action` insta
   Click me
 </button>
 ```
-
+<!-- prettier-ignore-end -->
 
 #### Advanced usage with destructuration
 

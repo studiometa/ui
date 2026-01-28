@@ -24,7 +24,7 @@ class App extends Base {
     name: 'Base',
     components: {
       Figure,
-    }
+    },
   };
 }
 

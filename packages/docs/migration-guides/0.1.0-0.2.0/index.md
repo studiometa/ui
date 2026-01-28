@@ -4,11 +4,11 @@
 
 The following components have been updated:
 
-|                   Component                   |          Previous version         |      New version       |              Changed              |
-|-----------------------------------------------|-----------------------------------|------------------------|-----------------------------------|
-| [Button](/components/Button/)           | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| [Cursor](/components/Cursor/)           | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| [Figure](/components/Figure/)           | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| Component                           | Previous version                  | New version            | Changed                             |
+| ----------------------------------- | --------------------------------- | ---------------------- | ----------------------------------- |
+| [Button](/components/Button/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Cursor](/components/Cursor/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Figure](/components/Figure/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
 | [Accordion](/components/Accordion/) | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
 | [Modal](/components/Modal/)         | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
 | [Sticky](/components/Sticky/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |

@@ -25,12 +25,13 @@ class App extends Base {
     name: 'Base',
     components: {
       FigureVideo: FigureVideoTwicpics,
-    }
+    },
   };
 }
 
 export default createApp(App);
 ```
+
 ```twig
 {% include '@ui/FigureVideo/FigureVideoTwicpics.twig' with {
   src: '/video.mp4',

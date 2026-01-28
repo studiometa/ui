@@ -1,0 +1,19 @@
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll down ↓
+</div>
+
+<div data-component="ScrollAnimationTimeline"
+  data-option-debug
+  class="h-[300vh]">
+  <div class="sticky top-0 flex items-center justify-center w-full h-screen">
+    <div
+      data-component="ScrollAnimationTarget"
+      data-option-from="{{ { scale: 0, opacity: 0, rotate: 0 }|json_encode }}"
+      data-option-to="{{ { scale: 1, opacity: 1, rotate: 360 }|json_encode }}"
+      class="w-48 h-48 rounded-2xl bg-blue-500"></div>
+  </div>
+</div>
+
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll up ↑
+</div>

@@ -64,8 +64,7 @@ You can now add a togglable component in your HTML with the needed option to des
   data-option-leave-active="transition duration-500 ease-out-expo"
   data-option-leave-to="transform translate-y-20 opacity-0"
   data-option-leave-keep
-  class="transform translate-y-4 opacity-0"
->
+  class="transform translate-y-4 opacity-0">
   ...
 </div>
 ```

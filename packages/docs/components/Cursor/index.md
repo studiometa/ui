@@ -25,12 +25,13 @@ class App extends Base {
     name: 'Base',
     components: {
       Cursor,
-    }
+    },
   };
 }
 
 export default createApp(App);
 ```
+
 ```twig
 {% include '@ui/Cursor/Cursor.twig' only %}
 ```

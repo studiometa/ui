@@ -1,4 +1,9 @@
 export * from './AbstractScrollAnimation.js';
+export * from './ScrollAnimationTimeline.js';
+export * from './ScrollAnimationTarget.js';
+export * from './withScrollAnimationDebug.js';
+
+// Deprecated exports
 export * from './animationScrollWithEase.js';
 export * from './ScrollAnimation.js';
 export * from './ScrollAnimationWithEase.js';

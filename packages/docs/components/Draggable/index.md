@@ -33,9 +33,7 @@ export default createApp(App);
 
 ```html [index.html]
 <div data-component="Draggable">
-  <div data-ref="target">
-    ...
-  </div>
+  <div data-ref="target">...</div>
 </div>
 ```
 

@@ -62,7 +62,6 @@ registerComponent(DataComputed);
 
 </llm-only>
 
-
 ### Double computed value
 
 <llm-exclude>

@@ -1,0 +1,51 @@
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll down ↓
+</div>
+
+<div data-component="ScrollAnimationTimeline"
+  class="relative h-screen pointer-events-none">
+  <div class="absolute top-0 left-1/2 w-48 h-48 m:w-96 m:h-96 -translate-x-1/2">
+    <div data-component="ScrollAnimationTarget"
+      data-option-to="{{ {
+        x: -500,
+        scale: 0.2,
+        rotate: -50
+      }|json_encode }}"
+      class="w-full h-full rounded-2xl bg-blue-400"
+      style="will-change: transform;"></div>
+  </div>
+  <div class="absolute top-0 left-1/2 w-48 h-48 m:w-96 m:h-96 mt-8 ml-8 m:mt-16 m:ml-16 -translate-x-1/2 rotate-3">
+    <div data-component="ScrollAnimationTarget"
+      data-option-to="{{ {
+        x: -400,
+        scale: 0.3,
+        rotate: -40
+      }|json_encode }}"
+      class="w-full h-full rounded-2xl bg-green-400"
+      style="will-change: transform;"></div>
+  </div>
+  <div class="absolute top-0 left-1/2 w-48 h-48 m:w-96 m:h-96 mt-16 ml-16 m:mt-32 m:ml-32 -translate-x-1/2 rotate-6">
+    <div data-component="ScrollAnimationTarget"
+      data-option-to="{{ {
+        x: -300,
+        scale: 0.4,
+        rotate: -30
+      }|json_encode }}"
+      class="w-full h-full rounded-2xl bg-red-400"
+      style="will-change: transform;"></div>
+  </div>
+  <div class="absolute top-0 left-1/2 w-48 h-48 m:w-96 m:h-96 mt-24 ml-24 m:mt-48 m:ml-48 -translate-x-1/2 rotate-12">
+    <div data-component="ScrollAnimationTarget"
+      data-option-to="{{ {
+        x: -200,
+        scale: 0.5,
+        rotate: -20
+      }|json_encode }}"
+      class="w-full h-full rounded-2xl bg-purple-400"
+      style="will-change: transform;"></div>
+  </div>
+</div>
+
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll up ↑
+</div>

@@ -4,7 +4,7 @@ import type {
   ScrollInViewProps,
   WithScrolledInViewProps,
 } from '@studiometa/js-toolkit';
-import { damp, clamp01, domScheduler } from '@studiometa/js-toolkit/utils';
+import { damp, clamp01, domScheduler, isDev } from '@studiometa/js-toolkit/utils';
 import { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
 
 export interface ScrollAnimationChildProps extends BaseProps {
@@ -32,6 +32,8 @@ function updateProps(
 
 /**
  * ScrollAnimationChild class.
+ *
+ * @deprecated Use `ScrollAnimationTarget` instead.
  */
 export class ScrollAnimationChild<T extends BaseProps = BaseProps> extends AbstractScrollAnimation<
   T & ScrollAnimationChildProps
@@ -72,6 +74,18 @@ export class ScrollAnimationChild<T extends BaseProps = BaseProps> extends Abstr
   };
 
   /**
+   * Display deprecation warning.
+   */
+  mounted() {
+    if (isDev) {
+      console.warn(
+        `The ${this.$options.name} component is deprecated.`,
+        '\nUse `ScrollAnimationTarget` instead.',
+      );
+    }
+  }
+
+  /**
    * Compute local damped progress.
    */
   scrolledInView(props: ScrollInViewProps) {
@@ -79,12 +93,14 @@ export class ScrollAnimationChild<T extends BaseProps = BaseProps> extends Abstr
       const { dampFactor, dampPrecision } = this.$options;
       updateProps(this, props, dampFactor, dampPrecision, 'x');
       updateProps(this, props, dampFactor, dampPrecision, 'y');
-      props.dampedCurrent = this.dampedCurrent;
-      props.dampedProgress = this.dampedProgress;
     });
 
     domScheduler.write(() => {
-      super.scrolledInView(props);
+      super.scrolledInView({
+        ...props,
+        dampedCurrent: this.dampedCurrent,
+        dampedProgress: this.dampedProgress,
+      });
     });
   }
 }

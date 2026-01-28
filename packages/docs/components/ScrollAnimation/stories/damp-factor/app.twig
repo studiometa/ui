@@ -1,0 +1,48 @@
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll down ↓
+</div>
+
+<div data-component="ScrollAnimationTimeline" class="h-[300vh]">
+  <div class="sticky top-0 flex gap-8 items-center justify-center w-full h-screen">
+    <div class="text-center">
+      <div
+        data-component="ScrollAnimationTarget"
+        data-option-damp-factor="1"
+        data-option-from="{{ { scale: 0, opacity: 0, rotate: 0 }|json_encode }}"
+        data-option-to="{{ { scale: 1, opacity: 1, rotate: 360 }|json_encode }}"
+        class="w-24 h-24 rounded-2xl bg-blue-500"></div>
+      <p class="mt-4 text-sm text-gray-600">1 (no damping)</p>
+    </div>
+    <div class="text-center">
+      <div
+        data-component="ScrollAnimationTarget"
+        data-option-damp-factor="0.5"
+        data-option-from="{{ { scale: 0, opacity: 0, rotate: 0 }|json_encode }}"
+        data-option-to="{{ { scale: 1, opacity: 1, rotate: 360 }|json_encode }}"
+        class="w-24 h-24 rounded-2xl bg-green-500"></div>
+      <p class="mt-4 text-sm text-gray-600">0.5</p>
+    </div>
+    <div class="text-center">
+      <div
+        data-component="ScrollAnimationTarget"
+        data-option-damp-factor="0.1"
+        data-option-from="{{ { scale: 0, opacity: 0, rotate: 0 }|json_encode }}"
+        data-option-to="{{ { scale: 1, opacity: 1, rotate: 360 }|json_encode }}"
+        class="w-24 h-24 rounded-2xl bg-red-500"></div>
+      <p class="mt-4 text-sm text-gray-600">0.1 (default)</p>
+    </div>
+    <div class="text-center">
+      <div
+        data-component="ScrollAnimationTarget"
+        data-option-damp-factor="0.02"
+        data-option-from="{{ { scale: 0, opacity: 0, rotate: 0 }|json_encode }}"
+        data-option-to="{{ { scale: 1, opacity: 1, rotate: 360 }|json_encode }}"
+        class="w-24 h-24 rounded-2xl bg-purple-500"></div>
+      <p class="mt-4 text-sm text-gray-600">0.02 (slow)</p>
+    </div>
+  </div>
+</div>
+
+<div class="flex items-center justify-center w-full h-screen">
+  Scroll up ↑
+</div>

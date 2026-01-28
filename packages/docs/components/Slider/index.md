@@ -16,7 +16,6 @@ badges: [JS]
   - [SliderItem](./js-api/slider-item.md)
   - [SliderProgress](./js-api/slider-progress.md)
 
-
 ## Usage
 
 Use the `Slider` component to display items on a X axis and enable indexed navigation between them.

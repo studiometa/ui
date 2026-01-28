@@ -24,7 +24,7 @@ class App extends Base {
     name: 'Base',
     components: {
       Figure: FigureShopify,
-    }
+    },
   };
 }
 
@@ -44,4 +44,3 @@ export default createApp(App);
   </figure>
 </div>
 ```
-

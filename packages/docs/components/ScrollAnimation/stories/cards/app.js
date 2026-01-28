@@ -1,12 +1,12 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { ScrollAnimation, ScrollAnimationWithEase } from '@studiometa/ui';
+import { ScrollAnimationTimeline, ScrollAnimationTarget } from '@studiometa/ui';
 
 class App extends Base {
   static config = {
     name: 'App',
     components: {
-      ScrollAnimation,
-      ScrollAnimationWithEase,
+      ScrollAnimationTimeline,
+      ScrollAnimationTarget,
     },
   };
 }

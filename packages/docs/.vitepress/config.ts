@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
 import { defineConfig } from 'vitepress';
 import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
-import { withLeadingSlash, withLeadingCharacters } from '@studiometa/js-toolkit/utils';
+import { withLeadingSlash } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
 import pkg from '../package.json' with { type: 'json' };
 
@@ -78,7 +78,10 @@ export default defineConfig({
       },
       {
         text: `<span class="VPBadge font-bold bg-[var(--vp-button-brand-bg)] text-[var(--vp-button-brand-text)]">v${pkg.version}</span>`,
-        items: [{ text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' }],
+        items: [
+          { text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' },
+          { text: 'Migration guides', link: '/migration-guides/' },
+        ],
       },
     ],
     sidebar: {

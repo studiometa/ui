@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ScrollAnimationChild } from '@studiometa/ui';
 import { h, mount, destroy } from '#test-utils';
 
-describe('ScrollAnimationChild', () => {
+describe('ScrollAnimationChild (deprecated)', () => {
   let element: HTMLDivElement;
   let animation: ScrollAnimationChild;
 

@@ -44,6 +44,7 @@ Customize the wrapper around all tab buttons. By default, renders all tab button
 ### `title`
 
 Customize each tab button's content. Defaults to `item.title`. Available variables:
+
 - `item` - The current tab item
 
 ### `content_wrapper`
@@ -53,4 +54,5 @@ Customize the wrapper around all tab content panels. By default, renders all con
 ### `content`
 
 Customize each tab content panel. Defaults to `item.content`. Available variables:
+
 - `item` - The current tab item

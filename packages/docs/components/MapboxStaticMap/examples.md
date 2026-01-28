@@ -79,5 +79,3 @@ title: MapboxStaticMap examples
 :::
 
 </llm-only>
-
-

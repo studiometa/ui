@@ -22,4 +22,3 @@ title: FigureTwicpics examples
 :::
 
 </llm-only>
-

@@ -39,7 +39,7 @@ export default createApp(App, document.body);
     content: 'Content for tab 1'
   },
   {
-    title: 'Tab 2', 
+    title: 'Tab 2',
     content: 'Content for tab 2'
   },
   {

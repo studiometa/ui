@@ -7,7 +7,7 @@ title: MapboxStaticMap Twig API
 ## Parameters
 
 :::tip Required parameter
-The  [`access_token`](#access-token) parameter is required.
+The [`access_token`](#access-token) parameter is required.
 :::
 
 All parameters from the [`Figure` component](/components/Figure/twig-api) are inherited.

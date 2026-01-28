@@ -25,12 +25,13 @@ class App extends Base {
     name: 'Base',
     components: {
       Figure: FigureTwicpics,
-    }
+    },
   };
 }
 
 export default createApp(App);
 ```
+
 ```twig
 <div class="card">
   {% include '@ui/Figure/FigureTwicpics.twig' with {
