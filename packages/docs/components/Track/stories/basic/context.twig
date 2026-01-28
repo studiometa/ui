@@ -1,0 +1,31 @@
+<section
+  data-component="TrackContext"
+  data-option-data='{"page_type": "product", "product_id": "SKU123", "product_name": "Example Product"}'>
+
+  <div class="space-y-4">
+    <p class="text-sm text-gray-600">
+      All buttons inherit context data from the parent TrackContext.
+    </p>
+
+    <div class="flex gap-4">
+      <button
+        data-component="Track"
+        data-on:click='{"action": "add_to_cart"}'
+        class="px-4 py-2 bg-blue-500 text-white rounded">
+        Add to Cart
+      </button>
+
+      <button
+        data-component="Track"
+        data-on:click='{"action": "add_to_wishlist"}'
+        class="px-4 py-2 bg-gray-500 text-white rounded">
+        Add to Wishlist
+      </button>
+    </div>
+
+    <p class="text-xs text-gray-500">
+      Clicking "Add to Cart" dispatches:<br>
+      <code>{ page_type: "product", product_id: "SKU123", product_name: "Example Product", action: "add_to_cart" }</code>
+    </p>
+  </div>
+</section>

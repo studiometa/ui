@@ -1,0 +1,24 @@
+<div class="space-y-4">
+  <p class="text-sm text-gray-600">
+    This example shows how to track CustomEvents from third-party scripts.
+  </p>
+
+  <div
+    id="custom-form"
+    data-component="Track"
+    data-on:form-submitted='{"event": "form_submitted", "email": "$detail.email", "source": "$detail.source"}'
+    class="p-4 border rounded">
+
+    <p class="mb-2">Simulated third-party form</p>
+
+    <button
+      onclick="this.parentElement.dispatchEvent(new CustomEvent('form-submitted', { detail: { email: 'user@example.com', source: 'newsletter' } }))"
+      class="px-4 py-2 bg-green-500 text-white rounded">
+      Simulate Form Submit
+    </button>
+  </div>
+
+  <p class="text-xs text-gray-500">
+    The Track component extracts <code>email</code> and <code>source</code> from <code>event.detail</code> using the <code>$detail.*</code> syntax.
+  </p>
+</div>

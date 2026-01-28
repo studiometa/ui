@@ -1,0 +1,10 @@
+<!-- This element tracks data on page load -->
+<div
+  data-component="Track"
+  data-on:mounted='{"event": "page_view", "page_type": "home", "user_logged_in": false}'
+  hidden>
+</div>
+
+<p class="text-sm text-gray-600">
+  Check `window.dataLayer` - the page_view event was dispatched when this component mounted.
+</p>
