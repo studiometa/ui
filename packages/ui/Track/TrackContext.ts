@@ -12,6 +12,8 @@ export interface TrackContextProps extends BaseProps {
  *
  * Provides hierarchical context data that is merged into child Track components.
  *
+ * @link https://ui.studiometa.dev/components/Track/js-api.html#trackcontext
+ *
  * @example
  * ```html
  * <section

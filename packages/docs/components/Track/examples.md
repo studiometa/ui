@@ -244,8 +244,7 @@ title: Track Examples
 <div
   id="hubspot-form"
   data-component="Track"
-  data-on:form-success='{"event": "lead_generated", "source": "$detail.source", "email": "$detail.email"}'>
-</div>
+  data-on:form-success='{"event": "lead_generated", "source": "$detail.source", "email": "$detail.email"}'></div>
 ```
 
 ## Multiple Events on Same Element

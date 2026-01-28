@@ -22,6 +22,8 @@ function defaultDispatcher(data: Record<string, unknown>) {
 /**
  * Set a custom dispatcher function.
  *
+ * @link https://ui.studiometa.dev/components/Track/js-api.html#custom-dispatcher
+ *
  * @param fn - The dispatcher function, or null to reset to default.
  *
  * @example

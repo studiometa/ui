@@ -1,6 +1,7 @@
 <div class="space-y-4">
   <p class="text-sm text-gray-600">
-    This example shows how to track CustomEvents from third-party scripts.
+    This example shows how to track <code>CustomEvent</code> from third-party scripts
+    using the <code>$detail.*</code> syntax.
   </p>
 
   <div
@@ -9,16 +10,19 @@
     data-on:form-submitted='{"event": "form_submitted", "email": "$detail.email", "source": "$detail.source"}'
     class="p-4 border rounded">
 
-    <p class="mb-2">Simulated third-party form</p>
+    <p class="mb-3 text-sm text-gray-700">Simulated third-party form</p>
 
     <button
       onclick="this.parentElement.dispatchEvent(new CustomEvent('form-submitted', { detail: { email: 'user@example.com', source: 'newsletter' } }))"
-      class="px-4 py-2 bg-green-500 text-white rounded">
+      class="px-4 py-2 bg-blue-400 text-white rounded hover:bg-blue-500">
       Simulate Form Submit
     </button>
   </div>
 
-  <p class="text-xs text-gray-500">
-    The Track component extracts <code>email</code> and <code>source</code> from <code>event.detail</code> using the <code>$detail.*</code> syntax.
-  </p>
+  <div>
+    <p class="text-sm font-medium text-gray-700 mb-2">dataLayer:</p>
+    <pre
+      data-debug-datalayer
+      class="p-3 bg-gray-100 rounded text-xs overflow-auto max-h-48 text-gray-800">[]</pre>
+  </div>
 </div>
