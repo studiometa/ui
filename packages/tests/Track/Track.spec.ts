@@ -232,6 +232,35 @@ describe('The Track component', () => {
     await destroy(track);
   });
 
+  it('should merge full event.detail with .detail modifier', async () => {
+    const div = h('div', {
+      'data-on:custom-event.detail': JSON.stringify({
+        event: 'custom_tracking',
+        source: 'component',
+      }),
+    });
+    const track = new Track(div);
+    await mount(track);
+
+    const customEvent = new CustomEvent('custom-event', {
+      detail: {
+        extra: 'data',
+        nested: { value: 123 },
+      },
+    });
+    track.$el.dispatchEvent(customEvent);
+
+    expect(window.dataLayer).toHaveLength(1);
+    expect(window.dataLayer![0]).toEqual({
+      event: 'custom_tracking',
+      source: 'component',
+      extra: 'data',
+      nested: { value: 123 },
+    });
+
+    await destroy(track);
+  });
+
   it('should debounce events with default delay', async () => {
     const div = h('div', {
       'data-on:input.debounce': JSON.stringify({ event: 'search_input' }),

@@ -126,6 +126,15 @@ describe('resolveDetailPlaceholders', () => {
     expect(result).toEqual({ email: undefined });
   });
 
+  it('should return undefined when path traversal hits a non-object value', () => {
+    const data = { value: '$detail.foo.bar.baz' };
+    const detail = { foo: 'primitive' }; // foo is a string, not an object
+
+    const result = resolveDetailPlaceholders(data, detail);
+
+    expect(result).toEqual({ value: undefined });
+  });
+
   it('should preserve non-placeholder values', () => {
     const data = { event: 'test', static: 'value', number: 42 };
     const detail = {};
