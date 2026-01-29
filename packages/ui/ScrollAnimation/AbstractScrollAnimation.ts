@@ -1,6 +1,6 @@
 import { Base, withFreezedOptions } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig, ScrollInViewProps } from '@studiometa/js-toolkit';
-import { map, clamp01, animate } from '@studiometa/js-toolkit/utils';
+import { map, clamp01, animate, nextTick } from '@studiometa/js-toolkit/utils';
 import type { Keyframe } from '@studiometa/js-toolkit/utils';
 
 export interface AbstractScrollAnimationProps extends BaseProps {
@@ -46,6 +46,30 @@ export class AbstractScrollAnimation<
       },
     },
   };
+
+  /**
+   * Current animation progress (0 to 1).
+   */
+  progress = 0;
+
+  /**
+   * Constructor.
+   */
+  constructor(element: HTMLElement) {
+    super(element);
+
+    // Restore animation state on mount
+    this.$on('mounted', () => {
+      this.render(this.progress);
+    });
+
+    // Complete animation to nearest boundary on destroy
+    this.$on('destroyed', () => {
+      nextTick(() => {
+        this.render(Math.round(this.progress));
+      });
+    });
+  }
 
   /**
    * Get the target element for the animation.
@@ -103,6 +127,7 @@ export class AbstractScrollAnimation<
    * Render the animation for the given progress.
    */
   render(progress: number) {
+    this.progress = progress;
     this.animation.progress(progress);
   }
 }

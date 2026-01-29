@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **ScrollAnimation:** add a `withScrollAnimationDebug` decorator ([#494](https://github.com/studiometa/ui/pull/494))
 
+### Fixed
+
+- **ScrollAnimation:** complete animation to nearest boundary on destroy ([#444](https://github.com/studiometa/ui/issues/444), [#496](https://github.com/studiometa/ui/pull/496), [ecb63dd](https://github.com/studiometa/ui/commit/ecb63dd))
+
 ### Changed
 
 - **ScrollAnimation:** refactor components into `ScrollAnimationTimeline` and `ScrollAnimationTarget` ([#441](https://github.com/studiometa/ui/issues/441) [#494](https://github.com/studiometa/ui/pull/494), [a5d0e29](https://github.com/studiometa/ui/commit/a5d0e29))
