@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - **ScrollAnimation:** add a `withScrollAnimationDebug` decorator ([#494](https://github.com/studiometa/ui/pull/494))
+- **TwigExtension:** add a Composer plugin for build-time icon fetching ([#498](https://github.com/studiometa/ui/issues/498), [#499](https://github.com/studiometa/ui/pull/499))
+
+### Changed
+
+- **TwigExtension:** `iconify/json` and `iconify/json-tools` are no longer required dependencies, the Composer plugin fetches only the icons used in templates from the Iconify API ([#498](https://github.com/studiometa/ui/issues/498), [#499](https://github.com/studiometa/ui/pull/499))
 
 ### Fixed
 
