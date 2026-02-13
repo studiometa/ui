@@ -28,3 +28,7 @@ All [Iconify](https://iconify.design/) sets can also be used by specifying a nam
   name: 'mdi:globe',
 } %}
 ```
+
+::: tip
+Iconify icons are automatically fetched from the API as local SVG files when you run `composer install` or `composer update`. You can also manually sync icons with `composer ui:icons`. See the [installation guide](/guide/installation/) for configuration options.
+:::

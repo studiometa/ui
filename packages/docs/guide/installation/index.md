@@ -14,6 +14,56 @@ Install the Twig and PHP parts with Composer:
 composer require studiometa/ui
 ```
 
+The package is a Composer plugin that automatically fetches icons from the [Iconify API](https://iconify.design/) when you run `composer install` or `composer update`. You will need to allow the plugin:
+
+```bash
+composer config allow-plugins.studiometa/ui true
+```
+
+### Icon management
+
+Icons referenced via `meta_icon('collection:icon-name')` in your templates are automatically scanned and fetched as local SVG files. You can also manage icons manually:
+
+```bash
+# Scan templates and fetch missing icons
+composer ui:icons
+
+# Preview detected icons without fetching (dry-run)
+composer ui:icons --dry-run
+
+# Fetch and remove unused icons
+composer ui:icons --prune
+
+# Remove unused icons only
+composer ui:icons:prune
+```
+
+You can configure the icon behavior in your project's `composer.json`:
+
+```json
+{
+    "extra": {
+        "studiometa/ui": {
+            "icons": {
+                "enabled": true,
+                "output": "assets/icons",
+                "scan": ["templates", "app"],
+                "include": ["mdi:loading"],
+                "exclude": ["mdi:test-*"]
+            }
+        }
+    }
+}
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `enabled` | `true` | Enable/disable automatic icon syncing |
+| `output` | `"assets/icons"` | Directory for local SVG files |
+| `scan` | `["templates"]` | Directories to scan for `meta_icon()` calls |
+| `include` | `[]` | Icons to always fetch (even if not found in templates) |
+| `exclude` | `[]` | Glob patterns for icons to ignore |
+
 Configure the Twig extension from the `studiometa/ui` package in your project:
 
 - Directly with Twig:
