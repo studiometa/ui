@@ -11,8 +11,16 @@ require_once __DIR__ . '/helpers.php';
  */
 function createPruneCommandTester(array $extra, string $vendorDir): \Symfony\Component\Console\Tester\CommandTester
 {
+    if (isset($extra['studiometa/ui']['icons']) && !isset($extra['studiometa/ui']['icons']['api'])) {
+        $extra['studiometa/ui']['icons']['api'] = getMockApiUrl();
+    }
+
     return createCommandTester(new IconPruneCommand(), $extra, $vendorDir);
 }
+
+beforeAll(function () {
+    ensureMockApiServer();
+});
 
 beforeEach(function () {
     $this->tmpDir = sys_get_temp_dir() . '/ui-prune-cmd-test-' . uniqid();

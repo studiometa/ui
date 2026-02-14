@@ -11,10 +11,11 @@
     "twig/twig": "^3.19.0"
   },
   "require-dev": {
+    "composer/composer": "^2.9",
     "iconify/json": "^2.2",
     "iconify/json-tools": "^1.0",
     "mallardduck/prettier-php-runner": "^1.0",
-    "composer/composer": "^2.9",
+    "mockery/mockery": "^1.6",
     "pestphp/pest": "^3.0",
     "phpstan/phpstan": "^2.1",
     "spatie/pest-plugin-snapshots": "^2.3",

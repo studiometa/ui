@@ -7,6 +7,21 @@ use Studiometa\Ui\Composer\Plugin;
 
 require_once __DIR__ . '/helpers.php';
 
+/**
+ * Build the icons extra config with the mock API URL injected.
+ *
+ * @param array<string, mixed> $iconsConfig
+ * @return array<string, mixed>
+ */
+function pluginExtra(array $iconsConfig): array
+{
+    return ['studiometa/ui' => ['icons' => array_merge(['api' => getMockApiUrl()], $iconsConfig)]];
+}
+
+beforeAll(function () {
+    ensureMockApiServer();
+});
+
 beforeEach(function () {
     $this->tmpDir = sys_get_temp_dir() . '/ui-plugin-test-' . uniqid();
     mkdir($this->tmpDir . '/templates', 0755, true);
@@ -35,7 +50,7 @@ test('it subscribes to post-install and post-update events', function () {
 
 test('it does nothing when disabled', function () {
     $composer = createComposerStub(
-        ['studiometa/ui' => ['icons' => ['enabled' => false]]],
+        pluginExtra(['enabled' => false]),
         $this->tmpDir . '/vendor'
     );
     $io = new BufferIO();
@@ -51,7 +66,7 @@ test('it does nothing when disabled', function () {
 
 test('it reports no icons found when templates are empty', function () {
     $composer = createComposerStub(
-        ['studiometa/ui' => ['icons' => ['scan' => ['templates']]]],
+        pluginExtra(['scan' => ['templates']]),
         $this->tmpDir . '/vendor'
     );
     $io = new BufferIO();
@@ -77,7 +92,7 @@ test('it reports all icons up to date when already synced', function () {
     );
 
     $composer = createComposerStub(
-        ['studiometa/ui' => ['icons' => ['scan' => ['templates']]]],
+        pluginExtra(['scan' => ['templates']]),
         $this->tmpDir . '/vendor'
     );
     $io = new BufferIO();
@@ -98,7 +113,7 @@ test('it fetches new icons on sync', function () {
     );
 
     $composer = createComposerStub(
-        ['studiometa/ui' => ['icons' => ['scan' => ['templates']]]],
+        pluginExtra(['scan' => ['templates']]),
         $this->tmpDir . '/vendor'
     );
     $io = new BufferIO();

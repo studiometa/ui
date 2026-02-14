@@ -6,19 +6,30 @@ require_once __DIR__ . '/helpers.php';
 
 /**
  * Create a CommandTester for IconSyncCommand with a stubbed Composer.
+ * Automatically injects the mock API URL into the icons config.
  *
  * @param array<string, mixed> $extra
  */
 function createSyncCommandTester(array $extra, string $vendorDir): \Symfony\Component\Console\Tester\CommandTester
 {
+    // Inject mock API URL if icons config exists and no api is set
+    if (isset($extra['studiometa/ui']['icons']) && !isset($extra['studiometa/ui']['icons']['api'])) {
+        $extra['studiometa/ui']['icons']['api'] = getMockApiUrl();
+    }
+
     return createCommandTester(new IconSyncCommand(), $extra, $vendorDir);
 }
+
+beforeAll(function () {
+    ensureMockApiServer();
+});
 
 beforeEach(function () {
     $this->tmpDir = sys_get_temp_dir() . '/ui-sync-cmd-test-' . uniqid();
     mkdir($this->tmpDir . '/templates', 0755, true);
     mkdir($this->tmpDir . '/vendor', 0755, true);
     mkdir($this->tmpDir . '/assets/icons', 0755, true);
+    $this->mockApiUrl = getMockApiUrl();
 });
 
 afterEach(function () {

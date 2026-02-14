@@ -9,6 +9,62 @@ use Composer\Package\RootPackage;
 use Symfony\Component\Console\Tester\CommandTester;
 use Composer\Command\BaseCommand;
 
+const MOCK_API_PORT = 18923;
+
+/**
+ * Start the mock Iconify API server (idempotent).
+ */
+function ensureMockApiServer(): string
+{
+    $url = 'http://localhost:' . MOCK_API_PORT;
+
+    // Already running?
+    $conn = @fsockopen('localhost', MOCK_API_PORT, $errno, $errstr, 0.1);
+    if ($conn) {
+        fclose($conn);
+        return $url;
+    }
+
+    $cmd = sprintf(
+        'php -S localhost:%d %s > /dev/null 2>&1 & echo $!',
+        MOCK_API_PORT,
+        escapeshellarg(__DIR__ . '/fixtures/mock-api.php')
+    );
+    $pid = (int) trim((string) shell_exec($cmd));
+    $GLOBALS['mockApiPid'] = $pid;
+
+    // Wait for server to be ready
+    for ($i = 0; $i < 50; $i++) {
+        $conn = @fsockopen('localhost', MOCK_API_PORT, $errno, $errstr, 0.1);
+        if ($conn) {
+            fclose($conn);
+            return $url;
+        }
+        usleep(20_000);
+    }
+
+    return $url;
+}
+
+/**
+ * Stop the mock API server.
+ */
+function stopMockApiServer(): void
+{
+    if (isset($GLOBALS['mockApiPid']) && $GLOBALS['mockApiPid'] > 0) {
+        posix_kill($GLOBALS['mockApiPid'], SIGTERM);
+        unset($GLOBALS['mockApiPid']);
+    }
+}
+
+/**
+ * Get the mock API URL (assumes server is already started).
+ */
+function getMockApiUrl(): string
+{
+    return 'http://localhost:' . MOCK_API_PORT;
+}
+
 /**
  * Create a stubbed Composer instance for testing.
  *

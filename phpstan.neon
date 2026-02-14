@@ -2,8 +2,6 @@ parameters:
   level: max
   paths:
     - packages/twig-extension
-  excludePaths:
-    - packages/twig-extension/Composer
   ignoreErrors:
     - identifier: missingType.iterableValue
     - identifier: callable.nonNativeMethod
