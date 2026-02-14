@@ -6,7 +6,7 @@
   "license": "MIT",
   "require": {
     "composer-plugin-api": "^2.0",
-    "php": "^8.1",
+    "php": "^8.3",
     "studiometa/twig-toolkit": "^2.1.1",
     "twig/twig": "^3.19.0"
   },
@@ -14,9 +14,10 @@
     "iconify/json": "^2.2",
     "iconify/json-tools": "^1.0",
     "mallardduck/prettier-php-runner": "^1.0",
-    "pestphp/pest": "^2.0|^3.0",
+    "composer/composer": "^2.9",
+    "pestphp/pest": "^3.0",
     "phpstan/phpstan": "^2.1",
-    "spatie/pest-plugin-snapshots": "^2.0",
+    "spatie/pest-plugin-snapshots": "^2.3",
     "squizlabs/php_codesniffer": "^3.6"
   },
   "scripts": {
