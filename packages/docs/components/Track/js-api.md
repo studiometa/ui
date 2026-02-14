@@ -17,21 +17,21 @@ The IntersectionObserver threshold used for the `view` event. A value of `0.5` m
 <div
   data-component="Track"
   data-option-threshold="0.8"
-  data-on:view.once='{"event": "product_impression"}'>
+  data-track:view.once='{"event": "product_impression"}'>
   Product Card
 </div>
 ```
 
 ## Events
 
-Events are defined using the `data-on:<event>[.<modifier>]` syntax with a JSON payload.
+Events are defined using the `data-track:<event>[.<modifier>]` syntax with a JSON payload.
 
 ### DOM Events
 
 Any DOM event can be tracked: `click`, `submit`, `change`, `input`, `focus`, `blur`, `scroll`, `mouseenter`, `mouseleave`, etc.
 
 ```html
-<button data-component="Track" data-on:click='{"event": "cta_click", "location": "header"}'>
+<button data-component="Track" data-track:click='{"event": "cta_click", "location": "header"}'>
   Subscribe
 </button>
 ```
@@ -45,7 +45,7 @@ Dispatches tracking data immediately when the component mounts. Useful for page 
 ```html
 <div
   data-component="Track"
-  data-on:mounted='{"event": "view_item_list", "ecommerce": {"items": [...]}}'
+  data-track:mounted='{"event": "view_item_list", "ecommerce": {"items": [...]}}'
   hidden></div>
 ```
 
@@ -54,7 +54,7 @@ Dispatches tracking data immediately when the component mounts. Useful for page 
 Uses IntersectionObserver for impression tracking. The event fires when the element becomes visible based on the `threshold` option.
 
 ```html
-<div data-component="Track" data-on:view.once='{"event": "product_impression", "id": "123"}'>
+<div data-component="Track" data-track:view.once='{"event": "product_impression", "id": "123"}'>
   Product Card
 </div>
 ```
@@ -64,7 +64,7 @@ Uses IntersectionObserver for impression tracking. The event fires when the elem
 Modifiers can be chained using `.` as a separator:
 
 ```html
-<a href="/product" data-component="Track" data-on:click.prevent.once='{"event": "select_item"}'>
+<a href="/product" data-component="Track" data-track:click.prevent.once='{"event": "select_item"}'>
   View Product
 </a>
 ```
@@ -87,15 +87,15 @@ Modifiers can be chained using `.` as a separator:
 
 ```html
 <!-- Debounce search input (default 300ms) -->
-<input data-component="Track" data-on:input.debounce='{"event": "search_input"}' />
+<input data-component="Track" data-track:input.debounce='{"event": "search_input"}' />
 
 <!-- Debounce with custom delay -->
-<input data-component="Track" data-on:input.debounce500='{"event": "search_input"}' />
+<input data-component="Track" data-track:input.debounce500='{"event": "search_input"}' />
 
 <!-- Throttle scroll tracking (default 16ms ~60fps) -->
-<main data-component="Track" data-on:scroll.throttle.passive='{"event": "scroll_tracking"}'>
+<main data-component="Track" data-track:scroll.throttle.passive='{"event": "scroll_tracking"}'>
   <!-- Throttle with custom delay -->
-  <div data-component="Track" data-on:mousemove.throttle100='{"event": "mouse_position"}'></div>
+  <div data-component="Track" data-track:mousemove.throttle100='{"event": "mouse_position"}'></div>
 </main>
 ```
 
@@ -110,7 +110,7 @@ Extract specific values from `event.detail` using the `$detail.*` syntax:
 ```html
 <form
   data-component="Track"
-  data-on:form-submitted='{"event": "form_submitted", "email": "$detail.email", "name": "$detail.user.name"}'></form>
+  data-track:form-submitted='{"event": "form_submitted", "email": "$detail.email", "name": "$detail.user.name"}'></form>
 ```
 
 If the form dispatches:
@@ -146,7 +146,7 @@ The context data to merge into child Track components.
 <section
   data-component="TrackContext"
   data-option-data='{"page_type": "product", "product_id": "123"}'>
-  <button data-component="Track" data-on:click='{"action": "add_to_cart"}'>Add to Cart</button>
+  <button data-component="Track" data-track:click='{"action": "add_to_cart"}'>Add to Cart</button>
   <!-- Dispatches: { page_type: "product", product_id: "123", action: "add_to_cart" } -->
 </section>
 ```
@@ -160,7 +160,7 @@ When Track is nested in multiple TrackContext components, it uses the data from 
   <section
     data-component="TrackContext"
     data-option-data='{"page": "product", "product_id": "123"}'>
-    <button data-component="Track" data-on:click='{"action": "buy"}'>Buy</button>
+    <button data-component="Track" data-track:click='{"action": "buy"}'>Buy</button>
     <!-- Uses closest context: { page: "product", product_id: "123", action: "buy" } -->
   </section>
 </div>

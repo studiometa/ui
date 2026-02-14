@@ -22,7 +22,7 @@ export interface TrackContextProps extends BaseProps {
  *
  *   <button
  *     data-component="Track"
- *     data-on:click='{"action": "add_to_cart"}'>
+ *     data-track:click='{"action": "add_to_cart"}'>
  *     Add to Cart
  *   </button>
  *   <!-- Dispatches: { page_type: "product", product_id: "123", action: "add_to_cart" } -->

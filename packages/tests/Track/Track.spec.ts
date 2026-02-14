@@ -30,7 +30,7 @@ describe('The Track component', () => {
 
   it('should dispatch on click event', async () => {
     const div = h('div', {
-      'data-on:click': JSON.stringify({ event: 'cta_click', location: 'header' }),
+      'data-track:click': JSON.stringify({ event: 'cta_click', location: 'header' }),
     });
     const track = new Track(div);
     await mount(track);
@@ -45,7 +45,7 @@ describe('The Track component', () => {
 
   it('should dispatch on mounted event', async () => {
     const div = h('div', {
-      'data-on:mounted': JSON.stringify({ event: 'page_view', page: 'home' }),
+      'data-track:mounted': JSON.stringify({ event: 'page_view', page: 'home' }),
     });
     const track = new Track(div);
     await mount(track);
@@ -58,7 +58,7 @@ describe('The Track component', () => {
 
   it('should dispatch on view event with IntersectionObserver', async () => {
     const div = h('div', {
-      'data-on:view': JSON.stringify({ event: 'product_impression', id: '123' }),
+      'data-track:view': JSON.stringify({ event: 'product_impression', id: '123' }),
     });
     const track = new Track(div);
     await mount(track);
@@ -77,7 +77,7 @@ describe('The Track component', () => {
 
   it('should dispatch only once with .once modifier on view event', async () => {
     const div = h('div', {
-      'data-on:view.once': JSON.stringify({ event: 'product_impression', id: '123' }),
+      'data-track:view.once': JSON.stringify({ event: 'product_impression', id: '123' }),
     });
     const track = new Track(div);
     await mount(track);
@@ -93,8 +93,8 @@ describe('The Track component', () => {
 
   it('should support multiple events on same element', async () => {
     const div = h('div', {
-      'data-on:click': JSON.stringify({ event: 'click_event' }),
-      'data-on:mouseenter': JSON.stringify({ event: 'hover_event' }),
+      'data-track:click': JSON.stringify({ event: 'click_event' }),
+      'data-track:mouseenter': JSON.stringify({ event: 'hover_event' }),
     });
     const track = new Track(div);
     await mount(track);
@@ -113,7 +113,7 @@ describe('The Track component', () => {
     setTrackDispatcher(dispatcherSpy);
 
     const div = h('div', {
-      'data-on:click': JSON.stringify({ event: 'test_event' }),
+      'data-track:click': JSON.stringify({ event: 'test_event' }),
     });
     const track = new Track(div);
     await mount(track);
@@ -136,7 +136,7 @@ describe('The Track component', () => {
       'data-option-data': JSON.stringify({ page_type: 'product', product_id: '123' }),
     });
     const trackDiv = h('div', {
-      'data-on:click': JSON.stringify({ action: 'add_to_cart' }),
+      'data-track:click': JSON.stringify({ action: 'add_to_cart' }),
     });
     contextDiv.appendChild(trackDiv);
 
@@ -158,7 +158,7 @@ describe('The Track component', () => {
 
   it('should apply .prevent modifier', async () => {
     const div = h('div', {
-      'data-on:click.prevent': JSON.stringify({ event: 'test' }),
+      'data-track:click.prevent': JSON.stringify({ event: 'test' }),
     });
     const track = new Track(div);
     await mount(track);
@@ -174,7 +174,7 @@ describe('The Track component', () => {
 
   it('should apply .stop modifier', async () => {
     const div = h('div', {
-      'data-on:click.stop': JSON.stringify({ event: 'test' }),
+      'data-track:click.stop': JSON.stringify({ event: 'test' }),
     });
     const track = new Track(div);
     await mount(track);
@@ -190,7 +190,7 @@ describe('The Track component', () => {
 
   it('should warn on invalid JSON', async () => {
     const div = h('div', {
-      'data-on:click': 'invalid json',
+      'data-track:click': 'invalid json',
     });
     const track = new Track(div);
     // $warn is a getter, so we spy on it with 'get'
@@ -205,7 +205,7 @@ describe('The Track component', () => {
 
   it('should handle CustomEvent with $detail.* placeholders', async () => {
     const div = h('div', {
-      'data-on:form-submitted': JSON.stringify({
+      'data-track:form-submitted': JSON.stringify({
         event: 'form_submitted',
         email: '$detail.email',
         name: '$detail.user.name',
@@ -234,7 +234,7 @@ describe('The Track component', () => {
 
   it('should merge full event.detail with .detail modifier', async () => {
     const div = h('div', {
-      'data-on:custom-event.detail': JSON.stringify({
+      'data-track:custom-event.detail': JSON.stringify({
         event: 'custom_tracking',
         source: 'component',
       }),
@@ -263,7 +263,7 @@ describe('The Track component', () => {
 
   it('should debounce events with default delay', async () => {
     const div = h('div', {
-      'data-on:input.debounce': JSON.stringify({ event: 'search_input' }),
+      'data-track:input.debounce': JSON.stringify({ event: 'search_input' }),
     });
     const track = new Track(div);
     await mount(track);
@@ -293,7 +293,7 @@ describe('The Track component', () => {
 
   it('should debounce events with custom delay', async () => {
     const div = h('div', {
-      'data-on:input.debounce500': JSON.stringify({ event: 'search_input' }),
+      'data-track:input.debounce500': JSON.stringify({ event: 'search_input' }),
     });
     const track = new Track(div);
     await mount(track);
@@ -317,7 +317,7 @@ describe('The Track component', () => {
 
   it('should throttle events with default delay', async () => {
     const div = h('div', {
-      'data-on:scroll.throttle': JSON.stringify({ event: 'scroll_tracking' }),
+      'data-track:scroll.throttle': JSON.stringify({ event: 'scroll_tracking' }),
     });
     const track = new Track(div);
     await mount(track);

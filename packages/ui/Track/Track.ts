@@ -23,21 +23,21 @@ export interface TrackProps extends BaseProps {
  * <!-- Click tracking -->
  * <button
  *   data-component="Track"
- *   data-on:click='{"event": "cta_click", "location": "header"}'>
+ *   data-track:click='{"event": "cta_click", "location": "header"}'>
  *   Subscribe
  * </button>
  *
  * <!-- Page load tracking -->
  * <div
  *   data-component="Track"
- *   data-on:mounted='{"event": "view_item_list", "ecommerce": {"items": [...]}}'
+ *   data-track:mounted='{"event": "view_item_list", "ecommerce": {"items": [...]}}'
  *   hidden>
  * </div>
  *
  * <!-- Impression tracking -->
  * <div
  *   data-component="Track"
- *   data-on:view.once='{"event": "product_impression", "id": "123"}'>
+ *   data-track:view.once='{"event": "product_impression", "id": "123"}'>
  *   Product Card
  * </div>
  * ```
@@ -59,7 +59,7 @@ export class Track<T extends BaseProps = BaseProps> extends Base<TrackProps & T>
   __trackEvents?: Set<TrackEvent>;
 
   /**
-   * Get all TrackEvent instances parsed from data-on:* attributes.
+   * Get all TrackEvent instances parsed from data-track:* attributes.
    */
   get trackEvents(): Set<TrackEvent> {
     if (this.__trackEvents) {
@@ -68,11 +68,11 @@ export class Track<T extends BaseProps = BaseProps> extends Base<TrackProps & T>
 
     this.__trackEvents = new Set();
 
-    // Parse data-on:* attributes
+    // Parse data-track:* attributes
     for (let i = 0; i < this.$el.attributes.length; i++) {
       const attr = this.$el.attributes[i];
-      if (attr.name.startsWith('data-on:')) {
-        const eventDefinition = attr.name.slice(8); // Remove 'data-on:'
+      if (attr.name.startsWith('data-track:')) {
+        const eventDefinition = attr.name.slice(11); // Remove 'data-track:'
         try {
           const data = JSON.parse(attr.value);
           this.__trackEvents.add(new TrackEvent(this, eventDefinition, data));

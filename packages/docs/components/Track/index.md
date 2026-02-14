@@ -34,7 +34,7 @@ createApp(App);
 
 ### Click Tracking
 
-Track user interactions with `data-on:click`:
+Track user interactions with `data-track:click`:
 
 <llm-exclude>
 <PreviewPlayground
@@ -55,7 +55,7 @@ Track user interactions with `data-on:click`:
 
 ### Page Load Tracking
 
-Use `data-on:mounted` to dispatch tracking data when the component mounts (page load):
+Use `data-track:mounted` to dispatch tracking data when the component mounts (page load):
 
 <llm-exclude>
 <PreviewPlayground
@@ -76,7 +76,7 @@ Use `data-on:mounted` to dispatch tracking data when the component mounts (page 
 
 ### Impression Tracking
 
-Use `data-on:view` for IntersectionObserver-based impression tracking:
+Use `data-track:view` for IntersectionObserver-based impression tracking:
 
 <llm-exclude>
 <PreviewPlayground

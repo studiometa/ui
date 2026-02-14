@@ -12,7 +12,7 @@ title: Track Examples
 {# Track product list view on page load #}
 <div
   data-component="Track"
-  data-on:mounted='{{ {
+  data-track:mounted='{{ {
     event: "view_item_list",
     ecommerce: {
       items: products|map(p => {
@@ -32,7 +32,7 @@ title: Track Examples
 <a
   href="{{ product.url }}"
   data-component="Track"
-  data-on:click='{{ {
+  data-track:click='{{ {
     event: "select_item",
     ecommerce: {
       items: [{
@@ -59,7 +59,7 @@ title: Track Examples
 
   <button
     data-component="Track"
-    data-on:click='{{ {
+    data-track:click='{{ {
       event: "add_to_cart",
       ecommerce: {
         currency: "EUR",
@@ -83,7 +83,7 @@ title: Track Examples
 {# On thank you page #}
 <div
   data-component="Track"
-  data-on:mounted='{{ {
+  data-track:mounted='{{ {
     event: "purchase",
     ecommerce: {
       transaction_id: order.id,
@@ -114,7 +114,7 @@ title: Track Examples
     <a
       href="{{ item.url }}"
       data-component="Track"
-      data-on:click='{{ {
+      data-track:click='{{ {
         event: "menu_click",
         menu_item: item.title,
         menu_position: loop.index
@@ -135,7 +135,7 @@ title: Track Examples
   <a
     href="/contact"
     data-component="Track"
-    data-on:click='{{ { event: "link_click", link_text: "Contact Us" }|json_encode }}'>
+    data-track:click='{{ { event: "link_click", link_text: "Contact Us" }|json_encode }}'>
     Contact Us
   </a>
 </footer>
@@ -148,7 +148,7 @@ title: Track Examples
 ```twig
 <form
   data-component="Track"
-  data-on:submit.prevent='{{ {
+  data-track:submit.prevent='{{ {
     event: "form_submit",
     form_name: "newsletter",
     form_location: "footer"
@@ -164,7 +164,7 @@ title: Track Examples
 <input
   type="search"
   data-component="Track"
-  data-on:input.debounce500='{{ { event: "search_query" }|json_encode }}'
+  data-track:input.debounce500='{{ { event: "search_query" }|json_encode }}'
   placeholder="Search...">
 ```
 
@@ -176,7 +176,7 @@ title: Track Examples
 {% for product in products %}
   <div
     data-component="Track"
-    data-on:view.once='{{ {
+    data-track:view.once='{{ {
       event: "view_item",
       ecommerce: {
         items: [{
@@ -199,7 +199,7 @@ title: Track Examples
 <div
   data-component="Track"
   data-option-threshold="0.8"
-  data-on:view.once='{{ {
+  data-track:view.once='{{ {
     event: "promotion_view",
     promotion_id: banner.id,
     promotion_name: banner.title,
@@ -216,9 +216,9 @@ title: Track Examples
 ```twig
 <video
   data-component="Track"
-  data-on:play='{{ { event: "video_start", video_title: video.title }|json_encode }}'
-  data-on:pause='{{ { event: "video_pause", video_title: video.title }|json_encode }}'
-  data-on:ended='{{ { event: "video_complete", video_title: video.title }|json_encode }}'>
+  data-track:play='{{ { event: "video_start", video_title: video.title }|json_encode }}'
+  data-track:pause='{{ { event: "video_pause", video_title: video.title }|json_encode }}'
+  data-track:ended='{{ { event: "video_complete", video_title: video.title }|json_encode }}'>
   <source src="{{ video.url }}" type="video/mp4">
 </video>
 ```
@@ -230,7 +230,7 @@ title: Track Examples
 ```twig
 <main
   data-component="Track"
-  data-on:scroll.throttle200.passive='{{ { event: "scroll_depth" }|json_encode }}'>
+  data-track:scroll.throttle200.passive='{{ { event: "scroll_depth" }|json_encode }}'>
   {# Page content #}
 </main>
 ```
@@ -244,7 +244,7 @@ title: Track Examples
 <div
   id="hubspot-form"
   data-component="Track"
-  data-on:form-success='{"event": "lead_generated", "source": "$detail.source", "email": "$detail.email"}'></div>
+  data-track:form-success='{"event": "lead_generated", "source": "$detail.source", "email": "$detail.email"}'></div>
 ```
 
 ## Multiple Events on Same Element
@@ -253,9 +253,9 @@ title: Track Examples
 <a
   href="{{ product.url }}"
   data-component="Track"
-  data-on:click='{{ { event: "select_item", item_id: product.sku }|json_encode }}'
-  data-on:auxclick='{{ { event: "select_item", item_id: product.sku, method: "new_tab" }|json_encode }}'
-  data-on:contextmenu='{{ { event: "select_item", item_id: product.sku, method: "context_menu" }|json_encode }}'>
+  data-track:click='{{ { event: "select_item", item_id: product.sku }|json_encode }}'
+  data-track:auxclick='{{ { event: "select_item", item_id: product.sku, method: "new_tab" }|json_encode }}'
+  data-track:contextmenu='{{ { event: "select_item", item_id: product.sku, method: "context_menu" }|json_encode }}'>
   {{ product.name }}
 </a>
 ```

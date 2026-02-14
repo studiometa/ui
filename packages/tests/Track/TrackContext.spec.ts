@@ -16,7 +16,7 @@ describe('The TrackContext component', () => {
       'data-option-data': JSON.stringify({ page: 'home' }),
     });
     const trackDiv = h('div', {
-      'data-on:click': JSON.stringify({ action: 'click' }),
+      'data-track:click': JSON.stringify({ action: 'click' }),
     });
     contextDiv.appendChild(trackDiv);
 
@@ -42,7 +42,7 @@ describe('The TrackContext component', () => {
       'data-option-data': JSON.stringify({ page: 'product', product_id: '123' }),
     });
     const trackDiv = h('div', {
-      'data-on:click': JSON.stringify({ action: 'add_to_cart' }),
+      'data-track:click': JSON.stringify({ action: 'add_to_cart' }),
     });
 
     outerContext.appendChild(innerContext);
@@ -67,7 +67,7 @@ describe('The TrackContext component', () => {
 
   it('should work without TrackContext parent', async () => {
     const trackDiv = h('div', {
-      'data-on:click': JSON.stringify({ event: 'standalone' }),
+      'data-track:click': JSON.stringify({ event: 'standalone' }),
     });
     const track = new Track(trackDiv);
     await mount(track);
@@ -84,7 +84,7 @@ describe('The TrackContext component', () => {
       'data-option-data': JSON.stringify({ page: 'home', version: '1' }),
     });
     const trackDiv = h('div', {
-      'data-on:click': JSON.stringify({ page: 'override', action: 'click' }),
+      'data-track:click': JSON.stringify({ page: 'override', action: 'click' }),
     });
     contextDiv.appendChild(trackDiv);
 
@@ -106,7 +106,7 @@ describe('The TrackContext component', () => {
   it('should default to empty object when no data option provided', async () => {
     const contextDiv = h('div');
     const trackDiv = h('div', {
-      'data-on:click': JSON.stringify({ event: 'test' }),
+      'data-track:click': JSON.stringify({ event: 'test' }),
     });
     contextDiv.appendChild(trackDiv);
 
