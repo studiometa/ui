@@ -1,8 +1,15 @@
 import { resolve, join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+import { execFileSync } from 'node:child_process';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
 import CopyPlugin from 'copy-webpack-plugin';
 import esbuild from 'esbuild';
+
+const require = createRequire(import.meta.url);
+const tsgoPackageDir = dirname(require.resolve('@typescript/native-preview/package.json'));
+const { default: getExePath } = await import(pathToFileURL(join(tsgoPackageDir, 'lib/getExePath.js')));
+const tsgo = getExePath();
 
 export default defineWebpackConfig({
   presets: [
@@ -20,6 +27,7 @@ export default defineWebpackConfig({
       },
       tailwindcss: true,
       syncColorScheme: true,
+      htmlLanguage: { id: 'twig' },
       loaders: {
         html: resolve('./lib/twig-loader.js'),
       },
@@ -126,9 +134,29 @@ createApp(App);`,
               cache: true,
             },
           },
+
         ],
       }),
     );
+
+    // Generate .d.ts files for @studiometa/ui using tsgo
+    const dtsOutDir = join(config.output.path, 'static/ui');
+    config.plugins.push({
+      apply(compiler) {
+        compiler.hooks.afterEmit.tapPromise('TsgoDtsPlugin', async () => {
+          execFileSync(tsgo, [
+            '--declaration',
+            '--emitDeclarationOnly',
+            '--outDir', dtsOutDir,
+            '--moduleResolution', 'node',
+            '--target', 'esnext',
+            '--module', 'esnext',
+            '--skipLibCheck',
+            resolve('../ui/index.ts'),
+          ], { stdio: 'ignore' });
+        });
+      },
+    });
 
     config.optimization.splitChunks.cacheGroups = {
       vendors: {
