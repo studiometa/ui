@@ -1,18 +1,1 @@
 {% extends '@playground/pages/index.twig' %}
-
-{% block body_after %}
-  <script>
-    (() => {
-      const origin = window.location.origin;
-      document.querySelectorAll('[data-option-import-map]').forEach((el) => {
-        const map = JSON.parse(el.dataset.optionImportMap);
-        for (const key of Object.keys(map)) {
-          if (map[key].startsWith('/')) {
-            map[key] = origin + map[key];
-          }
-        }
-        el.dataset.optionImportMap = JSON.stringify(map);
-      });
-    })();
-  </script>
-{% endblock %}
