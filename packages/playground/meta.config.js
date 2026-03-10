@@ -32,6 +32,11 @@ export default defineWebpackConfig({
           entry: '../ui/index.ts',
         },
       ],
+      importMap: {
+        'morphdom': '/play/static/deps/morphdom/index.js',
+        '@studiometa/js-toolkit': '/play/static/deps/@studiometa/js-toolkit/index.js',
+        '@studiometa/ui': '/play/static/deps/@studiometa/ui/index.js',
+      },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
   Hello world
