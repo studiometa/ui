@@ -2,6 +2,7 @@ import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
 import CopyPlugin from 'copy-webpack-plugin';
 import esbuild from 'esbuild';
@@ -155,6 +156,30 @@ createApp(App);`,
             '--skipLibCheck',
             resolve('../ui/index.ts'),
           ], { stdio: 'ignore' });
+
+          // Rewrite .js imports to .d.ts in declaration files so that
+          // modern-monaco's TypeScript worker resolves types correctly
+          // when fetching .d.ts files over HTTP.
+          const rewriteDtsImports = async (dir) => {
+            const entries = await readdir(dir, { withFileTypes: true });
+            await Promise.all(entries.map(async (entry) => {
+              const fullPath = join(dir, entry.name);
+              if (entry.isDirectory()) {
+                return rewriteDtsImports(fullPath);
+              }
+              if (entry.name.endsWith('.d.ts')) {
+                const content = await readFile(fullPath, 'utf8');
+                const rewritten = content.replace(
+                  /(from\s+['"])([^'"]+)\.js(['"])/g,
+                  '$1$2.d.ts$3',
+                );
+                if (rewritten !== content) {
+                  await writeFile(fullPath, rewritten);
+                }
+              }
+            }));
+          };
+          await rewriteDtsImports(dtsOutDir);
         });
       },
     });
