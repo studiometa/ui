@@ -147,6 +147,7 @@ createApp(App);`,
           execFileSync(tsgo, [
             '--declaration',
             '--emitDeclarationOnly',
+            '--noCheck',
             '--outDir', dtsOutDir,
             '--moduleResolution', 'node',
             '--target', 'esnext',

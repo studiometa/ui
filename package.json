@@ -37,6 +37,9 @@
     "oxlint-tsgolint": "0.5.1",
     "prettier": "3.6.2"
   },
+  "overrides": {
+    "@typescript/vfs": "1.6.4"
+  },
   "dependencies": {
     "patch-package": "8.0.1"
   }
