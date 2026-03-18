@@ -9,9 +9,13 @@
     "build": "meta build"
   },
   "dependencies": {
-    "@studiometa/playground": "0.3.1"
+    "@studiometa/playground": "0.3.4"
   },
   "devDependencies": {
+    "@motionone/easing": "^10.18.0",
+    "@studiometa/js-toolkit": "^3.4.0",
+    "deepmerge": "^4.3.1",
+    "morphdom": "^2.7.5",
     "tsdown": "^0.21.1"
   }
 }
