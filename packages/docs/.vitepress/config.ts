@@ -7,6 +7,13 @@ import glob from 'fast-glob';
 import pkg from '../package.json' with { type: 'json' };
 
 export default defineConfig({
+  vue: {
+    template: {
+      compilerOptions: {
+        isCustomElement: (tag) => tag === 'playground-preview',
+      },
+    },
+  },
   ignoreDeadLinks: 'localhostLinks',
   lang: 'en-US',
   title: '@studiometa/ui',
