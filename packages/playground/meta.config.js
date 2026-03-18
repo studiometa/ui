@@ -24,19 +24,15 @@ export default defineWebpackConfig({
       dependencies: [
         '@motionone/easing',
         'deepmerge',
-        { specifier: 'morphdom', source: 'morphdom' },
-        { specifier: '@studiometa/js-toolkit', source: '@studiometa/js-toolkit' },
+        'morphdom',
+        '@studiometa/js-toolkit',
+        '@studiometa/js-toolkit/utils',
         {
           specifier: '@studiometa/ui',
           source: '../ui/**/*.ts',
           entry: '../ui/index.ts',
         },
       ],
-      importMap: {
-        'morphdom': '/play/static/deps/morphdom/index.js',
-        '@studiometa/js-toolkit': '/play/static/deps/@studiometa/js-toolkit/index.js',
-        '@studiometa/ui': '/play/static/deps/@studiometa/ui/index.js',
-      },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
   Hello world
