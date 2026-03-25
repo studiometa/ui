@@ -17,7 +17,7 @@
   "devDependencies": {
     "@iconify-json/octicon": "1.2.17",
     "@shikijs/vitepress-twoslash": "3.15.0",
-    "@studiometa/playground-preview": "0.3.4",
+    "@studiometa/playground-preview": "0.3.6",
     "@studiometa/tailwind-config": "2.1.0",
     "autoprefixer": "10.4.21",
     "concurrently": "9.2.1",
