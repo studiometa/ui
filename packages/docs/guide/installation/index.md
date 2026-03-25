@@ -2,6 +2,13 @@
 
 ## In a Twig project
 
+### Requirements
+
+- PHP **8.3** or higher
+- Composer **2.x**
+
+### Setup
+
 Install the JavaScript and Vue parts with NPM:
 
 ```bash
@@ -20,9 +27,25 @@ The package is a Composer plugin that automatically fetches icons from the [Icon
 composer config allow-plugins.studiometa/ui true
 ```
 
+::: tip Offline / CI environments
+The plugin makes HTTP requests to the Iconify API during `composer install` and `composer update` to fetch icon SVGs. If your environment does not have internet access, you can disable automatic syncing and commit the fetched icons to your repository instead:
+
+```json
+{
+    "extra": {
+        "studiometa/ui": {
+            "icons": { "enabled": false }
+        }
+    }
+}
+```
+:::
+
 ### Icon management
 
-Icons referenced via `meta_icon('collection:icon-name')` in your templates are automatically scanned and fetched as local SVG files. You can also manage icons manually:
+Icons referenced via `meta_icon('collection:icon-name')` in your templates are automatically scanned and fetched as local SVG files. Only the icons you actually use are downloaded — there is no need for the full `iconify/json` package (~690MB).
+
+You can also manage icons manually:
 
 ```bash
 # Scan templates and fetch missing icons
@@ -37,6 +60,8 @@ composer ui:icons --prune
 # Remove unused icons only
 composer ui:icons:prune
 ```
+
+#### Configuration
 
 You can configure the icon behavior in your project's `composer.json`:
 
@@ -58,11 +83,29 @@ You can configure the icon behavior in your project's `composer.json`:
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `enabled` | `true` | Enable/disable automatic icon syncing |
-| `output` | `"assets/icons"` | Directory for local SVG files |
+| `enabled` | `true` | Enable/disable automatic icon syncing on `composer install`/`update` |
+| `output` | `"assets/icons"` | Directory for local SVG files (relative to project root) |
 | `scan` | `["templates"]` | Directories to scan for `meta_icon()` calls |
 | `include` | `[]` | Icons to always fetch (even if not found in templates) |
-| `exclude` | `[]` | Glob patterns for icons to ignore |
+| `exclude` | `[]` | Glob patterns for icons to ignore (supports `*` wildcard) |
+
+#### How it works
+
+1. On `composer install` or `composer update`, the plugin scans the configured directories for `meta_icon()` calls
+2. It extracts icon references (e.g. `mdi:home`, `heroicons:chevron-down`)
+3. Missing icons are fetched in batches from the [Iconify API](https://api.iconify.design/)
+4. SVGs are saved locally as `{output}/{prefix}/{name}.svg`
+5. At runtime, `meta_icon()` reads from local files first, with a fallback to `iconify/json` if installed
+
+#### Backward compatibility
+
+If you prefer the previous approach using the full `iconify/json` package, you can still install it alongside the plugin:
+
+```bash
+composer require iconify/json iconify/json-tools
+```
+
+The `meta_icon()` function will automatically use `iconify/json` as a fallback when a local SVG file is not found.
 
 Configure the Twig extension from the `studiometa/ui` package in your project:
 

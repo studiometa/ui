@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **TwigExtension:** bump minimum PHP version from `^8.1` to `^8.3` ([#499](https://github.com/studiometa/ui/pull/499))
 - **TwigExtension:** change package type to `composer-plugin`, users will be prompted to allow the plugin on `composer install` ([#499](https://github.com/studiometa/ui/pull/499))
+- **TwigExtension:** the Composer plugin makes HTTP requests to the Iconify API on `composer install`/`update`, disable with `"enabled": false` in offline environments ([#499](https://github.com/studiometa/ui/pull/499))
 - **TwigExtension:** move `iconify/json` and `iconify/json-tools` from `require` to `require-dev`, the new Composer plugin fetches only the icons used in templates from the Iconify API ([#498](https://github.com/studiometa/ui/issues/498), [#499](https://github.com/studiometa/ui/pull/499))
 - **ScrollAnimation:** refactor components into `ScrollAnimationTimeline` and `ScrollAnimationTarget` ([#441](https://github.com/studiometa/ui/issues/441) [#494](https://github.com/studiometa/ui/pull/494), [a5d0e29](https://github.com/studiometa/ui/commit/a5d0e29))
 - **Playground:** update `@studiometa/playground` from 0.2.1 to 0.3.6 and replace custom preview components with `@studiometa/playground-preview` web component ([#500](https://github.com/studiometa/ui/pull/500), [56a873f](https://github.com/studiometa/ui/commit/56a873f))
