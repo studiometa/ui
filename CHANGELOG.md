@@ -13,16 +13,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- **TwigExtension:** `iconify/json` and `iconify/json-tools` are no longer required dependencies, the Composer plugin fetches only the icons used in templates from the Iconify API ([#498](https://github.com/studiometa/ui/issues/498), [#499](https://github.com/studiometa/ui/pull/499))
+- **TwigExtension:** bump minimum PHP version from `^8.1` to `^8.3` ([#499](https://github.com/studiometa/ui/pull/499))
+- **TwigExtension:** change package type to `composer-plugin`, users will be prompted to allow the plugin on `composer install` ([#499](https://github.com/studiometa/ui/pull/499))
+- **TwigExtension:** move `iconify/json` and `iconify/json-tools` from `require` to `require-dev`, the new Composer plugin fetches only the icons used in templates from the Iconify API ([#498](https://github.com/studiometa/ui/issues/498), [#499](https://github.com/studiometa/ui/pull/499))
+- **ScrollAnimation:** refactor components into `ScrollAnimationTimeline` and `ScrollAnimationTarget` ([#441](https://github.com/studiometa/ui/issues/441) [#494](https://github.com/studiometa/ui/pull/494), [a5d0e29](https://github.com/studiometa/ui/commit/a5d0e29))
+- **Playground:** update `@studiometa/playground` from 0.2.1 to 0.3.6 and replace custom preview components with `@studiometa/playground-preview` web component ([#500](https://github.com/studiometa/ui/pull/500), [56a873f](https://github.com/studiometa/ui/commit/56a873f))
 
 ### Fixed
 
 - **ScrollAnimation:** complete animation to nearest boundary on destroy ([#444](https://github.com/studiometa/ui/issues/444), [#496](https://github.com/studiometa/ui/pull/496), [ecb63dd](https://github.com/studiometa/ui/commit/ecb63dd))
-
-### Changed
-
-- **ScrollAnimation:** refactor components into `ScrollAnimationTimeline` and `ScrollAnimationTarget` ([#441](https://github.com/studiometa/ui/issues/441) [#494](https://github.com/studiometa/ui/pull/494), [a5d0e29](https://github.com/studiometa/ui/commit/a5d0e29))
-- **Playground:** update `@studiometa/playground` from 0.2.1 to 0.3.6 and replace custom preview components with `@studiometa/playground-preview` web component ([#500](https://github.com/studiometa/ui/pull/500), [56a873f](https://github.com/studiometa/ui/commit/56a873f))
 
 ## [v1.7.0](https://github.com/studiometa/ui/compare/1.6.0..1.7.0) (2025-11-11)
 
