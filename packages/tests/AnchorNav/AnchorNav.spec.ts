@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterEach, onTestFinished } from 'vitest';
 import { AnchorNav, AnchorNavLink } from '@studiometa/ui';
 import {
   wait,
@@ -68,6 +68,15 @@ async function getContext() {
   const anchorNavTest = new AnchorNavTest(div);
 
   await mount(anchorNavTest);
+
+  // Ensure the component is destroyed after each test to prevent
+  // async transition events from leaking into subsequent tests.
+  onTestFinished(async () => {
+    vi.useFakeTimers();
+    anchorNavTest.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+  });
 
   return {
     mountedFn,
