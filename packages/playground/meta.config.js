@@ -1,8 +1,5 @@
-import { resolve, join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
-import CopyPlugin from 'copy-webpack-plugin';
-import esbuild from 'esbuild';
 
 export default defineWebpackConfig({
   presets: [
@@ -20,17 +17,22 @@ export default defineWebpackConfig({
       },
       tailwindcss: true,
       syncColorScheme: true,
+      htmlLanguage: { id: 'twig' },
       loaders: {
         html: resolve('./lib/twig-loader.js'),
       },
-      importMap: {
-        '@motionone/easing': '/play/static/motionone-easing.js',
-        '@studiometa/js-toolkit': '/play/static/js-toolkit/index.js',
-        '@studiometa/js-toolkit/utils': '/play/static/js-toolkit/utils/index.js',
-        '@studiometa/ui': '/play/static/ui/index.js',
-        deepmerge: '/play/static/deepmerge.js',
-        morphdom: '/play/static/morphdom.js',
-      },
+      dependencies: [
+        '@motionone/easing',
+        'deepmerge',
+        'morphdom',
+        '@studiometa/js-toolkit',
+        '@studiometa/js-toolkit/utils',
+        {
+          specifier: '@studiometa/ui',
+          source: '../ui/**/*.ts',
+          entry: '../ui/index.ts',
+        },
+      ],
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
   Hello world
@@ -59,76 +61,6 @@ createApp(App);`,
   webpack(config) {
     config.output.publicPath = '/play/';
     config.output.path = resolve('../docs/public/play/');
-
-    config.plugins.push(
-      new CopyPlugin({
-        patterns: [
-          {
-            from:
-              dirname(fileURLToPath(import.meta.resolve('@studiometa/js-toolkit'))) +
-              '/**/*.{js,ts,map}',
-            context: dirname(fileURLToPath(import.meta.resolve('@studiometa/js-toolkit'))),
-            to: join(config.output.path, 'static/js-toolkit/[path][name][ext]'),
-            toType: 'template',
-            info: {
-              minimized: true,
-            },
-          },
-          {
-            from: './static/*.js',
-            to: config.output.path,
-            info: { minimized: true },
-            transform: {
-              async transformer(content, filename) {
-                const result = await esbuild.build({
-                  bundle: true,
-                  target: 'es2022',
-                  write: false,
-                  format: 'esm',
-                  sourcemap: true,
-                  minify: false,
-                  loader: {
-                    '.ts': 'ts',
-                  },
-                  stdin: {
-                    contents: content,
-                    sourcefile: filename,
-                    resolveDir: config.context,
-                  },
-                });
-                return result.outputFiles.at(0).text;
-              },
-              cache: true,
-            },
-          },
-          {
-            from: '../ui/**/*.ts',
-            to: join(config.output.path, 'static/ui/[path][name].js'),
-            toType: 'template',
-            info: { minimized: true },
-            transform: {
-              async transformer(content, filename) {
-                const result = await esbuild.build({
-                  target: 'es2022',
-                  write: false,
-                  format: 'esm',
-                  sourcemap: true,
-                  minify: false,
-                  stdin: {
-                    contents: content,
-                    sourcefile: filename,
-                    resolveDir: dirname(filename),
-                    loader: 'ts',
-                  },
-                });
-                return result.outputFiles.at(0).text;
-              },
-              cache: true,
-            },
-          },
-        ],
-      }),
-    );
 
     config.optimization.splitChunks.cacheGroups = {
       vendors: {

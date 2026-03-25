@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - **ScrollAnimation:** refactor components into `ScrollAnimationTimeline` and `ScrollAnimationTarget` ([#441](https://github.com/studiometa/ui/issues/441) [#494](https://github.com/studiometa/ui/pull/494), [a5d0e29](https://github.com/studiometa/ui/commit/a5d0e29))
+- **Playground:** update `@studiometa/playground` from 0.2.1 to 0.3.6 and replace custom preview components with `@studiometa/playground-preview` web component ([#500](https://github.com/studiometa/ui/pull/500), [56a873f](https://github.com/studiometa/ui/commit/56a873f))
 
 ## [v1.7.0](https://github.com/studiometa/ui/compare/1.6.0..1.7.0) (2025-11-11)
 
