@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.8.0](https://github.com/studiometa/ui/compare/1.7.0..1.8.0) (2026-03-25)
+
 ### Added
 
 - **ScrollAnimation:** add a `withScrollAnimationDebug` decorator ([#494](https://github.com/studiometa/ui/pull/494))
