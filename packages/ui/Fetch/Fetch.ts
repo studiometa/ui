@@ -317,7 +317,6 @@ export class Fetch<T extends BaseProps = BaseProps>
     const { FETCH_MODES } = this.constructor;
     const { mode, selector } = this.$options;
 
-    // @ts-expect-error querySelectorAll is iterable in the browser
     for (const newElement of fragment.querySelectorAll<HTMLElement>(selector)) {
       const oldElement = newElement.id && document.getElementById(newElement.id);
 

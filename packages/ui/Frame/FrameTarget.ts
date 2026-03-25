@@ -53,7 +53,6 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
 
     const { mode } = this.$options;
     const { $el, modes } = this;
-    // @ts-expect-error querySelectoAll is iterable.
     const previousScripts: Set<HTMLScriptElement> = new Set(this.$el.querySelectorAll('script'));
 
     // In append or prepend mode, the leave transition can be used to
@@ -64,7 +63,6 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
       const enterTargets = Array.from(content.children) as HTMLElement[];
 
       $el[mode](...Array.from(content.childNodes));
-      // @ts-expect-error querySelectoAll is iterable.
       const newScripts: Set<HTMLScriptElement> = new Set(this.$el.querySelectorAll('script'));
       adoptNewScripts(newScripts, previousScripts);
       await Promise.all([this.leave(leaveTargets), this.enter(enterTargets)]);
@@ -75,7 +73,6 @@ export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T &
       } else {
         $el.replaceChildren(...Array.from(content.childNodes));
       }
-      // @ts-expect-error querySelectoAll is iterable.
       const newScripts: Set<HTMLScriptElement> = new Set(this.$el.querySelectorAll('script'));
       adoptNewScripts(newScripts, previousScripts);
       await this.enter();
