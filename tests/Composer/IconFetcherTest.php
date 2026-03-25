@@ -8,9 +8,7 @@ beforeAll(function () {
     ensureMockApiServer();
 });
 
-afterAll(function () {
-    stopMockApiServer();
-});
+
 
 test('it fetches icons from the API', function () {
     $fetcher = new IconFetcher(getMockApiUrl());

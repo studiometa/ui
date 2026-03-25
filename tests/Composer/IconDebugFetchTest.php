@@ -10,9 +10,7 @@ beforeAll(function () {
     ensureMockApiServer();
 });
 
-afterAll(function () {
-    stopMockApiServer();
-});
+
 
 beforeEach(function () {
     $this->tmpDir = sys_get_temp_dir() . '/ui-icon-debug-test-' . uniqid();
