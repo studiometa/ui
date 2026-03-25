@@ -153,16 +153,30 @@ describe('The Modal component', () => {
 
 describe('The Modal component with the `move` option', () => {
   it('should move the `modal` ref to the `#target` element on mounted.', async () => {
-    const { modal } = await getContext({ move: '#target' });
-    expect(document.body.firstElementChild).toBe(modal.$refs.modal);
+    const { modal, root, target } = await getContext({ move: '#target' });
+    // Append root to the document so querySelector('#target') can find it
+    document.body.append(root);
+    // Re-mount so the move logic can find #target in the document
+    vi.useFakeTimers();
+    modal.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    modal.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+    expect(target.firstElementChild).toBe(modal.$refs.modal);
+    // Clean up
+    modal.$destroy();
+    root.remove();
   });
 
   it.skip('should move the `modal` ref back to its previous place.', async () => {
-    const { modal } = await getContext({ move: '#target' });
+    const { modal, root } = await getContext({ move: '#target' });
+    document.body.append(root);
     vi.useFakeTimers();
     modal.$destroy();
     await vi.advanceTimersByTimeAsync(100);
     vi.useRealTimers();
     expect(document.body.firstElementChild).toBeNull();
+    root.remove();
   });
 });
