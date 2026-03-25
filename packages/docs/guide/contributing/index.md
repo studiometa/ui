@@ -4,16 +4,14 @@ outline: deep
 
 # Contributing
 
-## Git Flow
+## Branching
 
-The [repository](https://github.com/studiometa/ui) for `@studiometa/ui` follows the [Git Flow](https://nvie.com/posts/a-successful-git-branching-model/) convention, so branches should be prefixed as follow:
+The [repository](https://github.com/studiometa/ui) for `@studiometa/ui` follows a trunk-based workflow with `main` as the single principal branch:
 
 - `feature/...` for new features
-- `bugfix/...` for bug fixes
-- `release/<version>` for releases
-- `hotfix/<version>` for hotfixes
+- `fix/...` for bug fixes
 
-Every merge should be first approved by opening a pull-request against the `develop` branch for features and bugfixes and against the `master` branch for releases and hotfixes.
+Every merge should be first approved by opening a pull-request against the `main` branch.
 
 ## Local development
 
@@ -107,13 +105,11 @@ All Twig templates should at least expose an `attr` variable that can be used to
 
 ## Publishing a new version
 
-To publis a new version, create a release branch:
+To publish a new version, create a release branch from `main`:
 
 ```sh
-git flow release start 0.2.41
-# or without gitflow
-git checkout develop
-git pull origin develop
+git checkout main
+git pull origin main
 git checkout -b release/0.2.41
 ```
 
@@ -132,25 +128,14 @@ Edit the `CHANGELOG.md` file to add the version number and the date of the relea
 +
 ```
 
-Open a pull-request to validate the changes and make sure all tests are passing. Once the PR is approved, merge the release:
+Open a pull-request against `main` to validate the changes and make sure all tests are passing. Once the PR is approved, merge it and tag the release:
 
 ```sh
-git flow release finish
-# or with git
-git checkout master
-git pull origin master
-git merge release/0.2.41 --no-ff
+git checkout main
+git pull origin main
 git tag 0.2.41 --message 'v0.2.41'
-git checkout develop
-git merge 0.2.41 --no-ff
-```
-
-And push all the changes to GitHub:
-
-```sh
-git push origin develop
-git push origin master
-git push origing --tags
+git push origin main
+git push origin --tags
 ```
 
 GitHub actions will create a release on GitHub and publish the `@studiometa/ui` packages to NPM. The [Packagist package](https://packagist.org/packages/studiometa/ui) will be updated with the latest tag as well.
