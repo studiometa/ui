@@ -1,7 +1,7 @@
 {
   "name": "studiometa/ui",
   "type": "composer-plugin",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "A set of opiniated, unstyled and accessible components.",
   "license": "MIT",
   "require": {
