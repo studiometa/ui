@@ -12,6 +12,11 @@ class Icon extends AbstractTwigFunction
     private ?string $iconPath = null;
 
     /**
+     * Iconify API base URL (overridable for testing).
+     */
+    private string $apiUrl = 'https://api.iconify.design';
+
+    /**
      * {@inheritdoc}
      */
     public function name(): string
@@ -36,6 +41,14 @@ class Icon extends AbstractTwigFunction
     public function setIconPath(string $path): void
     {
         $this->iconPath = rtrim($path, '/');
+    }
+
+    /**
+     * Set the Iconify API base URL.
+     */
+    public function setApiUrl(string $url): void
+    {
+        $this->apiUrl = rtrim($url, '/');
     }
 
     /**
@@ -126,7 +139,7 @@ class Icon extends AbstractTwigFunction
             }
         }
 
-        $fetcher = new \Studiometa\Ui\Composer\IconFetcher();
+        $fetcher = new \Studiometa\Ui\Composer\IconFetcher($this->apiUrl);
         $svgs = $fetcher->fetch(["$prefix:$name"]);
 
         if (!isset($svgs["$prefix:$name"])) {
