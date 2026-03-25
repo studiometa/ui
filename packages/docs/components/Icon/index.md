@@ -28,3 +28,14 @@ All [Iconify](https://iconify.design/) sets can also be used by specifying a nam
   name: 'mdi:globe',
 } %}
 ```
+
+::: tip Automatic icon fetching
+Iconify icons are automatically fetched from the API and saved as local SVG files when you run `composer install` or `composer update`. Only the icons actually used in your templates are downloaded.
+
+You can also manually manage icons with:
+- `composer ui:icons` — scan and fetch missing icons
+- `composer ui:icons --dry-run` — preview detected icons
+- `composer ui:icons --prune` — remove unused icons
+
+See the [installation guide](/guide/installation/#icon-management) for full configuration options.
+:::
