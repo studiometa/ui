@@ -97,6 +97,12 @@ You can configure the icon behavior in your project's `composer.json`:
 4. SVGs are saved locally as `{output}/{prefix}/{name}.svg`
 5. At runtime, `meta_icon()` reads from local files first, with a fallback to `iconify/json` if installed
 
+::: tip Development mode
+When Twig debug mode is enabled, icons that are not yet available locally are automatically fetched from the Iconify API on-the-fly and saved for future requests. This means you don't need to run `composer ui:icons` every time you add a new icon in a template during development.
+
+This on-the-fly fetching is **disabled in production** to avoid external HTTP requests and latency at runtime. Make sure to run `composer ui:icons` before deploying.
+:::
+
 #### Backward compatibility
 
 If you prefer the previous approach using the full `iconify/json` package, you can still install it alongside the plugin:
