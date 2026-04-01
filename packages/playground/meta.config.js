@@ -25,8 +25,8 @@ export default defineWebpackConfig({
         '@motionone/easing',
         'deepmerge',
         'morphdom',
-        '@studiometa/js-toolkit',
-        '@studiometa/js-toolkit/utils',
+        { specifier: '@studiometa/js-toolkit', esmSh: { bundle: false } },
+        { specifier: '@studiometa/js-toolkit/utils', esmSh: { bundle: false } },
         {
           specifier: '@studiometa/ui',
           source: '../ui/**/*.ts',

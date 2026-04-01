@@ -9,7 +9,7 @@
     "build": "meta build"
   },
   "dependencies": {
-    "@studiometa/playground": "0.3.6"
+    "@studiometa/playground": "0.3.7"
   },
   "devDependencies": {
     "@motionone/easing": "^10.18.0",
