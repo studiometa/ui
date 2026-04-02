@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- **Track:** add component for declarative analytics tracking with `data-track:*` attributes ([#495](https://github.com/studiometa/ui/issues/495), [#497](https://github.com/studiometa/ui/pull/497), [d95126d](https://github.com/studiometa/ui/commit/d95126d), [51b5f69](https://github.com/studiometa/ui/commit/51b5f69))
 - **ScrollAnimation:** add a `withScrollAnimationDebug` decorator ([#494](https://github.com/studiometa/ui/pull/494))
 - **TwigExtension:** add a Composer plugin for build-time icon fetching ([#498](https://github.com/studiometa/ui/issues/498), [#499](https://github.com/studiometa/ui/pull/499))
 
