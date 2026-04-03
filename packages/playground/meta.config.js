@@ -26,8 +26,9 @@ export default defineWebpackConfig({
         'deepmerge',
         'morphdom',
         'mapbox-gl',
+        '@mapbox/mapbox-gl-geocoder',
         { specifier: '@studiometa/js-toolkit', esmSh: { bundle: false } },
-        { specifier: '@studiometa/js-toolkit/utils', esmSh: { bundle: false } }, 9acbc63 (Update docs)
+        { specifier: '@studiometa/js-toolkit/utils', esmSh: { bundle: false } },
         {
           specifier: '@studiometa/ui',
           source: '../ui/**/*.ts',
