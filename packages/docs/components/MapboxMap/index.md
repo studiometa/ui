@@ -75,7 +75,7 @@ Adds a marker to the map. Can contain a `MapboxPopup` child.
 ```html
 <div data-component="MapboxMap" data-option-access-token="TOKEN">
   <div data-ref="container"></div>
-  <div data-component="MapboxMarker" data-option-lng-lat="[2.35, 48.86]">
+  <div hidden data-component="MapboxMarker" data-option-lng-lat="[2.35, 48.86]">
     <div data-component="MapboxPopup">
       <p>Hello from Paris!</p>
     </div>
@@ -98,12 +98,12 @@ The popup content is taken from its children.
 
 ```html
 <!-- Standalone popup -->
-<div data-component="MapboxPopup" data-option-lng-lat="[2.35, 48.86]">
+<div hidden data-component="MapboxPopup" data-option-lng-lat="[2.35, 48.86]">
   <p>Popup content</p>
 </div>
 
 <!-- Inside a marker (no lng-lat needed) -->
-<div data-component="MapboxMarker" data-option-lng-lat="[2.35, 48.86]">
+<div hidden data-component="MapboxMarker" data-option-lng-lat="[2.35, 48.86]">
   <div data-component="MapboxPopup">
     <p>Marker popup content</p>
   </div>
@@ -122,7 +122,7 @@ The popup content is taken from its children.
 Adds zoom in/out and compass controls to the map.
 
 ```html
-<div data-component="MapboxNavigationControl"
+<div hidden data-component="MapboxNavigationControl"
   data-option-position="top-right">
 </div>
 ```
@@ -141,7 +141,7 @@ Adds zoom in/out and compass controls to the map.
 Adds a button that uses the browser's geolocation API to locate the user on the map.
 
 ```html
-<div data-component="MapboxGeolocateControl"
+<div hidden data-component="MapboxGeolocateControl"
   data-option-position="top-right"
   data-option-track-user-location>
 </div>
@@ -182,7 +182,7 @@ Adds an address search control powered by [mapbox-gl-geocoder](https://github.co
 Adds a custom layer to the map (e.g., GeoJSON, raster tiles).
 
 ```html
-<div data-component="MapboxLayer"
+<div hidden data-component="MapboxLayer"
   data-option-id="my-layer"
   data-option-layer='{"type": "circle", "source": "my-source"}'>
 </div>
