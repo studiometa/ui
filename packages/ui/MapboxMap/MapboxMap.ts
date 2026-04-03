@@ -5,7 +5,37 @@ import { MapboxPopup } from './MapboxPopup.js';
 import { MapboxNavigationControl } from './MapboxNavigationControl.js';
 import { MapboxGeolocateControl } from './MapboxGeolocateControl.js';
 import { MapboxGeocoder } from './MapboxGeocoder.js';
+import { MapboxLayer } from './MapboxLayer.js';
 import { resolveWhenMapboxMapIsLoaded } from './utils.js';
+
+const MAP_EVENTS = [
+  'click',
+  'dblclick',
+  'mouseenter',
+  'mouseleave',
+  'mousemove',
+  'movestart',
+  'move',
+  'moveend',
+  'zoomstart',
+  'zoom',
+  'zoomend',
+  'rotatestart',
+  'rotate',
+  'rotateend',
+  'pitchstart',
+  'pitch',
+  'pitchend',
+  'dragstart',
+  'drag',
+  'dragend',
+  'load',
+  'idle',
+  'render',
+  'resize',
+  'remove',
+  'error',
+] as const;
 
 export interface MapboxMapProps extends BaseProps {
   $refs: {
@@ -31,7 +61,7 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
    */
   static config: BaseConfig = {
     name: 'MapboxMap',
-    emits: ['map-load'],
+    emits: ['map-load', ...MAP_EVENTS],
     refs: ['container'],
     options: {
       accessToken: String,
@@ -46,6 +76,7 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
       MapboxGeolocateControl: resolveWhenMapboxMapIsLoaded(MapboxGeolocateControl),
       MapboxMarker: resolveWhenMapboxMapIsLoaded(MapboxMarker),
       MapboxNavigationControl: resolveWhenMapboxMapIsLoaded(MapboxNavigationControl),
+      MapboxLayer: resolveWhenMapboxMapIsLoaded(MapboxLayer),
       MapboxPopup: resolveWhenMapboxMapIsLoaded(MapboxPopup),
     },
   };
@@ -83,6 +114,12 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
       this.isLoaded = true;
       this.$emit('map-load', this.map);
     });
+
+    for (const event of MAP_EVENTS) {
+      this.map.on(event, (e) => {
+        this.$emit(event, e);
+      });
+    }
   }
 
   /**

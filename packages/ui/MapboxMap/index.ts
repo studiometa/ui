@@ -1,4 +1,5 @@
 export * from './MapboxGeocoder.js';
+export * from './MapboxLayer.js';
 export * from './MapboxGeolocateControl.js';
 export * from './MapboxMap.js';
 export * from './MapboxMarker.js';

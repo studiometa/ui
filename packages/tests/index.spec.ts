@@ -39,6 +39,7 @@ test('components exports', () => {
       "LazyInclude",
       "MapboxGeocoder",
       "MapboxGeolocateControl",
+      "MapboxLayer",
       "MapboxMap",
       "MapboxMarker",
       "MapboxNavigationControl",
