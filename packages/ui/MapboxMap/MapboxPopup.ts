@@ -6,7 +6,6 @@ import { MapboxMap } from './MapboxMap.js';
 import { MapboxMarker } from './MapboxMarker.js';
 
 export interface MapboxPopupProps extends BaseProps {
-  $el: HTMLTemplateElement;
   $options: {
     lngLat: [number, number];
     /**
@@ -60,12 +59,10 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
     const { popup, $el, map, $options } = this;
 
     popup.setLngLat($options.lngLat);
-    const el = $el instanceof HTMLTemplateElement ? $el.content : $el;
 
-    if (el.childNodes.length === 1) {
-      popup.setDOMContent(el.firstChild);
-    } else if (el.childNodes.length > 1) {
-      popup.setHTML($el.innerHTML);
+    const content = $el.innerHTML.trim();
+    if (content) {
+      popup.setHTML(content);
     }
 
     // Only add popup directly to map if not inside a marker
