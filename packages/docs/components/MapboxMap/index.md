@@ -75,11 +75,11 @@ Adds a marker to the map. Can contain a `MapboxPopup` child.
 ```html
 <div data-component="MapboxMap" data-option-access-token="TOKEN">
   <div data-ref="container"></div>
-  <template data-component="MapboxMarker" data-option-lng-lat="[2.35, 48.86]">
-    <template data-component="MapboxPopup">
+  <div data-component="MapboxMarker" data-option-lng-lat="[2.35, 48.86]">
+    <div data-component="MapboxPopup">
       <p>Hello from Paris!</p>
-    </template>
-  </template>
+    </div>
+  </div>
 </div>
 ```
 
@@ -94,20 +94,20 @@ Adds a marker to the map. Can contain a `MapboxPopup` child.
 
 Displays a popup on the map. Can be used standalone (placed directly on the map at a given position) or inside a `MapboxMarker` (attached to the marker).
 
-Use a `<template>` element as the root. The popup content is taken from its children.
+The popup content is taken from its children.
 
 ```html
 <!-- Standalone popup -->
-<template data-component="MapboxPopup" data-option-lng-lat="[2.35, 48.86]">
+<div data-component="MapboxPopup" data-option-lng-lat="[2.35, 48.86]">
   <p>Popup content</p>
-</template>
+</div>
 
 <!-- Inside a marker (no lng-lat needed) -->
-<template data-component="MapboxMarker" data-option-lng-lat="[2.35, 48.86]">
-  <template data-component="MapboxPopup">
+<div data-component="MapboxMarker" data-option-lng-lat="[2.35, 48.86]">
+  <div data-component="MapboxPopup">
     <p>Marker popup content</p>
-  </template>
-</template>
+  </div>
+</div>
 ```
 
 **Options:**
@@ -122,9 +122,9 @@ Use a `<template>` element as the root. The popup content is taken from its chil
 Adds zoom in/out and compass controls to the map.
 
 ```html
-<template data-component="MapboxNavigationControl"
+<div data-component="MapboxNavigationControl"
   data-option-position="top-right">
-</template>
+</div>
 ```
 
 **Options:**
@@ -141,10 +141,10 @@ Adds zoom in/out and compass controls to the map.
 Adds a button that uses the browser's geolocation API to locate the user on the map.
 
 ```html
-<template data-component="MapboxGeolocateControl"
+<div data-component="MapboxGeolocateControl"
   data-option-position="top-right"
   data-option-track-user-location>
-</template>
+</div>
 ```
 
 **Options:**
@@ -182,10 +182,10 @@ Adds an address search control powered by [mapbox-gl-geocoder](https://github.co
 Adds a custom layer to the map (e.g., GeoJSON, raster tiles).
 
 ```html
-<template data-component="MapboxLayer"
+<div data-component="MapboxLayer"
   data-option-id="my-layer"
   data-option-layer='{"type": "circle", "source": "my-source"}'>
-</template>
+</div>
 ```
 
 **Options:**
