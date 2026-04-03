@@ -34,13 +34,13 @@
   },
   "devDependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",
-    "@studiometa/js-toolkit": "3.4.3",
+    "@studiometa/js-toolkit": "3.5.0",
     "@types/mapbox__mapbox-gl-geocoder": "^5.0.0",
     "mapbox-gl": "^3.13.0"
   },
   "peerDependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",
-    "@studiometa/js-toolkit": "^3.4.0",
+    "@studiometa/js-toolkit": "^3.5.0",
     "mapbox-gl": "^3.13.0"
   }
 }
