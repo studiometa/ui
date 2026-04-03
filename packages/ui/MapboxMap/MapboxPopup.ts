@@ -2,8 +2,7 @@ import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import mapboxgl from 'mapbox-gl';
 import type { Popup, PopupOptions } from 'mapbox-gl';
 import { AbstractMapboxMapChild } from './AbstractMapboxMapChild.js';
-import { MapboxMap } from './MapboxMap.js';
-import { MapboxMarker } from './MapboxMarker.js';
+import type { MapboxMarker } from './MapboxMarker.js';
 
 export interface MapboxPopupProps extends BaseProps {
   $options: {
