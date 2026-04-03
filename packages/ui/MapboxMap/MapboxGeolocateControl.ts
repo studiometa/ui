@@ -1,6 +1,7 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractMapboxMapChild, AbstractMapboxMapChildProps } from './AbstractMapboxMapChild.js';
-import { type ControlPosition, type GeolocateControlOptions, GeolocateControl } from 'mapbox-gl';
+import mapboxgl from 'mapbox-gl';
+import type { ControlPosition, GeolocateControlOptions, GeolocateControl } from 'mapbox-gl';
 
 export interface MapboxGeolocateControlProps extends AbstractMapboxMapChildProps {
   $options: {
@@ -36,7 +37,7 @@ export class MapboxGeolocateControl<T extends BaseProps = BaseProps> extends Abs
   get control() {
     if (!this.__control) {
       const { position, ...options } = this.$options;
-      this.__control = new GeolocateControl(options);
+      this.__control = new mapboxgl.GeolocateControl(options);
     }
 
     return this.__control;

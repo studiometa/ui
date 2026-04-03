@@ -12,8 +12,12 @@ function createControl(attrs: Record<string, string> = {}) {
   });
 
   const instance = new MapboxGeolocateControl(el);
-  Object.defineProperty(instance, '$parent', {
-    get: () => ({ map: mockMap, $options: { accessToken: 'token' } }),
+  // Mock $closest since async component resolution doesn't set it up
+  instance.$closest = vi.fn((query: string) => {
+    if (query === 'MapboxMap') {
+      return { map: mockMap, $options: { accessToken: 'token' } } as any;
+    }
+    return undefined;
   });
 
   return { instance, mockMap };

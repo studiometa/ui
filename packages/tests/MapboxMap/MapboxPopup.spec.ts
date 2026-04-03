@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { h } from '#test-utils';
 import './mock-mapbox-gl.js';
 import { MockMap, MockPopup } from './mock-mapbox-gl.js';
-import { MapboxPopup, MapboxMap } from '@studiometa/ui';
+import { MapboxPopup } from '@studiometa/ui';
 
 function createPopup(attrs: Record<string, string> = {}, isMapParent = true) {
   const mockMap = new MockMap();
@@ -13,14 +13,17 @@ function createPopup(attrs: Record<string, string> = {}, isMapParent = true) {
   });
 
   const instance = new MapboxPopup(el);
-  // Use a plain object but make instanceof MapboxMap work via Symbol.hasInstance
-  const mockParent: any = { $options: { accessToken: 'token' } };
-  Object.defineProperty(mockParent, 'map', { get: () => mockMap, configurable: true });
-  if (isMapParent) {
-    // Make `mockParent instanceof MapboxMap` return true
-    Object.setPrototypeOf(mockParent, MapboxMap.prototype);
-  }
-  Object.defineProperty(instance, '$parent', { get: () => mockParent, configurable: true });
+  // Mock $closest since async component resolution doesn't set it up
+  instance.$closest = vi.fn((query: string) => {
+    if (query === 'MapboxMap') {
+      return { map: mockMap, $options: { accessToken: 'token' } } as any;
+    }
+    if (query === 'MapboxMarker') {
+      // If isMapParent is true, we're not inside a marker
+      return isMapParent ? undefined : {} as any;
+    }
+    return undefined;
+  });
 
   return { instance, mockMap };
 }
@@ -53,10 +56,15 @@ describe('MapboxPopup component', () => {
     const mockMap = new MockMap();
     const el = h('div', { 'data-component': 'MapboxPopup' });
     const inst = new MapboxPopup(el);
-    const mockParent: any = { $options: {} };
-    Object.defineProperty(mockParent, 'map', { get: () => mockMap, configurable: true });
-    Object.setPrototypeOf(mockParent, MapboxMap.prototype);
-    Object.defineProperty(inst, '$parent', { get: () => mockParent, configurable: true });
+    inst.$closest = vi.fn((query: string) => {
+      if (query === 'MapboxMap') {
+        return { map: mockMap, $options: {} } as any;
+      }
+      if (query === 'MapboxMarker') {
+        return undefined;
+      }
+      return undefined;
+    });
 
     vi.useFakeTimers();
     inst.$mount();

@@ -45,11 +45,6 @@ export class MockNavigationControl {}
 export class MockGeolocateControl {}
 
 vi.mock('mapbox-gl', () => ({
-  Map: MockMap,
-  Marker: MockMarker,
-  Popup: MockPopup,
-  NavigationControl: MockNavigationControl,
-  GeolocateControl: MockGeolocateControl,
   default: {
     Map: MockMap,
     Marker: MockMarker,

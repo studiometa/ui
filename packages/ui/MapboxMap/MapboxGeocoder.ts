@@ -1,7 +1,7 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractMapboxMapChild, AbstractMapboxMapChildProps } from './AbstractMapboxMapChild.js';
 import GeocoderControl from '@mapbox/mapbox-gl-geocoder';
-import * as mapboxgl from 'mapbox-gl';
+import mapboxgl from 'mapbox-gl';
 import type { Map } from 'mapbox-gl';
 
 export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
@@ -41,9 +41,9 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
   get control() {
     if (!this.__control) {
       const { options } = this.$options;
-      options.mapboxgl = mapboxgl;
+      options.mapboxgl = mapboxgl as unknown as typeof import('mapbox-gl');
       if (!options.accessToken) {
-        options.accessToken = this.$parent.$options.accessToken;
+        options.accessToken = this.mapboxMap.$options.accessToken;
       }
       this.__control = new GeocoderControl(options);
     }

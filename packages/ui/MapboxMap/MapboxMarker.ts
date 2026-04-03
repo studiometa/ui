@@ -1,5 +1,6 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import { Marker } from 'mapbox-gl';
+import mapboxgl from 'mapbox-gl';
+import type { Marker } from 'mapbox-gl';
 import { AbstractMapboxMapChild, AbstractMapboxMapChildProps } from './AbstractMapboxMapChild.js';
 import { MapboxPopup } from './MapboxPopup.js';
 
@@ -7,9 +8,6 @@ export interface MapboxMarkerProps extends AbstractMapboxMapChildProps {
   $options: {
     lngLat: [number, number];
     markerOptions: any;
-  };
-  $children: {
-    MapboxPopup: MapboxPopup[];
   };
 }
 
@@ -39,14 +37,14 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapbo
 
   get marker() {
     if (!this.__marker) {
-      this.__marker = new Marker(this.markerOptions);
+      this.__marker = new mapboxgl.Marker(this.markerOptions);
     }
 
     return this.__marker;
   }
 
   get popup() {
-    return this.$children.MapboxPopup[0];
+    return this.$query<MapboxPopup>('MapboxPopup')[0];
   }
 
   get markerOptions() {

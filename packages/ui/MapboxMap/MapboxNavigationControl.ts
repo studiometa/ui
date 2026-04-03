@@ -1,6 +1,7 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractMapboxMapChild, AbstractMapboxMapChildProps } from './AbstractMapboxMapChild.js';
-import { ControlPosition, NavigationControl } from 'mapbox-gl';
+import mapboxgl from 'mapbox-gl';
+import type { ControlPosition, NavigationControl } from 'mapbox-gl';
 
 export interface MapboxNavigationControlProps extends AbstractMapboxMapChildProps {
   $options: {
@@ -36,7 +37,7 @@ export class MapboxNavigationControl<
   get control() {
     if (!this.__control) {
       const { position, ...options } = this.$options;
-      this.__control = new NavigationControl(options);
+      this.__control = new mapboxgl.NavigationControl(options);
     }
 
     return this.__control;

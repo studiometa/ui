@@ -1,5 +1,6 @@
 import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
-import { Map } from 'mapbox-gl';
+import mapboxgl from 'mapbox-gl';
+import type { Map } from 'mapbox-gl';
 import { MapboxMarker } from './MapboxMarker.js';
 import { MapboxPopup } from './MapboxPopup.js';
 import { MapboxNavigationControl } from './MapboxNavigationControl.js';
@@ -40,9 +41,6 @@ const MAP_EVENTS = [
 export interface MapboxMapProps extends BaseProps {
   $refs: {
     container: HTMLElement;
-  };
-  $children: {
-    MapboxMarker: MapboxMarker[];
   };
   $options: {
     accessToken: string;
@@ -97,7 +95,7 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
    */
   get map() {
     if (!this.__map) {
-      this.__map = new Map({
+      this.__map = new mapboxgl.Map({
         container: this.$refs.container ?? this.$el,
         ...this.$options,
       });

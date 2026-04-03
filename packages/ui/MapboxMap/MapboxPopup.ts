@@ -1,11 +1,11 @@
-import { getClosestParent, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
-import { Popup, PopupOptions } from 'mapbox-gl';
+import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
+import mapboxgl from 'mapbox-gl';
+import type { Popup, PopupOptions } from 'mapbox-gl';
 import { AbstractMapboxMapChild } from './AbstractMapboxMapChild.js';
 import { MapboxMap } from './MapboxMap.js';
 import { MapboxMarker } from './MapboxMarker.js';
 
 export interface MapboxPopupProps extends BaseProps {
-  $parent: MapboxMap | MapboxMarker;
   $el: HTMLTemplateElement;
   $options: {
     lngLat: [number, number];
@@ -42,7 +42,7 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
 
   get popup() {
     if (!this.__popup) {
-      this.__popup = new Popup();
+      this.__popup = new mapboxgl.Popup();
     }
 
     return this.__popup;
@@ -57,7 +57,7 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
   }
 
   mounted() {
-    const { popup, $el, map, $parent, $options } = this;
+    const { popup, $el, map, $options } = this;
 
     popup.setLngLat($options.lngLat);
     const el = $el instanceof HTMLTemplateElement ? $el.content : $el;
@@ -68,7 +68,9 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
       popup.setHTML($el.innerHTML);
     }
 
-    if (map && $parent instanceof MapboxMap) {
+    // Only add popup directly to map if not inside a marker
+    const marker = this.$closest<MapboxMarker>('MapboxMarker');
+    if (map && !marker) {
       popup.addTo(map);
     }
   }
