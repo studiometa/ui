@@ -1,8 +1,8 @@
 diff --git a/node_modules/@studiometa/js-toolkit/Base/utils.js b/node_modules/@studiometa/js-toolkit/Base/utils.js
-index 5c98cca..a50002a 100644
+index 3cfc0d5..712fd72 100644
 --- a/node_modules/@studiometa/js-toolkit/Base/utils.js
 +++ b/node_modules/@studiometa/js-toolkit/Base/utils.js
-@@ -36,13 +36,14 @@ function getSelector(nameOrSelector) {
+@@ -38,13 +38,14 @@ function getSelector(nameOrSelector) {
  }
  function getComponentElements(nameOrSelector, element = document) {
    const selector = getSelector(nameOrSelector);
@@ -19,3 +19,16 @@ index 5c98cca..a50002a 100644
    }
    return elements;
  }
+diff --git a/node_modules/@studiometa/js-toolkit/helpers/queryComponent.js b/node_modules/@studiometa/js-toolkit/helpers/queryComponent.js
+index 8b1f8bd..4dc232e 100644
+--- a/node_modules/@studiometa/js-toolkit/helpers/queryComponent.js
++++ b/node_modules/@studiometa/js-toolkit/helpers/queryComponent.js
+@@ -48,7 +48,7 @@ function closestComponent(query, options = { from: null }) {
+     if (!element) return false;
+     if (parsedQuery.cssSelector && !element.matches(parsedQuery.cssSelector)) return false;
+     for (const instance of instances) {
+-      if (instanceIsMatching(instance, parsedQuery)) {
++      if (instance.$el === element && instanceIsMatching(instance, parsedQuery)) {
+         closestInstance = instance;
+         return true;
+       }
