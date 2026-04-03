@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "postinstall": "patch-package --patch-dir patches",
     "dev": "meta dev",
     "watch": "meta watch",
     "build": "meta build"

@@ -30,6 +30,10 @@ export default defineWebpackConfig({
         { specifier: '@studiometa/js-toolkit', esmSh: { bundle: false } },
         { specifier: '@studiometa/js-toolkit/utils', esmSh: { bundle: false } },
         {
+          specifier: '@studiometa/js-toolkit/utils',
+          esmSh: { bundle: false },
+        },
+        {
           specifier: '@studiometa/ui',
           source: '../ui/**/*.ts',
           entry: '../ui/index.ts',
