@@ -63,36 +63,13 @@ export default createApp(App);
 
 ## Full example with child components
 
-```html
-<div data-component="MapboxMap"
-  data-option-access-token="YOUR_TOKEN"
-  data-option-zoom="12"
-  data-option-center="[2.35, 48.86]">
-  <div data-ref="container"></div>
+A complete example featuring navigation controls, geolocation, markers with popups, and standalone popups.
 
-  <!-- Navigation control -->
-  <template data-component="MapboxNavigationControl"
-    data-option-position="top-right">
-  </template>
-
-  <!-- Geolocate control -->
-  <template data-component="MapboxGeolocateControl"
-    data-option-track-user-location>
-  </template>
-
-  <!-- Marker with popup -->
-  <template data-component="MapboxMarker"
-    data-option-lng-lat="[2.35, 48.86]">
-    <template data-component="MapboxPopup">
-      <h3>Paris</h3>
-      <p>Capital of France</p>
-    </template>
-  </template>
-
-  <!-- Standalone popup -->
-  <template data-component="MapboxPopup"
-    data-option-lng-lat="[2.29, 48.86]">
-    <p>Near the Eiffel Tower</p>
-  </template>
-</div>
-```
+<PreviewPlayground
+  :html="() => import('./stories/full/app.twig')"
+  :html-editor="false"
+  :script="() => import('./stories/full/app.js?raw')"
+  :script-editor="false"
+  :css="() => import('./stories/full/app.css?raw')"
+  :css-editor="false"
+  />
