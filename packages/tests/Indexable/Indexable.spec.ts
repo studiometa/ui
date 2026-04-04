@@ -56,10 +56,18 @@ describe('The Indexable class', () => {
 
     it('should handle out of bounds indexes', () => {
       indexable.currentIndex = -1;
-      expect(indexable.currentIndex).toBe(2); // (-1 + 3) % 3 = 2
+      expect(indexable.currentIndex).toBe(2);
 
       indexable.currentIndex = 5;
-      expect(indexable.currentIndex).toBe(2); // (5) % 3 = 2
+      expect(indexable.currentIndex).toBe(2);
+    });
+
+    it('should handle large negative indexes', () => {
+      indexable.currentIndex = -5;
+      expect(indexable.currentIndex).toBe(1); // ((-5 % 3) + 3) % 3 = 1
+
+      indexable.currentIndex = -7;
+      expect(indexable.currentIndex).toBe(2); // ((-7 % 3) + 3) % 3 = 2
     });
   });
 

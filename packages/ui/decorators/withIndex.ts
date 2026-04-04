@@ -187,7 +187,7 @@ export function withIndex<S extends Base>(
           this.__index = Math.min(cycleIndex, cycleLength - cycleIndex);
           break;
         case INDEXABLE_MODES.INFINITE:
-          this.__index = (value + this.length) % this.length
+          this.__index = ((value % this.length) + this.length) % this.length;
           break;
         case INDEXABLE_MODES.NORMAL:
         default:
