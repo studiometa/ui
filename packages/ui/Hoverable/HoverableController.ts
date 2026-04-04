@@ -1,7 +1,6 @@
 import { Base, withRelativePointer, getInstanceFromElement } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps, PointerServiceProps } from '@studiometa/js-toolkit';
 import { Hoverable } from './Hoverable.js';
-import { isFunction } from '@studiometa/js-toolkit/utils';
 
 export interface HoverableControllerProps extends BaseProps {
   $options: {
@@ -49,7 +48,7 @@ export class HoverableController<T extends BaseProps = BaseProps> extends withRe
   get hoverable(): Hoverable | null {
     const { controls } = this.$options;
     return controls
-      ? getInstanceFromElement(document.querySelector(`#${controls}`), Hoverable)
+      ? getInstanceFromElement(document.getElementById(controls), Hoverable)
       : null;
   }
 
@@ -59,7 +58,7 @@ export class HoverableController<T extends BaseProps = BaseProps> extends withRe
    */
   movedrelative(props: PointerServiceProps) {
     const { hoverable } = this;
-    if (hoverable && isFunction(hoverable.movedrelative)) {
+    if (hoverable) {
       hoverable.movedrelative(props, true);
     }
   }
