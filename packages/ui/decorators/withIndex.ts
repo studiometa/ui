@@ -177,6 +177,7 @@ export function withIndex<S extends Base>(
     }
 
     set currentIndex(value) {
+      const oldIndex = this.__index;
       switch (this.mode) {
         case INDEXABLE_MODES.ALTERNATE: {
           // Bounce: reflect out-of-bounds values back into range
@@ -203,7 +204,9 @@ export function withIndex<S extends Base>(
           this.__index = clamp(value, this.minIndex, this.maxIndex);
           break;
       }
-      this.$emit('index', this.currentIndex);
+      if (this.__index !== oldIndex) {
+        this.$emit('index', this.currentIndex);
+      }
     }
 
     get firstIndex() {
