@@ -178,14 +178,23 @@ export function withIndex<S extends Base>(
 
     set currentIndex(value) {
       switch (this.mode) {
-        case INDEXABLE_MODES.ALTERNATE:
-          if (Math.floor(value/this.length) % 2 !== 0) {
+        case INDEXABLE_MODES.ALTERNATE: {
+          // Bounce: reflect out-of-bounds values back into range
+          const cycleLength = this.length * 2 - 2;
+          if (cycleLength <= 0) {
+            this.__index = 0;
+            break;
+          }
+          let normalized = ((value % cycleLength) + cycleLength) % cycleLength;
+          if (normalized > this.maxIndex) {
+            normalized = cycleLength - normalized;
+          }
+          if (value < this.minIndex || value > this.maxIndex) {
             this.isReverse = !this.isReverse;
           }
-          const cycleLength = this.length * 2;
-          const cycleIndex = Math.abs(value) % cycleLength;
-          this.__index = Math.min(cycleIndex, cycleLength - cycleIndex);
+          this.__index = normalized;
           break;
+        }
         case INDEXABLE_MODES.INFINITE:
           this.__index = ((value % this.length) + this.length) % this.length;
           break;
@@ -205,22 +214,39 @@ export function withIndex<S extends Base>(
       return this.isReverse ? this.minIndex : this.maxIndex;
     }
 
+    /**
+     * Check if the given raw index would trigger a direction reversal in alternate mode.
+     * @private
+     */
+    _wouldReverse(rawIndex: number): boolean {
+      return this.mode === INDEXABLE_MODES.ALTERNATE
+        && (rawIndex > this.maxIndex || rawIndex < this.minIndex);
+    }
+
     get prevIndex() {
-      let rawIndex = this.isReverse ? this.currentIndex + 1 : this.currentIndex - 1;
-      if (this.mode === INDEXABLE_MODES.ALTERNATE && (rawIndex > this.maxIndex || rawIndex < this.minIndex)) {
-        this.isReverse = !this.isReverse;
-        rawIndex = this.isReverse ? this.currentIndex + 1 : this.currentIndex - 1;
+      const reverse = this.isReverse;
+      let rawIndex = reverse ? this.currentIndex + 1 : this.currentIndex - 1;
+
+      if (this._wouldReverse(rawIndex)) {
+        rawIndex = !reverse ? this.currentIndex + 1 : this.currentIndex - 1;
       }
-      return this.mode === INDEXABLE_MODES.NORMAL ? clamp(rawIndex, this.minIndex, this.maxIndex) : (rawIndex + this.length) % this.length;
+
+      return this.mode === INDEXABLE_MODES.NORMAL
+        ? clamp(rawIndex, this.minIndex, this.maxIndex)
+        : ((rawIndex % this.length) + this.length) % this.length;
     }
 
     get nextIndex() {
-      let rawIndex = this.isReverse ? this.currentIndex - 1 : this.currentIndex + 1;
-      if (this.mode === INDEXABLE_MODES.ALTERNATE && (rawIndex > this.maxIndex || rawIndex < this.minIndex)) {
-        this.isReverse = !this.isReverse;
-        rawIndex = this.isReverse ? this.currentIndex - 1 : this.currentIndex + 1;
+      const reverse = this.isReverse;
+      let rawIndex = reverse ? this.currentIndex - 1 : this.currentIndex + 1;
+
+      if (this._wouldReverse(rawIndex)) {
+        rawIndex = !reverse ? this.currentIndex - 1 : this.currentIndex + 1;
       }
-      return this.mode === INDEXABLE_MODES.NORMAL ? clamp(rawIndex, this.minIndex, this.maxIndex) : (rawIndex + this.length) % this.length;
+
+      return this.mode === INDEXABLE_MODES.NORMAL
+        ? clamp(rawIndex, this.minIndex, this.maxIndex)
+        : ((rawIndex % this.length) + this.length) % this.length;
     }
 
     goTo(indexOrInstruction) {
