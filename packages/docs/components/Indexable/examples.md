@@ -16,8 +16,8 @@ title: Indexable examples
 
 :::code-group
 
-<<< ./stories/toggle/app.twig
-<<< ./stories/toggle/app.js
+<<< ./stories/counter/app.twig
+<<< ./stories/counter/app.js
 
 :::
 
