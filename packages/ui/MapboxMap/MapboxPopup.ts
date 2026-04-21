@@ -1,0 +1,78 @@
+import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
+import mapboxgl from 'mapbox-gl';
+import type { Popup, PopupOptions } from 'mapbox-gl';
+import { AbstractMapboxMapChild } from './AbstractMapboxMapChild.js';
+import type { MapboxMarker } from './MapboxMarker.js';
+
+export interface MapboxPopupProps extends BaseProps {
+  $options: {
+    lngLat: [number, number];
+    /**
+     * Popup options.
+     * @see https://docs.mapbox.com/mapbox-gl-js/api/markers#popup
+     */
+    popupOptions: PopupOptions;
+  };
+}
+
+/**
+ * Display a popup on a MapboxMap map.
+ * @see https://ui.studiometa.dev/-/components/MapboxMap
+ */
+export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapboxMapChild<
+  T & MapboxPopupProps
+> {
+  /**
+   * Config.
+   */
+  static config: BaseConfig = {
+    name: 'MapboxPopup',
+    options: {
+      lngLat: {
+        type: Array,
+        default: () => [0, 0],
+      },
+      popupOptions: Object,
+    },
+  };
+
+  __popup: Popup;
+
+  get popup() {
+    if (!this.__popup) {
+      this.__popup = new mapboxgl.Popup();
+    }
+
+    return this.__popup;
+  }
+
+  get popupOptions() {
+    if (this.$options.popupOptions) {
+      return this.$options.popupOptions;
+    }
+
+    return {};
+  }
+
+  mounted() {
+    const { popup, $el, map, $options } = this;
+
+    popup.setLngLat($options.lngLat);
+
+    const content = $el.innerHTML.trim();
+    if (content) {
+      popup.setHTML(content);
+    }
+
+    // Only add popup directly to map if not inside a marker
+    const marker = this.$closest<MapboxMarker>('MapboxMarker');
+    if (map && !marker) {
+      popup.addTo(map);
+    }
+  }
+
+  destroyed() {
+    this.popup?.remove();
+    this.__popup = undefined;
+  }
+}

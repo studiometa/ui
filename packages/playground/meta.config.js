@@ -25,6 +25,8 @@ export default defineWebpackConfig({
         '@motionone/easing',
         'deepmerge',
         'morphdom',
+        'mapbox-gl',
+        '@mapbox/mapbox-gl-geocoder',
         { specifier: '@studiometa/js-toolkit', esmSh: { bundle: false } },
         { specifier: '@studiometa/js-toolkit/utils', esmSh: { bundle: false } },
         {

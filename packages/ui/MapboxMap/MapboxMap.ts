@@ -1,0 +1,130 @@
+import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
+import mapboxgl from 'mapbox-gl';
+import type { Map } from 'mapbox-gl';
+import { MapboxMarker } from './MapboxMarker.js';
+import { MapboxPopup } from './MapboxPopup.js';
+import { MapboxNavigationControl } from './MapboxNavigationControl.js';
+import { MapboxGeolocateControl } from './MapboxGeolocateControl.js';
+import { MapboxGeocoder } from './MapboxGeocoder.js';
+import { MapboxLayer } from './MapboxLayer.js';
+import { resolveWhenMapboxMapIsLoaded } from './utils.js';
+
+const MAP_EVENTS = [
+  'click',
+  'dblclick',
+  'mouseenter',
+  'mouseleave',
+  'mousemove',
+  'movestart',
+  'move',
+  'moveend',
+  'zoomstart',
+  'zoom',
+  'zoomend',
+  'rotatestart',
+  'rotate',
+  'rotateend',
+  'pitchstart',
+  'pitch',
+  'pitchend',
+  'dragstart',
+  'drag',
+  'dragend',
+  'load',
+  'idle',
+  'render',
+  'resize',
+  'remove',
+  'error',
+] as const;
+
+export interface MapboxMapProps extends BaseProps {
+  $refs: {
+    container: HTMLElement;
+  };
+  $options: {
+    accessToken: string;
+    zoom: number;
+    center: [number, number];
+  };
+}
+
+/**
+ * Display a Mapbox GL map.
+ * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ */
+export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxMapProps> {
+  /**
+   * Config.
+   */
+  static config: BaseConfig = {
+    name: 'MapboxMap',
+    emits: ['map-load', ...MAP_EVENTS],
+    refs: ['container'],
+    options: {
+      accessToken: String,
+      zoom: Number,
+      center: {
+        type: Array,
+        default: () => [0, 0],
+      },
+    },
+    components: {
+      MapboxGeocoder: resolveWhenMapboxMapIsLoaded(MapboxGeocoder),
+      MapboxGeolocateControl: resolveWhenMapboxMapIsLoaded(MapboxGeolocateControl),
+      MapboxMarker: resolveWhenMapboxMapIsLoaded(MapboxMarker),
+      MapboxNavigationControl: resolveWhenMapboxMapIsLoaded(MapboxNavigationControl),
+      MapboxLayer: resolveWhenMapboxMapIsLoaded(MapboxLayer),
+      MapboxPopup: resolveWhenMapboxMapIsLoaded(MapboxPopup),
+    },
+  };
+
+  /**
+   * Is the map loaded?
+   */
+  isLoaded = false;
+
+  /**
+   * Map instance.
+   * @private
+   */
+  __map: Map;
+
+  /**
+   * The mapbox Map instance.
+   */
+  get map() {
+    if (!this.__map) {
+      this.__map = new mapboxgl.Map({
+        container: this.$refs.container ?? this.$el,
+        ...this.$options,
+      });
+    }
+
+    return this.__map;
+  }
+
+  /**
+   * Mounted hook.
+   */
+  mounted() {
+    this.map.on('load', () => {
+      this.isLoaded = true;
+      this.$emit('map-load', this.map);
+    });
+
+    for (const event of MAP_EVENTS) {
+      this.map.on(event, (e) => {
+        this.$emit(event, e);
+      });
+    }
+  }
+
+  /**
+   * Destroyed hook.
+   */
+  destroyed() {
+    this.map?.remove();
+    this.__map = undefined;
+  }
+}

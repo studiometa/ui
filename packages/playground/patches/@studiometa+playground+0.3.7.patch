@@ -1,0 +1,19 @@
+diff --git a/node_modules/@studiometa/playground/dist/lib/plugins/PlaygroundDependenciesPlugin.js b/node_modules/@studiometa/playground/dist/lib/plugins/PlaygroundDependenciesPlugin.js
+index 5c98cca..a50002a 100644
+--- a/node_modules/@studiometa/playground/dist/lib/plugins/PlaygroundDependenciesPlugin.js
++++ b/node_modules/@studiometa/playground/dist/lib/plugins/PlaygroundDependenciesPlugin.js
+@@ -38,6 +38,13 @@ class PlaygroundDependenciesPlugin {
+           }
+         }
+       }
++      // Add source files to webpack's watch dependencies for live reload
++      for (const dep of this.dependencies) {
++        if (dep.type === "bundle" && dep.source && this.isLocalSource(dep.source)) {
++          const resolvedPattern = resolve(this.configDir, dep.source);
++          const sourceFiles = glob.globSync(resolvedPattern);
++          sourceFiles.forEach((file) => compilation.fileDependencies.add(file));
++        }
++      }
+       compilation.hooks.processAssets.tapAsync(
+         {
+           name: pluginName,
