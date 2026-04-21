@@ -6,6 +6,8 @@ title: Hoverable examples
 
 ## Default
 
+Moves the target relative to the pointer inside rectangular bounds. This playground compares an oversized target with an undersized one.
+
 <llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/default.twig')"
@@ -24,6 +26,8 @@ title: Hoverable examples
 </llm-only>
 
 ## Reversed
+
+Inverts the movement direction for a counter-motion effect. This playground compares an oversized target with an undersized one.
 
 <llm-exclude>
 <PreviewPlayground
@@ -44,6 +48,8 @@ title: Hoverable examples
 
 ## Contained
 
+Stops updating when the pointer leaves the root element. This playground compares an oversized target with an undersized one.
+
 <llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/contained.twig')"
@@ -62,6 +68,8 @@ title: Hoverable examples
 </llm-only>
 
 ## Reversed and contained
+
+Combines reversed motion with contained pointer tracking. This playground compares an oversized target with an undersized one.
 
 <llm-exclude>
 <PreviewPlayground
@@ -82,6 +90,8 @@ title: Hoverable examples
 
 ## Circle shape
 
+Constrains movement to an inscribed circular area. This playground compares an oversized target with an undersized one.
+
 <llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/circle.twig')"
@@ -100,6 +110,8 @@ title: Hoverable examples
 </llm-only>
 
 ## Ellipse shape
+
+Constrains movement to an inscribed elliptical area. This playground compares an oversized target with an undersized one.
 
 <llm-exclude>
 <PreviewPlayground
