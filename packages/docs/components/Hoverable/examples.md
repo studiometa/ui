@@ -6,7 +6,7 @@ title: Hoverable examples
 
 ## Default
 
-Moves the target relative to the pointer inside rectangular bounds. This playground compares an oversized target with an undersized one.
+Moves the target relative to the pointer inside rectangular bounds.
 
 <llm-exclude>
 <PreviewPlayground
@@ -27,7 +27,7 @@ Moves the target relative to the pointer inside rectangular bounds. This playgro
 
 ## Reversed
 
-Inverts the movement direction for a counter-motion effect. This playground compares an oversized target with an undersized one.
+Inverts the movement direction for a counter-motion effect.
 
 <llm-exclude>
 <PreviewPlayground
@@ -48,7 +48,7 @@ Inverts the movement direction for a counter-motion effect. This playground comp
 
 ## Contained
 
-Stops updating when the pointer leaves the root element. This playground compares an oversized target with an undersized one.
+Stops updating when the pointer leaves the root element.
 
 <llm-exclude>
 <PreviewPlayground
@@ -69,7 +69,7 @@ Stops updating when the pointer leaves the root element. This playground compare
 
 ## Reversed and contained
 
-Combines reversed motion with contained pointer tracking. This playground compares an oversized target with an undersized one.
+Combines reversed motion with contained pointer tracking.
 
 <llm-exclude>
 <PreviewPlayground
@@ -90,7 +90,7 @@ Combines reversed motion with contained pointer tracking. This playground compar
 
 ## Circle shape
 
-Constrains movement to an inscribed circular area. This playground compares an oversized target with an undersized one.
+Constrains movement to an inscribed circular area.
 
 <llm-exclude>
 <PreviewPlayground
@@ -111,7 +111,7 @@ Constrains movement to an inscribed circular area. This playground compares an o
 
 ## Ellipse shape
 
-Constrains movement to an inscribed elliptical area. This playground compares an oversized target with an undersized one.
+Constrains movement to an inscribed elliptical area.
 
 <llm-exclude>
 <PreviewPlayground
