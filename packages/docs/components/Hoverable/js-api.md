@@ -44,6 +44,16 @@ Use this option to constrain the target movement to an inscribed shape instead o
 
 The values used to calculate and render the position of the target element.
 
+## Methods
+
+### `constrainPosition`
+
+- Signature: `(x: number, y: number, bounds = this.bounds) => { x: number, y: number }`
+
+Constrains the given position to the configured bounding shape.
+
+By default, this method supports the built-in `rect`, `circle` and `ellipse` shapes. You can override it in a custom component to implement more advanced constraints.
+
 ## Getters
 
 ### `target`
