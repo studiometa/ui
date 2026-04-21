@@ -6,7 +6,7 @@ title: Hoverable examples
 
 ## Default
 
-In this example, we showcase the default behaviour as well as [the `reversed`](./js-api.md#reversed) and [`contained` options](./js-api.md#contained).
+In this example, we showcase the default behaviour as well as [the `reversed`](./js-api.md#reversed), [`contained`](./js-api.md#contained) and [`shape`](./js-api.md#shape) options.
 
 <llm-exclude>
 <PreviewPlayground
