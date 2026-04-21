@@ -73,6 +73,50 @@ describe('The Hoverable component', () => {
     expect(hoverable.props.y).toBe(0);
   });
 
+  it('should constrain the target position to a circle when the circle shape is used', async () => {
+    const target = h('div', { dataRef: 'target' });
+    const div = h('div', { dataOptionShape: 'circle' }, [target]);
+    const hoverable = new Hoverable(div);
+    const spy = vi.spyOn(hoverable, 'bounds', 'get');
+    spy.mockImplementation(() => ({
+      xMin: 0,
+      xMax: 100,
+      yMin: 0,
+      yMax: 100,
+    }));
+    await mount(hoverable);
+
+    hoverable.movedrelative(pointerProgress(0, 0));
+    expect(hoverable.props.x).toBeCloseTo(14.64466094067263);
+    expect(hoverable.props.y).toBeCloseTo(14.64466094067263);
+
+    hoverable.movedrelative(pointerProgress(0.5, 0.5));
+    expect(hoverable.props.x).toBe(50);
+    expect(hoverable.props.y).toBe(50);
+  });
+
+  it('should constrain the target position to an ellipse when the ellipse shape is used', async () => {
+    const target = h('div', { dataRef: 'target' });
+    const div = h('div', { dataOptionShape: 'ellipse' }, [target]);
+    const hoverable = new Hoverable(div);
+    const spy = vi.spyOn(hoverable, 'bounds', 'get');
+    spy.mockImplementation(() => ({
+      xMin: 0,
+      xMax: 200,
+      yMin: 0,
+      yMax: 100,
+    }));
+    await mount(hoverable);
+
+    hoverable.movedrelative(pointerProgress(0, 0));
+    expect(hoverable.props.x).toBeCloseTo(29.28932188134526);
+    expect(hoverable.props.y).toBeCloseTo(14.64466094067263);
+
+    hoverable.movedrelative(pointerProgress(0.5, 0.5));
+    expect(hoverable.props.x).toBe(100);
+    expect(hoverable.props.y).toBe(50);
+  });
+
   it('should stop update x and y position when contained option is used and mouse position is out of bounds', async () => {
     const target = h('div', { dataRef: 'target' });
     const div = h('div', { dataOptionContained: true }, [target]);

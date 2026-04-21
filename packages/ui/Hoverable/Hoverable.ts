@@ -22,6 +22,10 @@ export interface HoverableProps extends BaseProps {
      * Wether to stop moving the target when the mouse is not over the root element or not.
      */
     contained: boolean;
+    /**
+     * The bounding shape used to constrain the target movement.
+     */
+    shape: 'rect' | 'circle' | 'ellipse';
   };
 }
 
@@ -45,6 +49,10 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePoin
       },
       reversed: Boolean,
       contained: Boolean,
+      shape: {
+        type: String,
+        default: 'rect',
+      },
     },
   };
 
@@ -89,6 +97,47 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePoin
   }
 
   /**
+   * Constrain a position to the configured bounding shape.
+   */
+  constrainPosition(x: number, y: number, bounds = this.bounds) {
+    const { shape } = this.$options;
+
+    if (shape === 'circle' || shape === 'ellipse') {
+      const { xMin, xMax, yMin, yMax } = bounds;
+      const centerX = (xMin + xMax) / 2;
+      const centerY = (yMin + yMax) / 2;
+      const deltaX = x - centerX;
+      const deltaY = y - centerY;
+      const radiusX = (xMax - xMin) / 2;
+      const radiusY = (yMax - yMin) / 2;
+      const minRadius = Math.min(radiusX, radiusY);
+      const constrainedRadiusX = shape === 'circle' ? minRadius : radiusX;
+      const constrainedRadiusY = shape === 'circle' ? minRadius : radiusY;
+
+      if (constrainedRadiusX <= 0 || constrainedRadiusY <= 0) {
+        return { x: centerX, y: centerY };
+      }
+
+      const ratio =
+        (deltaX * deltaX) / (constrainedRadiusX * constrainedRadiusX) +
+        (deltaY * deltaY) / (constrainedRadiusY * constrainedRadiusY);
+
+      if (ratio <= 1) {
+        return { x, y };
+      }
+
+      const scale = 1 / Math.sqrt(ratio);
+
+      return {
+        x: centerX + deltaX * scale,
+        y: centerY + deltaY * scale,
+      };
+    }
+
+    return { x, y };
+  }
+
+  /**
    * Update props when the mouse moves.
    */
   movedrelative({ progress }: PointerServiceProps) {
@@ -103,9 +152,14 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePoin
 
     const from = reversed ? 1 : 0;
     const to = reversed ? 0 : 1;
+    const position = this.constrainPosition(
+      map(clamp01(x), from, to, bounds.xMin, bounds.xMax),
+      map(clamp01(y), from, to, bounds.yMin, bounds.yMax),
+      bounds,
+    );
 
-    props.y = map(clamp01(y), from, to, bounds.yMin, bounds.yMax);
-    props.x = map(clamp01(x), from, to, bounds.xMin, bounds.xMax);
+    props.x = position.x;
+    props.y = position.y;
   }
 
   /**
