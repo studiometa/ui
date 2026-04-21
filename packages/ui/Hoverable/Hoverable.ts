@@ -103,13 +103,16 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePoin
     const { shape } = this.$options;
 
     if (shape === 'circle' || shape === 'ellipse') {
-      const { xMin, xMax, yMin, yMax } = bounds;
-      const centerX = (xMin + xMax) / 2;
-      const centerY = (yMin + yMax) / 2;
+      const minX = Math.min(bounds.xMin, bounds.xMax);
+      const maxX = Math.max(bounds.xMin, bounds.xMax);
+      const minY = Math.min(bounds.yMin, bounds.yMax);
+      const maxY = Math.max(bounds.yMin, bounds.yMax);
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
       const deltaX = x - centerX;
       const deltaY = y - centerY;
-      const radiusX = (xMax - xMin) / 2;
-      const radiusY = (yMax - yMin) / 2;
+      const radiusX = (maxX - minX) / 2;
+      const radiusY = (maxY - minY) / 2;
       const minRadius = Math.min(radiusX, radiusY);
       const constrainedRadiusX = shape === 'circle' ? minRadius : radiusX;
       const constrainedRadiusY = shape === 'circle' ? minRadius : radiusY;

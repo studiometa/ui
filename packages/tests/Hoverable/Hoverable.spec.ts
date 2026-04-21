@@ -95,6 +95,28 @@ describe('The Hoverable component', () => {
     expect(hoverable.props.y).toBe(50);
   });
 
+  it('should constrain the target position to a circle when bounds are inverted', async () => {
+    const target = h('div', { dataRef: 'target' });
+    const div = h('div', { dataOptionShape: 'circle' }, [target]);
+    const hoverable = new Hoverable(div);
+    const spy = vi.spyOn(hoverable, 'bounds', 'get');
+    spy.mockImplementation(() => ({
+      xMin: 20,
+      xMax: -20,
+      yMin: 20,
+      yMax: -20,
+    }));
+    await mount(hoverable);
+
+    hoverable.movedrelative(pointerProgress(0, 0));
+    expect(hoverable.props.x).toBeCloseTo(14.14213562373095);
+    expect(hoverable.props.y).toBeCloseTo(14.14213562373095);
+
+    hoverable.movedrelative(pointerProgress(0.5, 0.5));
+    expect(hoverable.props.x).toBe(0);
+    expect(hoverable.props.y).toBe(0);
+  });
+
   it('should constrain the target position to an ellipse when the ellipse shape is used', async () => {
     const target = h('div', { dataRef: 'target' });
     const div = h('div', { dataOptionShape: 'ellipse' }, [target]);
@@ -115,6 +137,28 @@ describe('The Hoverable component', () => {
     hoverable.movedrelative(pointerProgress(0.5, 0.5));
     expect(hoverable.props.x).toBe(100);
     expect(hoverable.props.y).toBe(50);
+  });
+
+  it('should constrain the target position to an ellipse when bounds are inverted', async () => {
+    const target = h('div', { dataRef: 'target' });
+    const div = h('div', { dataOptionShape: 'ellipse' }, [target]);
+    const hoverable = new Hoverable(div);
+    const spy = vi.spyOn(hoverable, 'bounds', 'get');
+    spy.mockImplementation(() => ({
+      xMin: 40,
+      xMax: -40,
+      yMin: 20,
+      yMax: -20,
+    }));
+    await mount(hoverable);
+
+    hoverable.movedrelative(pointerProgress(0, 0));
+    expect(hoverable.props.x).toBeCloseTo(28.2842712474619);
+    expect(hoverable.props.y).toBeCloseTo(14.14213562373095);
+
+    hoverable.movedrelative(pointerProgress(0.5, 0.5));
+    expect(hoverable.props.x).toBe(0);
+    expect(hoverable.props.y).toBe(0);
   });
 
   it('should stop update x and y position when contained option is used and mouse position is out of bounds', async () => {
