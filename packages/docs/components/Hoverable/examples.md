@@ -6,11 +6,9 @@ title: Hoverable examples
 
 ## Default
 
-In this example, we showcase the default behaviour as well as [the `reversed`](./js-api.md#reversed), [`contained`](./js-api.md#contained) and [`shape`](./js-api.md#shape) options.
-
 <llm-exclude>
 <PreviewPlayground
-  :html="() => import('./stories/app.twig')"
+  :html="() => import('./stories/default.twig')"
   :script="() => import('./stories/app.js?raw')"
   />
 </llm-exclude>
@@ -18,7 +16,102 @@ In this example, we showcase the default behaviour as well as [the `reversed`](.
 
 :::code-group
 
-<<< ./stories/app.twig
+<<< ./stories/default.twig
+<<< ./stories/app.js
+
+:::
+
+</llm-only>
+
+## Reversed
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/reversed.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/reversed.twig
+<<< ./stories/app.js
+
+:::
+
+</llm-only>
+
+## Contained
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/contained.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/contained.twig
+<<< ./stories/app.js
+
+:::
+
+</llm-only>
+
+## Reversed and contained
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/reversed-contained.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/reversed-contained.twig
+<<< ./stories/app.js
+
+:::
+
+</llm-only>
+
+## Circle shape
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/circle.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/circle.twig
+<<< ./stories/app.js
+
+:::
+
+</llm-only>
+
+## Ellipse shape
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/ellipse.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/ellipse.twig
 <<< ./stories/app.js
 
 :::

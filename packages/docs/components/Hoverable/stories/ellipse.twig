@@ -1,0 +1,26 @@
+<div
+  data-component="Hoverable"
+  data-option-shape="ellipse"
+  class="relative w-80 h-52 overflow-hidden rounded-[9999px] bg-gray-300">
+  <div class="z-10 absolute inset-0 rounded-[9999px] ring"></div>
+  <div
+    data-ref="target"
+    class="absolute w-[120%] h-[120%] self-center justify-self-center pointer-events-none">
+    {% include '@ui/Figure/Figure.twig' with {
+      src: 'https://picsum.photos/600/600',
+      width: 600,
+      height: 600,
+      fit: 'cover',
+      absolute: true,
+      attr: {
+        data_option_enter_from: 'opacity-0'
+      },
+      inner_attr: {
+        class: 'bg-vp-bg rounded-[9999px] overflow-hidden'
+      },
+      img_attr: {
+        class: 'opacity-0 transform'
+      }
+    } only %}
+  </div>
+</div>
