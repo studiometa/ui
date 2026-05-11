@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **ESLintPluginUi:** add a new `@studiometa/eslint-plugin-ui` package with ESLint/Oxlint rules to help developers discover and use components from `@studiometa/ui` ([#503](https://github.com/studiometa/ui/pull/503))
+
+### Fixed
+
+- **Config:** fix deprecated `moduleResolution: node` value in root `tsconfig.json` ([#503](https://github.com/studiometa/ui/pull/503))
+
 ## [v1.8.0](https://github.com/studiometa/ui/compare/1.7.0..1.8.0) (2026-03-25)
 
 ### Added
