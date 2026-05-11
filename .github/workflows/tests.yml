@@ -70,7 +70,7 @@ jobs:
       - name: Install modules
         run: npm install --no-audit --no-fund
       - name: Run tests
-        run: npm run test -w @studiometa/eslint-plugin-ui -- -- --coverage.enabled
+        run: npm run test -w @studiometa/eslint-plugin-ui -- --coverage.enabled
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:

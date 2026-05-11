@@ -75,7 +75,7 @@ jobs:
       - uses: JS-DevTools/npm-publish@v3
         with:
           provenance: true
-          package: packages/eslint-plugin-ui/dist/
+          package: packages/eslint-plugin-ui/
           tag: ${{ env.NPM_TAG }}
           token: ${{ secrets.NPM_TOKEN }}
 
