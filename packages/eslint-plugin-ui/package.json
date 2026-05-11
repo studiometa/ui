@@ -1,0 +1,42 @@
+{
+  "name": "@studiometa/eslint-plugin-ui",
+  "version": "1.0.0",
+  "description": "ESLint plugin to help developers discover and use @studiometa/ui components",
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr)",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint:types": "tsgo --build tsconfig.json"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "4.1.2",
+    "esbuild": "0.27.4",
+    "eslint": "9.34.0",
+    "typescript": "6.0.2",
+    "vitest": "4.1.2"
+  },
+  "dependencies": {
+    "@oxlint/plugins": "1.63.0"
+  }
+}
