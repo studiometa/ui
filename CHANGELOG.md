@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.9.0-beta.0](https://github.com/studiometa/ui/compare/1.8.0..1.9.0-beta.0) (2026-05-11)
+
 ### Added
 
 - **ESLintPluginUi:** add a new `@studiometa/eslint-plugin-ui` package with ESLint/Oxlint rules to help developers discover and use components from `@studiometa/ui` ([#503](https://github.com/studiometa/ui/pull/503))
