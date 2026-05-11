@@ -10,6 +10,8 @@ npm install --save-dev @studiometa/eslint-plugin-ui
 
 ## Configuration
 
+### ESLint
+
 Add the recommended config to your `eslint.config.js` (ESLint v9 flat config):
 
 ```js
@@ -33,6 +35,23 @@ export default [
     },
   },
 ];
+```
+
+### Oxlint
+
+Add the plugin to your `.oxlintrc.json` using the `"ui"` name to get the `ui/` rule prefix:
+
+```json
+{
+  "jsPlugins": [{ "name": "ui", "specifier": "@studiometa/eslint-plugin-ui" }],
+  "rules": {
+    "ui/prefer-ui-component": "warn",
+    "ui/prefer-transition": "warn",
+    "ui/no-manual-fetch": "warn",
+    "ui/prefer-data-model": "warn",
+    "ui/prefer-action": "warn"
+  }
+}
 ```
 
 ## Rules

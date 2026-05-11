@@ -45,7 +45,7 @@ export default [
 
 ### Oxlint
 
-Add the plugin to your `.oxlintrc.json`:
+Add the plugin to your `.oxlintrc.json` using the `"ui"` name to get the `ui/` rule prefix:
 
 ```json
 {
