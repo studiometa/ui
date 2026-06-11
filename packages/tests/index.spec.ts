@@ -64,6 +64,7 @@ test('components exports', () => {
       "Sticky",
       "Tabs",
       "Target",
+      "Track",
       "Transition",
       "animationScrollWithEase",
       "withDeprecation",
