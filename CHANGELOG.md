@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **Slider:** replace deprecated `$parent` with `$closest('Slider')` in `AbstractSliderChild` and all subclasses (`SliderBtn`, `SliderDots`, `SliderProgress`) ([#506](https://github.com/studiometa/ui/pull/506))
+- **Accordion:** replace deprecated `$parent` with `$closest('Accordion')` in `AccordionItem` ([#506](https://github.com/studiometa/ui/pull/506))
+- Bump `@studiometa/js-toolkit` from `3.4.3` to `^3.5.0` ([#506](https://github.com/studiometa/ui/pull/506))
+
+### Fixed
+
+- **Slider:** fix `TypeError: Cannot read properties of null (reading '$on')` crash when `AbstractSliderChild.mounted()` runs before parent Slider is registered ([#506](https://github.com/studiometa/ui/pull/506))
+
 ## [v1.9.0-beta.0](https://github.com/studiometa/ui/compare/1.8.0..1.9.0-beta.0) (2026-05-11)
 
 ### Added
