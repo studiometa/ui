@@ -51,8 +51,9 @@ export class AccordionItem<T extends BaseProps = BaseProps> extends Base<T & Acc
    * Add aria-attributes on mounted.
    */
   mounted() {
-    if (this.$parent && this.$parent instanceof Accordion && this.$parent.$options.item) {
-      Object.entries(this.$parent.$options.item).forEach(([key, value]) => {
+    const accordion = this.$closest('Accordion') as InstanceType<typeof Accordion> | undefined;
+    if (accordion?.$options.item) {
+      Object.entries(accordion.$options.item).forEach(([key, value]) => {
         if (key in this.$options) {
           // @ts-ignore
           const type = AccordionItem.config.options[key].type ?? AccordionItem.config.options[key];
