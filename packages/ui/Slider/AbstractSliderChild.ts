@@ -26,7 +26,10 @@ export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<T
    */
   mounted() {
     nextFrame(() => {
-      this.slider?.$on('index', this);
+      if (this.slider) {
+        this.slider.$on('index', this);
+        this.update(this.slider.currentIndex);
+      }
     });
   }
 
