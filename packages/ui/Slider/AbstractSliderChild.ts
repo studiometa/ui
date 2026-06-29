@@ -3,16 +3,10 @@ import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { nextFrame, domScheduler, isFunction } from '@studiometa/js-toolkit/utils';
 import type { Slider } from './Slider.js';
 
-export interface AbstractSliderChildProps extends BaseProps {
-  $parent: Slider;
-}
-
 /**
  * AbstractSliderChild class.
  */
-export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<
-  T & AbstractSliderChildProps
-> {
+export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<T> {
   /**
    * Config.
    */
@@ -21,10 +15,19 @@ export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<
   };
 
   /**
+   * Get the closest Slider ancestor.
+   */
+  get slider(): Slider | null {
+    return this.$closest('Slider') as Slider | null;
+  }
+
+  /**
    * Listen to the `goto` event of the parent on mount.
    */
   mounted() {
-    this.$parent.$on('index', this);
+    nextFrame(() => {
+      this.slider?.$on('index', this);
+    });
   }
 
   /**
@@ -32,7 +35,9 @@ export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<
    */
   resized() {
     nextFrame(() => {
-      this.update(this.$parent.currentIndex);
+      if (this.slider) {
+        this.update(this.slider.currentIndex);
+      }
     });
   }
 
@@ -40,7 +45,7 @@ export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<
    * Remove the event listener.
    */
   destroyed() {
-    this.$parent.$off('index', this);
+    this.slider?.$off('index', this);
   }
 
   /**

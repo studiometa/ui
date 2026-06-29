@@ -28,7 +28,8 @@ export class SliderProgress<T extends BaseProps = BaseProps> extends AbstractSli
   update(index: number) {
     domScheduler.read(() => {
       const { progress } = this.$refs;
-      const x = map(index, 0, this.$parent.indexMax, progress.clientWidth * -1, 0);
+      if (!this.slider) return;
+      const x = map(index, 0, this.slider.indexMax, progress.clientWidth * -1, 0);
       domScheduler.write(() => {
         transform(progress, { x });
       });
