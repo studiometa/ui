@@ -49,6 +49,6 @@ export class SliderDots<
    * Go to the given index on dot click.
    */
   onDotsClick({ index }: { index: number }) {
-    this.$parent.goTo(index);
+    this.slider?.goTo(index);
   }
 }

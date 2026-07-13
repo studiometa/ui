@@ -2,7 +2,7 @@ import deepmerge from 'deepmerge';
 import { Base, BaseConfig } from '@studiometa/js-toolkit';
 import type { BaseProps } from '@studiometa/js-toolkit';
 import { transition } from '@studiometa/js-toolkit/utils';
-import { AccordionCore as Accordion } from './AccordionCore.js';
+import type { AccordionCore as Accordion } from './AccordionCore.js';
 
 type AccordionItemStates = Partial<
   Record<'open' | 'active' | 'closed', string | Partial<CSSStyleDeclaration>>
@@ -51,8 +51,9 @@ export class AccordionItem<T extends BaseProps = BaseProps> extends Base<T & Acc
    * Add aria-attributes on mounted.
    */
   mounted() {
-    if (this.$parent && this.$parent instanceof Accordion && this.$parent.$options.item) {
-      Object.entries(this.$parent.$options.item).forEach(([key, value]) => {
+    const accordion = this.$closest<Accordion>('Accordion');
+    if (accordion && accordion.$options.item) {
+      Object.entries(accordion.$options.item).forEach(([key, value]) => {
         if (key in this.$options) {
           // @ts-ignore
           const type = AccordionItem.config.options[key].type ?? AccordionItem.config.options[key];
