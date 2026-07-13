@@ -1,7 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { getInstanceFromElement } from '@studiometa/js-toolkit';
 import { Menu, MenuBtn, MenuList } from '@studiometa/ui';
 import { h, mount, wait } from '#test-utils';
+
+// The MenuList open/close/toggle transitions are asynchronous (`withTransition`
+// schedules work over a few animation frames). Tests trigger them without
+// awaiting, so let any pending transition settle within this file's happy-dom
+// environment — otherwise it resolves during a later test file whose globals
+// have been torn down (`ReferenceError: Node is not defined`).
+afterEach(async () => {
+  await wait(50);
+});
 
 async function getContext({ mode = 'click' } = {}) {
   const menuBtn = h('button', { dataComponent: 'MenuBtn' }, ['Click me']);
