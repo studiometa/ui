@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **Slider:** require `@studiometa/js-toolkit` `^3.6.0` and share the current index through a per-instance store instead of the deprecated `$parent` accessor ([#507](https://github.com/studiometa/ui/pull/507))
+
+### Fixed
+
+- **Slider:** fix `SliderBtn`, `SliderCount`, `SliderDots` and `SliderProgress` crashing when mounted before their parent `Slider` ([#507](https://github.com/studiometa/ui/pull/507))
+- **Accordion:** fix `AccordionItem` option inheritance relying on the deprecated `$parent` accessor ([#507](https://github.com/studiometa/ui/pull/507))
+
 ## [v1.9.0-beta.0](https://github.com/studiometa/ui/compare/1.8.0..1.9.0-beta.0) (2026-05-11)
 
 ### Added
