@@ -31,7 +31,12 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
    * Update attributes.
    */
   update(index: number) {
-    if (this.$options.contain && !this.$parent.$options.contain) {
+    const { slider } = this;
+    if (!slider) {
+      return;
+    }
+
+    if (this.$options.contain && !slider.$options.contain) {
       this.$warn(
         `The contain option will only works if the parent Slider also has the contain option.`,
       );
@@ -39,13 +44,12 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
 
     const isContainMaxState =
       this.$options.contain &&
-      this.$parent.$options.contain &&
-      this.$parent.containMaxState ===
-        this.$parent.getStates()[index].x[this.$parent.$options.mode];
+      slider.$options.contain &&
+      slider.containMaxState === slider.getStates()[index].x[slider.$options.mode];
 
     if (
       (index === 0 && this.$options.prev) ||
-      ((index === this.$parent.indexMax || isContainMaxState) && this.$options.next)
+      ((index === slider.indexMax || isContainMaxState) && this.$options.next)
     ) {
       this.$el.setAttribute('disabled', '');
     } else {
@@ -58,11 +62,15 @@ export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderCh
    */
   onClick() {
     const { prev, next } = this.$options;
+    const { slider } = this;
+    if (!slider) {
+      return;
+    }
 
     if (prev) {
-      this.$parent.goPrev();
+      slider.goPrev();
     } else if (next) {
-      this.$parent.goNext();
+      slider.goNext();
     }
   }
 }
