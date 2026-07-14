@@ -16,11 +16,26 @@ title: Track JS API
 
 ## Events
 
-Events are declared with attributes named `data-track:<event>[.modifier…]`. The attribute **value** is an optional JSON object merged into the dispatched payload; the analytics event name is carried in its `event` key.
+Events are declared with attributes named `data-track:<event>[.modifier…]`. The attribute **value** can be:
 
-```html
-<button data-track:click='{"event": "cta_click", "location": "header"}'></button>
-```
+- **a bare event name** — the shorthand for the common case, avoiding JSON in HTML:
+
+  ```html
+  <button data-track:click="add_to_cart"></button>
+  <!-- equivalent to data-track:click='{"event": "add_to_cart"}' -->
+  ```
+
+- **a JSON object** — merged into the dispatched payload, with the event name under its `event` key. Use this when a single event needs its own structured data (the payload ref and options are shared by every event on the element):
+
+  ```html
+  <button data-track:click='{"event": "cta_click", "location": "header"}'></button>
+  ```
+
+- **empty** — the payload then comes entirely from the context, the `payload` ref and/or the `payload` option:
+
+  ```html
+  <div data-track:view data-option-payload='{"event": "impression"}'></div>
+  ```
 
 Several `data-track:*` attributes can be set on the same element to track independent events.
 
@@ -53,13 +68,16 @@ Example: `data-track:input.debounce500`, `data-track:click.prevent.once`.
 The dispatched payload is deep-merged from the following sources, in increasing priority:
 
 1. **Inherited context** — from ancestor `TrackContext` components (see below).
-2. **Component payload** — an optional `<script data-ref="payload" type="application/json">` child, shared by every event on the element.
-3. **Event payload** — the JSON value of the `data-track:<event>` attribute.
+2. **Component payload** — shared by every event on the element, from a `<script data-ref="payload" type="application/json">` child and/or a `data-option-payload` attribute (the option overrides the ref on conflicts).
+3. **Event payload** — the JSON value of the `data-track:<event>` attribute (or the `event` key when the bare-name shorthand is used).
 
 Later sources win on conflicting keys. **Arrays are replaced, not concatenated**, so a more specific layer fully overrides a list (e.g. GA4 `ecommerce.items`) from a broader one.
 
 ```html
-<div data-component="Track" data-track:click='{"event": "select_item"}'>
+<div
+  data-component="Track"
+  data-track:click='{"event": "select_item"}'
+  data-option-payload='{"currency": "EUR"}'>
   <script data-ref="payload" type="application/json">
     { "list": "search-results" }
   </script>
@@ -82,9 +100,10 @@ For a `CustomEvent`, resolve values from its `detail` with `$detail.<path>` plac
 
 ## Options
 
-| Option      | Type     | Default | Description                                           |
-| ----------- | -------- | ------- | ----------------------------------------------------- |
-| `threshold` | `Number` | `0.5`   | Intersection ratio required to fire the `view` event. |
+| Option      | Type     | Default | Description                                                     |
+| ----------- | -------- | ------- | --------------------------------------------------------------- |
+| `threshold` | `Number` | `0.5`   | Intersection ratio required to fire the `view` event.           |
+| `payload`   | `Object` | `{}`    | Base payload shared by every event, from `data-option-payload`. |
 
 ## Refs
 

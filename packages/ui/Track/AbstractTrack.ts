@@ -11,6 +11,7 @@ export interface AbstractTrackProps extends BaseProps {
   };
   $options: {
     threshold: number;
+    payload: Record<string, unknown>;
   };
 }
 
@@ -22,6 +23,30 @@ export interface AbstractTrackProps extends BaseProps {
  */
 function arrayMerge(_destination: unknown[], source: unknown[]) {
   return source;
+}
+
+/**
+ * Parse the value of a `data-track:<event>` attribute.
+ *
+ * - An empty value carries no data (the payload comes from the context, the
+ *   `payload` ref and/or the `payload` option).
+ * - A value starting with `{` is parsed as a JSON payload (escape hatch for
+ *   per-event structured data). May throw on malformed JSON.
+ * - Any other value is a bare token used as the event name, so
+ *   `data-track:click="add_to_cart"` is shorthand for `{ "event": "add_to_cart" }`.
+ */
+function parseEventValue(value: string): Record<string, unknown> {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return {};
+  }
+
+  if (!trimmed.startsWith('{')) {
+    return { event: trimmed };
+  }
+
+  return JSON.parse(trimmed) ?? {};
 }
 
 /**
@@ -52,6 +77,7 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
         type: Number,
         default: 0.5,
       },
+      payload: Object,
     },
   };
 
@@ -76,8 +102,8 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
       if (attr.name.startsWith('data-track:')) {
         const eventDefinition = attr.name.slice(11); // Remove 'data-track:'
         try {
-          const data = attr.value ? JSON.parse(attr.value) : {};
-          this.__trackEvents.add(new TrackEvent(this, eventDefinition, data ?? {}));
+          const data = parseEventValue(attr.value);
+          this.__trackEvents.add(new TrackEvent(this, eventDefinition, data));
         } catch (err) {
           this.$warn(`Invalid JSON in ${attr.name}:`, err);
         }
@@ -88,10 +114,10 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
   }
 
   /**
-   * Get the component's own base payload from the optional `payload` ref, a
+   * Get the component's base payload from the optional `payload` ref, a
    * `<script data-ref="payload" type="application/json">` element.
    */
-  get payload(): Record<string, unknown> {
+  get scriptPayload(): Record<string, unknown> {
     const script = this.$refs.payload;
 
     if (!script) {
@@ -104,6 +130,31 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
       this.$warn('Invalid JSON in the `payload` ref:', err);
       return {};
     }
+  }
+
+  /**
+   * Get the component's base payload from the optional `data-option-payload`
+   * attribute.
+   */
+  get optionPayload(): Record<string, unknown> {
+    try {
+      // OptionsManager parses Object options with `JSON.parse`, which throws
+      // uncaught on malformed values; guard it here.
+      return this.$options.payload ?? {};
+    } catch (err) {
+      this.$warn('Invalid JSON in the `payload` option:', err);
+      return {};
+    }
+  }
+
+  /**
+   * Get the component's base payload, shared by every event on the element.
+   *
+   * It is sourced from both the `payload` ref and the `payload` option; the
+   * option overrides the ref on conflicting keys, mirroring `TrackContext`.
+   */
+  get payload(): Record<string, unknown> {
+    return deepmerge(this.scriptPayload, this.optionPayload, { arrayMerge });
   }
 
   /**

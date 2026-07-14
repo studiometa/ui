@@ -74,6 +74,81 @@ describe('Track component', () => {
     expect(lastPush()).toHaveProperty('event', 'add_to_cart');
   });
 
+  describe('bare event name attribute', () => {
+    it('should treat a non-JSON attribute value as the event name', async () => {
+      const { root } = await mountTree(
+        `<button data-component="Track" data-track:click="add_to_cart"></button>`,
+      );
+
+      (root.querySelector('button') as HTMLButtonElement).click();
+
+      expect(lastPush()).toEqual({ event: 'add_to_cart' });
+    });
+
+    it('should merge the bare event name with the context and base payload', async () => {
+      const { root } = await mountTree(`
+        <div data-component="TrackContext" data-option-context='{"page_type": "product"}'>
+          <button
+            data-component="Track"
+            data-track:click="add_to_cart"
+            data-option-payload='{"location": "footer"}'></button>
+        </div>
+      `);
+
+      (root.querySelector('button') as HTMLButtonElement).click();
+
+      expect(lastPush()).toEqual({
+        page_type: 'product',
+        location: 'footer',
+        event: 'add_to_cart',
+      });
+    });
+  });
+
+  describe('data-option-payload', () => {
+    it('should use the `payload` option as the base payload', async () => {
+      const { root } = await mountTree(
+        `<button
+          data-component="Track"
+          data-track:click='{"event": "cta"}'
+          data-option-payload='{"location": "header", "id": "1"}'></button>`,
+      );
+
+      (root.querySelector('button') as HTMLButtonElement).click();
+
+      expect(lastPush()).toEqual({ event: 'cta', location: 'header', id: '1' });
+    });
+
+    it('should let the `payload` option override the `payload` ref', async () => {
+      const { root } = await mountTree(`
+        <button
+          data-component="Track"
+          data-track:click='{"event": "cta"}'
+          data-option-payload='{"source": "option"}'>
+          <script data-ref="payload" type="application/json">{ "source": "ref", "kept": true }</script>
+        </button>
+      `);
+
+      (root.querySelector('button') as HTMLButtonElement).click();
+
+      // Option wins on conflicts; non-conflicting ref keys are kept.
+      expect(lastPush()).toEqual({ event: 'cta', source: 'option', kept: true });
+    });
+
+    it('should let the per-event attribute override the `payload` option', async () => {
+      const { root } = await mountTree(
+        `<button
+          data-component="Track"
+          data-track:click='{"event": "cta", "location": "event"}'
+          data-option-payload='{"location": "option"}'></button>`,
+      );
+
+      (root.querySelector('button') as HTMLButtonElement).click();
+
+      expect(lastPush()).toEqual({ event: 'cta', location: 'event' });
+    });
+  });
+
   it('should merge the deep-merged context of every ancestor TrackContext, nearer wins', async () => {
     // PDP > Variant > Track tree.
     const { root } = await mountTree(`
@@ -311,6 +386,23 @@ describe('Track component', () => {
 
       (root.querySelector('button') as HTMLButtonElement).click();
 
+      expect(lastPush()).toEqual({ event: 'x' });
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
+    it('should fall back to an empty payload when data-option-payload is invalid JSON', async () => {
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const { root } = await mountTree(
+        `<button
+          data-component="Track"
+          data-option-log
+          data-track:click='{"event": "x"}'
+          data-option-payload='{ not json }'></button>`,
+      );
+
+      const button = root.querySelector('button') as HTMLButtonElement;
+      expect(() => button.click()).not.toThrow();
       expect(lastPush()).toEqual({ event: 'x' });
       expect(spy).toHaveBeenCalled();
       spy.mockRestore();

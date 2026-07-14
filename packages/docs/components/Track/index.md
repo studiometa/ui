@@ -38,7 +38,7 @@ class App extends Base {
 createApp(App);
 ```
 
-Then declare what to track with `data-track:<event>` attributes. The attribute value is an optional JSON payload; the event name is carried in its `event` key.
+Then declare what to track with `data-track:<event>` attributes. The value can be a bare event name (`data-track:click="add_to_cart"`) or, when an event needs its own structured data, a JSON payload whose `event` key holds the name. Data shared by every event on the element can be provided through a `<script data-ref="payload">` child or a `data-option-payload` attribute.
 
 ### Click tracking
 
