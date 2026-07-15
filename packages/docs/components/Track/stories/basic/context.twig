@@ -1,0 +1,38 @@
+<section data-component="TrackContext" class="space-y-4">
+  <script data-ref="context" type="application/json">
+    { "page_type": "product", "product_id": "SKU123" }
+  </script>
+
+  <p class="text-sm text-gray-600">
+    Both buttons inherit <code>page_type</code> and <code>product_id</code> from the
+    outer <code>TrackContext</code>; the nested <code>TrackContext</code> adds
+    <code>variant</code>, which the buttons inherit too.
+  </p>
+
+  <div data-component="TrackContext" class="flex gap-4">
+    <script data-ref="context" type="application/json">
+      { "variant": "red" }
+    </script>
+
+    <button
+      data-component="Track"
+      data-track:click='{"event": "add_to_cart"}'
+      class="px-4 py-2 bg-blue-400 text-white rounded hover:bg-blue-500">
+      Add to Cart
+    </button>
+
+    <button
+      data-component="Track"
+      data-track:click='{"event": "add_to_wishlist"}'
+      class="px-4 py-2 bg-green-400 text-white rounded hover:bg-green-500">
+      Add to Wishlist
+    </button>
+  </div>
+
+  <div>
+    <p class="text-sm font-medium text-gray-700 mb-2">dataLayer:</p>
+    <pre
+      data-debug-datalayer
+      class="p-3 bg-gray-100 rounded text-xs overflow-auto max-h-48 text-gray-800">[]</pre>
+  </div>
+</section>

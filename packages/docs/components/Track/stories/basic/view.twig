@@ -1,0 +1,41 @@
+<div class="space-y-4">
+  <p class="text-sm text-gray-600">
+    Scroll down to see the product cards. Each card tracks an impression when it becomes visible.
+  </p>
+
+  <div class="h-[200px] overflow-y-auto border rounded p-4 space-y-4">
+    <div class="h-[150px] bg-gray-50 rounded flex items-center justify-center text-gray-400">
+      ↓ Scroll down ↓
+    </div>
+
+    <div
+      data-component="Track"
+      data-track:view.once='{"event": "product_impression", "product_id": "SKU001", "product_name": "Product A"}'
+      class="p-4 bg-blue-100 rounded">
+      <strong>Product A</strong> - Impression tracked once when visible
+    </div>
+
+    <div
+      data-component="Track"
+      data-track:view.once='{"event": "product_impression", "product_id": "SKU002", "product_name": "Product B"}'
+      class="p-4 bg-green-100 rounded">
+      <strong>Product B</strong> - Impression tracked once when visible
+    </div>
+
+    <div
+      data-component="Track"
+      data-track:view.once='{"event": "product_impression", "product_id": "SKU003", "product_name": "Product C"}'
+      class="p-4 bg-yellow-100 rounded">
+      <strong>Product C</strong> - Impression tracked once when visible
+    </div>
+
+    <div class="h-[150px]"></div>
+  </div>
+
+  <div>
+    <p class="text-sm font-medium text-gray-700 mb-2">dataLayer:</p>
+    <pre
+      data-debug-datalayer
+      class="p-3 bg-gray-100 rounded text-xs overflow-auto max-h-48 text-gray-800">[]</pre>
+  </div>
+</div>
