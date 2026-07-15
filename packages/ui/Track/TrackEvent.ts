@@ -1,4 +1,4 @@
-import { debounce, throttle } from '@studiometa/js-toolkit/utils';
+import { throttle } from '@studiometa/js-toolkit/utils';
 import type { AbstractTrack } from './AbstractTrack.js';
 
 export type Modifier =
@@ -137,6 +137,7 @@ export class TrackEvent {
   private handler: (event?: Event) => void;
   private observer?: IntersectionObserver;
   private detached = false;
+  private debounceTimer?: ReturnType<typeof setTimeout>;
 
   constructor(track: AbstractTrack, eventDefinition: string, data: Record<string, unknown>) {
     this.track = track;
@@ -149,16 +150,24 @@ export class TrackEvent {
     this.debounceDelay = debounceDelay;
     this.throttleDelay = throttleDelay;
 
-    // Build handler with timing modifiers
-    let handler: (event?: Event) => void = (event?: Event) => this.handleEvent(event);
+    // Build the handler with timing modifiers. The debounce timer is owned by
+    // the instance (rather than js-toolkit's non-cancelable `debounce`) so it
+    // can be cleared on detach; otherwise a pending debounced dispatch could
+    // fire in a later lifecycle after a destroy/remount, once the `detached`
+    // guard has been reset. `throttle` schedules no deferred callback, so it
+    // needs no cancellation.
+    const dispatch = (event?: Event) => this.handleEvent(event);
 
     if (modifiers.includes('debounce')) {
-      handler = debounce(handler, debounceDelay) as typeof handler;
+      this.handler = (event?: Event) => {
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => dispatch(event), debounceDelay);
+      };
     } else if (modifiers.includes('throttle')) {
-      handler = throttle(handler, throttleDelay) as typeof handler;
+      this.handler = throttle(dispatch, throttleDelay) as (event?: Event) => void;
+    } else {
+      this.handler = dispatch;
     }
-
-    this.handler = handler;
   }
 
   /**
@@ -261,6 +270,9 @@ export class TrackEvent {
    */
   detachEvent() {
     this.detached = true;
+    // Cancel any pending debounced dispatch so it cannot fire in a later
+    // lifecycle after a remount.
+    clearTimeout(this.debounceTimer);
     // The `capture` flag must match the one used at registration for the
     // listener to actually be removed.
     this.track.$el.removeEventListener(this.event, this.handler as EventListener, {

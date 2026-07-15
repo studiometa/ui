@@ -424,6 +424,24 @@ describe('Track component', () => {
       // Re-attaching after remount resumes dispatching.
       expect(window.dataLayer).toHaveLength(2);
     });
+
+    it('should cancel a pending debounced dispatch on destroy, even after a remount', async () => {
+      const { root, instances } = await mountTree(
+        `<div data-component="Track" data-track:input.debounce50='{"event": "search"}'></div>`,
+      );
+      const el = root.querySelector('[data-component="Track"]') as HTMLElement;
+
+      // Interact (schedules a 50ms debounce), then destroy mid-window and
+      // remount — which resets the `detached` guard.
+      el.dispatchEvent(new Event('input'));
+      await instances[0].$destroy();
+      await instances[0].$mount();
+
+      // Past the original debounce window: the pre-destroy interaction must not
+      // resurface (it would if the timer were not cancelled on destroy).
+      await wait(120);
+      expect(window.dataLayer ?? []).toHaveLength(0);
+    });
   });
 
   describe('payload isolation and memoization', () => {
