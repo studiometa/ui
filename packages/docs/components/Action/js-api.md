@@ -45,6 +45,8 @@ Modifiers can be chained with a `.` as separator:
 
 Use this option to define the components that should be used as targets to the [effect callback](#effect). Multiple components can be defined by using a single space as delimiter.
 
+When an Action is inside a [`DataScope`](../DataScope/index.md), targets are limited to components in that same nearest scope. Actions outside a `DataScope` keep resolving targets globally.
+
 ::: info Name definition
 The `Action` component will use the `name` property defined in the static `config` object of each class to resolve components on the page.
 

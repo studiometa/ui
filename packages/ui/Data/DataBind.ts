@@ -1,14 +1,19 @@
 import { Base, withGroup } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { isArray, nextTick } from '@studiometa/js-toolkit/utils';
+import { DataScope, getDataScope } from './DataScope.js';
+import type { DataValue } from './DataScope.js';
 import { isInput, isCheckbox, isSelect } from './utils.js';
 
 export interface DataBindProps extends BaseProps {
   $options: {
     prop: string;
     immediate: boolean;
+    key: string;
   };
 }
+
+const EMPTY_DATA = Object.freeze({});
 
 /**
  * DataBind class.
@@ -20,8 +25,29 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
     options: {
       prop: String,
       immediate: Boolean,
+      key: String,
     },
   };
+
+  private __dataScopeResolved = false;
+  private __dataScope?: DataScope;
+
+  get dataScope() {
+    if (!this.__dataScopeResolved) {
+      this.__dataScope = getDataScope(this.$el);
+      this.__dataScopeResolved = true;
+    }
+
+    return this.__dataScope;
+  }
+
+  get group() {
+    return this.$options.group || this.dataScope?.$options.group || '';
+  }
+
+  override get $group() {
+    return this.dataScope?.getGroup(this.group) ?? super.$group;
+  }
 
   /**
    * @deprecated Use the `$group` getter instead.
@@ -30,8 +56,33 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
     return this.$group as Set<this>;
   }
 
+  get dataKey() {
+    if (!this.dataScope) {
+      return '';
+    }
+
+    if (this.$options.key) {
+      return this.$options.key;
+    }
+
+    const { target } = this;
+    if (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLSelectElement ||
+      target instanceof HTMLTextAreaElement
+    ) {
+      return target.name;
+    }
+
+    return '';
+  }
+
+  get $data() {
+    return this.dataScope?.getData(this.group) ?? EMPTY_DATA;
+  }
+
   get multiple() {
-    return this.$options.group.endsWith('[]');
+    return this.group.endsWith('[]');
   }
 
   get target() {
@@ -66,7 +117,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
     this.set(value);
   }
 
-  get() {
+  get(): DataValue {
     const { target, multiple } = this;
 
     if (isSelect(target)) {
@@ -88,9 +139,13 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
 
     if (isCheckbox(target)) {
       if (multiple) {
-        const values = new Set();
+        const values = new Set<string>();
         for (const instance of this.relatedInstances) {
-          if (isCheckbox(instance.target) && instance.target.checked) {
+          if (
+            (!this.dataKey || instance.dataKey === this.dataKey) &&
+            isCheckbox(instance.target) &&
+            instance.target.checked
+          ) {
             values.add(instance.target.value);
           }
         }
@@ -103,7 +158,12 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
     return target[this.prop];
   }
 
-  set(value: boolean | string | string[], dispatch = true) {
+  set(value: DataValue, dispatch = true) {
+    if (dispatch && this.dataScope && this.dataKey) {
+      this.__dispatchScopedValue(value);
+      return;
+    }
+
     const { target, multiple, relatedInstances } = this;
 
     if (dispatch) {
@@ -138,11 +198,43 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
     target[this.prop] = value;
   }
 
-  mounted() {
-    if (this.$options.immediate) {
-      nextTick().then(() => {
-        this.set(this.get());
-      });
+  /**
+   * Publish a keyed value to the scoped group and synchronize matching subscribers.
+   * @internal
+   */
+  __dispatchScopedValue(value: DataValue, updateData = true) {
+    const { dataScope, dataKey, relatedInstances } = this;
+
+    if (!dataScope || !dataKey) {
+      this.set(value);
+      return;
     }
+
+    if (updateData) {
+      dataScope.setValue(this.group, dataKey, value);
+    }
+
+    for (const instance of relatedInstances) {
+      if (instance !== this && (!instance.dataKey || instance.dataKey === dataKey)) {
+        instance.set(value, false);
+      }
+    }
+
+    this.set(value, false);
+  }
+
+  mounted() {
+    if (!this.$options.immediate) {
+      return;
+    }
+
+    if (this.dataScope && this.dataKey) {
+      this.dataScope.hydrate(this.group, this);
+      return;
+    }
+
+    nextTick().then(() => {
+      this.set(this.get());
+    });
   }
 }

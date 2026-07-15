@@ -1,6 +1,7 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { DataBind } from './DataBind.js';
 import type { DataBindProps } from './DataBind.js';
+import type { DataValue } from './DataScope.js';
 import { getCallback } from './utils.js';
 
 export interface DataComputedProps extends DataBindProps {
@@ -22,11 +23,11 @@ export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<Data
     return getCallback(group, `return ${compute};`);
   }
 
-  set(value: boolean | string | string[]) {
+  set(value: DataValue) {
     let newValue = value;
 
     try {
-      newValue = this.compute(value, this.target);
+      newValue = this.compute(value, this.target, this.$data);
     } catch (error) {
       // @todo better handling of errors?
       console.error('Failed', error);

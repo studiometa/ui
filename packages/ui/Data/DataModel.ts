@@ -14,10 +14,15 @@ export class DataModel<T extends BaseProps = BaseProps> extends DataBind<DataMod
     const { target, multiple } = this;
     let value = this.get();
 
-    if (multiple && isCheckbox(target) && !target.checked) {
+    if (multiple && isCheckbox(target) && !target.checked && Array.isArray(value)) {
       const set = new Set(value);
       set.delete(target.value);
       value = Array.from(set);
+    }
+
+    if (this.dataScope && this.dataKey) {
+      this.set(value);
+      return;
     }
 
     for (const instance of this.relatedInstances) {

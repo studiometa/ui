@@ -1,6 +1,6 @@
 import { describe, it, vi, expect } from 'vitest';
 import { Base } from '@studiometa/js-toolkit';
-import { Action } from '@studiometa/ui';
+import { Action, DataScope } from '@studiometa/ui';
 import { h, mount, destroy } from '#test-utils';
 
 async function getContext({
@@ -146,5 +146,48 @@ describe('The Action component', () => {
     expect(action.$el.id).toBe('bar');
     action.$el.dispatchEvent(new Event('click'));
     expect(action.$el.id).toBe('foo');
+  });
+
+  it('should only target instances in the nearest DataScope', async () => {
+    const fn = vi.fn();
+    class Foo extends Base {
+      static config = { name: 'Foo' };
+
+      run() {
+        fn(this);
+      }
+    }
+
+    const scopeRoot = h('div');
+    const actionRoot = h('button', {
+      dataOptionTarget: 'Foo',
+      dataOptionEffect: 'target.run()',
+    });
+    const localRoot = h('div');
+    const nestedScopeRoot = h('div');
+    const nestedRoot = h('div');
+    nestedScopeRoot.append(nestedRoot);
+    scopeRoot.append(actionRoot, localRoot, nestedScopeRoot);
+
+    const siblingScopeRoot = h('div');
+    const siblingRoot = h('div');
+    siblingScopeRoot.append(siblingRoot);
+    const globalRoot = h('div');
+
+    const scope = new DataScope(scopeRoot);
+    const nestedScope = new DataScope(nestedScopeRoot);
+    const siblingScope = new DataScope(siblingScopeRoot);
+    const action = new Action(actionRoot);
+    const local = new Foo(localRoot);
+    const nested = new Foo(nestedRoot);
+    const sibling = new Foo(siblingRoot);
+    const global = new Foo(globalRoot);
+    await mount(scope, nestedScope, siblingScope, action, local, nested, sibling, global);
+
+    actionRoot.dispatchEvent(new Event('click'));
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledWith(local);
+
+    await destroy(scope, nestedScope, siblingScope, action, local, nested, sibling, global);
   });
 });

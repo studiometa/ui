@@ -28,14 +28,21 @@ If the option is explicitly set with the `data-option-prop` attribute, it will o
 - Type: `boolean`
 - Default: `false`
 
-Use the `data-option-immediate` attribute on a `DataBind` component to propage its value on mount to other components in the same group.
+Use the `data-option-immediate` attribute on a `DataBind` component to propagate its value on mount to other components in the same group. Immediate keyed values inside a [`DataScope`](../DataScope/index.md) are collected before subscribers are notified.
 
 ### `group`
 
 - Type: `string`
 - Default: `''`
 
-The `group` option is used to group instances together. All related instances will be updated when the value changes.
+The `group` option is used to group instances together. All related instances will be updated when the value changes. Inside a [`DataScope`](../DataScope/index.md), an omitted group inherits the scope's group and remains isolated from other scopes.
+
+### `key`
+
+- Type: `string`
+- Default: the native form control `name`, when scoped
+
+A keyed value updates only bindings with the same key while notifying unkeyed subscribers. Keys are local to a `DataScope`; unscoped bindings preserve scalar group behavior.
 
 When using it with multiple checkboxes or select multiple, use the `[]` suffix to push each selected value in an array. See the [checkboxes example](/components/DataBind/examples.md#checkboxes) for more details on how this works.
 
@@ -61,13 +68,15 @@ Wether new values should be pushed to an array instead of a single value. This i
 
 ## Methods
 
-### `set(value: string | boolean | string[], dispatch = true)`
+### `set(value: DataValue, dispatch = true)`
 
 Set the value for the current instance and dispatch it to others if the second parameter `dispatch` is set to `true` (default).
 
+`DataValue` accepts `boolean`, `string`, `string[]`, `number`, `Date`, `null`, or `undefined`.
+
 **Params**
 
-- `value` (`string | boolean | string[]`): the value to set
+- `value` (`DataValue`): the value to set
 - `dispatch` (`boolean`, default to `true`): wether to dispatch the value to other related instances or not
 
 ### `get()`

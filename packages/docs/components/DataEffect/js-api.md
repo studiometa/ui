@@ -14,7 +14,7 @@ The `DataEffect` component extends the [`DataBind` component](../DataBind/js-api
 - Type: `string`
 - Default: `''`
 
-Use this option to define a piece of JavaScript code to be executed when the value changes. The `value` and `target` variables can be used to access both the current value of the binding and the DOM element targeted by the changes.
+Use this option to define a piece of JavaScript code to be executed when the value changes. The `value` and `target` variables can be used to access both the current value of the binding and the DOM element targeted by the changes. Inside a `DataScope`, the third `$data` argument is a frozen snapshot of all keyed values in the resolved group.
 
 **Example**
 

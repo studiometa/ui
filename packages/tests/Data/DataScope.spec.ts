@@ -1,0 +1,194 @@
+import { describe, expect, it } from 'vitest';
+import { DataBind, DataComputed, DataEffect, DataModel, DataScope } from '@studiometa/ui';
+import { nextTick } from '@studiometa/js-toolkit/utils';
+import { destroy, hConnected as h, mount } from '#test-utils';
+
+describe('The DataScope component', () => {
+  it('should inherit its default group while allowing explicit overrides', async () => {
+    const root = h('div');
+    const inheritedAElement = h('div');
+    const inheritedBElement = h('div');
+    const overriddenElement = h('div', { dataOptionGroup: 'other' });
+    root.append(inheritedAElement, inheritedBElement, overriddenElement);
+
+    const scope = new DataScope(root);
+    const inheritedA = new DataBind(inheritedAElement);
+    const inheritedB = new DataBind(inheritedBElement);
+    const overridden = new DataBind(overriddenElement);
+    await mount(scope, inheritedA, inheritedB, overridden);
+
+    expect(scope.$options.group).toBe('default');
+    expect(inheritedA.group).toBe('default');
+    expect(inheritedA.$group).toBe(inheritedB.$group);
+    expect(overridden.group).toBe('other');
+    expect(overridden.$group).not.toBe(inheritedA.$group);
+
+    await destroy(scope, inheritedA, inheritedB, overridden);
+  });
+
+  it('should isolate sibling scopes and use the nearest nested scope', async () => {
+    const outerRoot = h('div', { dataOptionGroup: 'shared' });
+    const outerElement = h('div');
+    const nestedRoot = h('div', { dataOptionGroup: 'shared' });
+    const nestedElement = h('div');
+    nestedRoot.append(nestedElement);
+    outerRoot.append(outerElement, nestedRoot);
+
+    const siblingRoot = h('div', { dataOptionGroup: 'shared' });
+    const siblingElement = h('div');
+    siblingRoot.append(siblingElement);
+
+    const outerScope = new DataScope(outerRoot);
+    const nestedScope = new DataScope(nestedRoot);
+    const siblingScope = new DataScope(siblingRoot);
+    const outer = new DataBind(outerElement);
+    const nested = new DataBind(nestedElement);
+    const sibling = new DataBind(siblingElement);
+    await mount(outerScope, nestedScope, siblingScope, outer, nested, sibling);
+
+    expect(outer.$group).not.toBe(nested.$group);
+    expect(outer.$group).not.toBe(sibling.$group);
+    expect(nested.dataScope).toBe(nestedScope);
+
+    outer.set('outer');
+    expect(nested.value).toBe('');
+    expect(sibling.value).toBe('');
+
+    await destroy(outerScope, nestedScope, siblingScope, outer, nested, sibling);
+  });
+
+  it('should keep keyed values independent and synchronize equal keys', async () => {
+    const root = h('div', { dataOptionGroup: 'person' });
+    const firstInput = h('input', { name: 'first', value: 'Ada' });
+    const lastInput = h('input', { name: 'last', value: 'Lovelace' });
+    const firstOutput = h('div', { dataOptionKey: 'first' });
+    root.append(firstInput, lastInput, firstOutput);
+
+    const scope = new DataScope(root);
+    const first = new DataModel(firstInput);
+    const last = new DataModel(lastInput);
+    const output = new DataBind(firstOutput);
+    await mount(scope, first, last, output);
+
+    firstInput.value = 'Grace';
+    firstInput.dispatchEvent(new Event('input'));
+    expect(first.value).toBe('Grace');
+    expect(output.value).toBe('Grace');
+    expect(last.value).toBe('Lovelace');
+    expect(first.$data).toEqual({ first: 'Grace' });
+    expect(Object.isFrozen(first.$data)).toBe(true);
+
+    await destroy(scope, first, last, output);
+  });
+
+  it('should recompute unkeyed subscribers for every keyed update', async () => {
+    const root = h('div', { dataOptionGroup: 'values' });
+    const firstInput = h('input', {
+      name: 'first',
+      value: 'A',
+      dataOptionImmediate: true,
+    });
+    const lastInput = h('input', {
+      name: 'last',
+      value: 'B',
+      dataOptionImmediate: true,
+    });
+    const computedElement = h('div', {
+      dataOptionCompute: '$data.first + $data.last',
+    });
+    root.append(firstInput, lastInput, computedElement);
+
+    const scope = new DataScope(root);
+    const first = new DataModel(firstInput);
+    const last = new DataModel(lastInput);
+    const computed = new DataComputed(computedElement);
+    await mount(scope, first, last, computed);
+    await nextTick();
+    expect(computed.value).toBe('AB');
+
+    firstInput.value = 'AB';
+    firstInput.dispatchEvent(new Event('input'));
+    expect(computed.value).toBe('ABB');
+
+    await destroy(scope, first, last, computed);
+  });
+
+  it('should hydrate all immediate keyed sources before notifying subscribers', async () => {
+    const root = h('div', { dataOptionGroup: 'person' });
+    const firstInput = h('input', {
+      name: 'first',
+      value: 'Ada',
+      dataOptionImmediate: true,
+    });
+    const lastInput = h('input', {
+      name: 'last',
+      value: 'Lovelace',
+      dataOptionImmediate: true,
+    });
+    const computedElement = h('div', {
+      dataOptionCompute: '$data.first + " " + $data.last',
+    });
+    const effectElement = h('div', {
+      dataOptionEffect:
+        'target.dataset.values = (target.dataset.values || "") + $data.first + " " + $data.last + "|"; target.dataset.frozen = Object.isFrozen($data)',
+    });
+    root.append(firstInput, lastInput, computedElement, effectElement);
+
+    const scope = new DataScope(root);
+    const first = new DataModel(firstInput);
+    const last = new DataModel(lastInput);
+    const computed = new DataComputed(computedElement);
+    const effect = new DataEffect(effectElement);
+    await mount(scope, first, last, computed, effect);
+    await nextTick();
+
+    expect(computed.value).toBe('Ada Lovelace');
+    expect(effectElement.dataset.values?.split('|').filter(Boolean)).toEqual([
+      'Ada Lovelace',
+      'Ada Lovelace',
+    ]);
+    expect(effectElement.dataset.frozen).toBe('true');
+
+    await destroy(scope, first, last, computed, effect);
+  });
+
+  it('should ignore immediate sources destroyed before hydration', async () => {
+    const root = h('div', { dataOptionGroup: 'person' });
+    const input = h('input', {
+      name: 'first',
+      value: 'Ada',
+      dataOptionImmediate: true,
+    });
+    const effectElement = h('div', {
+      dataOptionEffect: 'target.dataset.called = "true"',
+    });
+    root.append(input, effectElement);
+
+    const scope = new DataScope(root);
+    const source = new DataModel(input);
+    const effect = new DataEffect(effectElement);
+    await mount(scope, source, effect);
+    await destroy(source);
+    await nextTick();
+
+    expect(scope.getData('person')).toEqual({});
+    expect(effectElement.dataset.called).toBeUndefined();
+
+    await destroy(scope, effect);
+  });
+
+  it('should preserve value and target callback arguments with scoped data', () => {
+    const root = h('div');
+    const computedElement = h('div', {
+      dataOptionCompute: 'value + target.dataset.suffix + Object.isFrozen($data)',
+      dataSuffix: '-target-',
+    });
+    root.append(computedElement);
+
+    new DataScope(root);
+    const computed = new DataComputed(computedElement);
+    computed.set('value');
+
+    expect(computed.value).toBe('value-target-true');
+  });
+});

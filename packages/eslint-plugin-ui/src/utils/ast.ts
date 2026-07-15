@@ -36,6 +36,7 @@ export const UI_COMPONENT_NAMES = new Set([
   'DataComputed',
   'DataEffect',
   'DataModel',
+  'DataScope',
   'Draggable',
   'Figure',
   'FigureVideo',

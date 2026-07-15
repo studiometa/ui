@@ -1,6 +1,7 @@
 import { getInstances } from '@studiometa/js-toolkit';
 import type { Base } from '@studiometa/js-toolkit';
 import { isFunction } from '@studiometa/js-toolkit/utils';
+import { getDataScope } from '../Data/DataScope.js';
 
 /**
  * Extract component name and an optional additional selector from a string.
@@ -129,9 +130,14 @@ export class ActionEvent<T extends Base> {
     });
 
     const targets = [] as Array<Record<string, Base>>;
+    const actionScope = getDataScope(this.action.$el);
 
     for (const instance of getInstances()) {
       const { name } = instance.__config;
+
+      if (actionScope && getDataScope(instance.$el) !== actionScope) {
+        continue;
+      }
 
       for (const part of parts) {
         const shouldPush =
