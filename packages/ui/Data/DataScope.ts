@@ -26,6 +26,32 @@ interface DataScopeGroup {
 
 const EMPTY_DATA = Object.freeze({});
 
+function cloneValue(value: DataValue): DataValue {
+  if (Array.isArray(value)) {
+    return [...value];
+  }
+
+  if (value instanceof Date) {
+    return new Date(value.getTime());
+  }
+
+  return value;
+}
+
+function createSnapshot(values: Map<string, DataValue>): Readonly<Record<string, DataValue>> {
+  const entries = Array.from(values, ([key, value]) => {
+    const snapshotValue = cloneValue(value);
+
+    if (Array.isArray(snapshotValue) || snapshotValue instanceof Date) {
+      Object.freeze(snapshotValue);
+    }
+
+    return [key, snapshotValue] as const;
+  });
+
+  return Object.freeze(Object.fromEntries(entries));
+}
+
 /**
  * Define a local boundary and a default group for descendant Data components.
  * @link https://ui.studiometa.dev/components/DataScope/
@@ -76,8 +102,8 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
 
   setValue(group: string, key: string, value: DataValue) {
     const record = this.getRecord(group);
-    record.values.set(key, value);
-    record.data = Object.freeze(Object.fromEntries(record.values));
+    record.values.set(key, cloneValue(value));
+    record.data = createSnapshot(record.values);
   }
 
   deleteValue(group: string, key: string) {
@@ -87,12 +113,12 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
     );
 
     if (remainingSource) {
-      record.values.set(key, remainingSource.get());
+      record.values.set(key, cloneValue(remainingSource.get()));
     } else {
       record.values.delete(key);
     }
 
-    record.data = Object.freeze(Object.fromEntries(record.values));
+    record.data = createSnapshot(record.values);
   }
 
   hydrate(group: string, instance: DataScopeMember) {
@@ -111,14 +137,14 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
         for (const source of record.hydration) {
           if (source.$isMounted && source.$el.isConnected && source.dataKey) {
             sources.set(source.dataKey, source);
-            record.values.set(source.dataKey, source.get());
+            record.values.set(source.dataKey, cloneValue(source.get()));
           }
         }
       }
 
       record.hydration.clear();
       record.hydrationPending = false;
-      record.data = Object.freeze(Object.fromEntries(record.values));
+      record.data = createSnapshot(record.values);
 
       for (const source of sources.values()) {
         source.__dispatchScopedValue(source.get(), false);

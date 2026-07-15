@@ -111,6 +111,35 @@ describe('The DataScope component', () => {
     await destroy(scope);
   });
 
+  it('should clone and freeze mutable snapshot values', () => {
+    const scope = new DataScope(h('div'));
+    const items = ['one'];
+    const date = new Date('2026-01-01');
+
+    scope.setValue('values', 'items', items);
+    scope.setValue('values', 'date', date);
+    const data = scope.getData('values');
+
+    expect(data.items).toEqual(items);
+    expect(data.items).not.toBe(items);
+    expect(Object.isFrozen(data.items)).toBe(true);
+    expect(data.date).toEqual(date);
+    expect(data.date).not.toBe(date);
+    expect(Object.isFrozen(data.date)).toBe(true);
+
+    items.push('two');
+    date.setFullYear(2030);
+    (data.date as Date).setFullYear(2031);
+    scope.setValue('values', 'other', 'value');
+
+    expect(data.items).toEqual(['one']);
+    expect(scope.getData('values')).toEqual({
+      items: ['one'],
+      date: new Date('2026-01-01'),
+      other: 'value',
+    });
+  });
+
   it('should recompute unkeyed subscribers for every keyed update', async () => {
     const root = h('div', { dataOptionGroup: 'values' });
     const firstInput = h('input', {
