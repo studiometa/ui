@@ -237,4 +237,10 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
       this.set(this.get());
     });
   }
+
+  destroyed() {
+    if (this.dataScope && this.dataKey) {
+      this.dataScope.deleteValue(this.group, this.dataKey);
+    }
+  }
 }

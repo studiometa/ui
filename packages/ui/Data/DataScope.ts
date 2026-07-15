@@ -80,6 +80,21 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
     record.data = Object.freeze(Object.fromEntries(record.values));
   }
 
+  deleteValue(group: string, key: string) {
+    const record = this.getRecord(group);
+    const remainingSource = Array.from(record.instances).find(
+      (instance) => instance.dataKey === key,
+    );
+
+    if (remainingSource) {
+      record.values.set(key, remainingSource.get());
+    } else {
+      record.values.delete(key);
+    }
+
+    record.data = Object.freeze(Object.fromEntries(record.values));
+  }
+
   hydrate(group: string, instance: DataScopeMember) {
     const record = this.getRecord(group);
     record.hydration.add(instance);

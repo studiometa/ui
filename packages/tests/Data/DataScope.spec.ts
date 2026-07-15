@@ -81,6 +81,36 @@ describe('The DataScope component', () => {
     await destroy(scope, first, last, output);
   });
 
+  it('should remove keyed data when its last source is destroyed', async () => {
+    const root = h('div', { dataOptionGroup: 'person' });
+    const primaryInput = h('input', {
+      name: 'first',
+      value: 'Ada',
+      dataOptionImmediate: true,
+    });
+    const secondaryInput = h('input', {
+      name: 'first',
+      value: 'Ada',
+      dataOptionImmediate: true,
+    });
+    root.append(primaryInput, secondaryInput);
+
+    const scope = new DataScope(root);
+    const primary = new DataModel(primaryInput);
+    const secondary = new DataModel(secondaryInput);
+    await mount(scope, primary, secondary);
+    await nextTick();
+    expect(scope.getData('person')).toEqual({ first: 'Ada' });
+
+    await destroy(primary);
+    expect(scope.getData('person')).toEqual({ first: 'Ada' });
+
+    await destroy(secondary);
+    expect(scope.getData('person')).toEqual({});
+
+    await destroy(scope);
+  });
+
   it('should recompute unkeyed subscribers for every keyed update', async () => {
     const root = h('div', { dataOptionGroup: 'values' });
     const firstInput = h('input', {
