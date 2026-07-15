@@ -155,6 +155,13 @@ describe('The DataBind component', () => {
     expect(checkbox.value).toBe(true);
     checkbox.toggle();
     expect(checkbox.value).toBe(false);
+    checkbox.toggle('open', 'closed');
+    expect(checkbox.value).toBe(false);
+
+    const radioElement = h('input', { type: 'radio', value: 'one' });
+    const radio = new DataBind(radioElement);
+    radio.toggle('one', '');
+    expect(radioElement.checked).toBe(false);
 
     const state = new DataBind(h('div'));
     state.toggle('open', 'closed');

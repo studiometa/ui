@@ -81,7 +81,9 @@ Set the value for the current instance and dispatch it to others if the second p
 
 ### `toggle(onValue = true, offValue = false)`
 
-Toggle between two values and dispatch the result to the group. Custom values can describe disclosure state without repeating comparison logic in an Action:
+Toggle between two values and dispatch the result to the group. Single checkboxes support the default boolean values; custom values require a target that can represent them without coercing them to `checked`. Radio inputs are not supported.
+
+Custom values can describe disclosure state without repeating comparison logic in an Action:
 
 ```html
 <button

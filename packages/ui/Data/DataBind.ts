@@ -242,6 +242,16 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   }
 
   toggle(onValue: DataValue = true, offValue: DataValue = false) {
+    const isRadio = isInput(this.target) && this.target.type === 'radio';
+    const hasCustomCheckboxValues =
+      isCheckbox(this.target) &&
+      (typeof onValue !== 'boolean' || typeof offValue !== 'boolean');
+
+    if (isRadio || hasCustomCheckboxValues) {
+      this.$warn('The toggle() values can not be represented by this input.');
+      return;
+    }
+
     this.set(valuesEqual(this.value, onValue) ? offValue : onValue);
   }
 
