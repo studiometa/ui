@@ -203,6 +203,14 @@ export class TrackEvent {
   }
 
   /**
+   * Trigger the handler manually, e.g. for the synthetic `mounted` event, so
+   * timing modifiers and the detached guard apply consistently.
+   */
+  trigger() {
+    this.handler();
+  }
+
+  /**
    * Attach the event listener for standard DOM events.
    */
   attachEvent() {

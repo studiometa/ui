@@ -211,10 +211,11 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
         // Resolve the context on the next frame so an ancestor TrackContext
         // mounted just after this component is still taken into account. Guard
         // against a same-frame destroy (e.g. an SPA route change) so we never
-        // dispatch for an unmounted component.
+        // dispatch for an unmounted component. Route through the TrackEvent
+        // handler so timing modifiers apply consistently with other events.
         nextFrame(() => {
           if (this.$isMounted) {
-            this.send(trackEvent.data);
+            trackEvent.trigger();
           }
         });
       } else if (trackEvent.event === 'view') {

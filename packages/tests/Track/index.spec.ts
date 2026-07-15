@@ -289,6 +289,27 @@ describe('Track component', () => {
       expect(lastPush()).toEqual({ page_type: 'product', event: 'page_view' });
     });
 
+    it('should apply timing modifiers to the mounted event', async () => {
+      window.dataLayer = [];
+      const root = h('div');
+      root.innerHTML = `<div data-component="Track" data-track:mounted.debounce500='{"event": "page_view"}'></div>`;
+      const el = root.querySelector('[data-component="Track"]') as HTMLElement;
+
+      vi.useFakeTimers();
+      const track = new Track(el);
+      track.$mount();
+
+      // Flush the mounted deferral (nextFrame → rAF → setTimeout 16), but not
+      // yet the 500ms debounce window.
+      await vi.advanceTimersByTimeAsync(50);
+      expect(window.dataLayer).toHaveLength(0);
+
+      await vi.advanceTimersByTimeAsync(500);
+      expect(window.dataLayer).toHaveLength(1);
+      expect(lastPush()).toEqual({ event: 'page_view' });
+      vi.useRealTimers();
+    });
+
     it('should not dispatch when destroyed before the deferred mounted frame', async () => {
       const root = h('div');
       root.innerHTML = `<div data-component="Track" data-track:mounted='{"event": "page_view"}'></div>`;
