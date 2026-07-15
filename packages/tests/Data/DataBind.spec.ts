@@ -272,6 +272,18 @@ describe('The DataBind component', () => {
     expect(button.textContent).toBe('Selected: true');
   });
 
+  it('should resolve acronym-cased DOM properties', () => {
+    const div = h('div', {
+      'data-bind:prop.inner-html': '`<strong>${value}</strong>`',
+    });
+    const instance = new DataBind(div);
+
+    instance.set('Content');
+
+    expect(div.innerHTML).toBe('<strong>Content</strong>');
+    expect((div as HTMLElement & { innerHtml?: string }).innerHtml).toBeUndefined();
+  });
+
   it('should pass the raw value through empty virtual bindings', () => {
     const div = h('div', {
       'data-bind:prop.title': '',

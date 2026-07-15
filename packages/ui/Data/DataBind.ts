@@ -19,8 +19,21 @@ type VirtualBinding =
   | { type: 'text'; expression: string }
   | { type: 'prop' | 'attr' | 'class' | 'style'; name: string; expression: string };
 
-function camelize(value: string) {
-  return value.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
+function resolvePropertyName(target: HTMLElement, name: string) {
+  const normalizedName = name.replaceAll('-', '').toLowerCase();
+  let current: object | null = target;
+
+  while (current) {
+    const property = Object.getOwnPropertyNames(current).find(
+      (candidate) => candidate.toLowerCase() === normalizedName,
+    );
+    if (property) {
+      return property;
+    }
+    current = Object.getPrototypeOf(current);
+  }
+
+  return name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
 }
 
 /**
@@ -262,7 +275,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
 
       switch (binding.type) {
         case 'prop':
-          this.target[camelize(binding.name)] = result;
+          this.target[resolvePropertyName(this.target, binding.name)] = result;
           break;
         case 'attr':
           if (result === false || result === null || result === undefined) {
