@@ -41,6 +41,41 @@ describe('TrackEvent custom event handling', () => {
     });
   });
 
+  it('should resolve `$detail.*` placeholders nested inside arrays', async () => {
+    const el = h('div', {
+      dataComponent: 'Track',
+      'data-track:add-to-cart': JSON.stringify({
+        event: 'add_to_cart',
+        ecommerce: {
+          items: [{ item_id: '$detail.id', price: '$detail.price' }],
+        },
+      }),
+    });
+    await mountTrack(el);
+
+    el.dispatchEvent(new CustomEvent('add-to-cart', { detail: { id: 'SKU1', price: 29.9 } }));
+
+    expect(lastPush()).toEqual({
+      event: 'add_to_cart',
+      ecommerce: { items: [{ item_id: 'SKU1', price: 29.9 }] },
+    });
+  });
+
+  it('should treat a falsy CustomEvent detail as empty (no literal placeholder leak)', async () => {
+    const el = h('div', {
+      dataComponent: 'Track',
+      'data-track:ping': JSON.stringify({ event: 'ping', value: '$detail.value' }),
+    });
+    await mountTrack(el);
+
+    el.dispatchEvent(new CustomEvent('ping', { detail: 0 }));
+
+    // The placeholder resolves to undefined, never the literal "$detail.value".
+    const push = lastPush() as Record<string, unknown>;
+    expect(push.event).toBe('ping');
+    expect(push.value).toBeUndefined();
+  });
+
   it('should merge the full event detail with the `.detail` modifier', async () => {
     const el = h('div', {
       dataComponent: 'Track',

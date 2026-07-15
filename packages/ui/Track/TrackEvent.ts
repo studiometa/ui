@@ -82,17 +82,31 @@ export function resolveDetailPlaceholders(
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(data)) {
-    if (typeof value === 'string' && value.startsWith('$detail.')) {
-      const path = value.slice(8); // Remove '$detail.'
-      result[key] = getNestedValue(detail, path);
-    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
-      result[key] = resolveDetailPlaceholders(value as Record<string, unknown>, detail);
-    } else {
-      result[key] = value;
-    }
+    result[key] = resolveDetailValue(value, detail);
   }
 
   return result;
+}
+
+/**
+ * Resolve `$detail.*` placeholders in an arbitrary value, descending into both
+ * objects and arrays so placeholders nested inside arrays (e.g. GA4
+ * `ecommerce.items`) are resolved too.
+ */
+function resolveDetailValue(value: unknown, detail: Record<string, unknown>): unknown {
+  if (typeof value === 'string' && value.startsWith('$detail.')) {
+    return getNestedValue(detail, value.slice(8)); // Remove '$detail.'
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveDetailValue(item, detail));
+  }
+
+  if (value && typeof value === 'object') {
+    return resolveDetailPlaceholders(value as Record<string, unknown>, detail);
+  }
+
+  return value;
 }
 
 /**
@@ -120,7 +134,7 @@ export class TrackEvent {
   debounceDelay: number;
   throttleDelay: number;
 
-  private handler: EventListener;
+  private handler: (event?: Event) => void;
   private observer?: IntersectionObserver;
   private detached = false;
 
@@ -128,19 +142,20 @@ export class TrackEvent {
     this.track = track;
     this.data = data;
 
-    const { event, modifiers, debounceDelay, throttleDelay } = parseEventDefinition(eventDefinition);
+    const { event, modifiers, debounceDelay, throttleDelay } =
+      parseEventDefinition(eventDefinition);
     this.event = event;
     this.modifiers = modifiers;
     this.debounceDelay = debounceDelay;
     this.throttleDelay = throttleDelay;
 
     // Build handler with timing modifiers
-    let handler: EventListener = (event: Event) => this.handleEvent(event);
+    let handler: (event?: Event) => void = (event?: Event) => this.handleEvent(event);
 
     if (modifiers.includes('debounce')) {
-      handler = debounce(handler, debounceDelay) as EventListener;
+      handler = debounce(handler, debounceDelay) as typeof handler;
     } else if (modifiers.includes('throttle')) {
-      handler = throttle(handler, throttleDelay) as EventListener;
+      handler = throttle(handler, throttleDelay) as typeof handler;
     }
 
     this.handler = handler;
@@ -149,32 +164,38 @@ export class TrackEvent {
   /**
    * Handle the DOM event and dispatch tracking data.
    */
-  handleEvent(event: Event) {
+  handleEvent(event?: Event) {
     const { modifiers, data, track } = this;
 
-    // A debounced/throttled handler can still fire after the component is
-    // destroyed; bail out so we never dispatch from a detached instance.
+    // A debounced/throttled handler — or a queued IntersectionObserver
+    // notification — can still fire after the component is destroyed; bail out
+    // so we never dispatch from a detached instance.
     if (this.detached) {
       return;
     }
 
-    if (modifiers.includes('prevent')) {
+    if (event && modifiers.includes('prevent')) {
       event.preventDefault();
     }
 
-    if (modifiers.includes('stop')) {
+    if (event && modifiers.includes('stop')) {
       event.stopPropagation();
     }
 
-    // Handle CustomEvent detail merging
+    // Handle CustomEvent detail merging. A non-object detail (0, false, '', …)
+    // is treated as an empty detail so placeholders resolve to `undefined`
+    // instead of leaking the literal `$detail.*` string.
     let finalData = data;
-    if (event instanceof CustomEvent && event.detail) {
-      // Check for .detail modifier (merge full detail)
+    if (event instanceof CustomEvent) {
+      const detail =
+        event.detail && typeof event.detail === 'object'
+          ? (event.detail as Record<string, unknown>)
+          : {};
+
       if (modifiers.includes('detail')) {
-        finalData = { ...data, ...event.detail };
+        finalData = { ...data, ...detail };
       } else {
-        // Resolve $detail.* placeholders
-        finalData = resolveDetailPlaceholders(data, event.detail);
+        finalData = resolveDetailPlaceholders(data, detail);
       }
     }
 
@@ -188,7 +209,7 @@ export class TrackEvent {
     const { event, modifiers, handler, track } = this;
     this.detached = false; // re-attaching after a destroy/remount cycle
 
-    track.$el.addEventListener(event, handler, {
+    track.$el.addEventListener(event, handler as EventListener, {
       capture: modifiers.includes('capture'),
       once: modifiers.includes('once'),
       passive: modifiers.includes('passive'),
@@ -199,15 +220,21 @@ export class TrackEvent {
    * Attach IntersectionObserver for the "view" event.
    */
   attachViewEvent() {
-    const { modifiers, track, data } = this;
+    const { modifiers, track, handler } = this;
     this.detached = false; // re-attaching after a destroy/remount cycle
     const threshold = track.$options.threshold;
 
     this.observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting && entry.intersectionRatio >= threshold) {
-            track.send(data);
+          // Rely on `isIntersecting` (the observer's own `threshold` controls
+          // sensitivity). Comparing `intersectionRatio >= threshold` would make
+          // impressions unreachable for elements taller than the viewport,
+          // whose ratio can never approach a non-zero threshold.
+          if (entry.isIntersecting) {
+            // Dispatch through the shared handler so timing modifiers and the
+            // detached guard apply to the `view` event too.
+            handler();
 
             if (modifiers.includes('once')) {
               this.observer?.disconnect();
@@ -228,7 +255,7 @@ export class TrackEvent {
     this.detached = true;
     // The `capture` flag must match the one used at registration for the
     // listener to actually be removed.
-    this.track.$el.removeEventListener(this.event, this.handler, {
+    this.track.$el.removeEventListener(this.event, this.handler as EventListener, {
       capture: this.modifiers.includes('capture'),
     });
     this.observer?.disconnect();

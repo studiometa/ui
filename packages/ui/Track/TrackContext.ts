@@ -1,6 +1,7 @@
 import deepmerge from 'deepmerge';
 import { Base } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import { arrayMerge } from './utils.js';
 
 export interface TrackContextProps extends BaseProps {
   $refs: {
@@ -9,15 +10,6 @@ export interface TrackContextProps extends BaseProps {
   $options: {
     context: Record<string, unknown>;
   };
-}
-
-/**
- * Array merge strategy for `deepmerge`: replace the destination array with the
- * source array instead of concatenating. See {@link AbstractTrack} for the
- * rationale.
- */
-function arrayMerge(_destination: unknown[], source: unknown[]) {
-  return source;
 }
 
 /**

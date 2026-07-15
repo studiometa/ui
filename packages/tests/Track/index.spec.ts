@@ -288,6 +288,22 @@ describe('Track component', () => {
 
       expect(lastPush()).toEqual({ page_type: 'product', event: 'page_view' });
     });
+
+    it('should not dispatch when destroyed before the deferred mounted frame', async () => {
+      const root = h('div');
+      root.innerHTML = `<div data-component="Track" data-track:mounted='{"event": "page_view"}'></div>`;
+      const el = root.querySelector('[data-component="Track"]') as HTMLElement;
+
+      const track = new Track(el);
+      await track.$mount();
+      // Destroy within the same frame, before the deferred send runs.
+      await track.$destroy();
+
+      await wait(50);
+
+      // The $isMounted guard prevents a dispatch for the unmounted component.
+      expect(window.dataLayer ?? []).toHaveLength(0);
+    });
   });
 
   describe('view event (IntersectionObserver)', () => {
@@ -336,6 +352,34 @@ describe('Track component', () => {
       expect(window.dataLayer).toHaveLength(1);
       expect(observer.disconnect).toHaveBeenCalled();
     });
+
+    it('should dispatch on any visibility, even a ratio below the threshold (tall element)', async () => {
+      const { root } = await mountTree(
+        `<div data-component="Track" data-option-threshold="0.5" data-track:view='{"event": "impression"}'></div>`,
+      );
+
+      const el = root.querySelector('[data-component="Track"]') as HTMLElement;
+      // A tall element that can only ever be 20% visible: isIntersecting is
+      // true but the ratio stays below the threshold. It must still dispatch.
+      await mockIsIntersecting(el, true, 0.2);
+
+      expect(window.dataLayer).toHaveLength(1);
+    });
+
+    it('should apply timing modifiers to the view event', async () => {
+      const { root } = await mountTree(
+        `<div data-component="Track" data-track:view.throttle1000='{"event": "impression"}'></div>`,
+      );
+
+      const el = root.querySelector('[data-component="Track"]') as HTMLElement;
+      // Three intersections well within the throttle window: only the leading
+      // dispatch goes through.
+      await mockIsIntersecting(el, true);
+      await mockIsIntersecting(el, false);
+      await mockIsIntersecting(el, true);
+
+      expect(window.dataLayer).toHaveLength(1);
+    });
   });
 
   describe('lifecycle', () => {
@@ -358,6 +402,43 @@ describe('Track component', () => {
       el.click();
       // Re-attaching after remount resumes dispatching.
       expect(window.dataLayer).toHaveLength(2);
+    });
+  });
+
+  describe('payload isolation and memoization', () => {
+    it('should not share the array instance across dispatches', async () => {
+      const { root } = await mountTree(
+        `<button data-component="Track" data-track:click='{"event": "e", "items": [1, 2]}'></button>`,
+      );
+      const button = root.querySelector('button') as HTMLButtonElement;
+
+      button.click();
+      // A consumer mutates the pushed array in place.
+      (window.dataLayer.at(-1) as { items: number[] }).items.push(99);
+
+      button.click();
+      // The second dispatch is unaffected by the mutation of the first.
+      expect((window.dataLayer.at(-1) as { items: number[] }).items).toEqual([1, 2]);
+    });
+
+    it('should resolve the ancestor context only once across dispatches', async () => {
+      const { root, instances } = await mountTree(`
+        <div data-component="TrackContext" data-option-context='{"page_type": "product"}'>
+          <button data-component="Track" data-track:click="cta"></button>
+        </div>
+      `);
+      const track = instances.find((i) => i instanceof Track) as Track;
+      const spy = vi.spyOn(track, '$closest');
+
+      const button = root.querySelector('button') as HTMLButtonElement;
+      button.click();
+      button.click();
+      button.click();
+
+      // Context is memoized: the ancestor chain is walked once, not per click.
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(lastPush()).toEqual({ page_type: 'product', event: 'cta' });
+      spy.mockRestore();
     });
   });
 

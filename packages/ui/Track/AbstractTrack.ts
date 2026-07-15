@@ -1,9 +1,10 @@
 import deepmerge from 'deepmerge';
 import { Base } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { nextFrame } from '@studiometa/js-toolkit/utils';
+import { memo, nextFrame } from '@studiometa/js-toolkit/utils';
 import { TrackContext } from './TrackContext.js';
 import { TrackEvent } from './TrackEvent.js';
+import { arrayMerge } from './utils.js';
 
 export interface AbstractTrackProps extends BaseProps {
   $refs: {
@@ -13,16 +14,6 @@ export interface AbstractTrackProps extends BaseProps {
     threshold: number;
     payload: Record<string, unknown>;
   };
-}
-
-/**
- * Array merge strategy for `deepmerge`: replace the destination array with the
- * source array instead of concatenating. Concatenation is wrong for GA4 style
- * payloads (e.g. `ecommerce.items`), where a more specific layer should fully
- * override the array coming from a broader one.
- */
-function arrayMerge(_destination: unknown[], source: unknown[]) {
-  return source;
 }
 
 /**
@@ -75,7 +66,7 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
     options: {
       threshold: {
         type: Number,
-        default: 0.5,
+        default: 0,
       },
       payload: Object,
     },
@@ -148,24 +139,38 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
   }
 
   /**
-   * Get the component's base payload, shared by every event on the element.
+   * Resolve the component's base payload once per instance.
    *
-   * It is sourced from both the `payload` ref and the `payload` option; the
-   * option overrides the ref on conflicting keys, mirroring `TrackContext`.
+   * Sourced from both the `payload` ref and the `payload` option (the option
+   * overrides the ref, mirroring `TrackContext`). Memoized so a high-frequency
+   * event (e.g. `scroll.throttle16`) does not re-parse the `<script>` payload
+   * on every dispatch.
+   * @private
+   */
+  __resolvePayload = memo(() => deepmerge(this.scriptPayload, this.optionPayload, { arrayMerge }));
+
+  /**
+   * Resolve the merged ancestor context once per instance.
+   *
+   * The closest TrackContext already exposes the whole ancestor chain merged
+   * through its own recursive `context` getter, so reading it here is enough.
+   * Memoized to avoid re-walking the ancestor chain on every dispatch.
+   * @private
+   */
+  __resolveContext = memo(() => this.$closest<TrackContext>('TrackContext')?.context ?? {});
+
+  /**
+   * Get the component's base payload, shared by every event on the element.
    */
   get payload(): Record<string, unknown> {
-    return deepmerge(this.scriptPayload, this.optionPayload, { arrayMerge });
+    return this.__resolvePayload();
   }
 
   /**
    * Get the merged context from the closest ancestor TrackContext.
-   *
-   * The closest TrackContext already exposes the whole ancestor chain merged
-   * through its own recursive `context` getter, so reading it here is enough.
    */
   get context(): Record<string, unknown> {
-    const context = this.$closest<TrackContext>('TrackContext');
-    return context?.context ?? {};
+    return this.__resolveContext();
   }
 
   /**
@@ -204,8 +209,14 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
     for (const trackEvent of this.trackEvents) {
       if (trackEvent.event === 'mounted') {
         // Resolve the context on the next frame so an ancestor TrackContext
-        // mounted just after this component is still taken into account.
-        nextFrame(() => this.send(trackEvent.data));
+        // mounted just after this component is still taken into account. Guard
+        // against a same-frame destroy (e.g. an SPA route change) so we never
+        // dispatch for an unmounted component.
+        nextFrame(() => {
+          if (this.$isMounted) {
+            this.send(trackEvent.data);
+          }
+        });
       } else if (trackEvent.event === 'view') {
         // IntersectionObserver for impression tracking
         trackEvent.attachViewEvent();

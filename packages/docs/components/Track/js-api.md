@@ -100,10 +100,10 @@ For a `CustomEvent`, resolve values from its `detail` with `$detail.<path>` plac
 
 ## Options
 
-| Option      | Type     | Default | Description                                                     |
-| ----------- | -------- | ------- | --------------------------------------------------------------- |
-| `threshold` | `Number` | `0.5`   | Intersection ratio required to fire the `view` event.           |
-| `payload`   | `Object` | `{}`    | Base payload shared by every event, from `data-option-payload`. |
+| Option      | Type     | Default | Description                                                                                       |
+| ----------- | -------- | ------- | ------------------------------------------------------------------------------------------------- |
+| `threshold` | `Number` | `0`     | `IntersectionObserver` threshold for the `view` event (`0` fires as soon as any part is visible). |
+| `payload`   | `Object` | `{}`    | Base payload shared by every event, from `data-option-payload`.                                   |
 
 ## Refs
 
