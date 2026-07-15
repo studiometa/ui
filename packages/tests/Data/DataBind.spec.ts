@@ -1,5 +1,5 @@
 import { it, describe, expect, vi } from 'vitest';
-import { DataBind, DataComputed, DataEffect } from '@studiometa/ui';
+import { Action, DataBind, DataComputed, DataEffect, DataScope } from '@studiometa/ui';
 import { nextTick } from '@studiometa/js-toolkit/utils';
 import { destroy, hConnected as h, mount } from '#test-utils';
 
@@ -245,5 +245,148 @@ describe('The DataBind component', () => {
     await mount(bind1, bind2);
     await nextTick();
     expect(bind2.value).toBe('foo');
+  });
+
+  it('should apply multiple virtual prop, attr, class, style and text bindings', () => {
+    const button = h(
+      'button',
+      {
+        'data-bind:prop.disabled': '!value',
+        'data-bind:prop.tab-index': 'value ? 0 : -1',
+        'data-bind:attr.aria-pressed': 'String(Boolean(value))',
+        'data-bind:class.is-active': 'value',
+        'data-bind:style.display': 'value ? "block" : "none"',
+        'data-bind:text': '`Selected: ${value}`',
+      },
+      ['Original label'],
+    );
+    const instance = new DataBind(button);
+
+    instance.set(true);
+
+    expect(button.disabled).toBe(false);
+    expect(button.tabIndex).toBe(0);
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(button.classList.contains('is-active')).toBe(true);
+    expect(button.style.display).toBe('block');
+    expect(button.textContent).toBe('Selected: true');
+  });
+
+  it('should pass the raw value through empty virtual bindings', () => {
+    const div = h('div', {
+      'data-bind:prop.title': '',
+      'data-bind:attr.data-value': '',
+      'data-bind:class.selected': '',
+      'data-bind:style.--state': '',
+      'data-bind:text': '',
+    });
+    const instance = new DataBind(div);
+
+    instance.set('visible');
+
+    expect(div.title).toBe('visible');
+    expect(div.dataset.value).toBe('visible');
+    expect(div.classList.contains('selected')).toBe(true);
+    expect(div.style.getPropertyValue('--state')).toBe('visible');
+    expect(div.textContent).toBe('visible');
+  });
+
+  it('should use scoped data in virtual binding expressions', () => {
+    const root = h('div', { dataOptionGroup: 'tabs' });
+    const button = h('button', {
+      'data-bind:attr.aria-selected': '$data.active === value',
+      'data-bind:class.is-active': '$data.active === value',
+    });
+    root.append(button);
+    const scope = new DataScope(root);
+    const instance = new DataBind(button);
+    scope.setValue('tabs', 'active', 'details');
+
+    instance.set('details');
+
+    expect(button.getAttribute('aria-selected')).toBe('');
+    expect(button.classList.contains('is-active')).toBe(true);
+  });
+
+  it('should remove attributes and clear styles according to binding semantics', () => {
+    const div = h('div', {
+      'data-bind:attr.hidden': 'value',
+      'data-bind:style.--state': 'value',
+    });
+    const instance = new DataBind(div);
+
+    instance.set(true);
+    expect(div.getAttribute('hidden')).toBe('');
+    expect(div.style.getPropertyValue('--state')).toBe('true');
+
+    for (const value of [false, null, undefined]) {
+      instance.set(value);
+      expect(div.hasAttribute('hidden')).toBe(false);
+      expect(div.style.getPropertyValue('--state')).toBe('');
+    }
+
+    instance.set(0);
+    expect(div.getAttribute('hidden')).toBe('0');
+    expect(div.style.getPropertyValue('--state')).toBe('0');
+  });
+
+  it('should fail quietly when a virtual binding expression throws', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const div = h('div', {
+      'data-bind:attr.title': 'missing.value',
+      'data-bind:text': '`Value: ${value}`',
+    });
+    const instance = new DataBind(div);
+
+    expect(() => instance.set('foo')).not.toThrow();
+    expect(div.hasAttribute('title')).toBe(false);
+    expect(div.textContent).toBe('Value: foo');
+    expect(consoleError).toHaveBeenCalledOnce();
+    consoleError.mockRestore();
+  });
+
+  it('should update virtual subscribers when their legacy value equals the dispatched value', async () => {
+    const source = new DataBind(h('div', { dataOptionGroup: 'equal' }, ['foo']));
+    const button = h(
+      'button',
+      {
+        dataOptionGroup: 'equal',
+        'data-bind:attr.data-value': 'value',
+      },
+      ['foo'],
+    );
+    const subscriber = new DataBind(button);
+    await mount(source, subscriber);
+
+    source.set('foo');
+
+    expect(button.dataset.value).toBe('foo');
+    expect(button.textContent).toBe('foo');
+  });
+
+  it('should coexist with Action virtual events without option collisions', async () => {
+    const button = h('button', {
+      'data-on:click': 'target.$el.dataset.clicked = "true"',
+      'data-bind:class.is-active': 'value',
+    });
+    const action = new Action(button);
+    const bind = new DataBind(button);
+    await mount(action, bind);
+
+    bind.set(true);
+    button.dispatchEvent(new Event('click'));
+
+    expect(button.classList.contains('is-active')).toBe(true);
+    expect(button.dataset.clicked).toBe('true');
+  });
+
+  it('should preserve the legacy single-property behavior without virtual bindings', () => {
+    const button = h('button', { dataOptionProp: 'disabled' }, ['Label']);
+    const instance = new DataBind(button);
+
+    instance.set(true);
+
+    expect(button.disabled).toBe(true);
+    expect(button.textContent).toBe('Label');
   });
 });
