@@ -1,5 +1,13 @@
 import { it, describe, expect, vi } from 'vitest';
-import { Action, DataBind, DataComputed, DataEffect, DataModel, DataScope } from '@studiometa/ui';
+import {
+  Action,
+  DataBind,
+  DataComputed,
+  DataEffect,
+  DataModel,
+  DataScope,
+  type DataValue,
+} from '@studiometa/ui';
 import { nextTick } from '@studiometa/js-toolkit/utils';
 import { destroy, hConnected as h, mount } from '#test-utils';
 
@@ -304,6 +312,108 @@ describe('The DataBind component', () => {
     expect(instance2.value).toBe('bar');
     expect(instance3.value).toBe('barbar');
     expect(instance4.$el.id).toBe('bar');
+  });
+
+  it('should deliver group updates through the public set method', async () => {
+    const legacySource = new DataBind(h('div', { dataOptionGroup: 'custom-set' }));
+    const legacySubscriber = new DataBind(h('div', { dataOptionGroup: 'custom-set' }));
+    const legacySet = vi.spyOn(legacySubscriber, 'set');
+    await mount(legacySource, legacySubscriber);
+
+    legacySource.set('legacy');
+    expect(legacySet).toHaveBeenCalledWith('legacy', false);
+
+    const root = h('div', { dataOptionGroup: 'person' });
+    const input = h('input', { name: 'first' });
+    const output = h('div', { dataOptionKey: 'first' });
+    root.append(input, output);
+    const scope = new DataScope(root);
+    const scopedSource = new DataModel(input);
+    const scopedSubscriber = new DataBind(output);
+    const scopedSet = vi.spyOn(scopedSubscriber, 'set');
+    await mount(scope, scopedSource, scopedSubscriber);
+
+    scopedSource.set('scoped');
+    expect(scopedSet).toHaveBeenCalledWith('scoped', false);
+
+    await destroy(legacySource, legacySubscriber, scope, scopedSource, scopedSubscriber);
+  });
+
+  it('should preserve the latest value during reentrant group updates', async () => {
+    class ReentrantDataBind extends DataBind {
+      private dispatched = false;
+
+      set(value: DataValue, dispatch = true) {
+        super.set(value, dispatch);
+
+        if (!dispatch && value === 'outer' && !this.dispatched) {
+          this.dispatched = true;
+          super.set('inner');
+        }
+      }
+    }
+
+    const source = new DataBind(h('div', { dataOptionGroup: 'reentrant' }));
+    const reentrant = new ReentrantDataBind(h('div', { dataOptionGroup: 'reentrant' }));
+    const output = new DataBind(h('div', { dataOptionGroup: 'reentrant' }));
+    await mount(source, reentrant, output);
+
+    source.set('outer');
+
+    expect(source.value).toBe('inner');
+    expect(reentrant.value).toBe('inner');
+    expect(output.value).toBe('inner');
+
+    await destroy(source, reentrant, output);
+  });
+
+  it('should not run effects on mount unless an immediate value is dispatched', async () => {
+    const passiveElement = h('div', {
+      dataOptionGroup: 'passive-effect',
+      dataOptionEffect: 'target.dataset.called = "true"',
+    });
+    const immediateElement = h('div', {
+      dataOptionGroup: 'immediate-effect',
+      dataOptionEffect:
+        'target.dataset.calls = String(Number(target.dataset.calls || 0) + 1)',
+      dataOptionImmediate: true,
+    });
+    const passive = new DataEffect(passiveElement);
+    const immediate = new DataEffect(immediateElement);
+
+    await mount(passive, immediate);
+    expect(passiveElement.dataset.called).toBeUndefined();
+    expect(immediateElement.dataset.calls).toBeUndefined();
+
+    await nextTick();
+    expect(passiveElement.dataset.called).toBeUndefined();
+    expect(immediateElement.dataset.calls).toBe('1');
+
+    await destroy(passive, immediate);
+  });
+
+  it('should dispose and recreate group subscriptions across lifecycle changes', async () => {
+    const source = new DataBind(h('div', { dataOptionGroup: 'lifecycle' }));
+    const effectElement = h('div', {
+      dataOptionGroup: 'lifecycle',
+      dataOptionEffect:
+        'target.dataset.calls = String(Number(target.dataset.calls || 0) + 1)',
+    });
+    const effect = new DataEffect(effectElement);
+    await mount(source, effect);
+
+    source.set('first');
+    expect(effectElement.dataset.calls).toBe('1');
+
+    await destroy(effect);
+    source.set('second');
+    expect(effectElement.dataset.calls).toBe('1');
+
+    await mount(effect);
+    source.set('third');
+    expect(effectElement.dataset.calls).toBe('2');
+
+    await destroy(source, effect);
   });
 
   it('should forget related instances not in the DOM anymore', async () => {

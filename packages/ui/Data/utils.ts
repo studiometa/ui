@@ -1,15 +1,3 @@
-export function isInput(el: Element): el is HTMLInputElement {
-  return el instanceof HTMLInputElement;
-}
-
-export function isCheckbox(el: Element): el is HTMLInputElement {
-  return isInput(el) && el.type === 'checkbox';
-}
-
-export function isSelect(el: Element): el is HTMLSelectElement {
-  return el instanceof HTMLSelectElement;
-}
-
 const callbacks = new Map<string, Function>();
 
 export function getCallback(name: string, code: string): Function {

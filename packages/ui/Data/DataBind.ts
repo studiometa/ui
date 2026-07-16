@@ -1,9 +1,20 @@
 import { Base, withGroup } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { isArray, nextTick } from '@studiometa/js-toolkit/utils';
+import { nextTick } from '@studiometa/js-toolkit/utils';
+import { getDataChannel } from './DataChannel.js';
 import { DataScope, getDataScope } from './DataScope.js';
-import type { DataValue } from './DataScope.js';
-import { getCallback, isInput, isCheckbox, isSelect } from './utils.js';
+import type { DataScopeMember, DataValue } from './DataScope.js';
+import {
+  type DataControlContext,
+  isCheckbox,
+  isInput,
+  readControlValue,
+  resolvePropertyName,
+  setProperty,
+  valuesEqual,
+  writeControlValue,
+} from './formControl.js';
+import { getCallback } from './utils.js';
 
 export interface DataBindProps extends BaseProps {
   $options: {
@@ -15,69 +26,9 @@ export interface DataBindProps extends BaseProps {
 
 const EMPTY_DATA = Object.freeze({});
 
-function valuesEqual(left: DataValue, right: DataValue) {
-  if (Object.is(left, right)) {
-    return true;
-  }
-
-  if (left instanceof Date && right instanceof Date) {
-    return left.getTime() === right.getTime();
-  }
-
-  if (Array.isArray(left) && Array.isArray(right)) {
-    return (
-      left.length === right.length && left.every((value, index) => value === right[index])
-    );
-  }
-
-  const isNumberAndString =
-    (typeof left === 'number' && typeof right === 'string') ||
-    (typeof left === 'string' && typeof right === 'number');
-  const isArrayAndString =
-    (Array.isArray(left) && typeof right === 'string') ||
-    (typeof left === 'string' && Array.isArray(right));
-
-  return (isNumberAndString || isArrayAndString) && String(left) === String(right);
-}
-
 type VirtualBinding =
   | { type: 'text'; expression: string }
   | { type: 'prop' | 'attr' | 'class' | 'style'; name: string; expression: string };
-
-function setProperty(target: HTMLElement, name: string, value: unknown) {
-  if (value !== null && value !== undefined) {
-    target[name] = value;
-    return;
-  }
-
-  switch (name) {
-    case 'valueAsDate':
-      target[name] = null;
-      break;
-    case 'valueAsNumber':
-      target[name] = Number.NaN;
-      break;
-    default:
-      target[name] = '';
-  }
-}
-
-function resolvePropertyName(target: HTMLElement, name: string) {
-  const normalizedName = name.replaceAll('-', '').toLowerCase();
-  let current: object | null = target;
-
-  while (current) {
-    const property = Object.getOwnPropertyNames(current).find(
-      (candidate) => candidate.toLowerCase() === normalizedName,
-    );
-    if (property) {
-      return property;
-    }
-    current = Object.getPrototypeOf(current);
-  }
-
-  return name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
-}
 
 /**
  * DataBind class.
@@ -97,6 +48,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
 
   private __dataScopeResolved = false;
   private __dataScope?: DataScope;
+  private __stopUpdates?: () => void;
   private __virtualBindings?: VirtualBinding[];
   private __virtualValue?: DataValue;
   private __hasVirtualValue = false;
@@ -186,6 +138,23 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
     return this.group.endsWith('[]');
   }
 
+  private get channel() {
+    return (
+      this.dataScope?.getChannel(this.group) ??
+      getDataChannel(this.$group as Set<DataScopeMember>)
+    );
+  }
+
+  protected get controlContext(): DataControlContext {
+    return {
+      dataKey: this.dataKey,
+      members: this.relatedInstances,
+      multiple: this.multiple,
+      prop: this.prop,
+      target: this.target,
+    };
+  }
+
   get target() {
     return this.$el;
   }
@@ -227,62 +196,18 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   }
 
   protected getTargetValue(): DataValue {
-    const { target, multiple } = this;
-
-    if (isSelect(target)) {
-      if (multiple) {
-        const values = [] as string[];
-        // @ts-ignore
-        for (const option of target.options) {
-          if (option.selected) {
-            values.push(option.value);
-          }
-        }
-
-        return values;
-      }
-
-      const option = target.options.item(target.selectedIndex);
-      return option?.value;
-    }
-
-    if (isCheckbox(target)) {
-      if (multiple) {
-        const values = new Set<string>();
-        for (const instance of this.relatedInstances) {
-          if (
-            (!this.dataKey || instance.dataKey === this.dataKey) &&
-            isCheckbox(instance.target) &&
-            instance.target.checked
-          ) {
-            values.add(instance.target.value);
-          }
-        }
-        return Array.from(values);
-      } else {
-        return target.checked;
-      }
-    }
-
-    return target[this.prop];
+    return readControlValue(this.controlContext);
   }
 
   set(value: DataValue, dispatch = true) {
-    if (dispatch && this.dataScope && this.dataKey) {
-      this.__dispatchScopedValue(value);
-      return;
+    const publication = dispatch ? this.publishValue(value) : undefined;
+
+    if (!publication || publication.channel.isCurrent(publication.frame)) {
+      this.applyValue(value);
     }
+  }
 
-    const { target, multiple, relatedInstances } = this;
-
-    if (dispatch) {
-      for (const instance of relatedInstances) {
-        if (instance !== this && (instance.hasVirtualBindings || instance.value !== value)) {
-          instance.set(value, false);
-        }
-      }
-    }
-
+  private applyValue(value: DataValue) {
     if (this.hasVirtualBindings) {
       this.__virtualValue = value;
       this.__hasVirtualValue = true;
@@ -290,28 +215,36 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
       return;
     }
 
-    if (isSelect(target)) {
-      // @ts-ignore
-      for (const option of target.options) {
-        option.selected =
-          multiple && isArray(value) ? value.includes(option.value) : option.value === value;
+    writeControlValue(this.controlContext, value);
+  }
+
+  /**
+   * Publish a value to the resolved Data group without applying it locally.
+   * @internal
+   */
+  protected publishValue(value: DataValue, force = false, updateData = true) {
+    if (this.dataScope && this.dataKey) {
+      if (updateData) {
+        this.dataScope.setValue(this.group, this.dataKey, value, this);
       }
-      return;
+
+      const channel = this.dataScope.getChannel(this.group);
+      const frame = channel.publish({
+        force: true,
+        key: this.dataKey,
+        source: this,
+        value,
+      });
+      return { channel, frame };
     }
 
-    if (isInput(target)) {
-      switch (target.type) {
-        case 'radio':
-          target.checked = target.value === value;
-          return;
-        case 'checkbox':
-          target.checked =
-            multiple && isArray(value) ? value.includes(target.value) : Boolean(value);
-          return;
-      }
-    }
-
-    setProperty(target, this.prop, value);
+    const channel = this.channel;
+    const frame = channel.publish({
+      force,
+      source: this,
+      value,
+    });
+    return { channel, frame };
   }
 
   private applyVirtualBindings(value: DataValue) {
@@ -364,24 +297,11 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
    * @internal
    */
   __dispatchScopedValue(value: DataValue, updateData = true) {
-    const { dataScope, dataKey, relatedInstances } = this;
+    const publication = this.publishValue(value, true, updateData);
 
-    if (!dataScope || !dataKey) {
-      this.set(value);
-      return;
+    if (publication.channel.isCurrent(publication.frame)) {
+      this.set(value, false);
     }
-
-    if (updateData) {
-      dataScope.setValue(this.group, dataKey, value, this);
-    }
-
-    for (const instance of relatedInstances) {
-      if (instance !== this && (!instance.dataKey || instance.dataKey === dataKey)) {
-        instance.set(value, false);
-      }
-    }
-
-    this.set(value, false);
   }
 
   private validateMutation(method: string) {
@@ -435,6 +355,23 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   }
 
   mounted() {
+    this.__stopUpdates?.();
+    this.__stopUpdates = this.channel.subscribe((update) => {
+      if (!this.$el.isConnected) {
+        this.__stopUpdates?.();
+        this.__stopUpdates = undefined;
+        return;
+      }
+
+      if (
+        update.source !== this &&
+        (!update.key || !this.dataKey || update.key === this.dataKey) &&
+        (update.force || this.hasVirtualBindings || this.value !== update.value)
+      ) {
+        this.set(update.value, false);
+      }
+    });
+
     if (!this.$options.immediate) {
       return;
     }
@@ -450,6 +387,9 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   }
 
   destroyed() {
+    this.__stopUpdates?.();
+    this.__stopUpdates = undefined;
+
     if (this.dataScope && this.dataKey) {
       this.dataScope.deleteValue(this.group, this.dataKey, this);
     }
