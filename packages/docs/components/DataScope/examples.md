@@ -25,6 +25,48 @@ Sibling scopes remain independent even when they use the same group name. In the
 
 </llm-only>
 
+## Tabs
+
+The following example implements two independent tab interfaces with `DataScope`, [`Action`](../Action/index.md), and [`DataBind`](../DataBind/index.md). Each scope contains a hidden source of truth, while virtual bindings synchronize the selected state and panels. The `Tabs` component is not registered.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/tabs.twig')"
+  :script="() => import('./stories/tabs.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/tabs.twig
+<<< ./stories/tabs.js
+
+:::
+
+</llm-only>
+
+## Accordion
+
+This example uses the same pattern for two independent accordion interfaces. Each action toggles the scoped hidden value; opening one panel closes the other panels in that scope, and clicking the open item closes it. The `Accordion` component is not registered.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/accordion.twig')"
+  :script="() => import('./stories/accordion.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/accordion.twig
+<<< ./stories/accordion.js
+
+:::
+
+</llm-only>
+
 ## Nested and explicit groups
 
 A Data component without `data-option-group` inherits the group of its nearest `DataScope`. An explicit group creates another group inside the same scope instead of escaping the scope.

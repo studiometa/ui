@@ -1,0 +1,76 @@
+<div class="grid gap-8">
+  {% for i in 1..2 %}
+    <section data-component="DataScope" class="grid gap-4 rounded ring p-4">
+      <input
+        class="tabs-state"
+        type="hidden"
+        value="tab-1"
+        data-component="DataBind"
+        data-option-immediate />
+      <div
+        class="flex gap-2 border-b"
+        role="tablist"
+        aria-label="Demo tabs {{ i }}">
+        <button
+          id="tabs-{{ i }}-tab-1"
+          type="button"
+          role="tab"
+          aria-controls="tabs-{{ i }}-panel-1"
+          aria-selected="true"
+          data-component="Action DataBind"
+          data-bind:attr.aria-selected="String(value === 'tab-1')"
+          data-on:click="DataBind(.tabs-state)->target.value = 'tab-1'">
+          First tab
+        </button>
+        <button
+          id="tabs-{{ i }}-tab-2"
+          type="button"
+          role="tab"
+          aria-controls="tabs-{{ i }}-panel-2"
+          aria-selected="false"
+          data-component="Action DataBind"
+          data-bind:attr.aria-selected="String(value === 'tab-2')"
+          data-on:click="DataBind(.tabs-state)->target.value = 'tab-2'">
+          Second tab
+        </button>
+        <button
+          id="tabs-{{ i }}-tab-3"
+          type="button"
+          role="tab"
+          aria-controls="tabs-{{ i }}-panel-3"
+          aria-selected="false"
+          data-component="Action DataBind"
+          data-bind:attr.aria-selected="String(value === 'tab-3')"
+          data-on:click="DataBind(.tabs-state)->target.value = 'tab-3'">
+          Third tab
+        </button>
+      </div>
+      <div
+        id="tabs-{{ i }}-panel-1"
+        role="tabpanel"
+        aria-labelledby="tabs-{{ i }}-tab-1"
+        data-component="DataBind"
+        data-bind:attr.hidden="value !== 'tab-1'">
+        First tab content. The hidden input is the single source of truth.
+      </div>
+      <div
+        id="tabs-{{ i }}-panel-2"
+        role="tabpanel"
+        aria-labelledby="tabs-{{ i }}-tab-2"
+        hidden
+        data-component="DataBind"
+        data-bind:attr.hidden="value !== 'tab-2'">
+        Second tab content. DataBind synchronizes this panel.
+      </div>
+      <div
+        id="tabs-{{ i }}-panel-3"
+        role="tabpanel"
+        aria-labelledby="tabs-{{ i }}-tab-3"
+        hidden
+        data-component="DataBind"
+        data-bind:attr.hidden="value !== 'tab-3'">
+        Third tab content. No Tabs component is registered.
+      </div>
+    </section>
+  {% endfor %}
+</div>
