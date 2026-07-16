@@ -138,6 +138,27 @@ describe('The DataScope component', () => {
     await destroy(scope, subscriberB);
   });
 
+  it('should remove keyed values from disconnected sources', async () => {
+    const root = h('div', { dataOptionGroup: 'person' });
+    const input = h('input', {
+      name: 'first',
+      value: 'Ada',
+      dataOptionImmediate: true,
+    });
+    root.append(input);
+
+    const scope = new DataScope(root);
+    const source = new DataModel(input);
+    await mount(scope, source);
+    await nextTick();
+    expect(scope.getData('person')).toEqual({ first: 'Ada' });
+
+    input.remove();
+    expect(scope.getData('person')).toEqual({});
+
+    await destroy(scope, source);
+  });
+
   it('should clone and freeze mutable snapshot values', () => {
     const scope = new DataScope(h('div'));
     const items = ['one'];

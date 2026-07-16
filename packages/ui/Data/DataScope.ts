@@ -96,6 +96,24 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
       }
     }
 
+    let dataChanged = false;
+    for (const [key, sources] of record.sources) {
+      for (const source of sources) {
+        if (!source.$el.isConnected) {
+          sources.delete(source);
+        }
+      }
+
+      if (sources.size === 0) {
+        record.sources.delete(key);
+        dataChanged = record.values.delete(key) || dataChanged;
+      }
+    }
+
+    if (dataChanged) {
+      record.data = createSnapshot(record.values);
+    }
+
     return record;
   }
 
