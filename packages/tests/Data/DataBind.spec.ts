@@ -36,6 +36,18 @@ describe('The DataBind component', () => {
     expect(instance.get()).toBe('bar');
   });
 
+  it('should clear typed input properties with nullish values', () => {
+    const dateElement = h('input', { type: 'date', value: '2026-01-01' });
+    const date = new DataBind(dateElement);
+    expect(() => date.set(undefined)).not.toThrow();
+    expect(dateElement.value).toBe('');
+
+    const numberElement = h('input', { type: 'number', value: '42' });
+    const number = new DataBind(numberElement);
+    number.set(null);
+    expect(numberElement.value).toBe('');
+  });
+
   it('should set the checked property of a checkbox', () => {
     const input = h('input', { type: 'checkbox' });
     const instance = new DataBind(input);
@@ -451,6 +463,13 @@ describe('The DataBind component', () => {
     expect(div.classList.contains('selected')).toBe(true);
     expect(div.style.getPropertyValue('--state')).toBe('visible');
     expect(div.textContent).toBe('visible');
+
+    instance.set(undefined);
+    expect(div.title).toBe('');
+    expect(div.hasAttribute('data-value')).toBe(false);
+    expect(div.classList.contains('selected')).toBe(false);
+    expect(div.style.getPropertyValue('--state')).toBe('');
+    expect(div.textContent).toBe('');
   });
 
   it('should use scoped data in virtual binding expressions', () => {

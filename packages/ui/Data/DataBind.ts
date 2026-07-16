@@ -44,6 +44,24 @@ type VirtualBinding =
   | { type: 'text'; expression: string }
   | { type: 'prop' | 'attr' | 'class' | 'style'; name: string; expression: string };
 
+function setProperty(target: HTMLElement, name: string, value: unknown) {
+  if (value !== null && value !== undefined) {
+    target[name] = value;
+    return;
+  }
+
+  switch (name) {
+    case 'valueAsDate':
+      target[name] = null;
+      break;
+    case 'valueAsNumber':
+      target[name] = Number.NaN;
+      break;
+    default:
+      target[name] = '';
+  }
+}
+
 function resolvePropertyName(target: HTMLElement, name: string) {
   const normalizedName = name.replaceAll('-', '').toLowerCase();
   let current: object | null = target;
@@ -293,7 +311,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
       }
     }
 
-    target[this.prop] = value ?? '';
+    setProperty(target, this.prop, value);
   }
 
   private applyVirtualBindings(value: DataValue) {
@@ -316,7 +334,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
 
       switch (binding.type) {
         case 'prop':
-          this.target[resolvePropertyName(this.target, binding.name)] = result;
+          setProperty(this.target, resolvePropertyName(this.target, binding.name), result);
           break;
         case 'attr':
           if (result === false || result === null || result === undefined) {
@@ -335,7 +353,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
           );
           break;
         case 'text':
-          this.target.textContent = result as string | null;
+          this.target.textContent = (result ?? '') as string;
           break;
       }
     }
