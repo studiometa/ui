@@ -50,13 +50,25 @@ export class DataChannel {
   }
 }
 
-const channels = new WeakMap<Set<DataScopeMember>, DataChannel>();
+type GlobalWithDataChannels = typeof globalThis & {
+  __STUDIOMETA_UI_DATA_CHANNELS__?: WeakMap<Set<DataScopeMember>, DataChannel>;
+};
+
+/**
+ * Get the global Data channel storage so it can be shared between different
+ * instances of the package.
+ */
+function getChannelsStorage() {
+  const global = globalThis as GlobalWithDataChannels;
+  return (global.__STUDIOMETA_UI_DATA_CHANNELS__ ??= new WeakMap());
+}
 
 /**
  * Get the signal channel associated with a legacy Data group.
  * @internal
  */
 export function getDataChannel(group: Set<DataScopeMember>) {
+  const channels = getChannelsStorage();
   let channel = channels.get(group);
 
   if (!channel) {
