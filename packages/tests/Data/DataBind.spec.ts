@@ -1,5 +1,5 @@
 import { it, describe, expect, vi } from 'vitest';
-import { Action, DataBind, DataComputed, DataEffect, DataScope } from '@studiometa/ui';
+import { Action, DataBind, DataComputed, DataEffect, DataModel, DataScope } from '@studiometa/ui';
 import { nextTick } from '@studiometa/js-toolkit/utils';
 import { destroy, hConnected as h, mount } from '#test-utils';
 
@@ -370,7 +370,7 @@ describe('The DataBind component', () => {
     expect(button.textContent).toBe('Selected: true');
   });
 
-  it('should retain the raw value applied through virtual bindings', () => {
+  it('should retain the raw value applied through virtual bindings', async () => {
     const button = h('button', {
       'data-bind:attr.aria-expanded': 'String(value === "open")',
     });
@@ -383,6 +383,19 @@ describe('The DataBind component', () => {
     instance.toggle('open', 'closed');
     expect(instance.value).toBe('closed');
     expect(button.getAttribute('aria-expanded')).toBe('false');
+
+    const input = h('input', {
+      value: 'initial',
+      'data-bind:attr.data-value': 'value',
+    });
+    const model = new DataModel(input);
+    await mount(model);
+    model.set('initial');
+    input.value = 'edited';
+    model.dispatch();
+    expect(model.value).toBe('edited');
+    expect(input.dataset.value).toBe('edited');
+    await destroy(model);
   });
 
   it('should resolve acronym-cased DOM properties', () => {

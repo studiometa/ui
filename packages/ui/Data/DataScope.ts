@@ -130,7 +130,14 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
 
     if (source) {
       if (source.$el instanceof HTMLInputElement && source.$el.type === 'radio') {
-        record.sources.set(key, new Set([source]));
+        const matchingSource = Array.from(record.instances).find(
+          (instance) =>
+            instance.dataKey === key &&
+            instance.$el instanceof HTMLInputElement &&
+            instance.$el.type === 'radio' &&
+            instance.$el.value === value,
+        );
+        record.sources.set(key, new Set([matchingSource ?? source]));
       } else {
         const sources = record.sources.get(key) ?? new Set();
         sources.add(source);

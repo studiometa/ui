@@ -12,7 +12,7 @@ export class DataModel<T extends BaseProps = BaseProps> extends DataBind<DataMod
 
   dispatch() {
     const { target, multiple } = this;
-    let value = this.get();
+    let value = this.getTargetValue();
 
     if (multiple && isCheckbox(target) && !target.checked && Array.isArray(value)) {
       const set = new Set(value);

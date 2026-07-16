@@ -190,11 +190,15 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   }
 
   get(): DataValue {
-    const { target, multiple } = this;
-
     if (this.hasVirtualBindings && this.__hasVirtualValue) {
       return this.__virtualValue;
     }
+
+    return this.getTargetValue();
+  }
+
+  protected getTargetValue(): DataValue {
+    const { target, multiple } = this;
 
     if (isSelect(target)) {
       if (multiple) {

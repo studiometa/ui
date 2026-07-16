@@ -283,14 +283,17 @@ describe('The DataScope component', () => {
     await nextTick();
     expect(scope.getData('tabs')).toEqual({ tab: 'overview' });
 
-    detailsElement.checked = true;
-    detailsElement.dispatchEvent(new Event('input'));
+    overview.set('details');
+    expect(detailsElement.checked).toBe(true);
+    expect(scope.getData('tabs')).toEqual({ tab: 'details' });
+
+    await destroy(overview);
     expect(scope.getData('tabs')).toEqual({ tab: 'details' });
 
     await destroy(details);
     expect(scope.getData('tabs')).toEqual({});
 
-    await destroy(scope, overview);
+    await destroy(scope);
   });
 
   it('should ignore immediate sources destroyed before hydration', async () => {
