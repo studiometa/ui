@@ -96,7 +96,7 @@ Custom values can describe disclosure state without repeating comparison logic i
 
 ### `increment(step = 1)`
 
-Convert the current value to a number, increment it by `step`, and dispatch the result. A non-numeric current value starts at `0`. Pass a negative step to decrement.
+Convert the current value to a number, increment it by `step`, and dispatch the result. A non-numeric current value starts at `0`. Pass a negative step to decrement. Date inputs are not supported.
 
 ### `cycle(values)`
 

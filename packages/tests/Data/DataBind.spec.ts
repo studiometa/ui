@@ -211,6 +211,11 @@ describe('The DataBind component', () => {
     instance.value = 'invalid';
     instance.increment(5);
     expect(instance.value).toBe('5');
+
+    const dateElement = h('input', { type: 'date', value: '2026-01-01' });
+    const date = new DataBind(dateElement);
+    date.increment();
+    expect(dateElement.value).toBe('2026-01-01');
   });
 
   it('should cycle through values', () => {
@@ -363,6 +368,21 @@ describe('The DataBind component', () => {
     expect(button.classList.contains('is-active')).toBe(true);
     expect(button.style.display).toBe('block');
     expect(button.textContent).toBe('Selected: true');
+  });
+
+  it('should retain the raw value applied through virtual bindings', () => {
+    const button = h('button', {
+      'data-bind:attr.aria-expanded': 'String(value === "open")',
+    });
+    const instance = new DataBind(button);
+
+    instance.set('open');
+    expect(instance.value).toBe('open');
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+
+    instance.toggle('open', 'closed');
+    expect(instance.value).toBe('closed');
+    expect(button.getAttribute('aria-expanded')).toBe('false');
   });
 
   it('should resolve acronym-cased DOM properties', () => {

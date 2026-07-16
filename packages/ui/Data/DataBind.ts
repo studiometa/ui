@@ -73,6 +73,8 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   private __dataScopeResolved = false;
   private __dataScope?: DataScope;
   private __virtualBindings?: VirtualBinding[];
+  private __virtualValue?: DataValue;
+  private __hasVirtualValue = false;
 
   get virtualBindings() {
     if (!this.__virtualBindings) {
@@ -190,6 +192,10 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   get(): DataValue {
     const { target, multiple } = this;
 
+    if (this.hasVirtualBindings && this.__hasVirtualValue) {
+      return this.__virtualValue;
+    }
+
     if (isSelect(target)) {
       if (multiple) {
         const values = [] as string[];
@@ -245,6 +251,8 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
     }
 
     if (this.hasVirtualBindings) {
+      this.__virtualValue = value;
+      this.__hasVirtualValue = true;
       this.applyVirtualBindings(value);
       return;
     }
@@ -358,6 +366,11 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   }
 
   increment(step = 1) {
+    if (isInput(this.target) && this.target.type === 'date') {
+      this.$warn('The increment() method can not be used with date inputs.');
+      return;
+    }
+
     const value = Number(this.value);
     this.set((Number.isNaN(value) ? 0 : value) + step);
   }
