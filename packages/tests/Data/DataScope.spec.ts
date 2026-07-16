@@ -140,6 +140,47 @@ describe('The DataScope component', () => {
     await destroy(scope, subscriberB);
   });
 
+  it('should recompute multiple values when a checkbox source is removed', async () => {
+    const root = h('div', { dataOptionGroup: 'choices[]' });
+    const firstElement = h('input', {
+      type: 'checkbox',
+      name: 'items',
+      value: 'first',
+      dataOptionImmediate: true,
+    });
+    const secondElement = h('input', {
+      type: 'checkbox',
+      name: 'items',
+      value: 'second',
+      dataOptionImmediate: true,
+    });
+    firstElement.checked = true;
+    secondElement.checked = true;
+    const computedElement = h('div', {
+      dataOptionCompute: '$data.items?.join(", ") ?? ""',
+    });
+    root.append(firstElement, secondElement, computedElement);
+
+    const scope = new DataScope(root);
+    const first = new DataModel(firstElement);
+    const second = new DataModel(secondElement);
+    const computed = new DataComputed(computedElement);
+    await mount(scope, first, second, computed);
+    await nextTick();
+    expect(scope.getData('choices[]')).toEqual({ items: ['first', 'second'] });
+    expect(computed.value).toBe('first, second');
+
+    secondElement.remove();
+    expect(scope.getData('choices[]')).toEqual({ items: ['first'] });
+    expect(computed.value).toBe('first');
+
+    await destroy(first);
+    expect(scope.getData('choices[]')).toEqual({});
+    expect(computed.value).toBe('');
+
+    await destroy(scope, second, computed);
+  });
+
   it('should remove keyed values from disconnected sources', async () => {
     const root = h('div', { dataOptionGroup: 'person' });
     const input = h('input', {

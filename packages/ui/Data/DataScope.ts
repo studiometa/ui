@@ -97,10 +97,13 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
     }
 
     const deletedKeys = [] as string[];
+    const updatedValues = new Map<string, DataValue>();
     for (const [key, sources] of record.sources) {
+      let sourcesChanged = false;
       for (const source of sources) {
         if (!source.$el.isConnected) {
           sources.delete(source);
+          sourcesChanged = true;
         }
       }
 
@@ -109,22 +112,52 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
         if (record.values.delete(key)) {
           deletedKeys.push(key);
         }
+      } else if (sourcesChanged && group.endsWith('[]')) {
+        const value = this.getMultipleSourcesValue(sources);
+        record.values.set(key, value);
+        updatedValues.set(key, value);
       }
     }
 
-    if (deletedKeys.length > 0) {
+    if (deletedKeys.length > 0 || updatedValues.size > 0) {
       record.data = createSnapshot(record.values);
       for (const key of deletedKeys) {
-        this.notifyDeletedValue(record, key);
+        this.notifyValue(record, key, undefined);
+      }
+      for (const [key, value] of updatedValues) {
+        this.notifyValue(record, key, value);
       }
     }
 
     return record;
   }
 
-  private notifyDeletedValue(
+  private getMultipleSourcesValue(sources: Set<DataScopeMember>) {
+    const values = new Set<string>();
+
+    for (const source of sources) {
+      if (source.$el instanceof HTMLInputElement && source.$el.type === 'checkbox') {
+        if (source.$el.checked) {
+          values.add(source.$el.value);
+        }
+        continue;
+      }
+
+      const value = source.get();
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          values.add(item);
+        }
+      }
+    }
+
+    return Array.from(values);
+  }
+
+  private notifyValue(
     record: DataScopeGroup,
     key: string,
+    value: DataValue,
     excludedSource?: DataScopeMember,
   ) {
     const instances = Array.from(record.instances).filter(
@@ -133,7 +166,7 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
     const dispatcher =
       instances.find((instance) => instance.dataKey === key) ??
       instances.find((instance) => !instance.dataKey);
-    dispatcher?.__dispatchScopedValue(undefined, false);
+    dispatcher?.__dispatchScopedValue(value, false);
   }
 
   getGroup(group: string) {
@@ -183,7 +216,12 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
       record.sources.delete(key);
       record.values.delete(key);
       record.data = createSnapshot(record.values);
-      this.notifyDeletedValue(record, key, source);
+      this.notifyValue(record, key, undefined, source);
+    } else if (group.endsWith('[]')) {
+      const value = this.getMultipleSourcesValue(sources);
+      record.values.set(key, value);
+      record.data = createSnapshot(record.values);
+      this.notifyValue(record, key, value, source);
     }
   }
 
