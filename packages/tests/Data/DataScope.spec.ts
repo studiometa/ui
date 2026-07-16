@@ -145,18 +145,50 @@ describe('The DataScope component', () => {
       value: 'Ada',
       dataOptionImmediate: true,
     });
-    root.append(input);
+    const computedElement = h('div', {
+      dataOptionCompute: '$data.first ?? "missing"',
+    });
+    root.append(input, computedElement);
 
     const scope = new DataScope(root);
     const source = new DataModel(input);
-    await mount(scope, source);
+    const computed = new DataComputed(computedElement);
+    await mount(scope, source, computed);
     await nextTick();
     expect(scope.getData('person')).toEqual({ first: 'Ada' });
+    expect(computed.value).toBe('Ada');
 
     input.remove();
     expect(scope.getData('person')).toEqual({});
+    expect(computed.value).toBe('missing');
 
-    await destroy(scope, source);
+    await destroy(scope, source, computed);
+  });
+
+  it('should recompute subscribers when the last keyed source is destroyed', async () => {
+    const root = h('div', { dataOptionGroup: 'person' });
+    const input = h('input', {
+      name: 'first',
+      value: 'Ada',
+      dataOptionImmediate: true,
+    });
+    const computedElement = h('div', {
+      dataOptionCompute: '$data.first ?? "missing"',
+    });
+    root.append(input, computedElement);
+
+    const scope = new DataScope(root);
+    const source = new DataModel(input);
+    const computed = new DataComputed(computedElement);
+    await mount(scope, source, computed);
+    await nextTick();
+    expect(computed.value).toBe('Ada');
+
+    await destroy(source);
+    expect(scope.getData('person')).toEqual({});
+    expect(computed.value).toBe('missing');
+
+    await destroy(scope, computed);
   });
 
   it('should clone and freeze mutable snapshot values', () => {
@@ -294,6 +326,35 @@ describe('The DataScope component', () => {
     expect(scope.getData('tabs')).toEqual({});
 
     await destroy(scope);
+  });
+
+  it('should track the initiating radio when values are duplicated', async () => {
+    const root = h('div', { dataOptionGroup: 'tabs' });
+    const firstElement = h('input', {
+      type: 'radio',
+      name: 'tab',
+      value: 'shared',
+    });
+    const secondElement = h('input', {
+      type: 'radio',
+      name: 'tab',
+      value: 'shared',
+    });
+    root.append(firstElement, secondElement);
+
+    const scope = new DataScope(root);
+    const first = new DataModel(firstElement);
+    const second = new DataModel(secondElement);
+    await mount(scope, first, second);
+
+    second.set('shared');
+    expect(secondElement.checked).toBe(true);
+    expect(scope.getData('tabs')).toEqual({ tab: 'shared' });
+
+    await destroy(second);
+    expect(scope.getData('tabs')).toEqual({});
+
+    await destroy(scope, first);
   });
 
   it('should ignore immediate sources destroyed before hydration', async () => {

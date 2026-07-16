@@ -96,7 +96,7 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
       }
     }
 
-    let dataChanged = false;
+    const deletedKeys = [] as string[];
     for (const [key, sources] of record.sources) {
       for (const source of sources) {
         if (!source.$el.isConnected) {
@@ -106,15 +106,34 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
 
       if (sources.size === 0) {
         record.sources.delete(key);
-        dataChanged = record.values.delete(key) || dataChanged;
+        if (record.values.delete(key)) {
+          deletedKeys.push(key);
+        }
       }
     }
 
-    if (dataChanged) {
+    if (deletedKeys.length > 0) {
       record.data = createSnapshot(record.values);
+      for (const key of deletedKeys) {
+        this.notifyDeletedValue(record, key);
+      }
     }
 
     return record;
+  }
+
+  private notifyDeletedValue(
+    record: DataScopeGroup,
+    key: string,
+    excludedSource?: DataScopeMember,
+  ) {
+    const instances = Array.from(record.instances).filter(
+      (instance) => instance !== excludedSource && instance.$el.isConnected,
+    );
+    const dispatcher =
+      instances.find((instance) => instance.dataKey === key) ??
+      instances.find((instance) => !instance.dataKey);
+    dispatcher?.__dispatchScopedValue(undefined, false);
   }
 
   getGroup(group: string) {
@@ -130,13 +149,16 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
 
     if (source) {
       if (source.$el instanceof HTMLInputElement && source.$el.type === 'radio') {
-        const matchingSource = Array.from(record.instances).find(
-          (instance) =>
-            instance.dataKey === key &&
-            instance.$el instanceof HTMLInputElement &&
-            instance.$el.type === 'radio' &&
-            instance.$el.value === value,
-        );
+        const matchingSource =
+          source.$el.value === value
+            ? source
+            : Array.from(record.instances).find(
+                (instance) =>
+                  instance.dataKey === key &&
+                  instance.$el instanceof HTMLInputElement &&
+                  instance.$el.type === 'radio' &&
+                  instance.$el.value === value,
+              );
         record.sources.set(key, new Set([matchingSource ?? source]));
       } else {
         const sources = record.sources.get(key) ?? new Set();
@@ -161,6 +183,7 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
       record.sources.delete(key);
       record.values.delete(key);
       record.data = createSnapshot(record.values);
+      this.notifyDeletedValue(record, key, source);
     }
   }
 
