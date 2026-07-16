@@ -13,6 +13,7 @@ export type DataValue = boolean | string | string[] | number | Date | null | und
 export interface DataScopeMember extends Base {
   readonly dataKey: string;
   get(): DataValue;
+  set(value: DataValue, dispatch?: boolean): void;
   __dispatchScopedValue(value: DataValue, updateData?: boolean): void;
 }
 
@@ -160,13 +161,15 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
     value: DataValue,
     excludedSource?: DataScopeMember,
   ) {
-    const instances = Array.from(record.instances).filter(
-      (instance) => instance !== excludedSource && instance.$el.isConnected,
-    );
-    const dispatcher =
-      instances.find((instance) => instance.dataKey === key) ??
-      instances.find((instance) => !instance.dataKey);
-    dispatcher?.__dispatchScopedValue(value, false);
+    for (const instance of record.instances) {
+      if (
+        instance !== excludedSource &&
+        instance.$el.isConnected &&
+        (!instance.dataKey || instance.dataKey === key)
+      ) {
+        instance.set(value, false);
+      }
+    }
   }
 
   getGroup(group: string) {

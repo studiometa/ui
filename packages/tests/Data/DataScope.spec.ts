@@ -218,20 +218,26 @@ describe('The DataScope component', () => {
     const computedElement = h('div', {
       dataOptionCompute: '$data.first ?? "missing"',
     });
-    root.append(input, computedElement);
+    const effectElement = h('div', {
+      dataOptionEffect: 'target.dataset.value = $data.first ?? "missing"',
+    });
+    root.append(input, computedElement, effectElement);
 
     const scope = new DataScope(root);
     const source = new DataModel(input);
     const computed = new DataComputed(computedElement);
-    await mount(scope, source, computed);
+    const effect = new DataEffect(effectElement);
+    await mount(scope, source, computed, effect);
     await nextTick();
     expect(computed.value).toBe('Ada');
+    expect(effectElement.dataset.value).toBe('Ada');
 
     await destroy(source);
     expect(scope.getData('person')).toEqual({});
     expect(computed.value).toBe('missing');
+    expect(effectElement.dataset.value).toBe('missing');
 
-    await destroy(scope, computed);
+    await destroy(scope, computed, effect);
   });
 
   it('should clone and freeze mutable snapshot values', () => {
