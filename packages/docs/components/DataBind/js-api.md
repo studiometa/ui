@@ -79,6 +79,8 @@ Set the value for the current instance and dispatch it to others if the second p
 - `value` (`DataValue`): the value to set
 - `dispatch` (`boolean`, default to `true`): wether to dispatch the value to other related instances or not
 
+The mutation helpers below are available on `DataBind` and `DataModel`. They are not supported on computed values or effects.
+
 ### `toggle(onValue = true, offValue = false)`
 
 Toggle between two values and dispatch the result to the group. Single checkboxes support the default boolean values; custom values require a target that can represent them without coercing them to `checked`. Radio inputs are not supported.

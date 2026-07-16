@@ -256,6 +256,21 @@ describe('The DataBind component', () => {
     expect(raw.value).toBe(true);
   });
 
+  it('should reject mutation helpers on computed values and effects', () => {
+    const computed = new DataComputed(
+      h('div', { dataOptionCompute: 'value' }, ['current']),
+    );
+    computed.toggle('next', 'current');
+    expect(computed.value).toBe('current');
+
+    const effectElement = h('div', {
+      dataOptionEffect: 'target.dataset.called = "true"',
+    });
+    const effect = new DataEffect(effectElement);
+    effect.increment();
+    expect(effectElement.dataset.called).toBeUndefined();
+  });
+
   it('should dispatch value to other instances', async () => {
     const instance1 = new DataBind(h('div', { dataOptionGroup: 'a' }, ['foo']));
     const instance2 = new DataBind(h('div', { dataOptionGroup: 'a' }, ['foo']));

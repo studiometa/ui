@@ -128,12 +128,14 @@ describe('The DataScope component', () => {
     const subscriberB = new DataBind(outputB);
     await mount(scope, source, subscriberA, subscriberB);
     await nextTick();
+    expect(outputB.textContent).toBe('Ada');
 
     await destroy(subscriberA);
     expect(scope.getData('person')).toEqual({ first: 'Ada' });
 
     await destroy(source);
     expect(scope.getData('person')).toEqual({});
+    expect(outputB.textContent).toBe('');
 
     await destroy(scope, subscriberB);
   });

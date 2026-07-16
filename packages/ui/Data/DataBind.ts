@@ -83,6 +83,10 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   private __virtualValue?: DataValue;
   private __hasVirtualValue = false;
 
+  protected get supportsMutations() {
+    return true;
+  }
+
   get virtualBindings() {
     if (!this.__virtualBindings) {
       this.__virtualBindings = [];
@@ -289,7 +293,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
       }
     }
 
-    target[this.prop] = value;
+    target[this.prop] = value ?? '';
   }
 
   private applyVirtualBindings(value: DataValue) {
@@ -362,7 +366,20 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
     this.set(value, false);
   }
 
+  private validateMutation(method: string) {
+    if (this.supportsMutations) {
+      return true;
+    }
+
+    this.$warn(`The ${method}() method can not be used with this component.`);
+    return false;
+  }
+
   toggle(onValue: DataValue = true, offValue: DataValue = false) {
+    if (!this.validateMutation('toggle')) {
+      return;
+    }
+
     const isRadio = isInput(this.target) && this.target.type === 'radio';
     const hasCustomCheckboxValues =
       isCheckbox(this.target) &&
@@ -377,6 +394,10 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   }
 
   increment(step = 1) {
+    if (!this.validateMutation('increment')) {
+      return;
+    }
+
     if (isInput(this.target) && this.target.type === 'date') {
       this.$warn('The increment() method can not be used with date inputs.');
       return;
@@ -387,7 +408,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   }
 
   cycle(values: readonly DataValue[]) {
-    if (values.length === 0) {
+    if (!this.validateMutation('cycle') || values.length === 0) {
       return;
     }
 

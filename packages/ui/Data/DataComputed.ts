@@ -18,6 +18,10 @@ export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<Data
     },
   };
 
+  protected get supportsMutations() {
+    return false;
+  }
+
   get compute() {
     const { group, compute } = this.$options;
     return getCallback(group, `return ${compute};`);

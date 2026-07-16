@@ -18,6 +18,10 @@ export class DataEffect<T extends BaseProps = BaseProps> extends DataBind<DataEf
     },
   };
 
+  protected get supportsMutations() {
+    return false;
+  }
+
   get effect() {
     const { group, effect } = this.$options;
     return getCallback(group, effect);
