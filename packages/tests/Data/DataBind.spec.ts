@@ -245,6 +245,15 @@ describe('The DataBind component', () => {
       ['three', 'four'],
     ]);
     expect(array.value).toBe('three,four');
+
+    const raw = new DataBind(
+      h('div', {
+        'data-bind:attr.data-value': 'value',
+      }),
+    );
+    raw.set('false');
+    raw.cycle([false, 'false', true]);
+    expect(raw.value).toBe(true);
   });
 
   it('should dispatch value to other instances', async () => {

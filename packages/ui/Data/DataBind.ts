@@ -30,7 +30,14 @@ function valuesEqual(left: DataValue, right: DataValue) {
     );
   }
 
-  return String(left) === String(right);
+  const isNumberAndString =
+    (typeof left === 'number' && typeof right === 'string') ||
+    (typeof left === 'string' && typeof right === 'number');
+  const isArrayAndString =
+    (Array.isArray(left) && typeof right === 'string') ||
+    (typeof left === 'string' && Array.isArray(right));
+
+  return (isNumberAndString || isArrayAndString) && String(left) === String(right);
 }
 
 type VirtualBinding =
