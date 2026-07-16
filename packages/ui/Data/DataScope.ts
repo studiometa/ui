@@ -1,6 +1,7 @@
 import { Base } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { nextTick } from '@studiometa/js-toolkit/utils';
+import { DataChannel } from './DataChannel.js';
 
 export interface DataScopeProps extends BaseProps {
   $options: {
@@ -19,6 +20,7 @@ export interface DataScopeMember extends Base {
 }
 
 interface DataScopeGroup {
+  channel: DataChannel;
   instances: Set<DataScopeMember>;
   sources: Map<string, Set<DataScopeMember>>;
   values: Map<string, DataValue>;
@@ -82,6 +84,7 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
 
     if (!record) {
       record = {
+        channel: new DataChannel(),
         instances: new Set(),
         sources: new Map(),
         values: new Map(),
@@ -162,15 +165,12 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
     value: DataValue,
     excludedSource?: DataScopeMember,
   ) {
-    for (const instance of record.instances) {
-      if (
-        instance !== excludedSource &&
-        instance.$el.isConnected &&
-        (!instance.dataKey || instance.dataKey === key)
-      ) {
-        instance.set(value, false);
-      }
-    }
+    record.channel.publish({
+      force: true,
+      key,
+      source: excludedSource,
+      value,
+    });
   }
 
   getGroup(group: string) {
@@ -179,6 +179,14 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
 
   getData(group: string) {
     return this.getRecord(group).data;
+  }
+
+  /**
+   * Get the signal channel for a scoped Data group.
+   * @internal
+   */
+  getChannel(group: string) {
+    return this.getRecord(group).channel;
   }
 
   setValue(group: string, key: string, value: DataValue, source?: DataScopeMember) {

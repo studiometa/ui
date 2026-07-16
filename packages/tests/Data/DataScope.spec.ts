@@ -303,6 +303,37 @@ describe('The DataScope component', () => {
     });
   });
 
+  it('should synchronously notify scoped subscribers for repeated equal writes', async () => {
+    const root = h('div', { dataOptionGroup: 'person' });
+    const input = h('input', { name: 'first' });
+    const output = h('div', { dataOptionKey: 'first' });
+    const effectElement = h('div', {
+      dataOptionEffect:
+        'target.dataset.calls = String(Number(target.dataset.calls || 0) + 1); target.dataset.value = value',
+    });
+    root.append(input, output, effectElement);
+
+    const scope = new DataScope(root);
+    const model = new DataModel(input);
+    const bind = new DataBind(output);
+    const effect = new DataEffect(effectElement);
+    await mount(scope, model, bind, effect);
+
+    model.set('Ada');
+    const firstSnapshot = model.$data;
+    expect(bind.value).toBe('Ada');
+    expect(effectElement.dataset.calls).toBe('1');
+    expect(effectElement.dataset.value).toBe('Ada');
+
+    model.set('Ada');
+    expect(bind.value).toBe('Ada');
+    expect(effectElement.dataset.calls).toBe('2');
+    expect(model.$data).toEqual({ first: 'Ada' });
+    expect(model.$data).not.toBe(firstSnapshot);
+
+    await destroy(scope, model, bind, effect);
+  });
+
   it('should recompute unkeyed subscribers for every keyed update', async () => {
     const root = h('div', { dataOptionGroup: 'values' });
     const firstInput = h('input', {
@@ -372,6 +403,37 @@ describe('The DataScope component', () => {
     expect(effectElement.dataset.frozen).toBe('true');
 
     await destroy(scope, first, last, computed, effect);
+  });
+
+  it('should notify once when hydrating multiple immediate sources for the same key', async () => {
+    const root = h('div', { dataOptionGroup: 'person' });
+    const firstInput = h('input', {
+      name: 'first',
+      value: 'Ada',
+      dataOptionImmediate: true,
+    });
+    const secondInput = h('input', {
+      name: 'first',
+      value: 'Ada',
+      dataOptionImmediate: true,
+    });
+    const effectElement = h('div', {
+      dataOptionEffect:
+        'target.dataset.values = (target.dataset.values || "") + $data.first + "|"',
+    });
+    root.append(firstInput, secondInput, effectElement);
+
+    const scope = new DataScope(root);
+    const first = new DataModel(firstInput);
+    const second = new DataModel(secondInput);
+    const effect = new DataEffect(effectElement);
+    await mount(scope, first, second, effect);
+    await nextTick();
+
+    expect(effectElement.dataset.values?.split('|').filter(Boolean)).toEqual(['Ada']);
+    expect(scope.getData('person')).toEqual({ first: 'Ada' });
+
+    await destroy(scope, first, second, effect);
   });
 
   it('should hydrate and track only the selected radio', async () => {
