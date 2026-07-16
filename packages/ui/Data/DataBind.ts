@@ -3,7 +3,7 @@ import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { isArray, nextTick } from '@studiometa/js-toolkit/utils';
 import { DataScope, getDataScope } from './DataScope.js';
 import type { DataValue } from './DataScope.js';
-import { isInput, isCheckbox, isSelect } from './utils.js';
+import { getCallback, isInput, isCheckbox, isSelect } from './utils.js';
 
 export interface DataBindProps extends BaseProps {
   $options: {
@@ -33,11 +33,34 @@ function valuesEqual(left: DataValue, right: DataValue) {
   return String(left) === String(right);
 }
 
+type VirtualBinding =
+  | { type: 'text'; expression: string }
+  | { type: 'prop' | 'attr' | 'class' | 'style'; name: string; expression: string };
+
+function resolvePropertyName(target: HTMLElement, name: string) {
+  const normalizedName = name.replaceAll('-', '').toLowerCase();
+  let current: object | null = target;
+
+  while (current) {
+    const property = Object.getOwnPropertyNames(current).find(
+      (candidate) => candidate.toLowerCase() === normalizedName,
+    );
+    if (property) {
+      return property;
+    }
+    current = Object.getPrototypeOf(current);
+  }
+
+  return name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
+}
+
 /**
  * DataBind class.
  * @link https://ui.studiometa.dev/components/DataBind/
  */
-export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, 'data:')<DataBindProps & T> {
+export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, 'data:')<
+  DataBindProps & T
+> {
   static config: BaseConfig = {
     name: 'DataBind',
     options: {
@@ -49,6 +72,35 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
 
   private __dataScopeResolved = false;
   private __dataScope?: DataScope;
+  private __virtualBindings?: VirtualBinding[];
+
+  get virtualBindings() {
+    if (!this.__virtualBindings) {
+      this.__virtualBindings = [];
+
+      for (const attribute of this.$el.attributes) {
+        if (attribute.name === 'data-bind:text') {
+          this.__virtualBindings.push({ type: 'text', expression: attribute.value });
+          continue;
+        }
+
+        const match = attribute.name.match(/^data-bind:(prop|attr|class|style)\.(.+)$/);
+        if (match) {
+          this.__virtualBindings.push({
+            type: match[1] as 'prop' | 'attr' | 'class' | 'style',
+            name: match[2],
+            expression: attribute.value,
+          });
+        }
+      }
+    }
+
+    return this.__virtualBindings;
+  }
+
+  get hasVirtualBindings() {
+    return this.virtualBindings.length > 0;
+  }
 
   get dataScope() {
     if (!this.__dataScopeResolved) {
@@ -186,10 +238,15 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
 
     if (dispatch) {
       for (const instance of relatedInstances) {
-        if (instance !== this && instance.value !== value) {
+        if (instance !== this && (instance.hasVirtualBindings || instance.value !== value)) {
           instance.set(value, false);
         }
       }
+    }
+
+    if (this.hasVirtualBindings) {
+      this.applyVirtualBindings(value);
+      return;
     }
 
     if (isSelect(target)) {
@@ -214,6 +271,51 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
     }
 
     target[this.prop] = value;
+  }
+
+  private applyVirtualBindings(value: DataValue) {
+    for (const binding of this.virtualBindings) {
+      let result: unknown = value;
+
+      if (binding.expression) {
+        try {
+          result = getCallback(this.group, `return ${binding.expression};`)(
+            value,
+            this.target,
+            this.$data,
+          );
+        } catch (error) {
+          // @todo better handling of errors?
+          console.error('Failed', error);
+          continue;
+        }
+      }
+
+      switch (binding.type) {
+        case 'prop':
+          this.target[resolvePropertyName(this.target, binding.name)] = result;
+          break;
+        case 'attr':
+          if (result === false || result === null || result === undefined) {
+            this.target.removeAttribute(binding.name);
+          } else {
+            this.target.setAttribute(binding.name, result === true ? '' : String(result));
+          }
+          break;
+        case 'class':
+          this.target.classList.toggle(binding.name, Boolean(result));
+          break;
+        case 'style':
+          this.target.style.setProperty(
+            binding.name,
+            result === false || result === null || result === undefined ? '' : String(result),
+          );
+          break;
+        case 'text':
+          this.target.textContent = result as string | null;
+          break;
+      }
+    }
   }
 
   /**
