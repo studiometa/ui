@@ -331,7 +331,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
     }
 
     if (updateData) {
-      dataScope.setValue(this.group, dataKey, value);
+      dataScope.setValue(this.group, dataKey, value, this);
     }
 
     for (const instance of relatedInstances) {
@@ -388,7 +388,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
 
   destroyed() {
     if (this.dataScope && this.dataKey) {
-      this.dataScope.deleteValue(this.group, this.dataKey);
+      this.dataScope.deleteValue(this.group, this.dataKey, this);
     }
   }
 }

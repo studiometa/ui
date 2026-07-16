@@ -18,6 +18,7 @@ export interface DataScopeMember extends Base {
 
 interface DataScopeGroup {
   instances: Set<DataScopeMember>;
+  sources: Map<string, Set<DataScopeMember>>;
   values: Map<string, DataValue>;
   data: Readonly<Record<string, DataValue>>;
   hydration: Set<DataScopeMember>;
@@ -52,6 +53,11 @@ function createSnapshot(values: Map<string, DataValue>): Readonly<Record<string,
   return Object.freeze(Object.fromEntries(entries));
 }
 
+function isCurrentValueSource(instance: DataScopeMember) {
+  const { $el } = instance;
+  return !($el instanceof HTMLInputElement && $el.type === 'radio' && !$el.checked);
+}
+
 /**
  * Define a local boundary and a default group for descendant Data components.
  * @link https://ui.studiometa.dev/components/DataScope/
@@ -75,6 +81,7 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
     if (!record) {
       record = {
         instances: new Set(),
+        sources: new Map(),
         values: new Map(),
         data: EMPTY_DATA,
         hydration: new Set(),
@@ -100,25 +107,36 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
     return this.getRecord(group).data;
   }
 
-  setValue(group: string, key: string, value: DataValue) {
+  setValue(group: string, key: string, value: DataValue, source?: DataScopeMember) {
     const record = this.getRecord(group);
+
+    if (source) {
+      if (source.$el instanceof HTMLInputElement && source.$el.type === 'radio') {
+        record.sources.set(key, new Set([source]));
+      } else {
+        const sources = record.sources.get(key) ?? new Set();
+        sources.add(source);
+        record.sources.set(key, sources);
+      }
+    }
+
     record.values.set(key, cloneValue(value));
     record.data = createSnapshot(record.values);
   }
 
-  deleteValue(group: string, key: string) {
+  deleteValue(group: string, key: string, source: DataScopeMember) {
     const record = this.getRecord(group);
-    const remainingSource = Array.from(record.instances).find(
-      (instance) => instance.dataKey === key,
-    );
+    const sources = record.sources.get(key);
 
-    if (remainingSource) {
-      record.values.set(key, cloneValue(remainingSource.get()));
-    } else {
-      record.values.delete(key);
+    if (!sources?.delete(source)) {
+      return;
     }
 
-    record.data = createSnapshot(record.values);
+    if (sources.size === 0) {
+      record.sources.delete(key);
+      record.values.delete(key);
+      record.data = createSnapshot(record.values);
+    }
   }
 
   hydrate(group: string, instance: DataScopeMember) {
@@ -135,9 +153,22 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
 
       if (this.$isMounted) {
         for (const source of record.hydration) {
-          if (source.$isMounted && source.$el.isConnected && source.dataKey) {
+          if (
+            source.$isMounted &&
+            source.$el.isConnected &&
+            source.dataKey &&
+            isCurrentValueSource(source)
+          ) {
             sources.set(source.dataKey, source);
             record.values.set(source.dataKey, cloneValue(source.get()));
+
+            if (source.$el instanceof HTMLInputElement && source.$el.type === 'radio') {
+              record.sources.set(source.dataKey, new Set([source]));
+            } else {
+              const valueSources = record.sources.get(source.dataKey) ?? new Set();
+              valueSources.add(source);
+              record.sources.set(source.dataKey, valueSources);
+            }
           }
         }
       }

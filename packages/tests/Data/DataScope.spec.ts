@@ -111,6 +111,33 @@ describe('The DataScope component', () => {
     await destroy(scope);
   });
 
+  it('should track only actual keyed sources during teardown', async () => {
+    const root = h('div', { dataOptionGroup: 'person' });
+    const input = h('input', {
+      name: 'first',
+      value: 'Ada',
+      dataOptionImmediate: true,
+    });
+    const outputA = h('div', { dataOptionKey: 'first' });
+    const outputB = h('div', { dataOptionKey: 'first' });
+    root.append(input, outputA, outputB);
+
+    const scope = new DataScope(root);
+    const source = new DataModel(input);
+    const subscriberA = new DataBind(outputA);
+    const subscriberB = new DataBind(outputB);
+    await mount(scope, source, subscriberA, subscriberB);
+    await nextTick();
+
+    await destroy(subscriberA);
+    expect(scope.getData('person')).toEqual({ first: 'Ada' });
+
+    await destroy(source);
+    expect(scope.getData('person')).toEqual({});
+
+    await destroy(scope, subscriberB);
+  });
+
   it('should clone and freeze mutable snapshot values', () => {
     const scope = new DataScope(h('div'));
     const items = ['one'];
@@ -209,6 +236,40 @@ describe('The DataScope component', () => {
     expect(effectElement.dataset.frozen).toBe('true');
 
     await destroy(scope, first, last, computed, effect);
+  });
+
+  it('should hydrate and track only the selected radio', async () => {
+    const root = h('div', { dataOptionGroup: 'tabs' });
+    const overviewElement = h('input', {
+      type: 'radio',
+      name: 'tab',
+      value: 'overview',
+      dataOptionImmediate: true,
+    });
+    const detailsElement = h('input', {
+      type: 'radio',
+      name: 'tab',
+      value: 'details',
+      dataOptionImmediate: true,
+    });
+    overviewElement.checked = true;
+    root.append(overviewElement, detailsElement);
+
+    const scope = new DataScope(root);
+    const overview = new DataModel(overviewElement);
+    const details = new DataModel(detailsElement);
+    await mount(scope, overview, details);
+    await nextTick();
+    expect(scope.getData('tabs')).toEqual({ tab: 'overview' });
+
+    detailsElement.checked = true;
+    detailsElement.dispatchEvent(new Event('input'));
+    expect(scope.getData('tabs')).toEqual({ tab: 'details' });
+
+    await destroy(details);
+    expect(scope.getData('tabs')).toEqual({});
+
+    await destroy(scope, overview);
   });
 
   it('should ignore immediate sources destroyed before hydration', async () => {
