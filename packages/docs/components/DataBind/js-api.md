@@ -79,6 +79,29 @@ Set the value for the current instance and dispatch it to others if the second p
 - `value` (`DataValue`): the value to set
 - `dispatch` (`boolean`, default to `true`): wether to dispatch the value to other related instances or not
 
+### `toggle(onValue = true, offValue = false)`
+
+Toggle between two values and dispatch the result to the group. Single checkboxes support the default boolean values; custom values require a target that can represent them without coercing them to `checked`. Radio inputs are not supported.
+
+Custom values can describe disclosure state without repeating comparison logic in an Action:
+
+```html
+<button
+  data-component="Action"
+  data-option-target="DataBind(.state)"
+  data-option-effect="target.toggle('open', 'closed')">
+  Toggle
+</button>
+```
+
+### `increment(step = 1)`
+
+Convert the current value to a number, increment it by `step`, and dispatch the result. A non-numeric current value starts at `0`. Pass a negative step to decrement.
+
+### `cycle(values)`
+
+Select and dispatch the value following the current value in the given array. The method wraps to the first value; an unknown current value also selects the first value. An empty array does nothing.
+
 ### `get()`
 
 Get the value for the current instance.

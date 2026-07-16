@@ -15,6 +15,24 @@ export interface DataBindProps extends BaseProps {
 
 const EMPTY_DATA = Object.freeze({});
 
+function valuesEqual(left: DataValue, right: DataValue) {
+  if (Object.is(left, right)) {
+    return true;
+  }
+
+  if (left instanceof Date && right instanceof Date) {
+    return left.getTime() === right.getTime();
+  }
+
+  if (Array.isArray(left) && Array.isArray(right)) {
+    return (
+      left.length === right.length && left.every((value, index) => value === right[index])
+    );
+  }
+
+  return String(left) === String(right);
+}
+
 type VirtualBinding =
   | { type: 'text'; expression: string }
   | { type: 'prop' | 'attr' | 'class' | 'style'; name: string; expression: string };
@@ -323,6 +341,34 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
     }
 
     this.set(value, false);
+  }
+
+  toggle(onValue: DataValue = true, offValue: DataValue = false) {
+    const isRadio = isInput(this.target) && this.target.type === 'radio';
+    const hasCustomCheckboxValues =
+      isCheckbox(this.target) &&
+      (typeof onValue !== 'boolean' || typeof offValue !== 'boolean');
+
+    if (isRadio || hasCustomCheckboxValues) {
+      this.$warn('The toggle() values can not be represented by this input.');
+      return;
+    }
+
+    this.set(valuesEqual(this.value, onValue) ? offValue : onValue);
+  }
+
+  increment(step = 1) {
+    const value = Number(this.value);
+    this.set((Number.isNaN(value) ? 0 : value) + step);
+  }
+
+  cycle(values: readonly DataValue[]) {
+    if (values.length === 0) {
+      return;
+    }
+
+    const index = values.findIndex((value) => valuesEqual(value, this.value));
+    this.set(values[(index + 1) % values.length]);
   }
 
   mounted() {

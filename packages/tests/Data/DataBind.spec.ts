@@ -149,6 +149,99 @@ describe('The DataBind component', () => {
     expect(spySet).toHaveBeenLastCalledWith('bar');
   });
 
+  it('should toggle between default and custom values', () => {
+    const checkbox = new DataBind(h('input', { type: 'checkbox' }));
+    checkbox.toggle();
+    expect(checkbox.value).toBe(true);
+    checkbox.toggle();
+    expect(checkbox.value).toBe(false);
+    checkbox.toggle('open', 'closed');
+    expect(checkbox.value).toBe(false);
+
+    const radioElement = h('input', { type: 'radio', value: 'one' });
+    const radio = new DataBind(radioElement);
+    radio.toggle('one', '');
+    expect(radioElement.checked).toBe(false);
+
+    const state = new DataBind(h('div'));
+    state.toggle('open', 'closed');
+    expect(state.value).toBe('open');
+    state.toggle('open', 'closed');
+    expect(state.value).toBe('closed');
+
+    const numericState = new DataBind(h('input', { type: 'text' }));
+    numericState.toggle(1, 0);
+    expect(numericState.value).toBe('1');
+    numericState.toggle(1, 0);
+    expect(numericState.value).toBe('0');
+  });
+
+  it('should mutate scoped values from an Action', async () => {
+    const root = h('div', { dataOptionGroup: 'disclosure' });
+    const stateElement = h('div', { class: 'state', dataOptionKey: 'state' });
+    const button = h('button', {
+      dataOptionTarget: 'DataBind(.state)',
+      dataOptionEffect: "target.toggle('open', 'closed')",
+    });
+    root.append(stateElement, button);
+
+    const scope = new DataScope(root);
+    const state = new DataBind(stateElement);
+    const action = new Action(button);
+    await mount(scope, state, action);
+
+    button.dispatchEvent(new Event('click'));
+    expect(state.value).toBe('open');
+    expect(state.$data).toEqual({ state: 'open' });
+
+    button.dispatchEvent(new Event('click'));
+    expect(state.value).toBe('closed');
+    expect(state.$data).toEqual({ state: 'closed' });
+
+    await destroy(scope, state, action);
+  });
+
+  it('should increment numeric values and recover from non-numeric values', () => {
+    const instance = new DataBind(h('div', ['2']));
+
+    instance.increment();
+    expect(instance.value).toBe('3');
+    instance.increment(-2);
+    expect(instance.value).toBe('1');
+    instance.value = 'invalid';
+    instance.increment(5);
+    expect(instance.value).toBe('5');
+  });
+
+  it('should cycle through values', () => {
+    const instance = new DataBind(h('div', ['one']));
+    const values = ['one', 'two', 'three'];
+
+    instance.cycle(values);
+    expect(instance.value).toBe('two');
+    instance.cycle(values);
+    expect(instance.value).toBe('three');
+    instance.cycle(values);
+    expect(instance.value).toBe('one');
+
+    instance.value = 'unknown';
+    instance.cycle(values);
+    expect(instance.value).toBe('one');
+    instance.cycle([]);
+    expect(instance.value).toBe('one');
+
+    const numeric = new DataBind(h('input', { type: 'text', value: '1' }));
+    numeric.cycle([1, 2, 3]);
+    expect(numeric.value).toBe('2');
+
+    const array = new DataBind(h('div', ['one,two']));
+    array.cycle([
+      ['one', 'two'],
+      ['three', 'four'],
+    ]);
+    expect(array.value).toBe('three,four');
+  });
+
   it('should dispatch value to other instances', async () => {
     const instance1 = new DataBind(h('div', { dataOptionGroup: 'a' }, ['foo']));
     const instance2 = new DataBind(h('div', { dataOptionGroup: 'a' }, ['foo']));
