@@ -1,0 +1,37 @@
+<div class="grid gap-6 md:grid-cols-2">
+  <div
+    data-component="DataScope"
+    data-option-group="person"
+    class="flex flex-col gap-4 rounded ring p-4">
+    <h2 class="text-xl font-bold">First profile</h2>
+    <input
+      name="first"
+      value="Ada"
+      data-component="DataModel"
+      data-option-immediate
+      class="bg-transparent rounded ring p-2" />
+    <output
+      data-component="DataComputed"
+      data-option-compute="`Hello ${$data.first}`">
+      Hello Ada
+    </output>
+  </div>
+
+  <div
+    data-component="DataScope"
+    data-option-group="person"
+    class="flex flex-col gap-4 rounded ring p-4">
+    <h2 class="text-xl font-bold">Second profile</h2>
+    <input
+      name="first"
+      value="Grace"
+      data-component="DataModel"
+      data-option-immediate
+      class="bg-transparent rounded ring p-2" />
+    <output
+      data-component="DataComputed"
+      data-option-compute="`Hello ${$data.first}`">
+      Hello Grace
+    </output>
+  </div>
+</div>
