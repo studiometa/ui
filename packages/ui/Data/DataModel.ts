@@ -10,6 +10,10 @@ export class DataModel<T extends BaseProps = BaseProps> extends DataBind<DataMod
     name: 'DataModel',
   };
 
+  override get isDataSource() {
+    return true;
+  }
+
   dispatch() {
     const { target, multiple } = this;
     let value = this.getTargetValue();

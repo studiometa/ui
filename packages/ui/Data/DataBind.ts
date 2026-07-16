@@ -101,6 +101,10 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
   private __virtualValue?: DataValue;
   private __hasVirtualValue = false;
 
+  get isDataSource() {
+    return false;
+  }
+
   protected get supportsMutations() {
     return true;
   }

@@ -140,6 +140,40 @@ describe('The DataScope component', () => {
     await destroy(scope, subscriberB);
   });
 
+  it('should retain mirrored keyed models as live sources', async () => {
+    const root = h('div', { dataOptionGroup: 'person' });
+    const primaryElement = h('input', {
+      name: 'first',
+      value: 'Ada',
+      dataOptionImmediate: true,
+    });
+    const mirroredElement = h('input', {
+      name: 'first',
+      value: '',
+    });
+    root.append(primaryElement, mirroredElement);
+
+    const scope = new DataScope(root);
+    const primary = new DataModel(primaryElement);
+    const mirrored = new DataModel(mirroredElement);
+    await mount(scope, primary, mirrored);
+    await nextTick();
+    expect(mirrored.value).toBe('Ada');
+    expect(scope.getData('person')).toEqual({ first: 'Ada' });
+
+    await destroy(primary);
+    expect(scope.getData('person')).toEqual({ first: 'Ada' });
+
+    mirroredElement.value = 'Grace';
+    mirrored.dispatch();
+    expect(scope.getData('person')).toEqual({ first: 'Grace' });
+
+    await destroy(mirrored);
+    expect(scope.getData('person')).toEqual({});
+
+    await destroy(scope);
+  });
+
   it('should recompute multiple values when a checkbox source is removed', async () => {
     const root = h('div', { dataOptionGroup: 'choices[]' });
     const firstElement = h('input', {

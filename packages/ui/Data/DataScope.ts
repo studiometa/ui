@@ -12,6 +12,7 @@ export type DataValue = boolean | string | string[] | number | Date | null | und
 
 export interface DataScopeMember extends Base {
   readonly dataKey: string;
+  readonly isDataSource: boolean;
   get(): DataValue;
   set(value: DataValue, dispatch?: boolean): void;
   __dispatchScopedValue(value: DataValue, updateData?: boolean): void;
@@ -199,6 +200,11 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
       } else {
         const sources = record.sources.get(key) ?? new Set();
         sources.add(source);
+        for (const instance of record.instances) {
+          if (instance.isDataSource && instance.dataKey === key) {
+            sources.add(instance);
+          }
+        }
         record.sources.set(key, sources);
       }
     }
@@ -256,6 +262,11 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
             } else {
               const valueSources = record.sources.get(source.dataKey) ?? new Set();
               valueSources.add(source);
+              for (const instance of record.instances) {
+                if (instance.isDataSource && instance.dataKey === source.dataKey) {
+                  valueSources.add(instance);
+                }
+              }
               record.sources.set(source.dataKey, valueSources);
             }
           }
