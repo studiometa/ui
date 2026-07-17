@@ -45,10 +45,6 @@ Data callbacks receive the group's `$data` snapshot as their third argument:
 
 The snapshot object and its array values are frozen. Array and `Date` values are cloned before they are exposed, so mutating the original value does not mutate an existing snapshot. A cloned `Date` can still be changed through its mutation methods, but later snapshots remain isolated from those changes.
 
-## Action targets
-
-An [`Action`](../Action/index.md) inside a `DataScope` resolves targets only among components in the same nearest scope. An Action outside a scope continues to resolve targets globally.
-
 ## Lifecycle
 
 Scope membership is resolved when a Data component is initialized. Moving a mounted component between scopes or changing its group or key dynamically is not supported.

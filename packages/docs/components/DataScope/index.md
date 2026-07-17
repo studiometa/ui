@@ -4,7 +4,7 @@ badges: [JS]
 
 # DataScope <Badges :texts="$frontmatter.badges" />
 
-Use the `DataScope` component to isolate [`DataBind`](../DataBind/index.md), [`DataModel`](../DataModel/index.md), [`DataComputed`](../DataComputed/index.md), and [`DataEffect`](../DataEffect/index.md) groups inside a reusable widget. [`Action`](../Action/index.md) targets inside the widget are isolated by the same scope.
+Use the `DataScope` component to isolate [`DataBind`](../DataBind/index.md), [`DataModel`](../DataModel/index.md), [`DataComputed`](../DataComputed/index.md), and [`DataEffect`](../DataEffect/index.md) groups inside a reusable widget.
 
 Descendant Data components inherit the scope's group unless they define their own `data-option-group`. Nested scopes use the nearest `DataScope` boundary.
 
