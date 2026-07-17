@@ -27,7 +27,7 @@ Sibling scopes remain independent even when they use the same group name. In the
 
 ## Tabs
 
-The following example implements two independent tab interfaces with `DataScope`, [`Action`](../Action/index.md), and [`DataBind`](../DataBind/index.md). Each scope contains a hidden source of truth, while virtual bindings synchronize the selected state and panels. The `Tabs` component is not registered.
+The following example implements two independent tab interfaces with `DataScope`, [`Action`](../Action/index.md), [`DataModel`](../DataModel/index.md), and [`DataBind`](../DataBind/index.md). The tab buttons are mirrored models for the same `active` key: the first button hydrates the initial value, every button can publish a new value, and virtual bindings synchronize the selected state and panels. The `Tabs` component is not registered.
 
 <llm-exclude>
 <PreviewPlayground
@@ -48,7 +48,7 @@ The following example implements two independent tab interfaces with `DataScope`
 
 ## Accordion
 
-This example uses the same pattern for two independent accordion interfaces. Each action toggles the scoped hidden value; opening one panel closes the other panels in that scope, and clicking the open item closes it. The `Accordion` component is not registered.
+This example uses the same mirrored-model pattern for two independent accordion interfaces. Each button toggles the shared `active` key with [`toggle()`](../DataBind/js-api.md); opening one panel closes the other panels in that scope, and clicking the open item closes it. The `Accordion` component is not registered.
 
 <llm-exclude>
 <PreviewPlayground

@@ -6,7 +6,7 @@ title: DataBind, DataModel, DataEffect and DataComputed examples
 
 ## Immediate propagation
 
-In the following example, we use the `data-option-immediate` attribute to enable the [`immediate` option](./js-api.md#immediate) on the first `<input>`, in order to set the value of the second `<input>` on mount.
+In the following example, the first [`DataModel`](../DataModel/index.md) uses the [`immediate` option](./js-api.md#immediate) to hydrate the scoped `text` key on mount. The second model mirrors the same native `name`, and the keyed `DataBind` renders their shared value.
 
 <llm-exclude>
 <PreviewPlayground

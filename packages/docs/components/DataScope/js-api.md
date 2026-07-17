@@ -53,4 +53,6 @@ An [`Action`](../Action/index.md) inside a `DataScope` resolves targets only amo
 
 Scope membership is resolved when a Data component is initialized. Moving a mounted component between scopes or changing its group or key dynamically is not supported.
 
-When the last component providing a key is destroyed, that key is removed from the scope's `$data` snapshot.
+A keyed [`DataModel`](../DataModel/index.md) is a data source. For non-radio values, every mounted `DataModel` with the same key is tracked as a mirrored source after publication. Destroying one mirrored model keeps the value in `$data`; the key is removed only when its last source is destroyed. Same-key `DataBind`, `DataComputed`, and `DataEffect` instances are subscribers and do not retain the key. A radio key is owned by the model representing its selected value.
+
+Disconnected sources are cleaned up the next time the scope is read or updated. For `[]` groups, the remaining selected values are recomputed before subscribers are notified.

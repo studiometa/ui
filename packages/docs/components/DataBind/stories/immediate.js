@@ -1,4 +1,6 @@
 import { registerComponent } from '@studiometa/js-toolkit';
-import { DataBind } from '@studiometa/ui';
+import { DataBind, DataModel, DataScope } from '@studiometa/ui';
 
+registerComponent(DataScope);
 registerComponent(DataBind);
+registerComponent(DataModel);

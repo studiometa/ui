@@ -6,7 +6,7 @@ badges: [JS]
 
 Use the `DataBind` to create a one-way binding of a property of the targeted DOM element. This component should be used with the [`DataModel` component](../DataModel/index.md), which handles two-way bindings.
 
-The related [`DateComputed`](../DataComputed/index.md) and [`DataEffect`](../DataEffect/index.md) components can also be used for computed values and side effects respectively.
+The related [`DataComputed`](../DataComputed/index.md) and [`DataEffect`](../DataEffect/index.md) components can also be used for computed values and side effects respectively.
 
 ## Table of content
 
@@ -23,20 +23,22 @@ Import the components in your main app and use the [`DataModel` component](../Da
 
 ```js [app.js] twoslash
 import { registerComponent } from '@studiometa/js-toolkit';
-import { DataBind } from '@studiometa/ui';
+import { Action, DataBind, DataModel, DataScope } from '@studiometa/ui';
 
+registerComponent(DataScope);
 registerComponent(DataBind);
+registerComponent(DataModel);
+registerComponent(Action);
 ```
 
 ```html [index.html]
-<!-- Bind "textContent" to the "text" group -->
-<div data-component="DataBind" data-option-group="text"></div>
+<div data-component="DataScope" data-option-group="message">
+  <!-- Hydrate the "text" key from the input's native name. -->
+  <input name="text" value="Hello world" data-component="DataModel" data-option-immediate />
 
-<!-- Bind "value" to the "text" group -->
-<input type="text" data-component="DataModel" data-option-group="text" />
-
-<!-- Bind "value" to the "text" group and sync it on mount -->
-<input type="text" data-component="DataModel" data-option-group="text" data-option-immediate />
+  <!-- Render only updates published for the "text" key. -->
+  <output data-component="DataBind" data-option-key="text">Hello world</output>
+</div>
 ```
 
 :::
@@ -59,46 +61,34 @@ Use kebab-case for camel-cased DOM properties because HTML attribute names are c
 
 For ARIA attributes, explicitly stringify booleans when `"false"` must remain present, for example `data-bind:attr.aria-selected="String(value === 'overview')"`.
 
-The following Tabs-like controls keep their labels while updating state and panels from the `tab` group:
+The following disclosure keeps its button label while updating its class, ARIA state, and panel visibility from one scoped value. The `DataModel` uses its `value` property to hydrate the initial state; virtual bindings then retain the reactive value without replacing the label.
 
 ```html
-<input
-  id="current-tab"
-  type="hidden"
-  value="overview"
-  data-component="DataBind"
-  data-option-group="tab"
-  data-option-immediate />
+<div data-component="DataScope" data-option-group="disclosure">
+  <button
+    type="button"
+    value="closed"
+    aria-controls="details"
+    aria-expanded="false"
+    data-component="Action DataModel"
+    data-option-key="state"
+    data-option-prop="value"
+    data-option-immediate
+    data-on:click="DataModel.toggle('open', 'closed')"
+    data-bind:class.is-active="value === 'open'"
+    data-bind:attr.aria-expanded="String(value === 'open')">
+    Details
+  </button>
 
-<button
-  data-component="Action DataBind"
-  data-option-group="tab"
-  data-on:click="DataBind(#current-tab) -> target.value = 'overview'"
-  data-bind:class.is-active="value === 'overview'"
-  data-bind:attr.aria-selected="String(value === 'overview')">
-  Overview
-</button>
-<button
-  data-component="Action DataBind"
-  data-option-group="tab"
-  data-on:click="DataBind(#current-tab) -> target.value = 'details'"
-  data-bind:class.is-active="value === 'details'"
-  data-bind:attr.aria-selected="String(value === 'details')">
-  Details
-</button>
-
-<section
-  data-component="DataBind"
-  data-option-group="tab"
-  data-bind:attr.hidden="value !== 'overview'">
-  Overview panel
-</section>
-<section
-  data-component="DataBind"
-  data-option-group="tab"
-  data-bind:attr.hidden="value !== 'details'">
-  Details panel
-</section>
+  <section
+    id="details"
+    hidden
+    data-component="DataBind"
+    data-option-key="state"
+    data-bind:attr.hidden="value !== 'open'">
+    Disclosure content
+  </section>
+</div>
 ```
 
 Expression errors are reported without interrupting updates to the other bindings, matching `DataComputed` and `DataEffect` behavior.

@@ -10,7 +10,7 @@
   <p
     data-component="DataEffect"
     data-option-group="counter"
-    data-option-effect="target.classList.toggle('text-red-500', value > 50)">
+    data-option-effect="target.animate([{ opacity: 0.5 }, { opacity: 1 }], { duration: 200 })">
     Count:
     <span data-component="DataBind" data-option-group="counter">50</span>
   </p>

@@ -1,20 +1,33 @@
-<div class="flex flex-col gap-4">
-  <input
-    data-component="DataModel"
-    data-option-group="counter"
-    type="range"
-    value="10"
-    min="0"
-    max="100"
-    step="1" />
-  <p>
-    Count:
-    <span data-component="DataBind" data-option-group="counter">10</span>
-  </p>
-  <p>
-    Double:
-    <span data-component="DataComputed" data-option-group="counter" data-option-compute="value * 2">
-      20
-    </span>
+<div
+  data-component="DataScope"
+  data-option-group="order"
+  class="grid gap-4 max-w-sm rounded ring p-4">
+  <label class="grid gap-1">
+    <span>Quantity</span>
+    <input
+      name="quantity"
+      type="number"
+      value="2"
+      min="0"
+      data-component="DataModel"
+      data-option-immediate
+      class="p-2 bg-transparent ring rounded" />
+  </label>
+  <label class="grid gap-1">
+    <span>Unit price</span>
+    <input
+      name="unitPrice"
+      type="number"
+      value="10"
+      min="0"
+      data-component="DataModel"
+      data-option-immediate
+      class="p-2 bg-transparent ring rounded" />
+  </label>
+  <p class="text-xl">
+    Total:
+    <output
+      data-component="DataComputed"
+      data-option-compute="($data.quantity || 0) * ($data.unitPrice || 0)">20</output>
   </p>
 </div>

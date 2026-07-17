@@ -14,10 +14,10 @@ The `DataBind` component can be used to keep a value in sync between multiple DO
 - Type: `string`
 - Default: `'textContent'`
 
-The default value for the `prop` options depends on the type of the targeted element. If the element is an input, a textearea or a select, the default prop will be one of the following:
+The default value for the `prop` option depends on the type of the targeted element. If the element is an input, a textarea, or a select, the default prop will be one of the following:
 
 - `valueAsDate` for `<input type="date">`
-- `valueAsNumber` from `<input type="number">`
+- `valueAsNumber` for `<input type="number">`
 - `value` for all other inputs
 - for `<select>` elements, the prop option is not used and the value will always be the selected option(s)
 
@@ -44,13 +44,13 @@ The `group` option is used to group instances together. All related instances wi
 
 A keyed value updates only bindings with the same key while notifying unkeyed subscribers. Keys are local to a `DataScope`; unscoped bindings preserve scalar group behavior.
 
-When using it with multiple checkboxes or select multiple, use the `[]` suffix to push each selected value in an array. See the [checkboxes example](/components/DataBind/examples.md#checkboxes) for more details on how this works.
+When using it with multiple checkboxes or a multiple select, use the `[]` suffix to push each selected value into an array. See the [checkboxes example](../DataModel/examples.md#checkboxes) for more details.
 
 ## Properties
 
 ### `value`
 
-Get and set the value on the current instance. This is a getter and setter alias for the [`set(value)`](#set-value-string-boolean-string) and [get()](#get) methods.
+Get and set the value on the current instance. This is a getter and setter alias for the `set(value)` and [`get()`](#get) methods.
 
 ### `target`
 
@@ -64,7 +64,7 @@ The targeted DOM element.
 - Type: `boolean`
 - Readonly
 
-Wether new values should be pushed to an array instead of a single value. This is enabled by adding the `[]` suffix to the [`group` option](#group).
+Whether new values should be pushed to an array instead of a single value. This is enabled by adding the `[]` suffix to the [`group` option](#group).
 
 ## Methods
 
@@ -77,7 +77,7 @@ Set the value for the current instance and dispatch it to others if the second p
 **Params**
 
 - `value` (`DataValue`): the value to set
-- `dispatch` (`boolean`, default to `true`): wether to dispatch the value to other related instances or not
+- `dispatch` (`boolean`, defaults to `true`): whether to dispatch the value to other related instances
 
 The mutation helpers below are available on `DataBind` and `DataModel`. They are not supported on computed values or effects.
 
@@ -88,21 +88,60 @@ Toggle between two values and dispatch the result to the group. Single checkboxe
 Custom values can describe disclosure state without repeating comparison logic in an Action:
 
 ```html
-<button
-  data-component="Action"
-  data-option-target="DataBind(.state)"
-  data-option-effect="target.toggle('open', 'closed')">
-  Toggle
-</button>
+<div data-component="DataScope" data-option-group="disclosure">
+  <button
+    type="button"
+    value="closed"
+    data-component="Action DataModel"
+    data-option-key="state"
+    data-option-prop="value"
+    data-option-immediate
+    data-on:click="DataModel.toggle('open', 'closed')"
+    data-bind:attr.aria-expanded="String(value === 'open')">
+    Toggle
+  </button>
+</div>
 ```
 
 ### `increment(step = 1)`
 
 Convert the current value to a number, increment it by `step`, and dispatch the result. A non-numeric current value starts at `0`. Pass a negative step to decrement. Date inputs are not supported.
 
+```html
+<div data-component="DataScope" data-option-group="counter">
+  <button
+    type="button"
+    value="0"
+    data-component="Action DataModel"
+    data-option-key="count"
+    data-option-prop="value"
+    data-option-immediate
+    data-on:click="DataModel.increment()"
+    data-bind:text="`Count: ${value}`">
+    Count: 0
+  </button>
+</div>
+```
+
 ### `cycle(values)`
 
 Select and dispatch the value following the current value in the given array. The method wraps to the first value; an unknown current value also selects the first value. An empty array does nothing.
+
+```html
+<div data-component="DataScope" data-option-group="workflow">
+  <button
+    type="button"
+    value="draft"
+    data-component="Action DataModel"
+    data-option-key="status"
+    data-option-prop="value"
+    data-option-immediate
+    data-on:click="DataModel.cycle(['draft', 'review', 'published'])"
+    data-bind:text="`Status: ${value}`">
+    Status: draft
+  </button>
+</div>
+```
 
 ### `get()`
 

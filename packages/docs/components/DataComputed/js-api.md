@@ -5,7 +5,7 @@ outline: deep
 
 # JS API
 
-The `DataComputed` component extends the [`DataBind` component](../DataBind/js-api.md), it inherits from its API.
+The `DataComputed` component extends the [`DataBind` component](../DataBind/js-api.md) and inherits its binding API. Mutation helpers such as `toggle()`, `increment()`, and `cycle()` are not supported on computed values.
 
 ## Options
 
@@ -37,13 +37,13 @@ Use this option to define a piece of JavaScript code to transform the value befo
 
 ## Methods
 
-### `set(value: string | boolean | string[])`
+### `set(value: DataValue)`
 
-Set the value for the current instance.
+Compute and set the value for the current instance.
 
 **Params**
 
-- `value` (`string | boolean | string[]`): the value to set
+- `value` (`DataValue`): the source value to transform
 
 ### `get()`
 

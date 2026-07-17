@@ -1,10 +1,15 @@
-<div class="grid gap-4 max-w-sm">
-  <!-- Two ways binding on the "text" group for the input's value -->
+<div
+  data-component="DataScope"
+  data-option-group="validation"
+  class="grid gap-2 max-w-sm">
+  <label for="validated-text">Message</label>
   <input
+    id="validated-text"
+    name="message"
     type="text"
-    placeholder="..."
+    placeholder="Use 10 characters or fewer"
     data-component="DataModel DataEffect"
-    data-option-group="text"
-    data-option-effect="value.length > 10 && alert('Too long')"
-    class="p-2 border border-current/20 rounded" />
+    data-option-effect="target.setCustomValidity(value.length > 10 ? 'Use 10 characters or fewer.' : '')"
+    class="p-2 border border-current/20 invalid:ring-red-500 bg-transparent ring rounded" />
+  <small>The effect updates the input's native validation state.</small>
 </div>

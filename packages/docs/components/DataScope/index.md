@@ -34,6 +34,6 @@ Import the `DataScope` component with the Data components used by your applicati
 
 </llm-only>
 
-The native `name` of a form control becomes its key inside the scope. Use `data-option-key` to define a key explicitly. Unkeyed computed values and effects receive the complete frozen `$data` snapshot, allowing expressions to combine several keyed values.
+The native `name` of a form control becomes its key inside the scope. Use `data-option-key` to define a key explicitly. Non-radio `DataModel` controls with the same key mirror each other and jointly retain the scoped value. Unkeyed computed values and effects receive the complete frozen `$data` snapshot, allowing expressions to combine several keyed values.
 
 See the [JavaScript API](./js-api.md) for details about group inheritance, keys, and scoped data snapshots.

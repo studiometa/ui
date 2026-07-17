@@ -5,7 +5,7 @@ outline: deep
 
 # DataEffect JS API
 
-The `DataEffect` component extends the [`DataBind` component](../DataBind/js-api.md), it inherits from its API.
+The `DataEffect` component extends the [`DataBind` component](../DataBind/js-api.md) and inherits its binding API. Mutation helpers such as `toggle()`, `increment()`, and `cycle()` are not supported on effects.
 
 ## Options
 
@@ -18,7 +18,7 @@ Use this option to define a piece of JavaScript code to be executed when the val
 
 **Example**
 
-In the following example, the counter text color is changed based on the input's length:
+In the following example, the counter is animated whenever the range value changes:
 
 <llm-exclude>
 <PreviewPlayground

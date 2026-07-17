@@ -1,16 +1,22 @@
-<div class="grid gap-4 max-w-sm">
-  <input
-    data-component="DataBind"
-    data-option-group="foo"
-    data-option-immediate
-    type="text"
-    value="foo"
-    class="p-2 border border-current/20 rounded" />
-  <input
-    data-component="DataBind"
-    data-option-group="foo"
-    type="text"
-    value=""
-    readonly
-    class="p-2 border border-current/20 rounded" />
+<div
+  data-component="DataScope"
+  data-option-group="message"
+  class="grid gap-4 max-w-sm rounded ring p-4">
+  <label class="grid gap-1">
+    <span>Primary model</span>
+    <input
+      name="text"
+      value="Hello world"
+      data-component="DataModel"
+      data-option-immediate
+      class="p-2 bg-transparent ring rounded" />
+  </label>
+  <label class="grid gap-1">
+    <span>Mirrored model</span>
+    <input
+      name="text"
+      data-component="DataModel"
+      class="p-2 bg-transparent ring rounded" />
+  </label>
+  <output data-component="DataBind" data-option-key="text">Hello world</output>
 </div>
