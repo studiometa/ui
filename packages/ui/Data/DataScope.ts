@@ -243,6 +243,12 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
   }
 
   hydrate(group: string, instance: DataScopeMember) {
+    // Only data sources can hydrate the scoped values; keyed subscribers
+    // receive the hydrated values through the post-hydration dispatch.
+    if (!instance.isDataSource) {
+      return;
+    }
+
     const record = this.getRecord(group);
     record.hydration.add(instance);
 

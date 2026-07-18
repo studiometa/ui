@@ -502,6 +502,39 @@ describe('The DataScope component', () => {
     await destroy(scope, first);
   });
 
+  it('should not hydrate values from immediate keyed subscribers', async () => {
+    const root = h('div', { dataOptionGroup: 'person' });
+    const input = h('input', {
+      name: 'first',
+      value: 'Ada',
+      dataOptionImmediate: true,
+    });
+    const mirrorElement = h('output', {
+      dataOptionKey: 'first',
+      dataOptionImmediate: true,
+    });
+    const computedElement = h('div', {
+      dataOptionKey: 'first',
+      dataOptionCompute: 'value + "!"',
+      dataOptionImmediate: true,
+    });
+    root.append(input, mirrorElement, computedElement);
+
+    const scope = new DataScope(root);
+    const source = new DataModel(input);
+    const mirror = new DataBind(mirrorElement);
+    const computed = new DataComputed(computedElement);
+    await mount(scope, source, mirror, computed);
+    await nextTick();
+
+    expect(scope.getData('person')).toEqual({ first: 'Ada' });
+    expect(input.value).toBe('Ada');
+    expect(mirrorElement.textContent).toBe('Ada');
+    expect(computedElement.textContent).toBe('Ada!');
+
+    await destroy(scope, source, mirror, computed);
+  });
+
   it('should ignore immediate sources destroyed before hydration', async () => {
     const root = h('div', { dataOptionGroup: 'person' });
     const input = h('input', {

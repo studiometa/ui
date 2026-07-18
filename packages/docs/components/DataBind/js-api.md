@@ -28,7 +28,7 @@ If the option is explicitly set with the `data-option-prop` attribute, it will o
 - Type: `boolean`
 - Default: `false`
 
-Use the `data-option-immediate` attribute on a `DataBind` component to propagate its value on mount to other components in the same group. Immediate keyed values inside a [`DataScope`](../DataScope/index.md) are collected before subscribers are notified.
+Use the `data-option-immediate` attribute on a `DataBind` component to propagate its value on mount to other components in the same group. Inside a [`DataScope`](../DataScope/index.md), only [`DataModel`](../DataModel/index.md) sources hydrate the keyed value; immediate keyed `DataBind`, `DataComputed` and `DataEffect` components are subscribers and receive the hydrated values once all sources are collected.
 
 ### `group`
 
