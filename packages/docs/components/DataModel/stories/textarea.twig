@@ -1,0 +1,21 @@
+<div
+  data-component="DataScope"
+  data-option-group="feedback"
+  class="grid gap-2 max-w-lg">
+  <label class="grid gap-1">
+    <span>Message</span>
+    <textarea
+      name="message"
+      rows="3"
+      data-component="DataModel"
+      data-option-immediate
+      class="p-2 bg-transparent ring rounded">Hello world</textarea>
+  </label>
+  <p
+    data-component="DataComputed"
+    data-option-key="message"
+    data-option-compute="`${value.length} character${value.length === 1 ? '' : 's'}`"
+    class="text-sm">
+    11 characters
+  </p>
+</div>

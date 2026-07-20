@@ -1,0 +1,23 @@
+<div
+  data-component="DataScope"
+  data-option-group="event"
+  class="flex flex-col gap-2">
+  <label class="grid gap-1 max-w-xs">
+    <span>Event date</span>
+    <input
+      type="date"
+      name="day"
+      value="2026-01-01"
+      data-component="DataModel"
+      data-option-immediate
+      class="p-2 bg-transparent ring rounded" />
+  </label>
+  <p>
+    Selected date:
+    <span
+      data-component="DataBind"
+      data-option-key="day"
+      data-bind:text="value ? value.toLocaleDateString('en', { dateStyle: 'full' }) : 'none'"
+      class="font-bold">Thursday, January 1, 2026</span>
+  </p>
+</div>

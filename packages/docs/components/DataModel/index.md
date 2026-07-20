@@ -15,6 +15,8 @@ Use the `DataModel` component to create a two-way binding of a property of HTML 
 
 Import the components in your main app and use the `DataModel` component on HTML form elements and the `DataBind` and `DataComputed` components on other elements that need to be updated accordingly. The `DataEffect` component can be used to execute side effects when the value changes.
 
+Inside a [`DataScope`](../DataScope/index.md), non-radio controls with the same key are mirrored models. In this example, both inputs use the native name `text`: editing either input updates the other one and every subscriber for that key. The first model uses `data-option-immediate` to hydrate the initial value.
+
 <llm-exclude>
 <PreviewPlayground
   :html="() => import('./stories/basic.twig')"

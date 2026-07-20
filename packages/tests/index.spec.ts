@@ -21,6 +21,7 @@ test('components exports', () => {
       "DataComputed",
       "DataEffect",
       "DataModel",
+      "DataScope",
       "Draggable",
       "Fetch",
       "Figure",

@@ -1,7 +1,7 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { DataBind } from './DataBind.js';
 import type { DataBindProps } from './DataBind.js';
-import { isCheckbox } from './utils.js';
+import { serializeControlValue } from './formControl.js';
 
 export interface DataModelProps extends DataBindProps {}
 
@@ -10,18 +10,16 @@ export class DataModel<T extends BaseProps = BaseProps> extends DataBind<DataMod
     name: 'DataModel',
   };
 
+  override get isDataSource() {
+    return true;
+  }
+
   dispatch() {
-    const { target, multiple } = this;
-    let value = this.get();
+    const value = serializeControlValue(this.controlContext);
+    const publication = this.publishValue(value, true);
 
-    if (multiple && isCheckbox(target) && !target.checked) {
-      const set = new Set(value);
-      set.delete(target.value);
-      value = Array.from(set);
-    }
-
-    for (const instance of this.relatedInstances) {
-      instance.set(value, false);
+    if (publication.channel.isCurrent(publication.frame)) {
+      this.set(value, false);
     }
   }
 

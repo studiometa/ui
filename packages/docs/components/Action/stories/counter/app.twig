@@ -1,25 +1,26 @@
 <div class="flex flex-col gap-8">
   <div class="flex flex-wrap gap-4 w-48">
     <input data-component="DataBind"
-      data-option-name="counter"
+      data-option-group="counter"
+      type="number"
       name="counter"
       value="0"
       readonly
       class="px-4 py-2 ring-2 rounded bg-transparent" />
     <button data-component="Action"
       data-option-target="DataBind"
-      data-option-effect="target.value -= 1"
+      data-option-effect="target.increment(-1)"
       class="w-20 px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
       -
     </button>
     <button data-component="Action"
       data-option-target="DataBind"
-      data-option-effect="target.value += 1"
+      data-option-effect="target.increment()"
       class="w-20 px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
       +
     </button>
     <p data-component="DataComputed"
-      data-option-name="counter"
+      data-option-group="counter"
       data-option-compute="`Double is ${value * 2}.`">
       Double is 0.
     </p>

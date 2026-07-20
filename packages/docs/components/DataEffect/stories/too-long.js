@@ -1,5 +1,6 @@
 import { registerComponent } from '@studiometa/js-toolkit';
-import { DataEffect, DataModel } from '@studiometa/ui';
+import { DataEffect, DataModel, DataScope } from '@studiometa/ui';
 
-registerComponent(DataEffect);
+registerComponent(DataScope);
 registerComponent(DataModel);
+registerComponent(DataEffect);

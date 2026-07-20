@@ -1,11 +1,5 @@
 import { Base, createApp } from '@studiometa/js-toolkit';
-import { Action, DataBind as DataBindCore, DataComputed } from '@studiometa/ui';
-
-class DataBind extends DataBindCore {
-  get() {
-    return Number(super.get());
-  }
-}
+import { Action, DataBind, DataComputed } from '@studiometa/ui';
 
 class App extends Base {
   static config = {

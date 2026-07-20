@@ -1,0 +1,29 @@
+<div
+  data-component="DataScope"
+  data-option-group="contact"
+  class="flex flex-col gap-2">
+  <div class="flex gap-4">
+    <label class="flex items-center gap-2">
+      <input
+        type="radio"
+        name="method"
+        value="email"
+        checked
+        data-component="DataModel"
+        data-option-immediate />
+      <span>Email</span>
+    </label>
+    <label class="flex items-center gap-2">
+      <input
+        type="radio"
+        name="method"
+        value="phone"
+        data-component="DataModel" />
+      <span>Phone</span>
+    </label>
+  </div>
+  <p>
+    Preferred contact method:
+    <span data-component="DataBind" data-option-key="method" class="font-bold">email</span>
+  </p>
+</div>
