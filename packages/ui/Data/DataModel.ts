@@ -15,8 +15,8 @@ export class DataModel<T extends BaseProps = BaseProps> extends DataBind<DataMod
   }
 
   dispatch() {
-    const value = serializeControlValue(this.controlContext);
-    const publication = this.publishValue(value, true);
+    const value = serializeControlValue(this.__controlContext);
+    const publication = this.__publishValue(value, true);
 
     if (publication.channel.isCurrent(publication.frame)) {
       this.set(value, false);

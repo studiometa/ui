@@ -18,7 +18,10 @@ export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<Data
     },
   };
 
-  protected get supportsMutations() {
+  /**
+   * @protected
+   */
+  get __supportsMutations() {
     return false;
   }
 

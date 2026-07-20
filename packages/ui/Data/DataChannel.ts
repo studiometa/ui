@@ -17,26 +17,33 @@ type DataUpdateSubscriber = (update: DataUpdate) => void;
  * @internal
  */
 export class DataChannel {
-  private update = signal<DataUpdate | typeof INITIAL>(INITIAL);
-  private latest?: DataUpdate;
+  /**
+   * @private
+   */
+  __update = signal<DataUpdate | typeof INITIAL>(INITIAL);
+
+  /**
+   * @private
+   */
+  __latest?: DataUpdate;
 
   publish(update: DataUpdate) {
     // Always publish a fresh frame so equal values remain observable events.
     const frame = { ...update };
-    this.latest = frame;
-    this.update(frame);
+    this.__latest = frame;
+    this.__update(frame);
     return frame;
   }
 
   isCurrent(frame: DataUpdate) {
-    return this.latest === frame;
+    return this.__latest === frame;
   }
 
   subscribe(subscriber: DataUpdateSubscriber) {
     let initialized = false;
 
     return effect(() => {
-      const update = this.update();
+      const update = this.__update();
 
       if (!initialized) {
         initialized = true;

@@ -52,18 +52,21 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
     },
   };
 
-  private __dataScopeResolved = false;
-  private __dataScope?: DataScope;
-  private __stopUpdates?: () => void;
-  private __virtualBindings?: VirtualBinding[];
-  private __virtualValue?: DataValue;
-  private __hasVirtualValue = false;
+  __dataScopeResolved = false;
+  __dataScope?: DataScope;
+  __stopUpdates?: () => void;
+  __virtualBindings?: VirtualBinding[];
+  __virtualValue?: DataValue;
+  __hasVirtualValue = false;
 
   get isDataSource() {
     return false;
   }
 
-  protected get supportsMutations() {
+  /**
+   * @protected
+   */
+  get __supportsMutations() {
     return true;
   }
 
@@ -144,14 +147,20 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
     return this.group.endsWith('[]');
   }
 
-  private get channel() {
+  /**
+   * @private
+   */
+  get __channel() {
     return (
       this.dataScope?.getChannel(this.group) ??
       getDataChannel(this.$group as Set<DataScopeMember>)
     );
   }
 
-  protected get controlContext(): DataControlContext {
+  /**
+   * @protected
+   */
+  get __controlContext(): DataControlContext {
     return {
       dataKey: this.dataKey,
       members: this.relatedInstances,
@@ -198,37 +207,43 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
       return this.__virtualValue;
     }
 
-    return this.getTargetValue();
+    return this.__getTargetValue();
   }
 
-  protected getTargetValue(): DataValue {
-    return readControlValue(this.controlContext);
+  /**
+   * @protected
+   */
+  __getTargetValue(): DataValue {
+    return readControlValue(this.__controlContext);
   }
 
   set(value: DataValue, dispatch = true) {
-    const publication = dispatch ? this.publishValue(value) : undefined;
+    const publication = dispatch ? this.__publishValue(value) : undefined;
 
     if (!publication || publication.channel.isCurrent(publication.frame)) {
-      this.applyValue(value);
+      this.__applyValue(value);
     }
   }
 
-  private applyValue(value: DataValue) {
+  /**
+   * @private
+   */
+  __applyValue(value: DataValue) {
     if (this.hasVirtualBindings) {
       this.__virtualValue = value;
       this.__hasVirtualValue = true;
-      this.applyVirtualBindings(value);
+      this.__applyVirtualBindings(value);
       return;
     }
 
-    writeControlValue(this.controlContext, value);
+    writeControlValue(this.__controlContext, value);
   }
 
   /**
    * Publish a value to the resolved Data group without applying it locally.
-   * @internal
+   * @protected
    */
-  protected publishValue(value: DataValue, force = false, updateData = true) {
+  __publishValue(value: DataValue, force = false, updateData = true) {
     if (this.dataScope && this.dataKey) {
       if (updateData) {
         this.dataScope.setValue(this.group, this.dataKey, value, this);
@@ -244,7 +259,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
       return { channel, frame };
     }
 
-    const channel = this.channel;
+    const channel = this.__channel;
     const frame = channel.publish({
       force,
       source: this,
@@ -253,7 +268,10 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
     return { channel, frame };
   }
 
-  private applyVirtualBindings(value: DataValue) {
+  /**
+   * @private
+   */
+  __applyVirtualBindings(value: DataValue) {
     for (const binding of this.virtualBindings) {
       let result: unknown = value;
 
@@ -303,15 +321,18 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
    * @internal
    */
   __dispatchScopedValue(value: DataValue, updateData = true) {
-    const publication = this.publishValue(value, true, updateData);
+    const publication = this.__publishValue(value, true, updateData);
 
     if (publication.channel.isCurrent(publication.frame)) {
       this.set(value, false);
     }
   }
 
-  private validateMutation(method: string) {
-    if (this.supportsMutations) {
+  /**
+   * @private
+   */
+  __validateMutation(method: string) {
+    if (this.__supportsMutations) {
       return true;
     }
 
@@ -320,7 +341,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
   }
 
   toggle(onValue: DataValue = true, offValue: DataValue = false) {
-    if (!this.validateMutation('toggle')) {
+    if (!this.__validateMutation('toggle')) {
       return;
     }
 
@@ -338,7 +359,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
   }
 
   increment(step = 1) {
-    if (!this.validateMutation('increment')) {
+    if (!this.__validateMutation('increment')) {
       return;
     }
 
@@ -352,7 +373,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
   }
 
   cycle(values: readonly DataValue[]) {
-    if (!this.validateMutation('cycle') || values.length === 0) {
+    if (!this.__validateMutation('cycle') || values.length === 0) {
       return;
     }
 
@@ -362,7 +383,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
 
   mounted() {
     this.__stopUpdates?.();
-    this.__stopUpdates = this.channel.subscribe((update) => {
+    this.__stopUpdates = this.__channel.subscribe((update) => {
       if (!this.$el.isConnected) {
         this.__stopUpdates?.();
         this.__stopUpdates = undefined;
