@@ -28,7 +28,7 @@ If the option is explicitly set with the `data-option-prop` attribute, it will o
 - Type: `boolean`
 - Default: `false`
 
-Use the `data-option-immediate` attribute on a `DataBind` component to propagate its value on mount to other components in the same group. Inside a [`DataScope`](../DataScope/index.md), only [`DataModel`](../DataModel/index.md) sources hydrate the keyed value; immediate keyed `DataBind`, `DataComputed` and `DataEffect` components are subscribers and receive the hydrated values once all sources are collected.
+Propagates the component's value on mount to other components in the same group. Inside a [`DataScope`](../DataScope/index.md), only [`DataModel`](../DataModel/index.md) sources hydrate the keyed value; immediate keyed `DataBind`, `DataComputed` and `DataEffect` components are subscribers and receive the hydrated values once all sources are collected.
 
 ### `group`
 
@@ -45,6 +45,26 @@ The `group` option is used to group instances together. All related instances wi
 A keyed value updates only bindings with the same key while notifying unkeyed subscribers. Keys are local to a `DataScope`; unscoped bindings preserve scalar group behavior.
 
 When using it with multiple checkboxes or a multiple select, use the `[]` suffix to push each selected value into an array. See the [checkboxes example](../DataModel/examples.md#checkboxes) for more details.
+
+## Virtual bindings
+
+Virtual `data-bind:*` attributes update several parts of an element from the same value. When an element has one or more virtual bindings, they replace the default single `textContent` or property update.
+
+| Syntax                   | Behavior                                                                                                                                 |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `data-bind:prop.<name>`  | Assigns the DOM property.                                                                                                                |
+| `data-bind:attr.<name>`  | Removes the attribute for `false`, `null`, or `undefined`; writes an empty attribute for `true`; otherwise writes the stringified value. |
+| `data-bind:class.<name>` | Toggles the class according to the result's boolean value.                                                                               |
+| `data-bind:style.<name>` | Clears the style for `false`, `null`, or `undefined`; otherwise writes the stringified value.                                            |
+| `data-bind:text`         | Assigns `textContent`.                                                                                                                   |
+
+A non-empty attribute value is a JavaScript expression with access to `value`, `target`, and `$data`. An empty attribute passes through the current value. Bindings are read when first used; changing their attributes afterward is not supported.
+
+Use kebab-case for camel-cased DOM properties because HTML attribute names are case-insensitive, for example `data-bind:prop.tab-index` targets `tabIndex`.
+
+For ARIA attributes, explicitly stringify booleans when `"false"` must remain present, for example `data-bind:attr.aria-selected="String(value === 'overview')"`.
+
+Expression errors are reported without interrupting updates to the other bindings, matching `DataComputed` and `DataEffect` behavior.
 
 ## Properties
 

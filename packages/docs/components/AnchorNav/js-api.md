@@ -14,4 +14,4 @@ The `AnchorNavLink` class implements the features of the [`Transition` primitive
 
 ## AnchorNavTarget
 
-The `AnchorNavTarget` class implementes the features of the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html).
+The `AnchorNavTarget` class implements the features of the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html).

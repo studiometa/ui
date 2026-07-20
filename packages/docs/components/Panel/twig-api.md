@@ -13,7 +13,7 @@ The `Panel` component extends the [`Modal` component](/components/Modal/twig-api
 - Type: `'top' | 'right' | 'bottom' | 'left'`
 - Default: `'left'`
 
-Define from which edge of the screen the panel slides in. This affects the panel positioning, sizing, and animation direction:
+Defines from which edge of the screen the panel slides in. This affects the panel positioning, sizing, and animation direction:
 
 - `'top'`: Panel slides down from the top edge, full width
 - `'right'`: Panel slides in from the right edge, full height
@@ -24,7 +24,7 @@ Define from which edge of the screen the panel slides in. This affects the panel
 
 - Type: `array`
 
-Customize the wrapper element attributes. The wrapper positioning is automatically adjusted based on the `position` parameter to properly align the panel.
+Customizes the wrapper element attributes. The wrapper positioning is automatically adjusted based on the `position` parameter to properly align the panel.
 
 ## Inherited Parameters
 
@@ -42,12 +42,12 @@ All blocks from the [Modal component](/components/Modal/twig-api.md) are inherit
 
 ### `open`
 
-Customize the open trigger button.
+Customizes the open trigger button.
 
 ### `close`
 
-Customize the close trigger button.
+Customizes the close trigger button.
 
 ### `content`
 
-Set the panel's content. This is where you place the main content of your slide-in panel.
+Sets the panel's content. This is the main content of the slide-in panel.

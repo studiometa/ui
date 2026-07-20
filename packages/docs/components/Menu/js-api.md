@@ -11,7 +11,7 @@ title: Menu JS API
 - Type: `'click' | 'hover'`
 - Default: `click`
 
-Configure by which event the menu will be opened and closed.
+Configures by which event the menu is opened and closed.
 
 ## Methods
 

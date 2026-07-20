@@ -44,7 +44,7 @@ A CSS selector where to move the modal in the DOM. Useful for moving modals to t
 - Type: `string`
 - Default: `'[autofocus]'`
 
-A CSS selector for the element to set focus to when the modal opens. Use `false` to disable autofocus.
+A CSS selector for the element to set focus to when the modal opens. The value `false` disables autofocus.
 
 ### `scrollLock`
 
@@ -58,7 +58,7 @@ Whether to lock scrolling on the document when the modal is open.
 - Type: `object`
 - Default: `{ modal: { closed: { opacity: '0', pointerEvents: 'none', visibility: 'hidden' } } }`
 
-Configure the styles for different modal states. Each reference can have `open`, `active`, and `closed` style states.
+Configures the styles for different modal states. Each reference can have `open`, `active`, and `closed` style states.
 
 ## Methods
 

@@ -13,7 +13,7 @@ The `ScrollReveal` class extends the [`Transition` primitive](/components/Transi
 - Type: `boolean`
 - Default: `false`
 
-Configure wether or not the reveal animation should be replayed each time the element enters the viewport or just once.
+Configures whether or not the reveal animation should be replayed each time the element enters the viewport or just once.
 
 ```html
 <div data-component="ScrollReveal" data-option-repeat>

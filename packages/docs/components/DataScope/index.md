@@ -8,11 +8,6 @@ Use the `DataScope` component to isolate [`DataBind`](../DataBind/index.md), [`D
 
 Descendant Data components inherit the scope's group unless they define their own `data-option-group`. Nested scopes use the nearest `DataScope` boundary.
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JavaScript API](./js-api.md)
-
 ## Usage
 
 Import the `DataScope` component with the Data components used by your application. Add `DataScope` to the root element of a widget, then omit `data-option-group` from descendants that should inherit its default group.

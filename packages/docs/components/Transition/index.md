@@ -8,11 +8,6 @@ The Transition primitive should be used when creating components which can switc
 
 It is available as a `Transition` component as well as a `withTransition(Base)` decorator.
 
-## Table of content
-
-- [Examples](./examples)
-- [JS API](./js-api)
-
 ## Usage
 
 As a primitive, the `Transition` class should be used to create other components instead of being used directly in an application.

@@ -4,14 +4,9 @@ badges: [Twig, JS]
 
 # Accordion <Badges :texts="$frontmatter.badges" />
 
-## Table of content
-
-- [Examples](./examples.md)
-- [Twig API](./twig-api.md)
-
 ## Usage
 
-Once the [package installed](/guide/installation/), simply include the template in your project:
+After you install the [package](/guide/installation/), include the template in your project:
 
 ```js{2,8}
 import { Base, createApp } from '@studiometa/js-toolkit';

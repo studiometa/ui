@@ -14,21 +14,21 @@ The `FigureVideoTwicpics` class extends the [`FigureVideo` class](/components/Fi
 - Type: `string`
 - Default: `''`
 
-Use this option to configure your Twicpics domain.
+Configures your Twicpics domain.
 
 ### `path`
 
 - Type: `string`
 - Default: `''`
 
-Use this option to configure your Twicpics path.
+Configures your Twicpics path.
 
 ### `transform`
 
 - Type: `string`
 - Default: `''`
 
-Use this option to add transforms to the video with [TwicPics URL API](https://www.twicpics.com/docs/api/basics).
+Adds transforms to the video with [TwicPics URL API](https://www.twicpics.com/docs/api/basics).
 
 ### `step`
 

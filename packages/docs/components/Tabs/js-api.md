@@ -21,7 +21,7 @@ HTMLElement references for tab content panels. Each panel corresponds to a tab b
 - Type: `object`
 - Default: `{ content: { closed: { position: 'absolute', opacity: '0', pointerEvents: 'none', visibility: 'hidden' } } }`
 
-Configure the styles for different tab states. Available references are `btn` and `content`, each supporting `open`, `active`, and `closed` style states.
+Configures the styles for different tab states. Available references are `btn` and `content`, each supporting `open`, `active`, and `closed` style states.
 
 <!-- prettier-ignore-start -->
 ```html

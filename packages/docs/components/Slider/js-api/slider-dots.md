@@ -1,6 +1,6 @@
 # SliderDots
 
-This component can be used to display a secondary navigation for the main slider.
+Displays a secondary navigation for the main slider.
 
 ## Refs
 

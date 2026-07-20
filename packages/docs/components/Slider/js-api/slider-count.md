@@ -1,6 +1,6 @@
 # SliderCount
 
-This component can be used to display the current index of the slider and update it on change.
+Displays the current index of the slider and updates it on change.
 
 ## Refs
 
@@ -8,4 +8,4 @@ This component can be used to display the current index of the slider and update
 
 - Type: `HTMLElement`
 
-The element where the index will be injected.
+The element that receives the index.

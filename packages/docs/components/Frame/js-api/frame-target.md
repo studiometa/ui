@@ -4,7 +4,7 @@ title: FrameTarget
 
 # FrameTarget
 
-The `FrameLoader` component extends the [`Transition` component](/components/Transition/) and inherits its APIs, with the exception of the [`enterKeep`](/components/Transition/js-api.md#enterkeep) and [`leaveKeep`](/components/Transition/js-api.md#/components/Transition/js-api.md#enterkeep) options which are force to be always `true`.
+The `FrameTarget` component extends the [`Transition` component](/components/Transition/) and inherits its APIs, with the exception of the [`enterKeep`](/components/Transition/js-api.md#enterkeep) and [`leaveKeep`](/components/Transition/js-api.md#leavekeep) options which are forced to always be `true`.
 
 ## Options
 

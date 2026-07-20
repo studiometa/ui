@@ -11,11 +11,6 @@ The `Track` components provide declarative analytics tracking, defined entirely 
 
 `TrackContext` lets you factor shared data out of individual events and inherit it from ancestors.
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JS API](./js-api.md)
-
 ## Usage
 
 Register the components you need in your application:

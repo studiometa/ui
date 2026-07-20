@@ -16,4 +16,4 @@ Custom attributes for the root element.
 
 ### `content`
 
-Custom content for the root element, defaults to `''`.
+Custom content for the root element. Defaults to `''`.

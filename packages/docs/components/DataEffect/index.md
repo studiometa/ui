@@ -6,10 +6,6 @@ badges: [JS]
 
 Use the `DataEffect` component to execute side effects when the value of the `Data...` components group changes. This component extends the [`DataBind` component](../DataBind/index.md), so it inherits from its API.
 
-## Table of content
-
-- [JavaScript API](./js-api.md)
-
 ## Usage
 
 ::: code-group

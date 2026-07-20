@@ -6,11 +6,6 @@ badges: [JS]
 
 Use the `DataComputed` component to create a one-way binding of a property of the targeted DOM element with a computed value. This component extends the [`DataBind` component](../DataBind/index.md), so it inherits from its API.
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JavaScript API](./js-api.md)
-
 ## Usage
 
 ### Basic usage to transform a value

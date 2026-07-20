@@ -4,12 +4,7 @@ badges: [Twig]
 
 # IconList <Badges :texts="$frontmatter.badges" />
 
-The `IconList` molecules is a (Twig only) component who displays a list of clickable icons. Useful for display social links in a footer by example.
-
-## Table of content
-
-- [Examples](./examples)
-- [Twig API](./twig-api)
+The `IconList` molecules is a (Twig only) component that displays a list of clickable icons. Useful for display social links in a footer by example.
 
 ## Usage
 

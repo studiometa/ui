@@ -31,9 +31,9 @@ It will trigger a request on its parent [`Frame` component](./frame.md) when its
 
 - Type: `HTMLInputElement[]`
 
-The `headers[]` refs can be used to add additional headers to the request with `<input type="hidden">` elements.
+The `headers[]` refs add additional headers to the request with `<input type="hidden">` elements.
 
-To avoid adding the header to the form data, use the `data-name` attribute to specify the name of the header.
+The `data-name` attribute specifies the name of the header and avoids adding the header to the form data.
 
 ```html
 <form data-component="FrameForm">

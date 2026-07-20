@@ -27,7 +27,7 @@ Inside a scope, a Data component resolves its key from:
 
 A keyed value updates bindings with the same key and notifies unkeyed [`DataComputed`](../DataComputed/index.md) and [`DataEffect`](../DataEffect/index.md) subscribers. Unscoped Data groups preserve their scalar behavior.
 
-Use `data-option-immediate` on keyed sources to collect their initial values when the components mount. All immediate values mounted in the same tick are collected before subscribers are notified.
+`data-option-immediate` on keyed sources collects their initial values when the components mount. All immediate values mounted in the same tick are collected before subscribers are notified.
 
 ## Scoped data
 

@@ -6,11 +6,6 @@ badges: [JS]
 
 Use the `FigureShopify` component to display responsive images with [Shopify CDN `image_url` API](https://shopify.dev/docs/api/liquid/filters/image_url).
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JS API](./js-api.md)
-
 ## Usage
 
 Register the component in your JavaScript app and use it in your templates. The component will transform the `data-src` URL to load an image at the dimension of the `<img>` DOM element.
@@ -21,7 +16,7 @@ import { FigureShopify } from '@studiometa/ui';
 
 class App extends Base {
   static config = {
-    name: 'Base',
+    name: 'App',
     components: {
       Figure: FigureShopify,
     },

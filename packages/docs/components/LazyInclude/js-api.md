@@ -18,7 +18,7 @@ The source URL where the content will be fetched from.
 - Type: `boolean`
 - Default: `false`
 
-Use this option to terminate the component once the content has been inserted in the page or the error has been displayed.
+Terminates the component once the content has been inserted in the page or the error has been displayed.
 
 ## Refs
 

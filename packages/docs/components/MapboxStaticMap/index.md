@@ -6,11 +6,6 @@ badges: [Twig]
 
 The `MapboxStaticMap` component can be used to display custom maps anywhere, without having to load the full Mapbox GL JavaScript library. You can test all features from this API on the [static images API playground](https://docs.mapbox.com/playground/static/) from Mapbox.
 
-## Table of content
-
-- [Examples](./examples.md)
-- [Twig API](./twig-api.md)
-
 ## Usage
 
 Register the [Figure](/components/Figure/) component in your JavaScript app and use the Twig template to display images.
@@ -21,7 +16,7 @@ import { Figure } from '@studiometa/ui';
 
 class App extends Base {
   static config = {
-    name: 'Base',
+    name: 'App',
     components: {
       Figure,
     },

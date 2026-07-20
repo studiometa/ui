@@ -4,7 +4,7 @@ title: LargeText JS API
 
 # JS API
 
-The `LargeText` component extends the [`Base` class](https://js-toolkit.studiometa.dev/api/configuration.html) and implements the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html). It inherits their respective APIs, so make sur have a look at them.
+The `LargeText` component extends the [`Base` class](https://js-toolkit.studiometa.dev/api/configuration.html) and implements the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html). It inherits their respective APIs. See both linked references.
 
 ## Options
 
@@ -13,21 +13,21 @@ The `LargeText` component extends the [`Base` class](https://js-toolkit.studiome
 - Type: `boolean`
 - Default: `false`
 
-Use this options to enable skew.
+Enables skew.
 
 ### `sensitivity`
 
 - Type: `number`
 - Default: `1`
 
-Use this options to set the sensitivity.
+Sets the sensitivity.
 
 ### `skewSensitivity`
 
 - Type: `number`
 - Default: `1`
 
-Use this options to set the skew sensitivity.
+Sets the skew sensitivity.
 
 ::: warning
 Remember to enable skew with the `skew` option.

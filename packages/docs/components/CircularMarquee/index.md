@@ -6,14 +6,9 @@ badges: [JS, Twig]
 
 Use this component to create CircularMarquee, a spinning on scroll circular text. This is made using the `<svg>` capabilities.
 
-## Table of content
-
-- [Examples](./examples.md)
-- [Twig API](./twig-api.md)
-
 ## Usage
 
-Once the [package installed](/guide/installation/), simply include the Twig template and load the JavaScript component in your project:
+After you install the [package](/guide/installation/), include the Twig template and load the JavaScript component in your project:
 
 ```twig
 {% include '@ui-pkg/CircularMarquee/CircularMarquee.twig' with {
@@ -37,5 +32,5 @@ class App extends Base {
   };
 }
 
-export default createApp(Base);
+export default createApp(App);
 ```

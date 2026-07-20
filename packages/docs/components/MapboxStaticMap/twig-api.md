@@ -59,15 +59,15 @@ Zoom level, a number between 0 and 22.
 
 - Type: `string`
 
-Add a custom marker, format: `'url-<URL_TO_IMAGE>(<LON>,<LAT>)'`.
-see https://docs.mapbox.com/api/maps/static-images/#example-request-retrieve-a-static-map-with-a-custom-marker-overlay fore more informations.
+Adds a custom marker. Format: `'url-<URL_TO_IMAGE>(<LON>,<LAT>)'`.
+See https://docs.mapbox.com/api/maps/static-images/#example-request-retrieve-a-static-map-with-a-custom-marker-overlay for more information.
 
 ### `overlay`
 
 - Type: `object`
 
-Add overlays/markers, must be a valid geojson object.
-see https://docs.mapbox.com/api/maps/static-images/#overlay-options fore more informations.
+Adds overlays/markers. Must be a valid geojson object.
+See https://docs.mapbox.com/api/maps/static-images/#overlay-options for more information.
 
 ### `bearing`
 
@@ -96,7 +96,7 @@ Renders the map at @2x scale.
 - Default: `true`
 
 Whether there is attribution on the image.
-If you are setting this to `false` please read: https://docs.mapbox.com/help/getting-started/attribution/#static--print.
+When set to `false`, see https://docs.mapbox.com/help/getting-started/attribution/#static--print.
 
 ### `logo`
 

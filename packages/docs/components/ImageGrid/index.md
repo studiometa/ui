@@ -6,11 +6,6 @@ badges: [Twig]
 
 A component to display images in a destructured grid.
 
-## Table of content
-
-- [Examples](./examples.md)
-- [Twig API](./twig-api.md)
-
 ## Usage
 
 Use this component directly in your Twig templates by providing it with an array of objects following the [`Figure` component](../Figure/index.md) parameters.
