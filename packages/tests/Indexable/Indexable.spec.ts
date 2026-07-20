@@ -154,12 +154,19 @@ describe('The Indexable class', () => {
       expect(indexable.currentIndex).toBe(0);
     });
 
-    it('should reject invalid instruction', async () => {
-      const warnSpy = vi.spyOn(indexable, '$warn');
+    it('should warn and keep the current index for an invalid instruction', async () => {
+      const warnSpy = vi.spyOn(indexable, '$warn', 'get');
 
-      await expect(indexable.goTo('invalid' as any)).rejects.toBeUndefined();
-      expect(warnSpy).toHaveBeenCalledWith('Invalid goto instruction.');
+      await expect(indexable.goTo('invalid' as any)).resolves.toBeUndefined();
+      expect(warnSpy).toHaveBeenCalledOnce();
       expect(indexable.currentIndex).toBe(0);
+    });
+
+    it('should not emit when the index does not change', async () => {
+      const emitSpy = vi.spyOn(indexable, '$emit');
+
+      await indexable.goTo(0); // already at index 0
+      expect(emitSpy).not.toHaveBeenCalled();
     });
   });
 });

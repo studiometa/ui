@@ -7,7 +7,7 @@ class Counter extends Indexable {
   };
 
   get length() {
-      return 10;
+    return 10;
   }
 
   onIndex() {

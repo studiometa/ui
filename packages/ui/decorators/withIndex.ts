@@ -13,7 +13,7 @@ const INDEXABLE_MODES = {
   ALTERNATE: 'alternate',
 } as const;
 
-export type IndexableMode = typeof INDEXABLE_MODES[keyof typeof INDEXABLE_MODES];
+export type IndexableMode = (typeof INDEXABLE_MODES)[keyof typeof INDEXABLE_MODES];
 
 const INDEXABLE_INSTRUCTIONS = {
   NEXT: 'next',
@@ -23,7 +23,8 @@ const INDEXABLE_INSTRUCTIONS = {
   RANDOM: 'random',
 } as const;
 
-export type IndexableInstructions = typeof INDEXABLE_INSTRUCTIONS[keyof typeof INDEXABLE_INSTRUCTIONS];
+export type IndexableInstructions =
+  (typeof INDEXABLE_INSTRUCTIONS)[keyof typeof INDEXABLE_INSTRUCTIONS];
 
 export interface IndexableProps extends BaseProps {
   $options: {
@@ -135,6 +136,10 @@ export function withIndex<S extends Base>(
       },
     };
 
+    static MODES = INDEXABLE_MODES;
+
+    static INSTRUCTIONS = INDEXABLE_INSTRUCTIONS;
+
     __index = 0;
 
     get isReverse() {
@@ -156,11 +161,15 @@ export function withIndex<S extends Base>(
     }
 
     set mode(value) {
-      this.$options.mode = Object.values(INDEXABLE_MODES).includes(value) ? value : INDEXABLE_MODES.NORMAL;
+      this.$options.mode = Object.values(INDEXABLE_MODES).includes(value)
+        ? value
+        : INDEXABLE_MODES.NORMAL;
     }
 
     get length() {
-      this.$warn('The length property should be overridden to match with the actual number of items. Finite length is required for infinite and alternate modes.');
+      this.$warn(
+        'The length property should be overridden to match with the actual number of items. Finite length is required for infinite and alternate modes.',
+      );
       return Number.POSITIVE_INFINITY;
     }
 
@@ -222,8 +231,10 @@ export function withIndex<S extends Base>(
      * @private
      */
     _wouldReverse(rawIndex: number): boolean {
-      return this.mode === INDEXABLE_MODES.ALTERNATE
-        && (rawIndex > this.maxIndex || rawIndex < this.minIndex);
+      return (
+        this.mode === INDEXABLE_MODES.ALTERNATE &&
+        (rawIndex > this.maxIndex || rawIndex < this.minIndex)
+      );
     }
 
     get prevIndex() {
@@ -268,7 +279,7 @@ export function withIndex<S extends Base>(
             return this.goTo(randomInt(this.minIndex, this.maxIndex));
           default:
             this.$warn('Invalid goto instruction.');
-            return Promise.reject();
+            return Promise.resolve();
         }
       }
       this.currentIndex = indexOrInstruction;
@@ -284,10 +295,6 @@ export function withIndex<S extends Base>(
     }
   }
 
-  // Add constants as static properties to the returned class
-  const IndexableWithConstants = Indexable as any;
-  IndexableWithConstants.MODES = INDEXABLE_MODES;
-  IndexableWithConstants.INSTRUCTIONS = INDEXABLE_INSTRUCTIONS;
-
-  return IndexableWithConstants;
+  // @ts-ignore — the decorated class matches the declared decorator return type.
+  return Indexable;
 }

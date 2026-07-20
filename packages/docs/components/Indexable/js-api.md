@@ -9,7 +9,7 @@ outline: deep
 
 ### `mode`
 
-- Type: `String`
+- Type: `string`
 - Default: `'normal'`
 
 Three modes are available: `normal`, `infinite`, or `alternate`:
@@ -26,7 +26,7 @@ Three modes are available: `normal`, `infinite`, or `alternate`:
 
 ### `reverse`
 
-- Type: `Boolean`
+- Type: `boolean`
 - Default: `false`
 
 Defines the initial direction of the count.
