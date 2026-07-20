@@ -2,7 +2,7 @@ import { Base, withGroup } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { nextTick } from '@studiometa/js-toolkit/utils';
 import { getDataChannel } from './DataChannel.js';
-import { DataScope, getDataScope } from './DataScope.js';
+import { DataScope, getDataScope, DATA_GROUP_NAMESPACE } from './DataScope.js';
 import type { DataScopeMember, DataValue } from './DataScope.js';
 import {
   type DataControlContext,
@@ -34,9 +34,15 @@ type VirtualBinding =
  * DataBind class.
  * @link https://ui.studiometa.dev/components/DataBind/
  */
-export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, 'data:')<
-  DataBindProps & T
-> {
+export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, DataScope>(
+  Base,
+  DATA_GROUP_NAMESPACE,
+  {
+    getScope: (instance) => getDataScope(instance.$el),
+    getGroup: (instance, scope) =>
+      (instance.$options as { group?: string }).group || scope?.$options.group || '',
+  },
+)<DataBindProps & T> {
   static config: BaseConfig = {
     name: 'DataBind',
     options: {
@@ -100,10 +106,6 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup(Base, '
 
   get group() {
     return this.$options.group || this.dataScope?.$options.group || '';
-  }
-
-  override get $group() {
-    return this.dataScope?.getGroup(this.group) ?? super.$group;
   }
 
   /**
