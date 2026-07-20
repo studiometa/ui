@@ -1,7 +1,9 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base, getScopedGroups } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { nextTick } from '@studiometa/js-toolkit/utils';
 import { DataChannel } from './DataChannel.js';
+
+export const DATA_GROUP_NAMESPACE = 'data:';
 
 export interface DataScopeProps extends BaseProps {
   $options: {
@@ -21,7 +23,6 @@ export interface DataScopeMember extends Base {
 
 interface DataScopeGroup {
   channel: DataChannel;
-  instances: Set<DataScopeMember>;
   sources: Map<string, Set<DataScopeMember>>;
   values: Map<string, DataValue>;
   data: Readonly<Record<string, DataValue>>;
@@ -85,7 +86,6 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
     if (!record) {
       record = {
         channel: new DataChannel(),
-        instances: new Set(),
         sources: new Map(),
         values: new Map(),
         data: EMPTY_DATA,
@@ -93,12 +93,6 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
         hydrationPending: false,
       };
       this.groups.set(group, record);
-    }
-
-    for (const instance of record.instances) {
-      if (!instance.$el.isConnected) {
-        record.instances.delete(instance);
-      }
     }
 
     const deletedKeys = [] as string[];
@@ -135,6 +129,24 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
     }
 
     return record;
+  }
+
+  private getInstances(group: string): Set<DataScopeMember> {
+    const instances = getScopedGroups(this).get(`${DATA_GROUP_NAMESPACE}${group}`) as
+      | Set<DataScopeMember>
+      | undefined;
+
+    if (!instances) {
+      return new Set();
+    }
+
+    for (const instance of instances) {
+      if (!instance.$el.isConnected) {
+        instances.delete(instance);
+      }
+    }
+
+    return instances;
   }
 
   private getMultipleSourcesValue(sources: Set<DataScopeMember>) {
@@ -174,7 +186,7 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
   }
 
   getGroup(group: string) {
-    return this.getRecord(group).instances;
+    return this.getInstances(group);
   }
 
   getData(group: string) {
@@ -193,11 +205,12 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
     const record = this.getRecord(group);
 
     if (source) {
+      const instances = this.getInstances(group);
       if (source.$el instanceof HTMLInputElement && source.$el.type === 'radio') {
         const matchingSource =
           source.$el.value === value
             ? source
-            : Array.from(record.instances).find(
+            : Array.from(instances).find(
                 (instance) =>
                   instance.dataKey === key &&
                   instance.$el instanceof HTMLInputElement &&
@@ -208,7 +221,7 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
       } else {
         const sources = record.sources.get(key) ?? new Set();
         sources.add(source);
-        for (const instance of record.instances) {
+        for (const instance of instances) {
           if (instance.isDataSource && instance.dataKey === key) {
             sources.add(instance);
           }
@@ -276,7 +289,7 @@ export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopePr
             } else {
               const valueSources = record.sources.get(source.dataKey) ?? new Set();
               valueSources.add(source);
-              for (const instance of record.instances) {
+              for (const instance of this.getInstances(group)) {
                 if (instance.isDataSource && instance.dataKey === source.dataKey) {
                   valueSources.add(instance);
                 }
