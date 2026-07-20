@@ -8,7 +8,7 @@ outline: deep
 ## Parameters
 
 :::tip Required parameters
-The [`src`](#src), [`width`](#width) and [`height`](#height) parameters are required.
+The [`src`](#src) parameter is required.
 :::
 
 ### `src`
@@ -28,9 +28,9 @@ Configure the `width` attribute of the image and the components sizing.
 ### `height`
 
 - Type: `number`
-- Required
+- Default: `100`
 
-Configure the `height` attribute of the image and the components sizing.
+Configure the `height` attribute of the image and the component sizing.
 
 ### `srcset`
 
@@ -47,6 +47,8 @@ Configure the `sizes` attribute of the image.
 ### `alt`
 
 - Type: `string`
+
+Configure the `alt` attribute of the image.
 
 ### `lazy`
 

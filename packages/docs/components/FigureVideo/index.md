@@ -22,7 +22,7 @@ import { FigureVideo } from '@studiometa/ui';
 
 class App extends Base {
   static config = {
-    name: 'Base',
+    name: 'App',
     components: {
       FigureVideo,
     },
@@ -81,9 +81,9 @@ And replace the import in your app to import your local class instead of the one
 
   class App extends Base {
     static config = {
-      name: 'Base',
+      name: 'App',
       components: {
-        Figure,
+        FigureVideo,
       }
     };
   }

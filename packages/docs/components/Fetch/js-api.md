@@ -40,7 +40,7 @@ Use this options to update the browser's history when performing a request. The 
 Use this option to customize the options for the fetch request.
 
 ```html
-<a href="/path" data-component="Fetch" data-option-request-init='{ "priority": "hight" }'>Fetch</a>
+<a href="/path" data-component="Fetch" data-option-request-init='{ "priority": "high" }'>Fetch</a>
 ```
 
 ### `headers`

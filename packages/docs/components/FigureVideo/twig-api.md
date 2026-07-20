@@ -1,5 +1,5 @@
 ---
-title: Figure Twig API
+title: FigureVideo Twig API
 outline: deep
 ---
 
@@ -8,7 +8,7 @@ outline: deep
 ## Parameters
 
 :::tip Required parameters
-The [`src`](#src) or [`sources`](#sources) parameters are required, [`width`](#width) and [`height`](#height) too.
+The [`src`](#src) or [`sources`](#sources) parameter is required.
 :::
 
 ### `src`
@@ -30,14 +30,14 @@ Configure multiple sources of the video. Sources must contain at least one objec
 - Type: `number`
 - Default: `100`
 
-Configure the `width` attribute of the image and the components sizing.
+Configure the `width` attribute of the video and the component sizing.
 
 ### `height`
 
 - Type: `number`
-- Required
+- Default: `100`
 
-Configure the `height` attribute of the image and the components sizing.
+Configure the `height` attribute of the video and the component sizing.
 
 ### `lazy`
 

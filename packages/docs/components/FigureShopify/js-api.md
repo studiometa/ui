@@ -5,7 +5,7 @@ outline: deep
 
 # JS API
 
-The `FigureShopify` class extends the [`Figure` class](/components/Figure/js-api.md) and adds support for TwicPics API.
+The `FigureShopify` class extends the [`Figure` class](/components/Figure/js-api.md) and formats image sources for the [Shopify CDN image API](https://shopify.dev/docs/api/liquid/filters/image_url).
 
 ## Options
 
@@ -18,10 +18,10 @@ The step used to round up image size calculation. Default to `50`, which means t
 
 ### `crop`
 
-- Type: `string`
-- Default: `'top' | 'left' | 'right' | 'bottom' | 'center'`
+- Type: `'top' | 'left' | 'right' | 'bottom' | 'center'`
+- Default: `null`
 
-If the image should be cropped (cover like), use the `crop` option with one the allowed value.
+Crops the image towards the given edge or its center, like `object-fit: cover`. When `null`, the image is not cropped.
 
 ### `disable`
 

@@ -37,5 +37,5 @@ class App extends Base {
   };
 }
 
-export default createApp(Base);
+export default createApp(App);
 ```
