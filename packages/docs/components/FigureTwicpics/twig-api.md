@@ -13,19 +13,19 @@ The `FigureTwicpics` template extends the [`Figure` template](/components/Figure
 
 - Type: `string`
 
-Use this parameter to configure your Twicpics domain.
+Configures your Twicpics domain.
 
 ### `twic_path`
 
 - Type: `string`
 
-Use this parameter to configure your Twicpics path.
+Configures your Twicpics path.
 
 ### `twic_placeholder`
 
 - Type: `'preview' | 'meancolor' | 'maincolor' | Object`
 
-Use this parameter to customise the placeholder used when lazyloading images. It can either be one of the preview type provided by TwicPics, or an object defining custom transforms like the [`twic_transform` parameter](#twic-transform).
+Customises the placeholder used when lazyloading images. It can either be one of the preview type provided by TwicPics, or an object defining custom transforms like the [`twic_transform` parameter](#twic-transform).
 
 **Examples**
 
@@ -49,7 +49,7 @@ Use this parameter to customise the placeholder used when lazyloading images. It
 
 - Type: `Object`
 
-Use this parameter to define custom transforms that should be used on the image. See [Twicpics documentation](https://www.twicpics.com/docs/reference/transformations) to discover available transformations.
+Defines custom transforms that should be used on the image. See [Twicpics documentation](https://www.twicpics.com/docs/reference/transformations) to discover available transformations.
 
 **Examples**
 

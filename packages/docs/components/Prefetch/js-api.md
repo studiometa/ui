@@ -11,7 +11,7 @@ title: Prefetch JS API
 - Type: `boolean`
 - Default: `true`
 
-Use this option to disable prefetching on specific elements by using the `data-option-no-prefetch` attribute.
+The `data-option-no-prefetch` attribute disables prefetching on specific elements.
 
 ## Getters
 

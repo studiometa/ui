@@ -16,46 +16,46 @@ List of reinsurance (max 4)
 
 - Type: `object`
 
-Customize the root element attributes.
+Customizes the root element attributes.
 
 ### `title_attr`
 
 - Type: `object`
 
-Customize the title element attributes.
+Customizes the title element attributes.
 
 ### `content_attr`
 
 - Type: `object`
 
-Customize the content element attributes.
+Customizes the content element attributes.
 
 ### `slider_mobile`
 
 - Type: `boolean`
 
-Activate css scroll on mobile
+Activates css scroll on mobile
 
 ### `mobile_classes`
 
 - Type: `array`
 
-Customize the mobile classe (changing breakpoint for example)
+Customizes the mobile class (changing breakpoint for example)
 
 ## Blocks
 
 ### `icon`
 
-Use this block to customize the icon
+Customizes the icon
 
 ## Blocks
 
 ### `title`
 
-Use this block to customize the title html
+Customizes the title html
 
 ## Blocks
 
 ### `content`
 
-Use this block to customize the content html
+Customizes the content html

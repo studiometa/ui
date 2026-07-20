@@ -14,14 +14,14 @@ Defines how the slider items are aligned.
 - Type: `boolean`
 - Default: `false`
 
-Set to `true` to force items to align themselves on drag end.
+Forces items to align themselves on drag end.
 
 ### `contain`
 
 - Type: `boolean`
 - Default: `false`
 
-Set to `true` to prevent first and last items to overflow.
+Prevents the first and last items from overflowing.
 
 ### `sensitivity`
 

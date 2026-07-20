@@ -16,44 +16,44 @@ Shorthand of `list_attr`.
 
 - Type: `array`
 
-Customize the list element attributes.
+Customizes the list element attributes.
 
 ### `item_attr`
 
 - Type: `array`
 
-Customize the list item elements attributes.
+Customizes the list item elements attributes.
 
 ### `icon_attr`
 
 - Type: `array`
 
-Customize the icon attibutes.
+Customizes the icon attributes.
 
 ### `action_attr`
 
 - Type: `array`
 
-Customize the action element attributes.
+Customizes the action element attributes.
 
 ### `action_tag`
 
 - Type: `string`
 
-Customize the action element type (tag).
+Customizes the action element type (tag).
 
 ### `items`
 
 - Type: `array`
 
-Use the icon name in key and the url in value for each entry of this array. You can pass an array instead of the url to pass custom attributes to the action.
+Uses the icon name as key and the url as value for each entry of this array. An array can be passed instead of the url to pass custom attributes to the action.
 
 ## Blocks
 
 ### `item`
 
-Use this block to override the component behavior inside the list items.
+Overrides the component behavior inside the list items.
 
 ### `icon`
 
-Use this block to override the icons.
+Overrides the icons.

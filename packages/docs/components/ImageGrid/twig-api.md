@@ -32,4 +32,4 @@ Custom attributes for each image wrapper element.
 
 ### `image`
 
-Use this block to customize each image output.
+Customizes each image output.

@@ -20,14 +20,14 @@ A number between in the range `0–1` used to smoothen the transition between ea
 - Type: `boolean`
 - Default: `false`
 
-Use this option to reverse the movement of the target.
+Reverses the movement of the target.
 
 ### `contained`
 
 - Type: `boolean`
 - Default: `false`
 
-Use this option to stop moving the target element when the pointer has leaved the root element.
+Stops moving the target element when the pointer has leaved the root element.
 
 ## Properties
 

@@ -16,53 +16,53 @@ The [`src`](#src) parameter is required.
 - Type: `string`
 - Required
 
-Configure the `src` attribute of the image.
+Configures the `src` attribute of the image.
 
 ### `width`
 
 - Type: `number`
 - Default: `100`
 
-Configure the `width` attribute of the image and the components sizing.
+Configures the `width` attribute of the image and the components sizing.
 
 ### `height`
 
 - Type: `number`
 - Default: `100`
 
-Configure the `height` attribute of the image and the component sizing.
+Configures the `height` attribute of the image and the component sizing.
 
 ### `srcset`
 
 - Type: `string`
 
-Configure the `srcset` attribute of the image.
+Configures the `srcset` attribute of the image.
 
 ### `sizes`
 
 - Type: `string`
 
-Configure the `sizes` attribute of the image.
+Configures the `sizes` attribute of the image.
 
 ### `alt`
 
 - Type: `string`
 
-Configure the `alt` attribute of the image.
+Configures the `alt` attribute of the image.
 
 ### `lazy`
 
 - Type: `boolean`
 - Default: `true`
 
-Configure the type of loading for the image. Defaults to `true` which requires the `Figure` JavaScript component to be loaded in your project.
+Configures the type of loading for the image. Defaults to `true` which requires the `Figure` JavaScript component to be loaded in your project.
 
 ### `lazy_fallback`
 
 - Type: `boolean`
 - Default: `false`
 
-Use this parameter to add an image inside a `<noscript>` tag for SEO purpose when using the [`lazy` mode](#lazy).
+Adds an image inside a `<noscript>` tag for SEO purpose when using the [`lazy` mode](#lazy).
 
 ### `caption`
 
@@ -74,25 +74,25 @@ The caption of the image.
 
 - Type: `'cover'|'contain'|'fill'|'none'`
 
-Define how the image will fit.
+Defines how the image fits.
 
 ### `absolute`
 
 - Type: `boolean`
 
-Use absolute position on the image holder instead of relative.
+Uses absolute position on the image holder instead of relative.
 
 ### `inline`
 
 - Type: `boolean`
 
-Wether to enable the display of the figure inline or not. When `inline`, the root element will have a max-width set corresponding to the `width` given. Use with caution.
+Whether to enable the display of the figure inline or not. When `inline`, the root element will have a max-width set corresponding to the `width` given. Use with caution.
 
 ### `placeholder`
 
 - Type: `string`
 
-Use a custom placeholder instead of the generic placeholder:
+Defines a custom placeholder instead of the generic placeholder:
 
 ```twig
 {%- set placeholder_markup -%}
@@ -111,7 +111,7 @@ Use a custom placeholder instead of the generic placeholder:
 - Type: `string`
 - Default: `"#eee"`
 
-Define the color of the generic placeholder.
+Defines the color of the generic placeholder.
 
 ### `attr`
 
@@ -141,4 +141,4 @@ Custom attributes for the caption element.
 
 ### `caption`
 
-Use this block to customize the image's caption, defaults to the [`caption` parameter](#caption).
+Customizes the image's caption. Defaults to the [`caption` parameter](#caption).

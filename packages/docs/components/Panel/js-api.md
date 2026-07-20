@@ -13,7 +13,7 @@ The `Panel` component extends the [`Modal`](/components/Modal/js-api.md) compone
 - Type: `'top' | 'right' | 'bottom' | 'left'`
 - Default: `'left'`
 
-Configure from which edge of the screen the panel slides in.
+Configures from which edge of the screen the panel slides in.
 
 ## Methods
 

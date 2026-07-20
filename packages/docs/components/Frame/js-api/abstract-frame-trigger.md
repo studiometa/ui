@@ -11,14 +11,14 @@ title: AbstractFrameTrigger
 - Type: `RequestInit`
 - Default: `{}`
 
-Use this option to customize the options for the fetch request.
+Customizes the options for the fetch request.
 
 ### `headers`
 
 - Type: `Record<string, string>`
 - Default: `{}`
 
-Use this option to add custom headers to the fetch request. The headers will be merge with any `$options.requestInit.headers` already defined.
+Adds custom headers to the fetch request. The headers merge with any `$options.requestInit.headers` already defined.
 
 ## Getters
 
@@ -73,7 +73,7 @@ Emitted when the request starts.
   - `requestInit` (`RequestInit`): options for the fetch function
   - `content` (`string | Error`): the content of the request if successful, an error otherwise
 
-Emitted after the fetch request, be it successfull or not. The third parameter can be either the content of the response or an error instance.
+Emitted after the fetch request, be it successful or not. The third parameter can be either the content of the response or an error instance.
 
 ### `frame-content`
 

@@ -16,7 +16,7 @@ The filename of the icon, as found in the folder corresponding to the `@svg` ali
 
 - Type: `boolean`
 
-Avoid printing of `<img>` with empty `src`.
+Avoids printing of `<img>` with empty `src`.
 
 ### `attr`
 

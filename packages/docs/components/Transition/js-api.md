@@ -9,7 +9,7 @@ outline: deep
 
 ### `enterFrom`
 
-- Type: `String`
+- Type: `string`
 - Default: `''`
 
 Defines the classes that describe the initial state of the enter transition.
@@ -25,7 +25,7 @@ Defines the classes that describe the initial state of the enter transition.
 
 ### `enterActive`
 
-- Type: `String`
+- Type: `string`
 - Default: `''`
 
 Defines the classes that describe the transitioning state of the enter transition.
@@ -41,7 +41,7 @@ Defines the classes that describe the transitioning state of the enter transitio
 
 ### `enterTo`
 
-- Type: `String`
+- Type: `string`
 - Default: `''`
 
 Defines the classes that describe the end state of the enter transition.
@@ -57,10 +57,10 @@ Defines the classes that describe the end state of the enter transition.
 
 ### `enterKeep`
 
-- Type: `Boolean`
+- Type: `boolean`
 - Default: `false`
 
-Configure wether or not the `enterTo` classes should be kept on the target element at the end of the enter transition.
+Configures whether or not the `enterTo` classes should be kept on the target element at the end of the enter transition.
 
 <!-- prettier-ignore-start -->
 ```html {2}
@@ -73,7 +73,7 @@ Configure wether or not the `enterTo` classes should be kept on the target eleme
 
 ### `leaveFrom`
 
-- Type: `String`
+- Type: `string`
 - Default: `''`
 
 Defines the classes that describe the initial state of the leave transition.
@@ -89,7 +89,7 @@ Defines the classes that describe the initial state of the leave transition.
 
 ### `leaveActive`
 
-- Type: `String`
+- Type: `string`
 - Default: `''`
 
 Defines the classes that describe the transitioning state of the leave transition.
@@ -105,7 +105,7 @@ Defines the classes that describe the transitioning state of the leave transitio
 
 ### `leaveTo`
 
-- Type: `String`
+- Type: `string`
 - Default: `''`
 
 Defines the classes that describe the end state of the leave transition.
@@ -121,10 +121,10 @@ Defines the classes that describe the end state of the leave transition.
 
 ### `leaveKeep`
 
-- Type: `Boolean`
+- Type: `boolean`
 - Default: `false`
 
-Configure wether or not the `leaveTo` classes should be kept on the target element at the end of the leave transition.
+Configures whether or not the `leaveTo` classes should be kept on the target element at the end of the leave transition.
 
 <!-- prettier-ignore-start -->
 ```html {2}
@@ -137,10 +137,10 @@ Configure wether or not the `leaveTo` classes should be kept on the target eleme
 
 ### `group`
 
-- Type: `String`
+- Type: `string`
 - Default: `''`
 
-Define a group to sync `enter` and `leave` transition between multiple instances.
+Defines a group to sync `enter` and `leave` transition between multiple instances.
 
 <!-- prettier-ignore-start -->
 ```html {2,7}

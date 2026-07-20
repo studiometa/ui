@@ -5,7 +5,7 @@ outline: deep
 
 # JS API
 
-The `FigureVideo` component extends the [`Transition` primitive](/components/Transition/) and implements the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html). It inherits their respective APIs, so make sur have a look at them.
+The `FigureVideo` component extends the [`Transition` primitive](/components/Transition/) and implements the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html). It inherits their respective APIs. See both linked references.
 
 ## Options
 
@@ -14,7 +14,7 @@ The `FigureVideo` component extends the [`Transition` primitive](/components/Tra
 - Type: `boolean`
 - Default: `false`
 
-Use this options to enable lazy loading while reading the source from the `data-src` attribute of the [`video` ref](#video)'s sources.
+Enables lazy loading. The source is read from the `data-src` attribute of the [`video` ref](#video)'s sources.
 
 ## Refs
 

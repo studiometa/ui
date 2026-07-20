@@ -28,4 +28,4 @@ Crops the image towards the given edge or its center, like `object-fit: cover`. 
 - Type: `boolean`
 - Default: `false`
 
-Use this option to disable the features of this component.
+Disables the features of this component.

@@ -28,4 +28,4 @@ Custom attributes for the inner element.
 
 ### `content`
 
-Use this block to set the content of the sticky element, defaults to the [`content` parameter](#content).
+Sets the content of the sticky element. Defaults to the [`content` parameter](#content).

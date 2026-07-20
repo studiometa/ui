@@ -15,21 +15,21 @@ The Marquee id's. Mandatory to have it unique, as it is used inside the `<svg>` 
 
 ### `outer_radius`
 
-- Type: `Number`
-- Defaults: `250`
+- Type: `number`
+- Default: `250`
 
 The outer radius of the `<svg>`. Must be greater than `radius`.
 
 ### `radius`
 
-- Type: `Number`
-- Defaults: `220`
+- Type: `number`
+- Default: `220`
 
 The radius of the text in the `<svg>`. Must be smaller than `outer_radius`.
 
 ### `content`
 
-- Type: `String`
+- Type: `string`
 
 The text to insert inside the CircularMarquee
 
@@ -41,8 +41,8 @@ Custom attributes for the content element.
 
 ### `sensitivity`
 
-- Type: `Number`
-- Defaults: `0.1`
+- Type: `number`
+- Default: `0.1`
 
 The sensitivity control the speed and direction of the animation.
-Use a negative value to make it spin clockwise. The higher the value, the faster the animation will be.
+A negative value makes it spin clockwise. The higher the value, the faster the animation will be.
