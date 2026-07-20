@@ -18,7 +18,10 @@ export class DataEffect<T extends BaseProps = BaseProps> extends DataBind<DataEf
     },
   };
 
-  protected get supportsMutations() {
+  /**
+   * @protected
+   */
+  get __supportsMutations() {
     return false;
   }
 

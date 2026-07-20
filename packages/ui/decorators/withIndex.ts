@@ -184,7 +184,7 @@ export function withIndex<S extends Base>(
 
     set currentIndex(value) {
       const oldIndex = this.__index;
-      this.__index = this._normalizeIndex(value);
+      this.__index = this.__normalizeIndex(value);
       if (this.__index !== oldIndex) {
         this.$emit('index', this.currentIndex);
       }
@@ -202,7 +202,7 @@ export function withIndex<S extends Base>(
      * Get the travel direction: `1` when going forward, `-1` when reversed.
      * @private
      */
-    get _direction(): number {
+    get __direction(): number {
       return this.isReverse ? -1 : 1;
     }
 
@@ -210,12 +210,12 @@ export function withIndex<S extends Base>(
      * Normalize any value to a valid index according to the current boundary.
      * @private
      */
-    _normalizeIndex(value: number): number {
+    __normalizeIndex(value: number): number {
       switch (this.boundary) {
         case INDEXABLE_BOUNDARIES.BOUNCE:
           return fold(value, this.minIndex, this.maxIndex);
         case INDEXABLE_BOUNDARIES.LOOP:
-          return this._loopIndex(value);
+          return this.__loopIndex(value);
         case INDEXABLE_BOUNDARIES.CLAMP:
         default:
           return clamp(value, this.minIndex, this.maxIndex);
@@ -227,7 +227,7 @@ export function withIndex<S extends Base>(
      * is not a positive finite number.
      * @private
      */
-    _loopIndex(value: number): number {
+    __loopIndex(value: number): number {
       const { length } = this;
 
       if (!Number.isFinite(length) || length <= 0) {
@@ -243,7 +243,7 @@ export function withIndex<S extends Base>(
      * whether a bounce reversed the travel direction.
      * @private
      */
-    _bounceStep(direction: number): { index: number; reversed: boolean } {
+    __bounceStep(direction: number): { index: number; reversed: boolean } {
       const tentative = this.currentIndex + direction;
       const reversed = tentative > this.maxIndex || tentative < this.minIndex;
 
@@ -251,11 +251,11 @@ export function withIndex<S extends Base>(
     }
 
     get prevIndex() {
-      return this._normalizeIndex(this.currentIndex - this._direction);
+      return this.__normalizeIndex(this.currentIndex - this.__direction);
     }
 
     get nextIndex() {
-      return this._normalizeIndex(this.currentIndex + this._direction);
+      return this.__normalizeIndex(this.currentIndex + this.__direction);
     }
 
     goTo(indexOrInstruction) {
@@ -288,11 +288,11 @@ export function withIndex<S extends Base>(
     }
 
     goNext() {
-      return this._step(this._direction);
+      return this.__step(this.__direction);
     }
 
     goPrev() {
-      return this._step(-this._direction);
+      return this.__step(-this.__direction);
     }
 
     /**
@@ -300,15 +300,15 @@ export function withIndex<S extends Base>(
      * `bounce` boundary when reaching a bound.
      * @private
      */
-    _step(direction: number) {
+    __step(direction: number) {
       if (this.boundary === INDEXABLE_BOUNDARIES.BOUNCE) {
-        const { index, reversed } = this._bounceStep(direction);
+        const { index, reversed } = this.__bounceStep(direction);
         if (reversed) {
           this.isReverse = !this.isReverse;
         }
         return this.goTo(index);
       }
-      return this.goTo(this._normalizeIndex(this.currentIndex + direction));
+      return this.goTo(this.__normalizeIndex(this.currentIndex + direction));
     }
   }
 

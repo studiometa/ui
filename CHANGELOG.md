@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- **Data / Indexable:** align private and protected class members to the `__` prefix convention (with `@private`/`@protected` docblocks), dropping the erasable-only TypeScript `private`/`protected` keywords in favour of runtime-discoverable internals
 - **DataScope:** resolve scoped groups through the `withGroup` decorator's new `getScope`/`getGroup` options and `getScopedGroups` helper, and require `@studiometa/js-toolkit` `^3.7.0`
 - **Indexable:** reflect the `bounce` boundary through the new `fold` math util and require `@studiometa/js-toolkit` `^3.7.0`
 - **Slider:** require `@studiometa/js-toolkit` `^3.6.0` and share the current index through a per-instance store instead of the deprecated `$parent` accessor ([#507](https://github.com/studiometa/ui/pull/507))
