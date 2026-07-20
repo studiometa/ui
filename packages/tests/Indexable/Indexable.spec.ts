@@ -248,6 +248,21 @@ describe('The Indexable class', () => {
       expect(indexable.currentIndex).toBe(0);
     });
 
+    it.each([undefined, null, true, {}, NaN, Infinity, -Infinity])(
+      'should warn and keep the current index for an invalid numeric index: %s',
+      async (value) => {
+        indexable.currentIndex = 1;
+        indexable.boundary = Indexable.BOUNDARIES.LOOP;
+        const warnSpy = vi.spyOn(indexable, '$warn', 'get');
+        const emitSpy = vi.spyOn(indexable, '$emit');
+
+        await expect(indexable.goTo(value as any)).resolves.toBeUndefined();
+        expect(warnSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).not.toHaveBeenCalled();
+        expect(indexable.currentIndex).toBe(1);
+      },
+    );
+
     it('should not emit when the index does not change', async () => {
       const emitSpy = vi.spyOn(indexable, '$emit');
 

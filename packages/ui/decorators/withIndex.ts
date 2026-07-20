@@ -295,6 +295,12 @@ export function withIndex<S extends Base>(
             return Promise.resolve();
         }
       }
+
+      if (!Number.isFinite(indexOrInstruction)) {
+        this.$warn('Invalid goto index.');
+        return Promise.resolve();
+      }
+
       this.currentIndex = indexOrInstruction;
       return Promise.resolve();
     }
