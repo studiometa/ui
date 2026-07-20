@@ -7,22 +7,26 @@ outline: deep
 
 ## Options
 
-### `mode`
+### `boundary`
 
 - Type: `string`
-- Default: `'normal'`
+- Default: `'clamp'`
 
-Three modes are available: `normal`, `infinite`, or `alternate`:
+Three boundary behaviors are available: `clamp`, `loop`, or `bounce`:
 
-- **Normal**: stops when the index reaches `maxIndex`.
-- **Infinite**: restarts from the beginning when the index reaches `maxIndex`.
-- **Alternate**: bounces back and goes backward when the index reaches `maxIndex`.
+- **`clamp`**: stops when the index reaches `maxIndex`.
+- **`loop`**: restarts from the beginning when the index reaches `maxIndex`.
+- **`bounce`**: reverses direction and goes backward when the index reaches `maxIndex`.
 
+<!-- prettier-ignore-start -->
 ```html {2}
-<div data-component="Indexable" data-option-mode="infinite">
+<div
+  data-component="Indexable"
+  data-option-boundary="loop">
   ...
 </div>
 ```
+<!-- prettier-ignore-end -->
 
 ### `reverse`
 
@@ -31,8 +35,12 @@ Three modes are available: `normal`, `infinite`, or `alternate`:
 
 Defines the initial direction of the count.
 
+<!-- prettier-ignore-start -->
 ```html {2}
-<div data-component="Indexable" data-option-reverse>
+<div
+  data-component="Indexable"
+  data-option-reverse>
   ...
 </div>
 ```
+<!-- prettier-ignore-end -->

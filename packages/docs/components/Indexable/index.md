@@ -4,7 +4,7 @@ badges: [JS]
 
 # Indexable <Badges :texts="$frontmatter.badges" />
 
-The Indexable primitive provides index management for components that need to navigate between multiple items. It offers methods to move between indices (`goNext()`, `goPrev()`, `goTo()`), supports different navigation modes (normal, infinite loop, alternate), and emits events when the index changes. It suits building components like sliders, carousels, tabs, or any component that needs to track and navigate through a collection of items.
+The Indexable primitive provides index management for components that need to navigate between multiple items. It offers methods to move between indices (`goNext()`, `goPrev()`, `goTo()`), supports different boundary behaviors (clamp, loop, bounce), and emits events when the index changes. It suits building components like sliders, carousels, tabs, or any component that needs to track and navigate through a collection of items.
 
 It is available as an `Indexable` component as well as a `withIndex(Base)` decorator.
 
@@ -21,7 +21,7 @@ export default class Counter extends Indexable {
   };
 
   get length() {
-      return 10;
+    return 10;
   }
 
   onIndex() {
@@ -57,12 +57,10 @@ class App extends Base {
 export default createApp(App);
 ```
 
-You can now add a counter component in your HTML and define the count mode:
+You can now add a counter component in your HTML and define the boundary behavior:
 
 ```html
-<output data-component="Counter" data-option-mode="infinite">
-  0
-</output>
+<output data-component="Counter" data-option-boundary="loop">0</output>
 <button type="button" data-ref="prevBtn">Previous</button>
 <button type="button" data-ref="nextBtn">Next</button>
 ```

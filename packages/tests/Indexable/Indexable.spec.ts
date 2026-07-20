@@ -23,9 +23,9 @@ describe('The Indexable class', () => {
     indexable = new TestIndexable(element);
   });
 
-  describe(`"${Indexable.MODES.NORMAL}" mode`, () => {
+  describe(`"${Indexable.BOUNDARIES.CLAMP}" boundary`, () => {
     beforeEach(() => {
-      indexable.mode = Indexable.MODES.NORMAL;
+      indexable.boundary = Indexable.BOUNDARIES.CLAMP;
     });
 
     it('should stay in bounds indexes', () => {
@@ -39,9 +39,9 @@ describe('The Indexable class', () => {
     });
   });
 
-  describe(`"${Indexable.MODES.INFINITE}" mode`, () => {
+  describe(`"${Indexable.BOUNDARIES.LOOP}" boundary`, () => {
     beforeEach(() => {
-      indexable.mode = Indexable.MODES.INFINITE;
+      indexable.boundary = Indexable.BOUNDARIES.LOOP;
     });
 
     it('should wrap around indexes', () => {
@@ -71,12 +71,12 @@ describe('The Indexable class', () => {
     });
   });
 
-  describe(`"${Indexable.MODES.ALTERNATE}" mode`, () => {
+  describe(`"${Indexable.BOUNDARIES.BOUNCE}" boundary`, () => {
     beforeEach(() => {
-      indexable.mode = Indexable.MODES.ALTERNATE;
+      indexable.boundary = Indexable.BOUNDARIES.BOUNCE;
     });
 
-    it('should alternate direction when reaching bounds', () => {
+    it('should bounce back when reaching bounds', () => {
       indexable.currentIndex = 0;
       expect(indexable.nextIndex).toBe(1);
       expect(indexable.prevIndex).toBe(1);

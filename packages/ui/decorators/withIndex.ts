@@ -7,13 +7,13 @@ import type {
 } from '@studiometa/js-toolkit';
 import { clamp, isString, randomInt } from '@studiometa/js-toolkit/utils';
 
-const INDEXABLE_MODES = {
-  NORMAL: 'normal',
-  INFINITE: 'infinite',
-  ALTERNATE: 'alternate',
+const INDEXABLE_BOUNDARIES = {
+  CLAMP: 'clamp',
+  LOOP: 'loop',
+  BOUNCE: 'bounce',
 } as const;
 
-export type IndexableMode = (typeof INDEXABLE_MODES)[keyof typeof INDEXABLE_MODES];
+export type IndexableBoundary = (typeof INDEXABLE_BOUNDARIES)[keyof typeof INDEXABLE_BOUNDARIES];
 
 const INDEXABLE_INSTRUCTIONS = {
   NEXT: 'next',
@@ -28,7 +28,7 @@ export type IndexableInstructions =
 
 export interface IndexableProps extends BaseProps {
   $options: {
-    mode: IndexableMode;
+    boundary: IndexableBoundary;
     reverse: boolean;
   };
 }
@@ -46,10 +46,10 @@ export interface IndexableInterface extends BaseInterface {
   set isReverse(value: boolean);
 
   /**
-   * Get mode.
+   * Get the boundary behavior.
    */
-  get mode(): IndexableMode;
-  set mode(value: IndexableMode);
+  get boundary(): IndexableBoundary;
+  set boundary(value: IndexableBoundary);
 
   /**
    * Get the length.
@@ -114,7 +114,7 @@ export interface IndexableInterface extends BaseInterface {
 export function withIndex<S extends Base>(
   BaseClass: typeof Base,
 ): BaseDecorator<IndexableInterface, S, IndexableProps> & {
-  MODES: typeof INDEXABLE_MODES;
+  BOUNDARIES: typeof INDEXABLE_BOUNDARIES;
   INSTRUCTIONS: typeof INDEXABLE_INSTRUCTIONS;
 } {
   /**
@@ -128,15 +128,15 @@ export function withIndex<S extends Base>(
       ...BaseClass.config,
       emits: ['index'],
       options: {
-        mode: {
+        boundary: {
           type: String,
-          default: INDEXABLE_MODES.NORMAL,
+          default: INDEXABLE_BOUNDARIES.CLAMP,
         },
         reverse: Boolean,
       },
     };
 
-    static MODES = INDEXABLE_MODES;
+    static BOUNDARIES = INDEXABLE_BOUNDARIES;
 
     static INSTRUCTIONS = INDEXABLE_INSTRUCTIONS;
 
@@ -150,25 +150,25 @@ export function withIndex<S extends Base>(
       this.$options.reverse = !!value;
     }
 
-    get mode() {
-      const { mode } = this.$options;
+    get boundary() {
+      const { boundary } = this.$options;
 
-      if (!Object.values(INDEXABLE_MODES).includes(mode)) {
-        return INDEXABLE_MODES.NORMAL;
+      if (!Object.values(INDEXABLE_BOUNDARIES).includes(boundary)) {
+        return INDEXABLE_BOUNDARIES.CLAMP;
       }
 
-      return mode;
+      return boundary;
     }
 
-    set mode(value) {
-      this.$options.mode = Object.values(INDEXABLE_MODES).includes(value)
+    set boundary(value) {
+      this.$options.boundary = Object.values(INDEXABLE_BOUNDARIES).includes(value)
         ? value
-        : INDEXABLE_MODES.NORMAL;
+        : INDEXABLE_BOUNDARIES.CLAMP;
     }
 
     get length() {
       this.$warn(
-        'The length property should be overridden to match with the actual number of items. Finite length is required for infinite and alternate modes.',
+        'The length property should be overridden to match with the actual number of items. Finite length is required for the loop and bounce boundaries.',
       );
       return Number.POSITIVE_INFINITY;
     }
@@ -187,9 +187,9 @@ export function withIndex<S extends Base>(
 
     set currentIndex(value) {
       const oldIndex = this.__index;
-      switch (this.mode) {
-        case INDEXABLE_MODES.ALTERNATE: {
-          // Bounce: reflect out-of-bounds values back into range
+      switch (this.boundary) {
+        case INDEXABLE_BOUNDARIES.BOUNCE: {
+          // Reflect out-of-bounds values back into range.
           const cycleLength = this.length * 2 - 2;
           if (cycleLength <= 0) {
             this.__index = 0;
@@ -205,10 +205,10 @@ export function withIndex<S extends Base>(
           this.__index = normalized;
           break;
         }
-        case INDEXABLE_MODES.INFINITE:
+        case INDEXABLE_BOUNDARIES.LOOP:
           this.__index = ((value % this.length) + this.length) % this.length;
           break;
-        case INDEXABLE_MODES.NORMAL:
+        case INDEXABLE_BOUNDARIES.CLAMP:
         default:
           this.__index = clamp(value, this.minIndex, this.maxIndex);
           break;
@@ -227,12 +227,12 @@ export function withIndex<S extends Base>(
     }
 
     /**
-     * Compute the index reached by stepping `direction` (`1` or `-1`) in alternate
-     * mode, reflecting at the bounds. Returns the target index and whether a bounce
-     * reversed the travel direction.
+     * Compute the index reached by stepping `direction` (`1` or `-1`) with the
+     * `bounce` boundary, reflecting at the bounds. Returns the target index and
+     * whether a bounce reversed the travel direction.
      * @private
      */
-    _alternateStep(direction: number): { index: number; reversed: boolean } {
+    _bounceStep(direction: number): { index: number; reversed: boolean } {
       const tentative = this.currentIndex + direction;
 
       if (tentative > this.maxIndex) {
@@ -247,25 +247,25 @@ export function withIndex<S extends Base>(
     }
 
     get prevIndex() {
-      if (this.mode === INDEXABLE_MODES.ALTERNATE) {
-        return this._alternateStep(this.isReverse ? 1 : -1).index;
+      if (this.boundary === INDEXABLE_BOUNDARIES.BOUNCE) {
+        return this._bounceStep(this.isReverse ? 1 : -1).index;
       }
 
       const rawIndex = this.isReverse ? this.currentIndex + 1 : this.currentIndex - 1;
 
-      return this.mode === INDEXABLE_MODES.NORMAL
+      return this.boundary === INDEXABLE_BOUNDARIES.CLAMP
         ? clamp(rawIndex, this.minIndex, this.maxIndex)
         : ((rawIndex % this.length) + this.length) % this.length;
     }
 
     get nextIndex() {
-      if (this.mode === INDEXABLE_MODES.ALTERNATE) {
-        return this._alternateStep(this.isReverse ? -1 : 1).index;
+      if (this.boundary === INDEXABLE_BOUNDARIES.BOUNCE) {
+        return this._bounceStep(this.isReverse ? -1 : 1).index;
       }
 
       const rawIndex = this.isReverse ? this.currentIndex - 1 : this.currentIndex + 1;
 
-      return this.mode === INDEXABLE_MODES.NORMAL
+      return this.boundary === INDEXABLE_BOUNDARIES.CLAMP
         ? clamp(rawIndex, this.minIndex, this.maxIndex)
         : ((rawIndex % this.length) + this.length) % this.length;
     }
@@ -294,8 +294,8 @@ export function withIndex<S extends Base>(
     }
 
     goNext() {
-      if (this.mode === INDEXABLE_MODES.ALTERNATE) {
-        const { index, reversed } = this._alternateStep(this.isReverse ? -1 : 1);
+      if (this.boundary === INDEXABLE_BOUNDARIES.BOUNCE) {
+        const { index, reversed } = this._bounceStep(this.isReverse ? -1 : 1);
         if (reversed) {
           this.isReverse = !this.isReverse;
         }
@@ -305,8 +305,8 @@ export function withIndex<S extends Base>(
     }
 
     goPrev() {
-      if (this.mode === INDEXABLE_MODES.ALTERNATE) {
-        const { index, reversed } = this._alternateStep(this.isReverse ? 1 : -1);
+      if (this.boundary === INDEXABLE_BOUNDARIES.BOUNCE) {
+        const { index, reversed } = this._bounceStep(this.isReverse ? 1 : -1);
         if (reversed) {
           this.isReverse = !this.isReverse;
         }
