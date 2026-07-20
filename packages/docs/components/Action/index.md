@@ -4,12 +4,7 @@ badges: [JS]
 
 # Action <Badges :texts="$frontmatter.badges" />
 
-The `Action` atom is a component who trigger an action on other components.
-
-## Table of content
-
-- [Examples](./examples.md)
-- [JS API](./js-api.md)
+The `Action` atom is a component that triggers an action on other components.
 
 ## Usage
 

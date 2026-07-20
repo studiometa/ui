@@ -6,14 +6,9 @@ badges: [JS]
 
 The `ScrollReveal` component should be used when you want to apply classes to an element when it enters the viewport.
 
-## Table of content
-
-- [Examples](./examples)
-- [JS API](./js-api)
-
 ## Usage
 
-Using this component is quite straightforward as it can directly be used in an application. It is based on the [`Transition` primitive](/components/Transition/) to manage its transition states under the hood.
+This component can directly be used in an application. It is based on the [`Transition` primitive](/components/Transition/) to manage its transition states under the hood.
 
 ```js
 import { Base, createApp } from '@studiometa/js-toolkit';

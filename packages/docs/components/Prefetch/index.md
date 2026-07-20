@@ -6,10 +6,6 @@ badges: [JS]
 
 The family of prefetch components can be used to improve performance when navigating in a page by prefetching content for the target links.
 
-## Table of content
-
-- [JS API](./js-api.md)
-
 ## Usage
 
 Import one of the available prefetch component in you app and use them in your HTML to enable a performance boost while navigating between pages.

@@ -4,11 +4,6 @@ badges: [JS, Twig]
 
 # AnchorNav <Badges :texts="$frontmatter.badges" />
 
-## Table of content
-
-- [Examples](./examples)
-- [JS API](./js-api)
-
 ## Usage
 
 This component can be directly imported and defined as a dependency of your application:

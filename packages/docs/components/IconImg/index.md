@@ -4,14 +4,9 @@ badges: [Twig]
 
 # IconImg <Badges :texts="$frontmatter.badges" />
 
-## Table of content
-
-- [Examples](./examples.md)
-- [Twig API](./twig-api.md)
-
 ## Usage
 
-Once the [package is installed](/guide/installation/), simply include the template in your project:
+After you install the package, include the template in your project:
 
 ```twig
 {% include  '@ui/Icon/IconImg.twig' with {

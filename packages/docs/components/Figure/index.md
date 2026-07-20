@@ -6,12 +6,6 @@ badges: [JS, Twig]
 
 Use the `Figure` component to display images.
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JS API](./js-api.md)
-- [Twig API](./twig-api.md)
-
 ## Usage
 
 Register the component in your JavaScript app and use the Twig template to display images.
@@ -22,7 +16,7 @@ import { Figure } from '@studiometa/ui';
 
 class App extends Base {
   static config = {
-    name: 'Base',
+    name: 'App',
     components: {
       Figure,
     },
@@ -85,7 +79,7 @@ import { Figure } from './Figure.js'; // [!code ++]
 
 class App extends Base {
   static config = {
-    name: 'Base',
+    name: 'App',
     components: {
       Figure,
     },

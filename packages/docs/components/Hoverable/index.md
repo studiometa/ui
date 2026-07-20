@@ -4,14 +4,9 @@ badges: [JS]
 
 # Hoverable <Badges :texts="$frontmatter.badges" />
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JS API](./js-api.md)
-
 ## Usage
 
-Use this component to move an oversized element withing its parent bounds.
+Use this component to move an oversized element within its parent bounds.
 
 ::: code-group
 

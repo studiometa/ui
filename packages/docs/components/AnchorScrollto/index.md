@@ -10,11 +10,6 @@ The `AnchorScrollTo` atom is a small interface to the [`scrollTo` utility functi
 It should be used on `<a>` elements only.
 :::
 
-## Table of content
-
-- [Examples](./examples)
-- [JS API](./js-api)
-
 ## Usage
 
 This component can be directly imported and defined as a dependency of your application and set up to be instanciated on elements matching the `a[href^="#"]` selector:
