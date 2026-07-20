@@ -6,28 +6,26 @@ badges: [JS]
 
 Use the `DataEffect` component to execute side effects when the value of the `Data...` components group changes. This component extends the [`DataBind` component](../DataBind/index.md), so it inherits from its API.
 
-## Table of content
-
-- [JavaScript API](./js-api.md)
-
 ## Usage
 
 ::: code-group
 
-```html {5,7} [index.html]
-<!-- Two ways binding on the "text" group for the input's value -->
-<!-- And show an alert if the content of the input is too loong -->
-<input
-  type="text"
-  data-component="DataModel DataEffect"
-  data-option-group="text"
-  data-option-effect="value.length > 20 && alert('Too long')" />
+```html [index.html]
+<div data-component="DataScope" data-option-group="validation">
+  <!-- "message" is the scoped key for both components. -->
+  <input
+    name="message"
+    type="text"
+    data-component="DataModel DataEffect"
+    data-option-effect="target.setCustomValidity(value.length > 10 ? 'Use 10 characters or fewer.' : '')" />
+</div>
 ```
 
 ```js [app.js] twoslash
 import { registerComponent } from '@studiometa/js-toolkit';
-import { DataModel, DataEffect } from '@studiometa/ui';
+import { DataEffect, DataModel, DataScope } from '@studiometa/ui';
 
+registerComponent(DataScope);
 registerComponent(DataModel);
 registerComponent(DataEffect);
 ```

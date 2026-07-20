@@ -4,11 +4,6 @@ badges: [Twig]
 
 # Hero <Badges :texts="$frontmatter.badges" />
 
-## Table of content
-
-- [Examples](./examples.md)
-- [Twig API](./twig-api.md)
-
 ## Usage
 
 Include or embed the Twig template in your project.

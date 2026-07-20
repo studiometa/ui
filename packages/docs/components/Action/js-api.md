@@ -12,7 +12,7 @@ title: Action JS API
 - Default: `'click'`
 - Format: `<event>[.<modifier>...]`
 
-Use this option to change the event that will trigger the [effect callback](#effect) on the defined [targets](#target). Modifiers can be used to configure how the event will be listened to. Available modifiers are:
+The event that triggers the [effect callback](#effect) on the defined [targets](#target). Modifiers configure how the event is listened to. Available modifiers are:
 
 - `prevent` to call the `event.preventDefault()` in the event handler
 - `stop` to call the `event.stopPropagation()` in the event handler
@@ -43,7 +43,7 @@ Modifiers can be chained with a `.` as separator:
   - `Name(.selector)`
   - `Name(.selector) OtherName([value="other-selector"])`
 
-Use this option to define the components that should be used as targets to the [effect callback](#effect). Multiple components can be defined by using a single space as delimiter.
+Defines the components used as targets to the [effect callback](#effect). Multiple components can be defined by using a single space as delimiter.
 
 ::: info Name definition
 The `Action` component will use the `name` property defined in the static `config` object of each class to resolve components on the page.
@@ -112,7 +112,7 @@ In the following example, the effect callback will only be triggered on the `Foo
 - Type: `string`
 - Required
 
-The `effect` option must be used to define a small piece of JavaScript that will be executed in the context of the current target. The following variables are available:
+Defines a small piece of JavaScript executed in the context of the current target. The following variables are available:
 
 - `this` (`HTMLElement`): the current element
 - `ctx` (`Record<name, Base>`): the current targeted component in an object with a uniq key being its name set in the static `config.name` property and the value being the component instance
@@ -223,7 +223,7 @@ The pattern described above with multiple components as targets is an advanced p
 - Type: `string`
 - Format: `[<name>[(<selector>)] -> ]<effect>`
 
-This option can be used to combine the [`on`](#on), [`target`](#target) and [`effect`](#effect) options into one single attributes. This option can be used to attach multiple events to a single `Action` component.
+Combines the [`on`](#on), [`target`](#target) and [`effect`](#effect) options into a single attribute. Attaches multiple events to a single `Action` component.
 
 ```html {3}
 <button

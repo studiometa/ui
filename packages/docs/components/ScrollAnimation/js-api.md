@@ -54,6 +54,7 @@ To use the debug option, you must wrap your `ScrollAnimationTimeline` with the `
 :::
 
 When enabled, the following elements are displayed:
+
 - A dashed outline around the timeline element
 - Start and end markers on the right side of the viewport
 - A progress bar and percentage indicator
@@ -128,13 +129,13 @@ Each point accepts the following values:
 
 **Common offset patterns:**
 
-| Offset | Description |
-| ------ | ----------- |
-| `"start end / end start"` | Default. Animation plays while element is visible in viewport |
-| `"start center / end center"` | Animation plays while element crosses the center of viewport |
-| `"start start / end start"` | Animation plays while element is at the top of viewport |
-| `"start end / end end"` | Animation plays while element is at the bottom of viewport |
-| `"start start / end end"` | Animation plays from when element enters until it completely leaves |
+| Offset                        | Description                                                         |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `"start end / end start"`     | Default. Animation plays while element is visible in viewport       |
+| `"start center / end center"` | Animation plays while element crosses the center of viewport        |
+| `"start start / end start"`   | Animation plays while element is at the top of viewport             |
+| `"start end / end end"`       | Animation plays while element is at the bottom of viewport          |
+| `"start start / end end"`     | Animation plays from when element enters until it completely leaves |
 
 <!-- prettier-ignore-start -->
 ```html {2}
@@ -564,9 +565,7 @@ export default createApp(App);
 
 ```html
 <div data-component="ScrollAnimationTimeline" data-option-debug>
-  <div data-component="ScrollAnimationTarget" ...>
-    ...
-  </div>
+  <div data-component="ScrollAnimationTarget" ...>...</div>
 </div>
 ```
 

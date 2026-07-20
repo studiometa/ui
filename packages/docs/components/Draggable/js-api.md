@@ -13,35 +13,35 @@ The `Draggable` component uses the [`withDrag` decorator](https://js-toolkit.stu
 - Type: `boolean`
 - Default: `true`
 
-Enable/disable moving the [`target` ref](#target) on the `x` axis. Defaults to `true`, use the `data-option-no-x` attribute to disable it.
+Enable/disable moving the [`target` ref](#target) on the `x` axis. Defaults to `true`. The `data-option-no-x` attribute disables it.
 
 ### `y`
 
 - Type: `boolean`
 - Default: `true`
 
-Enable/disable moving the [`target` ref](#target) on the `y` axis. Defaults to `true`, use the `data-option-no-y` attribute to disable it.
+Enable/disable moving the [`target` ref](#target) on the `y` axis. Defaults to `true`. The `data-option-no-y` attribute disables it.
 
 ### `fitBounds`
 
 - Type: `boolean`
 - Default: `false`
 
-Wether or not to force the [`target` ref](#target) to always come back in the root element's bounds. Use the `data-option-fit-bounds` attribute to enable it.
+Whether or not to force the [`target` ref](#target) to always come back in the root element's bounds. The `data-option-fit-bounds` attribute enables it.
 
 ### `strictFitBounds`
 
 - Type: `boolean`
 - Default: `false`
 
-Wether or not to force the [`target` ref](#target) to strictly stay in the root element's bounds. Use the `data-option-strict-fit-bounds` attribute to enable it.
+Whether or not to force the [`target` ref](#target) to strictly stay in the root element's bounds. The `data-option-strict-fit-bounds` attribute enables it.
 
 ### `margin`
 
 - Type: `string`
 - Default: `'0'`
 
-Define margins for the bounds. It follows the notation from the `margin` CSS declaration, meaning that it is possible to define different margins for top, right, bottom and left bounds.
+Defines margins for the bounds. It follows the notation from the `margin` CSS declaration, meaning that it is possible to define different margins for top, right, bottom and left bounds.
 
 The values are unitless and in pixels.
 

@@ -6,12 +6,6 @@ badges: [JS, Twig]
 
 Use the `FigureVideoTwicpics` component to display loop, muted & autoplay decorative videos with the Twicpics API.
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JS API](./js-api.md)
-- [Twig API](./twig-api.md)
-
 ## Usage
 
 Register the component in your JavaScript app and use the Twig template to display videos.
@@ -22,7 +16,7 @@ import { FigureVideoTwicpics } from '@studiometa/ui';
 
 class App extends Base {
   static config = {
-    name: 'Base',
+    name: 'App',
     components: {
       FigureVideo: FigureVideoTwicpics,
     },
@@ -73,7 +67,7 @@ And replace the import in your app to import your local class instead of the one
 
   class App extends Base {
     static config = {
-      name: 'Base',
+      name: 'App',
       components: {
 -       FigureVideo: FigureVideoTwicpics,
 +       FigureVideo,

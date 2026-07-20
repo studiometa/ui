@@ -9,6 +9,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Add an Indexable primitive component and a withIndex decorator ([#491](https://github.com/studiometa/ui/pull/491), [0394a1df](https://github.com/studiometa/ui/commit/0394a1df))
+- **Track:** add `Track`, `TrackShopify` and `TrackContext` components for declarative analytics tracking (dataLayer/GTM and Shopify providers, ancestor-merged context) ([#508](https://github.com/studiometa/ui/pull/508))
+
+### Changed
+
+- **Slider:** require `@studiometa/js-toolkit` `^3.6.0` and share the current index through a per-instance store instead of the deprecated `$parent` accessor ([#507](https://github.com/studiometa/ui/pull/507))
+
+### Fixed
+
+- **Slider:** fix `SliderBtn`, `SliderCount`, `SliderDots` and `SliderProgress` crashing when mounted before their parent `Slider` ([#507](https://github.com/studiometa/ui/pull/507))
+- **Accordion:** fix `AccordionItem` option inheritance relying on the deprecated `$parent` accessor ([#507](https://github.com/studiometa/ui/pull/507))
+
+## [v1.9.0-beta.0](https://github.com/studiometa/ui/compare/1.8.0..1.9.0-beta.0) (2026-05-11)
+
+### Added
+
+- **ESLintPluginUi:** add a new `@studiometa/eslint-plugin-ui` package with ESLint/Oxlint rules to help developers discover and use components from `@studiometa/ui` ([#503](https://github.com/studiometa/ui/pull/503))
+
+### Fixed
+
+- **Config:** fix deprecated `moduleResolution: node` value in root `tsconfig.json` ([#503](https://github.com/studiometa/ui/pull/503))
 
 ## [v1.8.0](https://github.com/studiometa/ui/compare/1.7.0..1.8.0) (2026-03-25)
 

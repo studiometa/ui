@@ -5,13 +5,25 @@ import type {
   DragServiceProps,
   KeyServiceProps,
 } from '@studiometa/js-toolkit';
-import { clamp, inertiaFinalValue, nextFrame } from '@studiometa/js-toolkit/utils';
+import {
+  clamp,
+  createMemoryStorageProvider,
+  createStorage,
+  inertiaFinalValue,
+  nextFrame,
+} from '@studiometa/js-toolkit/utils';
+import { AbstractSliderChild } from './AbstractSliderChild.js';
 import { SliderDrag } from './SliderDrag.js';
 import { SliderItem } from './SliderItem.js';
 
 export type SliderModes = 'left' | 'center' | 'right';
 
 type SliderState = { x: Record<SliderModes, number> };
+
+/**
+ * Shape of the per-instance store shared with the child components.
+ */
+export type SliderStore = { index: number };
 
 export interface SliderProps extends BaseProps {
   $refs: {
@@ -80,6 +92,13 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   states: SliderState[] = [];
 
   /**
+   * Per-instance store used to broadcast the current index to the child
+   * components. Children subscribe to it through a guarded `$closest('Slider')`
+   * lookup instead of dereferencing the deprecated `$parent` accessor.
+   */
+  store = createStorage<SliderStore>({ provider: createMemoryStorageProvider() });
+
+  /**
    * Origins for the different modes.
    */
   origins: Record<SliderModes, number> = {
@@ -106,6 +125,7 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
   set currentIndex(value: number) {
     this.currentSliderItem.disactivate();
     this.$emit('index', value);
+    this.store.set('index', value);
     this.__currentIndex = value;
     this.currentSliderItem.activate();
   }
@@ -245,6 +265,22 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     this.states = this.getStates();
     this.setAccessibilityAttributes();
     this.goTo(this.currentIndex);
+    this.connectChildren();
+  }
+
+  /**
+   * Connect the child components that track the current index, including those
+   * that mounted before this Slider. Runs after `goTo` has seeded the store so
+   * connected children synchronise against an initialised Slider.
+   */
+  connectChildren() {
+    for (const children of Object.values(this.$children as Record<string, Base[]>)) {
+      for (const child of children) {
+        if (child instanceof AbstractSliderChild) {
+          child.__connect(this as unknown as Slider);
+        }
+      }
+    }
   }
 
   /**

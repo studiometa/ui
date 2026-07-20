@@ -1,0 +1,84 @@
+<div class="grid gap-8">
+  {% for i in 1..2 %}
+    <section
+      data-component="DataScope"
+      data-option-group="accordion"
+      class="grid gap-2 rounded ring p-4">
+      <div class="grid gap-2">
+        <button
+          id="accordion-{{ i }}-button-1"
+          type="button"
+          value="accordion-1"
+          aria-controls="accordion-{{ i }}-panel-1"
+          aria-expanded="true"
+          data-component="Action DataModel"
+          data-option-key="active"
+          data-option-prop="value"
+          data-option-immediate
+          data-bind:attr.aria-expanded="String(value === 'accordion-1')"
+          data-on:click="DataModel.toggle('accordion-1', '')">
+          First item
+        </button>
+        <div
+          id="accordion-{{ i }}-panel-1"
+          role="region"
+          aria-labelledby="accordion-{{ i }}-button-1"
+          data-component="DataBind"
+          data-option-key="active"
+          data-bind:attr.hidden="value !== 'accordion-1'">
+          First accordion panel. Clicking again closes it.
+        </div>
+      </div>
+      <div class="grid gap-2">
+        <button
+          id="accordion-{{ i }}-button-2"
+          type="button"
+          value="accordion-2"
+          aria-controls="accordion-{{ i }}-panel-2"
+          aria-expanded="false"
+          data-component="Action DataModel"
+          data-option-key="active"
+          data-option-prop="value"
+          data-bind:attr.aria-expanded="String(value === 'accordion-2')"
+          data-on:click="DataModel.toggle('accordion-2', '')">
+          Second item
+        </button>
+        <div
+          id="accordion-{{ i }}-panel-2"
+          role="region"
+          aria-labelledby="accordion-{{ i }}-button-2"
+          hidden
+          data-component="DataBind"
+          data-option-key="active"
+          data-bind:attr.hidden="value !== 'accordion-2'">
+          Second accordion panel. Opening it auto-closes the first one.
+        </div>
+      </div>
+      <div class="grid gap-2">
+        <button
+          id="accordion-{{ i }}-button-3"
+          type="button"
+          value="accordion-3"
+          aria-controls="accordion-{{ i }}-panel-3"
+          aria-expanded="false"
+          data-component="Action DataModel"
+          data-option-key="active"
+          data-option-prop="value"
+          data-bind:attr.aria-expanded="String(value === 'accordion-3')"
+          data-on:click="DataModel.toggle('accordion-3', '')">
+          Third item
+        </button>
+        <div
+          id="accordion-{{ i }}-panel-3"
+          role="region"
+          aria-labelledby="accordion-{{ i }}-button-3"
+          hidden
+          data-component="DataBind"
+          data-option-key="active"
+          data-bind:attr.hidden="value !== 'accordion-3'">
+          Third accordion panel. No Accordion component is registered.
+        </div>
+      </div>
+    </section>
+  {% endfor %}
+</div>

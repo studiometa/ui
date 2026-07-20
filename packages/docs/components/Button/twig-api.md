@@ -47,28 +47,28 @@ Custom attributes for the icon component.
 
 - Type: `string`
 
-Customize classes for the icon element. Defaults to `mr-3` when the [`icon_position` parameter](#icon_position) is set to `start` and to `ml-3` when set to `end`. (Can be overrided by the `icon_attr` classes.)
+Customizes classes for the icon element. Defaults to `mr-3` when the [`icon_position` parameter](#icon_position) is set to `start` and to `ml-3` when set to `end`. (Can be overridden by the `icon_attr` classes.)
 
 ### `icon_position`
 
 - Type: `'start' | 'end'`
-- Defaults: `'start'`
+- Default: `'start'`
 
 ### `icon_only`
 
 - Type: `boolean`
-- Defaults: `false`
+- Default: `false`
 
 ## Blocks
 
 ### `content`
 
-Customize the content of the root element. Using this block will override the other blocks as they are nested in this one.
+Customizes the content of the root element. Using this block will override the other blocks as they are nested in this one.
 
 ### `label`
 
-Customize the label content, defaults to the [`label` parameter](#label).
+Customizes the label content. Defaults to the [`label` parameter](#label).
 
 ### `icon`
 
-Customize the icon content, defaults to the [`Icon` atom](/components/Icon/) with the [`icon` parameter](#icon) as its name.
+Customizes the icon content. Defaults to the [`Icon` atom](/components/Icon/) with the [`icon` parameter](#icon) as its name.

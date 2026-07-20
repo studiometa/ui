@@ -1,0 +1,29 @@
+<div
+  data-component="DataScope"
+  data-option-group="person"
+  class="flex flex-col gap-4 rounded ring p-4">
+  <label class="flex flex-col gap-1">
+    <span>First name</span>
+    <input
+      name="first"
+      value="Ada"
+      data-component="DataModel"
+      data-option-immediate
+      class="bg-transparent rounded ring p-2" />
+  </label>
+  <label class="flex flex-col gap-1">
+    <span>Last name</span>
+    <input
+      name="last"
+      value="Lovelace"
+      data-component="DataModel"
+      data-option-immediate
+      class="bg-transparent rounded ring p-2" />
+  </label>
+  <p
+    data-component="DataComputed"
+    data-option-compute="`${$data.first} ${$data.last}`"
+    class="text-xl font-bold">
+    Ada Lovelace
+  </p>
+</div>

@@ -14,21 +14,21 @@ The `FigureTwicpics` class extends the [`Figure` class](/components/Figure/js-ap
 - Type: `string`
 - Default: `''`
 
-Use this option to configure your Twicpics domain.
+Configures your Twicpics domain.
 
 ### `path`
 
 - Type: `string`
 - Default: `''`
 
-Use this option to configure your Twicpics path.
+Configures your Twicpics path.
 
 ### `transform`
 
 - Type: `string`
 - Default: `''`
 
-Use this option to add transforms to the image with [TwicPics URL API](https://www.twicpics.com/docs/api/basics).
+Adds transforms to the image with [TwicPics URL API](https://www.twicpics.com/docs/api/basics).
 
 ### `step`
 
@@ -49,14 +49,14 @@ The mode used to resize and crop the image. It can be any key of the [transforma
 - Type: `boolean`
 - Default: `true`
 
-Use this option to disable the support of the Device Pixel Ratio (DPR) with `data-option-no-dpr` attribute.
+Disables the support of the Device Pixel Ratio (DPR) with `data-option-no-dpr` attribute.
 
 ### `disable`
 
 - Type: `boolean`
 - Default: `false`
 
-Use this option to return the original src instead of the TwicPics src. Useful when testing in local or preproductions that does not have a TwicPics path configured.
+Returns the original src instead of the TwicPics src. Useful when testing in local or preproductions that does not have a TwicPics path configured.
 
 ## Getter
 

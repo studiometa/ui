@@ -44,6 +44,43 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
+  unit_eslint_plugin:
+    runs-on: macos-latest
+    env:
+      NODE_VERSION: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Get npm cache directory
+        id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+      - uses: actions/cache@v4
+        id: npm-cache
+        with:
+          path: |
+            ${{ steps.npm-cache-dir.outputs.dir }}
+            **/node_modules
+            .eslintcache
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+      - name: Install modules
+        run: npm install --no-audit --no-fund
+      - name: Run tests
+        run: npm run test -w @studiometa/eslint-plugin-ui -- --coverage.enabled
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          env_vars: NODE_VERSION
+          directory: ./packages/eslint-plugin-ui/coverage
+          flags: unittests
+          fail_ci_if_error: false
+          verbose: true
+
   unit_pest:
     runs-on: ubuntu-latest
     strategy:

@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["vitest", "import", "promise", "regex", "jsdoc"],
+  "plugins": ["vitest", "import", "promise", "jsdoc"],
   "rules": {
     "func-style": ["warn", "declaration"],
     "no-floating-promises": "allow",

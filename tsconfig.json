@@ -9,7 +9,7 @@
     "noEmit": true,
     "noImplicitThis": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "skipLibCheck": true,
     "paths": {
       "#private/*": ["./packages/ui/*"],

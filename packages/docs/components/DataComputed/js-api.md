@@ -5,7 +5,7 @@ outline: deep
 
 # JS API
 
-The `DataComputed` component extends the [`DataBind` component](../DataBind/js-api.md), it inherits from its API.
+The `DataComputed` component extends the [`DataBind` component](../DataBind/js-api.md) and inherits its binding API. Mutation helpers such as `toggle()`, `increment()`, and `cycle()` are not supported on computed values.
 
 ## Options
 
@@ -14,7 +14,7 @@ The `DataComputed` component extends the [`DataBind` component](../DataBind/js-a
 - Type: `string`
 - Default: `''`
 
-Use this option to define a piece of JavaScript code to transform the value before it is updated on the target. The `value` and `target` variables can be used to access both the current value of the binding and the DOM element targeted by the changes.
+Defines a piece of JavaScript code to transform the value before it is updated on the target. The `value` and `target` variables can be used to access both the current value of the binding and the DOM element targeted by the changes. Inside a `DataScope`, the third `$data` argument is a frozen snapshot of all keyed values in the resolved group.
 
 **Example**
 
@@ -37,13 +37,13 @@ Use this option to define a piece of JavaScript code to transform the value befo
 
 ## Methods
 
-### `set(value: string | boolean | string[])`
+### `set(value: DataValue)`
 
-Set the value for the current instance.
+Compute and set the value for the current instance.
 
 **Params**
 
-- `value` (`string | boolean | string[]`): the value to set
+- `value` (`DataValue`): the source value to transform
 
 ### `get()`
 

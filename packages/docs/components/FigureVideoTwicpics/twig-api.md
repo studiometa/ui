@@ -13,19 +13,19 @@ The `FigureVideoTwicpics` template extends the [`FigureVideo` template](/compone
 
 - Type: `string`
 
-Use this parameter to configure your Twicpics domain.
+Configures your Twicpics domain.
 
 ### `twic_path`
 
 - Type: `string`
 
-Use this parameter to configure your Twicpics path.
+Configures your Twicpics path.
 
-### `twig_transform`
+### `twic_transform`
 
 - Type: `Object`
 
-Use this parameter to define custom transforms that should be used on the video. See [Twicpics documentation](https://www.twicpics.com/docs/reference/transformations) to discover available transformations.
+Defines custom transforms that should be used on the video. See [Twicpics documentation](https://www.twicpics.com/docs/reference/transformations) to discover available transformations.
 
 **Examples**
 

@@ -16,26 +16,26 @@ List of items to display.
 
 - Type: `array`
 
-Customize the root element attributes.
+Customizes the root element attributes.
 
 ### `item_attr`
 
 - Type: `array`
 
-Customize each item element attributes.
+Customizes each item element attributes.
 
 ### `item_container_attr`
 
 - Type: `array`
 
-Customize each item container element attributes.
+Customizes each item container element attributes.
 
 ## Blocks
 
 ### `title`
 
-Use this block to customize each item's title, defaults to `item.title`.
+Customizes each item's title. Defaults to `item.title`.
 
 ### `content`
 
-Use this block to customize each item's content, defaults to `item.content`.
+Customizes each item's content. Defaults to `item.content`.

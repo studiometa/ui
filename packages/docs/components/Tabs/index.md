@@ -4,17 +4,11 @@ badges: [JS, Twig]
 
 # Tabs <Badges :texts="$frontmatter.badges" />
 
-The `Tabs` component creates accessible tab interfaces with smooth transitions and keyboard navigation support.
-
-## Table of content
-
-- [Examples](./examples)
-- [JS API](./js-api)
-- [Twig API](./twig-api)
+The `Tabs` component creates accessible tab interfaces with transitions and keyboard navigation support.
 
 ## Usage
 
-Once the [package installed](/guide/installation/), simply include the template in your project:
+After you install the [package](/guide/installation/), include the template in your project:
 
 ```js{2,8}
 import { Base, createApp } from '@studiometa/js-toolkit';
@@ -50,12 +44,3 @@ export default createApp(App, document.body);
 
 {% include '@ui/Tabs/Tabs.twig' with { items: tabs } %}
 ```
-
-## Features
-
-- **Accessibility**: Full ARIA support with proper labeling and roles
-- **Smooth Transitions**: Configurable CSS transitions between tabs
-- **Keyboard Support**: Navigate tabs with keyboard
-- **Customizable Styling**: Control appearance through styles options
-- **Event System**: Listen to enable/disable events
-- **Flexible Templates**: Multiple blocks for customizing appearance

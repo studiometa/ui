@@ -1,6 +1,6 @@
 # SliderDrag
 
-This component can be used to add drag capabilities to the slider. It should wrap the slider items, usually placed on the [`wrapper` ref](./slider.md#wrapper).
+Adds drag capabilities to the slider. It should wrap the slider items, usually placed on the [`wrapper` ref](./slider.md#wrapper).
 
 ```html
 <div data-component="Slider">
@@ -21,4 +21,4 @@ This component uses the [`withDrag` decorator](https://js-toolkit.studiometa.dev
 - Type: `number`
 - Default: `10`
 
-The scroll distance that will be used to test if the scroll should be prevented.
+The scroll distance used to test if the scroll should be prevented.

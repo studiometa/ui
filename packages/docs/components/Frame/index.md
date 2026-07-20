@@ -4,23 +4,11 @@ badges: [JS]
 
 # Frame <Badges :texts="$frontmatter.badges" />
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JS APIs](./js-api/index.md)
-  - [Frame](./js-api/frame.md)
-  - [AbstractFrameTrigger](./js-api/abstract-frame-trigger.md)
-  - [FrameAnchor](./js-api/frame-anchor.md)
-  - [FrameForm](./js-api/frame-form.md)
-  - [FrameLoader](./js-api/frame-loader.md)
-  - [FrameTarget](./js-api/frame-target.md)
-  - [FrameTriggerLoader](./js-api/frame-trigger-loader.md)
-
 ## Usage
 
-The `Frame` component and it's children `FrameForm`, `FrameTarget`, `FrameAnchor` and `FrameLoader` can be used to perform GET or POST requests without reloading the page.
+The `Frame` component and its children `FrameForm`, `FrameTarget`, `FrameAnchor` and `FrameLoader` perform GET or POST requests without reloading the page.
 
-Only include the `Frame` component in your app, as it loads all the other one automatically.
+Only include the `Frame` component in your app, as it loads all the others automatically.
 
 ```js twoslash
 import { Base, createApp } from '@studiometa/js-toolkit';
@@ -40,7 +28,7 @@ export default createApp(App);
 
 ### Frame
 
-Orchestrate the mechanic of request handling, updating the browser history, etc. The component **must-have** an `id` attribute. The component only work with it's children `FrameForm`, `FrameTarget`, `FrameAnchor` and `FrameLoader`.
+Orchestrates request handling, browser history updates, and related tasks. The component **must have** an `id` attribute. The component works only with its children `FrameForm`, `FrameTarget`, `FrameAnchor` and `FrameLoader`.
 
 ```html
 <div data-component="Frame" id="my-frame">

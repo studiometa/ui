@@ -4,12 +4,7 @@ badges: [JS]
 
 # Fetch <Badges :texts="$frontmatter.badges" />
 
-The `Fetch` component can be used to add AJAX capabilities to your existing HTML, with support for the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API) for smooth transitions between states.
-
-## Table of content
-
-- [Examples](./examples.md)
-- [JS APIs](./js-api.md)
+The `Fetch` component adds AJAX capabilities to your existing HTML, with support for the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API) to transition between states.
 
 ## Usage
 
@@ -127,7 +122,7 @@ The [events](./js-api.md#events) sent by the `Fetch` component are configured to
 
 ### Transitions
 
-The `Fetch` component is compatible with the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API) in compatible browsers. By default, the browser will chose which transition to use between the two states of the DOM. If you want more fine-grained transition, use the [View Transition CSS APIs](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API#css_additions).
+The `Fetch` component is compatible with the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API) in compatible browsers. By default, the browser chooses which transition to use between the two states of the DOM. If you want more fine-grained transition, use the [View Transition CSS APIs](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API#css_additions).
 
 ```css [app.css]
 ::view-transition-old(root) {

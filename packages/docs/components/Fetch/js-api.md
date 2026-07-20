@@ -19,7 +19,7 @@ Defines the way the new content will be injected in the page.
 - Type: `string`
 - Default: `'[id]'`
 
-Use this option to specify which content from the response should be updated in the DOM. This option can be any valid CSS selector.
+Specifies which content from the response should be updated in the DOM. This option can be any valid CSS selector.
 
 ::: warning ⚠️ Matching with ID
 This option can be used to extract specific content from the response, but the matching between the current DOM and the new DOM is still made based on `id` attributes. This means that elements that should be updated must always have an `id` attribute.
@@ -30,17 +30,17 @@ This option can be used to extract specific content from the response, but the m
 - Type: `boolean`
 - Default: `false`
 
-Use this options to update the browser's history when performing a request. The [`historyPush` function](https://js-toolkit.studiometa.dev/utils/history/historyPush.html#historypush) will be used in the background.
+Updates the browser's history when performing a request. The [`historyPush` function](https://js-toolkit.studiometa.dev/utils/history/historyPush.html#historypush) will be used in the background.
 
 ### `requestInit`
 
 - Type: [`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)
 - Default: `{}`
 
-Use this option to customize the options for the fetch request.
+Customizes the options for the fetch request.
 
 ```html
-<a href="/path" data-component="Fetch" data-option-request-init='{ "priority": "hight" }'>Fetch</a>
+<a href="/path" data-component="Fetch" data-option-request-init='{ "priority": "high" }'>Fetch</a>
 ```
 
 ### `headers`
@@ -48,7 +48,7 @@ Use this option to customize the options for the fetch request.
 - Type: `Record<string, string>`
 - Default: `{}`
 
-Use this option to add custom headers to the fetch request.
+Adds custom headers to the fetch request.
 
 ```html
 <a href="/path" data-component="Fetch" data-option-headers='{ "authorization": "Basic ..." }'>
@@ -58,10 +58,10 @@ Use this option to add custom headers to the fetch request.
 
 ### `viewTransition`
 
-- Type: `Boolean`
+- Type: `boolean`
 - Default: `true`
 
-Use this option to disable support for the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API).
+Disables support for the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API).
 
 ```html
 <a href="/path" data-component="Fetch" data-option-no-view-transition>Fetch</a>
@@ -72,7 +72,7 @@ Use this option to disable support for the [View Transition API](https://develop
 - Type: `string`
 - Default: `response.text()`
 
-Use this option to customize how the response's body is parsed.
+Customizes how the response's body is parsed.
 
 This option is useful when you do not have control over an API and need to extract HTML content from an `application/json` response.
 
@@ -198,7 +198,7 @@ Emitted when the fetch request returned a response, before extracting its body, 
 
 ### `fetch-after`
 
-Emitted after the fetch request is finished, wether it is successful or not.
+Emitted after the fetch request is finished, whether it is successful or not.
 
 **Payload**
 

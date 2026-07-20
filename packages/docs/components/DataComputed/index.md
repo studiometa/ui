@@ -6,11 +6,6 @@ badges: [JS]
 
 Use the `DataComputed` component to create a one-way binding of a property of the targeted DOM element with a computed value. This component extends the [`DataBind` component](../DataBind/index.md), so it inherits from its API.
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JavaScript API](./js-api.md)
-
 ## Usage
 
 ### Basic usage to transform a value
@@ -20,7 +15,7 @@ Use the `DataComputed` component alongside the [`DataModel` component](../DataMo
 ::: code-group
 
 ```html [index.html]
-<!-- Two ways binding on the "text" group for the input's value -->
+<!-- Two-way binding on the "text" group for the input's value -->
 <input type="text" data-component="DataModel" data-option-group="text" />
 
 <!-- Update the text content with the input's value in UPPERCASE -->
@@ -62,7 +57,9 @@ registerComponent(DataComputed);
 
 </llm-only>
 
-### Double computed value
+### Combine scoped values
+
+Inside a [`DataScope`](../DataScope/index.md), an unkeyed computed expression can derive a value from several named models through the frozen `$data` snapshot.
 
 <llm-exclude>
 <PreviewPlayground

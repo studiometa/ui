@@ -21,38 +21,38 @@ Array of tab items to display. Each item should contain:
 
 - Type: `array`
 
-Customize the root element attributes.
+Customizes the root element attributes.
 
 ### `btn_attr`
 
 - Type: `array`
 
-Default attributes applied to all tab buttons. Individual item `btn_attr` will be merged with these.
+Default attributes applied to all tab buttons. Individual item `btn_attr` is merged with these.
 
 ### `content_attr`
 
 - Type: `array`
 
-Default attributes applied to all tab content panels. Individual item `content_attr` will be merged with these.
+Default attributes applied to all tab content panels. Individual item `content_attr` is merged with these.
 
 ## Blocks
 
 ### `title_wrapper`
 
-Customize the wrapper around all tab buttons. By default, renders all tab buttons in sequence.
+Customizes the wrapper around all tab buttons. By default, renders all tab buttons in sequence.
 
 ### `title`
 
-Customize each tab button's content. Defaults to `item.title`. Available variables:
+Customizes each tab button's content. Defaults to `item.title`. Available variables:
 
 - `item` - The current tab item
 
 ### `content_wrapper`
 
-Customize the wrapper around all tab content panels. By default, renders all content panels in sequence.
+Customizes the wrapper around all tab content panels. By default, renders all content panels in sequence.
 
 ### `content`
 
-Customize each tab content panel. Defaults to `item.content`. Available variables:
+Customizes each tab content panel. Defaults to `item.content`. Available variables:
 
 - `item` - The current tab item

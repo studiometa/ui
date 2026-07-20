@@ -61,12 +61,13 @@ function triggerIntersection(
   isIntersecting: boolean,
   observer: IntersectionObserver,
   item,
+  ratio?: number,
 ) {
   const entries = [];
   for (const element of elements) {
     entries.push({
       boundingClientRect: element.getBoundingClientRect(),
-      intersectionRatio: isIntersecting ? 1 : 0,
+      intersectionRatio: ratio ?? (isIntersecting ? 1 : 0),
       intersectionRect: isIntersecting
         ? element.getBoundingClientRect()
         : {
@@ -109,7 +110,11 @@ export function intersectionMockInstance(element: Element): IntersectionObserver
 /**
  * Set the `isIntersecting` for the IntersectionObserver of a specific element.
  */
-export async function mockIsIntersecting(element: Element, isIntersecting: boolean) {
+export async function mockIsIntersecting(
+  element: Element,
+  isIntersecting: boolean,
+  ratio?: number,
+) {
   const observer = intersectionMockInstance(element);
   if (!observer) {
     throw new Error(
@@ -118,7 +123,7 @@ export async function mockIsIntersecting(element: Element, isIntersecting: boole
   }
   const item = observers.get(observer);
   if (item) {
-    triggerIntersection([element], isIntersecting, observer, item);
+    triggerIntersection([element], isIntersecting, observer, item, ratio);
   }
 
   await wait(10);

@@ -4,21 +4,9 @@ badges: [JS]
 
 # Slider <Badges :texts="$frontmatter.badges" />
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JS API](./js-api/index.md)
-  - [Slider](./js-api/slider.md)
-  - [SliderBtn](./js-api/slider-btn.md)
-  - [SliderCount](./js-api/slider-count.md)
-  - [SliderDots](./js-api/slider-dots.md)
-  - [SliderDrag](./js-api/slider-drag.md)
-  - [SliderItem](./js-api/slider-item.md)
-  - [SliderProgress](./js-api/slider-progress.md)
-
 ## Usage
 
-Use the `Slider` component to display items on a X axis and enable indexed navigation between them.
+Use the `Slider` component to display items on the X axis and enable indexed navigation between them.
 
 ::: code-group
 

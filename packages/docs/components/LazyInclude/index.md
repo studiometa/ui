@@ -4,14 +4,9 @@ badges: [JS]
 
 # LazyInclude <Badges :texts="$frontmatter.badges" />
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JS API](./js-api.md)
-
 ## Usage
 
-Use the `LazyInclude` component to load parts of your page lazyliy.
+Use the `LazyInclude` component to load parts of your page lazily.
 
 ::: code-group
 

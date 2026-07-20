@@ -26,11 +26,11 @@ The value used to generate the `z-index` for all sticky elements.
 - Type: `boolean`
 - Default: `false`
 
-Use this option to hide the sticky element when scrolling up.
+Hides the sticky element when the user scrolls up.
 
 ### `hideWhenDown`
 
 - Type: `boolean`
 - Default: `false`
 
-Use this option to hide the sticky element when scrolling down.
+Hides the sticky element when the user scrolls down.

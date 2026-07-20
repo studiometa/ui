@@ -1,0 +1,38 @@
+<div
+  data-component="DataScope"
+  data-option-group="cart"
+  class="flex flex-wrap items-center gap-4">
+  <div class="flex items-center gap-2">
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="DataModel(#quantity) -> target.increment(-1)"
+      class="px-3 py-1 rounded ring">
+      −
+    </button>
+    <input
+      id="quantity"
+      type="number"
+      name="quantity"
+      value="1"
+      min="0"
+      data-component="DataModel"
+      data-option-immediate
+      class="w-16 p-2 bg-transparent ring rounded" />
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="DataModel(#quantity) -> target.increment()"
+      class="px-3 py-1 rounded ring">
+      +
+    </button>
+  </div>
+  <p>
+    Total:
+    <span
+      data-component="DataComputed"
+      data-option-key="quantity"
+      data-option-compute="(value * 10).toFixed(2) + ' €'"
+      class="font-bold">10.00 €</span>
+  </p>
+</div>
