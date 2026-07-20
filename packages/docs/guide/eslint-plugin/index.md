@@ -17,9 +17,7 @@ Add the recommended config to your `eslint.config.js` (ESLint v9 flat config):
 ```js
 import { ui } from '@studiometa/eslint-plugin-ui';
 
-export default [
-  ui.configs.recommended,
-];
+export default [ui.configs.recommended];
 ```
 
 All rules ship at `warn` severity in the recommended config. To override individual rules:
@@ -56,13 +54,13 @@ Add the plugin to your `.oxlintrc.json` using the `"ui"` name to get the `ui/` r
 
 ## Rules
 
-| Rule | Description | Recommended |
-| ---- | ----------- | ----------- |
-| [`ui/prefer-ui-component`](#prefer-ui-component) | Warn when a class named after a `@studiometa/ui` component extends `Base` directly | warn |
-| [`ui/prefer-transition`](#prefer-transition) | Warn when a `Base` subclass manually implements `open()` and `close()` | warn |
-| [`ui/no-manual-fetch`](#no-manual-fetch) | Warn when a `Base` subclass combines `fetch()` with DOM injection | warn |
-| [`ui/prefer-data-model`](#prefer-data-model) | Warn when a `Base` subclass manually syncs input values to the DOM | warn |
-| [`ui/prefer-action`](#prefer-action) | Warn when a `Base` subclass only defines a single simple event handler | warn |
+| Rule                                             | Description                                                                        | Recommended |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------- | ----------- |
+| [`ui/prefer-ui-component`](#prefer-ui-component) | Warn when a class named after a `@studiometa/ui` component extends `Base` directly | warn        |
+| [`ui/prefer-transition`](#prefer-transition)     | Warn when a `Base` subclass manually implements `open()` and `close()`             | warn        |
+| [`ui/no-manual-fetch`](#no-manual-fetch)         | Warn when a `Base` subclass combines `fetch()` with DOM injection                  | warn        |
+| [`ui/prefer-data-model`](#prefer-data-model)     | Warn when a `Base` subclass manually syncs input values to the DOM                 | warn        |
+| [`ui/prefer-action`](#prefer-action)             | Warn when a `Base` subclass only defines a single simple event handler             | warn        |
 
 ### `ui/prefer-ui-component`
 
@@ -71,11 +69,11 @@ Detects classes whose name matches a component exported by `@studiometa/ui` (suc
 ```js
 // ❌ Incorrect
 import { Base } from '@studiometa/js-toolkit';
-class Menu extends Base { }
+class Menu extends Base {}
 
 // ✅ Correct
 import { Menu } from '@studiometa/ui';
-class MyMenu extends Menu { }
+class MyMenu extends Menu {}
 ```
 
 ### `ui/prefer-transition`
@@ -86,13 +84,17 @@ Detects `Base` subclasses that manually implement both `open()` and `close()` me
 // ❌ Incorrect
 import { Base } from '@studiometa/js-toolkit';
 class Drawer extends Base {
-  open() { this.$el.classList.add('is-open'); }
-  close() { this.$el.classList.remove('is-open'); }
+  open() {
+    this.$el.classList.add('is-open');
+  }
+  close() {
+    this.$el.classList.remove('is-open');
+  }
 }
 
 // ✅ Correct
 import { Transition } from '@studiometa/ui';
-class Drawer extends Transition { }
+class Drawer extends Transition {}
 ```
 
 ### `ui/no-manual-fetch`
@@ -111,7 +113,7 @@ class ProductList extends Base {
 
 // ✅ Correct
 import { Fetch } from '@studiometa/ui';
-class ProductList extends Fetch { }
+class ProductList extends Fetch {}
 ```
 
 ### `ui/prefer-data-model`
@@ -151,6 +153,5 @@ class Toggle extends Base {
   data-component="Action"
   data-option-on="click"
   data-option-target="#panel"
-  data-option-effect="toggle-class:is-active"
-></div>
+  data-option-effect="toggle-class:is-active"></div>
 ```

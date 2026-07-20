@@ -32,13 +32,14 @@ The plugin makes HTTP requests to the Iconify API during `composer install` and 
 
 ```json
 {
-    "extra": {
-        "studiometa/ui": {
-            "icons": { "enabled": false }
-        }
+  "extra": {
+    "studiometa/ui": {
+      "icons": { "enabled": false }
     }
+  }
 }
 ```
+
 :::
 
 ### Icon management
@@ -67,27 +68,27 @@ You can configure the icon behavior in your project's `composer.json`:
 
 ```json
 {
-    "extra": {
-        "studiometa/ui": {
-            "icons": {
-                "enabled": true,
-                "output": "assets/icons",
-                "scan": ["templates", "app"],
-                "include": ["mdi:loading"],
-                "exclude": ["mdi:test-*"]
-            }
-        }
+  "extra": {
+    "studiometa/ui": {
+      "icons": {
+        "enabled": true,
+        "output": "assets/icons",
+        "scan": ["templates", "app"],
+        "include": ["mdi:loading"],
+        "exclude": ["mdi:test-*"]
+      }
     }
+  }
 }
 ```
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `enabled` | `true` | Enable/disable automatic icon syncing on `composer install`/`update` |
-| `output` | `"assets/icons"` | Directory for local SVG files (relative to project root) |
-| `scan` | `["templates"]` | Directories to scan for `meta_icon()` calls |
-| `include` | `[]` | Icons to always fetch (even if not found in templates) |
-| `exclude` | `[]` | Glob patterns for icons to ignore (supports `*` wildcard) |
+| Option    | Default          | Description                                                          |
+| --------- | ---------------- | -------------------------------------------------------------------- |
+| `enabled` | `true`           | Enable/disable automatic icon syncing on `composer install`/`update` |
+| `output`  | `"assets/icons"` | Directory for local SVG files (relative to project root)             |
+| `scan`    | `["templates"]`  | Directories to scan for `meta_icon()` calls                          |
+| `include` | `[]`             | Icons to always fetch (even if not found in templates)               |
+| `exclude` | `[]`             | Glob patterns for icons to ignore (supports `*` wildcard)            |
 
 #### How it works
 
