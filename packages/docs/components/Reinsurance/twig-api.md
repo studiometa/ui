@@ -46,16 +46,12 @@ Customizes the mobile class (changing breakpoint for example)
 
 ### `icon`
 
-Customizes the icon
-
-## Blocks
+Customizes the icon.
 
 ### `title`
 
-Customizes the title html
-
-## Blocks
+Customizes the title HTML.
 
 ### `content`
 
-Customizes the content html
+Customizes the content HTML.
