@@ -40,21 +40,7 @@ registerComponent(Action);
 
 ### Multiple virtual bindings
 
-Use virtual `data-bind:*` attributes to update several parts of an element from the same value:
-
-| Syntax                   | Behavior                                                                                                                                 |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `data-bind:prop.<name>`  | Assigns the DOM property.                                                                                                                |
-| `data-bind:attr.<name>`  | Removes the attribute for `false`, `null`, or `undefined`; writes an empty attribute for `true`; otherwise writes the stringified value. |
-| `data-bind:class.<name>` | Toggles the class according to the result's boolean value.                                                                               |
-| `data-bind:style.<name>` | Clears the style for `false`, `null`, or `undefined`; otherwise writes the stringified value.                                            |
-| `data-bind:text`         | Assigns `textContent`.                                                                                                                   |
-
-A non-empty attribute value is a JavaScript expression with access to `value`, `target`, and `$data`. An empty attribute passes through the current value. When an element has one or more virtual bindings, they replace the default single `textContent` or property update. Bindings are read when first used; changing their attributes afterward is not supported.
-
-Use kebab-case for camel-cased DOM properties because HTML attribute names are case-insensitive, for example `data-bind:prop.tab-index` targets `tabIndex`.
-
-For ARIA attributes, explicitly stringify booleans when `"false"` must remain present, for example `data-bind:attr.aria-selected="String(value === 'overview')"`.
+Use virtual `data-bind:*` attributes to update several parts of an element — its class, ARIA state, and content — from one value, without a JavaScript class. See the [virtual bindings reference](./js-api.md#virtual-bindings) for the full syntax.
 
 The following disclosure keeps its button label while updating its class, ARIA state, and panel visibility from one scoped value. The `DataModel` uses its `value` property to hydrate the initial state; virtual bindings then retain the reactive value without replacing the label.
 
@@ -86,11 +72,9 @@ The following disclosure keeps its button label while updating its class, ARIA s
 </div>
 ```
 
-Expression errors are reported without interrupting updates to the other bindings, matching `DataComputed` and `DataEffect` behavior.
-
 ### Advanced usage with computed and effects
 
-The whole family of `Data...` components can be used to create reactivity in your HTML with only a few `data-...` attributes.
+The whole family of `Data...` components adds reactivity to your HTML with a few `data-...` attributes.
 
 <llm-exclude>
 <PreviewPlayground
