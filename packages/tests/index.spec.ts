@@ -36,6 +36,7 @@ test('components exports', () => {
       "FrameTarget",
       "FrameTriggerLoader",
       "Hoverable",
+      "Indexable",
       "LargeText",
       "LazyInclude",
       "Menu",
@@ -71,6 +72,7 @@ test('components exports', () => {
       "Transition",
       "animationScrollWithEase",
       "withDeprecation",
+      "withIndex",
       "withScrollAnimationDebug",
       "withTransition",
     ]

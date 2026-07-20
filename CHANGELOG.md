@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Add an Indexable primitive component and a withIndex decorator ([#491](https://github.com/studiometa/ui/pull/491), [0394a1df](https://github.com/studiometa/ui/commit/0394a1df))
 - **Track:** add `Track`, `TrackShopify` and `TrackContext` components for declarative analytics tracking (dataLayer/GTM and Shopify providers, ancestor-merged context) ([#508](https://github.com/studiometa/ui/pull/508))
 
 ### Changed

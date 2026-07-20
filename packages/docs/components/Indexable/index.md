@@ -1,0 +1,70 @@
+---
+badges: [JS]
+---
+
+# Indexable <Badges :texts="$frontmatter.badges" />
+
+The Indexable primitive provides index management for components that need to navigate between multiple items. It offers methods to move between indices (`goNext()`, `goPrev()`, `goTo()`), supports different boundary behaviors (clamp, loop, bounce), and emits events when the index changes. It suits building components like sliders, carousels, tabs, or any component that needs to track and navigate through a collection of items.
+
+It is available as an `Indexable` component as well as a `withIndex(Base)` decorator.
+
+## Usage
+
+As a primitive, the `Indexable` class should be used to create other components rather than being used directly in an application. The `length` property defaults to `0` and should be overridden to match the actual number of items.
+
+```js
+import { Indexable } from '@studiometa/ui';
+
+export default class Counter extends Indexable {
+  static config = {
+    name: 'Counter',
+  };
+
+  get length() {
+    return 10;
+  }
+
+  onIndex() {
+    this.$el.textContent = this.currentIndex;
+  }
+}
+```
+
+Once your component is created, you can use it in your app and trigger its `goNext` and `goPrev` methods to update its states:
+
+```js {2,10,13-15,17-19}
+import { Base, createApp } from '@studiometa/js-toolkit';
+import Counter from './Counter.js';
+
+class App extends Base {
+  static config = {
+    name: 'App',
+    refs: ['prevBtn', 'nextBtn'],
+    components: {
+      Counter,
+    },
+  };
+
+  onPrevBtnClick() {
+    this.$children.Counter.forEach((instance) => instance.goPrev());
+  }
+
+  onNextBtnClick() {
+    this.$children.Counter.forEach((instance) => instance.goNext());
+  }
+}
+
+export default createApp(App);
+```
+
+You can now add a counter component in your HTML and define the boundary behavior:
+
+```html
+<output data-component="Counter" data-option-boundary="loop">0</output>
+<button type="button" data-ref="prevBtn">Previous</button>
+<button type="button" data-ref="nextBtn">Next</button>
+```
+
+::: tip Example
+Checkout the [result of this example](./examples#counter) for a better understanding.
+:::
