@@ -5,7 +5,7 @@ import type {
   BaseConfig,
   BaseInterface,
 } from '@studiometa/js-toolkit';
-import { clamp, isString, randomInt } from '@studiometa/js-toolkit/utils';
+import { clamp, isString, randomInt, wrap } from '@studiometa/js-toolkit/utils';
 
 const INDEXABLE_BOUNDARIES = {
   CLAMP: 'clamp',
@@ -95,7 +95,7 @@ export interface IndexableInterface extends BaseInterface {
   /**
    * Go to the specified index or instruction.
    */
-  goTo(indexOrInstruction?: number | IndexableInstructions): Promise<void>;
+  goTo(indexOrInstruction: number | IndexableInstructions): Promise<void>;
 
   /**
    * Go to the next index.
@@ -167,10 +167,7 @@ export function withIndex<S extends Base>(
     }
 
     get length() {
-      this.$warn(
-        'The length property should be overridden to match with the actual number of items. Finite length is required for the loop and bounce boundaries.',
-      );
-      return Number.POSITIVE_INFINITY;
+      return 0;
     }
 
     get minIndex() {
@@ -178,7 +175,7 @@ export function withIndex<S extends Base>(
     }
 
     get maxIndex() {
-      return this.length - 1;
+      return Math.max(this.length - 1, 0);
     }
 
     get currentIndex() {
@@ -187,32 +184,7 @@ export function withIndex<S extends Base>(
 
     set currentIndex(value) {
       const oldIndex = this.__index;
-      switch (this.boundary) {
-        case INDEXABLE_BOUNDARIES.BOUNCE: {
-          // Reflect out-of-bounds values back into range.
-          const cycleLength = this.length * 2 - 2;
-          if (cycleLength <= 0) {
-            this.__index = 0;
-            break;
-          }
-          let normalized = ((value % cycleLength) + cycleLength) % cycleLength;
-          if (normalized > this.maxIndex) {
-            normalized = cycleLength - normalized;
-          }
-          if (value < this.minIndex || value > this.maxIndex) {
-            this.isReverse = !this.isReverse;
-          }
-          this.__index = normalized;
-          break;
-        }
-        case INDEXABLE_BOUNDARIES.LOOP:
-          this.__index = ((value % this.length) + this.length) % this.length;
-          break;
-        case INDEXABLE_BOUNDARIES.CLAMP:
-        default:
-          this.__index = clamp(value, this.minIndex, this.maxIndex);
-          break;
-      }
+      this.__index = this._normalizeIndex(value);
       if (this.__index !== oldIndex) {
         this.$emit('index', this.currentIndex);
       }
@@ -227,6 +199,63 @@ export function withIndex<S extends Base>(
     }
 
     /**
+     * Get the travel direction: `1` when going forward, `-1` when reversed.
+     * @private
+     */
+    get _direction(): number {
+      return this.isReverse ? -1 : 1;
+    }
+
+    /**
+     * Normalize any value to a valid index according to the current boundary.
+     * @private
+     */
+    _normalizeIndex(value: number): number {
+      switch (this.boundary) {
+        case INDEXABLE_BOUNDARIES.BOUNCE:
+          return this._bounceIndex(value);
+        case INDEXABLE_BOUNDARIES.LOOP:
+          return this._loopIndex(value);
+        case INDEXABLE_BOUNDARIES.CLAMP:
+        default:
+          return clamp(value, this.minIndex, this.maxIndex);
+      }
+    }
+
+    /**
+     * Wrap a value within the `0...length` range. Returns `0` when the length
+     * is not a positive finite number.
+     * @private
+     */
+    _loopIndex(value: number): number {
+      const { length } = this;
+
+      if (!Number.isFinite(length) || length <= 0) {
+        return 0;
+      }
+
+      return wrap(value, 0, length);
+    }
+
+    /**
+     * Reflect a value back into the `minIndex...maxIndex` range, ping-pong
+     * style. Only normalizes the position: the travel direction is left
+     * untouched as it is managed by `goNext` and `goPrev`.
+     * @private
+     */
+    _bounceIndex(value: number): number {
+      const cycleLength = this.length * 2 - 2;
+
+      if (!Number.isFinite(cycleLength) || cycleLength <= 0) {
+        return 0;
+      }
+
+      const wrapped = wrap(value, 0, cycleLength);
+
+      return wrapped > this.maxIndex ? cycleLength - wrapped : wrapped;
+    }
+
+    /**
      * Compute the index reached by stepping `direction` (`1` or `-1`) with the
      * `bounce` boundary, reflecting at the bounds. Returns the target index and
      * whether a bounce reversed the travel direction.
@@ -234,40 +263,17 @@ export function withIndex<S extends Base>(
      */
     _bounceStep(direction: number): { index: number; reversed: boolean } {
       const tentative = this.currentIndex + direction;
+      const reversed = tentative > this.maxIndex || tentative < this.minIndex;
 
-      if (tentative > this.maxIndex) {
-        return { index: Math.max(this.maxIndex - 1, this.minIndex), reversed: true };
-      }
-
-      if (tentative < this.minIndex) {
-        return { index: Math.min(this.minIndex + 1, this.maxIndex), reversed: true };
-      }
-
-      return { index: tentative, reversed: false };
+      return { index: this._bounceIndex(tentative), reversed };
     }
 
     get prevIndex() {
-      if (this.boundary === INDEXABLE_BOUNDARIES.BOUNCE) {
-        return this._bounceStep(this.isReverse ? 1 : -1).index;
-      }
-
-      const rawIndex = this.isReverse ? this.currentIndex + 1 : this.currentIndex - 1;
-
-      return this.boundary === INDEXABLE_BOUNDARIES.CLAMP
-        ? clamp(rawIndex, this.minIndex, this.maxIndex)
-        : ((rawIndex % this.length) + this.length) % this.length;
+      return this._normalizeIndex(this.currentIndex - this._direction);
     }
 
     get nextIndex() {
-      if (this.boundary === INDEXABLE_BOUNDARIES.BOUNCE) {
-        return this._bounceStep(this.isReverse ? -1 : 1).index;
-      }
-
-      const rawIndex = this.isReverse ? this.currentIndex - 1 : this.currentIndex + 1;
-
-      return this.boundary === INDEXABLE_BOUNDARIES.CLAMP
-        ? clamp(rawIndex, this.minIndex, this.maxIndex)
-        : ((rawIndex % this.length) + this.length) % this.length;
+      return this._normalizeIndex(this.currentIndex + this._direction);
     }
 
     goTo(indexOrInstruction) {
@@ -294,25 +300,27 @@ export function withIndex<S extends Base>(
     }
 
     goNext() {
-      if (this.boundary === INDEXABLE_BOUNDARIES.BOUNCE) {
-        const { index, reversed } = this._bounceStep(this.isReverse ? -1 : 1);
-        if (reversed) {
-          this.isReverse = !this.isReverse;
-        }
-        return this.goTo(index);
-      }
-      return this.goTo(this.nextIndex);
+      return this._step(this._direction);
     }
 
     goPrev() {
+      return this._step(-this._direction);
+    }
+
+    /**
+     * Go one step in the given direction (`1` or `-1`), bouncing back with the
+     * `bounce` boundary when reaching a bound.
+     * @private
+     */
+    _step(direction: number) {
       if (this.boundary === INDEXABLE_BOUNDARIES.BOUNCE) {
-        const { index, reversed } = this._bounceStep(this.isReverse ? 1 : -1);
+        const { index, reversed } = this._bounceStep(direction);
         if (reversed) {
           this.isReverse = !this.isReverse;
         }
         return this.goTo(index);
       }
-      return this.goTo(this.prevIndex);
+      return this.goTo(this._normalizeIndex(this.currentIndex + direction));
     }
   }
 

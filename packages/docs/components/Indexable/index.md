@@ -10,7 +10,7 @@ It is available as an `Indexable` component as well as a `withIndex(Base)` decor
 
 ## Usage
 
-As a primitive, the `Indexable` class should be used to create other components rather than being used directly in an application. **Important:** the `length` property must be defined.
+As a primitive, the `Indexable` class should be used to create other components rather than being used directly in an application. The `length` property defaults to `0` and should be overridden to match the actual number of items.
 
 ```js
 import { Indexable } from '@studiometa/ui';

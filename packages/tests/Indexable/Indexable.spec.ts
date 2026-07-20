@@ -94,6 +94,43 @@ describe('The Indexable class', () => {
       expect(indexable.currentIndex).toBe(1);
     });
 
+    it('should not change direction when setting an out of bounds index', () => {
+      expect(indexable.isReverse).toBe(false);
+
+      indexable.currentIndex = 5;
+      expect(indexable.currentIndex).toBe(1);
+      expect(indexable.isReverse).toBe(false);
+
+      indexable.currentIndex = -1;
+      expect(indexable.currentIndex).toBe(1);
+      expect(indexable.isReverse).toBe(false);
+    });
+
+    it('should not change direction when going to an out of bounds index', async () => {
+      expect(indexable.isReverse).toBe(false);
+
+      await indexable.goTo(10);
+      expect(indexable.currentIndex).toBe(2);
+      expect(indexable.isReverse).toBe(false);
+
+      await indexable.goTo(-5);
+      expect(indexable.currentIndex).toBe(1);
+      expect(indexable.isReverse).toBe(false);
+    });
+
+    it('should keep the travel direction after a no-op out of bounds assignment', async () => {
+      indexable.currentIndex = 1;
+
+      // -1 reflects back to the current index: no index change, no event,
+      // and the direction must stay untouched.
+      indexable.currentIndex = -1;
+      expect(indexable.currentIndex).toBe(1);
+      expect(indexable.isReverse).toBe(false);
+
+      await indexable.goNext();
+      expect(indexable.currentIndex).toBe(2);
+    });
+
     it('should ping-pong through indices with goNext', async () => {
       indexable.currentIndex = 0;
 
@@ -122,6 +159,25 @@ describe('The Indexable class', () => {
 
       await indexable.goPrev();
       expect(indexable.currentIndex).toBe(1);
+    });
+  });
+
+  describe('default length', () => {
+    it('should default to 0 and pin the index at 0', async () => {
+      const instance = new Indexable(h('div'));
+      expect(instance.length).toBe(0);
+      expect(instance.maxIndex).toBe(0);
+
+      await instance.goTo(5);
+      expect(instance.currentIndex).toBe(0);
+
+      instance.boundary = Indexable.BOUNDARIES.LOOP;
+      await instance.goTo(5);
+      expect(instance.currentIndex).toBe(0);
+
+      instance.boundary = Indexable.BOUNDARIES.BOUNCE;
+      await instance.goTo(5);
+      expect(instance.currentIndex).toBe(0);
     });
   });
 
