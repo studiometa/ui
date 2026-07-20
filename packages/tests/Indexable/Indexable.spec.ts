@@ -93,6 +93,36 @@ describe('The Indexable class', () => {
       indexable.currentIndex = 5;
       expect(indexable.currentIndex).toBe(1);
     });
+
+    it('should ping-pong through indices with goNext', async () => {
+      indexable.currentIndex = 0;
+
+      await indexable.goNext();
+      expect(indexable.currentIndex).toBe(1);
+
+      await indexable.goNext();
+      expect(indexable.currentIndex).toBe(2);
+
+      await indexable.goNext();
+      expect(indexable.currentIndex).toBe(1); // bounce back instead of oscillating
+
+      await indexable.goNext();
+      expect(indexable.currentIndex).toBe(0);
+
+      await indexable.goNext();
+      expect(indexable.currentIndex).toBe(1); // bounce again
+    });
+
+    it('should reverse the direction back with goPrev', async () => {
+      indexable.currentIndex = 0;
+
+      await indexable.goNext();
+      await indexable.goNext();
+      expect(indexable.currentIndex).toBe(2);
+
+      await indexable.goPrev();
+      expect(indexable.currentIndex).toBe(1);
+    });
   });
 
   describe('goTo method', () => {

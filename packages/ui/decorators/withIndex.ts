@@ -227,23 +227,31 @@ export function withIndex<S extends Base>(
     }
 
     /**
-     * Check if the given raw index would trigger a direction reversal in alternate mode.
+     * Compute the index reached by stepping `direction` (`1` or `-1`) in alternate
+     * mode, reflecting at the bounds. Returns the target index and whether a bounce
+     * reversed the travel direction.
      * @private
      */
-    _wouldReverse(rawIndex: number): boolean {
-      return (
-        this.mode === INDEXABLE_MODES.ALTERNATE &&
-        (rawIndex > this.maxIndex || rawIndex < this.minIndex)
-      );
+    _alternateStep(direction: number): { index: number; reversed: boolean } {
+      const tentative = this.currentIndex + direction;
+
+      if (tentative > this.maxIndex) {
+        return { index: Math.max(this.maxIndex - 1, this.minIndex), reversed: true };
+      }
+
+      if (tentative < this.minIndex) {
+        return { index: Math.min(this.minIndex + 1, this.maxIndex), reversed: true };
+      }
+
+      return { index: tentative, reversed: false };
     }
 
     get prevIndex() {
-      const reverse = this.isReverse;
-      let rawIndex = reverse ? this.currentIndex + 1 : this.currentIndex - 1;
-
-      if (this._wouldReverse(rawIndex)) {
-        rawIndex = !reverse ? this.currentIndex + 1 : this.currentIndex - 1;
+      if (this.mode === INDEXABLE_MODES.ALTERNATE) {
+        return this._alternateStep(this.isReverse ? 1 : -1).index;
       }
+
+      const rawIndex = this.isReverse ? this.currentIndex + 1 : this.currentIndex - 1;
 
       return this.mode === INDEXABLE_MODES.NORMAL
         ? clamp(rawIndex, this.minIndex, this.maxIndex)
@@ -251,12 +259,11 @@ export function withIndex<S extends Base>(
     }
 
     get nextIndex() {
-      const reverse = this.isReverse;
-      let rawIndex = reverse ? this.currentIndex - 1 : this.currentIndex + 1;
-
-      if (this._wouldReverse(rawIndex)) {
-        rawIndex = !reverse ? this.currentIndex - 1 : this.currentIndex + 1;
+      if (this.mode === INDEXABLE_MODES.ALTERNATE) {
+        return this._alternateStep(this.isReverse ? -1 : 1).index;
       }
+
+      const rawIndex = this.isReverse ? this.currentIndex - 1 : this.currentIndex + 1;
 
       return this.mode === INDEXABLE_MODES.NORMAL
         ? clamp(rawIndex, this.minIndex, this.maxIndex)
@@ -267,9 +274,9 @@ export function withIndex<S extends Base>(
       if (isString(indexOrInstruction)) {
         switch (indexOrInstruction) {
           case INDEXABLE_INSTRUCTIONS.NEXT:
-            return this.goTo(this.nextIndex);
+            return this.goNext();
           case INDEXABLE_INSTRUCTIONS.PREVIOUS:
-            return this.goTo(this.prevIndex);
+            return this.goPrev();
           case INDEXABLE_INSTRUCTIONS.FIRST:
             return this.goTo(this.firstIndex);
           case INDEXABLE_INSTRUCTIONS.LAST:
@@ -287,10 +294,24 @@ export function withIndex<S extends Base>(
     }
 
     goNext() {
+      if (this.mode === INDEXABLE_MODES.ALTERNATE) {
+        const { index, reversed } = this._alternateStep(this.isReverse ? -1 : 1);
+        if (reversed) {
+          this.isReverse = !this.isReverse;
+        }
+        return this.goTo(index);
+      }
       return this.goTo(this.nextIndex);
     }
 
     goPrev() {
+      if (this.mode === INDEXABLE_MODES.ALTERNATE) {
+        const { index, reversed } = this._alternateStep(this.isReverse ? 1 : -1);
+        if (reversed) {
+          this.isReverse = !this.isReverse;
+        }
+        return this.goTo(index);
+      }
       return this.goTo(this.prevIndex);
     }
   }
