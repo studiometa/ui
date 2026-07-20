@@ -5,7 +5,7 @@ import type {
   BaseConfig,
   BaseInterface,
 } from '@studiometa/js-toolkit';
-import { clamp, isString, randomInt, wrap } from '@studiometa/js-toolkit/utils';
+import { clamp, fold, isString, randomInt, wrap } from '@studiometa/js-toolkit/utils';
 
 const INDEXABLE_BOUNDARIES = {
   CLAMP: 'clamp',
@@ -213,7 +213,7 @@ export function withIndex<S extends Base>(
     _normalizeIndex(value: number): number {
       switch (this.boundary) {
         case INDEXABLE_BOUNDARIES.BOUNCE:
-          return this._bounceIndex(value);
+          return fold(value, this.minIndex, this.maxIndex);
         case INDEXABLE_BOUNDARIES.LOOP:
           return this._loopIndex(value);
         case INDEXABLE_BOUNDARIES.CLAMP:
@@ -238,24 +238,6 @@ export function withIndex<S extends Base>(
     }
 
     /**
-     * Reflect a value back into the `minIndex...maxIndex` range, ping-pong
-     * style. Only normalizes the position: the travel direction is left
-     * untouched as it is managed by `goNext` and `goPrev`.
-     * @private
-     */
-    _bounceIndex(value: number): number {
-      const cycleLength = this.length * 2 - 2;
-
-      if (!Number.isFinite(cycleLength) || cycleLength <= 0) {
-        return 0;
-      }
-
-      const wrapped = wrap(value, 0, cycleLength);
-
-      return wrapped > this.maxIndex ? cycleLength - wrapped : wrapped;
-    }
-
-    /**
      * Compute the index reached by stepping `direction` (`1` or `-1`) with the
      * `bounce` boundary, reflecting at the bounds. Returns the target index and
      * whether a bounce reversed the travel direction.
@@ -265,7 +247,7 @@ export function withIndex<S extends Base>(
       const tentative = this.currentIndex + direction;
       const reversed = tentative > this.maxIndex || tentative < this.minIndex;
 
-      return { index: this._bounceIndex(tentative), reversed };
+      return { index: fold(tentative, this.minIndex, this.maxIndex), reversed };
     }
 
     get prevIndex() {
