@@ -8,11 +8,6 @@ Use the `DataBind` to create a one-way binding of a property of the targeted DOM
 
 The related [`DataComputed`](../DataComputed/index.md) and [`DataEffect`](../DataEffect/index.md) components can also be used for computed values and side effects respectively.
 
-## Table of content
-
-- [Examples](./examples.md)
-- [JavaScript API](./js-api.md)
-
 ## Usage
 
 Import the components in your main app and use the [`DataModel` component](../DataModel/index.md) on HTML `<form>` elements and the `DataBind` and [`DataComputed`](../DataComputed/index.md) components on other elements that need to be updated accordingly. The [`DataEffect` component](../DataEffect/index.md) can be used to execute side effects when the value changes.

@@ -4,12 +4,7 @@ badges: [JS]
 
 # ScrollAnimation <Badges :texts="$frontmatter.badges" />
 
-The `ScrollAnimation` component creates scroll-driven animations that respond to the viewport position, perfect for parallax effects, fade-ins, and other scroll-based interactions.
-
-## Table of content
-
-- [Examples](./examples.md)
-- [JS API](./js-api.md)
+The `ScrollAnimation` component creates scroll-driven animations that respond to the viewport position, for effects such as parallax and fade-ins.
 
 ## Usage
 
@@ -79,17 +74,6 @@ export default createApp(App, document.body);
   <div data-ref="target">Content to animate</div>
 </div>
 ```
-
-## Features
-
-- **Scroll-driven**: Animations progress based on scroll position
-- **Flexible Animation**: Support for CSS transforms, opacity, and other properties
-- **Keyframe Support**: Define complex animations with multiple keyframes
-- **Easing Control**: Customize animation timing with cubic-bezier easing
-- **Play Range**: Control when animation starts and ends during scroll
-- **Performance**: Optimized with intersection observer and RAF
-- **Timeline Support**: Coordinate multiple animations with `ScrollAnimationTimeline` and `ScrollAnimationTarget`
-- **Variants**: Multiple specialized classes for different use cases
 
 ## Deprecated components
 
