@@ -4,8 +4,7 @@ badges: [JS, Twig]
 
 # Sticky <Badges :texts="$frontmatter.badges" />
 
-Use the `Sticky` component to keep an element fixed in place while its container
-scrolls, and to react when the element enters or leaves its sticky state.
+Use the `Sticky` component to keep an element fixed in place while its container scrolls, and to react when the element enters or leaves its sticky state.
 
 ## Usage
 
