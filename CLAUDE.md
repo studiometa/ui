@@ -31,6 +31,11 @@
 - Use `composer lint` to check for PHP Code Quality
 - Use `composer fix` to fix fixable code quality errors reported by the `composer lint` command
 
+## Code conventions
+
+- Private and protected class members use the `__` prefix (double underscore), documented with an `@private`/`@protected` docblock — never the TypeScript `private`/`protected` keywords, and never the JavaScript `#` prefix (which is unsupported on old browsers). The `__` prefix keeps members runtime-discoverable while debugging. Prefer bare `__field` declarations for simple fields (matching the existing style, e.g. `__index`) and add the docblock on methods and getters.
+- Only use erasable TypeScript syntax: do not use non-erasable features such as `enum`, `namespace`, or constructor parameter-properties (`constructor(private foo)`).
+
 ## Playground
 
 If you see a link to `https://ui.studiometa.dev/play/`, it is a link to the playground for all components. You can either visit the page to see how it renders, or directly extract the content from the URL query string stored in the URL hash. The content is encoded and zipped, you can unzip it with the `unzip` export from the `@studiometa/playground` NPM package.
