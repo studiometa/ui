@@ -1,0 +1,35 @@
+<button
+  type="button"
+  popovertarget="modal"
+  class="px-4 py-2 rounded bg-blue-500 text-white font-semibold">
+  Open modal
+</button>
+
+{# The native Popover API on a <dialog> handles open/close, Esc,
+   light-dismiss, focus and top-layer stacking. Action only adds the body
+   scroll-lock the platform does not provide, via the native `toggle` event. #}
+<dialog
+  id="modal"
+  popover
+  class="m-auto max-w-lg p-6 rounded bg-white dark:bg-zinc-800 shadow-xl backdrop:bg-black/50"
+  data-component="Action"
+  data-on:toggle="document.documentElement.style.overflow = event.newState === 'open' ? 'hidden' : ''">
+  <h2 class="text-xl font-bold mb-2">Modern modal</h2>
+  <p class="mb-4">
+    Open/close, <kbd>Esc</kbd>, click-outside, focus and top-layer stacking are
+    handled natively by the Popover API on a <code>&lt;dialog&gt;</code>. The only
+    JavaScript is an <code>Action</code> listening to the native
+    <code>toggle</code> event to lock body scroll.
+  </p>
+  <button
+    type="button"
+    popovertarget="modal"
+    popovertargetaction="hide"
+    class="px-4 py-2 rounded bg-blue-500 text-white font-semibold">
+    Close
+  </button>
+</dialog>
+
+<div class="mt-4 h-[150vh] opacity-50">
+  Scroll me — the body scroll locks while the modal is open.
+</div>

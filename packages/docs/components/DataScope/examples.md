@@ -67,6 +67,27 @@ This example uses the same mirrored-model pattern for two independent accordion 
 
 </llm-only>
 
+## Dropdown menu
+
+The same disclosure pattern powers a dropdown menu. Each `DataScope` isolates one menu, so the two below toggle independently despite sharing the `menu` group name. The button is a mirrored [`DataModel`](../DataModel/index.md) that toggles the `open` key with [`toggle()`](../DataBind/js-api.md) and mirrors it onto `aria-expanded`, while the list is a [`DataBind`](../DataBind/index.md) that shows or hides itself. <kbd>Esc</kbd> closes the menu while the button is focused. No `Menu` component is registered.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/menu.twig')"
+  :script="() => import('./stories/menu.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/menu.twig
+<<< ./stories/menu.js
+
+:::
+
+</llm-only>
+
 ## Nested and explicit groups
 
 A Data component without `data-option-group` inherits the group of its nearest `DataScope`. An explicit group creates another group inside the same scope instead of escaping the scope.

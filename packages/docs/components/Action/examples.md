@@ -63,3 +63,24 @@ Use the `debounce` modifier to prevent firing the action's effect too often.
 :::
 
 </llm-only>
+
+## Side effects on a popover
+
+`Action` listens to real DOM events, so it can react to native ones too. Here a `<dialog>` uses the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API) for the whole modal mechanics — open, close, <kbd>Esc</kbd>, click-outside, focus and top-layer stacking — with no JavaScript. `Action` only wires the one thing the platform does not provide: locking the body scroll, by listening to the popover's `toggle` event and reading its `newState`.
+
+<llm-exclude>
+  <PreviewPlayground
+    :html="() => import('./stories/popover-toggle/app.twig')"
+    :script="() => import('./stories/popover-toggle/app.js?raw')"
+    />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/popover-toggle/app.twig
+<<< ./stories/popover-toggle/app.js
+
+:::
+
+</llm-only>

@@ -1,0 +1,35 @@
+<div class="flex gap-8">
+  {% for i in 1..2 %}
+    <nav
+      data-component="DataScope"
+      data-option-group="menu"
+      class="relative inline-block">
+      <button
+        type="button"
+        id="menu-{{ i }}-button"
+        aria-controls="menu-{{ i }}-list"
+        aria-expanded="false"
+        class="px-4 py-2 rounded bg-blue-500 text-white font-semibold"
+        data-component="Action DataModel"
+        data-option-key="open"
+        data-option-prop="value"
+        data-option-immediate
+        data-bind:attr.aria-expanded="String(value === 'open')"
+        data-on:click="DataModel.toggle('open', '')"
+        data-on:keydown="event.key === 'Escape' && DataModel.set('')">
+        Menu {{ i }} ▾
+      </button>
+      <ul
+        id="menu-{{ i }}-list"
+        hidden
+        class="absolute left-0 top-full mt-2 min-w-48 p-1 rounded ring bg-white dark:bg-zinc-800 shadow-lg"
+        data-component="DataBind"
+        data-option-key="open"
+        data-bind:attr.hidden="value !== 'open'">
+        <li><a href="#one" class="block px-3 py-2 rounded hover:bg-blue-500/10">Item one</a></li>
+        <li><a href="#two" class="block px-3 py-2 rounded hover:bg-blue-500/10">Item two</a></li>
+        <li><a href="#three" class="block px-3 py-2 rounded hover:bg-blue-500/10">Item three</a></li>
+      </ul>
+    </nav>
+  {% endfor %}
+</div>
