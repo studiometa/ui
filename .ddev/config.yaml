@@ -19,7 +19,11 @@ hooks:
         - exec: mkdir -p packages/docs/.vitepress/dist && ln -sfn ../../../api/public packages/docs/.vitepress/dist/api
 use_dns_when_possible: true
 composer_version: "2"
-web_environment: []
+web_environment:
+    # Make the MCP build_playground_url tool return directly-usable local links
+    # in dev, so there is no need to hand-edit the production host (editing a
+    # percent-encoded URL in the address bar is what corrupts the base64 payload).
+    - PLAYGROUND_BASE_URL=https://ui.ddev.site/play
 corepack_enable: false
 
 # Key features of DDEV's config.yaml:
