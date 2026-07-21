@@ -1,0 +1,65 @@
+{% set total = 4 %}
+
+<div class="max-w-md mx-auto grid gap-4">
+  {# Indexable owns the index. The co-located Action forwards its `index`
+     event (event.detail[0]) to every DataBind/DataComputed renderer. #}
+  <span
+    hidden
+    data-component="Indexable Action"
+    data-option-total="{{ total }}"
+    data-option-boundary="loop"
+    data-on:index="DataBind DataComputed -> target.set(event.detail[0], false)"></span>
+
+  <div class="overflow-hidden rounded-lg ring">
+    <div
+      class="flex transition-transform duration-500 ease-out"
+      data-component="DataBind"
+      data-bind:style.transform="`translateX(-${(Number(value) || 0) * 100}%)`">
+      {% for i in 1..total %}
+        <div
+          class="flex-none w-full h-48 flex items-center justify-center text-2xl font-bold text-white"
+          style="background: hsl({{ (loop.index0 * 360 / total)|round }}, 70%, 55%)">
+          Slide {{ i }}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="flex items-center justify-center gap-3">
+    <button
+      type="button"
+      class="px-4 py-2 rounded bg-blue-500 text-white font-semibold"
+      data-component="Action"
+      data-option-target="Indexable"
+      data-option-effect="target.goPrev()">
+      Previous
+    </button>
+
+    {% for i in 1..total %}
+      <button
+        type="button"
+        aria-label="Go to slide {{ i }}"
+        {% if loop.first %}aria-current="true"{% endif %}
+        class="size-3 rounded-full bg-gray-400 transition aria-[current=true]:bg-blue-500 aria-[current=true]:scale-125"
+        data-component="Action DataBind"
+        data-bind:attr.aria-current="String((Number(value) || 0) === {{ loop.index0 }})"
+        data-on:click="Indexable -> target.goTo({{ loop.index0 }})"></button>
+    {% endfor %}
+
+    <button
+      type="button"
+      class="px-4 py-2 rounded bg-blue-500 text-white font-semibold"
+      data-component="Action"
+      data-option-target="Indexable"
+      data-option-effect="target.goNext()">
+      Next
+    </button>
+  </div>
+
+  <p
+    class="text-center opacity-70"
+    data-component="DataComputed"
+    data-option-compute="`Slide ${(Number(value) || 0) + 1} of {{ total }}`">
+    Slide 1 of {{ total }}
+  </p>
+</div>
