@@ -1,6 +1,6 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { loadImage } from '@studiometa/js-toolkit/utils';
 import { AbstractFigure } from './AbstractFigure.js';
-import { loadImage } from './utils.js';
 
 export interface AbstractFigureDynamicProps extends BaseProps {
   $options: {
@@ -55,7 +55,14 @@ export class AbstractFigureDynamic<T extends BaseProps = BaseProps> extends Abst
    */
   async resized() {
     const { original } = this;
-    await loadImage(original);
+
+    try {
+      await loadImage(original);
+    } catch {
+      this.$warn(`Failed to load image "${original}".`);
+      return;
+    }
+
     this.src = original;
   }
 }

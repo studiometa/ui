@@ -1,7 +1,7 @@
 import { withMountWhenInView } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { loadImage } from '@studiometa/js-toolkit/utils';
 import { Transition } from '../Transition/index.js';
-import { loadImage } from '../Figure/utils.js';
 
 export interface FigureVideoProps extends BaseProps {
   $refs: {
@@ -53,17 +53,21 @@ export class FigureVideo<T extends BaseProps = BaseProps> extends withMountWhenI
   /**
    * Load poster
    */
-  loadPoster(): Promise<void|HTMLImageElement> {
+  loadPoster(): Promise<void> {
     const { video } = this.$refs;
 
     if (!video.dataset.poster) {
       return Promise.resolve();
     }
 
-    return loadImage(video.dataset.poster).then(() => {
-      video.poster = video.dataset.poster;
-      this.$log('fresh poster loaded');
-    })
+    return loadImage(video.dataset.poster)
+      .then(() => {
+        video.poster = video.dataset.poster;
+        this.$log('fresh poster loaded');
+      })
+      .catch(() => {
+        this.$warn(`Failed to load poster "${video.dataset.poster}".`);
+      });
   }
 
   /**

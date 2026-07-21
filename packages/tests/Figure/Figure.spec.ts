@@ -7,6 +7,7 @@ import {
   intersectionObserverBeforeAllCallback,
   intersectionObserverAfterEachCallback,
   mockImageLoad,
+  mockImageLoadError,
   unmockImageLoad,
 } from '#test-utils';
 
@@ -41,6 +42,31 @@ describe('The Figure component', () => {
     await wait(100);
     expect(img.src).toBe(src);
     expect(fn).toHaveBeenCalledOnce();
+  });
+
+  it('should warn and not terminate when the image fails to load', async () => {
+    unmockImageLoad();
+    mockImageLoadError();
+
+    const src = 'http://localhost/broken.jpg';
+    const img = h('img', {
+      dataRef: 'img',
+      src: 'data:image/svg+xml,<svg viewport="0 0 1 1"></svg>',
+      dataSrc: src,
+    });
+    const figure = h('figure', { dataOptionLazy: '' }, [img]);
+
+    const instance = new Figure(figure);
+    const warnSpy = vi.spyOn(instance, '$warn', 'get');
+    const terminated = vi.fn();
+    instance.$on('terminated', terminated);
+
+    mockIsIntersecting(figure, true);
+    await wait(100);
+
+    expect(img.src).not.toBe(src);
+    expect(warnSpy).toHaveBeenCalledOnce();
+    expect(terminated).not.toHaveBeenCalled();
   });
 
   it('should warn if the `img` ref is misconfigured', async () => {

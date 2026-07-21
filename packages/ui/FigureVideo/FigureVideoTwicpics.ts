@@ -1,10 +1,11 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import {
+  loadImage,
   withLeadingSlash,
   withoutLeadingSlash,
   withoutTrailingSlash,
 } from '@studiometa/js-toolkit/utils';
-import { loadImage } from '../Figure/utils.js';
+import { normalizeSize } from '../Figure/utils.js';
 import { FigureVideo } from './FigureVideo.js';
 
 export interface FigureVideoTwicpicsProps extends BaseProps {
@@ -19,15 +20,6 @@ export interface FigureVideoTwicpicsProps extends BaseProps {
     step: number;
     mode: string;
   };
-}
-
-/**
- * Normalize the given size to the step option.
- */
-// eslint-disable-next-line no-use-before-define
-function normalizeSize(that: FigureVideoTwicpics, prop: string): number {
-  const { step } = that.$options;
-  return Math.ceil(that.$refs.video[prop] / step) * step;
 }
 
 /**
@@ -62,6 +54,14 @@ export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends Figure
   };
 
   /**
+   * Normalize the given video dimension to the step option.
+   * @private
+   */
+  __normalizeSize(prop: 'offsetWidth' | 'offsetHeight'): number {
+    return normalizeSize(this.$refs.video[prop], this.$options.step);
+  }
+
+  /**
    * Get the Twicpics path.
    */
   get path(): string {
@@ -94,8 +94,8 @@ export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends Figure
       url.pathname = `/${this.path}${url.pathname}`;
     }
 
-    const width = normalizeSize(this, 'offsetWidth');
-    const height = normalizeSize(this, 'offsetHeight');
+    const width = this.__normalizeSize('offsetWidth');
+    const height = this.__normalizeSize('offsetHeight');
 
     this.$log(this.$options.mode, width, height);
 
@@ -114,7 +114,7 @@ export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends Figure
   /**
    * Load poster
    */
-  loadPoster(): Promise<void|HTMLImageElement> {
+  loadPoster(): Promise<void> {
     const { video } = this.$refs;
 
     if (!video.dataset.poster) {
@@ -123,10 +123,14 @@ export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends Figure
 
     const twicPoster = this.formatSrc(video.dataset.poster);
 
-    return loadImage(twicPoster).then(() => {
-      video.poster = twicPoster;
-      this.$log('fresh poster loaded');
-    });
+    return loadImage(twicPoster)
+      .then(() => {
+        video.poster = twicPoster;
+        this.$log('fresh poster loaded');
+      })
+      .catch(() => {
+        this.$warn(`Failed to load poster "${twicPoster}".`);
+      });
   }
 
   /**
@@ -154,8 +158,8 @@ export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends Figure
 
       video.addEventListener('canplaythrough', loadHandler);
 
-      this.$refs.video.width = normalizeSize(this, 'offsetWidth');
-      this.$refs.video.height = normalizeSize(this, 'offsetHeight');
+      this.$refs.video.width = this.__normalizeSize('offsetWidth');
+      this.$refs.video.height = this.__normalizeSize('offsetHeight');
 
       video.load();
     });
@@ -165,8 +169,8 @@ export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends Figure
    * Reassign the source from the original on resize.
    */
   async resized() {
-    const width = normalizeSize(this, 'offsetWidth');
-    const height = normalizeSize(this, 'offsetHeight');
+    const width = this.__normalizeSize('offsetWidth');
+    const height = this.__normalizeSize('offsetHeight');
 
     if (width === this.$refs.video.width && height === this.$refs.video.height) {
       return;
