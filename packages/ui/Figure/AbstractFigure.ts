@@ -1,7 +1,7 @@
 import { withMountWhenInView } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { loadImage } from '@studiometa/js-toolkit/utils';
 import { Transition } from '../Transition/index.js';
-import { loadImage } from './utils.js';
 
 export interface AbstractFigureProps extends BaseProps {
   $refs: {
@@ -76,7 +76,13 @@ export class AbstractFigure<
     const src = this.original;
 
     if (this.$options.lazy && src && src !== this.src) {
-      await loadImage(src);
+      try {
+        await loadImage(src);
+      } catch {
+        this.$warn(`Failed to load image "${src}".`);
+        return;
+      }
+
       this.src = src;
       this.enter();
       this.$emit('load');

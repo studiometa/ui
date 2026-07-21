@@ -1,3 +1,4 @@
+import { camelCase } from '@studiometa/js-toolkit/utils';
 import type { DataValue } from './DataScope.js';
 
 export interface DataControlMember {
@@ -80,7 +81,7 @@ export function resolvePropertyName(target: HTMLElement, name: string) {
     current = Object.getPrototypeOf(current);
   }
 
-  return name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
+  return camelCase(name);
 }
 
 /**

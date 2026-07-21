@@ -17,9 +17,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **DataScope:** resolve scoped groups through the `withGroup` decorator's new `getScope`/`getGroup` options and `getScopedGroups` helper, and require `@studiometa/js-toolkit` `^3.7.0`
 - **Indexable:** reflect the `bounce` boundary through the new `fold` math util and require `@studiometa/js-toolkit` `^3.7.0`
 - **Slider:** require `@studiometa/js-toolkit` `^3.6.0` and share the current index through a per-instance store instead of the deprecated `$parent` accessor ([#507](https://github.com/studiometa/ui/pull/507))
+- **Figure / FigureVideo:** delegate image loading to the `@studiometa/js-toolkit` `loadImage` util and drop the local re-implementation, deduplicate the `normalizeSize` helper, and replace the hand-rolled kebab→camelCase regex in `Data` form controls with the toolkit's memoized `camelCase` ([#518](https://github.com/studiometa/ui/issues/518))
 
 ### Fixed
 
+- **Figure / FigureVideo:** stop hanging forever when an image or poster fails to load — the failed load is now caught and logged instead of leaving the component stuck ([#518](https://github.com/studiometa/ui/issues/518))
 - **Slider:** fix `SliderBtn`, `SliderCount`, `SliderDots` and `SliderProgress` crashing when mounted before their parent `Slider` ([#507](https://github.com/studiometa/ui/pull/507))
 - **Accordion:** fix `AccordionItem` option inheritance relying on the deprecated `$parent` accessor ([#507](https://github.com/studiometa/ui/pull/507))
 
