@@ -119,13 +119,35 @@ export class ShopifyPartialsFetch<T extends BaseProps = BaseProps> extends Fetch
   }
 
   /**
+   * Whether the current request can be expressed through the partials API.
+   *
+   * The `@shopify/partial-rendering` API only performs a GET for the given URL, so any
+   * request carrying a body, a non-GET method, custom headers or a custom `requestInit`
+   * falls back to the base {@link Fetch} behaviour to preserve its contract — for example a
+   * `method="post"` form, or a `data-option-headers` / `data-option-request-init` usage.
+   * @protected
+   */
+  get __canUsePartials(): boolean {
+    const { headers, requestInit } = this.$options;
+    const method = (this.requestInit.method ?? 'get').toLowerCase();
+
+    return (
+      method === 'get' &&
+      !this.requestInit.body &&
+      Object.keys(headers).length === 0 &&
+      Object.keys(requestInit).length === 0 &&
+      this.$refs.headers.length === 0
+    );
+  }
+
+  /**
    * Fetch given url via Shopify partial rendering when configured, otherwise fall back to
    * the base fetch behaviour.
    * @inheritdoc
    */
   async fetch(url: URL, requestInit: RequestInit = {}) {
     const names = this.$options.partials;
-    const partials = names.length ? await this.__resolvePartials() : null;
+    const partials = names.length && this.__canUsePartials ? await this.__resolvePartials() : null;
 
     if (!partials) {
       return super.fetch(url, requestInit);

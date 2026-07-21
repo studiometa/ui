@@ -93,6 +93,44 @@ describe('The ShopifyPartialsFetch class', () => {
     container.remove();
   });
 
+  it('should fall back to base Fetch for a POST form (body cannot be carried)', async () => {
+    const fakePartials = useFakePartials();
+    const windowFetchSpy = vi.spyOn(window, 'fetch');
+    windowFetchSpy.mockImplementation(() => Promise.resolve(new Response('<div id="test">ok</div>')));
+
+    const form = h('form', {
+      action: 'https://example.com/cart/add',
+      method: 'post',
+      dataOptionPartials: ['cart-items'],
+    });
+    const fetch = new ShopifyPartialsFetch(form);
+
+    await mount(fetch);
+    await fetch.fetch(new URL('https://example.com/cart/add'));
+
+    expect(fakePartials.fetch).not.toHaveBeenCalled();
+    expect(windowFetchSpy).toHaveBeenCalledOnce();
+  });
+
+  it('should fall back to base Fetch when custom headers are configured', async () => {
+    const fakePartials = useFakePartials();
+    const windowFetchSpy = vi.spyOn(window, 'fetch');
+    windowFetchSpy.mockImplementation(() => Promise.resolve(new Response('<div id="test">ok</div>')));
+
+    const anchor = h('a', {
+      href: 'https://example.com',
+      dataOptionPartials: ['product-grid'],
+      dataOptionHeaders: { 'x-foo': 'bar' },
+    });
+    const fetch = new ShopifyPartialsFetch(anchor);
+
+    await mount(fetch);
+    await fetch.fetch(new URL('https://example.com'));
+
+    expect(fakePartials.fetch).not.toHaveBeenCalled();
+    expect(windowFetchSpy).toHaveBeenCalledOnce();
+  });
+
   it('should fall back to base Fetch when the module has no partials export', async () => {
     ShopifyPartialsFetch.__loadPartialsModule = async () => ({}) as any;
     const windowFetchSpy = vi.spyOn(window, 'fetch');
