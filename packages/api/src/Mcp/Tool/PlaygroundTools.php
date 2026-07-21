@@ -4,6 +4,7 @@ namespace App\Mcp\Tool;
 
 use App\Mcp\PlaygroundUrlBuilder;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Exception\ToolCallException;
 
 /**
  * MCP tools generating @studiometa/ui playgrounds.
@@ -40,5 +41,26 @@ final class PlaygroundTools
         $theme = 'dark' === $theme ? 'dark' : 'light';
 
         return $this->urlBuilder->build($html, $script, $css, $theme, $header);
+    }
+
+    /**
+     * Read the content of a shared playground URL.
+     *
+     * The inverse of `build_playground_url`: decode a link into its Twig/HTML,
+     * JavaScript, CSS and theme so you can inspect or edit an existing
+     * playground. Pass the full URL (the state lives in the part after `#`).
+     *
+     * @param string $url The playground URL to decode
+     *
+     * @return array{html?: string, script?: string, css?: string, theme?: string, header?: string}
+     */
+    #[McpTool(name: 'parse_playground_url')]
+    public function parsePlaygroundUrl(string $url): array
+    {
+        try {
+            return $this->urlBuilder->parse($url);
+        } catch (\RuntimeException $e) {
+            throw new ToolCallException($e->getMessage(), previous: $e);
+        }
     }
 }

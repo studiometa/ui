@@ -21,6 +21,7 @@ POST https://ui.studiometa.dev/api/mcp
 | `get_component_api` | Twig parameters/blocks (and JS options/refs/events) of a component. |
 | `get_component_example` | Ready-to-use Twig and JS snippets for a component. |
 | `build_playground_url` | Turn Twig/HTML, JavaScript and CSS into a shareable, live playground URL. |
+| `parse_playground_url` | Decode a shared playground URL back into its Twig/HTML, JavaScript, CSS and theme. |
 
 The discovery tools read the built VitePress documentation (`llms.txt` and the per-page Markdown files), so they stay in sync with the docs on every build. `build_playground_url` encodes the whole playground state in the URL hash — the code fields are zlib-compressed then base64-encoded, mirroring the front-end `zip()` helper from `@studiometa/playground` — so nothing is stored server-side.
 
