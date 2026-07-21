@@ -30,6 +30,7 @@ export interface IndexableProps extends BaseProps {
   $options: {
     boundary: IndexableBoundary;
     reverse: boolean;
+    total: number;
   };
 }
 
@@ -52,7 +53,9 @@ export interface IndexableInterface extends BaseInterface {
   set boundary(value: IndexableBoundary);
 
   /**
-   * Get the length.
+   * Get the length. Defaults to the `total` option, which lets the primitive
+   * be used standalone; subclasses may override it to derive the length from
+   * their content (e.g. the number of child items).
    */
   get length(): number;
 
@@ -133,6 +136,10 @@ export function withIndex<S extends Base>(
           default: INDEXABLE_BOUNDARIES.CLAMP,
         },
         reverse: Boolean,
+        total: {
+          type: Number,
+          default: 0,
+        },
       },
     };
 
@@ -167,7 +174,7 @@ export function withIndex<S extends Base>(
     }
 
     get length() {
-      return 0;
+      return this.$options.total;
     }
 
     get minIndex() {

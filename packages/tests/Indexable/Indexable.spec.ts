@@ -181,6 +181,25 @@ describe('The Indexable class', () => {
     });
   });
 
+  describe('total option', () => {
+    it('should derive the length from the `total` option when used standalone', async () => {
+      const instance = new Indexable(h('div', { dataOptionTotal: 3 }));
+      expect(instance.length).toBe(3);
+      expect(instance.maxIndex).toBe(2);
+    });
+
+    it('should let a standalone instance navigate within the configured bounds', async () => {
+      const instance = new Indexable(h('div', { dataOptionTotal: 3 }));
+
+      await instance.goTo(5);
+      expect(instance.currentIndex).toBe(2); // clamped to maxIndex
+
+      instance.boundary = Indexable.BOUNDARIES.LOOP;
+      await instance.goTo(3);
+      expect(instance.currentIndex).toBe(0); // wraps around
+    });
+  });
+
   describe('goTo method', () => {
     it('should go to specific index', async () => {
       const emitSpy = vi.spyOn(indexable, '$emit');
