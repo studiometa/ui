@@ -1,0 +1,18 @@
+mcp:
+    app: '@studiometa/ui'
+    version: '1.0.0'
+    description: 'Discover @studiometa/ui components and generate playgrounds.'
+    instructions: |
+        This server exposes the @studiometa/ui component library so you can build playgrounds.
+        Typical flow: call `list_components` to discover components, then `get_component_api` and `get_component_example` to learn how to use one, then `build_playground_url` to turn Twig/HTML, JavaScript and CSS into a shareable, live playground link.
+    client_transports:
+        http: true
+    http:
+        path: '/mcp'
+        # Served behind the `api.` host; allow the public documentation host to
+        # reach it. Adjust when the deployment host changes.
+        allowed_hosts:
+            - 'api.ui.studiometa.dev'
+            - 'ui.studiometa.dev'
+            - 'ui.ddev.site'
+            - 'localhost'
