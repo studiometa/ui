@@ -131,3 +131,41 @@ Use the [`abort` method](./js-api.md#abort-reason-any) to cancel a request. In t
 ::: tip
 In this example, we could use a more specific version of the [`data-option-target` attribute](../Action/js-api.md#target) of the `Action` component to target a single `Fetch` instance.
 :::
+
+## Shopify Section Rendering API
+
+Shopify's [Section Rendering API](https://shopify.dev/docs/api/ajax/section-rendering) returns the rendered HTML of specific theme sections as a JSON object: each key is a requested section ID and each value is that section's HTML — or `null` when the section fails to render. Because every section is wrapped in a `<div id="shopify-section-{id}">` element both on the page and inside the API response, the `Fetch` component can consume it **without any extra code**: parse the JSON with the [`response` option](./js-api.md#response) and let the default [`[id]` selector](./js-api.md#selector) swap each section in place.
+
+Request the sections to update by adding the comma-separated `sections` parameter (up to five) to the URL:
+
+:::code-group
+
+```html [collection.liquid]
+<a
+  href="{{ collection.url }}?sort_by=price-ascending&sections=main-collection-product-grid,collection-results-count"
+  data-component="Fetch"
+  data-option-response="response.json().then((sections) => Object.values(sections).filter(Boolean).join(''))">
+  Sort by price
+</a>
+
+{% comment %} These wrappers, rendered by Shopify, are what Fetch swaps by id. {% endcomment %}
+<div id="shopify-section-main-collection-product-grid">…</div>
+<div id="shopify-section-collection-results-count">…</div>
+```
+
+```json [GET ?sections=… response]
+{
+  "main-collection-product-grid": "<div id=\"shopify-section-main-collection-product-grid\" class=\"shopify-section\">…</div>",
+  "collection-results-count": "<div id=\"shopify-section-collection-results-count\" class=\"shopify-section\">…</div>"
+}
+```
+
+:::
+
+- `filter(Boolean)` drops any section returned as `null` (for example a section absent from the published theme) so the parser only receives valid HTML.
+- The JSON keys are ignored: `Fetch` matches each section by the `id` of its `shopify-section-*` wrapper, so there is never a key/id mismatch.
+- Keep the default `replace` [`mode`](./js-api.md#mode) (or use `morph`) so each section is swapped in place — `append` and `prepend` insert the new markup _inside_ the existing `shopify-section-{id}` wrapper and would duplicate its content. This works together with the [`history`](./js-api.md#history) and [`viewTransition`](./js-api.md#viewtransition) options.
+
+::: tip
+Use a `<form method="get">` instead of a link when the parameters come from user input (facet filters, a sort `<select>`, a search field): the form data is [automatically appended to the URL](./js-api.md#url), so you only need to add a hidden `<input name="sections">`.
+:::
