@@ -164,7 +164,7 @@ Request the sections to update by adding the comma-separated `sections` paramete
 
 - `filter(Boolean)` drops any section returned as `null` (for example a section absent from the published theme) so the parser only receives valid HTML.
 - The JSON keys are ignored: `Fetch` matches each section by the `id` of its `shopify-section-*` wrapper, so there is never a key/id mismatch.
-- This works with any [`mode`](./js-api.md#mode), and together with the [`history`](./js-api.md#history) and [`viewTransition`](./js-api.md#viewtransition) options.
+- Keep the default `replace` [`mode`](./js-api.md#mode) (or use `morph`) so each section is swapped in place — `append` and `prepend` insert the new markup _inside_ the existing `shopify-section-{id}` wrapper and would duplicate its content. This works together with the [`history`](./js-api.md#history) and [`viewTransition`](./js-api.md#viewtransition) options.
 
 ::: tip
 Use a `<form method="get">` instead of a link when the parameters come from user input (facet filters, a sort `<select>`, a search field): the form data is [automatically appended to the URL](./js-api.md#url), so you only need to add a hidden `<input name="sections">`.
