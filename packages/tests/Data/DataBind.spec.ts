@@ -98,6 +98,13 @@ describe('The DataBind component', () => {
     expect(input.checked).toBe(false);
   });
 
+  it('should resolve dashed custom property names via camelCase', () => {
+    const div = h('div', { 'data-bind:prop.custom-thing': '' });
+    const instance = new DataBind(div);
+    instance.set('foo');
+    expect((div as any).customThing).toBe('foo');
+  });
+
   it('should select an option of a select', () => {
     const optionA = h('option', { value: 'foo' }, ['Foo']);
     const optionB = h('option', { value: 'bar' }, ['Bar']);

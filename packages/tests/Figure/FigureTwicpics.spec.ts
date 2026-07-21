@@ -8,6 +8,7 @@ import {
   intersectionObserverAfterEachCallback,
   unmockImageLoad,
   mockImageLoad,
+  mockImageLoadError,
   resizeWindow,
 } from '#test-utils';
 
@@ -93,6 +94,20 @@ describe('The FigureTwicpics component', () => {
     expect(instance.$options.domain).toBe('');
     expect(instance.domain).toBe('localhost');
     expect(instance.original).toBe('https://localhost/path/image.jpg?twic=v1/cover=100x100');
+  });
+
+  it('should warn and keep the source when the image fails to load on resize', async () => {
+    const { instance, setSize, img } = await getContext();
+    const src = img.src;
+    const warnSpy = vi.spyOn(instance, '$warn', 'get');
+
+    unmockImageLoad();
+    mockImageLoadError();
+    setSize({ width: 200, height: 200 });
+    await resizeWindow();
+
+    expect(warnSpy).toHaveBeenCalledOnce();
+    expect(img.src).toBe(src);
   });
 
   it('should take the device pixel ratio into account', async () => {
