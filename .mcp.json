@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "studiometa-ui": {
+      "type": "http",
+      "url": "https://ui.ddev.site/api/mcp"
+    }
+  }
+}

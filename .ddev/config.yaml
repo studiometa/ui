@@ -13,6 +13,10 @@ database:
 hooks:
     post-start:
         - composer: install -d packages/api/
+        # Expose the API app under the docs docroot at /api (mirrors the docs
+        # postbuild symlink) so the render endpoint and MCP server are reachable
+        # in dev even without a full docs build.
+        - exec: mkdir -p packages/docs/.vitepress/dist && ln -sfn ../../../api/public packages/docs/.vitepress/dist/api
 use_dns_when_possible: true
 composer_version: "2"
 web_environment: []
