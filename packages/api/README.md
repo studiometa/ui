@@ -8,11 +8,19 @@ Small Symfony application powering [ui.studiometa.dev](https://ui.studiometa.dev
 ## MCP server
 
 The server is built with [`symfony/mcp-bundle`](https://github.com/symfony/mcp-bundle)
-and served over the Streamable HTTP transport at:
+and served over the Streamable HTTP transport. The route is `POST /mcp` on this
+application's own host — i.e. the `api.` subdomain used for the render endpoint
+(see `config/packages/nelmio_cors.yaml`):
 
 ```
-POST https://ui.studiometa.dev/mcp
+POST https://api.ui.studiometa.dev/mcp
 ```
+
+> **Deployment note:** the endpoint requires the Symfony app to be served as its
+> own document root (the `api.` vhost). Mounting the app under a sub-path of the
+> static docs host (the `/api/` symlink) only exposes the `/` render route, not
+> sub-routes such as `/mcp` or `/source`, because that vhost's `try_files`
+> falls back to the static docroot rather than the Symfony front controller.
 
 ### Tools
 
@@ -43,5 +51,5 @@ variables:
 Point any MCP client at the HTTP endpoint, e.g. with Claude Code:
 
 ```sh
-claude mcp add --transport http studiometa-ui https://ui.studiometa.dev/mcp
+claude mcp add --transport http studiometa-ui https://api.ui.studiometa.dev/mcp
 ```

@@ -4,6 +4,7 @@ namespace App\Mcp\Tool;
 
 use App\Mcp\DocsRepository;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Exception\ToolCallException;
 
 /**
  * MCP tools exposing the @studiometa/ui component documentation.
@@ -27,7 +28,11 @@ final class ComponentTools
     #[McpTool(name: 'list_components')]
     public function listComponents(): array
     {
-        return $this->docs->listComponents();
+        try {
+            return $this->docs->listComponents();
+        } catch (\RuntimeException $e) {
+            throw new ToolCallException($e->getMessage(), previous: $e);
+        }
     }
 
     /**
@@ -39,7 +44,11 @@ final class ComponentTools
     #[McpTool(name: 'get_component_api')]
     public function getComponentApi(string $name): string
     {
-        return $this->docs->getComponentApi($name);
+        try {
+            return $this->docs->getComponentApi($name);
+        } catch (\RuntimeException $e) {
+            throw new ToolCallException($e->getMessage(), previous: $e);
+        }
     }
 
     /**
@@ -51,6 +60,10 @@ final class ComponentTools
     #[McpTool(name: 'get_component_example')]
     public function getComponentExample(string $name): string
     {
-        return $this->docs->getComponentExample($name);
+        try {
+            return $this->docs->getComponentExample($name);
+        } catch (\RuntimeException $e) {
+            throw new ToolCallException($e->getMessage(), previous: $e);
+        }
     }
 }
