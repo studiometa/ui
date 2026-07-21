@@ -6,14 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.9.0-beta.1](https://github.com/studiometa/ui/compare/1.9.0-beta.0..1.9.0-beta.1) (2026-07-21)
+
 ### Added
 
 - Add an Indexable primitive component and a withIndex decorator ([#491](https://github.com/studiometa/ui/pull/491), [0394a1df](https://github.com/studiometa/ui/commit/0394a1df))
 - **Track:** add `Track`, `TrackShopify` and `TrackContext` components for declarative analytics tracking (dataLayer/GTM and Shopify providers, ancestor-merged context) ([#508](https://github.com/studiometa/ui/pull/508))
+- **Data:** add the `DataScope` component for scoped reactive groups, together with data mutation helpers, virtual bindings and form-control (input) bindings ([#511](https://github.com/studiometa/ui/pull/511), [#513](https://github.com/studiometa/ui/pull/513), [#514](https://github.com/studiometa/ui/pull/514), [#515](https://github.com/studiometa/ui/pull/515))
+- **Indexable:** add a `total` option so the primitive can be used standalone from HTML (e.g. `data-option-total="3"`) without subclassing to set `length` ([#526](https://github.com/studiometa/ui/pull/526))
 
 ### Changed
 
 - **Data / Indexable:** align private and protected class members to the `__` prefix convention (with `@private`/`@protected` docblocks), dropping the erasable-only TypeScript `private`/`protected` keywords in favour of runtime-discoverable internals
+- **Data:** refactor reactivity onto signals with globally-shared channels ([#515](https://github.com/studiometa/ui/pull/515))
 - **DataScope:** resolve scoped groups through the `withGroup` decorator's new `getScope`/`getGroup` options and `getScopedGroups` helper, and require `@studiometa/js-toolkit` `^3.7.0`
 - **Indexable:** reflect the `bounce` boundary through the new `fold` math util and require `@studiometa/js-toolkit` `^3.7.0`
 - **Slider:** require `@studiometa/js-toolkit` `^3.6.0` and share the current index through a per-instance store instead of the deprecated `$parent` accessor ([#507](https://github.com/studiometa/ui/pull/507))
