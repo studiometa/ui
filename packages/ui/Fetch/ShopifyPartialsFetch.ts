@@ -119,25 +119,47 @@ export class ShopifyPartialsFetch<T extends BaseProps = BaseProps> extends Fetch
   }
 
   /**
-   * Whether the current request can be expressed through the partials API.
+   * Whether the given request can be expressed through the partials API.
    *
-   * The `@shopify/partial-rendering` API only performs a GET for the given URL, so any
-   * request carrying a body, a non-GET method, custom headers or a custom `requestInit`
-   * falls back to the base {@link Fetch} behaviour to preserve its contract — for example a
-   * `method="post"` form, or a `data-option-headers` / `data-option-request-init` usage.
+   * The `@shopify/partial-rendering` API only performs a GET for the given URL (it receives
+   * nothing but `{ url, signal }`), so a request that carries a body, a non-GET method,
+   * custom headers or any other `RequestInit` field falls back to the base {@link Fetch}
+   * behaviour to preserve its contract — whether these come from the element options
+   * (a `method="post"` form, `data-option-headers`, `data-option-request-init`) or from the
+   * per-call `requestInit` argument (for example `fetch(url, { credentials: 'include' })`).
+   * Framework-internal headers (see {@link Fetch.__headerNames}) are ignored, so the
+   * declarative click, submit and popstate flows still use partial rendering.
    * @protected
    */
-  get __canUsePartials(): boolean {
-    const { headers, requestInit } = this.$options;
-    const method = (this.requestInit.method ?? 'get').toLowerCase();
+  __canUsePartials(requestInit: RequestInit): boolean {
+    const merged = {
+      ...this.requestInit,
+      ...requestInit,
+      headers: {
+        ...this.requestInit.headers,
+        ...requestInit.headers,
+      },
+    };
 
-    return (
-      method === 'get' &&
-      !this.requestInit.body &&
-      Object.keys(headers).length === 0 &&
-      Object.keys(requestInit).length === 0 &&
-      this.$refs.headers.length === 0
-    );
+    if ((merged.method ?? 'get').toLowerCase() !== 'get' || merged.body) {
+      return false;
+    }
+
+    const supportedKeys = new Set(['method', 'headers', 'body', 'signal']);
+    for (const key of Object.keys({ ...this.$options.requestInit, ...requestInit })) {
+      if (!supportedKeys.has(key)) {
+        return false;
+      }
+    }
+
+    const internalHeaders = new Set<string>(Object.values(this.__headerNames));
+    for (const header of Object.keys(merged.headers)) {
+      if (!internalHeaders.has(header.toLowerCase())) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**
@@ -147,7 +169,8 @@ export class ShopifyPartialsFetch<T extends BaseProps = BaseProps> extends Fetch
    */
   async fetch(url: URL, requestInit: RequestInit = {}) {
     const names = this.$options.partials;
-    const partials = names.length && this.__canUsePartials ? await this.__resolvePartials() : null;
+    const partials =
+      names.length && this.__canUsePartials(requestInit) ? await this.__resolvePartials() : null;
 
     if (!partials) {
       return super.fetch(url, requestInit);

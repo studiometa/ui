@@ -32,7 +32,7 @@ The names of the Shopify partials to refresh, matching the names used in the cor
 The Shopify partial rendering path is used only when the [`partials` option](#partials) lists at least one name **and** the `@shopify/partial-rendering` package resolves. In every other case the component behaves exactly like the base [`Fetch`](../Fetch/index.md) component and swaps content by matching `id` attributes from a full response. It falls back to `Fetch` when:
 
 - no partial is configured, or the package is not installed;
-- the request cannot be expressed as a plain `GET` — because the partials API only fetches a URL, a `method="post"` form (which carries a body), a [`headers`](../Fetch/js-api.md#headers) / [`requestInit`](../Fetch/js-api.md#requestinit) option or a [`headers[]` ref](../Fetch/js-api.md#headers-1) makes the component fall back so those request options are not silently dropped.
+- the request cannot be expressed as a plain `GET` — because the partials API only fetches a URL, any request carrying a body, a non-`GET` method, custom headers or any other request option makes the component fall back so those options are not silently dropped. This covers the [`headers`](../Fetch/js-api.md#headers) / [`requestInit`](../Fetch/js-api.md#requestinit) options and [`headers[]` refs](../Fetch/js-api.md#headers-1), a `method="post"` form, and per-call overrides such as `fetch(url, { credentials: 'include' })`. Framework-internal headers are ignored, so the click, submit and history navigation flows still use partial rendering.
 
 The package is loaded lazily on the first request, so it never needs to be bundled when it is not used.
 

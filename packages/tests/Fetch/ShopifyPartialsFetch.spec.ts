@@ -131,6 +131,24 @@ describe('The ShopifyPartialsFetch class', () => {
     expect(windowFetchSpy).toHaveBeenCalledOnce();
   });
 
+  it('should fall back to base Fetch when a per-call request init carries unsupported options', async () => {
+    const fakePartials = useFakePartials();
+    const windowFetchSpy = vi.spyOn(window, 'fetch');
+    windowFetchSpy.mockImplementation(() => Promise.resolve(new Response('<div id="test">ok</div>')));
+
+    const anchor = h('a', {
+      href: 'https://example.com',
+      dataOptionPartials: ['product-grid'],
+    });
+    const fetch = new ShopifyPartialsFetch(anchor);
+
+    await mount(fetch);
+    await fetch.fetch(new URL('https://example.com'), { credentials: 'include' });
+
+    expect(fakePartials.fetch).not.toHaveBeenCalled();
+    expect(windowFetchSpy).toHaveBeenCalledOnce();
+  });
+
   it('should fall back to base Fetch when the module has no partials export', async () => {
     ShopifyPartialsFetch.__loadPartialsModule = async () => ({}) as any;
     const windowFetchSpy = vi.spyOn(window, 'fetch');
