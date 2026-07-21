@@ -1,0 +1,206 @@
+import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
+import { historyPush } from '@studiometa/js-toolkit/utils';
+import { Fetch, type FetchProps } from './Fetch.js';
+
+export interface ShopifyPartialsFetchProps extends FetchProps {
+  $options: FetchProps['$options'] & {
+    partials: string[];
+  };
+}
+
+export type ShopifyPartialsFetchConstructor<
+  T extends ShopifyPartialsFetch = ShopifyPartialsFetch,
+> = {
+  new (...args: any[]): T;
+  prototype: ShopifyPartialsFetch;
+} & Pick<typeof ShopifyPartialsFetch, keyof typeof ShopifyPartialsFetch>;
+
+/**
+ * Minimal shape of the `partials` API exposed by `@shopify/partial-rendering`.
+ * @internal
+ */
+interface PartialsApi {
+  fetch(...args: [...names: string[], options: { url: string; signal?: AbortSignal }]): Promise<unknown>;
+  apply(update: unknown): void | Promise<void>;
+}
+
+/**
+ * Minimal shape of the `@shopify/partial-rendering` module.
+ * @internal
+ */
+interface PartialsModule {
+  partials: PartialsApi;
+}
+
+/**
+ * ShopifyPartialsFetch class.
+ *
+ * Adapts the base {@link Fetch} component to Shopify's `@shopify/partial-rendering` API
+ * (Liquid July '26 preview). Shopify partial rendering is engaged only when partial names
+ * are configured via the `partials` option AND the preview package resolves; otherwise it
+ * transparently falls back to the base {@link Fetch} behaviour (id-based full-page swap).
+ *
+ * Compared to the base {@link Fetch} lifecycle, the partials path diverges in two ways:
+ * - the `RESPONSE` event is never emitted, as there is no `Response` object on this path;
+ * - the `UPDATE` event payload carries the opaque partials `update` object instead of a
+ *   parsed `Document` fragment, and `partials.apply` owns DOM swapping, View Transitions
+ *   and focus/selection/form/scroll preservation.
+ *
+ * @link https://ui.studiometa.dev/components/Fetch/
+ */
+export class ShopifyPartialsFetch<T extends BaseProps = BaseProps> extends Fetch<
+  T & { $options: { partials: string[] } }
+> {
+  /**
+   * Declare the `this.constructor` type
+   * @link https://github.com/microsoft/TypeScript/issues/3841#issuecomment-2381594311
+   */
+  declare ['constructor']: ShopifyPartialsFetchConstructor;
+
+  /**
+   * Config.
+   */
+  static config: BaseConfig = {
+    ...Fetch.config,
+    name: 'ShopifyPartialsFetch',
+    options: {
+      ...Fetch.config.options,
+      partials: Array,
+    },
+  };
+
+  /**
+   * Module specifier for the Shopify partial rendering package.
+   *
+   * Exposed as a static field so tests can override {@link __loadPartialsModule} without
+   * relying on the preview package being installed.
+   */
+  static __PARTIALS_MODULE = '@shopify/partial-rendering';
+
+  /**
+   * Load the Shopify partial rendering module.
+   *
+   * The package is imported lazily via a dynamic import so the module compiles and runs
+   * without the preview package being installed. Override this in tests to inject a fake.
+   * @protected
+   */
+  static async __loadPartialsModule(): Promise<PartialsModule> {
+    return import(this.__PARTIALS_MODULE);
+  }
+
+  /**
+   * Cached partials API resolution.
+   *
+   * `undefined` means resolution has not been attempted yet, `null` means it failed.
+   * @internal
+   */
+  __partialsModule: PartialsApi | null | undefined;
+
+  /**
+   * Resolve the partials API, memoising the result.
+   *
+   * Returns `null` on any failure (missing package, missing export, ...) so callers can
+   * transparently fall back to the base behaviour. This never rejects.
+   * @protected
+   */
+  async __resolvePartials(): Promise<PartialsApi | null> {
+    if (typeof this.__partialsModule !== 'undefined') {
+      return this.__partialsModule;
+    }
+
+    try {
+      const module = await this.constructor.__loadPartialsModule();
+      this.__partialsModule = module?.partials ?? null;
+    } catch {
+      this.__partialsModule = null;
+    }
+
+    return this.__partialsModule;
+  }
+
+  /**
+   * Fetch given url via Shopify partial rendering when configured, otherwise fall back to
+   * the base fetch behaviour.
+   * @inheritdoc
+   */
+  async fetch(url: URL, requestInit: RequestInit = {}) {
+    const names = this.$options.partials;
+    const partials = names.length ? await this.__resolvePartials() : null;
+
+    if (!partials) {
+      return super.fetch(url, requestInit);
+    }
+
+    const { FETCH_EVENTS } = this.constructor;
+    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url, requestInit });
+
+    this.__abortController.abort();
+    const newController = new AbortController();
+    newController.signal.addEventListener('abort', () => {
+      this.$emit(FETCH_EVENTS.ABORT, {
+        instance: this,
+        url,
+        requestInit,
+        reason: newController.signal.reason,
+      });
+    });
+    this.__abortController = newController;
+    const init = {
+      ...this.requestInit,
+      ...requestInit,
+      headers: {
+        ...this.requestInit.headers,
+        ...requestInit.headers,
+      },
+      signal: newController.signal,
+    };
+
+    this.$log('fetch', url, init);
+    this.$emit(FETCH_EVENTS.FETCH, { instance: this, url, requestInit: init });
+
+    try {
+      const update = await partials.fetch(...names, {
+        url: url.toString(),
+        signal: init.signal,
+      });
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit: init, content: update });
+      // Fire-and-forget the apply phase, matching the base `Fetch.fetch` lifecycle: an
+      // `apply()` failure must not be misattributed to the fetch phase and re-emit
+      // `AFTER_FETCH` a second time.
+      this.__applyPartials(url, init, update, partials);
+    } catch (error) {
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit: init, error });
+      this.error(url, init, error);
+    }
+  }
+
+  /**
+   * Apply the partials update to the DOM.
+   *
+   * This is intentionally kept separate from the base {@link Fetch.update}: the base method
+   * is still used verbatim on the fallback path, where it parses an HTML string into a
+   * `Document` fragment and performs the id-based full-page swap. On the partials path,
+   * `partials.apply` owns DOM swapping, View Transitions and focus/selection/form/scroll
+   * preservation, so no fragment parsing nor `__updateDOM`/`startViewTransition` happens here.
+   * @protected
+   */
+  async __applyPartials(url: URL, requestInit: RequestInit, update: unknown, partials: PartialsApi) {
+    const { FETCH_EVENTS } = this.constructor;
+    const { history } = this.$options;
+
+    this.$log('content', url, update);
+    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { instance: this, url, requestInit, content: update });
+
+    if (history) {
+      if (requestInit?.headers?.[this.__headerNames.X_TRIGGERED_BY] !== 'popstate') {
+        historyPush({ path: url.pathname, search: url.searchParams });
+      }
+    }
+
+    this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, update });
+
+    await partials.apply(update);
+
+    this.$emit(FETCH_EVENTS.AFTER_UPDATE, { instance: this, url, requestInit, update });
+  }
+}
