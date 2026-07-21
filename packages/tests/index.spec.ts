@@ -56,6 +56,7 @@ test('components exports', () => {
       "ScrollAnimationWithEase",
       "ScrollReveal",
       "Sentinel",
+      "ShopifyPartialsFetch",
       "Slider",
       "SliderBtn",
       "SliderCount",

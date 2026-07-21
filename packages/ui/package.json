@@ -37,6 +37,12 @@
     "@studiometa/js-toolkit": "^3.7.0"
   },
   "peerDependencies": {
+    "@shopify/partial-rendering": "*",
     "@studiometa/js-toolkit": "^3.7.0"
+  },
+  "peerDependenciesMeta": {
+    "@shopify/partial-rendering": {
+      "optional": true
+    }
   }
 }
