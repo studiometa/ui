@@ -23,13 +23,15 @@ final class ComponentTools
      * Use this first to discover which components exist and how they are named
      * before fetching their API or examples.
      *
-     * @return list<array{name: string, slug: string, pages: list<string>}>
+     * @return array{components: list<array{name: string, slug: string, pages: list<string>}>}
      */
     #[McpTool(name: 'list_components')]
     public function listComponents(): array
     {
         try {
-            return $this->docs->listComponents();
+            // Wrap in an object: MCP requires tool structured content to be a
+            // record, not a bare array.
+            return ['components' => $this->docs->listComponents()];
         } catch (\RuntimeException $e) {
             throw new ToolCallException($e->getMessage(), previous: $e);
         }
