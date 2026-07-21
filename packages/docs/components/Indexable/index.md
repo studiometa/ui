@@ -10,7 +10,20 @@ It is available as an `Indexable` component as well as a `withIndex(Base)` decor
 
 ## Usage
 
-As a primitive, the `Indexable` class should be used to create other components rather than being used directly in an application. The `length` property defaults to `0` and should be overridden to match the actual number of items.
+### Standalone
+
+For simple cases, the `Indexable` component can be used directly in your HTML by setting the number of items with the [`total`](./js-api#total) option. Its index can then be driven from other components such as [`Action`](../Action/):
+
+```html
+<div data-component="Indexable" data-option-total="3" data-option-boundary="loop">
+  <button type="button" data-component="Action" data-option-target="Indexable" data-option-effect="target.goPrev()">Previous</button>
+  <button type="button" data-component="Action" data-option-target="Indexable" data-option-effect="target.goNext()">Next</button>
+</div>
+```
+
+### As a base class
+
+As a primitive, the `Indexable` class can also be used to create other components. The `length` property defaults to the `total` option (`0` when unset) and can be overridden to derive the number of items from the component's content instead.
 
 ```js
 import { Indexable } from '@studiometa/ui';

@@ -44,3 +44,20 @@ Defines the initial direction of the count.
 </div>
 ```
 <!-- prettier-ignore-end -->
+
+### `total`
+
+- Type: `number`
+- Default: `0`
+
+Defines the number of items to navigate through. It sets the `length` property, allowing the `Indexable` component to be used standalone without extending it. Subclasses may override the `length` getter to derive it from their content instead.
+
+<!-- prettier-ignore-start -->
+```html {2}
+<div
+  data-component="Indexable"
+  data-option-total="3">
+  ...
+</div>
+```
+<!-- prettier-ignore-end -->
