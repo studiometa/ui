@@ -60,4 +60,4 @@ await Promise.all([backdrop.enter(), panel.enter()]);
 Reach for `ViewTransition` when you need multiple elements to animate in sync, or to avoid transform-transition rendering bugs inside a modal `<dialog>`. Use [`Transition`](/components/Transition/) when you want fine-grained control over enter/leave classes and timing, or broader browser support.
 :::
 
-See the [JavaScript API](./js-api.md) for the full list of options, methods and events.
+See the [examples](./examples.md) for a live demo, and the [JavaScript API](./js-api.md) for the full list of options, methods and events.
