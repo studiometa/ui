@@ -1,0 +1,32 @@
+<div class="flex flex-col gap-8 py-8">
+  <p class="text-center text-sm text-zinc-500">Scroll down to play each Transition, scroll back up to replay.</p>
+
+  {# Spacer so the panels start below the fold. #}
+  <div class="h-[70vh]"></div>
+
+  {% for i in 1..4 %}
+    <div
+      data-component="Action InView Transition"
+      data-option-enter-from="opacity-0 translate-y-8"
+      data-option-enter-active="transition duration-700 ease-out"
+      data-option-enter-to="opacity-100 translate-y-0"
+      data-option-enter-keep
+      data-option-leave-from="opacity-100 translate-y-0"
+      data-option-leave-active="transition duration-500 ease-in"
+      data-option-leave-to="opacity-0 translate-y-8"
+      data-option-leave-keep
+      data-on:in-view="Transition.enter()"
+      data-on:out-of-view="Transition.leave()"
+      class="mx-auto w-full max-w-md rounded bg-emerald-500 p-6 text-white opacity-0 translate-y-8">
+      <h2 class="text-lg font-bold">Panel {{ i }}</h2>
+      <p class="mt-2">
+        Here <code>InView</code> and <code>Action</code> share the element with a
+        <code>Transition</code>. On <code>in-view</code> the <code>Action</code> plays
+        <code>Transition.enter()</code>, and on <code>out-of-view</code> it plays
+        <code>Transition.leave()</code> — so the class-based transition runs both ways as you scroll.
+      </p>
+    </div>
+  {% endfor %}
+
+  <div class="h-[40vh]"></div>
+</div>

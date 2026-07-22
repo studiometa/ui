@@ -24,3 +24,24 @@ Click **Enter** and **Leave** to toggle the element. The animation runs as a nat
 :::
 
 </llm-only>
+
+## Triggering with the `Action` component
+
+`ViewTransition` exposes the same `enter()`, `leave()` and `toggle()` methods as [`Transition`](/components/Transition/), so the [`Action` component](/components/Action/) can drive it declaratively — no custom `onClick` handlers required. Here the buttons target the `Togglable` instance and call its methods directly through `data-option-effect`.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/action/app.twig')"
+  :script="() => import('./stories/action/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/action/app.twig
+<<< ./stories/action/app.js
+
+:::
+
+</llm-only>

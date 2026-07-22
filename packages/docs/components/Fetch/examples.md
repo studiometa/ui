@@ -25,6 +25,27 @@ Intercepting clicks on links, displaying a loader and updating the targets' cont
 
 </llm-only>
 
+## Fetch from any element
+
+`Fetch` normally reads its URL from an `<a href>` or `<form action>`, but the [`src` option](./js-api.md#src) lets it be driven from **any** element and triggered programmatically. In the following example the panel is a `<div>`: it combines `Fetch` with the [`InViewOnce`](../InViewOnce/index.md) and [`Action`](../Action/index.md) components so that its content is lazy-loaded the first time it scrolls into view, with a bare [`Fetch.fetch()`](./js-api.md#fetch-url-url-string-requestinit-requestinit) call that resolves the `src` URL on its own.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/src/app.twig')"
+  :script="() => import('./stories/src/app.ts?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/src/app.twig
+<<< ./stories/src/app.ts
+
+:::
+
+</llm-only>
+
 ## Form
 
 In the following example, we intercept a form submission, display a loader and use a custom view transition to animate only the updated content once the request is finished.
