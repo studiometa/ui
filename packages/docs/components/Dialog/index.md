@@ -117,4 +117,4 @@ Do **not** add `grid`, `flex`, `block`, … to the `<dialog>` element. Those ove
 Keep all layout on inner elements (the centering layer, the box) and let the dialog's native open/closed `display` stand.
 :::
 
-See the [JavaScript API](./js-api.md) for the full list of options, methods and events.
+See the [examples](./examples.md) for a live demo, and the [JavaScript API](./js-api.md) for the full list of options, methods and events.
