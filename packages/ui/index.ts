@@ -13,6 +13,7 @@ export * from './FigureVideo/index.js';
 export * from './Frame/index.js';
 export * from './Hoverable/index.js';
 export * from './Indexable/index.js';
+export * from './InView/index.js';
 export * from './LargeText/index.js';
 export * from './LazyInclude/index.js';
 export * from './Menu/index.js';
