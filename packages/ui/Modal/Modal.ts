@@ -6,6 +6,7 @@ import {
   untrapFocus as untrap,
   saveActiveElement,
 } from '@studiometa/js-toolkit/utils';
+import { withDeprecation } from '../decorators/index.js';
 
 type ModalStates = Partial<
   Record<'open' | 'active' | 'closed', string | Partial<CSSStyleDeclaration>>
@@ -46,7 +47,10 @@ export interface ModalProps extends BaseProps {
  * Modal class.
  * @link https://ui.studiometa.dev/components/Modal/
  */
-export class Modal<T extends BaseProps = BaseProps> extends Base<T & ModalProps> {
+export class Modal<T extends BaseProps = BaseProps> extends withDeprecation(
+  Base,
+  'The Modal component is deprecated, use the Dialog component instead: https://ui.studiometa.dev/components/Dialog/',
+)<T & ModalProps> {
   /**
    * Config.
    */

@@ -29,13 +29,22 @@ export function withDeprecation<S extends Base>(
       name: 'Deprecated',
     };
 
-    onMounted() {
-      if (isDev) {
-        console.warn(
-          `The ${this.$options.name} component is deprecated.`,
-          message ? `\n${message}` : '',
-        );
-      }
+    /**
+     * Warn about the deprecation once the component is mounted.
+     *
+     * The warning is wired in the constructor through the `after-mounted`
+     * event rather than a `mounted()` hook: js-toolkit calls a single
+     * `mounted` method per instance, so a subclass defining its own
+     * `mounted()` (like `Modal`) would shadow the decorator and swallow the
+     * warning. Subscribing to the event sidesteps that entirely.
+     */
+    constructor(...args: ConstructorParameters<typeof Base>) {
+      super(...args);
+      this.$on('after-mounted', () => {
+        if (isDev) {
+          console.warn(message ?? `The ${this.$options.name} component is deprecated.`);
+        }
+      });
     }
   }
 
