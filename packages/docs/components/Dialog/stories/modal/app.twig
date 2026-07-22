@@ -1,0 +1,73 @@
+<div class="flex flex-col items-start gap-8">
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="Dialog(#modal)->target.open()"
+    class="px-4 py-2 rounded bg-blue-600 text-white font-semibold">
+    Open dialog
+  </button>
+
+  <p class="max-w-md text-current/60">
+    The dialog opens with <code>showModal()</code>, so the platform handles the
+    focus trap, background <code>inert</code>, <kbd>Esc</kbd> and top-layer
+    stacking. The scroll locks while it is open.
+  </p>
+</div>
+
+{# The <dialog> host carries NO display utility, so its native open/closed
+   display (block / none) is preserved — a closed dialog must stay
+   display:none or it covers the page and swallows every click. Layout lives
+   on the inner centering wrapper. #}
+<dialog
+  id="modal"
+  data-component="Action Dialog"
+  data-on:cancel.prevent="Dialog.close()"
+  data-on:click="event.target === $el && Dialog.close()"
+  class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent overflow-y-auto">
+
+  {# Fading backdrop — its own Transition child, dismisses on click. #}
+  <div
+    data-component="Action Transition"
+    data-on:click="Dialog(#modal)->target.close()"
+    data-option-enter-active="transition duration-300 ease-out"
+    data-option-enter-from="opacity-0"
+    data-option-leave-active="transition duration-200 ease-in"
+    data-option-leave-to="opacity-0"
+    data-option-leave-keep
+    class="fixed inset-0 bg-black/50 opacity-0"></div>
+
+  {# Centering layer — pointer-events-none so clicks fall through to the backdrop. #}
+  <div class="pointer-events-none relative flex min-h-full items-center justify-center p-4">
+    {# Scaling + fading box — a second Transition child. #}
+    <div
+      data-component="Transition"
+      data-option-enter-active="transition duration-300 ease-out"
+      data-option-enter-from="opacity-0 scale-95"
+      data-option-leave-active="transition duration-200 ease-in"
+      data-option-leave-to="opacity-0 scale-95"
+      data-option-leave-keep
+      class="pointer-events-auto relative w-full max-w-lg p-8 rounded-lg bg-white text-black shadow-2xl opacity-0 scale-95">
+      <h2 class="text-xl font-bold mb-3">Modal dialog</h2>
+      <p class="mb-6 text-black/60">
+        The backdrop is one <code>Transition</code> child (it fades) and the box
+        another (it scales and fades). One <code>Dialog</code> orchestrates both.
+      </p>
+      <div class="flex items-center gap-4">
+        <a href="https://www.studiometa.fr" class="underline text-blue-600">A focusable link</a>
+        <button
+          type="button"
+          data-component="Action"
+          data-on:click="Dialog(#modal)->target.close()"
+          class="ml-auto px-4 py-2 rounded bg-gray-900 text-white">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  /* The native ::backdrop cannot be class-transitioned, so we hide it and
+     animate our own backdrop element instead. */
+  dialog::backdrop { background: transparent; }
+</style>

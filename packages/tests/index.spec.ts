@@ -22,6 +22,7 @@ test('components exports', () => {
       "DataEffect",
       "DataModel",
       "DataScope",
+      "Dialog",
       "Draggable",
       "Fetch",
       "FetchShopifyPartial",
