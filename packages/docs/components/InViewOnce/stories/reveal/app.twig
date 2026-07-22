@@ -1,0 +1,41 @@
+<div class="flex flex-col gap-8 py-8">
+  <p class="text-center text-sm text-zinc-500">
+    Scroll down to reveal the cards once. Scroll back up: they stay in place — the reveal never
+    replays and no <code>out-of-view</code> is ever emitted.
+  </p>
+
+  {# Spacer so the cards start below the fold. #}
+  <div class="h-[70vh]"></div>
+
+  {% for i in 1..4 %}
+    <div
+      data-component="Action InViewOnce"
+      data-option-intersection-observer='{ "rootMargin": "-10% 0px" }'
+      data-on:in-view="$el.classList.add('is-visible')"
+      class="reveal mx-auto w-full max-w-md rounded bg-violet-500 p-6 text-white">
+      <h2 class="text-lg font-bold">Card {{ i }}</h2>
+      <p class="mt-2">
+        <code>InViewOnce</code> emits <code>in-view</code> a single time, then terminates and
+        disconnects its observer. The <code>Action</code> reveals the card once and it stays
+        visible — ideal for a one-off reveal, a lazy load or an analytics impression.
+      </p>
+    </div>
+  {% endfor %}
+
+  <div class="h-[40vh]"></div>
+</div>
+
+{# The `-10%` root margin delays the reveal until the card is comfortably inside the viewport. #}
+<style>
+  .reveal {
+    opacity: 0;
+    transform: translateY(2rem);
+    transition:
+      opacity 500ms ease,
+      transform 500ms ease;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+</style>

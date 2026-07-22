@@ -41,3 +41,18 @@ export default class Component extends Base {
   <div data-component="InView">...</div>
 </div>
 ```
+
+## Usage with the `Action` component
+
+Since [`$emit`](https://js-toolkit.studiometa.dev/api/methods/emit.html) dispatches a native `CustomEvent` on the component's root element, the [`Action` component](/components/Action/) can react to the `in-view` / `out-of-view` events without any custom class. Mount both on the same element and wire the events with `data-on:` attributes:
+
+```html
+<div
+  data-component="Action InView"
+  data-on:in-view="$el.classList.add('is-visible')"
+  data-on:out-of-view="$el.classList.remove('is-visible')">
+  ...
+</div>
+```
+
+See the [examples](./examples.md) for live reveal-on-scroll demos and the [JavaScript API](./js-api.md) for the full list of options and events.
