@@ -38,6 +38,7 @@ test('components exports', () => {
       "FrameTriggerLoader",
       "Hoverable",
       "InView",
+      "InViewOnce",
       "Indexable",
       "LargeText",
       "LazyInclude",
