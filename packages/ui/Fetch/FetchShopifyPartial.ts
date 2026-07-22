@@ -167,24 +167,25 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
    * the base fetch behaviour.
    * @inheritdoc
    */
-  async fetch(url: URL, requestInit: RequestInit = {}) {
+  async fetch(url: URL | string = this.url, requestInit: RequestInit = {}) {
+    const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
     const names = this.$options.partials;
     const partials =
       names.length && this.__canUsePartials(requestInit) ? await this.__resolvePartials() : null;
 
     if (!partials) {
-      return super.fetch(url, requestInit);
+      return super.fetch(normalizedUrl, requestInit);
     }
 
     const { FETCH_EVENTS } = this.constructor;
-    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url, requestInit });
+    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url: normalizedUrl, requestInit });
 
     this.__abortController.abort();
     const newController = new AbortController();
     newController.signal.addEventListener('abort', () => {
       this.$emit(FETCH_EVENTS.ABORT, {
         instance: this,
-        url,
+        url: normalizedUrl,
         requestInit,
         reason: newController.signal.reason,
       });
@@ -200,22 +201,32 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
       signal: newController.signal,
     };
 
-    this.$log('fetch', url, init);
-    this.$emit(FETCH_EVENTS.FETCH, { instance: this, url, requestInit: init });
+    this.$log('fetch', normalizedUrl, init);
+    this.$emit(FETCH_EVENTS.FETCH, { instance: this, url: normalizedUrl, requestInit: init });
 
     try {
       const update = await partials.fetch(...names, {
-        url: url.toString(),
+        url: normalizedUrl.toString(),
         signal: init.signal,
       });
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit: init, content: update });
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
+        instance: this,
+        url: normalizedUrl,
+        requestInit: init,
+        content: update,
+      });
       // Fire-and-forget the apply phase, matching the base `Fetch.fetch` lifecycle: an
       // `apply()` failure must not be misattributed to the fetch phase and re-emit
       // `AFTER_FETCH` a second time.
-      this.__applyPartials(url, init, update, partials);
+      this.__applyPartials(normalizedUrl, init, update, partials);
     } catch (error) {
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit: init, error });
-      this.error(url, init, error);
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
+        instance: this,
+        url: normalizedUrl,
+        requestInit: init,
+        error,
+      });
+      this.error(normalizedUrl, init, error);
     }
   }
 

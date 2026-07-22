@@ -16,6 +16,7 @@ export interface FetchProps extends BaseProps {
     selector: string;
     response: string;
     viewTransition: boolean;
+    src: string;
   };
 }
 
@@ -90,6 +91,7 @@ export class Fetch<T extends BaseProps = BaseProps>
         type: Boolean,
         default: true,
       },
+      src: String,
     },
   };
 
@@ -131,9 +133,13 @@ export class Fetch<T extends BaseProps = BaseProps>
 
   /**
    * The URL to use for the request.
+   *
+   * For a form, the URL is built from its `action` attribute (with the form data as search
+   * params for GET requests); for a link, from its `href` attribute. For any other element,
+   * it falls back to the `src` option resolved against the current location.
    */
   get url(): URL {
-    const { $el, isForm } = this;
+    const { $el, isForm, isLink } = this;
 
     if (isForm) {
       const { action, method } = this.$el as HTMLFormElement;
@@ -147,7 +153,11 @@ export class Fetch<T extends BaseProps = BaseProps>
       return url;
     }
 
-    return new URL($el.href);
+    if (isLink) {
+      return new URL($el.href);
+    }
+
+    return new URL(this.$options.src, window.location.href);
   }
 
   /**
@@ -256,17 +266,23 @@ export class Fetch<T extends BaseProps = BaseProps>
 
   /**
    * Fetch given url.
+   *
+   * The `url` parameter is optional and defaults to the {@link url} getter, allowing a bare
+   * `fetch()` call from an event or a decorator. String or relative inputs are coerced into a
+   * `URL` object resolved against the current location so the history and view-transition
+   * paths — which rely on `url.pathname` and `url.searchParams` — stay safe.
    */
-  async fetch(url: URL, requestInit: RequestInit = {}) {
+  async fetch(url: URL | string = this.url, requestInit: RequestInit = {}) {
+    const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
     const { FETCH_EVENTS } = this.constructor;
-    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url, requestInit });
+    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url: normalizedUrl, requestInit });
 
     this.__abortController.abort();
     const newController = new AbortController();
     newController.signal.addEventListener('abort', () => {
       this.$emit(FETCH_EVENTS.ABORT, {
         instance: this,
-        url,
+        url: normalizedUrl,
         requestInit,
         reason: newController.signal.reason,
       });
@@ -282,12 +298,17 @@ export class Fetch<T extends BaseProps = BaseProps>
       signal: newController.signal,
     };
 
-    this.$log('fetch', url, init);
-    this.$emit(FETCH_EVENTS.FETCH, { instance: this, url, requestInit: init });
+    this.$log('fetch', normalizedUrl, init);
+    this.$emit(FETCH_EVENTS.FETCH, { instance: this, url: normalizedUrl, requestInit: init });
 
     try {
-      const response = await this.client(url, init);
-      this.$emit(FETCH_EVENTS.RESPONSE, { instance: this, url, requestInit: init, response });
+      const response = await this.client(normalizedUrl, init);
+      this.$emit(FETCH_EVENTS.RESPONSE, {
+        instance: this,
+        url: normalizedUrl,
+        requestInit: init,
+        response,
+      });
 
       if (!response.ok) {
         throw new Error(`Fetch failed with status ${response.status}`);
@@ -300,12 +321,22 @@ export class Fetch<T extends BaseProps = BaseProps>
         'self',
         `return ${this.$options.response}`,
       );
-      const content = await fn.call(this, response, url, requestInit, self);
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit: init, content });
-      this.update(url, init, content);
+      const content = await fn.call(this, response, normalizedUrl, requestInit, self);
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
+        instance: this,
+        url: normalizedUrl,
+        requestInit: init,
+        content,
+      });
+      this.update(normalizedUrl, init, content);
     } catch (error) {
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, { instance: this, url, requestInit: init, error });
-      this.error(url, init, error);
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
+        instance: this,
+        url: normalizedUrl,
+        requestInit: init,
+        error,
+      });
+      this.error(normalizedUrl, init, error);
     }
   }
 

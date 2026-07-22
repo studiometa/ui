@@ -55,6 +55,35 @@ Clicking on the link will dispatch a background fetch request and will replace t
 We use `id` attributes to detect which content from the response should be used and injected in the DOM. Any content from the response not nested in a parent with an `id` attribute will be discarded.
 :::
 
+### From any element
+
+The `Fetch` component is not limited to `<a>` and `<form>` elements. Set the [`src` option](./js-api.md#src) to a URL and the component can be mounted on any element, then triggered programmatically with the [`fetch()` method](./js-api.md#fetch-url-url-string-requestinit-requestinit) — for example from an event via the [`Action`](../Action/index.md) component.
+
+::: code-group
+
+```html [index.html]
+<div
+  data-component="Action Fetch"
+  data-option-src="/some-content"
+  data-on:click="Fetch.fetch()">
+  Click me
+</div>
+
+<div id="content"></div>
+```
+
+```js twoslash [app.ts]
+import { registerComponent } from '@studiometa/js-toolkit';
+import { Action, Fetch } from '@studiometa/ui';
+
+registerComponent(Action);
+registerComponent(Fetch);
+```
+
+:::
+
+Calling `fetch()` without an argument uses the `src` option (or the element's `href` / `action` when it is a link or a form). You can also pass an explicit URL or a relative string, e.g. `Fetch.fetch('/other-content')`.
+
 ### With a loader
 
 Use the [`Action`](../Action/index.md) and [`Transition`](../Transition/index.md) components to display a loader while the fetch request is happening.
