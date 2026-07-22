@@ -4,20 +4,22 @@ title: Action examples
 
 # Examples
 
-## Close modals and panels
+## Close several dialogs at once
+
+A single `Action` can target several components at once. Here one button closes both a centered [`Dialog`](/components/Dialog/) and a drawer by targeting every `Dialog` matching the `[data-can-be-closed]` attribute selector.
 
 <llm-exclude>
   <PreviewPlayground
-    :html="() => import('./stories/close-modal-and-panel/app.twig')"
-    :script="() => import('./stories/close-modal-and-panel/app.js?raw')"
+    :html="() => import('./stories/close-dialogs/app.twig')"
+    :script="() => import('./stories/close-dialogs/app.js?raw')"
     />
 </llm-exclude>
 <llm-only>
 
 :::code-group
 
-<<< ./stories/close-modal-and-panel/app.twig
-<<< ./stories/close-modal-and-panel/app.js
+<<< ./stories/close-dialogs/app.twig
+<<< ./stories/close-dialogs/app.js
 
 :::
 

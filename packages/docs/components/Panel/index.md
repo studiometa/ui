@@ -1,8 +1,12 @@
 ---
-badges: [Twig, JS]
+badges: [Twig, JS, Deprecated]
 ---
 
 # Panel <Badges :texts="$frontmatter.badges" />
+
+::: warning Deprecated
+The `Panel` component is deprecated and will be removed in a future release. Use the [`Dialog`](/components/Dialog/) component instead — a drawer is a documented `Dialog` pattern, see [Building a drawer](/components/Dialog/#building-a-drawer).
+:::
 
 The `Panel` component extends the `Modal` component to create slide-in panels from any edge of the screen with animations.
 

@@ -8,7 +8,7 @@ export default defineConfig({
     alias: {
       '^#private/(.*)': '../ui/$1',
     },
-    setupFiles: ['./tests/__utils__/happydom.ts'],
+    setupFiles: ['./tests/__utils__/dev.ts', './tests/__utils__/happydom.ts'],
     coverage: {
       provider: 'v8',
       include: ['ui/**/*.ts'],

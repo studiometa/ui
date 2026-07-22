@@ -1,0 +1,120 @@
+<div class="flex flex-col items-start gap-4 p-10">
+  <div class="flex flex-wrap gap-4">
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Dialog(#modal)->target.open()"
+      class="px-4 py-2 rounded bg-blue-600 text-white font-semibold">
+      Open modal
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Dialog(#drawer)->target.open()"
+      class="px-4 py-2 rounded bg-emerald-600 text-white font-semibold">
+      Open drawer
+    </button>
+  </div>
+
+  {# A single Action can close several targets at once. The `[data-can-be-closed]`
+     attribute selector matches BOTH dialogs, so one click closes them together. #}
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="Dialog([data-can-be-closed])->target.close()"
+    class="px-4 py-2 rounded bg-gray-900 text-white font-semibold">
+    Close modal &amp; drawer
+  </button>
+
+  <p class="max-w-md text-current/60">
+    Open both dialogs, then use the last button: one <code>Action</code> targets
+    every <code>Dialog</code> matching <code>[data-can-be-closed]</code> and calls
+    <code>close()</code> on each.
+  </p>
+</div>
+
+{# Centered modal dialog. The host carries NO display utility so a closed dialog
+   stays display:none instead of covering the page. #}
+<dialog
+  id="modal"
+  data-can-be-closed
+  data-component="Action Dialog"
+  data-on:cancel.prevent="Dialog.close()"
+  data-on:click="event.target === $el && Dialog.close()"
+  class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent overflow-y-auto">
+  <div
+    data-component="Action Transition"
+    data-on:click="Dialog(#modal)->target.close()"
+    data-option-enter-active="transition duration-300 ease-out"
+    data-option-enter-from="opacity-0"
+    data-option-leave-active="transition duration-200 ease-in"
+    data-option-leave-to="opacity-0"
+    data-option-leave-keep
+    class="fixed inset-0 bg-black/50 opacity-0"></div>
+
+  <div class="pointer-events-none relative flex min-h-full items-center justify-center p-4">
+    <div
+      data-component="Transition"
+      data-option-enter-active="transition duration-300 ease-out"
+      data-option-enter-from="opacity-0 scale-95"
+      data-option-leave-active="transition duration-200 ease-in"
+      data-option-leave-to="opacity-0 scale-95"
+      data-option-leave-keep
+      class="pointer-events-auto relative w-full max-w-lg p-8 rounded-lg bg-white text-black shadow-2xl opacity-0 scale-95">
+      <p>
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+        veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex <a href="#" class="underline">
+          ea commodo consequat
+        </a>. Duis aute irure dolor in reprehenderit in voluptate velit esse
+        cillum dolore eu fugiat nulla pariatur.
+      </p>
+    </div>
+  </div>
+</dialog>
+
+{# Right-anchored drawer dialog — a Dialog whose panel is anchored with CSS and
+   slides in with a Transition. Also flagged `[data-can-be-closed]`. #}
+<dialog
+  id="drawer"
+  data-can-be-closed
+  data-component="Action Dialog"
+  data-on:cancel.prevent="Dialog.close()"
+  data-on:click="event.target === $el && Dialog.close()"
+  class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent">
+  <div
+    data-component="Action Transition"
+    data-on:click="Dialog(#drawer)->target.close()"
+    data-option-enter-active="transition duration-300 ease-out"
+    data-option-enter-from="opacity-0"
+    data-option-leave-active="transition duration-200 ease-in"
+    data-option-leave-to="opacity-0"
+    data-option-leave-keep
+    class="fixed inset-0 bg-black/50 opacity-0"></div>
+
+  <div
+    data-component="Transition"
+    data-option-enter-active="transition duration-300 ease-out"
+    data-option-enter-from="translate-x-full"
+    data-option-leave-active="transition duration-200 ease-in"
+    data-option-leave-to="translate-x-full"
+    data-option-leave-keep
+    class="absolute inset-y-0 right-0 w-80 max-w-full p-8 bg-white text-black shadow-2xl translate-x-full">
+    <div class="mb-4">
+      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+      eiusmod.
+    </div>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Dialog(#drawer)->target.close()"
+      class="px-4 py-2 rounded bg-gray-900 text-white">
+      Ok
+    </button>
+  </div>
+</dialog>
+
+<style>
+  /* The native ::backdrop cannot be class-transitioned; animate our own. */
+  dialog::backdrop { background: transparent; }
+</style>

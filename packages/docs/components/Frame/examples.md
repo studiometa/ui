@@ -73,11 +73,11 @@ In the following example, we implement three different `FrameTarget` components,
 
 ## Adding a product to a cart
 
-This example uses the [`Frame` components](/components/Frame/), as well as the [`Action`](/components/Action/), [`Figure`](/components/Figure/) and [`Panel`](/components/Panel/) components, to add support for adding products to a cart without reloading the page.
+This example uses the [`Frame` components](/components/Frame/), as well as the [`Action`](/components/Action/), [`Figure`](/components/Figure/) and [`Dialog`](/components/Dialog/) components, to add support for adding products to a cart without reloading the page.
 
 The `FrameForm` and `FrameAnchor` components are used to intercept click on links and form submission to make request in the background. The `FrameLoader` component displays a nice loader while the request are made. The `FrameTarget` components are then used to update some of the content on the page.
 
-The `Panel` component is used to display a nice cart and the `Action` component listens to the `Frame` event `frame-content`, which signals that the new content is being inserted, to open the cart and display the newly inserted content.
+The `Dialog` component is used to display a nice cart as a drawer (see [Building a drawer](/components/Dialog/#building-a-drawer)) and the `Action` component listens to the `Frame` event `frame-content`, which signals that the new content is being inserted, to open the cart and display the newly inserted content.
 
 <llm-exclude>
 <PreviewPlayground

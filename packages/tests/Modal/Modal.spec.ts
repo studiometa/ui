@@ -36,6 +36,17 @@ describe('The Modal component', () => {
     expect(modal.isOpen).toBe(false);
   });
 
+  it('should warn that it is deprecated when mounted', async () => {
+    const { consoleSpy, consoleSpyRestor } = await getContext();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('The Modal component is deprecated'),
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('https://ui.studiometa.dev/components/Dialog/'),
+    );
+    consoleSpyRestor();
+  });
+
   it('should emit events when opening and closing', async () => {
     const { modal } = await getContext();
     const fn = vi.fn();

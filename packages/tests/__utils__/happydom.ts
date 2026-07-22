@@ -4,8 +4,6 @@ import { getInstances } from '@studiometa/js-toolkit';
 
 GlobalRegistrator.register();
 
-window.__DEV__ = true;
-
 let y = 0;
 let x = 0;
 
