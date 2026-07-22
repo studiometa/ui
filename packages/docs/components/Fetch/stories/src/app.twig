@@ -1,0 +1,35 @@
+{%- set lazy_content -%}
+  <div id="lazy" class="rounded bg-emerald-500 p-6 text-white">
+    <h2 class="text-lg font-bold">Loaded on scroll</h2>
+    <p class="mt-2">
+      This markup was fetched from the URL defined by the <code>src</code> option the first time
+      the panel entered the viewport, with a bare <code>Fetch.fetch()</code> call.
+    </p>
+  </div>
+{%- endset -%}
+
+<div class="flex flex-col gap-8 py-8">
+  <p class="text-center text-sm text-zinc-500">
+    Scroll down — the panel fetches its content the first time it enters the viewport.
+  </p>
+
+  {# Spacer so the panel starts below the fold. #}
+  <div class="h-[70vh]"></div>
+
+  {#
+    The panel is neither a link nor a form, so `Fetch` reads the URL from the `src` option.
+    `InViewOnce` emits `in-view` once when the panel is scrolled into view, and the sibling
+    `Action` calls the no-argument `Fetch.fetch()`, which fetches `src` and swaps `#lazy` in place.
+  #}
+  <div
+    data-component="Action InViewOnce Fetch"
+    data-option-src="{{ twig_toolkit_url('/api/').withQueryParameter('content', lazy_content).withQueryParameter('wait', 1) }}"
+    data-on:in-view="Fetch.fetch()"
+    class="mx-auto w-full max-w-xl">
+    <div id="lazy" class="rounded border border-dashed border-zinc-300 p-6 text-center text-zinc-500">
+      Loading…
+    </div>
+  </div>
+
+  <div class="h-[40vh]"></div>
+</div>
