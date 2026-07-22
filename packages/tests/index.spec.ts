@@ -24,7 +24,6 @@ test('components exports', () => {
       "DataScope",
       "Dialog",
       "Draggable",
-      "Drawer",
       "Fetch",
       "FetchShopifyPartial",
       "Figure",

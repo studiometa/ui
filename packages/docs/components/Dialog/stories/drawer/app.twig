@@ -1,0 +1,74 @@
+<div class="flex flex-col items-start gap-8">
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="Dialog(#drawer)->target.open()"
+    class="px-4 py-2 rounded bg-emerald-600 text-white font-semibold">
+    Open drawer
+  </button>
+
+  <p class="max-w-md text-current/60">
+    A drawer is just a <code>Dialog</code>: the panel is anchored to the right
+    edge with your own classes (<code>absolute inset-y-0 right-0 w-80</code>) and
+    the slide is an optional <code>ViewTransition</code> you add — smooth even in
+    Firefox. Change the edge and direction by changing those classes and the
+    keyframes; the library ships no drawer opinion.
+  </p>
+</div>
+
+{# The <dialog> host carries NO display utility, so a closed drawer stays
+   display:none instead of covering the page. #}
+<dialog
+  id="drawer"
+  data-component="Action Dialog"
+  data-on:cancel.prevent="Dialog.close()"
+  data-on:click="event.target === $el && Dialog.close()"
+  class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent">
+
+  {# Fading backdrop — a ViewTransition child so it co-animates with the panel. #}
+  <div
+    data-component="Action ViewTransition"
+    data-on:click="Dialog(#drawer)->target.close()"
+    data-option-view-transition-name="drawer-backdrop"
+    data-option-leave-to="opacity-0"
+    class="fixed inset-0 bg-black/50 opacity-0"></div>
+
+  {# Right-anchored panel — author CSS handles the position, a ViewTransition
+     handles the slide. `translate-x-full` is the hidden (offscreen) state. #}
+  <div
+    data-component="ViewTransition"
+    data-option-view-transition-name="drawer-panel"
+    data-option-leave-to="translate-x-full"
+    class="absolute inset-y-0 right-0 w-80 max-w-full p-8 bg-white text-black shadow-2xl translate-x-full">
+    <h2 class="text-xl font-bold mb-3">Drawer</h2>
+    <p class="mb-6 text-black/60">
+      Backdrop fades, panel slides. Two <code>ViewTransition</code> children,
+      batched into a single coordinated transition by one <code>Dialog</code>.
+    </p>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Dialog(#drawer)->target.close()"
+      class="px-4 py-2 rounded bg-gray-900 text-white">
+      Close
+    </button>
+  </div>
+</dialog>
+
+<style>
+  /* The native ::backdrop cannot be class-transitioned; animate our own. */
+  dialog::backdrop { background: transparent; }
+
+  /* Panel: slide in from / out to the right edge. Change these keyframes to
+     slide from another edge — the direction is entirely author-controlled. */
+  @keyframes drawer-slide-in  { from { transform: translateX(100%); } }
+  @keyframes drawer-slide-out { to   { transform: translateX(100%); } }
+  ::view-transition-new(drawer-panel) { animation: 300ms ease-out both drawer-slide-in; }
+  ::view-transition-old(drawer-panel) { animation: 300ms ease-in both drawer-slide-out; }
+
+  /* Backdrop: fade in / out. */
+  @keyframes drawer-fade-in  { from { opacity: 0; } }
+  @keyframes drawer-fade-out { to   { opacity: 0; } }
+  ::view-transition-new(drawer-backdrop) { animation: 300ms ease-out both drawer-fade-in; }
+  ::view-transition-old(drawer-backdrop) { animation: 300ms ease-in both drawer-fade-out; }
+</style>

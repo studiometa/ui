@@ -8,7 +8,6 @@ export * from './Data/index.js';
 export * from './decorators/index.js';
 export * from './Dialog/index.js';
 export * from './Draggable/index.js';
-export * from './Drawer/index.js';
 export * from './Fetch/index.js';
 export * from './Figure/index.js';
 export * from './FigureVideo/index.js';

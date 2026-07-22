@@ -8,7 +8,7 @@ The `Dialog` component is a headless wrapper around the native [`<dialog>`](http
 
 It ships **no markup**: you author the HTML, wire the triggers with [`Action`](/components/Action/) and describe the animations with [`Transition`](/components/Transition/) or [`ViewTransition`](/components/ViewTransition/) children. The `Dialog` fans `enter()`/`leave()` out to every transition child it contains — the backdrop and the box are just two of them.
 
-Reach for [`Drawer`](/components/Drawer/) when you want the same thing sliding in from an edge.
+A **drawer** is not a separate component — it is a `Dialog` whose panel you anchor to an edge with your own CSS and, optionally, slide in with a transition. See [Building a drawer](#building-a-drawer).
 
 ## Usage
 
@@ -108,6 +108,29 @@ The `Dialog` awaits `Promise.all` over the `enter()`/`leave()` of **every** [`Tr
 - `leave()` runs **before** `dialog.close()`, so the dialog is still painted while its children animate out.
 
 With no transition child, `Promise.all([])` resolves immediately and open/close are instant.
+
+## Building a drawer
+
+There is no `Drawer` component: a drawer is a `Dialog` whose panel is **anchored to an edge with your own CSS**. Positioning and animation are entirely author-controlled — the library ships no drawer opinion.
+
+Anchor the panel to the edge you want with layout classes and let the `Dialog` handle the rest:
+
+```html
+<dialog id="drawer" data-component="Action Dialog" data-on:cancel.prevent="Dialog.close()">
+  <!-- backdrop child … -->
+  <!-- Right-anchored panel: position is just these classes. -->
+  <div class="absolute inset-y-0 right-0 w-80 max-w-full bg-white">…</div>
+</dialog>
+```
+
+Out of the box the panel appears and disappears **instantly** with the dialog. To slide it in, make the panel an **optional** transition child:
+
+- **`ViewTransition` (recommended)** — it animates a snapshot in the view-transition overlay rather than the live element in the dialog's top layer, so the slide stays smooth in Firefox (a transform-transition inside a modal `<dialog>` judders there; see [#532](https://github.com/studiometa/ui/issues/532)). Give the panel a unique `view-transition-name` and author the slide with `::view-transition-old()` / `::view-transition-new()` keyframes. The backdrop and panel batch into a single coordinated transition.
+- **`Transition` / CSS** — a plain [`Transition`](/components/Transition/) child with `translate` classes works too, as a fallback for browsers without the View Transitions API or for a non-modal (`data-option-no-modal`) drawer where the Firefox bug does not apply.
+
+The slide **direction** is yours: it is just the translate class / keyframes you choose (`translate-x-full` from the right, `-translate-x-full` from the left, `translate-y-full` from the bottom, and so on) paired with the matching edge-anchoring classes.
+
+See the [drawer example](./examples.md#drawer) for a complete right-side drawer sliding in via `ViewTransition`.
 
 ## The `<dialog>` gotcha
 
