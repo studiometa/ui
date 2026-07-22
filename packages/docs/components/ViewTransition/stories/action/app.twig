@@ -1,0 +1,50 @@
+<div class="flex flex-col items-start gap-8">
+  <div class="flex items-center gap-4">
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: 'Enter',
+      attr: {
+        data_component: 'Action',
+        data_option_target: 'Togglable',
+        data_option_effect: 'target.enter()'
+      }
+    } %}
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: 'Leave',
+      attr: {
+        data_component: 'Action',
+        data_option_target: 'Togglable',
+        data_option_effect: 'target.leave()'
+      }
+    } %}
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: 'Toggle',
+      theme: 'secondary',
+      attr: {
+        data_component: 'Action',
+        data_option_target: 'Togglable',
+        data_option_effect: 'target.toggle()'
+      }
+    } %}
+  </div>
+
+  <div
+    data-component="Togglable"
+    data-option-view-transition-name="box"
+    data-option-leave-to="hidden"
+    class="max-w-md rounded bg-blue-500 p-6 text-white">
+    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dignissimos deleniti
+    repudiandae facilis eos facere iste voluptatum earum optio porro beatae.
+  </div>
+</div>
+
+{# The enter/leave animation is authored with the ::view-transition-* pseudo-elements. #}
+<style>
+  @keyframes view-transition-box-enter {
+    from { opacity: 0; transform: translateY(1rem); }
+  }
+  @keyframes view-transition-box-leave {
+    to { opacity: 0; transform: translateY(1rem); }
+  }
+  ::view-transition-new(box) { animation: 300ms ease-out both view-transition-box-enter; }
+  ::view-transition-old(box) { animation: 300ms ease-in both view-transition-box-leave; }
+</style>
