@@ -20,7 +20,7 @@ onInViewInView() {
 
 ### `out-of-view`
 
-Emitted when the element leaves the viewport (i.e. when the component is destroyed by the `withMountWhenInView` decorator). By default the element re-emits `in-view` on each re-entry.
+Emitted when the element leaves the viewport (i.e. when the component is destroyed by the `withMountWhenInView` decorator). Only emitted when the [`repeat` option](#repeat) is enabled — in the default one-shot mode the primitive terminates after the first `in-view` and never emits `out-of-view`.
 
 ```js
 onInViewOutOfView() {
@@ -29,6 +29,19 @@ onInViewOutOfView() {
 ```
 
 ## Options
+
+### `repeat`
+
+- Type: `boolean`
+- Default: `false`
+
+Configures whether the primitive should keep reacting to viewport crossings or only fire once.
+
+By default (`repeat: false`), the primitive is **one-shot**: it emits `in-view` a single time when the element first enters the viewport, then terminates — so it never emits `out-of-view` and never re-fires. Enable `repeat` to re-emit `in-view` on each entry and `out-of-view` on each leave.
+
+```html
+<div data-component="InView" data-option-repeat>...</div>
+```
 
 ### `intersectionObserver`
 

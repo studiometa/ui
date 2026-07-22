@@ -4,6 +4,7 @@ import {
   h,
   mount,
   mockIsIntersecting,
+  intersectionMockInstance,
   intersectionObserverBeforeAllCallback,
   intersectionObserverAfterEachCallback,
 } from '#test-utils';
@@ -33,6 +34,7 @@ describe('InView component', () => {
   it('should have the correct config', () => {
     expect(InView.config.name).toBe('InView');
     expect(InView.config.emits).toEqual(['in-view', 'out-of-view']);
+    expect(InView.config.options).toHaveProperty('repeat', Boolean);
   });
 
   it('should emit `in-view` when the element enters the viewport', async () => {
@@ -45,42 +47,73 @@ describe('InView component', () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
-  it('should emit `out-of-view` when the element leaves the viewport', async () => {
-    const { el, instance } = await mountInView(`<div data-component="InView"></div>`);
-    const fn = vi.fn();
-    instance.$on('out-of-view', fn);
+  describe('default one-shot behavior', () => {
+    it('should emit `in-view` once and then terminate (disconnect the observer)', async () => {
+      const { el, instance } = await mountInView(`<div data-component="InView"></div>`);
+      const observer = intersectionMockInstance(el);
+      const terminateSpy = vi.spyOn(instance, '$terminate');
+      const fn = vi.fn();
+      instance.$on('in-view', fn);
 
-    await mockIsIntersecting(el, true);
-    await mockIsIntersecting(el, false);
+      await mockIsIntersecting(el, true);
 
-    expect(fn).toHaveBeenCalledTimes(1);
+      expect(fn).toHaveBeenCalledTimes(1);
+      expect(terminateSpy).toHaveBeenCalledTimes(1);
+      // The decorator disconnects the observer on `terminated`.
+      expect(observer.disconnect).toHaveBeenCalled();
+    });
+
+    it('should NOT emit `out-of-view` when terminating after a one-shot `in-view`', async () => {
+      const { el, instance } = await mountInView(`<div data-component="InView"></div>`);
+      const outOfView = vi.fn();
+      instance.$on('out-of-view', outOfView);
+
+      await mockIsIntersecting(el, true);
+
+      expect(outOfView).not.toHaveBeenCalled();
+    });
   });
 
-  it('should re-emit `in-view` on each re-entry (repeat by default)', async () => {
-    const { el, instance } = await mountInView(`<div data-component="InView"></div>`);
-    const inView = vi.fn();
-    const outOfView = vi.fn();
-    instance.$on('in-view', inView);
-    instance.$on('out-of-view', outOfView);
+  describe('with `repeat` option', () => {
+    it('should emit `out-of-view` when the element leaves the viewport', async () => {
+      const { el, instance } = await mountInView(
+        `<div data-component="InView" data-option-repeat></div>`,
+      );
+      const fn = vi.fn();
+      instance.$on('out-of-view', fn);
 
-    await mockIsIntersecting(el, true);
-    await mockIsIntersecting(el, false);
-    await mockIsIntersecting(el, true);
+      await mockIsIntersecting(el, true);
+      await mockIsIntersecting(el, false);
 
-    expect(inView).toHaveBeenCalledTimes(2);
-    expect(outOfView).toHaveBeenCalledTimes(1);
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should re-emit `in-view` on each re-entry', async () => {
+      const { el, instance } = await mountInView(
+        `<div data-component="InView" data-option-repeat></div>`,
+      );
+      const inView = vi.fn();
+      const outOfView = vi.fn();
+      instance.$on('in-view', inView);
+      instance.$on('out-of-view', outOfView);
+
+      await mockIsIntersecting(el, true);
+      await mockIsIntersecting(el, false);
+      await mockIsIntersecting(el, true);
+
+      expect(inView).toHaveBeenCalledTimes(2);
+      expect(outOfView).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('should expose the configurable `intersectionObserver` option', async () => {
     const { el } = await mountInView(
-      `<div data-component="InView" data-option-intersection-observer='{"rootMargin": "100px"}'></div>`,
+      `<div data-component="InView" data-option-repeat data-option-intersection-observer='{"rootMargin": "100px"}'></div>`,
     );
 
-    const observer = globalThis.IntersectionObserver as unknown as { mock: { results: any[] } };
-    const created = observer.mock.results.at(-1)?.value as IntersectionObserver;
+    const observer = intersectionMockInstance(el);
 
     // The option is forwarded to the IntersectionObserver instance.
-    expect(created.rootMargin).toBe('100px');
-    expect(el).toBeInstanceOf(HTMLElement);
+    expect(observer.rootMargin).toBe('100px');
   });
 });
