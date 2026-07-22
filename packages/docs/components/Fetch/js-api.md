@@ -102,6 +102,24 @@ The following element will be updated with HTML from the
 
 :::
 
+### `src`
+
+- Type: `string`
+- Default: `''`
+
+Defines the URL to fetch when the component is not mounted on a `<a>` or a `<form>` element. This makes it possible to drive the `Fetch` component from any element (e.g. a `<div>`) triggered by an event, a decorator or a programmatic call.
+
+The value is resolved against the current location, so both absolute and relative URLs are supported. It is only used as a fallback: on a `<a>` its `href` is used, on a `<form>` its `action` is used, and `src` is ignored.
+
+```html
+<div
+  data-component="Action InView Fetch"
+  data-option-src="/path"
+  data-on:in-view="Fetch.fetch()">
+  …
+</div>
+```
+
 ## Getters
 
 ### `client`
@@ -114,7 +132,7 @@ Returns the global `fetch` function.
 
 - Return: `URL`
 
-If the root element is a link, returns the `href` attribute, if it is a form, returns the `action` attribute, with the form data as URL parameters if the [`method`](#method) is `get`
+If the root element is a link, returns the `href` attribute, if it is a form, returns the `action` attribute, with the form data as URL parameters if the [`method`](#method) is `get`. For any other element, it falls back to the [`src` option](#src) resolved against the current location.
 
 ### `requestInit`
 
@@ -145,6 +163,26 @@ To avoid adding the header to the form data, use the `data-name` attribute to sp
 The example above will add a `x-my-token: some-not-sensible-token` header to the triggered request.
 
 ## Methods
+
+### `fetch(url?: URL | string, requestInit?: RequestInit)`
+
+Performs the fetch request and updates the DOM with the response.
+
+The declarative click, submit and popstate flows call this method for you, but it can also be triggered manually — from an event, a decorator or your own code.
+
+**Parameters**
+
+- `url` (`URL | string`, optional): the URL to fetch. Defaults to the [`url` getter](#url), so a bare `fetch()` call uses the element's `href`, `action` or [`src` option](#src). A `string` is coerced into a `URL` resolved against the current location.
+- `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit), optional): extra options merged into the [`requestInit` getter](#requestinit-1) for this call.
+
+```html
+<div
+  data-component="Action InView Fetch"
+  data-option-src="/path"
+  data-on:in-view="Fetch.fetch()">
+  …
+</div>
+```
 
 ### `abort(reason?: any)`
 

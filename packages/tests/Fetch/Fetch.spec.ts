@@ -42,6 +42,15 @@ describe('The Fetch class', () => {
       expect(fetch.url.href).toBe('https://example.com/submit?foo=bar');
     });
 
+    it('should fall back to the `src` option for the `url` getter on other elements', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const div = h('div', { dataOptionSrc: '/src-path' });
+      const fetch = new Fetch(div);
+      await mount(fetch);
+
+      expect(fetch.url).toEqual(new URL('https://example.com/src-path'));
+    });
+
     it('should have a `requestInit` getter', async () => {
       const headers = { 'x-foo': 'bar' };
       const init = { method: 'post' };
@@ -264,6 +273,57 @@ describe('The Fetch class', () => {
   });
 
   describe('fetch method', () => {
+    it('should default to the `url` getter when called with no argument', async () => {
+      const anchor = h('a', { href: 'https://example.com/no-arg' });
+      const fetch = new Fetch(anchor);
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+
+      await mount(fetch);
+      await fetch.fetch();
+
+      expect(clientSpy).toHaveBeenCalledWith(
+        new URL('https://example.com/no-arg'),
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
+    });
+
+    it('should resolve and fetch the `src` option URL when mounted on a `<div>`', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const div = h('div', { dataOptionSrc: '/src-path' });
+      const fetch = new Fetch(div);
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+
+      await mount(fetch);
+      await fetch.fetch();
+
+      expect(clientSpy).toHaveBeenCalledWith(
+        new URL('https://example.com/src-path'),
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
+    });
+
+    it('should coerce a string URL argument into a URL object', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+      const updateSpy = vi.spyOn(fetch, 'update');
+
+      await mount(fetch);
+      await fetch.fetch('/relative/path');
+
+      const expectedUrl = new URL('https://example.com/relative/path');
+      expect(clientSpy).toHaveBeenCalledWith(
+        expectedUrl,
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
+      // The normalized `URL` (not the raw string) is threaded through to `update`.
+      expect(updateSpy).toHaveBeenCalledWith(expectedUrl, expect.any(Object), 'content');
+    });
+
     it('should emit before-fetch event', async () => {
       const anchor = h('a', { href: 'https://example.com' });
       const fetch = new Fetch(anchor);
