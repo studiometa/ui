@@ -2,18 +2,18 @@ import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { historyPush } from '@studiometa/js-toolkit/utils';
 import { Fetch, type FetchProps } from './Fetch.js';
 
-export interface ShopifyPartialsFetchProps extends FetchProps {
+export interface FetchShopifyPartialProps extends FetchProps {
   $options: FetchProps['$options'] & {
     partials: string[];
   };
 }
 
-export type ShopifyPartialsFetchConstructor<
-  T extends ShopifyPartialsFetch = ShopifyPartialsFetch,
+export type FetchShopifyPartialConstructor<
+  T extends FetchShopifyPartial = FetchShopifyPartial,
 > = {
   new (...args: any[]): T;
-  prototype: ShopifyPartialsFetch;
-} & Pick<typeof ShopifyPartialsFetch, keyof typeof ShopifyPartialsFetch>;
+  prototype: FetchShopifyPartial;
+} & Pick<typeof FetchShopifyPartial, keyof typeof FetchShopifyPartial>;
 
 /**
  * Minimal shape of the `partials` API exposed by `@shopify/partial-rendering`.
@@ -33,7 +33,7 @@ interface PartialsModule {
 }
 
 /**
- * ShopifyPartialsFetch class.
+ * FetchShopifyPartial class.
  *
  * Adapts the base {@link Fetch} component to Shopify's `@shopify/partial-rendering` API
  * (Liquid July '26 preview). Shopify partial rendering is engaged only when partial names
@@ -48,21 +48,21 @@ interface PartialsModule {
  *
  * @link https://ui.studiometa.dev/components/Fetch/
  */
-export class ShopifyPartialsFetch<T extends BaseProps = BaseProps> extends Fetch<
+export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
   T & { $options: { partials: string[] } }
 > {
   /**
    * Declare the `this.constructor` type
    * @link https://github.com/microsoft/TypeScript/issues/3841#issuecomment-2381594311
    */
-  declare ['constructor']: ShopifyPartialsFetchConstructor;
+  declare ['constructor']: FetchShopifyPartialConstructor;
 
   /**
    * Config.
    */
   static config: BaseConfig = {
     ...Fetch.config,
-    name: 'ShopifyPartialsFetch',
+    name: 'FetchShopifyPartial',
     options: {
       ...Fetch.config.options,
       partials: Array,
