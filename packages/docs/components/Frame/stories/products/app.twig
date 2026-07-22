@@ -20,50 +20,58 @@
         )
       }}
     </div>
-    {% embed '@ui/Panel/Panel.twig'
-      with {
-        position: 'right',
-        attr: {
-          class: 'z-10'
-        },
-        overlay_attr: {
-          class: 'z-under absolute inset-0 bg-white/20'
-        },
-        container_attr: {
-          class: 'bg-white h-screen border-l'
-        },
-        content_attr: {
-          class: 'p-8 w-screen max-w-sm'
-        }
-      } only
-    %}
-      {% block open %}
-        <button data-ref="open[]"
-          href="#/api/?cart"
-          class="inline-flex gap-2 items-center border-b">
-          <span data-component="FrameTarget" id="cart-summary">Cart: 0</span>
-        </button>
-      {% endblock %}
-      {% block close %}
-        <div class="flex justify-end p-8 pb-0">
-          <button data-ref="close[]"
-            class="inline-flex gap-2 items-center border-b">
-            Close
-          </button>
-        </div>
-      {% endblock %}
-      {% block content %}
-        <div data-component="FrameTarget"
-          id="cart-content"
-          data-option-enter-from="opacity-0"
-          data-option-enter-active="transition ease-in-out"
-          data-option-leave-active="transition ease-in-out"
-          data-option-leave-to="opacity-0">
-          <p class="opacity-50">Your cart is empty.</p>
-        </div>
-      {% endblock %}
-    {% endembed %}
+    {# The cart drawer is a Dialog; this Action button opens it. #}
+    <button type="button"
+      data-component="Action"
+      data-on:click="Dialog(#cart)->target.open()"
+      class="inline-flex gap-2 items-center border-b">
+      <span data-component="FrameTarget" id="cart-summary">Cart: 0</span>
+    </button>
   </header>
+
+  {# Cart drawer — a right-anchored Dialog. The host carries NO display utility,
+     so a closed drawer stays display:none instead of covering the page. #}
+  <dialog id="cart"
+    data-component="Action Dialog"
+    data-on:cancel.prevent="Dialog.close()"
+    data-on:click="event.target === $el && Dialog.close()"
+    class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent">
+    {# Fading backdrop — a Transition child, dismisses on click. #}
+    <div data-component="Action Transition"
+      data-on:click="Dialog(#cart)->target.close()"
+      data-option-enter-active="transition duration-300 ease-out"
+      data-option-enter-from="opacity-0"
+      data-option-leave-active="transition duration-200 ease-in"
+      data-option-leave-to="opacity-0"
+      data-option-leave-keep
+      class="fixed inset-0 bg-white/20 opacity-0"></div>
+
+    {# Right-anchored panel sliding in from the edge — a second Transition child. #}
+    <div data-component="Transition"
+      data-option-enter-active="transition duration-500 ease-out-expo"
+      data-option-enter-from="translate-x-full"
+      data-option-leave-active="transition duration-500 ease-in-expo"
+      data-option-leave-to="translate-x-full"
+      data-option-leave-keep
+      class="absolute inset-y-0 right-0 w-screen max-w-sm p-8 bg-white border-l translate-x-full">
+      <div class="flex justify-end pb-8">
+        <button type="button"
+          data-component="Action"
+          data-on:click="Dialog(#cart)->target.close()"
+          class="inline-flex gap-2 items-center border-b">
+          Close
+        </button>
+      </div>
+      <div data-component="FrameTarget"
+        id="cart-content"
+        data-option-enter-from="opacity-0"
+        data-option-enter-active="transition ease-in-out"
+        data-option-leave-active="transition ease-in-out"
+        data-option-leave-to="opacity-0">
+        <p class="opacity-50">Your cart is empty.</p>
+      </div>
+    </div>
+  </dialog>
   <main class="grid xs:grid-cols-2 m:grid-cols-3 xl:grid-cols-4 gap-8 p-4">
     {% for article in 1..count %}
       {% set price = random(1, 4) ~ '00 €' %}
@@ -97,7 +105,7 @@
           <form data-component="FrameForm Action"
             action="/api/"
             method="POST"
-            data-on:frame-content="Panel -> target.open()"
+            data-on:frame-content="Dialog(#cart)->target.open()"
             class="flex items-center gap-2">
             {%- set cart_content -%}
               <span data-component="FrameTarget" id="cart-summary">
