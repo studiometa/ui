@@ -1,5 +1,5 @@
 ---
-title: ShopifyPartialsFetch examples
+title: FetchShopifyPartial examples
 ---
 
 # Examples
@@ -29,7 +29,7 @@ Refresh the product grid and the results count when the customer picks a sort or
 
 <a
   href="{{ collection.url }}?sort_by=price-ascending"
-  data-component="ShopifyPartialsFetch"
+  data-component="FetchShopifyPartial"
   data-option-partials='["product-grid", "product-count"]'
   data-option-history>
   Sort by price
@@ -38,9 +38,9 @@ Refresh the product grid and the results count when the customer picks a sort or
 
 ```js [app.ts]
 import { registerComponent } from '@studiometa/js-toolkit';
-import { ShopifyPartialsFetch } from '@studiometa/ui';
+import { FetchShopifyPartial } from '@studiometa/ui';
 
-registerComponent(ShopifyPartialsFetch);
+registerComponent(FetchShopifyPartial);
 ```
 
 :::
@@ -55,7 +55,7 @@ Use a `<form method="get">` so the selected facets are appended to the URL autom
 <form
   action="{{ collection.url }}"
   method="get"
-  data-component="ShopifyPartialsFetch Action"
+  data-component="FetchShopifyPartial Action"
   data-option-partials='["product-grid", "active-filters"]'
   data-on:fetch-before="Transition(#filters-loader) -> target.enter()"
   data-on:fetch-after="Transition(#filters-loader) -> target.leave()">
@@ -86,10 +86,10 @@ Use a `<form method="get">` so the selected facets are appended to the URL autom
 
 ```js [app.ts]
 import { registerComponent } from '@studiometa/js-toolkit';
-import { Action, ShopifyPartialsFetch, Transition } from '@studiometa/ui';
+import { Action, FetchShopifyPartial, Transition } from '@studiometa/ui';
 
 registerComponent(Action);
-registerComponent(ShopifyPartialsFetch);
+registerComponent(FetchShopifyPartial);
 registerComponent(Transition);
 ```
 
@@ -101,7 +101,7 @@ Submitting a facet automatically triggers the request — no submit button is re
 
 ## Reacting to the update event
 
-`ShopifyPartialsFetch` inherits the [`Fetch` events](../Fetch/js-api.md#events). Use the [`fetch-update-after` event](../Fetch/js-api.md#fetch-update-after) to run logic once the regions have been swapped — for example scrolling the refreshed grid back into view after paginating. As with the base component, events bubble, so the [`Action`](../Action/index.md) handler can live on a parent element.
+`FetchShopifyPartial` inherits the [`Fetch` events](../Fetch/js-api.md#events). Use the [`fetch-update-after` event](../Fetch/js-api.md#fetch-update-after) to run logic once the regions have been swapped — for example scrolling the refreshed grid back into view after paginating. As with the base component, events bubble, so the [`Action`](../Action/index.md) handler can live on a parent element.
 
 ::: code-group
 
@@ -111,7 +111,7 @@ Submitting a facet automatically triggers the request — no submit button is re
   data-on:fetch-update-after="document.getElementById('product-grid').scrollIntoView()">
   <a
     href="{{ collection.url }}?page=2"
-    data-component="ShopifyPartialsFetch"
+    data-component="FetchShopifyPartial"
     data-option-partials='["product-grid"]'>
     Next page
   </a>
@@ -120,10 +120,10 @@ Submitting a facet automatically triggers the request — no submit button is re
 
 ```js [app.ts]
 import { registerComponent } from '@studiometa/js-toolkit';
-import { Action, ShopifyPartialsFetch } from '@studiometa/ui';
+import { Action, FetchShopifyPartial } from '@studiometa/ui';
 
 registerComponent(Action);
-registerComponent(ShopifyPartialsFetch);
+registerComponent(FetchShopifyPartial);
 ```
 
 :::

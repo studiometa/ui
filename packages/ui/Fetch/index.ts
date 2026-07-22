@@ -1,2 +1,2 @@
 export * from './Fetch.js';
-export * from './ShopifyPartialsFetch.js';
+export * from './FetchShopifyPartial.js';

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { ShopifyPartialsFetch } from '@studiometa/ui';
+import { FetchShopifyPartial } from '@studiometa/ui';
 import { h, mount } from '#test-utils';
 
 const FAKE_UPDATE = { partials: [{ name: 'product-grid', html: '<div>updated</div>' }] };
 
-const originalLoader = ShopifyPartialsFetch.__loadPartialsModule;
+const originalLoader = FetchShopifyPartial.__loadPartialsModule;
 
 /**
  * Build a fake partials API and wire it into the static loader.
@@ -15,13 +15,13 @@ function useFakePartials(overrides: Record<string, unknown> = {}) {
     apply: vi.fn(),
     ...overrides,
   };
-  ShopifyPartialsFetch.__loadPartialsModule = async () => ({ partials: fakePartials }) as any;
+  FetchShopifyPartial.__loadPartialsModule = async () => ({ partials: fakePartials }) as any;
   return fakePartials;
 }
 
-describe('The ShopifyPartialsFetch class', () => {
+describe('The FetchShopifyPartial class', () => {
   afterEach(() => {
-    ShopifyPartialsFetch.__loadPartialsModule = originalLoader;
+    FetchShopifyPartial.__loadPartialsModule = originalLoader;
     vi.restoreAllMocks();
   });
 
@@ -31,7 +31,7 @@ describe('The ShopifyPartialsFetch class', () => {
       href: 'https://example.com/collections/all',
       dataOptionPartials: ['product-grid', 'product-count'],
     });
-    const fetch = new ShopifyPartialsFetch(anchor);
+    const fetch = new FetchShopifyPartial(anchor);
 
     await mount(fetch);
     anchor.dispatchEvent(new MouseEvent('click', { button: 0 }));
@@ -54,7 +54,7 @@ describe('The ShopifyPartialsFetch class', () => {
     windowFetchSpy.mockImplementation(() => Promise.resolve(new Response('<div id="test">ok</div>')));
 
     const anchor = h('a', { href: 'https://example.com' });
-    const fetch = new ShopifyPartialsFetch(anchor);
+    const fetch = new FetchShopifyPartial(anchor);
 
     await mount(fetch);
     await fetch.fetch(new URL('https://example.com'));
@@ -64,7 +64,7 @@ describe('The ShopifyPartialsFetch class', () => {
   });
 
   it('should fall back to base Fetch when the module fails to resolve', async () => {
-    ShopifyPartialsFetch.__loadPartialsModule = async () => {
+    FetchShopifyPartial.__loadPartialsModule = async () => {
       throw new Error('Cannot find module @shopify/partial-rendering');
     };
     const windowFetchSpy = vi.spyOn(window, 'fetch');
@@ -79,7 +79,7 @@ describe('The ShopifyPartialsFetch class', () => {
       href: 'https://example.com',
       dataOptionPartials: ['product-grid'],
     });
-    const fetch = new ShopifyPartialsFetch(anchor);
+    const fetch = new FetchShopifyPartial(anchor);
 
     await mount(fetch);
     await fetch.fetch(new URL('https://example.com'));
@@ -103,7 +103,7 @@ describe('The ShopifyPartialsFetch class', () => {
       method: 'post',
       dataOptionPartials: ['cart-items'],
     });
-    const fetch = new ShopifyPartialsFetch(form);
+    const fetch = new FetchShopifyPartial(form);
 
     await mount(fetch);
     await fetch.fetch(new URL('https://example.com/cart/add'));
@@ -122,7 +122,7 @@ describe('The ShopifyPartialsFetch class', () => {
       dataOptionPartials: ['product-grid'],
       dataOptionHeaders: { 'x-foo': 'bar' },
     });
-    const fetch = new ShopifyPartialsFetch(anchor);
+    const fetch = new FetchShopifyPartial(anchor);
 
     await mount(fetch);
     await fetch.fetch(new URL('https://example.com'));
@@ -140,7 +140,7 @@ describe('The ShopifyPartialsFetch class', () => {
       href: 'https://example.com',
       dataOptionPartials: ['product-grid'],
     });
-    const fetch = new ShopifyPartialsFetch(anchor);
+    const fetch = new FetchShopifyPartial(anchor);
 
     await mount(fetch);
     await fetch.fetch(new URL('https://example.com'), { credentials: 'include' });
@@ -150,7 +150,7 @@ describe('The ShopifyPartialsFetch class', () => {
   });
 
   it('should fall back to base Fetch when the module has no partials export', async () => {
-    ShopifyPartialsFetch.__loadPartialsModule = async () => ({}) as any;
+    FetchShopifyPartial.__loadPartialsModule = async () => ({}) as any;
     const windowFetchSpy = vi.spyOn(window, 'fetch');
     windowFetchSpy.mockImplementation(() => Promise.resolve(new Response('<div id="test">ok</div>')));
 
@@ -158,7 +158,7 @@ describe('The ShopifyPartialsFetch class', () => {
       href: 'https://example.com',
       dataOptionPartials: ['product-grid'],
     });
-    const fetch = new ShopifyPartialsFetch(anchor);
+    const fetch = new FetchShopifyPartial(anchor);
 
     await mount(fetch);
     await fetch.fetch(new URL('https://example.com'));
@@ -172,10 +172,10 @@ describe('The ShopifyPartialsFetch class', () => {
       href: 'https://example.com',
       dataOptionPartials: ['product-grid'],
     });
-    const fetch = new ShopifyPartialsFetch(anchor);
+    const fetch = new FetchShopifyPartial(anchor);
     const eventLog: string[] = [];
 
-    for (const event of Object.values(ShopifyPartialsFetch.FETCH_EVENTS)) {
+    for (const event of Object.values(FetchShopifyPartial.FETCH_EVENTS)) {
       fetch.$on(event as string, () => eventLog.push(event as string));
     }
 
@@ -183,13 +183,13 @@ describe('The ShopifyPartialsFetch class', () => {
     await fetch.fetch(new URL('https://example.com'));
 
     expect(eventLog).toEqual([
-      ShopifyPartialsFetch.FETCH_EVENTS.BEFORE_FETCH,
-      ShopifyPartialsFetch.FETCH_EVENTS.FETCH,
-      ShopifyPartialsFetch.FETCH_EVENTS.AFTER_FETCH,
-      ShopifyPartialsFetch.FETCH_EVENTS.BEFORE_UPDATE,
-      ShopifyPartialsFetch.FETCH_EVENTS.UPDATE,
-      ShopifyPartialsFetch.FETCH_EVENTS.AFTER_UPDATE,
+      FetchShopifyPartial.FETCH_EVENTS.BEFORE_FETCH,
+      FetchShopifyPartial.FETCH_EVENTS.FETCH,
+      FetchShopifyPartial.FETCH_EVENTS.AFTER_FETCH,
+      FetchShopifyPartial.FETCH_EVENTS.BEFORE_UPDATE,
+      FetchShopifyPartial.FETCH_EVENTS.UPDATE,
+      FetchShopifyPartial.FETCH_EVENTS.AFTER_UPDATE,
     ]);
-    expect(eventLog).not.toContain(ShopifyPartialsFetch.FETCH_EVENTS.RESPONSE);
+    expect(eventLog).not.toContain(FetchShopifyPartial.FETCH_EVENTS.RESPONSE);
   });
 });
