@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/eslint-plugin-ui",
-  "version": "1.9.0-beta.1",
+  "version": "1.9.0-beta.2",
   "description": "ESLint plugin to help developers discover and use @studiometa/ui components",
   "publishConfig": {
     "access": "public"
