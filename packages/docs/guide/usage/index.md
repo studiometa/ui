@@ -7,9 +7,9 @@ Import the [JS Toolkit](https://github.com/studiometa/js-toolkit) components fro
 ```js
 // app.js
 import { registerComponent } from '@studiometa/js-toolkit';
-import { Modal, Cursor } from '@studiometa/ui';
+import { Accordion, Cursor } from '@studiometa/ui';
 
-registerComponent(Modal);
+registerComponent(Accordion);
 registerComponent(Cursor);
 ```
 
@@ -19,9 +19,9 @@ Use [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/register
 
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
-import { Modal } from '@studiometa/ui';
+import { Accordion } from '@studiometa/ui';
 
-registerComponent(Modal);
+registerComponent(Accordion);
 ```
 
 Pass a name or selector as the second argument when the DOM uses a different `data-component` value, or to bind a component to a CSS selector:
