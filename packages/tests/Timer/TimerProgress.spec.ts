@@ -91,6 +91,26 @@ describe('TimerProgress component', () => {
     expect(ratios(details['timer-progress']).at(-1)).toBe(0);
   });
 
+  it('should stop the progress loop when a listener stops it mid-dispatch', async () => {
+    const el = h('div', { dataComponent: 'TimerProgress', dataOptionDelay: '5' });
+    const instance = new TimerProgress(el);
+    let count = 0;
+    // A listener that tears the timer down synchronously on the first frame.
+    el.addEventListener('timer-progress', () => {
+      count += 1;
+      if (count === 1) {
+        instance.stop();
+      }
+    });
+    instance.$mount();
+
+    await advanceTimersByTimeAsync(2000);
+
+    // Without the guard the loop would resurrect itself and keep counting up;
+    // `stop()` also emits a final progress of 0, so at most two events fire.
+    expect(count).toBeLessThanOrEqual(2);
+  });
+
   it('should still emit the base lifecycle events', async () => {
     const { calls } = await mountTimerProgress({ dataOptionDelay: '1' }, [
       'timer-start',

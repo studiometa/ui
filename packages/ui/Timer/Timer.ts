@@ -61,6 +61,12 @@ export class Timer<T extends BaseProps = BaseProps> extends Base<TimerProps & T>
   __remaining = 0;
 
   /**
+   * Whether a countdown is currently paused and can be resumed.
+   * @private
+   */
+  __paused = false;
+
+  /**
    * Start the countdown on mount unless `autostart` is disabled.
    */
   mounted() {
@@ -97,6 +103,7 @@ export class Timer<T extends BaseProps = BaseProps> extends Base<TimerProps & T>
    */
   start() {
     this.__clear();
+    this.__paused = false;
     this.__elapsed = 0;
     this.__remaining = this.__duration;
     this.__dispatch('timer-start');
@@ -115,6 +122,8 @@ export class Timer<T extends BaseProps = BaseProps> extends Base<TimerProps & T>
    */
   stop() {
     this.__clear();
+    this.__paused = false;
+    this.__remaining = 0;
     this.__dispatch('timer-stop');
   }
 
@@ -130,6 +139,7 @@ export class Timer<T extends BaseProps = BaseProps> extends Base<TimerProps & T>
     this.__elapsed += consumed;
     this.__remaining -= consumed;
     this.__clear();
+    this.__paused = true;
     this.__dispatch('timer-pause');
   }
 
@@ -137,10 +147,11 @@ export class Timer<T extends BaseProps = BaseProps> extends Base<TimerProps & T>
    * Resume a paused countdown from where it left off.
    */
   resume() {
-    if (this.__timer !== null || this.__remaining <= 0) {
+    if (!this.__paused) {
       return;
     }
 
+    this.__paused = false;
     this.__dispatch('timer-resume');
     this.__arm(this.__remaining);
   }

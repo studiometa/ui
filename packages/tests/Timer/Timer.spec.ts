@@ -161,6 +161,35 @@ describe('Timer component', () => {
     expect(calls['timer-end']).toBe(1);
   });
 
+  it('should not resume after being stopped', async () => {
+    const { instance, calls } = await mountTimer({ dataOptionDelay: '2' }, [
+      'timer-resume',
+      'timer-end',
+    ]);
+
+    instance.stop();
+    instance.resume();
+
+    expect(calls['timer-resume']).toBe(0);
+    await advanceTimersByTimeAsync(3000);
+    expect(calls['timer-end']).toBe(0);
+  });
+
+  it('should not resume after completing', async () => {
+    const { instance, calls } = await mountTimer({ dataOptionDelay: '1' }, [
+      'timer-resume',
+      'timer-end',
+    ]);
+
+    await advanceTimersByTimeAsync(1100);
+    expect(calls['timer-end']).toBe(1);
+
+    instance.resume();
+    expect(calls['timer-resume']).toBe(0);
+    await advanceTimersByTimeAsync(2000);
+    expect(calls['timer-end']).toBe(1);
+  });
+
   it('should cancel a pending countdown on destroy', async () => {
     const { instance, calls } = await mountTimer({ dataOptionDelay: '2' }, ['timer-end']);
     await instance.$destroy();
