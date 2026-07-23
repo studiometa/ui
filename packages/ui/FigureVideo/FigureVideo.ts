@@ -14,6 +14,13 @@ export interface FigureVideoProps extends BaseProps {
 
 /**
  * FigureVideo class.
+ *
+ * Lazy-loaded video counterpart to `Figure`. Built on `Transition` and the
+ * `withMountWhenInView` decorator, it defers loading of the `video` ref's
+ * `data-poster` and `data-src` sources until the element enters the viewport when
+ * `lazy` is set, runs the enter transition, emits `load`, and then terminates
+ * itself.
+ *
  * @link https://ui.studiometa.dev/components/FigureVideo/
  */
 export class FigureVideo<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(

@@ -44,6 +44,17 @@ export interface SliderProps extends BaseProps {
 
 /**
  * Slider class.
+ *
+ * The root of the carousel/slider system. It measures its `SliderItem`
+ * children against the `wrapper` ref to compute per-slide positions for the
+ * `left`, `center` and `right` modes, then drives navigation through `goTo`,
+ * `goNext` and `goPrev` — emitting `goto` and `index` events and broadcasting
+ * the active index over a per-instance store its `AbstractSliderChild`
+ * controls subscribe to. Drag interactions handled by the `SliderDrag` child
+ * feed inertia-based slide selection, honouring the `fitBounds`, `contain`,
+ * `sensitivity` and `dropSensitivity` options, and arrow-key navigation is
+ * supported when the wrapper is focused.
+ *
  * @link https://ui.studiometa.dev/components/Slider/
  * @todo a11y
  */

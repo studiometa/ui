@@ -12,6 +12,12 @@ export interface ScrollAnimationProps extends BaseProps {
 /**
  * ScrollAnimation class.
  *
+ * A single-element scroll-linked animation: it extends
+ * `AbstractScrollAnimation` with the `withScrolledInView` decorator and animates
+ * its `target` ref as the element scrolls through the viewport. Superseded by
+ * the timeline-based API — use `ScrollAnimationTimeline` with
+ * `ScrollAnimationTarget` children instead.
+ *
  * @deprecated Use `ScrollAnimationTimeline` with `ScrollAnimationTarget` children instead.
  * @link https://ui.studiometa.dev/components/ScrollAnimation/
  */

@@ -12,6 +12,12 @@ export interface ScrollAnimationParentProps extends BaseProps {
 /**
  * ScrollAnimationParent class.
  *
+ * The scroll driver for a group of animations: it uses the `withScrolledInView`
+ * decorator and forwards its `scrolledInView` progress to every
+ * `ScrollAnimationChild` component it contains, so several targets share one
+ * scroll range. Superseded by the timeline-based API — use
+ * `ScrollAnimationTimeline` instead.
+ *
  * @deprecated Use `ScrollAnimationTimeline` instead.
  */
 export class ScrollAnimationParent<T extends BaseProps = BaseProps> extends withScrolledInView(

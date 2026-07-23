@@ -6,6 +6,11 @@ export interface FigureProps extends AbstractFigureProps {}
 
 /**
  * Figure class.
+ *
+ * Concrete lazy-loaded image figure built on `AbstractFigure`. It loads the
+ * `data-src` source when the element scrolls into view, then terminates itself
+ * once the image has loaded, as it has no further work to do after the reveal.
+ *
  * @link https://ui.studiometa.dev/components/Figure/
  */
 export class Figure<T extends BaseProps = BaseProps> extends AbstractFigure<T> {

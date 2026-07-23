@@ -9,6 +9,13 @@ export interface CircularMarqueeProps extends BaseProps {
 
 /**
  * CircularMarquee class.
+ *
+ * Continuously rotates its element in response to scrolling, turning page scroll
+ * into a spinning marquee. Each scroll event feeds the vertical delta into a
+ * rotation accumulated on every animation frame, damped for smoothness and scaled
+ * by the `sensitivity` option (`data-option-sensitivity`, default `0.1`), then
+ * applied through a CSS transform.
+ *
  * @link https://ui.studiometa.dev/components/CircularMarquee/
  */
 export class CircularMarquee extends Base<CircularMarqueeProps> {

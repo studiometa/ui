@@ -10,6 +10,11 @@ export interface FrameFormProps extends BaseProps {
 
 /**
  * FrameForm class.
+ *
+ * The form trigger of the Frame navigation system. Bound to a `<form>` element, it prevents
+ * the default submission (unless `target="_blank"`) and calls `trigger()` so the parent
+ * `Frame` fetches the form's action, sending the form data as query params for GET or as a
+ * `FormData` body for POST, plus any headers declared through `headers` refs.
  */
 export class FrameForm<T extends BaseProps = BaseProps> extends AbstractFrameTrigger<
   T & FrameFormProps

@@ -32,6 +32,17 @@ type VirtualBinding =
 
 /**
  * DataBind class.
+ *
+ * Part of the reactive Data* family. It creates a binding between a DOM element
+ * and a shared value within its Data group — optionally scoped by an enclosing
+ * `DataScope` — reflecting values published by the other members of the group
+ * onto the element. The bound target defaults to a form control's value or the
+ * element's `textContent`, can be overridden with the `prop` option, keyed with
+ * the `key` option, and propagated on mount with `immediate`; `data-bind:*`
+ * attributes additionally drive an element's property, attribute, class, style
+ * or text from the same value. It also exposes `set`, `toggle`, `increment` and
+ * `cycle` helpers to publish changes back to the group.
+ *
  * @link https://ui.studiometa.dev/components/DataBind/
  */
 export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, DataScope>(

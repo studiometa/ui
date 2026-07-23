@@ -6,6 +6,12 @@ export interface SliderItemProps extends BaseProps {}
 
 /**
  * SliderItem class.
+ *
+ * A single slide within the Slider. It caches its bounding rectangle for the
+ * Slider's position computations and translates itself along the x axis on
+ * demand — either instantly via `moveInstantly` or with a damped, ticked
+ * animation via `move` — while exposing `activate`/`disactivate` to toggle its
+ * `is-active` state and setting `role`/`aria` attributes for accessibility.
  */
 export class SliderItem<T extends BaseProps = BaseProps> extends Base<T & SliderItemProps> {
   /**

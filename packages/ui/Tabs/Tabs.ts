@@ -26,6 +26,12 @@ export interface TabsProps extends BaseProps {
 
 /**
  * Tabs class.
+ *
+ * A tabs component pairing `btn` and `content` refs by index: clicking a button
+ * enables its panel and disables the others, transitioning each panel between
+ * open and closed states defined by the `styles` option while keeping ARIA
+ * attributes in sync. Emits `enable` and `disable`.
+ *
  * @link https://ui.studiometa.dev/components/Tabs/
  */
 export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {

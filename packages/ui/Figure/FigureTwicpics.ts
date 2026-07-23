@@ -24,6 +24,13 @@ const isBot = /bot|crawl|slurp|spider/i.test(navigator.userAgent);
 
 /**
  * FigureTwicpics class.
+ *
+ * Dynamic image figure that rewrites its source into a TwicPics URL sized to the
+ * rendered element. Building on `AbstractFigureDynamic`, its `formatSrc` injects
+ * a `twic` query built from the `domain`, `path`, `transform` and `mode` options
+ * and the measured dimensions, multiplied by the device pixel ratio unless `dpr`
+ * is disabled or a bot is detected.
+ *
  * @link https://ui.studiometa.dev/components/FigureTwicpics/
  */
 export class FigureTwicpics<T extends BaseProps = BaseProps> extends AbstractFigureDynamic<

@@ -33,6 +33,12 @@ function updateProps(
 /**
  * ScrollAnimationChild class.
  *
+ * An animation target driven by a `ScrollAnimationParent`: it extends
+ * `AbstractScrollAnimation` and smooths the parent's scroll progress with its
+ * own `dampFactor` and `dampPrecision` options before rendering, giving each
+ * child independent easing. Superseded by the timeline-based API — use
+ * `ScrollAnimationTarget` instead.
+ *
  * @deprecated Use `ScrollAnimationTarget` instead.
  */
 export class ScrollAnimationChild<T extends BaseProps = BaseProps> extends AbstractScrollAnimation<

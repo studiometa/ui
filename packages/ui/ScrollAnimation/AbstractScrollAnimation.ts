@@ -15,6 +15,14 @@ export interface AbstractScrollAnimationProps extends BaseProps {
 
 /**
  * AbstractScrollAnimation class.
+ *
+ * Shared base for the scroll-linked animation components. It drives a
+ * `@studiometa/js-toolkit` `animate` instance from the element's scroll
+ * progress, mapping the `scrolledInView` damped progress through the
+ * configurable `playRange` onto the animation defined by the `from`/`to` or
+ * `keyframes` and `easing` options. Options are frozen via `withFreezedOptions`,
+ * and the animation is restored on mount and snapped to its nearest boundary on
+ * destroy.
  */
 export class AbstractScrollAnimation<
   T extends BaseProps = BaseProps,

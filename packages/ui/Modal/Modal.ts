@@ -45,6 +45,13 @@ export interface ModalProps extends BaseProps {
 
 /**
  * Modal class.
+ *
+ * An overlay dialog component that opens and closes via `open`/`close` refs and
+ * an `overlay`, transitioning per-ref styles between open and closed states. It
+ * traps focus, closes on Escape, can lock document scroll, optionally autofocus
+ * an element and relocate its markup in the DOM via the `move` option, and
+ * emits `open` and `close`. Deprecated in favour of the `Dialog` component.
+ *
  * @link https://ui.studiometa.dev/components/Modal/
  */
 export class Modal<T extends BaseProps = BaseProps> extends withDeprecation(

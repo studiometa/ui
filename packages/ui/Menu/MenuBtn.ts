@@ -3,6 +3,10 @@ import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 
 /**
  * MenuBtn class.
+ *
+ * The toggle button child of a `Menu`. It tracks its own hover state and stops
+ * propagation of `mouseenter`/`mouseleave` events so the parent `Menu` can
+ * distinguish hovering the button from hovering the list.
  */
 export class MenuBtn<T extends BaseProps = BaseProps> extends Base<T> {
   /**

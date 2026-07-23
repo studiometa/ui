@@ -18,6 +18,13 @@ export interface StickyProps extends BaseProps {
 
 /**
  * Sticky class.
+ *
+ * A sticky-positioning primitive that stacks multiple sticky elements without overlap. It
+ * uses a child `Sentinel` to detect when the element becomes stuck, then offsets and
+ * z-indexes each instance against the others sharing its positioning context. The
+ * `hideWhenUp` and `hideWhenDown` options let it hide on scroll direction, and the `zIndex`
+ * option sets the base stacking order.
+ *
  * @link https://ui.studiometa.dev/components/Sticky/
  */
 export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProps> {

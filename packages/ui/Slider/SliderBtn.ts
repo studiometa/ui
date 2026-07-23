@@ -11,6 +11,12 @@ export interface SliderBtnProps extends BaseProps {
 
 /**
  * SliderBtn class.
+ *
+ * A previous/next navigation button for the Slider. Configured through the
+ * `prev` and `next` options, it calls the parent Slider's `goPrev`/`goNext` on
+ * click and toggles its own `disabled` attribute at the slider bounds. With the
+ * `contain` option it additionally disables the next button once the contained
+ * end state is reached, provided the parent Slider also runs in `contain` mode.
  */
 export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderChild<
   T & SliderBtnProps

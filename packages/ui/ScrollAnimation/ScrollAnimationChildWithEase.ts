@@ -6,6 +6,11 @@ import { animationScrollWithEase } from './animationScrollWithEase.js';
 /**
  * ScrollAnimationChildWithEase class.
  *
+ * A `ScrollAnimationChild` wrapped with the `animationScrollWithEase` mixin,
+ * which applies an easing function — selected via its `ease` option (default
+ * `outExpo`) — to the child's damped scroll progress before rendering.
+ * Superseded by the timeline-based API — use `ScrollAnimationTarget` instead.
+ *
  * @deprecated Use `ScrollAnimationTarget` instead.
  */
 export class ScrollAnimationChildWithEase extends animationScrollWithEase(ScrollAnimationChild) {

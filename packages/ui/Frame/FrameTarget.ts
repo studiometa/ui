@@ -11,6 +11,11 @@ export interface FrameTargetProps extends BaseProps {
 
 /**
  * FrameTarget class.
+ *
+ * The swap region of the Frame navigation system. Identified by its `id`, it receives the
+ * matching fragment from the fetched HTML and updates its content according to the `mode`
+ * option (`replace`, `prepend`, `append` or `morph`). It extends `Transition` to play the
+ * leave/enter transitions around the swap and re-adopts any newly inserted `<script>` tags.
  */
 export class FrameTarget<T extends BaseProps = BaseProps> extends Transition<T & FrameTargetProps> {
   /**

@@ -7,6 +7,10 @@ export interface FrameAnchorProps extends BaseProps {
 
 /**
  * FrameAnchor class.
+ *
+ * The link trigger of the Frame navigation system. Bound to an `<a>` element, it prevents
+ * the default navigation on a plain left click (ignoring modifier keys and `target="_blank"`)
+ * and calls `trigger()` to have the parent `Frame` fetch the link's `href` instead.
  */
 export class FrameAnchor<T extends BaseProps = BaseProps> extends AbstractFrameTrigger<
   T & FrameAnchorProps

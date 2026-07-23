@@ -14,6 +14,12 @@ export interface LazyIncludeProps extends BaseProps {
 
 /**
  * LazyInclude class.
+ *
+ * Lazily fetches remote HTML from the `src` option on mount and injects it into
+ * the element, toggling `loading` and `error` refs accordingly. It emits
+ * `content`, `error` and `always`, and can self-terminate once loaded via the
+ * `terminateOnLoad` option.
+ *
  * @link https://ui.studiometa.dev/components/LazyInclude/
  */
 export class LazyInclude<T extends BaseProps = BaseProps>
