@@ -4,11 +4,11 @@ badges: [JS]
 
 # InView <Badges :texts="$frontmatter.badges" />
 
-The `InView` primitive emits directional viewport events, letting you react differently when an element **enters** or **leaves** the viewport.
+The `InView` primitive emits directional events when an element enters or leaves the viewport.
 
 ## Usage
 
-The `InView` primitive should be used as a child component to listen to its `in-view` and `out-of-view` events. Unlike the [`Sentinel` primitive](/components/Sentinel/) — whose single `intersected` event fires on both enter and leave — `InView` is its directional counterpart: it tells you which way the element crossed the viewport boundary.
+The `InView` primitive should be used as a child component to listen to its `in-view` and `out-of-view` events. It emits a directional `in-view` / `out-of-view` pair, unlike [`Sentinel`](/components/Sentinel/), whose `intersected` event fires on both enter and leave.
 
 It is built on the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html): the component mounts when it enters the viewport (emitting `in-view`) and is destroyed when it leaves (emitting `out-of-view`), re-firing on each re-entry.
 
@@ -44,7 +44,7 @@ export default class Component extends Base {
 
 ## Usage with the `Action` component
 
-Since [`$emit`](https://js-toolkit.studiometa.dev/api/methods/emit.html) dispatches a native `CustomEvent` on the component's root element, the [`Action` component](/components/Action/) can react to the `in-view` / `out-of-view` events without any custom class. Mount both on the same element and wire the events with `data-on:` attributes:
+The [`Action` component](/components/Action/) can react to the `in-view` / `out-of-view` events without any custom class. Mount both on the same element and wire the events with `data-on:` attributes:
 
 ```html
 <div
@@ -55,4 +55,10 @@ Since [`$emit`](https://js-toolkit.studiometa.dev/api/methods/emit.html) dispatc
 </div>
 ```
 
-See the [examples](./examples.md) for live reveal-on-scroll demos and the [JavaScript API](./js-api.md) for the full list of options and events.
+::: info
+[`$emit`](https://js-toolkit.studiometa.dev/api/methods/emit.html) dispatches a native `CustomEvent` on the component's root element, which is what lets `Action` react to these events.
+:::
+
+::: tip Example
+See the [examples](./examples.md) for live reveal-on-scroll demos, and the [JavaScript API](./js-api.md) for the full list of options and events.
+:::

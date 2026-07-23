@@ -12,7 +12,7 @@ outline: deep
 - Type: `Boolean`
 - Default: `true`
 
-Open the dialog as a true modal with [`showModal()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/showModal) — the platform then handles the focus trap, makes the rest of the page [`inert`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/inert), restores focus on close and paints the dialog in the top layer. Set it to `false` (via `data-option-no-modal`) to use [`show()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/show) instead, which keeps the rest of the page interactive — useful for a slide-in nav.
+Open the dialog as a true modal with [`showModal()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/showModal): the platform then handles the focus trap, makes the rest of the page [`inert`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/inert), restores focus on close and paints the dialog in the top layer. Set it to `false` (via `data-option-no-modal`) to use [`show()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/show) instead, which keeps the rest of the page interactive, useful for a slide-in nav.
 
 <!-- prettier-ignore-start -->
 ```html {2}
@@ -28,7 +28,7 @@ Open the dialog as a true modal with [`showModal()`](https://developer.mozilla.o
 - Type: `Boolean`
 - Default: `true`
 
-Trap the tabulation inside the dialog. This is **only meaningful on the non-modal path** (`modal: false`) — `showModal()` already traps focus natively, so the option is a no-op when `modal` is `true`. On the non-modal path it saves the active element on open, keeps <kbd>Tab</kbd> inside the dialog while open, and restores focus on close.
+Trap the tabulation inside the dialog. This is only meaningful on the non-modal path (`modal: false`): `showModal()` already traps focus natively, so the option is a no-op when `modal` is `true`. On the non-modal path it saves the active element on open, keeps <kbd>Tab</kbd> inside the dialog while open, and restores focus on close.
 
 <!-- prettier-ignore-start -->
 ```html {3}
@@ -73,7 +73,7 @@ Open the dialog: call `showModal()` (or `show()` when `modal` is `false`), lock 
 
 - Returns `Promise<void>`
 
-Close the dialog: emit `close`, run every child's `leave()`, **then** call `dialog.close()`, release the focus-trap (non-modal path) and unlock the scroll. A no-op if the dialog is already closed. Resolves once closed.
+Close the dialog: emit `close`, run every child's `leave()`, then call `dialog.close()`, release the focus-trap (non-modal path) and unlock the scroll. A no-op if the dialog is already closed. Resolves once closed.
 
 ### `toggle`
 

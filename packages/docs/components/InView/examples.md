@@ -4,7 +4,7 @@ title: InView examples
 
 # Examples
 
-Because [`$emit`](https://js-toolkit.studiometa.dev/api/methods/emit.html) dispatches a native `CustomEvent` on the component's root element, the [`Action` component](../Action/index.md) can catch the `in-view` and `out-of-view` events emitted by `InView` with its [`data-on:<event>` attributes](../Action/js-api.md#on-event-modifier). Putting both components on the same element (`data-component="Action InView"`) is therefore all it takes to react to viewport crossings declaratively — no custom JavaScript class required.
+The [`Action` component](../Action/index.md) can catch the `in-view` and `out-of-view` events emitted by `InView` with its [`data-on:<event>` attributes](../Action/js-api.md#on-event-modifier), because [`$emit`](https://js-toolkit.studiometa.dev/api/methods/emit.html) dispatches them as native `CustomEvent`s on the root element. Mounting both components on the same element (`data-component="Action InView"`) is all it takes to react to viewport crossings declaratively, with no custom JavaScript class.
 
 ## Reveal on scroll
 
