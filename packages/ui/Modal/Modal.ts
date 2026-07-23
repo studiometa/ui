@@ -49,7 +49,7 @@ export interface ModalProps extends BaseProps {
  */
 export class Modal<T extends BaseProps = BaseProps> extends withDeprecation(
   Base,
-  'The Modal component is deprecated, use the Dialog component instead: https://ui.studiometa.dev/components/Dialog/',
+  'Use the Dialog component instead: https://ui.studiometa.dev/components/Dialog/',
 )<T & ModalProps> {
   /**
    * Config.
