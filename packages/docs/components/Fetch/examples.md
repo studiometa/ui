@@ -157,6 +157,10 @@ In this example, we could use a more specific version of the [`data-option-targe
 
 Shopify's [Section Rendering API](https://shopify.dev/docs/api/ajax/section-rendering) returns the rendered HTML of specific theme sections as a JSON object: each key is a requested section ID and each value is that section's HTML — or `null` when the section fails to render. Because every section is wrapped in a `<div id="shopify-section-{id}">` element both on the page and inside the API response, the `Fetch` component can consume it **without any extra code**: parse the JSON with the [`response` option](./js-api.md#response) and let the default [`[id]` selector](./js-api.md#selector) swap each section in place.
 
+::: tip
+The [`FetchShopifySection`](../FetchShopifySection/index.md) component wraps this pattern: it declares the sections through a `sections` option (keeping them out of the `href` for a working no-JS fallback) and ships the JSON extraction below as its default, so you don't repeat it on every element.
+:::
+
 Request the sections to update by adding the comma-separated `sections` parameter (up to five) to the URL:
 
 :::code-group
