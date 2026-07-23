@@ -20,6 +20,7 @@ export * from './LazyInclude/index.js';
 export * from './Menu/index.js';
 export * from './Modal/index.js';
 export * from './Panel/index.js';
+export * from './Popover/index.js';
 export * from './Prefetch/index.js';
 export * from './ScrollAnimation/index.js';
 export * from './ScrollReveal/index.js';
