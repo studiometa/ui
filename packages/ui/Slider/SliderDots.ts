@@ -10,6 +10,10 @@ export interface SliderDotsProps extends BaseProps {
 
 /**
  * SliderDots class.
+ *
+ * Pagination dots for the Slider. It reflects the active slide by running the
+ * `withTransition` enter/leave classes on the `dots` refs as the index changes,
+ * and navigates the parent Slider to the matching slide when a dot is clicked.
  */
 export class SliderDots<
   T extends BaseProps = BaseProps,

@@ -17,6 +17,13 @@ export interface CursorProps extends BaseProps {
 
 /**
  * Cursor class.
+ *
+ * Custom cursor that follows the pointer, damping its position each frame for a
+ * smooth trail. It grows over elements matching `growSelectors` and shrinks over
+ * `shrinkSelectors` or while the pointer is down, interpolating between the
+ * `scale`, `growTo` and `shrinkTo` factors with per-transition damping options
+ * and applying the result as a `transform` on the root element.
+ *
  * @link https://ui.studiometa.dev/components/Cursor/
  */
 export class Cursor<T extends BaseProps = BaseProps> extends Base<CursorProps & T> {

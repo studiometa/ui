@@ -8,6 +8,13 @@ export interface AnchorScrollToProps extends BaseProps {
 
 /**
  * AnchorScrollTo class.
+ *
+ * Enhances an anchor element so that clicking it smoothly scrolls to the element
+ * referenced by its `href` hash instead of jumping. It reads the target from the
+ * link's `hash`, delegates the animation to the toolkit `scrollTo` helper and
+ * prevents the default jump; if the target cannot be resolved the click is left
+ * untouched.
+ *
  * @link https://ui.studiometa.dev/components/AnchorScrollto/
  */
 export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<AnchorScrollToProps & T> {

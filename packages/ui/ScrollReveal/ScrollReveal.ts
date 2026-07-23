@@ -13,6 +13,13 @@ export interface ScrollRevealProps extends BaseProps {
 
 /**
  * ScrollReveal class.
+ *
+ * Plays a `Transition`'s `enter` transition when the element scrolls into view.
+ * Built on the `withMountWhenInView` decorator, it reveals its `target` ref (or
+ * the element itself) once and terminates, unless the `repeat` option is set, in
+ * which case it re-runs the transition on each entry while tracking scroll
+ * direction to skip reveals when scrolling up.
+ *
  * @link https://ui.studiometa.dev/components/ScrollReveal/
  */
 export class ScrollReveal<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(

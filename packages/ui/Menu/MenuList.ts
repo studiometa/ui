@@ -25,6 +25,12 @@ export interface MenuListProps extends BaseProps {
 
 /**
  * MenuList class.
+ *
+ * The collapsible list child of a `Menu`, extending `Transition` to animate its
+ * reveal. It exposes `open()`, `close()` and `toggle()`, keeps `aria-hidden`
+ * and the `tabindex` of its focusable elements in sync with its visibility,
+ * recursively closes nested lists, and emits `items-open`, `items-close` and
+ * `items-mouseleave`.
  */
 export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & MenuListProps> {
   /**

@@ -10,6 +10,10 @@ export interface SliderCountProps extends BaseProps {
 
 /**
  * SliderCount class.
+ *
+ * A slide index counter for the Slider. It writes the human-readable position
+ * of the active slide (the current index plus one) into its `current` ref
+ * whenever the Slider index changes.
  */
 export class SliderCount<T extends BaseProps = BaseProps> extends AbstractSliderChild<
   T & SliderCountProps

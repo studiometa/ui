@@ -17,6 +17,11 @@ export interface AbstractFrameTriggerProps extends BaseProps {
 
 /**
  * AbstractFrameTrigger class.
+ *
+ * The shared base for the Frame navigation triggers (`FrameAnchor` and `FrameForm`). It
+ * resolves the request URL and `requestInit` from the root element, exposes a `trigger()`
+ * method that emits the `frame-trigger` event consumed by the parent `Frame`, and drives
+ * its `FrameTriggerLoader` children during the request lifecycle.
  */
 export class AbstractFrameTrigger<T extends BaseProps = BaseProps> extends Base<
   T & AbstractFrameTriggerProps

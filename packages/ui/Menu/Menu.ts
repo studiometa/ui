@@ -18,6 +18,12 @@ export interface MenuProps extends BaseProps {
 
 /**
  * Menu class.
+ *
+ * A disclosure menu orchestrating a `MenuBtn` toggle button and a collapsible
+ * `MenuList`. The `mode` option chooses whether it opens on click or on hover,
+ * and it wires up ARIA attributes, keyboard handling (Enter/Escape),
+ * click-outside dismissal and mutual closing of sibling submenus.
+ *
  * @link https://ui.studiometa.dev/components/Menu/
  */
 export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {

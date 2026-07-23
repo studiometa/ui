@@ -15,6 +15,13 @@ export interface LargeTextProps extends BaseProps {
 
 /**
  * LargeText class.
+ *
+ * A component that continuously translates its `target` ref horizontally,
+ * looping as the content scrolls out of view, to render horizontally scrolling
+ * text. The motion is driven by scroll delta and tuned via the `sensitivity`
+ * option, with an optional `skew` effect. Built on the `withMountWhenInView`
+ * decorator so it only runs while visible.
+ *
  * @link https://ui.studiometa.dev/components/LargeText/
  */
 export class LargeText<T extends BaseProps = BaseProps>

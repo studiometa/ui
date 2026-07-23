@@ -7,6 +7,14 @@ export interface AbstractSliderChildProps extends BaseProps {}
 
 /**
  * AbstractSliderChild class.
+ *
+ * The shared base for Slider controls (buttons, counter, dots, progress). It
+ * connects to its parent `Slider` — either handed over by the Slider on mount
+ * or resolved through a guarded `$closest('Slider')` lookup, never via the
+ * deprecated `$parent` accessor — and subscribes to the Slider's index store,
+ * scheduling a call to the subclass `update(index)` method whenever the active
+ * slide changes. Subclasses must implement `update` to reflect the current
+ * index in the DOM.
  */
 export class AbstractSliderChild<T extends BaseProps = BaseProps> extends Base<
   T & AbstractSliderChildProps

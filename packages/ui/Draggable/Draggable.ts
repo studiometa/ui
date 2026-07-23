@@ -26,6 +26,15 @@ export interface DraggableProps extends BaseProps {
 
 /**
  * Draggable class.
+ *
+ * Makes a `target` ref draggable within its parent element using the `withDrag`
+ * decorator. Dragging can be constrained to the `x` and/or `y` axes, is damped
+ * via the `sensitivity` and `dropSensitivity` options, and the target can be
+ * kept inside the parent bounds (plus a configurable `margin`) with `fitBounds`
+ * or `strictFitBounds`. It emits `drag-start`, `drag-drag`, `drag-drop`,
+ * `drag-inertia`, `drag-stop`, `drag-fit` and `drag-render` events across the
+ * drag lifecycle.
+ *
  * @link https://ui.studiometa.dev/components/Draggable/
  */
 export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {

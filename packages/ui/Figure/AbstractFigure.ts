@@ -14,6 +14,12 @@ export interface AbstractFigureProps extends BaseProps {
 
 /**
  * Figure class.
+ *
+ * Shared base for the image figure components. It wraps a single `img` ref in a
+ * `Transition` and, through the `withMountWhenInView` decorator, defers loading
+ * of the `data-src` source until the element enters the viewport when the `lazy`
+ * option is set, running the enter transition and emitting `load` once the image
+ * is ready.
  */
 export class AbstractFigure<
   T extends BaseProps = BaseProps,

@@ -13,6 +13,14 @@ export interface ActionProps extends BaseProps {
 
 /**
  * Action class.
+ *
+ * A declarative bridge that wires DOM events on its element to effects run on
+ * targeted components. Bindings come from `data-on:<event>` attributes (e.g.
+ * `data-on:click="target.$el.textContent = 'Clicked'"`) and/or the `on`, `target`
+ * and `effect` options, each parsed into an `ActionEvent` that is attached on
+ * mount and detached on destroy. This lets HTML trigger methods or property
+ * changes on other components without writing any JavaScript.
+ *
  * @link https://ui.studiometa.dev/components/Action/
  */
 export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & T> {

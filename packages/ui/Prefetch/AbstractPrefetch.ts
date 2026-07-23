@@ -10,6 +10,13 @@ export interface AbstractPrefetchProps extends BaseProps {
 
 /**
  * AbstractPrefetch class.
+ *
+ * Shared base for the prefetch components, bound to an anchor element. It
+ * injects a `<link rel="prefetch">` for the anchor's `href` when the URL is
+ * prefetchable — same-origin, not the current page, and not disabled by the
+ * `prefetch` option — deduplicates across instances and emits a `prefetched`
+ * event. Subclasses decide when `prefetch()` is called.
+ *
  * @link https://ui.studiometa.dev/components/Prefetch/
  */
 export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<

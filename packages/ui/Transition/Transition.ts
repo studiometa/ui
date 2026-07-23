@@ -23,6 +23,12 @@ export type TransitionConstructor<T extends Transition = Transition> = {
 
 /**
  * Transition class.
+ *
+ * A primitive built on the `withTransition` decorator that runs enter/leave CSS
+ * transitions on its element. It exposes `enter()`, `leave()` and `toggle()`
+ * and emits the corresponding transition lifecycle events
+ * (`transition-enter`, `transition-leave` and their start/end variants).
+ *
  * @link https://ui.studiometa.dev/components/Transition/
  */
 export class Transition<T extends BaseProps = BaseProps> extends withTransition<Base>(Base)<T> {

@@ -10,6 +10,10 @@ export interface SliderProgressProps extends BaseProps {
 
 /**
  * SliderProgress class.
+ *
+ * A progress indicator for the Slider. It translates its `progress` ref along
+ * the x axis in proportion to the active index over the slider's total range,
+ * revealing more of the bar as the slider advances.
  */
 export class SliderProgress<T extends BaseProps = BaseProps> extends AbstractSliderChild<
   T & SliderProgressProps

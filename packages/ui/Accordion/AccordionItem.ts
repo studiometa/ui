@@ -22,6 +22,13 @@ export interface AccordionItemProps extends BaseProps {
 
 /**
  * AccordionItem class.
+ *
+ * A single collapsible panel driven by its `btn`, `content` and `container` refs.
+ * It toggles open and closed on button click, animating the container height (and
+ * any other ref styles declared via the `styles` option) with the toolkit
+ * `transition` helper, emits `open`/`close`, and keeps the relevant ARIA
+ * attributes (`aria-expanded`, `aria-controls`, `aria-hidden`, `aria-labelledby`)
+ * in sync. Its initial state is set with the `isOpen` option (`data-option-is-open`).
  */
 export class AccordionItem<T extends BaseProps = BaseProps> extends Base<T & AccordionItemProps> {
   /**

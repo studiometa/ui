@@ -12,6 +12,13 @@ export interface AnchorNavProps extends BaseProps {
 
 /**
  * AnchorNav class.
+ *
+ * Coordinates a set of `AnchorNavLink` children with their matching
+ * `AnchorNavTarget` sections. As each target enters or leaves (its
+ * mount/destroy is reported to the parent), the links whose `targetId` matches
+ * the target's element id are toggled active via their `enter()`/`leave()`
+ * methods, keeping the navigation highlight in sync with the visible section.
+ *
  * @link https://ui.studiometa.dev/components/AnchorNav/
  */
 export class AnchorNav<T extends BaseProps = BaseProps> extends Base<T & AnchorNavProps> {

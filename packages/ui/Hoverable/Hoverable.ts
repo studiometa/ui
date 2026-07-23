@@ -27,6 +27,13 @@ export interface HoverableProps extends BaseProps {
 
 /**
  * Hoverable class.
+ *
+ * Moves a `target` ref in response to the pointer's position over the root
+ * element, using the `withRelativePointer` decorator. The target is mapped across
+ * its available bounds and damped each frame by the `sensitivity` option; the
+ * `reversed` option inverts the movement and `contained` stops it once the
+ * pointer leaves the element.
+ *
  * @link https://ui.studiometa.dev/components/Hoverable/
  */
 export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePointer(Base)<

@@ -12,6 +12,12 @@ const DEFAULT_POSITION = 'left';
 
 /**
  * Panel class.
+ *
+ * A `Modal` variant that slides its container in from a screen edge chosen by
+ * the `position` option (`top`, `right`, `bottom` or `left`), animating the
+ * container's transform and the overlay's opacity on open and close.
+ * Deprecated in favour of the `Dialog` component.
+ *
  * @link https://ui.studiometa.dev/components/Panel/
  */
 export class Panel<T extends BaseProps = BaseProps> extends Modal<T & PanelProps> {

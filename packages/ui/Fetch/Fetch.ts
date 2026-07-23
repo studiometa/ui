@@ -27,6 +27,14 @@ export type FetchConstructor<T extends Fetch = Fetch> = {
 
 /**
  * Fetch class.
+ *
+ * A self-contained AJAX navigation primitive bound to a link, a form or any element with a
+ * `src` option. It resolves the request URL and `requestInit` from that element, fetches the
+ * content, then updates the DOM by matching elements from the response against the current
+ * page via the `selector` option and swapping them following the `mode` option (`replace`,
+ * `prepend`, `append` or `morph`). It optionally pushes browser history, wraps the update in a
+ * View Transition and emits a full set of lifecycle events.
+ *
  * @link https://ui.studiometa.dev/components/Fetch/
  */
 export class Fetch<T extends BaseProps = BaseProps>

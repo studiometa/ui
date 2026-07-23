@@ -24,6 +24,14 @@ export interface FrameProps extends BaseProps {
 
 /**
  * Frame class.
+ *
+ * The container of the Frame AJAX navigation system. It listens for `frame-trigger`
+ * events emitted by its `FrameAnchor` and `FrameForm` children, fetches the target URL,
+ * parses the returned HTML and dispatches the matching fragments to its `FrameTarget`
+ * children for swapping. It optionally pushes browser history (and reacts to `popstate`),
+ * drives `FrameLoader` children during the request and re-runs `$root.$update()` so newly
+ * injected components are mounted.
+ *
  * @link https://ui.studiometa.dev/components/Frame/
  */
 export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps> {

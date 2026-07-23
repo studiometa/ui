@@ -9,6 +9,12 @@ export interface SliderDragProps extends BaseProps {
 
 /**
  * SliderDrag class.
+ *
+ * The draggable track of the Slider, built on the `withDrag` decorator. It
+ * re-emits the drag lifecycle as `start`, `drag`, `drop`, `inertia` and `stop`
+ * events for the parent Slider to translate into slide motion, and blocks
+ * vertical scrolling during a mostly-horizontal touch drag once movement passes
+ * the `scrollLockThreshold` option.
  */
 export class SliderDrag<T extends BaseProps = BaseProps> extends withDrag(Base)<
   T & SliderDragProps

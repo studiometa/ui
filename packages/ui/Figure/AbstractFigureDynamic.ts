@@ -11,6 +11,13 @@ export interface AbstractFigureDynamicProps extends BaseProps {
 
 /**
  * AbstractFigureDynamic class.
+ *
+ * Shared base for figures whose source is computed at runtime from the element's
+ * rendered size. It extends `AbstractFigure`, defaults the `lazy` option to
+ * `true`, and passes the original `data-src` through the overridable `formatSrc`
+ * method, unless the `disable` option is set. Its own `formatSrc` returns the
+ * source unchanged, so subclasses provide the actual transformation, and on
+ * resize it recomputes and reloads the source.
  */
 export class AbstractFigureDynamic<T extends BaseProps = BaseProps> extends AbstractFigure<
   T & AbstractFigureDynamicProps
