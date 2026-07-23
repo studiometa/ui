@@ -51,21 +51,15 @@ Calling `enter()` removes `leave-to` and adds `enter-to`; `leave()` does the rev
 
 ## Co-animating several elements
 
-`ViewTransition` batches every `enter()` / `leave()` call made within the same tick into a single view transition, so independent instances animate together with no configuration. Give each one a distinct `view-transition-name`.
+The native View Transitions API runs one view transition per document at a time. `ViewTransition` batches every `enter()` / `leave()` call made within the same microtask into a single view transition, so independent instances animate together with no configuration. Give each one a distinct `view-transition-name`.
 
 ```js
 // Both animate as one coordinated transition.
 await Promise.all([backdrop.enter(), panel.enter()]);
 ```
 
-::: info
-The native View Transitions API runs one view transition per document at a time. `ViewTransition` handles this batching for you.
-:::
-
 ::: tip
 Reach for `ViewTransition` when you need multiple elements to animate in sync, or to avoid transform-transition rendering bugs inside a modal `<dialog>`. Use [`Transition`](/components/Transition/) when you want fine-grained control over enter/leave classes and timing, or broader browser support.
 :::
 
-::: tip Example
 See the [examples](./examples.md) for a live demo, and the [JavaScript API](./js-api.md) for the full list of options, methods and events.
-:::

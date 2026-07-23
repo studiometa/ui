@@ -27,7 +27,7 @@ Click the Enter and Leave buttons to toggle the element. The animation runs as a
 
 ## Triggering with the `Action` component
 
-`ViewTransition` exposes the same `enter()`, `leave()` and `toggle()` methods as [`Transition`](/components/Transition/), so the [`Action` component](/components/Action/) can drive it declaratively, with no custom `onClick` handlers. Here the buttons target the `Togglable` instance and call its methods directly through `data-option-effect`.
+`ViewTransition` exposes the same `enter()`, `leave()` and `toggle()` methods as [`Transition`](/components/Transition/), so the [`Action` component](/components/Action/) can drive it declaratively. No custom `onClick` handlers are required. Here the buttons target the `Togglable` instance and call its methods directly through `data-option-effect`.
 
 <llm-exclude>
 <PreviewPlayground

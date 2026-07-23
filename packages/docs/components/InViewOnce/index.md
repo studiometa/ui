@@ -52,6 +52,4 @@ The [`Action` component](/components/Action/) can react to the `in-view` event w
 [`$emit`](https://js-toolkit.studiometa.dev/api/methods/emit.html) dispatches a native `CustomEvent` on the component's root element, which is what lets `Action` react to the event.
 :::
 
-::: tip Example
 See the [examples](./examples.md) for a live one-shot reveal demo, and the [JavaScript API](./js-api.md) for the full list of options and events.
-:::

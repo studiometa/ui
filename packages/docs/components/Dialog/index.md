@@ -6,7 +6,7 @@ badges: [JS]
 
 The `Dialog` component is a headless wrapper around the native [`<dialog>`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog) element. It offloads to the platform everything a modal needs: modality, focus trap, background `inert`, focus restore, top-layer stacking and <kbd>Esc</kbd> to close. It owns only what the platform does not provide: scroll-lock, an optional focus-trap for the non-modal path, and orchestrating your transitions.
 
-It ships no markup: you author the HTML, wire the triggers with [`Action`](/components/Action/) and describe the animations with [`Transition`](/components/Transition/) or [`ViewTransition`](/components/ViewTransition/) children. The `Dialog` fans `enter()`/`leave()` out to every transition child it contains, such as the backdrop and the box.
+It ships no markup: you author the HTML, wire the triggers with [`Action`](/components/Action/) and describe the animations with [`Transition`](/components/Transition/) or [`ViewTransition`](/components/ViewTransition/) children. The `Dialog` fans `enter()`/`leave()` out to every transition child it contains; the backdrop and the box are just two such children.
 
 A drawer is not a separate component. It is a `Dialog` whose panel you anchor to an edge with your own CSS and, optionally, slide in with a transition. See [Building a drawer](#building-a-drawer).
 
@@ -104,8 +104,8 @@ Any trigger you omit falls back to the platform behavior.
 
 The `Dialog` awaits `Promise.all` over the `enter()`/`leave()` of every [`Transition`](/components/Transition/) and [`ViewTransition`](/components/ViewTransition/) child:
 
-- `enter()` runs after `showModal()`/`show()`, so the dialog is already in the top layer when its children animate in.
-- `leave()` runs before `dialog.close()`, so the dialog is still painted while its children animate out.
+- `enter()` runs **after** `showModal()`/`show()`, so the dialog is already in the top layer when its children animate in.
+- `leave()` runs **before** `dialog.close()`, so the dialog is still painted while its children animate out.
 
 With no transition child, `Promise.all([])` resolves immediately and open/close are instant.
 
@@ -140,6 +140,4 @@ Do **not** add `grid`, `flex`, `block`, … to the `<dialog>` element. Those ove
 Keep all layout on inner elements (the centering layer, the box) and let the dialog's native open/closed `display` stand.
 :::
 
-::: tip Example
 See the [examples](./examples.md) for a live demo, and the [JavaScript API](./js-api.md) for the full list of options, methods and events.
-:::

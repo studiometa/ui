@@ -27,7 +27,7 @@ Click the Open dialog button to open a modal wired entirely with [`Action`](/com
 
 ## Drawer
 
-A drawer is just a `Dialog`. The panel is anchored to the right edge with plain classes (`absolute inset-y-0 right-0 w-80`) and slides in via an optional [`ViewTransition`](/components/ViewTransition/) child, smooth even in Firefox. Both the position and the slide direction are author-controlled; the library ships no drawer component. See [Building a drawer](./index.md#building-a-drawer).
+A drawer is just a `Dialog`. The panel is anchored to the right edge with plain classes (`absolute inset-y-0 right-0 w-80`) and slides in via an optional [`ViewTransition`](/components/ViewTransition/) child, which stays smooth even in Firefox. Both the position and the slide direction are author-controlled; the library ships no drawer component. See [Building a drawer](./index.md#building-a-drawer).
 
 <llm-exclude>
 <PreviewPlayground
