@@ -1,4 +1,4 @@
-import { Base, createApp, withScrolledInView } from '@studiometa/js-toolkit';
+import { registerComponent, withScrolledInView } from '@studiometa/js-toolkit';
 import { Figure, ScrollAnimationTarget } from '@studiometa/ui';
 
 class Parallax extends withScrolledInView(ScrollAnimationTarget) {
@@ -15,13 +15,4 @@ class Parallax extends withScrolledInView(ScrollAnimationTarget) {
   }
 }
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Parallax,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(Parallax);

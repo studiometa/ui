@@ -1,4 +1,4 @@
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { registerComponent } from '@studiometa/js-toolkit';
 import {
   Figure,
   Slider as SliderCore,
@@ -23,14 +23,5 @@ class Slider extends SliderCore {
   };
 }
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Figure,
-      Slider,
-    },
-  };
-}
-
-export default createApp(App, document.body);
+registerComponent(Figure);
+registerComponent(Slider, 'Slider');

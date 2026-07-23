@@ -1,4 +1,7 @@
-import { Base, createApp, withResponsiveOptions } from '@studiometa/js-toolkit';
+import {
+  registerComponent,
+  withResponsiveOptions,
+} from '@studiometa/js-toolkit';
 import { Menu as MenuCore } from '@studiometa/ui';
 
 class Menu extends withResponsiveOptions(MenuCore, {
@@ -13,13 +16,4 @@ class Menu extends withResponsiveOptions(MenuCore, {
   };
 }
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Menu,
-    },
-  };
-}
-
-createApp(App);
+registerComponent(Menu);
