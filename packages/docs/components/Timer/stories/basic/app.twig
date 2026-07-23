@@ -1,0 +1,11 @@
+<button
+  type="button"
+  data-component="Action Timer"
+  data-option-delay="3"
+  data-option-no-autostart
+  data-on:click="Timer.restart()"
+  data-on:timer-start="this.textContent = 'Counting down… (click to restart)'"
+  data-on:timer-end="this.textContent = 'Time’s up! Click to run again.'"
+  class="px-4 py-2 rounded bg-blue-400 dark:bg-blue-600">
+  Click to start a 3s timer
+</button>
