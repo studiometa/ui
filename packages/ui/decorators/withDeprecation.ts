@@ -42,7 +42,8 @@ export function withDeprecation<S extends Base>(
       super(...args);
       this.$on('after-mounted', () => {
         if (isDev) {
-          console.warn(message ?? `The ${this.$options.name} component is deprecated.`);
+          const notice = `The ${this.$options.name} component is deprecated.`;
+          console.warn(message ? `${notice} ${message}` : notice);
         }
       });
     }
