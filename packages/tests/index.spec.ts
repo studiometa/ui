@@ -70,6 +70,8 @@ test('components exports', () => {
       "Sticky",
       "Tabs",
       "Target",
+      "Timer",
+      "TimerProgress",
       "Track",
       "TrackContext",
       "TrackShopify",

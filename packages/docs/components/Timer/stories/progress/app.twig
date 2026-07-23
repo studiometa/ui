@@ -1,0 +1,25 @@
+{# The routing Action catches the bubbling `timer-progress` and forwards the
+   ratio to the progress bar's DataBind, which lives in a separate subtree. #}
+<div
+  data-component="Action"
+  data-on:timer-progress="DataBind([data-role=progress])->target.set(event.detail[0])"
+  class="flex flex-col gap-4 w-full max-w-sm">
+
+  <div
+    data-component="Action TimerProgress"
+    data-option-delay="3"
+    data-option-repeat
+    data-on:mouseenter="TimerProgress.pause()"
+    data-on:mouseleave="TimerProgress.resume()"
+    class="text-sm text-current/60">
+    Loading… (hover to pause)
+  </div>
+
+  <div class="h-2 w-full overflow-hidden rounded-full bg-current/10">
+    <div
+      data-role="progress"
+      data-component="DataBind"
+      data-bind:style.width="(Number(value || 0) * 100) + '%'"
+      class="h-full w-0 rounded-full bg-blue-500"></div>
+  </div>
+</div>
