@@ -121,6 +121,13 @@ Out of the box the panel appears and disappears instantly with the dialog. To sl
 
 The slide direction is yours: it is the translate class / keyframes you choose (`translate-x-full` from the right, `-translate-x-full` from the left, `translate-y-full` from the bottom, and so on) paired with the matching edge-anchoring classes.
 
+::: tip Two top-layer stacking guards
+Because the modal `<dialog>` promotes its children to the top layer, two browser quirks are worth guarding against in your CSS — both are one-liners the [drawer example](./examples.md#drawer) applies:
+
+- **Hide the panel with `opacity-0`, not just a transform.** A panel that is only `translate-x-full` is offscreen but still fully painted, so Safari/WebKit captures it into `::view-transition-old()` and the slide-out keyframes drag a ghost copy across the screen on open. Adding `opacity-0` to the hidden state makes that snapshot empty. (Chromium/Firefox clip the offscreen content, so they don't show the ghost — but the `opacity-0` is harmless there.)
+- **Pin the group stacking with `z-index`.** Some Chromium versions mis-order the snapshots of top-layer content, painting the semi-transparent backdrop over the panel and greying it out mid-transition. `::view-transition-group(panel) { z-index: 2 }` above the backdrop keeps the panel on top everywhere.
+:::
+
 See the [drawer example](./examples.md#drawer) for a complete right-side drawer sliding in via `ViewTransition`.
 
 ## The `<dialog>` gotcha

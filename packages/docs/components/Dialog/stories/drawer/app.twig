@@ -34,12 +34,17 @@
     class="fixed inset-0 bg-black/50 opacity-0"></div>
 
   {# Right-anchored panel — author CSS handles the position, a ViewTransition
-     handles the slide. `translate-x-full` is the hidden (offscreen) state. #}
+     handles the slide. The hidden state is `translate-x-full opacity-0`: the
+     `opacity-0` is what matters for the transition — it makes the hidden
+     panel's view-transition snapshot empty. Without it, Safari/WebKit captures
+     the offscreen-but-opaque panel into `::view-transition-old(drawer-panel)`
+     and the slide-out keyframes drag a ghost copy across the screen on open
+     (Chromium/Firefox clip the offscreen content, so they never show it). #}
   <div
     data-component="ViewTransition"
     data-option-view-transition-name="drawer-panel"
-    data-option-leave-to="translate-x-full"
-    class="absolute inset-y-0 right-0 w-80 max-w-full p-8 bg-white text-black shadow-2xl translate-x-full">
+    data-option-leave-to="translate-x-full opacity-0"
+    class="absolute inset-y-0 right-0 w-80 max-w-full p-8 bg-white text-black shadow-2xl translate-x-full opacity-0">
     <h2 class="text-xl font-bold mb-3">Drawer</h2>
     <p class="mb-6 text-black/60">
       Backdrop fades, panel slides. Two <code>ViewTransition</code> children,
@@ -58,6 +63,14 @@
 <style>
   /* The native ::backdrop cannot be class-transitioned; animate our own. */
   dialog::backdrop { background: transparent; }
+
+  /* Keep the panel above the backdrop in the view-transition layer. The dialog
+     opens with showModal(), so its children live in the top layer, and some
+     Chromium versions mis-order the snapshots of top-layer content — the
+     semi-transparent backdrop then paints over the panel and greys out its
+     bg-white mid-transition. Pinning z-index makes the stacking robust. */
+  ::view-transition-group(drawer-panel)    { z-index: 2; }
+  ::view-transition-group(drawer-backdrop) { z-index: 1; }
 
   /* Panel: slide in from / out to the right edge. Change these keyframes to
      slide from another edge — the direction is entirely author-controlled. */
