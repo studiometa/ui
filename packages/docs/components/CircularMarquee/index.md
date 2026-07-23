@@ -20,17 +20,8 @@ After you install the [package](/guide/installation/), include the Twig template
 ```
 
 ```js
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { registerComponent } from '@studiometa/js-toolkit';
 import { CircularMarquee } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      CircularMarquee,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(CircularMarquee);
 ```

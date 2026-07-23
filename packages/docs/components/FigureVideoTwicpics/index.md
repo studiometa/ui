@@ -10,20 +10,11 @@ Use the `FigureVideoTwicpics` component to display loop, muted & autoplay decora
 
 Register the component in your JavaScript app and use the Twig template to display videos.
 
-```js {2,8}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
 import { FigureVideoTwicpics } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      FigureVideo: FigureVideoTwicpics,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(FigureVideoTwicpics, 'FigureVideo');
 ```
 
 ```twig

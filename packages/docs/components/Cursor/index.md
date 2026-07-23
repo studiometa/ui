@@ -10,20 +10,11 @@ Use the cursor component to add a custom cursor to your project.
 
 After you install the [package](/guide/installation/), include the template in your project:
 
-```js {2,8}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Cursor } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Cursor,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(Cursor);
 ```
 
 ```twig

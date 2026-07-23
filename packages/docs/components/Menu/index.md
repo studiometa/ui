@@ -10,20 +10,11 @@ The `Menu` component and its children `MenuBtn` and `MenuList` can be used to cr
 
 ::: code-group
 
-```js twoslash {2,8} [app.js]
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js twoslash [app.js]
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Menu } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Menu,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(Menu);
 ```
 
 ```html [index.html]

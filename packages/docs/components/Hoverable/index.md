@@ -11,19 +11,10 @@ Use this component to move an oversized element within its parent bounds.
 ::: code-group
 
 ```js twoslash [app.js]
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Hoverable } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Hoverable,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(Hoverable);
 ```
 
 ```html [index.html]

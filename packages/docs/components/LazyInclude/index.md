@@ -10,20 +10,11 @@ Use the `LazyInclude` component to load parts of your page lazily.
 
 ::: code-group
 
-```js [app.js] twoslash {2,8}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js [app.js] twoslash
+import { registerComponent } from '@studiometa/js-toolkit';
 import { LazyInclude } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      LazyInclude,
-    },
-  };
-}
-
-createApp(App);
+registerComponent(LazyInclude);
 ```
 
 ```html index.html

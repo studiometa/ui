@@ -12,21 +12,12 @@ Import one of the available prefetch component in you app and use them in your H
 
 ::: code-group
 
-```js twoslash [app.js] {2,8-9}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js twoslash [app.js]
+import { registerComponent } from '@studiometa/js-toolkit';
 import { PrefetchWhenOver, PrefetchWhenVisible } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      PrefetchWhenOver,
-      PrefetchWhenVisible,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(PrefetchWhenOver);
+registerComponent(PrefetchWhenVisible);
 ```
 
 ```html [index.html]
