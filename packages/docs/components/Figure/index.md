@@ -10,20 +10,11 @@ Use the `Figure` component to display images.
 
 Register the component in your JavaScript app and use the Twig template to display images.
 
-```js twoslash {2,8}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js twoslash
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Figure } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Figure,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(Figure);
 ```
 
 ```twig

@@ -1,4 +1,4 @@
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Draggable as DraggableCore, Action } from '@studiometa/ui';
 
 class Draggable extends DraggableCore {
@@ -7,14 +7,5 @@ class Draggable extends DraggableCore {
   }
 }
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Draggable,
-      Action,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(Draggable);
+registerComponent(Action);

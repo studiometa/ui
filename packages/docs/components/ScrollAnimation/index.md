@@ -10,21 +10,12 @@ The `ScrollAnimation` component creates scroll-driven animations that respond to
 
 For the best performance and flexibility, use `ScrollAnimationTimeline` with `ScrollAnimationTarget` children:
 
-```js {2,8-9}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
 import { ScrollAnimationTimeline, ScrollAnimationTarget } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      ScrollAnimationTimeline,
-      ScrollAnimationTarget,
-    },
-  };
-}
-
-export default createApp(App, document.body);
+registerComponent(ScrollAnimationTimeline);
+registerComponent(ScrollAnimationTarget);
 ```
 
 ```html

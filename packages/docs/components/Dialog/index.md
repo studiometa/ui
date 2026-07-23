@@ -14,22 +14,13 @@ A drawer is not a separate component. It is a `Dialog` whose panel you anchor to
 
 Register the component, along with the [`Action`](/components/Action/) and [`Transition`](/components/Transition/) components used by the authored HTML:
 
-```js{2,8-10}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Action, Dialog, Transition } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Action,
-      Dialog,
-      Transition,
-    },
-  };
-}
-
-export default createApp(App, document.body);
+registerComponent(Action);
+registerComponent(Dialog);
+registerComponent(Transition);
 ```
 
 The `<dialog>` becomes a transparent, full-viewport host. Inside it live an optional backdrop and the box, each a transition child with its own hidden/shown classes. Triggers are delegated to `Action`:

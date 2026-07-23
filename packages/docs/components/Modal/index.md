@@ -14,20 +14,11 @@ The `Modal` component creates accessible modal dialogs with focus management, ke
 
 After you install the [package](/guide/installation/), include the template in your project:
 
-```js{2,8}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Modal } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Modal,
-    },
-  };
-}
-
-export default createApp(App, document.body);
+registerComponent(Modal);
 ```
 
 ```twig

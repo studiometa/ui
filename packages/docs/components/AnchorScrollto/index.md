@@ -14,16 +14,9 @@ It should be used on `<a>` elements only.
 
 This component can be directly imported and defined as a dependency of your application and set up to be instanciated on elements matching the `a[href^="#"]` selector:
 
-```js {2,8}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
 import { AnchorScrollTo } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      'a[href^="#"]': AnchorScrollTo,
-    },
-  };
-}
+registerComponent(AnchorScrollTo, 'a[href^="#"]');
 ```

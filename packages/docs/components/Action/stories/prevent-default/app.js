@@ -1,4 +1,4 @@
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import { Action } from '@studiometa/ui';
 
 class Foo extends Base {
@@ -7,14 +7,5 @@ class Foo extends Base {
   };
 }
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Action,
-      Foo,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(Action);
+registerComponent(Foo);

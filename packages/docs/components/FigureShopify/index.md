@@ -10,20 +10,11 @@ Use the `FigureShopify` component to display responsive images with [Shopify CDN
 
 Register the component in your JavaScript app and use it in your templates. The component will transform the `data-src` URL to load an image at the dimension of the `<img>` DOM element.
 
-```js {2,8}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
 import { FigureShopify } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Figure: FigureShopify,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(FigureShopify, 'Figure');
 ```
 
 ```liquid

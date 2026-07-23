@@ -11,19 +11,10 @@ Use the `Sticky` component to keep an element fixed in place while its container
 Register the JavaScript component in your app and include the Twig template:
 
 ```js
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Sticky } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Sticky,
-    },
-  };
-}
-
-export default createApp(App, document.body);
+registerComponent(Sticky);
 ```
 
 ```twig

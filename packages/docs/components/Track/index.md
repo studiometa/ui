@@ -16,21 +16,12 @@ The `Track` components provide declarative analytics tracking, defined entirely 
 Register the components you need in your application:
 
 ```js
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Track, TrackShopify, TrackContext } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Track,
-      TrackShopify,
-      TrackContext,
-    },
-  };
-}
-
-createApp(App);
+registerComponent(Track);
+registerComponent(TrackShopify);
+registerComponent(TrackContext);
 ```
 
 Then declare what to track with `data-track:<event>` attributes. The value can be a bare event name (`data-track:click="add_to_cart"`) or, when an event needs its own structured data, a JSON payload whose `event` key holds the name. Data shared by every event on the element can be provided through a `<script data-ref="payload">` child or a `data-option-payload` attribute.

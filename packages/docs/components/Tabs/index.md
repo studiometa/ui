@@ -10,20 +10,11 @@ The `Tabs` component creates accessible tab interfaces with transitions and keyb
 
 After you install the [package](/guide/installation/), include the template in your project:
 
-```js{2,8}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Tabs } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Tabs,
-    },
-  };
-}
-
-export default createApp(App, document.body);
+registerComponent(Tabs);
 ```
 
 ```twig

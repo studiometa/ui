@@ -8,20 +8,11 @@ badges: [JS, Twig]
 
 This component can be directly imported and defined as a dependency of your application:
 
-```js{2,8}
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
 import { AnchorNav } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      AnchorNav,
-    },
-  };
-}
-
-export default createApp(App, document.body);
+registerComponent(AnchorNav);
 ```
 
 Then in your html make sure to have similar id and href for the link and the target.

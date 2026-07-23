@@ -1,7 +1,6 @@
 /* eslint-disable require-jsdoc */
 /* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable max-classes-per-file */
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Figure } from '@studiometa/ui';
 
 import {
@@ -27,14 +26,5 @@ class Slider extends SliderCore {
   };
 }
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Figure,
-      Slider,
-    },
-  };
-}
-
-createApp(App, document.body);
+registerComponent(Figure);
+registerComponent(Slider, 'Slider');

@@ -1,4 +1,4 @@
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { registerComponent } from '@studiometa/js-toolkit';
 import { FigureTwicpics } from '@studiometa/ui';
 
 class Figure extends FigureTwicpics {
@@ -11,13 +11,4 @@ class Figure extends FigureTwicpics {
   }
 }
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Figure,
-    },
-  };
-}
-
-export default createApp(App, document.body);
+registerComponent(Figure, 'Figure');

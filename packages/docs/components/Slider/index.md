@@ -11,19 +11,10 @@ Use the `Slider` component to display items on the X axis and enable indexed nav
 ::: code-group
 
 ```js twoslash [app.js]
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Slider } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Slider,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(Slider);
 ```
 
 ```twig [slider.twig]

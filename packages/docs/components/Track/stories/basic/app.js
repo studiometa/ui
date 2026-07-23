@@ -1,4 +1,4 @@
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { registerComponent } from '@studiometa/js-toolkit';
 import { Track as TrackCore, TrackContext } from '@studiometa/ui';
 
 /**
@@ -25,14 +25,5 @@ class Track extends TrackCore {
   }
 }
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Track,
-      TrackContext,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponent(Track);
+registerComponent(TrackContext);
