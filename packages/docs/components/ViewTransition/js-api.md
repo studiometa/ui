@@ -123,4 +123,4 @@ Emitted when the `toggle` method is called.
 
 ## Batching
 
-Every `enter` / `leave` call made within the same microtask is coalesced into a **single** `document.startViewTransition()` call, and batches are serialized across ticks. This is what lets several elements animate together as one coordinated transition. When the API is unavailable, the state change is applied synchronously with no animation.
+Every `enter` / `leave` call made within the same microtask is coalesced into a single `document.startViewTransition()` call, and batches are serialized across ticks. This is what lets several elements animate together as one coordinated transition. When the API is unavailable, the state change is applied synchronously with no animation.

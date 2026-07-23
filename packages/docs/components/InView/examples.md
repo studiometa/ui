@@ -4,7 +4,7 @@ title: InView examples
 
 # Examples
 
-Because [`$emit`](https://js-toolkit.studiometa.dev/api/methods/emit.html) dispatches a native `CustomEvent` on the component's root element, the [`Action` component](../Action/index.md) can catch the `in-view` and `out-of-view` events emitted by `InView` with its [`data-on:<event>` attributes](../Action/js-api.md#on-event-modifier). Putting both components on the same element (`data-component="Action InView"`) is therefore all it takes to react to viewport crossings declaratively — no custom JavaScript class required.
+The [`Action` component](../Action/index.md) can catch the `in-view` and `out-of-view` events emitted by `InView` with its [`data-on:<event>` attributes](../Action/js-api.md#on-event-modifier), because [`$emit`](https://js-toolkit.studiometa.dev/api/methods/emit.html) dispatches them as native `CustomEvent`s on the component's root element. Mounting both components on the same element (`data-component="Action InView"`) is all it takes to react to viewport crossings declaratively. No custom JavaScript class is required.
 
 ## Reveal on scroll
 
@@ -49,7 +49,7 @@ For a more capable reveal, share the element with the [`Transition` component](.
 </llm-only>
 
 ::: tip
-The `Action` component can also target a **sibling** component instead of one mounted on the same element, using its [`Name(#selector) -> target.method()` syntax](../Action/js-api.md#on-event-modifier). For example, `data-on:in-view="Transition(#panel) -> target.enter()"` lets an `InView` element play the `enter()` method of the `Transition` with the `panel` id.
+The `Action` component can also target a sibling component instead of one mounted on the same element, using its [`Name(#selector) -> target.method()` syntax](../Action/js-api.md#on-event-modifier). For example, `data-on:in-view="Transition(#panel) -> target.enter()"` lets an `InView` element play the `enter()` method of the `Transition` with the `panel` id.
 :::
 
 ## Custom threshold and root margin

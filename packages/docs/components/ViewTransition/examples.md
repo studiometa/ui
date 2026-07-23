@@ -6,7 +6,7 @@ title: ViewTransition examples
 
 ## Togglable
 
-Click **Enter** and **Leave** to toggle the element. The animation runs as a native view transition, defined entirely in the `::view-transition-old()` / `::view-transition-new()` CSS. In a browser without the View Transitions API, the element toggles instantly.
+Click the Enter and Leave buttons to toggle the element. The animation runs as a native view transition, defined entirely in the `::view-transition-old()` / `::view-transition-new()` CSS. In a browser without the View Transitions API, the element toggles instantly.
 
 <llm-exclude>
 <PreviewPlayground
@@ -27,7 +27,7 @@ Click **Enter** and **Leave** to toggle the element. The animation runs as a nat
 
 ## Triggering with the `Action` component
 
-`ViewTransition` exposes the same `enter()`, `leave()` and `toggle()` methods as [`Transition`](/components/Transition/), so the [`Action` component](/components/Action/) can drive it declaratively — no custom `onClick` handlers required. Here the buttons target the `Togglable` instance and call its methods directly through `data-option-effect`.
+`ViewTransition` exposes the same `enter()`, `leave()` and `toggle()` methods as [`Transition`](/components/Transition/), so the [`Action` component](/components/Action/) can drive it declaratively. No custom `onClick` handlers are required. Here the buttons target the `Togglable` instance and call its methods directly through `data-option-effect`.
 
 <llm-exclude>
 <PreviewPlayground

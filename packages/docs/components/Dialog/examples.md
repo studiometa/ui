@@ -6,7 +6,7 @@ title: Dialog examples
 
 ## Modal dialog
 
-Click **Open dialog** to open a modal wired entirely with [`Action`](/components/Action/). The backdrop fades and the box scales in, each a [`Transition`](/components/Transition/) child the `Dialog` orchestrates. Close it with the button, the backdrop, or <kbd>Esc</kbd>.
+Click the Open dialog button to open a modal wired entirely with [`Action`](/components/Action/). The backdrop fades and the box scales in, each a [`Transition`](/components/Transition/) child the `Dialog` orchestrates. Close it with the button, the backdrop, or <kbd>Esc</kbd>.
 
 <llm-exclude>
 <PreviewPlayground
@@ -27,7 +27,7 @@ Click **Open dialog** to open a modal wired entirely with [`Action`](/components
 
 ## Drawer
 
-A drawer is just a `Dialog`. The panel is anchored to the right edge with plain classes (`absolute inset-y-0 right-0 w-80`) and slides in via an optional [`ViewTransition`](/components/ViewTransition/) child — smooth even in Firefox. Both the position and the slide direction are author-controlled; the library ships no drawer component. See [Building a drawer](./index.md#building-a-drawer).
+A drawer is just a `Dialog`. The panel is anchored to the right edge with plain classes (`absolute inset-y-0 right-0 w-80`) and slides in via an optional [`ViewTransition`](/components/ViewTransition/) child, which stays smooth even in Firefox. Both the position and the slide direction are author-controlled; the library ships no drawer component. See [Building a drawer](./index.md#building-a-drawer).
 
 <llm-exclude>
 <PreviewPlayground
