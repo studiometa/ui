@@ -34,7 +34,7 @@ Trigger a refresh from a link or a form, listing the section IDs to update with 
 <div id="shopify-section-collection-results-count">…</div>
 ```
 
-- **Without JavaScript**, the link navigates to `{{ collection.url }}?sort_by=price-ascending` — a normal, fully rendered page.
+- **Without JavaScript**, the link navigates to <code v-pre>{{ collection.url }}?sort_by=price-ascending</code> — a normal, fully rendered page.
 - **With JavaScript**, the component requests `…?sort_by=price-ascending&sections=main-collection-product-grid,collection-results-count`, unwraps the JSON response and swaps each `shopify-section-*` wrapper in place.
 
 Because `FetchShopifySection` extends `Fetch`, it inherits every [option](../Fetch/js-api.md), getter, method and event of the base component, including the loader, [`mode`](../Fetch/js-api.md#mode), [`history`](../Fetch/js-api.md#history) and [`viewTransition`](../Fetch/js-api.md#viewtransition) features. The `sections` parameter is stripped from the URL pushed to the history, so navigation history stays on the human-facing page.
