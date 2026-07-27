@@ -23,12 +23,9 @@ Refresh the product grid and the results count when the customer picks a sort or
   Sort by price
 </a>
 
-<div id="shopify-section-main-collection-product-grid">
-  {% section 'main-collection-product-grid' %}
-</div>
-<div id="shopify-section-collection-results-count">
-  {% section 'collection-results-count' %}
-</div>
+{% comment %} `{% section %}` already outputs the `shopify-section-*` wrapper matched by id. {% endcomment %}
+{% section 'main-collection-product-grid' %}
+{% section 'collection-results-count' %}
 ```
 
 ```js [app.ts]
@@ -70,9 +67,8 @@ Use a `<form method="get">` so the selected facets are appended to the URL autom
   Loading…
 </div>
 
-<div id="shopify-section-main-collection-product-grid">
-  {% section 'main-collection-product-grid' %}
-</div>
+{% comment %} `{% section %}` already outputs the `shopify-section-*` wrapper matched by id. {% endcomment %}
+{% section 'main-collection-product-grid' %}
 ```
 
 ```js [app.ts]

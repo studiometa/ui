@@ -22,9 +22,10 @@ export type FetchShopifySectionConstructor<
  * to refresh are declared through the `sections` option instead of being baked into the URL, so
  * the element's own `href`/`action` stays a clean, no-JS fallback: the `sections` parameter is
  * appended to the request URL only when JavaScript runs, and it is kept out of the URL pushed to
- * the history. The JSON response (`{ [id]: html }`) is unwrapped by the default `response` option
- * and each section is swapped in place by the inherited `[id]` selector — no per-element
- * `response` boilerplate required.
+ * the history. The JSON response (`{ [id]: html }`) is unwrapped by {@link __parseResponse} and
+ * each section is swapped in place by the inherited `[id]` selector — no per-element `response`
+ * boilerplate required. When no `sections` are configured the component degrades to the base
+ * {@link Fetch} behaviour (a plain text response and id-based swap of the fetched page).
  *
  * @link https://ui.studiometa.dev/components/FetchShopifySection/
  */
@@ -51,11 +52,6 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
     options: {
       ...Fetch.config.options,
       sections: Array,
-      response: {
-        type: String,
-        default:
-          "response.json().then((sections) => Object.values(sections).filter(Boolean).join(''))",
-      },
     },
   };
 
@@ -92,6 +88,25 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
   fetch(url: URL | string = this.url, requestInit: RequestInit = {}) {
     const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
     return super.fetch(this.__appendSections(normalizedUrl), requestInit);
+  }
+
+  /**
+   * Unwrap the Section Rendering API JSON response (`{ [id]: html }`) into a single HTML string,
+   * dropping sections returned as `null`. When no `sections` are configured no `sections`
+   * parameter is sent, so the response is a normal HTML page: delegate to the base
+   * {@link Fetch.__parseResponse} (text) rather than attempting to parse it as JSON.
+   * @protected
+   * @inheritdoc
+   */
+  async __parseResponse(response: Response, url: URL, requestInit: RequestInit): Promise<string> {
+    if (!this.$options.sections.length) {
+      return super.__parseResponse(response, url, requestInit);
+    }
+
+    const sections = (await response.json()) as Record<string, string | null>;
+    return Object.values(sections)
+      .filter(Boolean)
+      .join('');
   }
 
   /**

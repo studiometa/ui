@@ -20,7 +20,9 @@ describe('The FetchShopifySection class', () => {
   it('should have the correct config', () => {
     expect(FetchShopifySection.config.name).toBe('FetchShopifySection');
     expect(FetchShopifySection.config.options.sections).toBe(Array);
-    expect(FetchShopifySection.config.options.response.default).toContain('response.json()');
+    // The JSON unwrapping lives in `__parseResponse`, not a `response` option override, so the
+    // base text-response default is inherited untouched.
+    expect(FetchShopifySection.config.options.response.default).toBe('response.text()');
   });
 
   it('should append the `sections` option to the request URL without touching the href', async () => {
@@ -71,6 +73,26 @@ describe('The FetchShopifySection class', () => {
     expect(document.getElementById('a')?.textContent).toBe('new-a');
     // The null section is skipped, leaving its element untouched.
     expect(document.getElementById('b')?.textContent).toBe('old-b');
+  });
+
+  it('should degrade to the base text response when no sections are configured', async () => {
+    document.body.innerHTML = '<div id="price">old</div>';
+    const spy = vi.spyOn(window, 'fetch');
+    // A plain HTML page, as returned when no `sections` parameter is sent.
+    spy.mockResolvedValue(
+      new Response('<div id="price">new</div>', { headers: { 'content-type': 'text/html' } }),
+    );
+
+    const anchor = h('a', { href: 'https://example.com/products/foo' });
+    const fetch = new FetchShopifySection(anchor);
+    await mount(fetch);
+    await fetch.fetch();
+    await wait(10);
+
+    // No `sections` parameter is appended…
+    expect((spy.mock.calls[0][0] as URL).searchParams.has('sections')).toBe(false);
+    // …and the HTML is swapped in place via the inherited id-based behaviour, not rejected.
+    expect(document.getElementById('price')?.textContent).toBe('new');
   });
 
   it('should re-append the `sections` parameter on popstate navigation', async () => {
