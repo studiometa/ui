@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Fetch:** add `FetchShopifySection`, an adapter for Shopify's stable Section Rendering API ([#550](https://github.com/studiometa/ui/pull/550))
+
+### Changed
+
+- **Fetch:** `FetchShopifyPartial`'s `partials` option now takes a comma-separated string instead of a JSON array ([#550](https://github.com/studiometa/ui/pull/550))
+
 ## [v1.9.0-beta.2](https://github.com/studiometa/ui/compare/1.9.0-beta.1..1.9.0-beta.2) (2026-07-23)
 
 ### Added
