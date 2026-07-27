@@ -73,6 +73,27 @@ describe('The FetchShopifySection class', () => {
     expect(document.getElementById('b')?.textContent).toBe('old-b');
   });
 
+  it('should re-append the `sections` parameter on popstate navigation', async () => {
+    const spy = vi.spyOn(window, 'fetch');
+    spy.mockResolvedValue(sectionsResponse({ price: '<div id="price">new</div>' }));
+
+    const anchor = h('a', {
+      href: 'https://example.com/products/foo',
+      dataOptionSections: ['price'],
+      dataOptionHistory: '',
+    });
+    const fetch = new FetchShopifySection(anchor);
+    await mount(fetch);
+
+    // Simulate the inherited popstate handler replaying the clean, section-free location URL.
+    fetch.fetch(new URL('https://example.com/products/foo'), {
+      headers: { 'x-triggered-by': 'popstate' },
+    });
+    await wait(10);
+
+    expect((spy.mock.calls[0][0] as URL).searchParams.get('sections')).toBe('price');
+  });
+
   it('should keep the `sections` parameter out of the history / update URL', async () => {
     const spy = vi.spyOn(window, 'fetch');
     spy.mockResolvedValue(sectionsResponse({ price: '<div id="price">new</div>' }));

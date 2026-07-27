@@ -60,11 +60,11 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
   };
 
   /**
-   * The request URL with the configured section IDs appended as the Section Rendering API
-   * `sections` parameter, leaving the element's own `href`/`action` untouched.
+   * Append the configured section IDs as the Section Rendering API `sections` parameter, leaving
+   * the given URL otherwise untouched. Returns the same instance for convenience.
+   * @private
    */
-  get url(): URL {
-    const url = super.url;
+  __appendSections(url: URL): URL {
     const { sections } = this.$options;
 
     if (sections.length) {
@@ -72,6 +72,26 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
     }
 
     return url;
+  }
+
+  /**
+   * The request URL with the configured section IDs appended as the Section Rendering API
+   * `sections` parameter, leaving the element's own `href`/`action` untouched.
+   */
+  get url(): URL {
+    return this.__appendSections(super.url);
+  }
+
+  /**
+   * Ensure the `sections` parameter is present on every request URL, including the explicit,
+   * already-clean URL replayed by the inherited `onWindowPopstate()` on back/forward navigation —
+   * which bypasses the `url` getter and would otherwise request HTML instead of Section
+   * Rendering JSON.
+   * @inheritdoc
+   */
+  fetch(url: URL | string = this.url, requestInit: RequestInit = {}) {
+    const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
+    return super.fetch(this.__appendSections(normalizedUrl), requestInit);
   }
 
   /**
