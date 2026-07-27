@@ -19,7 +19,7 @@ describe('The FetchShopifySection class', () => {
 
   it('should have the correct config', () => {
     expect(FetchShopifySection.config.name).toBe('FetchShopifySection');
-    expect(FetchShopifySection.config.options.sections).toBe(Array);
+    expect(FetchShopifySection.config.options.sections).toBe(String);
     // The JSON unwrapping lives in `__parseResponse`, not a `response` option override, so the
     // base text-response default is inherited untouched.
     expect(FetchShopifySection.config.options.response.default).toBe('response.text()');
@@ -28,7 +28,7 @@ describe('The FetchShopifySection class', () => {
   it('should append the `sections` option to the request URL without touching the href', async () => {
     const anchor = h('a', {
       href: 'https://example.com/collections/all?sort_by=price',
-      dataOptionSections: ['product-grid', 'product-count'],
+      dataOptionSections: 'product-grid,product-count',
     });
     const fetch = new FetchShopifySection(anchor);
     await mount(fetch);
@@ -40,6 +40,18 @@ describe('The FetchShopifySection class', () => {
     expect(fetch.url.searchParams.get('sections')).toBe('product-grid,product-count');
   });
 
+  it('should parse the comma-separated `sections` option, trimming whitespace', async () => {
+    const anchor = h('a', {
+      href: 'https://example.com/collections/all',
+      // Authored with incidental whitespace and a trailing comma.
+      dataOptionSections: ' product-grid , product-count , ',
+    });
+    const fetch = new FetchShopifySection(anchor);
+    await mount(fetch);
+
+    expect(fetch.url.searchParams.get('sections')).toBe('product-grid,product-count');
+  });
+
   it('should unwrap the JSON response and swap each section by id', async () => {
     document.body.innerHTML = '<div id="price">old</div>';
     const spy = vi.spyOn(window, 'fetch');
@@ -47,7 +59,7 @@ describe('The FetchShopifySection class', () => {
 
     const anchor = h('a', {
       href: 'https://example.com/products/foo',
-      dataOptionSections: ['price'],
+      dataOptionSections: 'price',
     });
     const fetch = new FetchShopifySection(anchor);
     await mount(fetch);
@@ -64,7 +76,7 @@ describe('The FetchShopifySection class', () => {
     const spy = vi.spyOn(window, 'fetch');
     spy.mockResolvedValue(sectionsResponse({ a: '<div id="a">new-a</div>', b: null }));
 
-    const anchor = h('a', { href: 'https://example.com/x', dataOptionSections: ['a', 'b'] });
+    const anchor = h('a', { href: 'https://example.com/x', dataOptionSections: 'a,b' });
     const fetch = new FetchShopifySection(anchor);
     await mount(fetch);
     await fetch.fetch();
@@ -103,7 +115,7 @@ describe('The FetchShopifySection class', () => {
 
     const anchor = h('a', {
       href: 'https://example.com/products/foo',
-      dataOptionSections: ['price'],
+      dataOptionSections: 'price',
       dataOptionResponse: 'Promise.resolve(\'<div id="price">custom</div>\')',
     });
     const fetch = new FetchShopifySection(anchor);
@@ -121,7 +133,7 @@ describe('The FetchShopifySection class', () => {
 
     const anchor = h('a', {
       href: 'https://example.com/products/foo',
-      dataOptionSections: ['price'],
+      dataOptionSections: 'price',
       dataOptionHistory: '',
     });
     const fetch = new FetchShopifySection(anchor);
@@ -136,13 +148,71 @@ describe('The FetchShopifySection class', () => {
     expect((spy.mock.calls[0][0] as URL).searchParams.get('sections')).toBe('price');
   });
 
+  it('should coerce a string URL passed to fetch() and append `sections`', async () => {
+    const spy = vi.spyOn(window, 'fetch');
+    spy.mockResolvedValue(sectionsResponse({ price: '<div id="price">new</div>' }));
+
+    const anchor = h('a', { href: 'https://example.com/products/foo', dataOptionSections: 'price' });
+    const fetch = new FetchShopifySection(anchor);
+    await mount(fetch);
+
+    // A string argument exercises the `url instanceof URL ? … : new URL(url, …)` branch…
+    fetch.fetch('https://example.com/collections/all?sort_by=price');
+    await wait(10);
+
+    const requested = spy.mock.calls[0][0] as URL;
+    expect(requested).toBeInstanceOf(URL);
+    expect(requested.pathname).toBe('/collections/all');
+    // …and the sections parameter is appended on top of the existing query.
+    expect(requested.searchParams.get('sort_by')).toBe('price');
+    expect(requested.searchParams.get('sections')).toBe('price');
+  });
+
+  it('should append `sections` onto a GET form’s derived query string', async () => {
+    const form = h('form', {
+      action: 'https://example.com/collections/all',
+      method: 'get',
+      dataOptionSections: 'main-collection-product-grid',
+    });
+    form.append(h('input', { type: 'hidden', name: 'sort_by', value: 'price-ascending' }));
+    const fetch = new FetchShopifySection(form);
+    await mount(fetch);
+
+    // The form field and the sections parameter coexist on the request URL…
+    expect(fetch.url.searchParams.get('sort_by')).toBe('price-ascending');
+    expect(fetch.url.searchParams.get('sections')).toBe('main-collection-product-grid');
+    // …while the form's own action stays clean for the no-JS fallback.
+    expect(form.getAttribute('action')).toBe('https://example.com/collections/all');
+  });
+
+  it('should emit a `fetch-error` event on a malformed JSON section response', async () => {
+    const spy = vi.spyOn(window, 'fetch');
+    // A non-JSON body: `response.json()` in `__parseResponse` rejects.
+    spy.mockResolvedValue(new Response('<not-json>', { headers: { 'content-type': 'text/html' } }));
+
+    const anchor = h('a', { href: 'https://example.com/products/foo', dataOptionSections: 'price' });
+    const fetch = new FetchShopifySection(anchor);
+
+    let error: Error | undefined;
+    fetch.$on(FetchShopifySection.FETCH_EVENTS.ERROR, (event) => {
+      error = (event as CustomEvent).detail[0].error;
+    });
+
+    await mount(fetch);
+    await fetch.fetch();
+    await wait(10);
+
+    // The rejection is caught by the base fetch lifecycle rather than left unhandled.
+    expect(error).toBeInstanceOf(Error);
+  });
+
   it('should keep the `sections` parameter out of the history / update URL', async () => {
     const spy = vi.spyOn(window, 'fetch');
     spy.mockResolvedValue(sectionsResponse({ price: '<div id="price">new</div>' }));
 
     const anchor = h('a', {
       href: 'https://example.com/products/foo?variant=42',
-      dataOptionSections: ['price'],
+      dataOptionSections: 'price',
       dataOptionHistory: '',
     });
     const fetch = new FetchShopifySection(anchor);

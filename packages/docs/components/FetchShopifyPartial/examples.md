@@ -30,13 +30,13 @@ Refresh the product grid and the results count when the customer picks a sort or
 <a
   href="{{ collection.url }}?sort_by=price-ascending"
   data-component="FetchShopifyPartial"
-  data-option-partials='["product-grid", "product-count"]'
+  data-option-partials="product-grid,product-count"
   data-option-history>
   Sort by price
 </a>
 ```
 
-```js [app.ts]
+```ts [app.ts]
 import { registerComponent } from '@studiometa/js-toolkit';
 import { FetchShopifyPartial } from '@studiometa/ui';
 
@@ -56,7 +56,8 @@ Use a `<form method="get">` so the selected facets are appended to the URL autom
   action="{{ collection.url }}"
   method="get"
   data-component="FetchShopifyPartial Action"
-  data-option-partials='["product-grid", "active-filters"]'
+  data-option-partials="product-grid,active-filters"
+  data-on:change="target.$el.requestSubmit()"
   data-on:fetch-before="Transition(#filters-loader) -> target.enter()"
   data-on:fetch-after="Transition(#filters-loader) -> target.leave()">
   {% for filter in collection.filters %}
@@ -69,9 +70,11 @@ Use a `<form method="get">` so the selected facets are appended to the URL autom
   id="filters-loader"
   data-component="Transition"
   data-option-enter-from="opacity-0"
+  data-option-enter-active="transition"
   data-option-leave-to="opacity-0"
+  data-option-leave-active="transition"
   data-option-leave-keep
-  class="opacity-0">
+  class="transition opacity-0">
   Loading…
 </div>
 
@@ -84,7 +87,7 @@ Use a `<form method="get">` so the selected facets are appended to the URL autom
 {% endpartial %}
 ```
 
-```js [app.ts]
+```ts [app.ts]
 import { registerComponent } from '@studiometa/js-toolkit';
 import { Action, FetchShopifyPartial, Transition } from '@studiometa/ui';
 
@@ -96,7 +99,7 @@ registerComponent(Transition);
 :::
 
 ::: tip
-Submitting a facet automatically triggers the request — no submit button is required when the form is enhanced. Keep a `<noscript>` submit button so filtering still works without JavaScript.
+Changing a facet fires a native `change` event that bubbles to the form, where the [`Action`](../Action/index.md) binding calls `requestSubmit()` to trigger the request — no submit button is required once JavaScript runs. Keep the `<noscript>` submit button so filtering still works without JavaScript.
 :::
 
 ## Reacting to the update event
@@ -112,13 +115,13 @@ Submitting a facet automatically triggers the request — no submit button is re
   <a
     href="{{ collection.url }}?page=2"
     data-component="FetchShopifyPartial"
-    data-option-partials='["product-grid"]'>
+    data-option-partials="product-grid">
     Next page
   </a>
 </div>
 ```
 
-```js [app.ts]
+```ts [app.ts]
 import { registerComponent } from '@studiometa/js-toolkit';
 import { Action, FetchShopifyPartial } from '@studiometa/ui';
 

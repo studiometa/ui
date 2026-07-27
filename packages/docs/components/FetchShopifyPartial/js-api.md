@@ -11,16 +11,16 @@ The `FetchShopifyPartial` class extends the [`Fetch` class](../Fetch/js-api.md) 
 
 ### `partials`
 
-- Type: `string[]`
-- Default: `[]`
+- Type: `string`
+- Default: `''`
 
-The names of the Shopify partials to refresh, matching the names used in the corresponding `{% partial %}` tags. Provide them as a JSON array in the `data-option-partials` attribute. When the list is empty, the component falls back to the base [`Fetch`](../Fetch/index.md) behaviour.
+The names of the Shopify partials to refresh, matching the names used in the corresponding `{% partial %}` tags. Provide them as a comma-separated list in the `data-option-partials` attribute; surrounding whitespace is trimmed. When empty, the component falls back to the base [`Fetch`](../Fetch/index.md) behaviour.
 
 ```html
 <a
   href="/collections/all"
   data-component="FetchShopifyPartial"
-  data-option-partials='["product-grid", "product-count"]'>
+  data-option-partials="product-grid,product-count">
   Refresh
 </a>
 ```

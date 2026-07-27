@@ -3,7 +3,7 @@ import { Fetch, type FetchProps } from './Fetch.js';
 
 export interface FetchShopifySectionProps extends FetchProps {
   $options: FetchProps['$options'] & {
-    sections: string[];
+    sections: string;
   };
 }
 
@@ -30,7 +30,7 @@ export type FetchShopifySectionConstructor<
  * @link https://ui.studiometa.dev/components/FetchShopifySection/
  */
 export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
-  T & { $options: { sections: string[] } }
+  T & { $options: { sections: string } }
 > {
   /**
    * Declare the `this.constructor` type
@@ -51,9 +51,21 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
     name: 'FetchShopifySection',
     options: {
       ...Fetch.config.options,
-      sections: Array,
+      sections: String,
     },
   };
+
+  /**
+   * The configured section IDs, parsed from the comma-separated `sections` option into a
+   * trimmed, empty-filtered list.
+   * @private
+   */
+  get __sectionIds(): string[] {
+    return this.$options.sections
+      .split(',')
+      .map((section) => section.trim())
+      .filter(Boolean);
+  }
 
   /**
    * Append the configured section IDs as the Section Rendering API `sections` parameter, leaving
@@ -61,7 +73,7 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
    * @private
    */
   __appendSections(url: URL): URL {
-    const { sections } = this.$options;
+    const { __sectionIds: sections } = this;
 
     if (sections.length) {
       url.searchParams.set(this.constructor.SECTIONS_PARAMETER, sections.join(','));
@@ -103,10 +115,10 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
    * @inheritdoc
    */
   async __parseResponse(response: Response, url: URL, requestInit: RequestInit): Promise<string> {
-    const { sections, response: responseOption } = this.$options;
+    const { response: responseOption } = this.$options;
     const defaultResponse = (Fetch.config.options.response as { default: string }).default;
 
-    if (!sections.length || responseOption !== defaultResponse) {
+    if (!this.__sectionIds.length || responseOption !== defaultResponse) {
       return super.__parseResponse(response, url, requestInit);
     }
 

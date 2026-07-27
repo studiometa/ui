@@ -45,7 +45,7 @@ Then trigger a refresh from a link or a form, listing the partials to update wit
 <a
   href="{{ collection.url }}?sort_by=price-ascending"
   data-component="FetchShopifyPartial"
-  data-option-partials='["product-grid", "product-count"]'>
+  data-option-partials="product-grid,product-count">
   Sort by price
 </a>
 ```

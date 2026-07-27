@@ -25,7 +25,7 @@ Trigger a refresh from a link or a form, listing the section IDs to update with 
 <a
   href="{{ collection.url }}?sort_by=price-ascending"
   data-component="FetchShopifySection"
-  data-option-sections='["main-collection-product-grid", "collection-results-count"]'>
+  data-option-sections="main-collection-product-grid,collection-results-count">
   Sort by price
 </a>
 
@@ -37,7 +37,7 @@ Trigger a refresh from a link or a form, listing the section IDs to update with 
 - **Without JavaScript**, the link navigates to <code v-pre>{{ collection.url }}?sort_by=price-ascending</code> — a normal, fully rendered page.
 - **With JavaScript**, the component requests `…?sort_by=price-ascending&sections=main-collection-product-grid,collection-results-count`, unwraps the JSON response and swaps each `shopify-section-*` wrapper in place.
 
-Because `FetchShopifySection` extends `Fetch`, it inherits every [option](../Fetch/js-api.md), getter, method and event of the base component, including the loader, [`mode`](../Fetch/js-api.md#mode), [`history`](../Fetch/js-api.md#history) and [`viewTransition`](../Fetch/js-api.md#viewtransition) features. The `sections` parameter is stripped from the URL pushed to the history, so navigation history stays on the human-facing page.
+Because `FetchShopifySection` extends `Fetch`, it inherits every [option](../Fetch/js-api.md), getter, method and event of the base component, including the [`mode`](../Fetch/js-api.md#mode), [`history`](../Fetch/js-api.md#history) and [`viewTransition`](../Fetch/js-api.md#viewtransition) options and the loader pattern built on its [events](../Fetch/js-api.md#events). The `sections` parameter is stripped from the URL pushed to the history, so navigation history stays on the human-facing page.
 
 ::: tip Forms
 Use a `<form method="get">` when the parameters come from user input (facet filters, a sort `<select>`, a search field): the form data is [appended to the URL automatically](../Fetch/js-api.md#url), and `FetchShopifySection` adds the `sections` parameter on top — no hidden `<input name="sections">` required.
