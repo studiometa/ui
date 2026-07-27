@@ -57,7 +57,7 @@ Use a `<form method="get">` so the selected facets are appended to the URL autom
   method="get"
   data-component="FetchShopifyPartial Action"
   data-option-partials="product-grid,active-filters"
-  data-on:change="target.$el.requestSubmit()"
+  data-on:change="$el.requestSubmit()"
   data-on:fetch-before="Transition(#filters-loader) -> target.enter()"
   data-on:fetch-after="Transition(#filters-loader) -> target.leave()">
   {% for filter in collection.filters %}
