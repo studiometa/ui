@@ -95,6 +95,26 @@ describe('The FetchShopifySection class', () => {
     expect(document.getElementById('price')?.textContent).toBe('new');
   });
 
+  it('should honour a custom `response` option instead of unwrapping JSON', async () => {
+    document.body.innerHTML = '<div id="price">old</div>';
+    const spy = vi.spyOn(window, 'fetch');
+    // The response is JSON, but the custom `response` option ignores it and returns fixed HTML.
+    spy.mockResolvedValue(sectionsResponse({ price: '<div id="price">json</div>' }));
+
+    const anchor = h('a', {
+      href: 'https://example.com/products/foo',
+      dataOptionSections: ['price'],
+      dataOptionResponse: 'Promise.resolve(\'<div id="price">custom</div>\')',
+    });
+    const fetch = new FetchShopifySection(anchor);
+    await mount(fetch);
+    await fetch.fetch();
+    await wait(10);
+
+    // The custom option wins over the default Section Rendering JSON unwrap.
+    expect(document.getElementById('price')?.textContent).toBe('custom');
+  });
+
   it('should re-append the `sections` parameter on popstate navigation', async () => {
     const spy = vi.spyOn(window, 'fetch');
     spy.mockResolvedValue(sectionsResponse({ price: '<div id="price">new</div>' }));

@@ -92,19 +92,26 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
 
   /**
    * Unwrap the Section Rendering API JSON response (`{ [id]: html }`) into a single HTML string,
-   * dropping sections returned as `null`. When no `sections` are configured no `sections`
-   * parameter is sent, so the response is a normal HTML page: delegate to the base
-   * {@link Fetch.__parseResponse} (text) rather than attempting to parse it as JSON.
+   * dropping sections returned as `null`.
+   *
+   * This is only the default extraction: it is skipped — deferring to the base
+   * {@link Fetch.__parseResponse}, which evaluates the `response` option — when no `sections`
+   * are configured (no `sections` parameter is sent, so the response is a normal HTML page) or
+   * when the caller supplies a custom `response` option, so an explicit `data-option-response`
+   * keeps working exactly as it does on the base {@link Fetch}.
    * @protected
    * @inheritdoc
    */
   async __parseResponse(response: Response, url: URL, requestInit: RequestInit): Promise<string> {
-    if (!this.$options.sections.length) {
+    const { sections, response: responseOption } = this.$options;
+    const defaultResponse = (Fetch.config.options.response as { default: string }).default;
+
+    if (!sections.length || responseOption !== defaultResponse) {
       return super.__parseResponse(response, url, requestInit);
     }
 
-    const sections = (await response.json()) as Record<string, string | null>;
-    return Object.values(sections)
+    const parsed = (await response.json()) as Record<string, string | null>;
+    return Object.values(parsed)
       .filter(Boolean)
       .join('');
   }
