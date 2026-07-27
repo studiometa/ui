@@ -23,7 +23,7 @@
   data-component="Action Dialog"
   data-on:cancel.prevent="Dialog.close()"
   data-on:click="event.target === $el && Dialog.close()"
-  class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent">
+  class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent overflow-hidden">
 
   {# Fading backdrop — a ViewTransition child so it co-animates with the panel. #}
   <div
