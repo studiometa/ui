@@ -45,7 +45,7 @@ Then trigger a refresh from a link or a form, listing the partials to update wit
 <a
   href="{{ collection.url }}?sort_by=price-ascending"
   data-component="FetchShopifyPartial"
-  data-option-partials='["product-grid", "product-count"]'>
+  data-option-partials="product-grid,product-count">
   Sort by price
 </a>
 ```
@@ -54,4 +54,4 @@ Clicking the link fetches fresh HTML for the `product-grid` and `product-count` 
 
 ## Choosing between the partials and Section Rendering APIs
 
-If you are not using the Liquid July&nbsp;'26 partial rendering preview, the base [`Fetch`](../Fetch/index.md) component can already consume Shopify's stable [Section Rendering API](../Fetch/examples.md#shopify-section-rendering-api) with no extra package. Reach for `FetchShopifyPartial` when you want the ergonomics and state preservation of the newer `{% partial %}` primitive.
+If you are not using the Liquid July&nbsp;'26 partial rendering preview, [`FetchShopifySection`](../FetchShopifySection/index.md) consumes Shopify's stable [Section Rendering API](https://shopify.dev/docs/api/ajax/section-rendering) with no extra package. Reach for `FetchShopifyPartial` when you want the ergonomics and state preservation of the newer `{% partial %}` primitive.

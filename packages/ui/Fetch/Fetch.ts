@@ -322,14 +322,7 @@ export class Fetch<T extends BaseProps = BaseProps>
         throw new Error(`Fetch failed with status ${response.status}`);
       }
 
-      const fn = new Function(
-        'response',
-        'url',
-        'requestInit',
-        'self',
-        `return ${this.$options.response}`,
-      );
-      const content = await fn.call(this, response, normalizedUrl, requestInit, self);
+      const content = await this.__parseResponse(response, normalizedUrl, requestInit);
       this.$emit(FETCH_EVENTS.AFTER_FETCH, {
         instance: this,
         url: normalizedUrl,
@@ -346,6 +339,20 @@ export class Fetch<T extends BaseProps = BaseProps>
       });
       this.error(normalizedUrl, init, error);
     }
+  }
+
+  /**
+   * Extract the string content to inject from the raw `Response`.
+   *
+   * The default implementation evaluates the `response` option expression, giving it access to
+   * the `response`, `url`, `requestInit` and `self` bindings and to the component instance via
+   * `this`. Subclasses can override this to parse the response with real, typed code instead of
+   * a declarative option string.
+   * @protected
+   */
+  __parseResponse(response: Response, url: URL, requestInit: RequestInit): Promise<string> | string {
+    const fn = new Function('response', 'url', 'requestInit', 'self', `return ${this.$options.response}`);
+    return fn.call(this, response, url, requestInit, self);
   }
 
   /**

@@ -4,7 +4,7 @@ import { Fetch, type FetchProps } from './Fetch.js';
 
 export interface FetchShopifyPartialProps extends FetchProps {
   $options: FetchProps['$options'] & {
-    partials: string[];
+    partials: string;
   };
 }
 
@@ -49,7 +49,7 @@ interface PartialsModule {
  * @link https://ui.studiometa.dev/components/Fetch/
  */
 export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
-  T & { $options: { partials: string[] } }
+  T & { $options: { partials: string } }
 > {
   /**
    * Declare the `this.constructor` type
@@ -65,9 +65,21 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
     name: 'FetchShopifyPartial',
     options: {
       ...Fetch.config.options,
-      partials: Array,
+      partials: String,
     },
   };
+
+  /**
+   * The configured partial names, parsed from the comma-separated `partials` option into a
+   * trimmed, empty-filtered list.
+   * @private
+   */
+  get __partialNames(): string[] {
+    return this.$options.partials
+      .split(',')
+      .map((partial) => partial.trim())
+      .filter(Boolean);
+  }
 
   /**
    * Module specifier for the Shopify partial rendering package.
@@ -169,7 +181,7 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
    */
   async fetch(url: URL | string = this.url, requestInit: RequestInit = {}) {
     const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
-    const names = this.$options.partials;
+    const names = this.__partialNames;
     const partials =
       names.length && this.__canUsePartials(requestInit) ? await this.__resolvePartials() : null;
 

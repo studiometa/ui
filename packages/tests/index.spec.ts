@@ -26,6 +26,7 @@ test('components exports', () => {
       "Draggable",
       "Fetch",
       "FetchShopifyPartial",
+      "FetchShopifySection",
       "Figure",
       "FigureShopify",
       "FigureTwicpics",

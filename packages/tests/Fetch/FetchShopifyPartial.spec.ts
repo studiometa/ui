@@ -29,7 +29,7 @@ describe('The FetchShopifyPartial class', () => {
     const fakePartials = useFakePartials();
     const anchor = h('a', {
       href: 'https://example.com/collections/all',
-      dataOptionPartials: ['product-grid', 'product-count'],
+      dataOptionPartials: 'product-grid,product-count',
     });
     const fetch = new FetchShopifyPartial(anchor);
 
@@ -77,7 +77,7 @@ describe('The FetchShopifyPartial class', () => {
 
     const anchor = h('a', {
       href: 'https://example.com',
-      dataOptionPartials: ['product-grid'],
+      dataOptionPartials: 'product-grid',
     });
     const fetch = new FetchShopifyPartial(anchor);
 
@@ -101,7 +101,7 @@ describe('The FetchShopifyPartial class', () => {
     const form = h('form', {
       action: 'https://example.com/cart/add',
       method: 'post',
-      dataOptionPartials: ['cart-items'],
+      dataOptionPartials: 'cart-items',
     });
     const fetch = new FetchShopifyPartial(form);
 
@@ -119,7 +119,7 @@ describe('The FetchShopifyPartial class', () => {
 
     const anchor = h('a', {
       href: 'https://example.com',
-      dataOptionPartials: ['product-grid'],
+      dataOptionPartials: 'product-grid',
       dataOptionHeaders: { 'x-foo': 'bar' },
     });
     const fetch = new FetchShopifyPartial(anchor);
@@ -138,7 +138,7 @@ describe('The FetchShopifyPartial class', () => {
 
     const anchor = h('a', {
       href: 'https://example.com',
-      dataOptionPartials: ['product-grid'],
+      dataOptionPartials: 'product-grid',
     });
     const fetch = new FetchShopifyPartial(anchor);
 
@@ -156,7 +156,7 @@ describe('The FetchShopifyPartial class', () => {
 
     const anchor = h('a', {
       href: 'https://example.com',
-      dataOptionPartials: ['product-grid'],
+      dataOptionPartials: 'product-grid',
     });
     const fetch = new FetchShopifyPartial(anchor);
 
@@ -170,7 +170,7 @@ describe('The FetchShopifyPartial class', () => {
     useFakePartials();
     const anchor = h('a', {
       href: 'https://example.com',
-      dataOptionPartials: ['product-grid'],
+      dataOptionPartials: 'product-grid',
     });
     const fetch = new FetchShopifyPartial(anchor);
     const eventLog: string[] = [];
