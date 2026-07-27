@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.9.0-beta.3](https://github.com/studiometa/ui/compare/1.9.0-beta.2..1.9.0-beta.3) (2026-07-27)
+
 ### Added
 
 - **Fetch:** add `FetchShopifySection`, an adapter for Shopify's stable Section Rendering API ([#550](https://github.com/studiometa/ui/pull/550))
