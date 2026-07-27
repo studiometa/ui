@@ -21,7 +21,7 @@ registerComponent(FetchShopifySection);
 
 Trigger a refresh from a link or a form, listing the section IDs to update with the [`sections` option](./js-api.md#sections). Keep those IDs out of the `href` — the component appends them to the request itself:
 
-```html
+```liquid
 <a
   href="{{ collection.url }}?sort_by=price-ascending"
   data-component="FetchShopifySection"
@@ -29,9 +29,9 @@ Trigger a refresh from a link or a form, listing the section IDs to update with 
   Sort by price
 </a>
 
-{% comment %} Wrappers rendered by Shopify, matched and swapped by id. {% endcomment %}
-<div id="shopify-section-main-collection-product-grid">…</div>
-<div id="shopify-section-collection-results-count">…</div>
+{% comment %} `{% section %}` already outputs the `shopify-section-*` wrapper matched by id. {% endcomment %}
+{% section 'main-collection-product-grid' %}
+{% section 'collection-results-count' %}
 ```
 
 - **Without JavaScript**, the link navigates to <code v-pre>{{ collection.url }}?sort_by=price-ascending</code> — a normal, fully rendered page.
