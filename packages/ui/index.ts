@@ -4,6 +4,7 @@ export * from './AnchorNav/index.js';
 export * from './AnchorScrollTo/index.js';
 export * from './Carousel/index.js';
 export * from './CircularMarquee/index.js';
+export * from './ClickOutside/index.js';
 export * from './Cursor/index.js';
 export * from './Data/index.js';
 export * from './decorators/index.js';
