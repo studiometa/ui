@@ -21,20 +21,27 @@ describe('The CarouselBtn class', () => {
     });
   }
 
-  for (const [action, index, lastIndex, isDisabled] of [
-    ['prev', 0, 10, true],
-    ['prev', 1, 10, false],
-    ['next', 1, 10, false],
-    ['next', 10, 10, true],
-    [1, 1, 10, true],
-    [1, 2, 10, false],
+  // The disabled state is derived from `prevIndex`/`nextIndex` (whether the
+  // action would actually move), so it honours boundary/reverse options.
+  for (const [action, index, carouselMock, isDisabled] of [
+    // clamp (default): the reachable end index equals the current index.
+    ['prev', 0, { prevIndex: 0 }, true],
+    ['prev', 1, { prevIndex: 0 }, false],
+    ['next', 1, { nextIndex: 2 }, false],
+    ['next', 10, { nextIndex: 10 }, true],
+    // numeric action: disabled only on the slide it points to.
+    [1, 1, {}, true],
+    [1, 2, {}, false],
+    // loop/reverse: prev/next still move at the raw ends, so never disabled.
+    ['prev', 0, { prevIndex: 10 }, false],
+    ['next', 10, { nextIndex: 0 }, false],
   ] as const) {
-    it(`should set the disabled attribute to ${String(isDisabled)} when action is ${action}, index is ${index} and lastIndex is ${lastIndex}.`, async () => {
+    it(`should set disabled=${String(isDisabled)} for action=${action} at index=${index} (${JSON.stringify(carouselMock)})`, async () => {
       const btn = h('button', { dataOptionAction: action });
       const carouselBtn = new CarouselBtn(btn);
       const spy = vi.spyOn(carouselBtn, 'carousel', 'get');
       // @ts-expect-error mock is partial
-      spy.mockImplementation(() => ({ lastIndex }));
+      spy.mockImplementation(() => carouselMock);
       carouselBtn.update(index);
       expect(btn.disabled).toBe(isDisabled);
     });

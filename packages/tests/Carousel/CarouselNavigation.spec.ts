@@ -169,4 +169,18 @@ describe('Carousel navigation', () => {
     expect(items[0].style.getPropertyValue('--carousel-item-active')).toBe('0');
     expect(items[1].style.getPropertyValue('--carousel-item-active')).toBe('1');
   });
+
+  it('should refresh progress after an update', async () => {
+    const { carousel, wrapper } = await getCarousel();
+    await wait();
+
+    // After an update the progress denominator can change; `updated` must
+    // re-emit the refreshed progress rather than leave `--carousel-progress`
+    // stale until the next scroll.
+    vi.spyOn(wrapper, 'progress', 'get').mockReturnValue(0.5);
+    carousel.updated();
+    await wait();
+
+    expect(carousel.$el.style.getPropertyValue('--carousel-progress')).toBe('0.5');
+  });
 });

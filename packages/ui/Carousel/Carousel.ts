@@ -196,6 +196,12 @@ export class Carousel<T extends IndexableProps = IndexableProps> extends Indexab
     const { currentIndex } = this;
     this.currentIndex = currentIndex;
     this.connectChildren();
+    // Item changes alter the progress denominator (the children invalidate their
+    // geometry caches in their own `updated` hooks). Force `ticked` to re-emit
+    // the refreshed progress on the next frame, otherwise the emitted `progress`
+    // value and `--carousel-progress` stay stale until the next scroll.
+    this.previousProgress = -1;
+    this.$services.enable('ticked');
   }
 
   /**

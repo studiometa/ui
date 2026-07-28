@@ -58,11 +58,19 @@ export class CarouselBtn<T extends BaseProps = BaseProps> extends AbstractCarous
     }
 
     const { action } = this.$options;
-    const { lastIndex } = carousel;
-    const shouldDisable =
-      (action === 'next' && index === lastIndex) ||
-      (action === 'prev' && index === 0) ||
-      Number(action) === index;
+    // Base the disabled state on whether the action would actually move the
+    // index, so it honours the inherited `Indexable` options: with `boundary`
+    // `loop`/`bounce` the ends never disable (navigation wraps), and `reverse`
+    // flips which end is terminal. `prevIndex`/`nextIndex` already encode all of
+    // that; a numeric action disables only on the slide it points to.
+    let shouldDisable: boolean;
+    if (action === 'next') {
+      shouldDisable = carousel.nextIndex === index;
+    } else if (action === 'prev') {
+      shouldDisable = carousel.prevIndex === index;
+    } else {
+      shouldDisable = Number(action) === index;
+    }
 
     this.$el.disabled = shouldDisable;
   }
