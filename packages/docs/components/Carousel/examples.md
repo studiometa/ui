@@ -21,3 +21,14 @@ title: Carousel examples
   :script="() => import('./stories/vertical/app.js?raw')"
   :script-editor="false"
   />
+
+## Boundaries
+
+The `boundary` option, inherited from the [`Indexable`](/components/Indexable/) primitive, controls what happens at the ends of the track. Use `clamp` (the default), `loop` or `bounce`. Watch the Prev/Next buttons: they disable at the ends in `clamp` mode but stay active in `loop` and `bounce`.
+
+<PreviewPlayground
+  :html="() => import('./stories/boundaries/app.twig')"
+  :html-editor="false"
+  :script="() => import('./stories/boundaries/app.js?raw')"
+  :script-editor="false"
+  />

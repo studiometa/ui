@@ -34,7 +34,24 @@ Defines the scroll direction of the carousel: `'x'` for horizontal, `'y'` for ve
 ```
 <!-- prettier-ignore-end -->
 
-The [`boundary`](/components/Indexable/js-api#boundary) and [`reverse`](/components/Indexable/js-api#reverse) options are inherited from the `Indexable` primitive. The `total` option has no effect here: the carousel derives its length from the number of `CarouselItem` children.
+### `boundary`
+
+- Type: `'clamp' | 'loop' | 'bounce'`
+- Default: `'clamp'`
+
+Inherited from the [`Indexable`](/components/Indexable/js-api#boundary) primitive, it controls what happens at the ends of the track: `clamp` stops at the first/last item, `loop` wraps around, and `bounce` reverses direction. The `CarouselBtn` controls follow it — `prev`/`next` disable at the ends in `clamp` mode but stay active in `loop` and `bounce`. See the [boundaries example](./examples#boundaries).
+
+<!-- prettier-ignore-start -->
+```html {3}
+<div
+  data-component="Carousel"
+  data-option-boundary="loop">
+  ...
+</div>
+```
+<!-- prettier-ignore-end -->
+
+The [`reverse`](/components/Indexable/js-api#reverse) option is also inherited from `Indexable`. The `total` option has no effect here: the carousel derives its length from the number of `CarouselItem` children.
 
 ## Getters
 

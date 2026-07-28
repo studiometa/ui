@@ -183,4 +183,42 @@ describe('Carousel navigation', () => {
 
     expect(carousel.$el.style.getPropertyValue('--carousel-progress')).toBe('0.5');
   });
+
+  describe('boundary option', () => {
+    async function mountWith(boundary: string) {
+      const items = [
+        h('div', { dataComponent: 'CarouselItem' }),
+        h('div', { dataComponent: 'CarouselItem' }),
+        h('div', { dataComponent: 'CarouselItem' }),
+      ];
+      const wrapperEl = h('div', { dataComponent: 'CarouselWrapper' }, items);
+      const el = h('div', { dataOptionBoundary: boundary }, [wrapperEl]);
+      const carousel = new Carousel(el);
+      await mount(carousel);
+      return carousel;
+    }
+
+    it('clamp: goNext stops at the last index', async () => {
+      const carousel = await mountWith('clamp');
+      carousel.goTo(2);
+      carousel.goNext();
+      expect(carousel.currentIndex).toBe(2);
+    });
+
+    it('loop: navigation wraps around the ends', async () => {
+      const carousel = await mountWith('loop');
+      carousel.goTo(2);
+      carousel.goNext();
+      expect(carousel.currentIndex).toBe(0);
+      carousel.goPrev();
+      expect(carousel.currentIndex).toBe(2);
+    });
+
+    it('bounce: navigation reverses at the last index', async () => {
+      const carousel = await mountWith('bounce');
+      carousel.goTo(2);
+      carousel.goNext();
+      expect(carousel.currentIndex).toBe(1);
+    });
+  });
 });

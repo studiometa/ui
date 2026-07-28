@@ -1,0 +1,62 @@
+{% set colors = ['red', 'green', 'blue', 'purple'] %}
+{% set count = 5 %}
+{% set boundaries = {
+  clamp: 'Stops at the first and last item — the Prev/Next buttons disable at the ends.',
+  loop: 'Wraps around — Next from the last item goes back to the first, and the buttons never disable.',
+  bounce: 'Reverses direction at the ends instead of wrapping — the buttons never disable.',
+} %}
+
+<div class="grid gap-12 p-10">
+  {% for boundary, description in boundaries %}
+    <section class="grid gap-3">
+      <header>
+        <h2 class="font-bold">
+          <code>data-option-boundary="{{ boundary }}"</code>
+        </h2>
+        <p class="text-sm opacity-70">{{ description }}</p>
+      </header>
+
+      <div data-component="Carousel"
+        class="grid gap-4"
+        data-option-axis="x"
+        data-option-boundary="{{ boundary }}">
+        <div data-component="CarouselWrapper CarouselDrag"
+          class="flex items-center gap-8 w-full overflow-x-auto snap-x snap-mandatory"
+          style="scrollbar-width: none;">
+          {% for i in 1..count %}
+            {% set color = colors[loop.index0 % (colors|length)] %}
+            <div data-component="CarouselItem"
+              class="
+                snap-center shrink-0 flex items-center justify-center
+                w-1/3 h-32 bg-{{
+              color
+              }}-400 ring-inset ring-{{
+              color
+              }}-600 ring
+                text-white font-bold rounded-xl
+              "
+              style="--tw-ring-opacity: var(--carousel-item-active, 0)">
+              N°{{ i }}
+            </div>
+          {% endfor %}
+        </div>
+        <nav class="flex items-center justify-center gap-2">
+          {% include '@ui/Button/StyledButton.twig' with {
+            label: '← Prev',
+            attr: {
+              data_component: 'CarouselBtn',
+              data_option_action: 'prev'
+            }
+          } %}
+          {% include '@ui/Button/StyledButton.twig' with {
+            label: 'Next →',
+            attr: {
+              data_component: 'CarouselBtn',
+              data_option_action: 'next'
+            }
+          } %}
+        </nav>
+      </div>
+    </section>
+  {% endfor %}
+</div>
