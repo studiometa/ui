@@ -29,30 +29,40 @@ export class CarouselBtn<T extends BaseProps = BaseProps> extends AbstractCarous
    * Go to the next or previous item on click.
    */
   onClick() {
+    const { carousel } = this;
+    if (!carousel) {
+      return;
+    }
+
     const { action } = this.$options;
     switch (action) {
       case 'next':
-        this.carousel.goNext();
+        carousel.goNext();
         break;
       case 'prev':
-        this.carousel.goPrev();
+        carousel.goPrev();
         break;
       default:
-        this.carousel.goTo(Number(action));
+        carousel.goTo(Number(action));
         break;
     }
   }
 
   /**
-   * Update button state on parent carousel progress.
+   * Update the disabled state for the given index.
    */
-  onParentCarouselProgress() {
+  update(index: number) {
+    const { carousel } = this;
+    if (!carousel) {
+      return;
+    }
+
     const { action } = this.$options;
-    const { currentIndex, lastIndex } = this.carousel;
+    const { lastIndex } = carousel;
     const shouldDisable =
-      (action === 'next' && currentIndex === lastIndex) ||
-      (action === 'prev' && currentIndex === 0) ||
-      Number(action) === currentIndex;
+      (action === 'next' && index === lastIndex) ||
+      (action === 'prev' && index === 0) ||
+      Number(action) === index;
 
     this.$el.disabled = shouldDisable;
   }

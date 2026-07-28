@@ -1,7 +1,7 @@
 import type { BaseConfig, BaseProps, DragServiceProps } from '@studiometa/js-toolkit';
 import { withDrag, withMountOnMediaQuery } from '@studiometa/js-toolkit';
 import { inertiaFinalValue } from '@studiometa/js-toolkit/utils';
-import { AbstractCarouselChild } from './AbstractCarouselChild.js';
+import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import { getClosestIndex } from './utils.js';
 
 /**
@@ -11,11 +11,17 @@ export interface CarouselDragProps extends BaseProps {}
 
 /**
  * CarouselDrag class.
+ *
+ * The draggable track of the Carousel. It only reads the carousel (items and
+ * orientation) and never reacts to index changes, so it extends the
+ * non-subscribing `AbstractCarouselComponent` rather than
+ * `AbstractCarouselChild` — mirroring how `SliderDrag` extends `Base`, not
+ * `AbstractSliderChild`.
  */
 export class CarouselDrag<
   T extends BaseProps = BaseProps,
-> extends withMountOnMediaQuery<AbstractCarouselChild>(
-  withDrag(AbstractCarouselChild),
+> extends withMountOnMediaQuery<AbstractCarouselComponent>(
+  withDrag(AbstractCarouselComponent),
   '(pointer: fine)',
 )<T & CarouselDragProps> {
   /**
@@ -62,22 +68,27 @@ export class CarouselDrag<
 
     // @todo implement inertia with the raf service for a smoother transition than the native smooth scroll
     if (props.mode === 'drop') {
+      const { carousel } = this;
+      if (!carousel) {
+        return;
+      }
+
       const options: ScrollToOptions = { behavior: 'smooth' };
 
       if (this.isHorizontal) {
         const finalValue = inertiaFinalValue(wrapper.scrollLeft, props.delta.x * -2.5);
         const index = getClosestIndex(
-          this.carousel.items.map((item) => item.state.left),
+          carousel.items.map((item) => item.state.left),
           finalValue,
         );
-        options.left = this.carousel.items[index].state.left;
+        options.left = carousel.items[index].state.left;
       } else if (this.isVertical) {
         const finalValue = inertiaFinalValue(wrapper.scrollTop, props.delta.y * -2.5);
         const index = getClosestIndex(
-          this.carousel.items.map((item) => item.state.top),
+          carousel.items.map((item) => item.state.top),
           finalValue,
         );
-        options.top = this.carousel.items[index].state.top;
+        options.top = carousel.items[index].state.top;
       }
 
       wrapper.addEventListener(

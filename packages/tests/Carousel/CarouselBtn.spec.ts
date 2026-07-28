@@ -34,8 +34,8 @@ describe('The CarouselBtn class', () => {
       const carouselBtn = new CarouselBtn(btn);
       const spy = vi.spyOn(carouselBtn, 'carousel', 'get');
       // @ts-expect-error mock is partial
-      spy.mockImplementation(() => ({ currentIndex: index, lastIndex }));
-      carouselBtn.onParentCarouselProgress();
+      spy.mockImplementation(() => ({ lastIndex }));
+      carouselBtn.update(index);
       expect(btn.disabled).toBe(isDisabled);
     });
   }

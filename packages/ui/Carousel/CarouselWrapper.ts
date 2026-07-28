@@ -1,6 +1,6 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { clamp } from '@studiometa/js-toolkit/utils';
-import { AbstractCarouselChild } from './AbstractCarouselChild.js';
+import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import { getClosestIndex } from './utils.js';
 
 /**
@@ -10,8 +10,15 @@ export interface CarouselWrapperProps extends BaseProps {}
 
 /**
  * CarouselWrapper class.
+ *
+ * The scrollable track of the Carousel. It scrolls to a given item on demand
+ * through the imperative `scrollToIndex` (called by `Carousel.goTo`) and, on
+ * native/touch scroll, merely reports the closest item back to the Carousel via
+ * `currentIndex`. Because scrolling is only ever initiated by `goTo` and
+ * `onScroll` only reports, the scroll/index feedback loop that used to hijack a
+ * smooth scroll cannot form, so no synchronising guard is needed.
  */
-export class CarouselWrapper<T extends BaseProps = BaseProps> extends AbstractCarouselChild<
+export class CarouselWrapper<T extends BaseProps = BaseProps> extends AbstractCarouselComponent<
   T & CarouselWrapperProps
 > {
   /**
@@ -20,15 +27,6 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends AbstractCa
   static config: BaseConfig = {
     name: 'CarouselWrapper',
   };
-
-  /**
-   * Whether the current index is being synced from a scroll event. While this
-   * is `true`, the wrapper must not scroll back to the index, otherwise the
-   * scroll position and the index fight each other and hijack any smooth
-   * scroll triggered by `goTo()`.
-   * @private
-   */
-  __syncingIndexFromScroll = false;
 
   /**
    * Cached maximum scroll distances (`scrollWidth - clientWidth` and
@@ -79,37 +77,40 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends AbstractCa
   }
 
   /**
-   * Update index and emit progress on wrapper scroll.
+   * Scroll to the item at the given index.
+   *
+   * Called imperatively by `Carousel.goTo`. Guards against an empty carousel or
+   * a missing item so the unconditional mount-time seed cannot throw.
+   */
+  scrollToIndex(index: number) {
+    const state = this.carousel?.items[index]?.state;
+    if (state) {
+      this.$el.scrollTo({ left: state.left, top: state.top, behavior: 'smooth' });
+    }
+  }
+
+  /**
+   * Report the scroll-synced index and keep the progress bar animating.
+   *
+   * Assigning `carousel.currentIndex` only stores/reports the index — it never
+   * scrolls back — so this cannot hijack a `goTo` smooth scroll. The `ticked`
+   * service must be (re-)enabled here because it self-disables once progress
+   * stabilises: without it `--carousel-progress` and the `progress` event would
+   * freeze during any scroll not initiated by `goTo`, including all touch
+   * scrolling (the `CarouselDrag` track only mounts on `(pointer: fine)`).
    */
   onScroll() {
     const { isHorizontal, $el, carousel } = this;
+    if (!carousel) {
+      return;
+    }
 
     const minDiffIndex = getClosestIndex(
       carousel.items.map((item) => (isHorizontal ? item.state.left : item.state.top)),
       isHorizontal ? $el.scrollLeft : $el.scrollTop,
     );
 
-    // Reflect the scroll position on the index without scrolling back to it:
-    // the `index` event is dispatched synchronously, so `onParentCarouselIndex`
-    // runs while this flag is set and bails out.
-    this.__syncingIndexFromScroll = true;
     carousel.currentIndex = minDiffIndex;
-    this.__syncingIndexFromScroll = false;
-
-    this.carousel.$services.enable('ticked');
-  }
-
-  /**
-   * Scroll to the new item on parent carousel go-to event.
-   */
-  onParentCarouselIndex() {
-    if (this.__syncingIndexFromScroll) {
-      return;
-    }
-
-    const { state } = this.carousel.items[this.carousel.currentIndex];
-    if (state) {
-      this.$el.scrollTo({ left: state.left, top: state.top, behavior: 'smooth' });
-    }
+    carousel.$services.enable('ticked');
   }
 }

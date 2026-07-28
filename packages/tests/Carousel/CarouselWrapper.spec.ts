@@ -135,11 +135,10 @@ describe('The CarouselWrapper class', () => {
     expect(mock.currentIndex).toBe(1);
   });
 
-  it('should scroll to the matching item when the carousel goes to', async () => {
+  it('should scroll to the matching item on scrollToIndex', async () => {
     const div = h('div');
     const carouselWrapper = new CarouselWrapper(div);
     const mock = {
-      currentIndex: 0,
       items: [
         {
           state: {
@@ -160,7 +159,7 @@ describe('The CarouselWrapper class', () => {
     carousel.mockImplementation(() => mock);
 
     const spy = vi.spyOn(div, 'scrollTo');
-    carouselWrapper.onParentCarouselIndex();
+    carouselWrapper.scrollToIndex(0);
     expect(spy).toHaveBeenCalledExactlyOnceWith({
       left: 0,
       top: 0,
@@ -168,13 +167,23 @@ describe('The CarouselWrapper class', () => {
     });
     spy.mockClear();
 
-    mock.currentIndex = 1;
-
-    carouselWrapper.onParentCarouselIndex();
+    carouselWrapper.scrollToIndex(1);
     expect(spy).toHaveBeenCalledExactlyOnceWith({
       left: -100,
       top: -100,
       behavior: 'smooth',
     });
+  });
+
+  it('should not scroll on scrollToIndex when the carousel has no matching item', () => {
+    const div = h('div');
+    const carouselWrapper = new CarouselWrapper(div);
+    const spy = vi.spyOn(div, 'scrollTo');
+    // @ts-expect-error partial mock
+    vi.spyOn(carouselWrapper, 'carousel', 'get').mockImplementation(() => ({ items: [] }));
+
+    // An empty carousel (or an out-of-range index) must not throw or scroll.
+    expect(() => carouselWrapper.scrollToIndex(0)).not.toThrow();
+    expect(spy).not.toHaveBeenCalled();
   });
 });

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { CarouselItem, Carousel } from '@studiometa/ui';
 import { getInstanceFromElement } from '@studiometa/js-toolkit';
-import { h, mount, wait } from '#test-utils';
+import { h, mount } from '#test-utils';
 
 vi.mock('compute-scroll-into-view', () => ({
   compute: (target: Element) => [{ el: target, top: 0, left: 0 }],
@@ -27,22 +27,16 @@ describe('The CarouselItem class', () => {
     expect(secondItem.index).toBe(1);
   });
 
-  it('should set an active state when active', async () => {
+  it('should set an active state when its index matches', async () => {
     const div = h('div');
     const carouselItem = new CarouselItem(div);
     vi.spyOn(carouselItem, 'index', 'get').mockImplementation(() => 0);
-    // @ts-expect-error partial mock
-    vi.spyOn(carouselItem, 'carousel', 'get').mockImplementation(() => ({ currentIndex: 0 }));
 
-    carouselItem.onParentCarouselProgress();
-    await wait(20);
+    // `update` returns the DOM write to run in the scheduler's write phase.
+    carouselItem.update(0)?.();
     expect(div.style.getPropertyValue('--carousel-item-active')).toBe('1');
 
-    // @ts-expect-error partial mock
-    vi.spyOn(carouselItem, 'carousel', 'get').mockImplementation(() => ({ currentIndex: 1 }));
-    carouselItem.onParentCarouselProgress();
-    expect(div.style.getPropertyValue('--carousel-item-active')).toBe('1');
-    await wait(20);
+    carouselItem.update(1)?.();
     expect(div.style.getPropertyValue('--carousel-item-active')).toBe('0');
   });
 

@@ -1,20 +1,26 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Give each item a deterministic scroll target based on its position among the
 // CarouselItem siblings, so `getClosestIndex` can map a scroll position back to
-// an index without a real layout engine.
+// an index without a real layout engine. `geo.scale` is mutable so a resize can
+// change the geometry and tests can tell a fresh measurement from a stale one.
+const geo = vi.hoisted(() => ({ scale: 100 }));
 vi.mock('compute-scroll-into-view', () => ({
   compute: (el: Element) => {
     const items = [...el.parentElement!.querySelectorAll('[data-component~="CarouselItem"]')];
     const index = items.indexOf(el);
-    return [{ el, top: index * 100, left: index * 100 }];
+    return [{ el, top: index * geo.scale, left: index * geo.scale }];
   },
 }));
 
 import { Carousel } from '@studiometa/ui';
-import { h, mount } from '#test-utils';
+import { h, mount, wait, resizeWindow } from '#test-utils';
 
 describe('Carousel navigation', () => {
+  beforeEach(() => {
+    geo.scale = 100;
+  });
+
   async function getCarousel() {
     const items = [
       h('div', { dataComponent: 'CarouselItem' }),
@@ -25,7 +31,7 @@ describe('Carousel navigation', () => {
     const el = h('div', [wrapperEl]);
     const carousel = new Carousel(el);
     await mount(carousel);
-    return { carousel, wrapper: carousel.wrapper };
+    return { carousel, wrapper: carousel.wrapper, items };
   }
 
   it('should scroll to the target item when navigating programmatically', async () => {
@@ -55,5 +61,84 @@ describe('Carousel navigation', () => {
     // A subsequent programmatic navigation still scrolls.
     carousel.goTo(0);
     expect(scrollTo).toHaveBeenCalledExactlyOnceWith({ left: 0, top: 0, behavior: 'smooth' });
+  });
+
+  it('should mark item 0 active and disable the prev button after mount alone', async () => {
+    // No navigation happens: this asserts the store is seeded on mount, which is
+    // what fixes the initial-state race (item 0 not active, prev not disabled).
+    const items = [
+      h('div', { dataComponent: 'CarouselItem' }),
+      h('div', { dataComponent: 'CarouselItem' }),
+    ];
+    const prevBtn = h('button', { dataComponent: 'CarouselBtn', dataOptionAction: 'prev' });
+    const wrapperEl = h('div', { dataComponent: 'CarouselWrapper' }, items);
+    const el = h('div', [wrapperEl, prevBtn]);
+    const carousel = new Carousel(el);
+    await mount(carousel);
+    await wait(50);
+
+    expect(items[0].style.getPropertyValue('--carousel-item-active')).toBe('1');
+    expect(items[1].style.getPropertyValue('--carousel-item-active')).toBe('0');
+    expect((prevBtn as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('should update progress on a scroll that is not preceded by a goTo', async () => {
+    const { carousel, wrapper } = await getCarousel();
+    await wait();
+
+    // A native/touch scroll only reports through onScroll; it must still keep
+    // the progress bar animating (the `ticked` service is re-enabled there).
+    vi.spyOn(wrapper, 'progress', 'get').mockReturnValue(0.5);
+    wrapper.onScroll();
+    await wait();
+
+    expect(carousel.$el.style.getPropertyValue('--carousel-progress')).toBe('0.5');
+  });
+
+  it('should re-snap to the freshly-measured position on resize', async () => {
+    const { carousel, wrapper } = await getCarousel();
+    carousel.goTo(1);
+    await wait();
+
+    const scrollTo = vi.spyOn(wrapper.$el, 'scrollTo');
+
+    // The geometry changes on resize: item positions halve. Driving the real
+    // resize service (not calling `resized()` directly) exercises js-toolkit's
+    // parent-first callback order, so a synchronous re-snap would read the stale
+    // cached position (100). The deferred re-snap must use the fresh one (50).
+    geo.scale = 50;
+    await resizeWindow({ width: 800 });
+
+    expect(scrollTo).toHaveBeenCalledWith({ left: 50, top: 50, behavior: 'smooth' });
+    expect(scrollTo).not.toHaveBeenCalledWith({ left: 100, top: 100, behavior: 'smooth' });
+  });
+
+  it('should refresh controls when items are added after mount', async () => {
+    // After appending items, `lastIndex` grows but the stored index is unchanged,
+    // so the change-gated store never re-notifies. Controls must still refresh on
+    // update, otherwise the `next` button stays stuck disabled.
+    const items = [
+      h('div', { dataComponent: 'CarouselItem' }),
+      h('div', { dataComponent: 'CarouselItem' }),
+    ];
+    const nextBtn = h('button', { dataComponent: 'CarouselBtn', dataOptionAction: 'next' });
+    const wrapperEl = h('div', { dataComponent: 'CarouselWrapper' }, items);
+    const el = h('div', [wrapperEl, nextBtn]);
+    const carousel = new Carousel(el);
+    await mount(carousel);
+
+    carousel.goTo(1); // last index of two items -> next disabled
+    await wait();
+    expect((nextBtn as HTMLButtonElement).disabled).toBe(true);
+
+    wrapperEl.append(
+      h('div', { dataComponent: 'CarouselItem' }),
+      h('div', { dataComponent: 'CarouselItem' }),
+    );
+    await carousel.$update();
+    await wait();
+
+    // lastIndex is now 3, so index 1 is no longer the last -> next re-enables.
+    expect((nextBtn as HTMLButtonElement).disabled).toBe(false);
   });
 });

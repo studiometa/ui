@@ -1,6 +1,5 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import type { ScrollAction } from 'compute-scroll-into-view';
-import { domScheduler } from '@studiometa/js-toolkit/utils';
 import { compute } from 'compute-scroll-into-view';
 import { AbstractCarouselChild } from './AbstractCarouselChild.js';
 
@@ -26,7 +25,7 @@ export class CarouselItem<T extends BaseProps = BaseProps> extends AbstractCarou
    * The item's index in the carousel.
    */
   get index() {
-    return this.carousel.$children.CarouselItem.indexOf(this);
+    return this.carousel?.$children.CarouselItem.indexOf(this) ?? -1;
   }
 
   __state: ScrollAction;
@@ -40,7 +39,7 @@ export class CarouselItem<T extends BaseProps = BaseProps> extends AbstractCarou
       const [state] = compute(this.$el, {
         block: 'center',
         inline: 'center',
-        boundary: this.carousel.wrapper.$el,
+        boundary: this.carousel?.wrapper?.$el,
       });
       this.__state = state;
       this.__shouldEvaluateState = false;
@@ -49,25 +48,27 @@ export class CarouselItem<T extends BaseProps = BaseProps> extends AbstractCarou
     return this.__state;
   }
 
+  /**
+   * Invalidate the cached state on resize.
+   *
+   * Extends the base reconnect/refresh (`super.resized`) rather than shadowing
+   * it: the cache is invalidated first so a subsequent `state` read re-measures.
+   * The active-state `update` does not depend on geometry, so the ordering only
+   * matters for keeping the base refresh alive for a future edit.
+   */
   resized() {
     this.__shouldEvaluateState = true;
+    super.resized();
   }
 
   /**
-   * Update the item's state on parent carousel progress.
+   * Reflect the active state for the given index.
    * @todo a11y
    */
-  onParentCarouselProgress() {
-    domScheduler.read(() => {
-      const { index } = this;
-      const { currentIndex: carouselIndex } = this.carousel;
-
-      domScheduler.write(() => {
-        this.$el.style.setProperty(
-          '--carousel-item-active',
-          String(Number(index === carouselIndex)),
-        );
-      });
-    });
+  update(index: number) {
+    const isActive = this.index === index;
+    return () => {
+      this.$el.style.setProperty('--carousel-item-active', String(Number(isActive)));
+    };
   }
 }

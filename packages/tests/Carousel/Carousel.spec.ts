@@ -89,6 +89,9 @@ describe('The Carousel class', () => {
     const carousel = new Carousel(div);
     const spy = vi.spyOn(carousel, 'goTo');
     carousel.resized();
+    // The re-snap is deferred one frame so the children's resize callbacks can
+    // invalidate their geometry caches first.
+    await wait();
     expect(spy).toHaveBeenCalledExactlyOnceWith(carousel.currentIndex);
   });
 });

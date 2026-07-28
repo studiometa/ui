@@ -5,6 +5,7 @@ test('components exports', () => {
   expect(Object.keys(components).toSorted()).toMatchInlineSnapshot(`
     [
       "AbstractCarouselChild",
+      "AbstractCarouselComponent",
       "AbstractFrameTrigger",
       "AbstractPrefetch",
       "AbstractScrollAnimation",
