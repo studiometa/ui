@@ -81,14 +81,22 @@ export class CarouselDrag<
           carousel.items.map((item) => item.state.left),
           finalValue,
         );
-        options.left = carousel.items[index].state.left;
+        options.left = carousel.items[index]?.state?.left;
       } else if (this.isVertical) {
         const finalValue = inertiaFinalValue(wrapper.scrollTop, props.delta.y * -2.5);
         const index = getClosestIndex(
           carousel.items.map((item) => item.state.top),
           finalValue,
         );
-        options.top = carousel.items[index].state.top;
+        options.top = carousel.items[index]?.state?.top;
+      }
+
+      // No target slide to snap to (e.g. an empty carousel): restore scroll-snap
+      // — which the `drag` branch disabled — and bail instead of scrolling to an
+      // `undefined` offset.
+      if (options.left === undefined && options.top === undefined) {
+        wrapper.style.scrollSnapType = '';
+        return;
       }
 
       wrapper.addEventListener(

@@ -141,4 +141,32 @@ describe('Carousel navigation', () => {
     // lastIndex is now 3, so index 1 is no longer the last -> next re-enables.
     expect((nextBtn as HTMLButtonElement).disabled).toBe(false);
   });
+
+  it('should re-normalize the current index when items are removed', async () => {
+    const items = [
+      h('div', { dataComponent: 'CarouselItem' }),
+      h('div', { dataComponent: 'CarouselItem' }),
+      h('div', { dataComponent: 'CarouselItem' }),
+      h('div', { dataComponent: 'CarouselItem' }),
+    ];
+    const wrapperEl = h('div', { dataComponent: 'CarouselWrapper' }, items);
+    const el = h('div', [wrapperEl]);
+    const carousel = new Carousel(el);
+    await mount(carousel);
+
+    carousel.goTo(3);
+    await wait();
+    expect(carousel.currentIndex).toBe(3);
+
+    // Remove the last two items so index 3 is now out of range.
+    items[3].remove();
+    items[2].remove();
+    await carousel.$update();
+    await wait();
+
+    // The index is clamped to the new last index and the active item follows.
+    expect(carousel.currentIndex).toBe(1);
+    expect(items[0].style.getPropertyValue('--carousel-item-active')).toBe('0');
+    expect(items[1].style.getPropertyValue('--carousel-item-active')).toBe('1');
+  });
 });

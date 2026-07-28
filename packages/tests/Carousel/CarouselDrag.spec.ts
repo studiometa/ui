@@ -131,4 +131,27 @@ describe('The CarouselDrag class', () => {
     div.dispatchEvent(new Event('scrollend'));
     expect(div.style.scrollSnapType).toBe('');
   });
+
+  it('should not throw or scroll on drop when the carousel has no items', async () => {
+    const div = h('div');
+    const carouselDrag = new CarouselDrag(div);
+    const spy = vi.spyOn(div, 'scrollTo');
+
+    vi.spyOn(carouselDrag, '$isMounted', 'get').mockImplementation(() => true);
+    vi.spyOn(carouselDrag, 'isHorizontal', 'get').mockImplementation(() => true);
+    vi.spyOn(carouselDrag, 'isVertical', 'get').mockImplementation(() => false);
+    // @ts-expect-error partial mock
+    vi.spyOn(carouselDrag, 'carousel', 'get').mockImplementation(() => ({ items: [] }));
+
+    // A preceding `drag` disables scroll-snap; a drop with no target slide must
+    // restore it and bail instead of scrolling to an `undefined` offset.
+    div.style.scrollSnapType = 'none';
+
+    expect(() =>
+      // @ts-expect-error partial mock
+      carouselDrag.dragged({ mode: 'drop', distance: { x: 10, y: 0 }, delta: { x: 10, y: 0 } }),
+    ).not.toThrow();
+    expect(spy).not.toHaveBeenCalled();
+    expect(div.style.scrollSnapType).toBe('');
+  });
 });

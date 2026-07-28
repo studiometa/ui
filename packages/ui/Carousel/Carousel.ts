@@ -182,13 +182,19 @@ export class Carousel<T extends IndexableProps = IndexableProps> extends Indexab
   }
 
   /**
-   * Reconnect dynamically-added children on update.
+   * Re-normalise the index and reconnect children on update.
    *
-   * `connectChildren` is idempotent (the `__unsubscribe` guard makes re-connect
-   * a no-op for already-connected children), so calling it here closes the gap
-   * for children added to the DOM after mount for free.
+   * Removing items after mount shrinks `length` but leaves `currentIndex`
+   * untouched, so it can fall outside the new `0…lastIndex` range and leave no
+   * item active. Reassigning it runs the `withIndex` setter, which re-normalises
+   * against the current item count and re-seeds the store (a no-op when the
+   * index is still in range). `connectChildren` then connects any newly-added
+   * children — it is idempotent for already-connected ones thanks to the
+   * `__unsubscribe` guard.
    */
   updated() {
+    const { currentIndex } = this;
+    this.currentIndex = currentIndex;
     this.connectChildren();
   }
 
