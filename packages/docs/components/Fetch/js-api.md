@@ -107,9 +107,9 @@ The following element will be updated with HTML from the
 - Type: `string`
 - Default: `''`
 
-Defines the URL to fetch when the component is not mounted on a `<a>` or a `<form>` element. This makes it possible to drive the `Fetch` component from any element (e.g. a `<div>`) triggered by an event, a decorator or a programmatic call.
+Defines the URL to fetch. This makes it possible to drive the `Fetch` component from any element (e.g. a `<div>`) triggered by an event, a decorator or a programmatic call.
 
-The value is resolved against the current location, so both absolute and relative URLs are supported. It is only used as a fallback: on a `<a>` its `href` is used, on a `<form>` its `action` is used, and `src` is ignored.
+The value is resolved against the current location, so both absolute and relative URLs are supported. When set, `src` **takes precedence** over the element's own destination: it overrides a `<a>`'s `href` and a `<form>`'s `action`. For a GET `<form>`, the live form data is still folded onto the `src` URL, so a fixed query in `src` (e.g. `?section_id=…`) survives alongside the form fields, with form fields winning on conflict.
 
 ```html
 <div
@@ -118,6 +118,18 @@ The value is resolved against the current location, so both absolute and relativ
   data-on:in-view="Fetch.fetch()">
   …
 </div>
+```
+
+This is handy for progressive enhancement, where the element's native `action`/`href` is the no-JS destination and `src` points the enhanced request at a JS-only endpoint. For example, a search form that submits to a full results page without JS but hits a lighter suggestions endpoint when enhanced:
+
+```html
+<form
+  action="/search"
+  method="get"
+  data-component="Fetch"
+  data-option-src="/search/suggest?section_id=predictive-search">
+  <input type="search" name="q" />
+</form>
 ```
 
 ## Getters
@@ -132,7 +144,7 @@ Returns the global `fetch` function.
 
 - Return: `URL`
 
-If the root element is a link, returns the `href` attribute, if it is a form, returns the `action` attribute, with the form data as URL parameters if the [`method`](#method) is `get`. For any other element, it falls back to the [`src` option](#src) resolved against the current location.
+Resolves the request URL. The base is the [`src` option](#src) when it is set, otherwise the element's own destination: a link's `href`, a form's `action`, or the current location as a last resort. For a form with `method="get"`, the form data is then folded onto that base as URL parameters (fields set on top, so a fixed query in `src` is preserved).
 
 ### `requestInit`
 

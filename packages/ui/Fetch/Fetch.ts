@@ -142,30 +142,31 @@ export class Fetch<T extends BaseProps = BaseProps>
   /**
    * The URL to use for the request.
    *
-   * For a form, the URL is built from its `action` attribute (with the form data as search
-   * params for GET requests); for a link, from its `href` attribute. For any other element,
-   * it falls back to the `src` option resolved against the current location.
+   * The base URL is the `src` option when it is set, otherwise the element's own destination:
+   * a form's `action`, a link's `href`, or the current location as a last resort. For a GET
+   * form, the form data is then folded onto that base with each field `set` on top — so an
+   * explicit `src` can carry a fixed query (e.g. `?section_id=…`) that survives alongside the
+   * live form fields, with form fields winning on conflict.
    */
   get url(): URL {
-    const { $el, isForm, isLink } = this;
+    const { $el, isForm, isLink, $options } = this;
 
-    if (isForm) {
-      const { action, method } = this.$el as HTMLFormElement;
-      const url = new URL(action);
+    const url = $options.src
+      ? new URL($options.src, window.location.href)
+      : isForm
+        ? new URL(($el as HTMLFormElement).action)
+        : isLink
+          ? new URL(($el as HTMLAnchorElement).href)
+          : new URL(window.location.href);
 
-      if (method.toLowerCase() === 'get') {
-        // @ts-expect-error URLSearchParams accepts FormData as parameter in the browser.
-        url.search = new URLSearchParams(new FormData($el)).toString();
+    if (isForm && ($el as HTMLFormElement).method.toLowerCase() === 'get') {
+      // @ts-expect-error URLSearchParams accepts FormData as parameter in the browser.
+      for (const [key, value] of new URLSearchParams(new FormData($el))) {
+        url.searchParams.set(key, value);
       }
-
-      return url;
     }
 
-    if (isLink) {
-      return new URL($el.href);
-    }
-
-    return new URL(this.$options.src, window.location.href);
+    return url;
   }
 
   /**
