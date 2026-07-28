@@ -23,6 +23,7 @@ test('components exports', () => {
       "CarouselItem",
       "CarouselWrapper",
       "CircularMarquee",
+      "ClickOutside",
       "Cursor",
       "DataBind",
       "DataComputed",
