@@ -53,4 +53,20 @@ describe('The CarouselItem class', () => {
     expect(carouselItem.state).not.toBe(state);
     expect(carouselItem.state).toEqual(state);
   });
+
+  it('should reset its state on update', async () => {
+    const item = h('div', { dataComponent: 'CarouselItem' });
+    const wrapper = h('div', { dataComponent: 'CarouselWrapper' }, [item]);
+    const div = h('div', [wrapper]);
+    const carousel = new Carousel(div);
+    await mount(carousel);
+    const carouselItem = getInstanceFromElement(item, CarouselItem);
+    const { state } = carouselItem;
+    expect(carouselItem.state).toBe(state);
+    // Inserting/removing slides re-measures offsets: a plain `$update` must
+    // invalidate the cached scroll target too, not just a window resize.
+    carouselItem.updated();
+    expect(carouselItem.state).not.toBe(state);
+    expect(carouselItem.state).toEqual(state);
+  });
 });

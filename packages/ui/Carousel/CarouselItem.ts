@@ -62,6 +62,19 @@ export class CarouselItem<T extends BaseProps = BaseProps> extends AbstractCarou
   }
 
   /**
+   * Invalidate the cached scroll target when the item list or content changes.
+   *
+   * Inserting/removing slides (or changing an item's content) via `$update`
+   * shifts the offsets returned by `compute-scroll-into-view`, so the cache is
+   * cleared before the base reconnect/refresh runs — otherwise `scrollToIndex`
+   * and `onScroll` keep using stale positions until the next resize.
+   */
+  updated() {
+    this.__shouldEvaluateState = true;
+    super.updated();
+  }
+
+  /**
    * Reflect the active state for the given index.
    * @todo a11y
    */

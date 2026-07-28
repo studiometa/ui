@@ -83,6 +83,24 @@ describe('The CarouselWrapper class', () => {
     expect(scrollWidth.mock.calls.length).toBeGreaterThan(callsAfterFirstRead);
   });
 
+  it('should invalidate the cached scroll distance on update', () => {
+    const div = h('div');
+    const carouselWrapper = new CarouselWrapper(div);
+    vi.spyOn(carouselWrapper, 'isHorizontal', 'get').mockImplementation(() => true);
+    vi.spyOn(carouselWrapper, 'isVertical', 'get').mockImplementation(() => false);
+    vi.spyOn(div, 'scrollLeft', 'get').mockImplementation(() => 25);
+    const scrollWidth = vi.spyOn(div, 'scrollWidth', 'get').mockImplementation(() => 100);
+    vi.spyOn(div, 'clientWidth', 'get').mockImplementation(() => 50);
+
+    expect(carouselWrapper.progress).toBe(0.5);
+
+    // Adding/removing items changes scrollWidth: `updated` must invalidate the
+    // cache so progress reflects the new scrollable distance without a resize.
+    scrollWidth.mockImplementation(() => 150);
+    carouselWrapper.updated();
+    expect(carouselWrapper.progress).toBe(0.25);
+  });
+
   it('should update index when scrolling', () => {
     const div = h('div');
     const carouselWrapper = new CarouselWrapper(div);

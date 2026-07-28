@@ -77,6 +77,17 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends AbstractCa
   }
 
   /**
+   * Invalidate the cached scroll distances when the item list changes.
+   *
+   * Adding or removing items changes `scrollWidth`, so `progress` (and the
+   * `--carousel-progress` variable derived from it) would keep dividing by the
+   * pre-update distance until the next resize otherwise.
+   */
+  updated() {
+    this.__shouldMeasure = true;
+  }
+
+  /**
    * Scroll to the item at the given index.
    *
    * Called imperatively by `Carousel.goTo`. Guards against an empty carousel or
