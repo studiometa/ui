@@ -51,6 +51,88 @@ describe('The Fetch class', () => {
       expect(fetch.url).toEqual(new URL('https://example.com/src-path'));
     });
 
+    it('should let the `src` option take precedence over a link `href`', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const anchor = h('a', { href: 'https://example.com/href', dataOptionSrc: '/src-path' });
+      const fetch = new Fetch(anchor);
+      await mount(fetch);
+
+      expect(fetch.url).toEqual(new URL('https://example.com/src-path'));
+    });
+
+    it('should let the `src` option take precedence over a form `action`', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const form = h('form', {
+        action: 'https://example.com/action',
+        method: 'post',
+        dataOptionSrc: '/src-path',
+      });
+      const fetch = new Fetch(form);
+      await mount(fetch);
+
+      expect(fetch.url).toEqual(new URL('https://example.com/src-path'));
+    });
+
+    it('should still fold GET form data onto a `src` base URL', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const input = h('input', { name: 'q', value: 'foo' });
+      const form = h(
+        'form',
+        { action: 'https://example.com/search', method: 'get', dataOptionSrc: '/search/suggest' },
+        [input],
+      );
+      const fetch = new Fetch(form);
+      await mount(fetch);
+
+      expect(fetch.url.href).toBe('https://example.com/search/suggest?q=foo');
+    });
+
+    it('should preserve a fixed query in `src` alongside GET form data', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const input = h('input', { name: 'q', value: 'foo' });
+      const form = h(
+        'form',
+        {
+          action: 'https://example.com/search',
+          method: 'get',
+          dataOptionSrc: '/search/suggest?section_id=predictive-search',
+        },
+        [input],
+      );
+      const fetch = new Fetch(form);
+      await mount(fetch);
+
+      expect(fetch.url.searchParams.get('section_id')).toBe('predictive-search');
+      expect(fetch.url.searchParams.get('q')).toBe('foo');
+    });
+
+    it('should let GET form fields win over a conflicting query in `src`', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const input = h('input', { name: 'q', value: 'live' });
+      const form = h(
+        'form',
+        {
+          action: 'https://example.com/search',
+          method: 'get',
+          dataOptionSrc: '/search/suggest?q=stale',
+        },
+        [input],
+      );
+      const fetch = new Fetch(form);
+      await mount(fetch);
+
+      expect(fetch.url.searchParams.get('q')).toBe('live');
+    });
+
+    it('should keep using the form `action` when `src` is empty', async () => {
+      const input = h('input', { name: 'foo', value: 'bar' });
+      const form = h('form', { action: 'https://example.com/submit', method: 'get' }, [input]);
+      const fetch = new Fetch(form);
+      await mount(fetch);
+
+      expect(fetch.url.href).toBe('https://example.com/submit?foo=bar');
+    });
+
     it('should have a `requestInit` getter', async () => {
       const headers = { 'x-foo': 'bar' };
       const init = { method: 'post' };
