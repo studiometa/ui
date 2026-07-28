@@ -1,0 +1,22 @@
+<div
+  data-component="ClickOutside Action"
+  data-on:click-outside="Target(#dropdown)->target.$el.hidden = true"
+  class="relative inline-block">
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="Target(#dropdown)->target.$el.hidden = !target.$el.hidden"
+    class="px-4 py-2 rounded bg-blue-500 text-white font-semibold">
+    Toggle menu
+  </button>
+
+  <ul
+    id="dropdown"
+    data-component="Target"
+    hidden
+    class="absolute left-0 mt-2 w-48 p-2 rounded bg-white dark:bg-zinc-800 shadow-xl">
+    <li><a href="#" class="block px-3 py-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700">Profile</a></li>
+    <li><a href="#" class="block px-3 py-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700">Settings</a></li>
+    <li><a href="#" class="block px-3 py-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700">Sign out</a></li>
+  </ul>
+</div>
