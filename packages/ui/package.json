@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui",
-  "version": "1.9.0-beta.3",
+  "version": "1.9.0-beta.4",
   "description": "A set of opiniated, unstyled and accessible components",
   "publishConfig": {
     "access": "public"

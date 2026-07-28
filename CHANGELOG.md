@@ -6,9 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.9.0-beta.4](https://github.com/studiometa/ui/compare/1.9.0-beta.3..1.9.0-beta.4) (2026-07-28)
+
 ### Added
 
-- **Carousel:** add the `Carousel` component (with `CarouselWrapper`, `CarouselItem`, `CarouselBtn` and `CarouselDrag`) built on the `Indexable` primitive, using native scroll-snap on touch devices and pointer drag on fine-pointer devices ([#320](https://github.com/studiometa/ui/pull/320))
+- **Carousel:** add the `Carousel` component (with `CarouselWrapper`, `CarouselItem`, `CarouselBtn` and `CarouselDrag`) built on the `Indexable` primitive, using native scroll-snap on touch devices and pointer drag on fine-pointer devices, with support for the `clamp`, `loop` and `bounce` boundary modes ([#553](https://github.com/studiometa/ui/pull/553))
+
+### Fixed
+
+- **Fetch:** let the `src` option take precedence over a `<form>`'s `action` or an `<a>`'s `href` when explicitly set, instead of being ignored on those elements ([#555](https://github.com/studiometa/ui/pull/555))
 
 ## [v1.9.0-beta.3](https://github.com/studiometa/ui/compare/1.9.0-beta.2..1.9.0-beta.3) (2026-07-27)
 
