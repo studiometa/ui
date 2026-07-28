@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Carousel:** add the `Carousel` component (with `CarouselWrapper`, `CarouselItem`, `CarouselBtn` and `CarouselDrag`) built on the `Indexable` primitive, using native scroll-snap on touch devices and pointer drag on fine-pointer devices ([#320](https://github.com/studiometa/ui/pull/320))
+
 ## [v1.9.0-beta.3](https://github.com/studiometa/ui/compare/1.9.0-beta.2..1.9.0-beta.3) (2026-07-27)
 
 ### Added

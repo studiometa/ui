@@ -23,6 +23,7 @@ export default defineWebpackConfig({
       },
       dependencies: [
         '@motionone/easing',
+        'compute-scroll-into-view',
         'deepmerge',
         'morphdom',
         { specifier: '@studiometa/js-toolkit', esmSh: { bundle: false } },
