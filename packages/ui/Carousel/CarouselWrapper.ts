@@ -1,4 +1,5 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { clamp } from '@studiometa/js-toolkit/utils';
 import { AbstractCarouselChild } from './AbstractCarouselChild.js';
 import { getClosestIndex } from './utils.js';
 
@@ -30,18 +31,51 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends AbstractCa
   __syncingIndexFromScroll = false;
 
   /**
+   * Cached maximum scroll distances (`scrollWidth - clientWidth` and
+   * `scrollHeight - clientHeight`). The `progress` getter runs on every frame,
+   * so these layout-triggering reads are cached and only refreshed on resize.
+   * @private
+   */
+  __scrollDistance = { x: 0, y: 0 };
+
+  /**
+   * Whether the cached scroll distances need to be re-measured.
+   * @private
+   */
+  __shouldMeasure = true;
+
+  /**
    * Current progress between 0 and 1.
    */
   get progress() {
+    if (this.__shouldMeasure) {
+      const { scrollWidth, clientWidth, scrollHeight, clientHeight } = this.$el;
+      // Round to integer pixels: browsers report fractional scroll sizes and
+      // offsets, so the last item can settle a sub-pixel short of the maximum
+      // and keep progress from ever reaching a clean `1`.
+      this.__scrollDistance = {
+        x: Math.round(scrollWidth - clientWidth),
+        y: Math.round(scrollHeight - clientHeight),
+      };
+      this.__shouldMeasure = false;
+    }
+
     if (this.isHorizontal) {
-      const { scrollLeft, scrollWidth, offsetWidth } = this.$el;
-      return scrollWidth - offsetWidth === 0 ? 0 : scrollLeft / (scrollWidth - offsetWidth);
+      const { x } = this.__scrollDistance;
+      return x === 0 ? 0 : clamp(Math.round(this.$el.scrollLeft) / x, 0, 1);
     } else if (this.isVertical) {
-      const { scrollTop, scrollHeight, offsetHeight } = this.$el;
-      return scrollHeight - offsetHeight === 0 ? 0 : scrollTop / (scrollHeight - offsetHeight);
+      const { y } = this.__scrollDistance;
+      return y === 0 ? 0 : clamp(Math.round(this.$el.scrollTop) / y, 0, 1);
     }
 
     return 0;
+  }
+
+  /**
+   * Invalidate the cached scroll distances on resize.
+   */
+  resized() {
+    this.__shouldMeasure = true;
   }
 
   /**

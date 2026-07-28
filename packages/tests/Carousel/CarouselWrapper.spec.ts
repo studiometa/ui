@@ -22,27 +22,65 @@ describe('The CarouselWrapper class', () => {
     vi.spyOn(carouselWrapper, 'isVertical', 'get').mockImplementation(() => true);
     expect(carouselWrapper.progress).toBe(0);
 
-    // Horizontal, size and scrollable, no scroll
+    // Horizontal, size and scrollable, no scroll. `offsetWidth` is larger than
+    // `clientWidth` to emulate a scrollbar/border: progress must divide by the
+    // real scrollable distance (`scrollWidth - clientWidth`), not `offsetWidth`.
     vi.spyOn(div, 'scrollWidth', 'get').mockImplementation(() => 100);
-    vi.spyOn(div, 'offsetWidth', 'get').mockImplementation(() => 50);
+    vi.spyOn(div, 'clientWidth', 'get').mockImplementation(() => 50);
+    vi.spyOn(div, 'offsetWidth', 'get').mockImplementation(() => 65);
     vi.spyOn(carouselWrapper, 'isHorizontal', 'get').mockImplementation(() => true);
     vi.spyOn(carouselWrapper, 'isVertical', 'get').mockImplementation(() => false);
+    carouselWrapper.resized();
     expect(carouselWrapper.progress).toBe(0);
 
     // Horizontal, size and scrollable and scroll
     vi.spyOn(div, 'scrollLeft', 'get').mockImplementation(() => 25);
     expect(carouselWrapper.progress).toBe(0.5);
 
+    // Reaches exactly 1 at the maximum scroll position.
+    vi.spyOn(div, 'scrollLeft', 'get').mockImplementation(() => 50);
+    expect(carouselWrapper.progress).toBe(1);
+
+    // A sub-pixel-short scroll offset still resolves to a clean 1.
+    vi.spyOn(div, 'scrollLeft', 'get').mockImplementation(() => 49.77);
+    expect(carouselWrapper.progress).toBe(1);
+
     // Vertical, size and scrollable, no scroll
     vi.spyOn(div, 'scrollHeight', 'get').mockImplementation(() => 100);
-    vi.spyOn(div, 'offsetHeight', 'get').mockImplementation(() => 50);
+    vi.spyOn(div, 'clientHeight', 'get').mockImplementation(() => 50);
+    vi.spyOn(div, 'offsetHeight', 'get').mockImplementation(() => 65);
     vi.spyOn(carouselWrapper, 'isHorizontal', 'get').mockImplementation(() => false);
     vi.spyOn(carouselWrapper, 'isVertical', 'get').mockImplementation(() => true);
+    carouselWrapper.resized();
     expect(carouselWrapper.progress).toBe(0);
 
-    // Horizontal, size and scrollable and scroll
+    // Vertical, size and scrollable and scroll
     vi.spyOn(div, 'scrollTop', 'get').mockImplementation(() => 25);
     expect(carouselWrapper.progress).toBe(0.5);
+  });
+
+  it('should cache the scroll distance until resized', () => {
+    const div = h('div');
+    const carouselWrapper = new CarouselWrapper(div);
+    vi.spyOn(carouselWrapper, 'isHorizontal', 'get').mockImplementation(() => true);
+    vi.spyOn(carouselWrapper, 'isVertical', 'get').mockImplementation(() => false);
+    vi.spyOn(div, 'scrollLeft', 'get').mockImplementation(() => 25);
+    const scrollWidth = vi.spyOn(div, 'scrollWidth', 'get').mockImplementation(() => 100);
+    vi.spyOn(div, 'clientWidth', 'get').mockImplementation(() => 50);
+
+    // First read measures and caches the layout values.
+    expect(carouselWrapper.progress).toBe(0.5);
+    const callsAfterFirstRead = scrollWidth.mock.calls.length;
+
+    // Subsequent reads reuse the cache and do not touch the layout again.
+    expect(carouselWrapper.progress).toBe(0.5);
+    expect(carouselWrapper.progress).toBe(0.5);
+    expect(scrollWidth.mock.calls.length).toBe(callsAfterFirstRead);
+
+    // A resize invalidates the cache, so the next read measures again.
+    carouselWrapper.resized();
+    expect(carouselWrapper.progress).toBe(0.5);
+    expect(scrollWidth.mock.calls.length).toBeGreaterThan(callsAfterFirstRead);
   });
 
   it('should update index when scrolling', () => {
