@@ -28,9 +28,3 @@ In the following example, a dropdown menu is toggled by a button and closes as s
 :::
 
 </llm-only>
-
-## Events
-
-### `click-outside`
-
-Dispatched on the component's root element when a `click` occurs outside of it. The original `MouseEvent` is available on the event's `detail.event` property.
