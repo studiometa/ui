@@ -45,20 +45,3 @@ The original `MouseEvent` is available through `event.detail.event` in the effec
 </div>
 ```
 <!-- prettier-ignore-end -->
-
-#### Listening in JavaScript
-
-The event can also be listened to directly on the element without the `Action` component:
-
-```js
-import { ClickOutside } from '@studiometa/ui';
-import { registerComponent } from '@studiometa/js-toolkit';
-
-registerComponent(ClickOutside);
-
-document
-  .querySelector('[data-component="ClickOutside"]')
-  ?.addEventListener('click-outside', (event) => {
-    console.log('Clicked outside', event.detail.event);
-  });
-```
