@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.9.0-beta.5](https://github.com/studiometa/ui/compare/1.9.0-beta.4..1.9.0-beta.5) (2026-07-29)
+
+### Added
+
+- **ClickOutside:** add the `ClickOutside` primitive that dispatches a `click-outside` event when a click lands outside its element, pairing with `Action` to react declaratively ([#557](https://github.com/studiometa/ui/pull/557))
+
 ## [v1.9.0-beta.4](https://github.com/studiometa/ui/compare/1.9.0-beta.3..1.9.0-beta.4) (2026-07-28)
 
 ### Added
