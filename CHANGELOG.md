@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.9.0](https://github.com/studiometa/ui/compare/1.8.0..1.9.0) (2026-07-29)
+
+This release promotes the `1.9.0` beta line to stable. It bundles every change published across `1.9.0-beta.0` through `1.9.0-beta.5` — see the sections below for the per-beta breakdown and pull request references.
+
+### Added
+
+- **Carousel:** add the `Carousel` component (`CarouselWrapper`, `CarouselItem`, `CarouselBtn`, `CarouselDrag`) built on the `Indexable` primitive, using native scroll-snap on touch devices and pointer drag on fine-pointer devices, with `clamp`, `loop` and `bounce` boundary modes ([#553](https://github.com/studiometa/ui/pull/553))
+- **Dialog:** add the `Dialog` component for accessible modal and drawer patterns ([#538](https://github.com/studiometa/ui/pull/538))
+- **Timer:** add the `Timer` and `TimerProgress` primitives — a headless countdown emitting bubbling lifecycle events with a `requestAnimationFrame`-driven progress signal ([#545](https://github.com/studiometa/ui/pull/545))
+- **InView:** add the `InView` primitive emitting directional `in-view`/`out-of-view` viewport events, together with an `InViewOnce` variant ([#535](https://github.com/studiometa/ui/pull/535))
+- **ViewTransition:** add the `ViewTransition` component and its `viewTransition` helper ([#537](https://github.com/studiometa/ui/pull/537))
+- **ClickOutside:** add the `ClickOutside` primitive that dispatches a `click-outside` event when a click lands outside its element, pairing with `Action` to react declaratively ([#557](https://github.com/studiometa/ui/pull/557))
+- **Track:** add `Track`, `TrackShopify` and `TrackContext` components for declarative analytics tracking (dataLayer/GTM and Shopify providers, ancestor-merged context) ([#508](https://github.com/studiometa/ui/pull/508))
+- **Data:** add the `DataScope` component for scoped reactive groups, together with data mutation helpers, virtual bindings and form-control (input) bindings ([#511](https://github.com/studiometa/ui/pull/511), [#513](https://github.com/studiometa/ui/pull/513), [#514](https://github.com/studiometa/ui/pull/514), [#515](https://github.com/studiometa/ui/pull/515))
+- **Indexable:** add the `Indexable` primitive and the `withIndex` decorator, with a `total` option so it can be used standalone from HTML without subclassing ([#491](https://github.com/studiometa/ui/pull/491), [#526](https://github.com/studiometa/ui/pull/526))
+- **Fetch:** add a `src` option and no-argument `fetch()` call, plus `FetchShopifyPartial` and `FetchShopifySection` adapters for Shopify's Section Rendering API ([#536](https://github.com/studiometa/ui/pull/536), [#529](https://github.com/studiometa/ui/pull/529), [#550](https://github.com/studiometa/ui/pull/550))
+- **ESLintPluginUi:** add the `@studiometa/eslint-plugin-ui` package with ESLint/Oxlint rules to help discover and use `@studiometa/ui` components ([#503](https://github.com/studiometa/ui/pull/503))
+
+### Changed
+
+- Require `@studiometa/js-toolkit` `^3.8.0` as a peer dependency ([#546](https://github.com/studiometa/ui/pull/546))
+- **Data:** refactor reactivity onto signals with globally-shared channels ([#515](https://github.com/studiometa/ui/pull/515))
+- **Fetch:** `FetchShopifyPartial`'s `partials` option now takes a comma-separated string instead of a JSON array ([#550](https://github.com/studiometa/ui/pull/550))
+- **Docs:** standardise component registration on `registerComponent` across the usage guide and story files ([#542](https://github.com/studiometa/ui/pull/542), [#543](https://github.com/studiometa/ui/pull/543))
+
+### Deprecated
+
+- **Modal / Panel:** deprecate the `Modal` and `Panel` components in favour of `Dialog` ([#540](https://github.com/studiometa/ui/pull/540), [#541](https://github.com/studiometa/ui/pull/541))
+
+### Fixed
+
+- **Figure / FigureVideo:** stop hanging forever when an image or poster fails to load — the failed load is now caught and logged ([#518](https://github.com/studiometa/ui/issues/518))
+- **Fetch:** let the `src` option take precedence over a `<form>`'s `action` or an `<a>`'s `href` when explicitly set ([#555](https://github.com/studiometa/ui/pull/555))
+- **Slider:** fix `SliderBtn`, `SliderCount`, `SliderDots` and `SliderProgress` crashing when mounted before their parent `Slider` ([#507](https://github.com/studiometa/ui/pull/507))
+- **Accordion:** fix `AccordionItem` option inheritance relying on the deprecated `$parent` accessor ([#507](https://github.com/studiometa/ui/pull/507))
+
 ## [v1.9.0-beta.5](https://github.com/studiometa/ui/compare/1.9.0-beta.4..1.9.0-beta.5) (2026-07-29)
 
 ### Added
