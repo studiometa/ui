@@ -27,24 +27,10 @@ composer require studiometa/ui
 Import the components from the package as needed:
 
 ```js
-import { Base, createApp } from '@studiometa/js-toolkit';
-import { Action, Frame, Modal, ScrollAnimation, ScrollReveal, Slider } from '@studiometa/ui';
+import { registerComponents } from '@studiometa/js-toolkit';
+import { Action, Dialog, Frame, ScrollAnimation, ScrollReveal, Slider } from '@studiometa/ui';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Action,
-      Frame,
-      Modal,
-      ScrollAnimation,
-      ScrollReveal,
-      Slider,
-    },
-  };
-}
-
-export default createApp(App);
+registerComponents(Action, Dialog, Frame, ScrollAnimation, ScrollReveal, Slider);
 ```
 
 Heads up to [ui.studiometa.dev](https://ui.studiometa.dev) for more informations.
