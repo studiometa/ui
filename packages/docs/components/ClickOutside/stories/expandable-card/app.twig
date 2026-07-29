@@ -1,0 +1,14 @@
+{# `ClickOutside` and `Action` share the same element: clicking the card opens
+   it, clicking anywhere else collapses it. Both effects simply toggle a class. #}
+<div
+  data-component="ClickOutside Action"
+  data-on:click="this.classList.add('is-open')"
+  data-on:click-outside="this.classList.remove('is-open')"
+  class="group max-w-sm p-4 rounded ring-2 ring-zinc-300 dark:ring-zinc-600 cursor-pointer">
+  <p class="font-semibold">Expandable card</p>
+  <p class="text-sm text-zinc-500">Click to expand, click outside to collapse.</p>
+  <div
+    class="hidden group-[.is-open]:block mt-3 pt-3 border-t border-zinc-300 dark:border-zinc-600">
+    <p>These details are revealed while the card is open and hidden again as soon as a click lands outside of it.</p>
+  </div>
+</div>

@@ -1,0 +1,19 @@
+{# The trigger lives *inside* the ClickOutside element, so opening the editor
+   never counts as an outside click. Clicking anywhere outside commits and
+   closes it. #}
+<div
+  data-component="ClickOutside Action"
+  data-on:click="() => { this.classList.add('is-editing'); this.querySelector('input').focus(); }"
+  data-on:click-outside="this.classList.remove('is-editing')"
+  class="group inline-block">
+  <span
+    class="group-[.is-editing]:hidden inline-block px-3 py-2 rounded ring-2 ring-transparent hover:ring-blue-400 cursor-text">
+    Studio Meta
+  </span>
+  <input
+    type="text"
+    value="Studio Meta"
+    data-component="Action"
+    data-on:input="this.previousElementSibling.textContent = this.value"
+    class="hidden group-[.is-editing]:inline-block px-3 py-2 rounded ring-2 ring-blue-400 bg-transparent" />
+</div>
