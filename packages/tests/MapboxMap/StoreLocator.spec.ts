@@ -89,6 +89,9 @@ function createStoreLocator(
     },
   };
   const mockCluster = {
+    // The coordinator only wires and feeds the cluster once it is fully mounted
+    // (its GeoJSON source is added from `mounted()`), so the mock advertises it.
+    $isMounted: true,
     setData: vi.fn(),
     $on(event: string, callback: (event: unknown) => void) {
       (clusterHandlers[event] ??= []).push(callback);
@@ -495,6 +498,38 @@ describe('StoreLocator component', () => {
       expect(() => ctx.fireFeatureClick({ properties: {} })).not.toThrow();
       expect(() => ctx.fireFeatureClick({})).not.toThrow();
       expect(select).not.toHaveBeenCalled();
+    });
+  });
+
+  // --- 6b. Deferred cluster wiring (async mount timing) --------------------
+  describe('deferred cluster wiring', () => {
+    it('does not wire the cluster until it is mounted, then wires it', async () => {
+      const ctx = createStoreLocator([
+        { id: 'a', lngLat: [1, 1] },
+        { id: 'b', lngLat: [2, 2] },
+      ]);
+      // The MapboxCluster is an async child of the map: it is queryable before
+      // its `mounted()` hook adds the GeoJSON source. Simulate that window.
+      ctx.mockCluster.$isMounted = false;
+      await mountAndLoad(ctx);
+
+      const select = vi.fn();
+      ctx.instance.$on('select', select);
+
+      // Not wired yet: a feature-click is ignored because pushing/wiring before
+      // the source exists would silently no-op.
+      expect((ctx.instance as any).__clusterWired).toBe(false);
+      ctx.fireFeatureClick({ properties: { id: 'b' } });
+      expect(select).not.toHaveBeenCalled();
+
+      // The cluster finishes mounting (source now added): wiring can proceed.
+      ctx.mockCluster.$isMounted = true;
+      (ctx.instance as any).__wireChildren();
+
+      expect((ctx.instance as any).__clusterWired).toBe(true);
+      ctx.fireFeatureClick({ properties: { id: 'b' } });
+      expect(select).toHaveBeenCalledTimes(1);
+      expect(ctx.mockCluster.setData).toHaveBeenCalled();
     });
   });
 

@@ -428,10 +428,17 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   __wireChildren(attempt = 0) {
     const { cluster, geocoder } = this;
 
-    if (cluster && !this.__clusterWired) {
+    // The cluster is an async child of the `MapboxMap`: it becomes queryable as
+    // soon as it is constructed, but its GeoJSON source is only added from its
+    // `mounted()` hook. Pushing data before that hook runs would silently no-op
+    // (the source does not exist yet) and leave the map empty, so we wait until
+    // the cluster is fully mounted — `$isMounted` flips to `true` right before
+    // `mounted()` runs synchronously, so observing it here guarantees the source
+    // is ready. Until then we keep polling.
+    if (cluster && cluster.$isMounted && !this.__clusterWired) {
       this.__clusterWired = true;
       this.__offHandlers.push(cluster.$on('feature-click', this.__handleClusterFeatureClick));
-      // The cluster just became available: push the current data to it.
+      // The cluster (and its source) are now ready: push the current data to it.
       this.__syncItems();
     }
 

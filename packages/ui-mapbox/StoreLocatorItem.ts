@@ -64,6 +64,19 @@ export class StoreLocatorItem<T extends BaseProps = BaseProps> extends Base<
   }
 
   /**
+   * The parent `StoreLocator` coordinator resolved at mount, cached so the item
+   * can still reach it on destroy.
+   *
+   * `destroyed()` runs *after* the element has been detached from the DOM (e.g.
+   * when a `Fetch` swaps the list, or a facet filter replaces it), and a
+   * `$closest` lookup on a disconnected node returns nothing — which would leave
+   * the removed item registered and its feature stuck on the map. Caching the
+   * reference keeps the unregister path working through the detach.
+   * @private
+   */
+  __coordinator?: StoreLocator;
+
+  /**
    * The closest parent `StoreLocator` coordinator instance.
    */
   get storeLocator() {
@@ -79,17 +92,20 @@ export class StoreLocatorItem<T extends BaseProps = BaseProps> extends Base<
   }
 
   /**
-   * Mounted hook: register with the coordinator.
+   * Mounted hook: cache the coordinator and register with it.
    */
   mounted() {
-    this.storeLocator?.registerItem(this);
+    this.__coordinator = this.storeLocator;
+    this.__coordinator?.registerItem(this);
   }
 
   /**
-   * Destroyed hook: unregister from the coordinator.
+   * Destroyed hook: unregister from the cached coordinator, even if the element
+   * has already been detached from the DOM.
    */
   destroyed() {
-    this.storeLocator?.unregisterItem(this);
+    this.__coordinator?.unregisterItem(this);
+    this.__coordinator = undefined;
   }
 
   /**
