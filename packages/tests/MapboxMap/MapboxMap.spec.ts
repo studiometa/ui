@@ -133,6 +133,29 @@ describe('MapboxMap component', () => {
     vi.useRealTimers();
   });
 
+  it('should not construct a map on destroy when the map was never created', async () => {
+    const root = createMapboxMap();
+    const instance = new MapboxMap(root);
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // Simulate a teardown where the lazy `get map()` getter has never populated
+    // the backing field (e.g. `$destroy()` called before the map is used, or a
+    // second `$destroy()`): the map instance does not exist at teardown time.
+    instance.__map = undefined as unknown as (typeof instance)['__map'];
+    const instanceCountBeforeDestroy = MockMap.instanceCount;
+
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // Teardown must be side-effect free: it must not go through the lazy getter
+    // and construct a brand-new map just to remove it.
+    expect(MockMap.instanceCount).toBe(instanceCountBeforeDestroy);
+    vi.useRealTimers();
+  });
+
   it('should forward mapOptions to the Map constructor', async () => {
     const style = {
       version: 8,

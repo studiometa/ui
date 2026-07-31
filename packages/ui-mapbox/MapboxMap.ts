@@ -151,7 +151,7 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
    * Destroyed hook.
    */
   destroyed() {
-    this.map?.remove();
+    this.__map?.remove();
     this.__map = undefined;
     this.isLoaded = false;
   }

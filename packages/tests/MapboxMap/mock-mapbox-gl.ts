@@ -1,6 +1,12 @@
 import { vi } from 'vitest';
 
 export class MockMap {
+  /**
+   * Count how many `MockMap` instances have been constructed. Lets tests assert
+   * that teardown does not construct a map through the lazy `get map()` getter.
+   */
+  static instanceCount = 0;
+
   _listeners: Record<string, Function[]> = {};
   _sources: Record<string, any> = {};
   _layers: any[] = [];
@@ -9,6 +15,7 @@ export class MockMap {
 
   constructor(options?: any) {
     this._options = options;
+    MockMap.instanceCount += 1;
   }
 
   /**
