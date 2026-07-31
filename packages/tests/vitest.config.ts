@@ -11,8 +11,8 @@ export default defineConfig({
     setupFiles: ['./tests/__utils__/dev.ts', './tests/__utils__/happydom.ts'],
     coverage: {
       provider: 'v8',
-      include: ['ui/**/*.ts'],
-      exclude: ['**/tests/**/*.ts', '**/ui/**/index.ts'],
+      include: ['ui/**/*.ts', 'ui-mapbox/**/*.ts'],
+      exclude: ['**/tests/**/*.ts', '**/ui/**/index.ts', '**/ui-mapbox/**/index.ts'],
     },
     exclude: ['**/.symfony/vendor/**', '**/api/vendor/**'],
   },

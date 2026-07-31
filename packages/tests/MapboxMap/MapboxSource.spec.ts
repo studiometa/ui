@@ -1,0 +1,97 @@
+import { describe, it, expect, vi } from 'vitest';
+import { h } from '#test-utils';
+import { MockMap } from './mock-mapbox-gl.js';
+import { MapboxSource } from '@studiometa/ui-mapbox';
+
+function createSource(attrs: Record<string, string> = {}) {
+  const mockMap = new MockMap();
+  const el = h('div', {
+    'data-component': 'MapboxSource',
+    'data-option-id': 'my-source',
+    'data-option-source': '{"type":"geojson","data":{"type":"FeatureCollection","features":[]}}',
+    ...attrs,
+  });
+
+  const instance = new MapboxSource(el);
+  // Mock $closest since async component resolution doesn't set it up
+  instance.$closest = vi.fn((query: string) => {
+    if (query === 'MapboxMap') {
+      return { map: mockMap, $options: { accessToken: 'token' } } as any;
+    }
+    return undefined;
+  });
+
+  return { instance, mockMap };
+}
+
+describe('MapboxSource component', () => {
+  it('should mount and add source to map', async () => {
+    const { instance, mockMap } = createSource();
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.addSource).toHaveBeenCalledWith(
+      'my-source',
+      expect.objectContaining({ type: 'geojson' }),
+    );
+  });
+
+  it('should not add the source twice if it already exists', async () => {
+    const { instance, mockMap } = createSource();
+    mockMap.getSource = vi.fn(() => ({ id: 'my-source' }) as any);
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.addSource).not.toHaveBeenCalled();
+  });
+
+  it('should remove tied layers then the source on destroy', async () => {
+    const { instance, mockMap } = createSource();
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // Two layers reference the source, one does not.
+    mockMap._layers = [
+      { id: 'tied-layer', source: 'my-source' },
+      { id: 'other-layer', source: 'another-source' },
+    ];
+
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.removeLayer).toHaveBeenCalledWith('tied-layer');
+    expect(mockMap.removeLayer).not.toHaveBeenCalledWith('other-layer');
+    expect(mockMap.removeSource).toHaveBeenCalledWith('my-source');
+
+    // Layers must be removed before the source they depend on.
+    const removeLayerOrder = mockMap.removeLayer.mock.invocationCallOrder[0];
+    const removeSourceOrder = mockMap.removeSource.mock.invocationCallOrder[0];
+    expect(removeLayerOrder).toBeLessThan(removeSourceOrder);
+  });
+
+  it('should not remove the source on destroy if it does not exist', async () => {
+    const { instance, mockMap } = createSource();
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // Source is gone by the time the component is destroyed.
+    mockMap.getSource = vi.fn(() => undefined);
+
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.removeSource).not.toHaveBeenCalled();
+  });
+});

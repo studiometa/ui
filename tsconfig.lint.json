@@ -4,6 +4,7 @@
     "noEmit": true,
   },
   "include": [
-    "packages/ui/**/*.ts"
+    "packages/ui/**/*.ts",
+    "packages/ui-mapbox/**/*.ts"
   ]
 }
