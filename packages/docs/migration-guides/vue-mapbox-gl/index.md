@@ -45,22 +45,22 @@ registerComponent(MapboxMap);
 
 Every Vue component has a one-to-one js-toolkit equivalent, with the same name. You author them as `data-component` elements nested inside a `MapboxMap` instead of Vue templates.
 
-| `@studiometa/vue-mapbox-gl` | `@studiometa/ui-mapbox`   | Notes                                                                 |
-| --------------------------- | ------------------------- | --------------------------------------------------------------------- |
-| `MapboxMap`                 | `MapboxMap`               | Root component, owns the map instance.                                |
-| `MapboxMarker`              | `MapboxMarker`            |                                                                       |
-| `MapboxPopup`               | `MapboxPopup`             | Content comes from the element's inner HTML.                          |
-| `MapboxNavigationControl`   | `MapboxNavigationControl` |                                                                       |
-| `MapboxGeolocateControl`    | `MapboxGeolocateControl`  |                                                                       |
-| `MapboxFullscreenControl`   | `MapboxFullscreenControl` | Ported.                                                               |
-| `MapboxGeocoder`            | `MapboxGeocoder`          | Needs the optional `@mapbox/mapbox-gl-geocoder`.                      |
-| `MapboxSource`              | `MapboxSource`            | Ported.                                                               |
-| `MapboxLayer`               | `MapboxLayer`             |                                                                       |
-| `MapboxImage`               | `MapboxImage`             | Ported.                                                               |
-| `MapboxImages`              | `MapboxImages`            | Ported.                                                               |
-| `MapboxCluster`             | `MapboxCluster`           | Ported. `data` only accepts a URL — see [below](#mapboxcluster-data). |
-| `StoreLocator`              | —                         | **Not yet available** — planned follow-up.                            |
-| `VueScroller`               | —                         | **Not yet available** — planned follow-up.                            |
+| `@studiometa/vue-mapbox-gl` | `@studiometa/ui-mapbox`   | Notes                                                                                             |
+| --------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------- |
+| `MapboxMap`                 | `MapboxMap`               | Root component, owns the map instance.                                                            |
+| `MapboxMarker`              | `MapboxMarker`            |                                                                                                   |
+| `MapboxPopup`               | `MapboxPopup`             | Content comes from the element's inner HTML.                                                      |
+| `MapboxNavigationControl`   | `MapboxNavigationControl` |                                                                                                   |
+| `MapboxGeolocateControl`    | `MapboxGeolocateControl`  |                                                                                                   |
+| `MapboxFullscreenControl`   | `MapboxFullscreenControl` | Ported.                                                                                           |
+| `MapboxGeocoder`            | `MapboxGeocoder`          | Needs the optional `@mapbox/mapbox-gl-geocoder`.                                                  |
+| `MapboxSource`              | `MapboxSource`            | Ported.                                                                                           |
+| `MapboxLayer`               | `MapboxLayer`             |                                                                                                   |
+| `MapboxImage`               | `MapboxImage`             | Ported.                                                                                           |
+| `MapboxImages`              | `MapboxImages`            | Ported.                                                                                           |
+| `MapboxCluster`             | `MapboxCluster`           | Ported. `data` accepts a URL; inline GeoJSON via a script ref — see [below](#mapboxcluster-data). |
+| `StoreLocator`              | —                         | **Not yet available** — planned follow-up.                                                        |
+| `VueScroller`               | —                         | **Not yet available** — planned follow-up.                                                        |
 
 ::: warning Not yet ported
 `StoreLocator` and its internal `VueScroller` helper have no js-toolkit equivalent yet. They are planned as a follow-up. If you rely on `StoreLocator`, keep it on `@studiometa/vue-mapbox-gl` for now, or rebuild the layout on top of `MapboxMap` + `MapboxMarker` + `MapboxCluster`.
@@ -163,7 +163,7 @@ Vue slots become real DOM children:
 
 ### MapboxCluster data {#mapboxcluster-data}
 
-In the Vue library, the `MapboxCluster` `data` prop accepts either a URL string or an inline GeoJSON object. In js-toolkit, options cannot express a `String | Object` union, so `data` is declared as a `String` and only accepts the **URL of a `.geojson` file** when set via the data attribute. To pass inline GeoJSON, provide it programmatically instead of through `data-option-data`.
+In the Vue library, the `MapboxCluster` `data` prop accepts either a URL string or an inline GeoJSON object. In js-toolkit, options cannot express a `String | Object` union, so `data` is declared as a `String` and only accepts the **URL of a `.geojson` file** when set via the data attribute. To keep the inline-GeoJSON case, add a `<script data-ref="geojson" type="application/json">` child holding the GeoJSON: when this `geojson` ref is present, its parsed content is used as the clustered source data and the `data` option becomes a fallback. Together, the URL option and the ref cover both halves of the original `String | Object` prop.
 
 ## Reactivity caveat
 

@@ -3,13 +3,17 @@ import { h } from '#test-utils';
 import { MockMap } from './mock-mapbox-gl.js';
 import { MapboxCluster } from '@studiometa/ui-mapbox';
 
-function createCluster(attrs: Record<string, string> = {}) {
+function createCluster(attrs: Record<string, string> = {}, children: (string | Node)[] = []) {
   const mockMap = new MockMap();
-  const el = h('div', {
-    'data-component': 'MapboxCluster',
-    'data-option-data': '/points.geojson',
-    ...attrs,
-  });
+  const el = h(
+    'div',
+    {
+      'data-component': 'MapboxCluster',
+      'data-option-data': '/points.geojson',
+      ...attrs,
+    },
+    children,
+  );
 
   const instance = new MapboxCluster(el);
   // Mock $closest since async component resolution doesn't set it up
@@ -51,6 +55,52 @@ describe('MapboxCluster component', () => {
       expect.objectContaining({ type: 'geojson', cluster: true, data: '/points.geojson' }),
     );
     expect(mockMap.addLayer).toHaveBeenCalledTimes(3);
+  });
+
+  it('should use inline GeoJSON from the `geojson` script ref as the source data', async () => {
+    const geojson = {
+      type: 'FeatureCollection',
+      features: [
+        { type: 'Feature', geometry: { type: 'Point', coordinates: [1, 2] }, properties: {} },
+      ],
+    };
+    const script = h('script', { 'data-ref': 'geojson', type: 'application/json' }, [
+      JSON.stringify(geojson),
+    ]);
+    const { instance, mockMap } = createCluster({}, [script]);
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    const sourceId = (instance as any).__getId('source');
+    expect(mockMap.addSource).toHaveBeenCalledWith(
+      sourceId,
+      expect.objectContaining({ type: 'geojson', cluster: true, data: geojson }),
+    );
+  });
+
+  it('should warn and fall back to the URL when the `geojson` ref holds invalid JSON', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const script = h('script', { 'data-ref': 'geojson', type: 'application/json' }, ['{ invalid']);
+    // `data-option-log` makes `$warn` emit to `console.warn`.
+    const { instance, mockMap } = createCluster({ 'data-option-log': '' }, [script]);
+
+    vi.useFakeTimers();
+    expect(() => {
+      instance.$mount();
+    }).not.toThrow();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(warn).toHaveBeenCalled();
+    const sourceId = (instance as any).__getId('source');
+    expect(mockMap.addSource).toHaveBeenCalledWith(
+      sourceId,
+      expect.objectContaining({ type: 'geojson', cluster: true, data: '/points.geojson' }),
+    );
+    warn.mockRestore();
   });
 
   it('should emit cluster-click and ease to the expansion zoom on cluster click', async () => {

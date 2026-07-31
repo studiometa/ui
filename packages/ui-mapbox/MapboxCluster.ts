@@ -30,8 +30,11 @@ function nextClusterId(): string {
 }
 
 export interface MapboxClusterProps extends AbstractMapboxMapChildProps {
+  $refs: {
+    geojson?: HTMLScriptElement;
+  };
   $options: {
-    data: GeoJSONSourceSpecification['data'];
+    data: string;
     clusterMaxZoom: number;
     clusterRadius: number;
     clusterMinPoints: number;
@@ -58,11 +61,14 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
    */
   static config: BaseConfig = {
     name: 'MapboxCluster',
+    refs: ['geojson'],
     emits: ['cluster-click', 'feature-click', 'feature-mouseenter', 'feature-mouseleave'],
     options: {
-      // js-toolkit options do not support union types: `data` is declared as a
-      // String so a URL to a GeoJSON file can be passed via a data attribute,
-      // which is the canonical clustered source usage.
+      // js-toolkit options do not support union types, so `data` is declared as
+      // a String and only accepts the URL of a `.geojson` file. To pass inline
+      // GeoJSON declaratively, provide it via the `geojson` script ref instead,
+      // a `<script data-ref="geojson" type="application/json">` element; the
+      // `data` option is then used as a fallback.
       data: String,
       clusterMaxZoom: {
         type: Number,
@@ -120,6 +126,27 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
       },
     },
   };
+
+  /**
+   * Resolve the clustered source data.
+   *
+   * When a `geojson` ref — a `<script data-ref="geojson" type="application/json">`
+   * element — is present, its content is parsed as inline GeoJSON and returned.
+   * Otherwise the `data` option is used as the URL of a `.geojson` file.
+   */
+  get data(): GeoJSONSourceSpecification['data'] {
+    const script = this.$refs.geojson;
+
+    if (script) {
+      try {
+        return JSON.parse(script.textContent || 'null') as GeoJSONSourceSpecification['data'];
+      } catch (err) {
+        this.$warn('Invalid JSON in the `geojson` ref:', err);
+      }
+    }
+
+    return this.$options.data;
+  }
 
   /**
    * Unique base id for this instance.
@@ -219,7 +246,6 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
    */
   mounted() {
     const {
-      data,
       clusterMaxZoom,
       clusterRadius,
       clusterMinPoints,
@@ -232,6 +258,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
       unclusteredPointLayout,
       unclusteredPointPaint,
     } = this.$options;
+    const { data } = this;
 
     const sourceId = this.__getId('source');
     const clustersFilter = ['has', 'point_count'] as FilterSpecification;

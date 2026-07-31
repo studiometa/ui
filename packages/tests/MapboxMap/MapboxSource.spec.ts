@@ -3,14 +3,18 @@ import { h } from '#test-utils';
 import { MockMap } from './mock-mapbox-gl.js';
 import { MapboxSource } from '@studiometa/ui-mapbox';
 
-function createSource(attrs: Record<string, string> = {}) {
+function createSource(attrs: Record<string, string> = {}, children: (string | Node)[] = []) {
   const mockMap = new MockMap();
-  const el = h('div', {
-    'data-component': 'MapboxSource',
-    'data-option-id': 'my-source',
-    'data-option-source': '{"type":"geojson","data":{"type":"FeatureCollection","features":[]}}',
-    ...attrs,
-  });
+  const el = h(
+    'div',
+    {
+      'data-component': 'MapboxSource',
+      'data-option-id': 'my-source',
+      'data-option-source': '{"type":"geojson","data":{"type":"FeatureCollection","features":[]}}',
+      ...attrs,
+    },
+    children,
+  );
 
   const instance = new MapboxSource(el);
   // Mock $closest since async component resolution doesn't set it up
@@ -36,6 +40,29 @@ describe('MapboxSource component', () => {
     expect(mockMap.addSource).toHaveBeenCalledWith(
       'my-source',
       expect.objectContaining({ type: 'geojson' }),
+    );
+  });
+
+  it('should inject inline GeoJSON from the `geojson` script ref as the source data', async () => {
+    const geojson = {
+      type: 'FeatureCollection',
+      features: [
+        { type: 'Feature', geometry: { type: 'Point', coordinates: [1, 2] }, properties: {} },
+      ],
+    };
+    const script = h('script', { 'data-ref': 'geojson', type: 'application/json' }, [
+      JSON.stringify(geojson),
+    ]);
+    const { instance, mockMap } = createSource({}, [script]);
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.addSource).toHaveBeenCalledWith(
+      'my-source',
+      expect.objectContaining({ type: 'geojson', data: geojson }),
     );
   });
 

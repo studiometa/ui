@@ -242,6 +242,12 @@ Add a [source](https://docs.mapbox.com/style-spec/reference/sources/) to the map
 | `id`     | `String` | —       | Unique source id, referenced by layers.                                                                                   |
 | `source` | `Object` | —       | A [source specification](https://docs.mapbox.com/style-spec/reference/sources/), e.g. `{ "type": "geojson", "data": … }`. |
 
+#### Refs
+
+| Ref       | Type                | Description                                                                                                                                                                                                      |
+| --------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `geojson` | `HTMLScriptElement` | Optional `<script data-ref="geojson" type="application/json">` element holding inline GeoJSON. When present, its parsed content is injected as the source spec's `data`. Invalid JSON is ignored with a warning. |
+
 ### MapboxLayer
 
 Add a [layer](https://docs.mapbox.com/style-spec/reference/layers/) to the map.
@@ -294,26 +300,32 @@ Load and register a list of images against the map sprite in one component.
 
 Display a clustered GeoJSON source. The component sets up the clustered source, the cluster circles layer, the cluster count labels layer and the unclustered points layer, together with the click-to-zoom interaction on clusters and pointer feedback on features.
 
-::: warning Inline GeoJSON is not supported via the data attribute
-js-toolkit options do not support union types, so the `data` option is declared as a `String` and only accepts the **URL of a `.geojson` file**. To pass inline GeoJSON, provide it programmatically rather than through the `data-option-data` attribute — for example by extending the component or setting the source data on the map instance after mount.
+::: tip Inline GeoJSON via the `geojson` ref
+js-toolkit options do not support union types, so the `data` option is declared as a `String` and only accepts the **URL of a `.geojson` file**. To pass inline GeoJSON declaratively, add a `<script data-ref="geojson" type="application/json">` child holding the GeoJSON — see the [`geojson` ref](#refs-2) below. When both are present, the `geojson` ref wins and the `data` option is used as a fallback.
 :::
 
 #### Options
 
-| Option                         | Type     | Default                                                | Description                                                                                                   |
-| ------------------------------ | -------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `data`                         | `String` | —                                                      | URL of a `.geojson` file used as the clustered source data.                                                   |
-| `cluster-max-zoom`             | `Number` | `14`                                                   | Max zoom at which points are clustered.                                                                       |
-| `cluster-radius`               | `Number` | `50`                                                   | Radius of each cluster when clustering points.                                                                |
-| `cluster-min-points`           | `Number` | `2`                                                    | Minimum number of points to form a cluster.                                                                   |
-| `cluster-properties`           | `Object` | `{}`                                                   | Custom [cluster properties](https://docs.mapbox.com/style-spec/reference/sources/#geojson-clusterProperties). |
-| `clusters-layout`              | `Object` | `{}`                                                   | Layout for the clusters circle layer.                                                                         |
-| `clusters-paint`               | `Object` | `{ 'circle-color': '#000', 'circle-radius': 40 }`      | Paint for the clusters circle layer.                                                                          |
-| `cluster-count-layout`         | `Object` | `{ 'text-field': ['get', 'point_count_abbreviated'] }` | Layout for the cluster count labels.                                                                          |
-| `cluster-count-paint`          | `Object` | `{ 'text-color': 'white' }`                            | Paint for the cluster count labels.                                                                           |
-| `unclustered-point-layer-type` | `String` | `'circle'`                                             | Type of the unclustered points layer.                                                                         |
-| `unclustered-point-layout`     | `Object` | `{}`                                                   | Layout for the unclustered points layer.                                                                      |
-| `unclustered-point-paint`      | `Object` | `{ 'circle-color': '#000', 'circle-radius': 4 }`       | Paint for the unclustered points layer.                                                                       |
+| Option                         | Type     | Default                                                | Description                                                                                                                         |
+| ------------------------------ | -------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `data`                         | `String` | —                                                      | URL of a `.geojson` file used as the clustered source data. Used as a fallback when no inline [`geojson` ref](#refs-2) is provided. |
+| `cluster-max-zoom`             | `Number` | `14`                                                   | Max zoom at which points are clustered.                                                                                             |
+| `cluster-radius`               | `Number` | `50`                                                   | Radius of each cluster when clustering points.                                                                                      |
+| `cluster-min-points`           | `Number` | `2`                                                    | Minimum number of points to form a cluster.                                                                                         |
+| `cluster-properties`           | `Object` | `{}`                                                   | Custom [cluster properties](https://docs.mapbox.com/style-spec/reference/sources/#geojson-clusterProperties).                       |
+| `clusters-layout`              | `Object` | `{}`                                                   | Layout for the clusters circle layer.                                                                                               |
+| `clusters-paint`               | `Object` | `{ 'circle-color': '#000', 'circle-radius': 40 }`      | Paint for the clusters circle layer.                                                                                                |
+| `cluster-count-layout`         | `Object` | `{ 'text-field': ['get', 'point_count_abbreviated'] }` | Layout for the cluster count labels.                                                                                                |
+| `cluster-count-paint`          | `Object` | `{ 'text-color': 'white' }`                            | Paint for the cluster count labels.                                                                                                 |
+| `unclustered-point-layer-type` | `String` | `'circle'`                                             | Type of the unclustered points layer.                                                                                               |
+| `unclustered-point-layout`     | `Object` | `{}`                                                   | Layout for the unclustered points layer.                                                                                            |
+| `unclustered-point-paint`      | `Object` | `{ 'circle-color': '#000', 'circle-radius': 4 }`       | Paint for the unclustered points layer.                                                                                             |
+
+#### Refs
+
+| Ref       | Type                | Description                                                                                                                                                                                                                                                  |
+| --------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `geojson` | `HTMLScriptElement` | Optional `<script data-ref="geojson" type="application/json">` element holding inline GeoJSON. When present, its parsed content is used as the clustered source data instead of the `data` URL. Invalid JSON falls back to the `data` option with a warning. |
 
 #### Events
 

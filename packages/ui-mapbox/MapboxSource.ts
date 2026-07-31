@@ -1,11 +1,14 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import type { SourceSpecification } from 'mapbox-gl';
+import type { SourceSpecification, GeoJSONSourceSpecification } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
 } from './AbstractMapboxMapChild.js';
 
 export interface MapboxSourceProps extends AbstractMapboxMapChildProps {
+  $refs: {
+    geojson?: HTMLScriptElement;
+  };
   $options: {
     id: string;
     /**
@@ -28,6 +31,7 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
    */
   static config: BaseConfig = {
     name: 'MapboxSource',
+    refs: ['geojson'],
     options: {
       id: String,
       source: Object,
@@ -35,10 +39,35 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
   };
 
   /**
+   * Resolve the source specification.
+   *
+   * When a `geojson` ref — a `<script data-ref="geojson" type="application/json">`
+   * element — is present, its content is parsed as inline GeoJSON and injected
+   * as the source spec's `data`. Otherwise the `source` option is used as is.
+   */
+  get source(): SourceSpecification {
+    const { source } = this.$options;
+    const script = this.$refs.geojson;
+
+    if (!script) {
+      return source;
+    }
+
+    try {
+      const data = JSON.parse(script.textContent || 'null') as GeoJSONSourceSpecification['data'];
+      return { ...source, data } as SourceSpecification;
+    } catch (err) {
+      this.$warn('Invalid JSON in the `geojson` ref:', err);
+      return source;
+    }
+  }
+
+  /**
    * Mounted hook.
    */
   mounted() {
-    const { id, source } = this.$options;
+    const { id } = this.$options;
+    const { source } = this;
 
     if (!this.map.getSource(id)) {
       this.map.addSource(id, source);

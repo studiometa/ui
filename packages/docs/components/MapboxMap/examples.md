@@ -254,7 +254,7 @@ registerComponent(MapboxMap);
 
 ## Cluster
 
-The `MapboxCluster` component displays a clustered GeoJSON source, wiring the cluster circles, the cluster count labels and the unclustered points, together with the click-to-zoom interaction. Its `data` option takes the URL of a `.geojson` file (see the [note on inline data](./js-api#mapboxcluster)).
+The `MapboxCluster` component displays a clustered GeoJSON source, wiring the cluster circles, the cluster count labels and the unclustered points, together with the click-to-zoom interaction. Its `data` option takes the URL of a `.geojson` file, or you can pass inline GeoJSON through a [`geojson` script ref](#inline-geojson-cluster).
 
 ::: code-group
 
@@ -274,6 +274,50 @@ The `MapboxCluster` component displays a clustered GeoJSON source, wiring the cl
     data-option-cluster-radius="60"
     data-option-clusters-paint='{ "circle-color": "#51bbd6", "circle-radius": 20 }'
     data-option-unclustered-point-paint='{ "circle-color": "#11b4da", "circle-radius": 5 }'></div>
+</div>
+```
+
+```js [app.js]
+import { registerComponent } from '@studiometa/js-toolkit';
+import { MapboxMap } from '@studiometa/ui-mapbox';
+
+registerComponent(MapboxMap);
+```
+
+:::
+
+### Inline GeoJSON cluster {#inline-geojson-cluster}
+
+Instead of a `data` URL, pass the GeoJSON inline through a `<script data-ref="geojson" type="application/json">` child. When the ref is present, its parsed content is used as the clustered source data and the `data` option is ignored.
+
+::: code-group
+
+```html [index.html]
+<div
+  data-component="MapboxMap"
+  data-option-access-token="<YOUR_MAPBOX_ACCESS_TOKEN>"
+  data-option-zoom="1"
+  data-option-center="[0, 20]"
+  class="h-96 w-full">
+  <div data-ref="container" class="h-full w-full"></div>
+
+  <div
+    hidden
+    data-component="MapboxCluster"
+    data-option-cluster-radius="60"
+    data-option-clusters-paint='{ "circle-color": "#51bbd6", "circle-radius": 20 }'
+    data-option-unclustered-point-paint='{ "circle-color": "#11b4da", "circle-radius": 5 }'>
+    <script data-ref="geojson" type="application/json">
+      {
+        "type": "FeatureCollection",
+        "features": [
+          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.35, 48.86] } },
+          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.29, 48.86] } },
+          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-0.13, 51.51] } }
+        ]
+      }
+    </script>
+  </div>
 </div>
 ```
 
