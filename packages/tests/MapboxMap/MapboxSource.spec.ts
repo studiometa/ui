@@ -66,6 +66,27 @@ describe('MapboxSource component', () => {
     );
   });
 
+  it('should keep the option source data when the `geojson` ref is empty', async () => {
+    // A present but empty (or whitespace-only) script ref must be treated as
+    // "no inline data": the `source` option is used as is, without injecting
+    // `data: null` (which `JSON.parse('null')` would otherwise produce).
+    const script = h('script', { 'data-ref': 'geojson', type: 'application/json' }, []);
+    const { instance, mockMap } = createSource({}, [script]);
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.addSource).toHaveBeenCalledWith(
+      'my-source',
+      expect.objectContaining({
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      }),
+    );
+  });
+
   it('should not add the source twice if it already exists', async () => {
     const { instance, mockMap } = createSource();
     mockMap.getSource = vi.fn(() => ({ id: 'my-source' }) as any);

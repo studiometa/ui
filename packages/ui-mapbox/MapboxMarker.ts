@@ -77,7 +77,7 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapbo
    * Destroyed hook.
    */
   destroyed() {
-    this.marker?.remove();
+    this.__marker?.remove();
     this.__marker = undefined;
   }
 }

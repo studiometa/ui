@@ -48,13 +48,17 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
   get source(): SourceSpecification {
     const { source } = this.$options;
     const script = this.$refs.geojson;
+    const content = script?.textContent?.trim();
 
-    if (!script) {
+    // Only inject inline data when the script ref holds actual content. A
+    // missing, empty or whitespace-only ref is treated as "no inline data" and
+    // the `source` option is used as is instead of injecting `data: null`.
+    if (!content) {
       return source;
     }
 
     try {
-      const data = JSON.parse(script.textContent || 'null') as GeoJSONSourceSpecification['data'];
+      const data = JSON.parse(content) as GeoJSONSourceSpecification['data'];
       return { ...source, data } as SourceSpecification;
     } catch (err) {
       this.$warn('Invalid JSON in the `geojson` ref:', err);

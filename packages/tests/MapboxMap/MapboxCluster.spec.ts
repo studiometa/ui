@@ -81,6 +81,25 @@ describe('MapboxCluster component', () => {
     );
   });
 
+  it('should fall back to the `data` URL when the `geojson` ref is empty', async () => {
+    // A present but empty (or whitespace-only) script ref must be treated as
+    // "no inline data" and fall back to the `data` URL option, not inject
+    // `null` (which `JSON.parse('null')` would otherwise produce).
+    const script = h('script', { 'data-ref': 'geojson', type: 'application/json' }, []);
+    const { instance, mockMap } = createCluster({}, [script]);
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    const sourceId = (instance as any).__getId('source');
+    expect(mockMap.addSource).toHaveBeenCalledWith(
+      sourceId,
+      expect.objectContaining({ type: 'geojson', cluster: true, data: '/points.geojson' }),
+    );
+  });
+
   it('should warn and fall back to the URL when the `geojson` ref holds invalid JSON', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const script = h('script', { 'data-ref': 'geojson', type: 'application/json' }, ['{ invalid']);

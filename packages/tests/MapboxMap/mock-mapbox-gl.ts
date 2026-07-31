@@ -101,8 +101,18 @@ export class MockMap {
 }
 
 export class MockMarker {
+  /**
+   * Count how many `MockMarker` instances have been constructed. Lets tests
+   * assert that teardown does not construct a marker through the lazy
+   * `get marker()` getter.
+   */
+  static instanceCount = 0;
+
   _lngLat: any;
   _popup: any;
+  constructor() {
+    MockMarker.instanceCount += 1;
+  }
   setLngLat = vi.fn(function (this: MockMarker, lngLat: any) {
     this._lngLat = lngLat;
     return this;
@@ -118,10 +128,18 @@ export class MockMarker {
 }
 
 export class MockPopup {
+  /**
+   * Count how many `MockPopup` instances have been constructed. Lets tests
+   * assert that teardown does not construct a popup through the lazy
+   * `get popup()` getter.
+   */
+  static instanceCount = 0;
+
   _lngLat: any;
   _options: any;
   constructor(options?: any) {
     this._options = options;
+    MockPopup.instanceCount += 1;
   }
   setLngLat = vi.fn(function (this: MockPopup, lngLat: any) {
     this._lngLat = lngLat;

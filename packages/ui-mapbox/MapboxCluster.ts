@@ -136,10 +136,14 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
    */
   get data(): GeoJSONSourceSpecification['data'] {
     const script = this.$refs.geojson;
+    const content = script?.textContent?.trim();
 
-    if (script) {
+    // Only parse when the script ref holds actual content. A missing,
+    // empty or whitespace-only ref is treated as "no inline data" and falls
+    // back to the `data` URL option instead of injecting `null`.
+    if (content) {
       try {
-        return JSON.parse(script.textContent || 'null') as GeoJSONSourceSpecification['data'];
+        return JSON.parse(content) as GeoJSONSourceSpecification['data'];
       } catch (err) {
         this.$warn('Invalid JSON in the `geojson` ref:', err);
       }

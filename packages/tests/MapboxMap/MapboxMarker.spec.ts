@@ -93,6 +93,30 @@ describe('MapboxMarker component', () => {
     expect(mockMarker.remove).toHaveBeenCalled();
   });
 
+  it('should not construct a marker on destroy when the marker was never created', async () => {
+    const { instance } = createMarker();
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // Simulate a teardown where the lazy `get marker()` getter has never
+    // populated the backing field (e.g. `$destroy()` called before the marker
+    // is used, or a second `$destroy()`): the marker does not exist at teardown
+    // time, while the component stays mounted so `destroyed()` still runs.
+    (instance as any).__marker = undefined;
+    const instanceCountBeforeDestroy = MockMarker.instanceCount;
+
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // Teardown must be side-effect free: it must not go through the lazy getter
+    // and construct a brand-new marker just to remove it.
+    expect(MockMarker.instanceCount).toBe(instanceCountBeforeDestroy);
+    expect((instance as any).__marker).toBeUndefined();
+  });
+
   it('should reuse the same marker instance', async () => {
     const { instance } = createMarker();
 

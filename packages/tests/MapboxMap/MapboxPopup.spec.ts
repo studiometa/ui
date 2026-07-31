@@ -128,6 +128,30 @@ describe('MapboxPopup component', () => {
     expect(mockPopup.remove).toHaveBeenCalled();
   });
 
+  it('should not construct a popup on destroy when the popup was never created', async () => {
+    const { instance } = createPopup();
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // Simulate a teardown where the lazy `get popup()` getter has never
+    // populated the backing field (e.g. `$destroy()` called before the popup
+    // is used, or a second `$destroy()`): the popup does not exist at teardown
+    // time, while the component stays mounted so `destroyed()` still runs.
+    (instance as any).__popup = undefined;
+    const instanceCountBeforeDestroy = MockPopup.instanceCount;
+
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // Teardown must be side-effect free: it must not go through the lazy getter
+    // and construct a brand-new popup just to remove it.
+    expect(MockPopup.instanceCount).toBe(instanceCountBeforeDestroy);
+    expect((instance as any).__popup).toBeUndefined();
+  });
+
   it('should reuse the same popup instance', async () => {
     const { instance } = createPopup();
 
