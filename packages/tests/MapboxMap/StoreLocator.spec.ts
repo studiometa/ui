@@ -647,6 +647,43 @@ describe('StoreLocator component', () => {
     });
   });
 
+  // --- 8b. Single initial sync (no duplicate on load) ----------------------
+  describe('initial load sync', () => {
+    it('runs the initial sync exactly ONCE when the cluster is already mounted at load', async () => {
+      // Regression: with the cluster mounted before `map-load`, `__wireChildren`
+      // used to also sync when wiring it, so `__handleMapLoad`'s own sync made the
+      // first `setData`, `fitBounds` and `filter` emission all fire TWICE. Each
+      // must happen exactly once.
+      const ctx = createStoreLocator(
+        [
+          { id: 'a', lngLat: [1, 2] },
+          { id: 'b', lngLat: [3, 4] },
+        ],
+        { attrs: { 'data-option-fit-on-update': '' } },
+      );
+
+      const filter = vi.fn();
+
+      vi.useFakeTimers();
+      ctx.instance.$mount();
+      // Let the mount-time registration debounce settle *before* load: it runs
+      // while `isLoaded` is still false, so it no-ops and cannot pollute the
+      // post-load counts. This isolates the wiring-vs-handleMapLoad double sync.
+      await vi.advanceTimersByTimeAsync(200);
+      expect(ctx.mockCluster.setData).not.toHaveBeenCalled();
+
+      // Listen before the load so the very first `filter` emission is counted.
+      ctx.instance.$on('filter', filter);
+      ctx.fireLoad();
+      await vi.advanceTimersByTimeAsync(200);
+      vi.useRealTimers();
+
+      expect(ctx.mockCluster.setData).toHaveBeenCalledTimes(1);
+      expect(ctx.mockMap.fitBounds).toHaveBeenCalledTimes(1);
+      expect(filter).toHaveBeenCalledTimes(1);
+    });
+  });
+
   // --- 9. Lifecycle --------------------------------------------------------
   describe('lifecycle teardown', () => {
     it('detaches listeners and clears the registry on destroy', async () => {

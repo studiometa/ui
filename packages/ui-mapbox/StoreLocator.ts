@@ -444,7 +444,11 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
       this.__clusterWired = true;
       this.__offHandlers.push(cluster.$on('feature-click', this.__handleClusterFeatureClick));
       // The cluster (and its source) are now ready: push the current data to it.
-      this.__syncItems();
+      // Only resync when the cluster became available AFTER the initial pass; on
+      // the first pass `__handleMapLoad`'s own `__syncItems()` call already covers it.
+      if (attempt > 0) {
+        this.__syncItems();
+      }
     }
 
     if (geocoder && !this.__geocoderWired) {
