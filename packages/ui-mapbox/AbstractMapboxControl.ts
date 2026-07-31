@@ -83,7 +83,9 @@ export class AbstractMapboxControl<T extends BaseProps = BaseProps> extends Abst
    * Destroyed hook.
    */
   destroyed() {
-    this.map?.removeControl(this.control);
-    this.__control = undefined;
+    if (this.__control) {
+      this.map?.removeControl(this.__control);
+      this.__control = undefined;
+    }
   }
 }

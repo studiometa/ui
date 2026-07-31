@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { h } from '#test-utils';
-import { MockMap } from './mock-mapbox-gl.js';
+import { MockMap, MockNavigationControl } from './mock-mapbox-gl.js';
 import { MapboxNavigationControl } from '@studiometa/ui-mapbox';
 
 function createControl(attrs: Record<string, string> = {}) {
@@ -68,6 +68,30 @@ describe('MapboxNavigationControl component', () => {
     vi.useRealTimers();
 
     expect(mockMap.removeControl).toHaveBeenCalled();
+  });
+
+  it('should not construct a control on destroy when the control was never created', async () => {
+    const { instance, mockMap } = createControl();
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // Simulate a teardown where the lazy `get control()` getter has never
+    // populated the backing field (e.g. `$destroy()` called before the control
+    // is used, or a second `$destroy()`): the control does not exist at teardown
+    // time, while the component stays mounted so `destroyed()` still runs.
+    instance.__control = undefined as unknown as (typeof instance)['__control'];
+    const instanceCountBeforeDestroy = MockNavigationControl.instanceCount;
+
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // Teardown must be side-effect free: it must not go through the lazy getter
+    // and construct a brand-new control just to remove it.
+    expect(MockNavigationControl.instanceCount).toBe(instanceCountBeforeDestroy);
+    expect(mockMap.removeControl).not.toHaveBeenCalled();
   });
 
   it('should reuse the same control instance', async () => {

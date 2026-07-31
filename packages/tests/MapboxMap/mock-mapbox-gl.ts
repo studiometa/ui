@@ -139,7 +139,18 @@ export class MockPopup {
   remove = vi.fn();
 }
 
-export class MockNavigationControl {}
+export class MockNavigationControl {
+  /**
+   * Count how many `MockNavigationControl` instances have been constructed. Lets
+   * tests assert that teardown does not construct a control through the lazy
+   * `get control()` getter.
+   */
+  static instanceCount = 0;
+
+  constructor() {
+    MockNavigationControl.instanceCount += 1;
+  }
+}
 export class MockGeolocateControl {}
 export class MockFullscreenControl {}
 
