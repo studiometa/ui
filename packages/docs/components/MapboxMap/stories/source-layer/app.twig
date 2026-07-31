@@ -1,0 +1,44 @@
+<link rel="stylesheet" href="https://esm.sh/mapbox-gl@3.13.0/dist/mapbox-gl.css" />
+
+<div
+  data-component="MapboxMap"
+  data-option-access-token="pk.eyJ1IjoiYWdlbmNlc3R1ZGlvbWV0YSIsImEiOiJjbXM5NTBycHMwa2Z4MndxeW02YndscmQyIn0.UitMikKpq-TRJOXM-rBcMg"
+  data-option-zoom="11"
+  data-option-center="[2.35, 48.86]"
+  data-option-map-options='{"style":"mapbox://styles/mapbox/streets-v12"}'
+  class="h-96 w-full">
+  <div data-ref="container" class="h-full w-full"></div>
+
+  {# A GeoJSON source describing a route across Paris #}
+  <div
+    hidden
+    data-component="MapboxSource"
+    data-option-id="route"
+    data-option-source='{
+      "type": "geojson",
+      "data": {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [2.2945, 48.8584],
+            [2.3376, 48.8606],
+            [2.3499, 48.8530],
+            [2.3653, 48.8467]
+          ]
+        }
+      }
+    }'></div>
+
+  {# A line layer rendering the source #}
+  <div
+    hidden
+    data-component="MapboxLayer"
+    data-option-id="route-line"
+    data-option-layer='{
+      "type": "line",
+      "source": "route",
+      "layout": { "line-join": "round", "line-cap": "round" },
+      "paint": { "line-color": "#e11d48", "line-width": 5 }
+    }'></div>
+</div>

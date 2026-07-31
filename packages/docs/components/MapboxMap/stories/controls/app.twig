@@ -1,0 +1,31 @@
+<link rel="stylesheet" href="https://esm.sh/mapbox-gl@3.13.0/dist/mapbox-gl.css" />
+
+{#
+  The `map-options` option forwards any mapbox-gl `Map` option. Here it sets a
+  specific style and a tilted, rotated camera (`pitch` + `bearing`) — the
+  navigation control's compass resets the bearing.
+#}
+<div
+  data-component="MapboxMap"
+  data-option-access-token="pk.eyJ1IjoiYWdlbmNlc3R1ZGlvbWV0YSIsImEiOiJjbXM5NTBycHMwa2Z4MndxeW02YndscmQyIn0.UitMikKpq-TRJOXM-rBcMg"
+  data-option-zoom="10"
+  data-option-center="[2.35, 48.86]"
+  data-option-map-options='{"style":"mapbox://styles/mapbox/streets-v12","pitch":45,"bearing":-17}'
+  class="h-96 w-full">
+  <div data-ref="container" class="h-full w-full"></div>
+
+  <div
+    hidden
+    data-component="MapboxNavigationControl"
+    data-option-position="top-right"
+    data-option-show-compass
+    data-option-show-zoom></div>
+
+  <div
+    hidden
+    data-component="MapboxGeolocateControl"
+    data-option-position="top-right"
+    data-option-track-user-location></div>
+
+  <div hidden data-component="MapboxFullscreenControl" data-option-position="top-right"></div>
+</div>
