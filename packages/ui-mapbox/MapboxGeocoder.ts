@@ -1,14 +1,22 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
 import mapboxgl from 'mapbox-gl';
-import type { Map } from 'mapbox-gl';
-// Type-only import: erased at build time, so it never triggers a runtime
-// resolution of the optional `@mapbox/mapbox-gl-geocoder` peer dependency. The
-// actual module is loaded lazily via a dynamic `import()` in `mounted()`.
-import type GeocoderControl from '@mapbox/mapbox-gl-geocoder';
+import type { Map, IControl } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
 } from './AbstractMapboxMapChild.js';
+
+/**
+ * Minimal structural shape of the optional Mapbox geocoder control used by this
+ * component. It is declared locally so the optional geocoder peer dependency
+ * never appears in the public type surface — and therefore never in the emitted
+ * declarations — which would otherwise break consumers who install
+ * `@studiometa/ui-mapbox` without the optional geocoder peer installed.
+ */
+interface GeocoderControlLike {
+  addTo(target: Map | HTMLElement | string): void;
+  onRemove(): void;
+}
 
 export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
   $options: {
@@ -18,21 +26,21 @@ export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
     addToMap: boolean;
     /**
      * All MapboxGeocoder options, except the non serializable ones.
-     * @see https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md#parameters
+     *
+     * Typed structurally (rather than with the optional geocoder peer types) to
+     * keep the peer out of the public type surface. Refer to the Mapbox geocoder
+     * package documentation (API.md#parameters) for the accepted options.
      */
-    options: Omit<
-      GeocoderControl.GeocoderOptions,
-      'filter' | 'externalGeocoder' | 'render' | 'getItemValue' | 'localGeocoder'
-    >;
+    options: Record<string, unknown>;
   };
 }
 
 /**
  * Add a geocoder control to the map.
  *
- * The `@mapbox/mapbox-gl-geocoder` module is an optional peer dependency and is
- * loaded on demand with a dynamic `import()` when the component mounts, so the
- * rest of the package keeps working without it installed.
+ * The Mapbox geocoder module is an optional peer dependency and is loaded on
+ * demand with a dynamic `import()` when the component mounts, so the rest of the
+ * package keeps working without it installed.
  *
  * @see https://ui.studiometa.dev/-/components/MapboxMap/
  */
@@ -54,12 +62,12 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
    * Control instance, created once the lazily imported module resolves.
    * @private
    */
-  __control?: GeocoderControl;
+  __control?: GeocoderControlLike;
 
   /**
-   * The mapbox-gl-geocoder control instance, if it has been created yet.
+   * The Mapbox geocoder control instance, if it has been created yet.
    */
-  get control(): GeocoderControl | undefined {
+  get control(): GeocoderControlLike | undefined {
     return this.__control;
   }
 
@@ -73,8 +81,8 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
   /**
    * Mounted hook.
    *
-   * Lazily loads the optional `@mapbox/mapbox-gl-geocoder` module before
-   * building and adding the control.
+   * Lazily loads the optional Mapbox geocoder module before building and adding
+   * the control.
    */
   async mounted() {
     const { default: GeocoderControlClass } = await import('@mapbox/mapbox-gl-geocoder');
@@ -92,7 +100,9 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
       mapboxgl: mapboxgl as unknown as typeof import('mapbox-gl'),
       accessToken: this.$options.options.accessToken ?? this.mapboxMap.$options.accessToken,
     };
-    this.__control = new GeocoderControlClass(options);
+    this.__control = new GeocoderControlClass(
+      options as ConstructorParameters<typeof GeocoderControlClass>[0],
+    );
     this.__control.addTo(this.target);
   }
 
@@ -107,7 +117,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
     }
 
     if (this.$options.addToMap) {
-      this.map?.removeControl(this.__control);
+      this.map?.removeControl(this.__control as unknown as IControl);
     } else {
       this.__control.onRemove();
     }

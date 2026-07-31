@@ -88,6 +88,16 @@ export class MockMap {
   removeImage = vi.fn((name: string) => {
     delete this._images[name];
   });
+
+  /**
+   * Seed a sprite as if it had been registered by someone other than the
+   * component under test. `hasImage` is backed by `_images`, so a seeded sprite
+   * makes `hasImage(name)` return `true` without the component having added it,
+   * letting tests exercise ownership-aware teardown.
+   */
+  seedImage(name: string, image: any = {}) {
+    this._images[name] = image;
+  }
 }
 
 export class MockMarker {

@@ -41,23 +41,33 @@ export class MapboxImage<T extends BaseProps = BaseProps> extends AbstractMapbox
   };
 
   /**
+   * Whether this instance actually added the image to the map sprite. Only
+   * sprites this instance added may be removed on teardown; a pre-existing
+   * sprite (registered by someone else) must be left untouched.
+   * @private
+   */
+  __added = false;
+
+  /**
    * Mounted hook.
    */
   async mounted() {
     const { name, url, options } = this.$options;
-    const image = await addMapboxImage(this.map, { name, url, options });
+    const { image, added } = await addMapboxImage(this.map, { name, url, options });
 
     // The component may have been destroyed while the image was loading.
     // `addMapboxImage` both loads AND adds, so the sprite is already registered
-    // on the map: undo the add and bail before emitting so no orphan sprite
-    // survives teardown (`destroyed()` already ran and found nothing to remove).
+    // on the map: undo the add (only if THIS call added it) and bail before
+    // emitting so no orphan sprite survives teardown (`destroyed()` already ran
+    // and found nothing to remove).
     if (!this.$isMounted) {
-      if (this.map?.hasImage(name)) {
+      if (added && this.map?.hasImage(name)) {
         this.map.removeImage(name);
       }
       return;
     }
 
+    this.__added = added;
     this.$emit('ready', { name, image, options });
   }
 
@@ -67,7 +77,7 @@ export class MapboxImage<T extends BaseProps = BaseProps> extends AbstractMapbox
   destroyed() {
     const { name } = this.$options;
 
-    if (this.map?.hasImage(name)) {
+    if (this.__added && this.map?.hasImage(name)) {
       this.map.removeImage(name);
     }
   }

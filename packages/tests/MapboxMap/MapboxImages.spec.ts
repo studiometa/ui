@@ -88,6 +88,31 @@ describe('MapboxImages component', () => {
     expect(mockMap.removeImage).toHaveBeenCalledWith('two');
   });
 
+  it('should only remove the images it added on destroy', async () => {
+    const { instance, mockMap } = createImages();
+    // "one" already exists on the map, added by someone else: this instance does
+    // not own it and must not remove it. "two" is new and owned by this instance.
+    mockMap.seedImage('one');
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // Only the new sprite was added.
+    expect(mockMap.addImage).toHaveBeenCalledTimes(1);
+    expect(mockMap.addImage).toHaveBeenCalledWith('two', expect.anything(), undefined);
+
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // Only the newly added sprite is removed; the pre-existing one is preserved.
+    expect(mockMap.removeImage).toHaveBeenCalledTimes(1);
+    expect(mockMap.removeImage).toHaveBeenCalledWith('two');
+    expect(mockMap.removeImage).not.toHaveBeenCalledWith('one');
+    expect(mockMap._images).toHaveProperty('one');
+  });
+
   it('should not leave orphan images when destroyed before the loads resolve', async () => {
     const { instance, mockMap } = createImages();
     // Defer every image load so the component can be destroyed while they are

@@ -57,26 +57,46 @@ export function loadMapboxImage(map: Map, url: string): Promise<MapboxImage> {
 }
 
 /**
+ * The result of registering an image against a map sprite.
+ */
+export interface AddMapboxImageResult {
+  /**
+   * The image loaded from the URL.
+   */
+  image: MapboxImage;
+  /**
+   * Whether this call actually added the image to the map sprite. It is `false`
+   * when the sprite already existed (registered by someone else), signalling to
+   * callers that they do not own it and must not remove it on teardown.
+   */
+  added: boolean;
+}
+
+/**
  * Load and register a single image against the map sprite.
  *
  * The image is only added when it is not already registered to avoid the
- * "An image with this name already exists" error thrown by Mapbox.
+ * "An image with this name already exists" error thrown by Mapbox. The returned
+ * `added` flag reports whether this call owns the sprite so callers can restrict
+ * teardown to the sprites they actually added.
  *
  * @param   {Map}                   map        The Mapbox map instance.
  * @param   {MapboxImageDefinition} definition The image definition to register.
- * @returns {Promise<MapboxImage>}
+ * @returns {Promise<AddMapboxImageResult>}
  */
 export async function addMapboxImage(
   map: Map,
   { name, url, options }: MapboxImageDefinition,
-): Promise<MapboxImage> {
+): Promise<AddMapboxImageResult> {
   const image = await loadMapboxImage(map, url);
 
+  let added = false;
   if (!map.hasImage(name)) {
     map.addImage(name, image, options);
+    added = true;
   }
 
-  return image;
+  return { image, added };
 }
 
 /**

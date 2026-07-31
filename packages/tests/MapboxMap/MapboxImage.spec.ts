@@ -79,6 +79,56 @@ describe('MapboxImage component', () => {
     expect(mockMap.removeImage).toHaveBeenCalledWith('my-image');
   });
 
+  it('should not remove a pre-existing image on destroy', async () => {
+    const { instance, mockMap } = createImage();
+    // The sprite already exists on the map, added by someone else: this instance
+    // does not own it and must never remove it on teardown.
+    mockMap.seedImage('my-image');
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // The image already existed, so it was never added by this instance.
+    expect(mockMap.addImage).not.toHaveBeenCalled();
+
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // The pre-existing sprite must be preserved.
+    expect(mockMap.removeImage).not.toHaveBeenCalled();
+    expect(mockMap._images).toHaveProperty('my-image');
+  });
+
+  it('should not remove a pre-existing image when destroyed before the load resolves', async () => {
+    const { instance, mockMap } = createImage();
+    // The sprite already exists on the map, added by someone else.
+    mockMap.seedImage('my-image');
+    // Defer the image load so the component can be destroyed while it is still
+    // in flight, reproducing the mount/teardown race for an unowned sprite.
+    let resolveLoad: ((error: unknown, image: unknown) => void) | undefined;
+    mockMap.loadImage = vi.fn((_url: string, cb: (error: unknown, image: unknown) => void) => {
+      resolveLoad = cb;
+    });
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // Destroy while the load is in flight, then let it resolve afterwards.
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    resolveLoad?.(null, {});
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // The pre-existing sprite this instance never added must be preserved.
+    expect(mockMap.addImage).not.toHaveBeenCalled();
+    expect(mockMap.removeImage).not.toHaveBeenCalled();
+    expect(mockMap._images).toHaveProperty('my-image');
+  });
+
   it('should not leave an orphan image when destroyed before the load resolves', async () => {
     const { instance, mockMap } = createImage();
     // Defer the image load so the component can be destroyed while it is still
