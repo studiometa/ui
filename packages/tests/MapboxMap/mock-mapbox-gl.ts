@@ -98,6 +98,16 @@ export class MockMap {
   seedImage(name: string, image: any = {}) {
     this._images[name] = image;
   }
+
+  /**
+   * Seed a source as if it had been registered by someone other than the
+   * component under test. `getSource` is backed by `_sources`, so a seeded
+   * source makes `getSource(id)` return truthy without the component having
+   * added it, letting tests exercise ownership-aware teardown.
+   */
+  seedSource(id: string, source: any = { type: 'geojson' }) {
+    this._sources[id] = source;
+  }
 }
 
 export class MockMarker {

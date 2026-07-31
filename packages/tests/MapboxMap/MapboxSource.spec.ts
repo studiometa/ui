@@ -126,6 +126,31 @@ describe('MapboxSource component', () => {
     expect(removeLayerOrder).toBeLessThan(removeSourceOrder);
   });
 
+  it('should not remove a pre-existing source (or its tied layers) it did not add on destroy', async () => {
+    const { instance, mockMap } = createSource();
+
+    // The source id is already registered on the map by someone else, so
+    // `mounted()` skips `addSource` and this instance never owns it.
+    mockMap.seedSource('my-source');
+
+    // A layer tied to the pre-existing source is present too.
+    mockMap._layers = [{ id: 'tied-layer', source: 'my-source' }];
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(mockMap.addSource).not.toHaveBeenCalled();
+
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // Ownership guard: teardown must not touch state this instance never added.
+    expect(mockMap.removeLayer).not.toHaveBeenCalled();
+    expect(mockMap.removeSource).not.toHaveBeenCalled();
+  });
+
   it('should not remove the source on destroy if it does not exist', async () => {
     const { instance, mockMap } = createSource();
 

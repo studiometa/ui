@@ -67,6 +67,15 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
   }
 
   /**
+   * Whether this instance actually added the source to the map. Only a source
+   * this instance added — along with the layers tied to it — may be removed on
+   * teardown; a pre-existing source (declared by someone else) must be left
+   * untouched.
+   * @private
+   */
+  __added = false;
+
+  /**
    * Mounted hook.
    */
   mounted() {
@@ -75,6 +84,7 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
 
     if (!this.map.getSource(id)) {
       this.map.addSource(id, source);
+      this.__added = true;
     }
   }
 
@@ -82,6 +92,10 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
    * Destroyed hook.
    */
   destroyed() {
+    if (!this.__added) {
+      return;
+    }
+
     const { id } = this.$options;
 
     if (!this.map.getSource(id)) {
