@@ -5,6 +5,11 @@ export class MockMap {
   _sources: Record<string, any> = {};
   _layers: any[] = [];
   _images: Record<string, any> = {};
+  _options: any;
+
+  constructor(options?: any) {
+    this._options = options;
+  }
 
   /**
    * Register a listener. Supports both the global `(event, fn)` signature and

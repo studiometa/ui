@@ -133,6 +133,34 @@ describe('MapboxMap component', () => {
     vi.useRealTimers();
   });
 
+  it('should forward mapOptions to the Map constructor', async () => {
+    const style = {
+      version: 8,
+      sources: {},
+      layers: [],
+    };
+    const root = createMapboxMap({
+      'data-option-map-options': JSON.stringify({ style, pitch: 45 }),
+    });
+    const instance = new MapboxMap(root);
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    const mockMap = instance.map as unknown as MockMap;
+    expect(mockMap._options.style).toEqual(style);
+    expect(mockMap._options.pitch).toBe(45);
+    // The convenience options are kept and `container` stays explicit.
+    expect(mockMap._options.zoom).toBe(10);
+    expect(mockMap._options.container).toBe(root.querySelector('[data-ref="container"]'));
+    // Framework options must not leak into the Map constructor.
+    expect(mockMap._options.name).toBeUndefined();
+    expect(mockMap._options.debug).toBeUndefined();
+    expect(mockMap._options.log).toBeUndefined();
+  });
+
   it('should reuse the same map instance', async () => {
     const root = createMapboxMap();
     const instance = new MapboxMap(root);

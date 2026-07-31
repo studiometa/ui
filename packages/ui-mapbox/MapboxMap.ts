@@ -1,6 +1,6 @@
 import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import mapboxgl from 'mapbox-gl';
-import type { Map } from 'mapbox-gl';
+import type { Map, MapOptions } from 'mapbox-gl';
 import { MapboxMarker } from './MapboxMarker.js';
 import { MapboxPopup } from './MapboxPopup.js';
 import { MapboxNavigationControl } from './MapboxNavigationControl.js';
@@ -51,6 +51,7 @@ export interface MapboxMapProps extends BaseProps {
     accessToken: string;
     zoom: number;
     center: [number, number];
+    mapOptions: Partial<Omit<MapOptions, 'container'>>;
   };
 }
 
@@ -73,19 +74,32 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
         type: Array,
         default: () => [0, 0],
       },
+      // Any other `mapbox-gl` `Map` option — including `style`, `pitch`,
+      // `bearing`, `bounds`, ... — spread as-is into the `Map` constructor. The
+      // convenience options above act as overridable defaults, while `container`
+      // is always resolved from the component and can not be overridden.
+      mapOptions: {
+        type: Object,
+        default: () => ({}),
+      },
     },
+    // Order matters: js-toolkit mounts children in this declaration order, so
+    // the data providers a layer depends on — sources and sprite images — are
+    // declared before `MapboxLayer`. This lets `MapboxLayer` add its layer
+    // directly on mount (its source already exists) instead of from inside a
+    // map event handler, which mapbox-gl does not always handle safely.
     components: {
+      MapboxSource: resolveWhenMapboxMapIsLoaded(MapboxSource),
+      MapboxImage: resolveWhenMapboxMapIsLoaded(MapboxImage),
+      MapboxImages: resolveWhenMapboxMapIsLoaded(MapboxImages),
+      MapboxLayer: resolveWhenMapboxMapIsLoaded(MapboxLayer),
       MapboxCluster: resolveWhenMapboxMapIsLoaded(MapboxCluster),
       MapboxFullscreenControl: resolveWhenMapboxMapIsLoaded(MapboxFullscreenControl),
       MapboxGeocoder: resolveWhenMapboxMapIsLoaded(MapboxGeocoder),
       MapboxGeolocateControl: resolveWhenMapboxMapIsLoaded(MapboxGeolocateControl),
-      MapboxImage: resolveWhenMapboxMapIsLoaded(MapboxImage),
-      MapboxImages: resolveWhenMapboxMapIsLoaded(MapboxImages),
       MapboxMarker: resolveWhenMapboxMapIsLoaded(MapboxMarker),
       MapboxNavigationControl: resolveWhenMapboxMapIsLoaded(MapboxNavigationControl),
-      MapboxLayer: resolveWhenMapboxMapIsLoaded(MapboxLayer),
       MapboxPopup: resolveWhenMapboxMapIsLoaded(MapboxPopup),
-      MapboxSource: resolveWhenMapboxMapIsLoaded(MapboxSource),
     },
   };
 
@@ -106,10 +120,11 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
   get map() {
     if (!this.__map) {
       this.__map = new mapboxgl.Map({
-        container: this.$refs.container ?? this.$el,
         accessToken: this.$options.accessToken,
         zoom: this.$options.zoom,
         center: this.$options.center,
+        ...this.$options.mapOptions,
+        container: this.$refs.container ?? this.$el,
       });
     }
 

@@ -1,7 +1,10 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import GeocoderControl from '@mapbox/mapbox-gl-geocoder';
 import mapboxgl from 'mapbox-gl';
 import type { Map } from 'mapbox-gl';
+// Type-only import: erased at build time, so it never triggers a runtime
+// resolution of the optional `@mapbox/mapbox-gl-geocoder` peer dependency. The
+// actual module is loaded lazily via a dynamic `import()` in `mounted()`.
+import type GeocoderControl from '@mapbox/mapbox-gl-geocoder';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
@@ -26,6 +29,11 @@ export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
 
 /**
  * Add a geocoder control to the map.
+ *
+ * The `@mapbox/mapbox-gl-geocoder` module is an optional peer dependency and is
+ * loaded on demand with a dynamic `import()` when the component mounts, so the
+ * rest of the package keeps working without it installed.
+ *
  * @see https://ui.studiometa.dev/-/components/MapboxMap/
  */
 export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMapboxMapChild<
@@ -43,24 +51,15 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
   };
 
   /**
-   * Control instance.
+   * Control instance, created once the lazily imported module resolves.
    * @private
    */
-  __control: GeocoderControl;
+  __control?: GeocoderControl;
 
   /**
-   * The mapbox-gl-geocoder control instance.
+   * The mapbox-gl-geocoder control instance, if it has been created yet.
    */
-  get control() {
-    if (!this.__control) {
-      const options = {
-        ...this.$options.options,
-        mapboxgl: mapboxgl as unknown as typeof import('mapbox-gl'),
-        accessToken: this.$options.options.accessToken ?? this.mapboxMap.$options.accessToken,
-      };
-      this.__control = new GeocoderControl(options);
-    }
-
+  get control(): GeocoderControl | undefined {
     return this.__control;
   }
 
@@ -73,19 +72,36 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
 
   /**
    * Mounted hook.
+   *
+   * Lazily loads the optional `@mapbox/mapbox-gl-geocoder` module before
+   * building and adding the control.
    */
-  mounted() {
-    this.control.addTo(this.target);
+  async mounted() {
+    const { default: GeocoderControlClass } = await import('@mapbox/mapbox-gl-geocoder');
+
+    const options = {
+      ...this.$options.options,
+      mapboxgl: mapboxgl as unknown as typeof import('mapbox-gl'),
+      accessToken: this.$options.options.accessToken ?? this.mapboxMap.$options.accessToken,
+    };
+    this.__control = new GeocoderControlClass(options);
+    this.__control.addTo(this.target);
   }
 
   /**
    * Destroyed hook.
    */
   destroyed() {
+    // The control may not exist yet: the dynamic import in `mounted()` might not
+    // have resolved, or the geocoder module was never loaded.
+    if (!this.__control) {
+      return;
+    }
+
     if (this.$options.addToMap) {
-      this.map?.removeControl(this.control);
+      this.map?.removeControl(this.__control);
     } else {
-      this.control.onRemove();
+      this.__control.onRemove();
     }
     this.__control = undefined;
   }

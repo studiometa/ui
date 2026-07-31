@@ -44,13 +44,23 @@ Display an interactive Mapbox GL map. This is the root component of the system a
 
 #### Options
 
-| Option         | Type     | Default  | Description                                                                                       |
-| -------------- | -------- | -------- | ------------------------------------------------------------------------------------------------- |
-| `access-token` | `String` | —        | Mapbox GL [access token](https://docs.mapbox.com/help/getting-started/access-tokens/) (required). |
-| `zoom`         | `Number` | —        | Initial zoom level.                                                                               |
-| `center`       | `Array`  | `[0, 0]` | Initial center as `[longitude, latitude]`.                                                        |
+| Option         | Type     | Default  | Description                                                                                                                                                                            |
+| -------------- | -------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `access-token` | `String` | —        | Mapbox GL [access token](https://docs.mapbox.com/help/getting-started/access-tokens/) (required).                                                                                      |
+| `zoom`         | `Number` | —        | Initial zoom level.                                                                                                                                                                    |
+| `center`       | `Array`  | `[0, 0]` | Initial center as `[longitude, latitude]`.                                                                                                                                             |
+| `map-options`  | `Object` | `{}`     | Any other [Mapbox `Map` option](https://docs.mapbox.com/mapbox-gl-js/api/map/#map-parameters), spread into the constructor. This is where `style`, `pitch`, `bearing`, `bounds`, … go. |
 
-All options are forwarded to the [Mapbox `Map` constructor](https://docs.mapbox.com/mapbox-gl-js/api/map/#map-parameters), so any other serializable map option can be added as a `data-option-*` attribute.
+The `access-token`, `zoom` and `center` options act as overridable defaults, then `map-options` is spread into the [Mapbox `Map` constructor](https://docs.mapbox.com/mapbox-gl-js/api/map/#map-parameters). The `container` is always resolved from the component (the `container` ref, falling back to the root element) and can not be overridden. Use `map-options` for anything the convenience options above do not cover — most notably the map [`style`](https://docs.mapbox.com/mapbox-gl-js/api/map/#map-parameters):
+
+```html
+<div
+  data-component="MapboxMap"
+  data-option-access-token="pk.…"
+  data-option-map-options='{ "style": "mapbox://styles/mapbox/streets-v12", "pitch": 45 }'>
+  <div data-ref="container"></div>
+</div>
+```
 
 #### Refs
 
@@ -212,6 +222,10 @@ Add a button that toggles the map fullscreen.
 ### MapboxGeocoder
 
 Add an address search control powered by [`@mapbox/mapbox-gl-geocoder`](https://github.com/mapbox/mapbox-gl-geocoder). Install the optional `@mapbox/mapbox-gl-geocoder` peer dependency to use it.
+
+::: tip Optional, loaded on demand
+`@mapbox/mapbox-gl-geocoder` is an optional peer dependency. It is loaded lazily with a dynamic `import()` when a `MapboxGeocoder` mounts, so the rest of the package works without it installed. If you use this component, add it to your project: `npm install @mapbox/mapbox-gl-geocoder`.
+:::
 
 #### Options
 

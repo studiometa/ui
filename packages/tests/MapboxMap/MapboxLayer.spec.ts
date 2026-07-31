@@ -3,8 +3,14 @@ import { h } from '#test-utils';
 import { MockMap } from './mock-mapbox-gl.js';
 import { MapboxLayer } from '@studiometa/ui-mapbox';
 
-function createLayer(attrs: Record<string, string> = {}) {
+function createLayer(attrs: Record<string, string> = {}, { withSource = true } = {}) {
   const mockMap = new MockMap();
+  // By default the referenced source already exists on the map so the layer is
+  // added directly on mount. Pass `withSource: false` to exercise the deferred
+  // path where the layer waits for its source to become available.
+  if (withSource) {
+    mockMap.addSource('test-source', { type: 'geojson' });
+  }
   const el = h('div', {
     'data-component': 'MapboxLayer',
     'data-option-id': 'test-layer',
@@ -78,6 +84,27 @@ describe('MapboxLayer component', () => {
 
     expect(mockMap.getLayer).toHaveBeenCalledWith('test-layer');
     expect(mockMap.removeLayer).toHaveBeenCalledWith('test-layer');
+  });
+
+  it('should wait for the source before adding the layer when it is missing', async () => {
+    const { instance, mockMap } = createLayer({}, { withSource: false });
+
+    await instance.$mount();
+
+    // The source is missing: the layer must not be added yet.
+    expect(mockMap.addLayer).not.toHaveBeenCalled();
+
+    // The source becomes available and a `sourcedata` event is fired.
+    mockMap.addSource('test-source', { type: 'geojson' });
+    mockMap.fire('sourcedata');
+    // Flush the microtask scheduling the deferred `addLayer` call.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockMap.addLayer).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'test-layer' }),
+      '',
+    );
   });
 
   it('should not remove layer on destroy if it does not exist', async () => {
