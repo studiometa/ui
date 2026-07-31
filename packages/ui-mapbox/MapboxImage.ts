@@ -46,6 +46,18 @@ export class MapboxImage<T extends BaseProps = BaseProps> extends AbstractMapbox
   async mounted() {
     const { name, url, options } = this.$options;
     const image = await addMapboxImage(this.map, { name, url, options });
+
+    // The component may have been destroyed while the image was loading.
+    // `addMapboxImage` both loads AND adds, so the sprite is already registered
+    // on the map: undo the add and bail before emitting so no orphan sprite
+    // survives teardown (`destroyed()` already ran and found nothing to remove).
+    if (!this.$isMounted) {
+      if (this.map?.hasImage(name)) {
+        this.map.removeImage(name);
+      }
+      return;
+    }
+
     this.$emit('ready', { name, image, options });
   }
 

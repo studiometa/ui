@@ -79,6 +79,16 @@ jobs:
           tag: ${{ env.NPM_TAG }}
           token: ${{ secrets.NPM_TOKEN }}
 
+      - name: Build ui-mapbox
+        run: npm run build -w @studiometa/ui-mapbox
+
+      - uses: JS-DevTools/npm-publish@v3
+        with:
+          provenance: true
+          package: packages/ui-mapbox/dist/
+          tag: ${{ env.NPM_TAG }}
+          token: ${{ secrets.NPM_TOKEN }}
+
       - uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref }}

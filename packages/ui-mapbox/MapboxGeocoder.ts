@@ -79,6 +79,14 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
   async mounted() {
     const { default: GeocoderControlClass } = await import('@mapbox/mapbox-gl-geocoder');
 
+    // The component may have been destroyed while the dynamic import was still
+    // resolving. Bail out before creating and adding the control, otherwise it
+    // would be attached after `destroyed()` already ran (and saw `__control`
+    // undefined), leaking an orphan control.
+    if (!this.$isMounted) {
+      return;
+    }
+
     const options = {
       ...this.$options.options,
       mapboxgl: mapboxgl as unknown as typeof import('mapbox-gl'),

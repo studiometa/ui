@@ -78,4 +78,36 @@ describe('MapboxImage component', () => {
 
     expect(mockMap.removeImage).toHaveBeenCalledWith('my-image');
   });
+
+  it('should not leave an orphan image when destroyed before the load resolves', async () => {
+    const { instance, mockMap } = createImage();
+    // Defer the image load so the component can be destroyed while it is still
+    // in flight, reproducing the mount/teardown race.
+    let resolveLoad: ((error: unknown, image: unknown) => void) | undefined;
+    mockMap.loadImage = vi.fn((_url: string, cb: (error: unknown, image: unknown) => void) => {
+      resolveLoad = cb;
+    });
+    const ready = vi.fn();
+
+    vi.useFakeTimers();
+    instance.$mount();
+    instance.$on('ready', ready);
+    await vi.advanceTimersByTimeAsync(100);
+
+    // The load is still pending: nothing has been added to the sprite yet.
+    expect(mockMap.addImage).not.toHaveBeenCalled();
+
+    // Destroy while the load is in flight, then let it resolve afterwards.
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    resolveLoad?.(null, {});
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // The image added after teardown must be removed again: no orphan sprite and
+    // no `ready` event emitted after destroy.
+    expect(mockMap.removeImage).toHaveBeenCalledWith('my-image');
+    expect(mockMap._images).toEqual({});
+    expect(ready).not.toHaveBeenCalled();
+  });
 });

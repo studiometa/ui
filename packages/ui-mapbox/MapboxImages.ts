@@ -44,6 +44,20 @@ export class MapboxImages<T extends BaseProps = BaseProps> extends AbstractMapbo
     const images = await Promise.all(
       sources.map((source) => addMapboxImage(this.map, source)),
     );
+
+    // The component may have been destroyed while the images were loading. Each
+    // image is already registered on the map sprite, so remove them all and bail
+    // before emitting to avoid leaving orphan sprites behind (`destroyed()`
+    // already ran and found nothing to remove).
+    if (!this.$isMounted) {
+      for (const { name } of sources) {
+        if (this.map?.hasImage(name)) {
+          this.map.removeImage(name);
+        }
+      }
+      return;
+    }
+
     this.$emit('ready', images);
   }
 
