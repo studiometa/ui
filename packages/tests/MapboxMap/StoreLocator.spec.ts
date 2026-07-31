@@ -49,7 +49,14 @@ function fakeItem(id: string, lngLat: [number, number]) {
  */
 function createStoreLocator(
   items: Array<{ id: string; lngLat: [number, number] }>,
-  options: { attrs?: Record<string, string>; geocoder?: boolean } = {},
+  options: {
+    attrs?: Record<string, string>;
+    geocoder?: boolean;
+    // Simulate a geocoder that mounts *after* the cluster: the `geocoder` getter
+    // returns `undefined` for the first N reads (attempts), then the mock. Lets a
+    // test drive the cluster-before-geocoder wiring race.
+    geocoderReadyAfter?: number;
+  } = {},
 ) {
   const listItems = items.map((item) =>
     h('li', { 'data-component': 'StoreLocatorItem', 'data-option-id': item.id }, [
@@ -98,18 +105,30 @@ function createStoreLocator(
       return off(clusterHandlers[event], callback);
     },
   };
-  const mockGeocoder = options.geocoder
-    ? {
-        $on(event: string, callback: (event: unknown) => void) {
-          (geocoderHandlers[event] ??= []).push(callback);
-          return off(geocoderHandlers[event], callback);
-        },
-      }
-    : undefined;
+  const mockGeocoder =
+    options.geocoder || options.geocoderReadyAfter !== undefined
+      ? {
+          $on(event: string, callback: (event: unknown) => void) {
+            (geocoderHandlers[event] ??= []).push(callback);
+            return off(geocoderHandlers[event], callback);
+          },
+        }
+      : undefined;
+
+  // When `geocoderReadyAfter` is set, the geocoder is not queryable yet: return
+  // `undefined` for the first N reads (mimicking an async mount that lands after
+  // the cluster's), then hand out the mock.
+  let geocoderReads = 0;
+  function geocoderGetter() {
+    if (options.geocoderReadyAfter !== undefined && geocoderReads++ < options.geocoderReadyAfter) {
+      return undefined;
+    }
+    return mockGeocoder;
+  }
 
   Object.defineProperty(instance, 'mapboxMap', { get: () => mockMapbox, configurable: true });
   Object.defineProperty(instance, 'cluster', { get: () => mockCluster, configurable: true });
-  Object.defineProperty(instance, 'geocoder', { get: () => mockGeocoder, configurable: true });
+  Object.defineProperty(instance, 'geocoder', { get: geocoderGetter, configurable: true });
 
   return {
     instance,
@@ -530,6 +549,28 @@ describe('StoreLocator component', () => {
       ctx.fireFeatureClick({ properties: { id: 'b' } });
       expect(select).toHaveBeenCalledTimes(1);
       expect(ctx.mockCluster.setData).toHaveBeenCalled();
+    });
+
+    it('keeps polling for the geocoder even after the cluster is wired first', async () => {
+      // The cluster is mounted and queryable immediately, but the geocoder only
+      // becomes queryable a couple of ticks later. The coordinator must poll
+      // until BOTH children are wired — stopping as soon as the cluster is wired
+      // would leave the geocoder's `result` listener unattached.
+      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }], { geocoderReadyAfter: 2 });
+      await mountAndLoad(ctx);
+
+      // The cluster wired on the first attempt...
+      expect((ctx.instance as any).__clusterWired).toBe(true);
+      // ...and the poll continued until the late geocoder was wired too.
+      expect((ctx.instance as any).__geocoderWired).toBe(true);
+
+      // Proof the geocoder listener is live: a result frames the map.
+      ctx.mockMap.fitBounds.mockClear();
+      ctx.fireGeocoderResult({ bbox: [10, 20, 30, 40] });
+      expect(ctx.mockMap.fitBounds).toHaveBeenCalledWith([
+        [10, 20],
+        [30, 40],
+      ]);
     });
   });
 

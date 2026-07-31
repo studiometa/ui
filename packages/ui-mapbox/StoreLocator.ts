@@ -420,8 +420,13 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
 
   /**
    * Attach the `MapboxCluster`/`MapboxGeocoder` listeners once those children
-   * are available. They mount asynchronously after the map loads, so we retry a
-   * bounded number of ticks until the (optional) cluster is wired.
+   * are available. Both are optional and mount asynchronously and independently
+   * after the map loads, so we poll a bounded number of ticks until *each* of
+   * them is wired (not just the first to appear): if the cluster mounts before
+   * the geocoder, stopping as soon as the cluster is wired would leave the
+   * geocoder's `result` listener unattached. A `StoreLocator` missing one (or
+   * both) of these children simply polls to the attempt cap — bounded and
+   * harmless.
    * @private
    * @param {number} attempt
    */
@@ -447,7 +452,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
       this.__offHandlers.push(geocoder.$on('result', this.__handleGeocoderResult));
     }
 
-    if (!this.__clusterWired && attempt < WIRE_CHILDREN_MAX_ATTEMPTS) {
+    if ((!this.__clusterWired || !this.__geocoderWired) && attempt < WIRE_CHILDREN_MAX_ATTEMPTS) {
       nextTick(() => {
         if (this.$isMounted) {
           this.__wireChildren(attempt + 1);
