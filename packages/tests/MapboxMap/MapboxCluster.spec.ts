@@ -194,6 +194,56 @@ describe('MapboxCluster component', () => {
     expect(mockMap.easeTo).not.toHaveBeenCalled();
   });
 
+  it('should default to an empty FeatureCollection source when no data is authored', async () => {
+    // No `data` URL and no `geojson` ref: the source must still be created with
+    // an empty FeatureCollection so a coordinator can drive it via `setData`.
+    const { instance, mockMap } = createCluster({ 'data-option-data': '' });
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    const sourceId = (instance as any).__getId('source');
+    expect(mockMap.addSource).toHaveBeenCalledWith(
+      sourceId,
+      expect.objectContaining({
+        type: 'geojson',
+        cluster: true,
+        data: { type: 'FeatureCollection', features: [] },
+      }),
+    );
+  });
+
+  it('should replace the live source data through setData', async () => {
+    const { instance, mockMap } = createCluster();
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    const sourceId = (instance as any).__getId('source');
+    const source = mockMap.getSource(sourceId);
+    const nextData = {
+      type: 'FeatureCollection',
+      features: [
+        { type: 'Feature', geometry: { type: 'Point', coordinates: [9, 9] }, properties: { id: '1' } },
+      ],
+    };
+
+    instance.setData(nextData as any);
+
+    expect(source.setData).toHaveBeenCalledWith(nextData);
+    expect(source.data).toBe(nextData);
+  });
+
+  it('should not throw when setData is called before mount (no source yet)', () => {
+    const { instance } = createCluster();
+    // Never mounted: the source does not exist. setData must be a safe no-op.
+    expect(() => instance.setData({ type: 'FeatureCollection', features: [] } as any)).not.toThrow();
+  });
+
   it('should remove the three layers and the source on destroy', async () => {
     const { instance, mockMap } = createCluster();
 

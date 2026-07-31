@@ -23,6 +23,8 @@ test('@studiometa/ui-mapbox exports', () => {
       "MapboxNavigationControl",
       "MapboxPopup",
       "MapboxSource",
+      "StoreLocator",
+      "StoreLocatorItem",
     ]
   `);
 

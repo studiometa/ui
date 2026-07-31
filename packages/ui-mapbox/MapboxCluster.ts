@@ -246,6 +246,23 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
   };
 
   /**
+   * Update the live GeoJSON source data.
+   *
+   * Looks up this cluster's source by id and, when it is a GeoJSON source,
+   * replaces its data. Guards against a missing map or source so it is safe to
+   * call before mount or after teardown.
+   *
+   * @param {GeoJSONSourceSpecification['data']} data
+   */
+  setData(data: GeoJSONSourceSpecification['data']) {
+    const source = this.map?.getSource<GeoJSONSource>(this.__getId('source'));
+
+    if (source && typeof source.setData === 'function') {
+      source.setData(data);
+    }
+  }
+
+  /**
    * Mounted hook.
    */
   mounted() {
@@ -271,7 +288,10 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
     const source: GeoJSONSourceSpecification = {
       type: 'geojson',
       cluster: true,
-      data,
+      // Tolerate no authored data: default to an empty FeatureCollection so a
+      // coordinator (e.g. `StoreLocator`) can drive the source through
+      // `setData` after mount instead of forcing inline/URL data upfront.
+      data: data || { type: 'FeatureCollection', features: [] },
       clusterMaxZoom,
       clusterRadius,
       clusterMinPoints,
