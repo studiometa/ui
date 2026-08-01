@@ -84,39 +84,23 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
     // geocoder, ... chunks. `resolveWhenMapboxMapIsLoaded` still defers the
     // actual import until the map has fired `load`.
     components: {
-      MapboxSource: resolveWhenMapboxMapIsLoaded(() =>
-        import('./MapboxSource.js').then((m) => m.MapboxSource),
+      MapboxSource: resolveWhenMapboxMapIsLoaded(() => import('./MapboxSource.js')),
+      MapboxImage: resolveWhenMapboxMapIsLoaded(() => import('./MapboxImage.js')),
+      MapboxImages: resolveWhenMapboxMapIsLoaded(() => import('./MapboxImages.js')),
+      MapboxLayer: resolveWhenMapboxMapIsLoaded(() => import('./MapboxLayer.js')),
+      MapboxCluster: resolveWhenMapboxMapIsLoaded(() => import('./MapboxCluster.js')),
+      MapboxFullscreenControl: resolveWhenMapboxMapIsLoaded(
+        () => import('./MapboxFullscreenControl.js'),
       ),
-      MapboxImage: resolveWhenMapboxMapIsLoaded(() =>
-        import('./MapboxImage.js').then((m) => m.MapboxImage),
+      MapboxGeocoder: resolveWhenMapboxMapIsLoaded(() => import('./MapboxGeocoder.js')),
+      MapboxGeolocateControl: resolveWhenMapboxMapIsLoaded(
+        () => import('./MapboxGeolocateControl.js'),
       ),
-      MapboxImages: resolveWhenMapboxMapIsLoaded(() =>
-        import('./MapboxImages.js').then((m) => m.MapboxImages),
+      MapboxMarker: resolveWhenMapboxMapIsLoaded(() => import('./MapboxMarker.js')),
+      MapboxNavigationControl: resolveWhenMapboxMapIsLoaded(
+        () => import('./MapboxNavigationControl.js'),
       ),
-      MapboxLayer: resolveWhenMapboxMapIsLoaded(() =>
-        import('./MapboxLayer.js').then((m) => m.MapboxLayer),
-      ),
-      MapboxCluster: resolveWhenMapboxMapIsLoaded(() =>
-        import('./MapboxCluster.js').then((m) => m.MapboxCluster),
-      ),
-      MapboxFullscreenControl: resolveWhenMapboxMapIsLoaded(() =>
-        import('./MapboxFullscreenControl.js').then((m) => m.MapboxFullscreenControl),
-      ),
-      MapboxGeocoder: resolveWhenMapboxMapIsLoaded(() =>
-        import('./MapboxGeocoder.js').then((m) => m.MapboxGeocoder),
-      ),
-      MapboxGeolocateControl: resolveWhenMapboxMapIsLoaded(() =>
-        import('./MapboxGeolocateControl.js').then((m) => m.MapboxGeolocateControl),
-      ),
-      MapboxMarker: resolveWhenMapboxMapIsLoaded(() =>
-        import('./MapboxMarker.js').then((m) => m.MapboxMarker),
-      ),
-      MapboxNavigationControl: resolveWhenMapboxMapIsLoaded(() =>
-        import('./MapboxNavigationControl.js').then((m) => m.MapboxNavigationControl),
-      ),
-      MapboxPopup: resolveWhenMapboxMapIsLoaded(() =>
-        import('./MapboxPopup.js').then((m) => m.MapboxPopup),
-      ),
+      MapboxPopup: resolveWhenMapboxMapIsLoaded(() => import('./MapboxPopup.js')),
     },
   };
 
