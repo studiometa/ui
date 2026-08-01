@@ -500,3 +500,5 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     this.__geocoderWired = false;
   }
 }
+
+export default StoreLocator;

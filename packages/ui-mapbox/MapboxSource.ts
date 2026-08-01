@@ -113,3 +113,5 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
     this.map.removeSource(id);
   }
 }
+
+export default MapboxSource;

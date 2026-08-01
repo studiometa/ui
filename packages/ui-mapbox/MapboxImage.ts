@@ -82,3 +82,5 @@ export class MapboxImage<T extends BaseProps = BaseProps> extends AbstractMapbox
     }
   }
 }
+
+export default MapboxImage;

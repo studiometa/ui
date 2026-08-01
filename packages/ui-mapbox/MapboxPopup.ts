@@ -87,3 +87,5 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
     this.__popup = undefined;
   }
 }
+
+export default MapboxPopup;

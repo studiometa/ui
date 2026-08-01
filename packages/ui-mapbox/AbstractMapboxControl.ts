@@ -89,3 +89,5 @@ export class AbstractMapboxControl<T extends BaseProps = BaseProps> extends Abst
     }
   }
 }
+
+export default AbstractMapboxControl;

@@ -97,3 +97,19 @@ registerComponent(StoreLocator);
 :::
 
 The styling contract is entirely data-attribute driven: `data-in-bounds` toggles list visibility, `data-active` (plus `aria-current="true"`) marks the selected item. See the [styling contract](./js-api#styling-contract) for details.
+
+## Lazy loading
+
+Registering `StoreLocator` pulls in `MapboxMap` and its heavy `mapbox-gl` dependency (~230&nbsp;kB gzipped). Register it lazily so it is code-split into its own chunk and only loaded when the locator is on the page, using the same [`importWhen*` helpers](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) as the rest of the [`MapboxMap` family](/components/MapboxMap/#lazy-loading):
+
+```js
+import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
+
+registerComponent(
+  importWhenVisible(() => import('@studiometa/ui-mapbox/StoreLocator'), 'StoreLocator'),
+);
+```
+
+Every component is also available at its own subpath (`@studiometa/ui-mapbox/<Component>`), whose default export is the component class — so the dynamic import needs no destructuring.
+
+`importWhenIdle`, `importOnInteraction` and `importOnMediaQuery` are available too — see the [MapboxMap lazy-loading note](/components/MapboxMap/#lazy-loading).

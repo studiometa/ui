@@ -37,3 +37,5 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
     return this.mapboxMap?.map;
   }
 }
+
+export default AbstractMapboxMapChild;

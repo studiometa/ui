@@ -34,3 +34,5 @@ export class MapboxNavigationControl extends withExtraConfig(AbstractMapboxContr
     return new mapboxgl.NavigationControl(options);
   }
 }
+
+export default MapboxNavigationControl;

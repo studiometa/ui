@@ -369,3 +369,5 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
     }
   }
 }
+
+export default MapboxCluster;
