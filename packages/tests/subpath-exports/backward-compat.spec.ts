@@ -46,8 +46,10 @@ test.each([
   // through package resolution (the `.twig` suffix beats the greedy `./*`).
   ['@studiometa/ui/Accordion/Accordion.twig', '/Accordion/Accordion.twig'],
   ['@studiometa/ui/Button/Button.twig', '/Button/Button.twig'],
-  // The source `.ts` files also ship in the package; `./*.ts` keeps
-  // `.ts`-extensioned deep imports resolving instead of `<path>.ts.ts`/`.ts.js`.
+  // In-repo, `@studiometa/ui` resolves to the `.ts` sources, so the source
+  // `package.json` keeps a `./*.ts` entry to preserve `.ts`-extensioned deep
+  // imports (otherwise `./*` rewrites them to `<path>.ts.ts`). The published
+  // dist ships `.js`/`.d.ts` only, so it has no `./*.ts` entry.
   ['@studiometa/ui/Accordion/Accordion.ts', '/Accordion/Accordion.ts'],
   ['@studiometa/ui/index.ts', '/index.ts'],
 ])('non-JS published path %s resolves to the asset itself', (specifier, suffix) => {

@@ -67,9 +67,10 @@ function buildExports(componentDirs) {
   // These are pure assets, so both `import` and `types` point at the file.
   exportsMap['./package.json'] = './package.json';
   exportsMap['./*.twig'] = { types: './*.twig', import: './*.twig' };
-  // `./*.ts` so `.ts`-extensioned deep imports (the source files also ship in
-  // `dist/`) keep resolving instead of being rewritten to `./*.ts.js`.
-  exportsMap['./*.ts'] = { types: './*.ts', import: './*.ts' };
+  // NOTE: no `./*.ts` entry here. The published `dist/` ships `.js` + `.d.ts`
+  // only (no `.ts` source), so a `.ts` subpath has no target — it was never
+  // resolvable in the published package. The source `package.json` keeps its
+  // `./*.ts` entry because the in-repo `.ts` files are consumed directly.
 
   // Greedy wildcards for deep-file imports, e.g. `@studiometa/ui/Frame/types`.
   // The `.js`-extensioned variant is declared first so it takes precedence over
