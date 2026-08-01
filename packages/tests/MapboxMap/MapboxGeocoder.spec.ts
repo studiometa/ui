@@ -39,7 +39,7 @@ function createGeocoder(attrs: Record<string, string> = {}) {
   // Mock $closest since async component resolution doesn't set it up
   instance.$closest = vi.fn((query: string) => {
     if (query === 'MapboxMap') {
-      return { map: mockMap, $options: { accessToken: 'parent-token' } } as any;
+      return { map: mockMap, isLoaded: true, $options: { accessToken: 'parent-token' } } as any;
     }
     return undefined;
   });

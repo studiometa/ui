@@ -78,7 +78,8 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
   }
 
   /**
-   * Target element for the geocoder.
+   * Target element the geocoder is added to: the map when `addToMap` is set,
+   * otherwise the component's own root element.
    */
   get target(): Map | HTMLElement | string {
     return this.$options.addToMap ? this.map : this.$el;
@@ -87,8 +88,8 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
   /**
    * Mounted hook.
    *
-   * Lazily loads the optional Mapbox geocoder module before building and adding
-   * the control.
+   * Lazily loads the optional Mapbox geocoder module, then builds and adds the
+   * control once the parent map is ready.
    */
   async mounted() {
     const { default: GeocoderControlClass } = await import('@mapbox/mapbox-gl-geocoder');
@@ -101,18 +102,21 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
       return;
     }
 
-    const options = {
-      ...this.$options.options,
-      mapboxgl: mapboxgl as unknown as typeof import('mapbox-gl'),
-      accessToken: this.$options.options.accessToken ?? this.mapboxMap.$options.accessToken,
-    };
-    this.__control = new GeocoderControlClass(
-      options as ConstructorParameters<typeof GeocoderControlClass>[0],
-    );
-    // Re-emit the control's `result` event as a component event so coordinators
-    // (e.g. `StoreLocator`) can react to a geocoded address.
-    this.__control.on?.('result', (event) => this.$emit('result', event.result));
-    this.__control.addTo(this.target);
+    this.whenMapReady(() => {
+      const options = {
+        ...this.$options.options,
+        mapboxgl: mapboxgl as unknown as typeof import('mapbox-gl'),
+        accessToken:
+          this.$options.options.accessToken ?? this.__readyMapboxMap?.$options.accessToken,
+      };
+      this.__control = new GeocoderControlClass(
+        options as ConstructorParameters<typeof GeocoderControlClass>[0],
+      );
+      // Re-emit the control's `result` event as a component event so consumers
+      // (e.g. a `MapboxCluster`) can react to a geocoded address.
+      this.__control.on?.('result', (event) => this.$emit('result', event.result));
+      this.__control.addTo(this.target);
+    });
   }
 
   /**
@@ -121,16 +125,16 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
   destroyed() {
     // The control may not exist yet: the dynamic import in `mounted()` might not
     // have resolved, or the geocoder module was never loaded.
-    if (!this.__control) {
-      return;
+    if (this.__control) {
+      if (this.$options.addToMap) {
+        this.__readyMap?.removeControl(this.__control as unknown as IControl);
+      } else {
+        this.__control.onRemove();
+      }
+      this.__control = undefined;
     }
 
-    if (this.$options.addToMap) {
-      this.map?.removeControl(this.__control as unknown as IControl);
-    } else {
-      this.__control.onRemove();
-    }
-    this.__control = undefined;
+    super.destroyed();
   }
 }
 

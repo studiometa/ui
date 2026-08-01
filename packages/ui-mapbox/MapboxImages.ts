@@ -47,46 +47,50 @@ export class MapboxImages<T extends BaseProps = BaseProps> extends AbstractMapbo
   /**
    * Mounted hook.
    */
-  async mounted() {
-    const { sources } = this.$options;
-    const results = await Promise.all(
-      sources.map((source) => addMapboxImage(this.map, source)),
-    );
+  mounted() {
+    this.whenMapReady(async (map) => {
+      const { sources } = this.$options;
+      const results = await Promise.all(sources.map((source) => addMapboxImage(map, source)));
 
-    // The component may have been destroyed while the images were loading. Each
-    // image this call added is already registered on the map sprite, so remove
-    // the ones we own and bail before emitting to avoid leaving orphan sprites
-    // behind (`destroyed()` already ran and found nothing to remove).
-    if (!this.$isMounted) {
-      sources.forEach((source, index) => {
-        if (results[index].added && this.map?.hasImage(source.name)) {
-          this.map.removeImage(source.name);
-        }
-      });
-      return;
-    }
+      // The component may have been destroyed while the images were loading. Each
+      // image this call added is already registered on the map sprite, so remove
+      // the ones we own and bail before emitting to avoid leaving orphan sprites
+      // behind (`destroyed()` already ran and found nothing to remove).
+      if (!this.$isMounted) {
+        sources.forEach((source, index) => {
+          if (results[index].added && map.hasImage(source.name)) {
+            map.removeImage(source.name);
+          }
+        });
+        return;
+      }
 
-    // Track which sprites this instance actually added so teardown never removes
-    // a pre-existing one.
-    this.__addedNames = sources
-      .filter((_source, index) => results[index].added)
-      .map((source) => source.name);
+      // Track which sprites this instance actually added so teardown never
+      // removes a pre-existing one.
+      this.__addedNames = sources
+        .filter((_source, index) => results[index].added)
+        .map((source) => source.name);
 
-    this.$emit(
-      'ready',
-      results.map((result) => result.image),
-    );
+      this.$emit(
+        'ready',
+        results.map((result) => result.image),
+      );
+    });
   }
 
   /**
    * Destroyed hook.
    */
   destroyed() {
+    const map = this.__readyMap;
+
     for (const name of this.__addedNames) {
-      if (this.map?.hasImage(name)) {
-        this.map.removeImage(name);
+      if (map?.hasImage(name)) {
+        map.removeImage(name);
       }
     }
+
+    super.destroyed();
   }
 }
 

@@ -34,9 +34,6 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapbo
       // Marker options. (https://docs.mapbox.com/mapbox-gl-js/api/markers#marker)
       markerOptions: Object,
     },
-    components: {
-      MapboxPopup,
-    },
   };
 
   /**
@@ -67,10 +64,17 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapbo
    * Mounted hook.
    */
   mounted() {
-    this.marker.setLngLat(this.$options.lngLat).addTo(this.map);
-    if (this.popup) {
-      this.marker.setPopup(this.popup.popup);
-    }
+    this.whenMapReady((map) => {
+      this.marker.setLngLat(this.$options.lngLat).addTo(map);
+
+      // The optional child popup is registered globally too, so it has mounted
+      // itself by the time the map is ready and is queryable here. It detected
+      // it lives inside a marker and skipped adding itself to the map, letting
+      // the marker own it via `setPopup`.
+      if (this.popup) {
+        this.marker.setPopup(this.popup.popup);
+      }
+    });
   }
 
   /**
@@ -79,6 +83,7 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapbo
   destroyed() {
     this.__marker?.remove();
     this.__marker = undefined;
+    super.destroyed();
   }
 }
 

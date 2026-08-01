@@ -51,24 +51,26 @@ export class MapboxImage<T extends BaseProps = BaseProps> extends AbstractMapbox
   /**
    * Mounted hook.
    */
-  async mounted() {
-    const { name, url, options } = this.$options;
-    const { image, added } = await addMapboxImage(this.map, { name, url, options });
+  mounted() {
+    this.whenMapReady(async (map) => {
+      const { name, url, options } = this.$options;
+      const { image, added } = await addMapboxImage(map, { name, url, options });
 
-    // The component may have been destroyed while the image was loading.
-    // `addMapboxImage` both loads AND adds, so the sprite is already registered
-    // on the map: undo the add (only if THIS call added it) and bail before
-    // emitting so no orphan sprite survives teardown (`destroyed()` already ran
-    // and found nothing to remove).
-    if (!this.$isMounted) {
-      if (added && this.map?.hasImage(name)) {
-        this.map.removeImage(name);
+      // The component may have been destroyed while the image was loading.
+      // `addMapboxImage` both loads AND adds, so the sprite is already registered
+      // on the map: undo the add (only if THIS call added it) and bail before
+      // emitting so no orphan sprite survives teardown (`destroyed()` already ran
+      // and found nothing to remove).
+      if (!this.$isMounted) {
+        if (added && map.hasImage(name)) {
+          map.removeImage(name);
+        }
+        return;
       }
-      return;
-    }
 
-    this.__added = added;
-    this.$emit('ready', { name, image, options });
+      this.__added = added;
+      this.$emit('ready', { name, image, options });
+    });
   }
 
   /**
@@ -76,10 +78,13 @@ export class MapboxImage<T extends BaseProps = BaseProps> extends AbstractMapbox
    */
   destroyed() {
     const { name } = this.$options;
+    const map = this.__readyMap;
 
-    if (this.__added && this.map?.hasImage(name)) {
-      this.map.removeImage(name);
+    if (this.__added && map?.hasImage(name)) {
+      map.removeImage(name);
     }
+
+    super.destroyed();
   }
 }
 

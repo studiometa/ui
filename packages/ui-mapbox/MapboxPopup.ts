@@ -60,23 +60,26 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
    * Mounted hook.
    */
   mounted() {
-    const { popup, $el, map, $options } = this;
+    this.whenMapReady((map) => {
+      const { popup, $el, $options } = this;
 
-    popup.setLngLat($options.lngLat);
+      popup.setLngLat($options.lngLat);
 
-    const content = $el.innerHTML.trim();
-    if (content) {
-      popup.setHTML(content);
-      // Hide the source markup so the content is not rendered twice: once in
-      // the popup and once in the document.
-      $el.hidden = true;
-    }
+      const content = $el.innerHTML.trim();
+      if (content) {
+        popup.setHTML(content);
+        // Hide the source markup so the content is not rendered twice: once in
+        // the popup and once in the document.
+        $el.hidden = true;
+      }
 
-    // Only add popup directly to map if not inside a marker
-    const marker = this.$closest<MapboxMarker>('MapboxMarker');
-    if (map && !marker) {
-      popup.addTo(map);
-    }
+      // Only add the popup directly to the map when it is not inside a marker:
+      // a marker owns its popup and attaches it through `setPopup`.
+      const marker = this.$closest<MapboxMarker>('MapboxMarker');
+      if (!marker) {
+        popup.addTo(map);
+      }
+    });
   }
 
   /**
@@ -85,6 +88,7 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
   destroyed() {
     this.__popup?.remove();
     this.__popup = undefined;
+    super.destroyed();
   }
 }
 

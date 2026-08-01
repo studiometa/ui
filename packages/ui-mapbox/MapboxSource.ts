@@ -79,38 +79,38 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
    * Mounted hook.
    */
   mounted() {
-    const { id } = this.$options;
-    const { source } = this;
+    this.whenMapReady((map) => {
+      const { id } = this.$options;
+      const { source } = this;
 
-    if (!this.map.getSource(id)) {
-      this.map.addSource(id, source);
-      this.__added = true;
-    }
+      if (!map.getSource(id)) {
+        map.addSource(id, source);
+        this.__added = true;
+      }
+    });
   }
 
   /**
    * Destroyed hook.
    */
   destroyed() {
-    if (!this.__added) {
-      return;
-    }
+    const map = this.__readyMap;
 
-    const { id } = this.$options;
+    if (this.__added && map?.getSource(this.$options.id)) {
+      const { id } = this.$options;
 
-    if (!this.map.getSource(id)) {
-      return;
-    }
-
-    // Remove every layer tied to the source before removing the source itself,
-    // otherwise Mapbox throws because layers still reference a missing source.
-    for (const layer of this.map.getStyle().layers) {
-      if ('source' in layer && layer.source === id) {
-        this.map.removeLayer(layer.id);
+      // Remove every layer tied to the source before removing the source itself,
+      // otherwise Mapbox throws because layers still reference a missing source.
+      for (const layer of map.getStyle().layers) {
+        if ('source' in layer && layer.source === id) {
+          map.removeLayer(layer.id);
+        }
       }
+
+      map.removeSource(id);
     }
 
-    this.map.removeSource(id);
+    super.destroyed();
   }
 }
 

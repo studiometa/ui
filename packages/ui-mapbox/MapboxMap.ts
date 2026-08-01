@@ -1,18 +1,6 @@
 import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import mapboxgl from 'mapbox-gl';
 import type { Map, MapOptions } from 'mapbox-gl';
-import { MapboxMarker } from './MapboxMarker.js';
-import { MapboxPopup } from './MapboxPopup.js';
-import { MapboxNavigationControl } from './MapboxNavigationControl.js';
-import { MapboxGeolocateControl } from './MapboxGeolocateControl.js';
-import { MapboxGeocoder } from './MapboxGeocoder.js';
-import { MapboxLayer } from './MapboxLayer.js';
-import { MapboxFullscreenControl } from './MapboxFullscreenControl.js';
-import { MapboxSource } from './MapboxSource.js';
-import { MapboxImage } from './MapboxImage.js';
-import { MapboxImages } from './MapboxImages.js';
-import { MapboxCluster } from './MapboxCluster.js';
-import { resolveWhenMapboxMapIsLoaded } from './utils.js';
 
 const MAP_EVENTS = [
   'click',
@@ -83,24 +71,12 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
         default: () => ({}),
       },
     },
-    // Order matters: js-toolkit mounts children in this declaration order, so
-    // the data providers a layer depends on — sources and sprite images — are
-    // declared before `MapboxLayer`. This lets `MapboxLayer` add its layer
-    // directly on mount (its source already exists) instead of from inside a
-    // map event handler, which mapbox-gl does not always handle safely.
-    components: {
-      MapboxSource: resolveWhenMapboxMapIsLoaded(MapboxSource),
-      MapboxImage: resolveWhenMapboxMapIsLoaded(MapboxImage),
-      MapboxImages: resolveWhenMapboxMapIsLoaded(MapboxImages),
-      MapboxLayer: resolveWhenMapboxMapIsLoaded(MapboxLayer),
-      MapboxCluster: resolveWhenMapboxMapIsLoaded(MapboxCluster),
-      MapboxFullscreenControl: resolveWhenMapboxMapIsLoaded(MapboxFullscreenControl),
-      MapboxGeocoder: resolveWhenMapboxMapIsLoaded(MapboxGeocoder),
-      MapboxGeolocateControl: resolveWhenMapboxMapIsLoaded(MapboxGeolocateControl),
-      MapboxMarker: resolveWhenMapboxMapIsLoaded(MapboxMarker),
-      MapboxNavigationControl: resolveWhenMapboxMapIsLoaded(MapboxNavigationControl),
-      MapboxPopup: resolveWhenMapboxMapIsLoaded(MapboxPopup),
-    },
+    // `MapboxMap` no longer declares its children. Each child component
+    // (markers, popups, controls, sources, layers, clusters, ...) is registered
+    // globally and resolves this map on its own via `$closest('MapboxMap')`,
+    // then waits for readiness through `AbstractMapboxMapChild.whenMapReady`.
+    // This makes the whole family dynamic-DOM-native: a child appended under a
+    // map at any time mounts and injects itself, and cleans up when removed.
   };
 
   /**

@@ -1,5 +1,5 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import type { LayerSpecification } from 'mapbox-gl';
+import type { LayerSpecification, Map } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
@@ -42,19 +42,20 @@ export class MapboxLayer<T extends BaseProps = BaseProps> extends AbstractMapbox
    * @private
    */
   __handleSourceData = () => {
+    const map = this.__readyMap;
     const { id } = this.$options;
 
-    if (this.map.getLayer(id) || !this.__sourceIsAvailable()) {
+    if (!map || map.getLayer(id) || !this.__sourceIsAvailable(map)) {
       return;
     }
 
-    this.map.off('sourcedata', this.__handleSourceData);
+    map.off('sourcedata', this.__handleSourceData);
     queueMicrotask(() => {
       // `$options.layer` returns a freshly parsed object, so re-apply the id.
       const { beforeId, layer } = this.$options;
       layer.id = id;
-      if (this.$isMounted && !this.map.getLayer(id)) {
-        this.map.addLayer(layer, beforeId);
+      if (this.$isMounted && !map.getLayer(id)) {
+        map.addLayer(layer, beforeId);
       }
     });
   };
@@ -65,41 +66,48 @@ export class MapboxLayer<T extends BaseProps = BaseProps> extends AbstractMapbox
    * Layers referencing an inline source object — or no source at all, like a
    * `background` layer — are always considered available.
    * @private
+   * @param   {Map} map
    * @returns {boolean}
    */
-  __sourceIsAvailable(): boolean {
+  __sourceIsAvailable(map: Map): boolean {
     const { source } = this.$options.layer as { source?: unknown };
-    return typeof source !== 'string' || Boolean(this.map.getSource(source));
+    return typeof source !== 'string' || Boolean(map.getSource(source));
   }
 
   /**
    * Mounted hook.
    */
   mounted() {
-    const { beforeId, id, layer } = this.$options;
-    layer.id = id;
+    this.whenMapReady((map) => {
+      const { beforeId, id, layer } = this.$options;
+      layer.id = id;
 
-    // The referenced source may be declared by a sibling `MapboxSource` that has
-    // not mounted yet — sibling mount order is not guaranteed. Adding a layer
-    // before its source silently fails, so wait for the source to be available.
-    if (this.__sourceIsAvailable()) {
-      this.map.addLayer(layer, beforeId);
-    } else {
-      this.map.on('sourcedata', this.__handleSourceData);
-    }
+      // The referenced source may be declared by a sibling `MapboxSource` that
+      // has not mounted yet — sibling mount order is not guaranteed. Adding a
+      // layer before its source silently fails, so wait for the source to be
+      // available.
+      if (this.__sourceIsAvailable(map)) {
+        map.addLayer(layer, beforeId);
+      } else {
+        map.on('sourcedata', this.__handleSourceData);
+      }
+    });
   }
 
   /**
    * Destroyed hook.
    */
   destroyed() {
+    const map = this.__readyMap;
     const { id } = this.$options;
 
-    this.map.off('sourcedata', this.__handleSourceData);
+    map?.off('sourcedata', this.__handleSourceData);
 
-    if (this.map.getLayer(id)) {
-      this.map.removeLayer(id);
+    if (map?.getLayer(id)) {
+      map.removeLayer(id);
     }
+
+    super.destroyed();
   }
 }
 

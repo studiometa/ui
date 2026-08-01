@@ -1,6 +1,4 @@
-import type { BaseConstructor } from '@studiometa/js-toolkit';
 import type { Map } from 'mapbox-gl';
-import type { MapboxMap } from './MapboxMap.js';
 
 /**
  * The kind of image the Mapbox `loadImage` method resolves with.
@@ -97,32 +95,4 @@ export async function addMapboxImage(
   }
 
   return { image, added };
-}
-
-/**
- * Wrap a `MapboxMap` child component into an async constructor that resolves
- * only once the parent Mapbox map instance has finished loading.
- *
- * js-toolkit calls the returned function with the parent `Base` instance (here
- * the `MapboxMap`) and awaits the returned promise before mounting the child,
- * which guarantees the child can safely access the fully loaded map.
- *
- * @param   {T} Component The child component constructor to resolve.
- * @returns {(mapboxMap: MapboxMap) => Promise<T>}
- */
-export function resolveWhenMapboxMapIsLoaded<T extends BaseConstructor>(Component: T) {
-  return (mapboxMap: MapboxMap): Promise<T> =>
-    new Promise((resolve) => {
-      if (mapboxMap.isLoaded) {
-        resolve(Component);
-      } else {
-        mapboxMap.$on(
-          'map-load',
-          () => {
-            resolve(Component);
-          },
-          { once: true },
-        );
-      }
-    });
 }

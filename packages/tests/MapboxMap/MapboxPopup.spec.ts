@@ -15,7 +15,7 @@ function createPopup(attrs: Record<string, string> = {}, isMapParent = true) {
   // Mock $closest since async component resolution doesn't set it up
   instance.$closest = vi.fn((query: string) => {
     if (query === 'MapboxMap') {
-      return { map: mockMap, $options: { accessToken: 'token' } } as any;
+      return { map: mockMap, isLoaded: true, $options: { accessToken: 'token' } } as any;
     }
     if (query === 'MapboxMarker') {
       // If isMapParent is true, we're not inside a marker
@@ -57,7 +57,7 @@ describe('MapboxPopup component', () => {
     const inst = new MapboxPopup(el);
     inst.$closest = vi.fn((query: string) => {
       if (query === 'MapboxMap') {
-        return { map: mockMap, $options: {} } as any;
+        return { map: mockMap, isLoaded: true, $options: {} } as any;
       }
       if (query === 'MapboxMarker') {
         return undefined;
