@@ -9,7 +9,7 @@
     "build": "meta build"
   },
   "dependencies": {
-    "@studiometa/playground": "0.3.10"
+    "@studiometa/playground": "0.3.11"
   },
   "devDependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",
