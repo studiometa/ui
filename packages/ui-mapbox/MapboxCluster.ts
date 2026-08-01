@@ -405,83 +405,106 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
     // `whenMapReady` gate.
     document.dispatchEvent(new CustomEvent(MAPBOX_CLUSTER_CONNECTED, { detail: this }));
 
-    this.whenMapReady((map) => {
-      const {
-        clusterMaxZoom,
-        clusterRadius,
-        clusterMinPoints,
-        clusterProperties,
-        clustersLayout,
-        clustersPaint,
-        clusterCountLayout,
-        clusterCountPaint,
-        unclusteredPointLayerType,
-        unclusteredPointLayout,
-        unclusteredPointPaint,
-      } = this.$options;
+    this.whenMapReady((map) => this.__inject(map));
+  }
 
-      const sourceId = this.__getId('source');
-      const clustersId = this.__getId('clusters');
-      const unclusteredPointId = this.__getId('unclustered-point');
-      const clustersFilter = ['has', 'point_count'] as FilterSpecification;
-      const unclusteredFilter = ['!', ['has', 'point_count']] as FilterSpecification;
+  /**
+   * Build the clustered source and its three layers and wire the clustering
+   * interaction — idempotently, so it can run both on first readiness and on a
+   * `style.load` re-injection after a `setStyle` wiped the style (H7, PR #567
+   * review).
+   *
+   * A `setStyle` clears sources and layers but leaves layer-scoped map listeners
+   * attached (they live on the map's event emitter, not the style), so this
+   * guards `addSource`/`addLayer` against an already-present resource and
+   * detaches every listener before re-attaching it — re-running never duplicates
+   * a listener nor throws a duplicate-id error.
+   * @private
+   * @param {Map} map
+   */
+  __inject(map: Map) {
+    const {
+      clusterMaxZoom,
+      clusterRadius,
+      clusterMinPoints,
+      clusterProperties,
+      clustersLayout,
+      clustersPaint,
+      clusterCountLayout,
+      clusterCountPaint,
+      unclusteredPointLayerType,
+      unclusteredPointLayout,
+      unclusteredPointPaint,
+    } = this.$options;
 
-      const source: GeoJSONSourceSpecification = {
-        type: 'geojson',
-        cluster: true,
-        // Seed the source with the currently-registered items. Items registered
-        // before the map was ready are already in `__items`, so the first render
-        // is correct without waiting for a debounced rebuild.
-        data: this.featureCollection,
-        clusterMaxZoom,
-        clusterRadius,
-        clusterMinPoints,
-        clusterProperties,
-      };
+    const sourceId = this.__getId('source');
+    const clustersId = this.__getId('clusters');
+    const clusterCountId = this.__getId('cluster-count');
+    const unclusteredPointId = this.__getId('unclustered-point');
+    const clustersFilter = ['has', 'point_count'] as FilterSpecification;
+    const unclusteredFilter = ['!', ['has', 'point_count']] as FilterSpecification;
 
-      const clustersLayer: CircleLayerSpecification = {
-        id: clustersId,
-        type: 'circle',
-        source: sourceId,
-        filter: clustersFilter,
-        layout: clustersLayout,
-        paint: clustersPaint,
-      };
+    const source: GeoJSONSourceSpecification = {
+      type: 'geojson',
+      cluster: true,
+      // Seed the source with the currently-registered items. Items registered
+      // before the map was ready are already in `__items`, so the first render
+      // is correct without waiting for a debounced rebuild.
+      data: this.featureCollection,
+      clusterMaxZoom,
+      clusterRadius,
+      clusterMinPoints,
+      clusterProperties,
+    };
 
-      const clusterCountLayer: SymbolLayerSpecification = {
-        id: this.__getId('cluster-count'),
-        type: 'symbol',
-        source: sourceId,
-        filter: clustersFilter,
-        layout: clusterCountLayout,
-        paint: clusterCountPaint,
-      };
+    const clustersLayer: CircleLayerSpecification = {
+      id: clustersId,
+      type: 'circle',
+      source: sourceId,
+      filter: clustersFilter,
+      layout: clustersLayout,
+      paint: clustersPaint,
+    };
 
-      const unclusteredPointLayer = {
-        id: unclusteredPointId,
-        type: unclusteredPointLayerType,
-        source: sourceId,
-        filter: unclusteredFilter,
-        layout: unclusteredPointLayout,
-        paint: unclusteredPointPaint,
-      } as unknown as LayerSpecification;
+    const clusterCountLayer: SymbolLayerSpecification = {
+      id: clusterCountId,
+      type: 'symbol',
+      source: sourceId,
+      filter: clustersFilter,
+      layout: clusterCountLayout,
+      paint: clusterCountPaint,
+    };
 
+    const unclusteredPointLayer = {
+      id: unclusteredPointId,
+      type: unclusteredPointLayerType,
+      source: sourceId,
+      filter: unclusteredFilter,
+      layout: unclusteredPointLayout,
+      paint: unclusteredPointPaint,
+    } as unknown as LayerSpecification;
+
+    if (!map.getSource(sourceId)) {
       map.addSource(sourceId, source);
-      map.addLayer(clustersLayer);
-      map.addLayer(clusterCountLayer);
-      map.addLayer(unclusteredPointLayer);
+    }
+    for (const layer of [clustersLayer, clusterCountLayer, unclusteredPointLayer]) {
+      if (!map.getLayer(layer.id)) {
+        map.addLayer(layer);
+      }
+    }
 
-      map.on('click', clustersId, this.__handleClustersClick);
-      map.on('mouseenter', clustersId, this.__handleClustersMouseenter);
-      map.on('mouseleave', clustersId, this.__handleClustersMouseleave);
-      map.on('click', unclusteredPointId, this.__handleUnclusteredClick);
-      map.on('mouseenter', unclusteredPointId, this.__handleUnclusteredMouseenter);
-      map.on('mouseleave', unclusteredPointId, this.__handleUnclusteredMouseleave);
+    // Detach before attaching so a re-injection never doubles a listener.
+    this.__offClusterListeners(map);
+    map.on('click', clustersId, this.__handleClustersClick);
+    map.on('mouseenter', clustersId, this.__handleClustersMouseenter);
+    map.on('mouseleave', clustersId, this.__handleClustersMouseleave);
+    map.on('click', unclusteredPointId, this.__handleUnclusteredClick);
+    map.on('mouseenter', unclusteredPointId, this.__handleUnclusteredMouseenter);
+    map.on('mouseleave', unclusteredPointId, this.__handleUnclusteredMouseleave);
 
-      // Announce the seeded item set so an orchestrator can run its first fit +
-      // viewport filter against a cluster that was already populated at load.
-      this.$emit('update', this.items);
-    });
+    // Announce the seeded item set so an orchestrator can run its first fit +
+    // viewport filter against a cluster that was already populated at load.
+    this.$emit('update', this.items);
   }
 
   /**

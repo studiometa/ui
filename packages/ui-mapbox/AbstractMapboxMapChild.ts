@@ -39,6 +39,15 @@ export const MAPBOX_MAP_CONNECTED = 'mapbox-map:connected';
  * 3. **Retryable, standing resolution** — resolution is not one-shot: a child
  *    with no map yet waits for `MAPBOX_MAP_CONNECTED`, and a map destroy →
  *    remount re-injects the child on the new map's next load.
+ * 4. **Style-reload re-injection** — a `map.setStyle()` wipes the whole style
+ *    (every source/layer/sprite) while the map instance and the still-mounted
+ *    children survive, so the declarative resources would silently vanish. Once
+ *    ready, the child subscribes to the map's `style.load` — fired once per
+ *    style load, the Mapbox-recommended hook for re-adding custom sources/layers
+ *    when switching base style — and re-runs its injection so it re-adds its
+ *    contribution onto the fresh style (H7, PR #567 review). The re-run reuses
+ *    the same containment as the first injection and is guarded on the resource
+ *    already being present, so it never double-injects.
  *
  * @see https://ui.studiometa.dev/-/components/MapboxMap/
  */
@@ -97,6 +106,12 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    * @private
    */
   __offMapRemove?: () => void;
+
+  /**
+   * Off handler for the ready map's `style.load` re-injection subscription.
+   * @private
+   */
+  __offStyleReload?: () => void;
 
   /**
    * Off handler for the document-level `MAPBOX_MAP_CONNECTED` retry subscription.
@@ -212,6 +227,7 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
     this.__offMapReady = undefined;
 
     this.__bindMapRemove(map);
+    this.__bindStyleReload(map);
 
     const run = () => {
       // The child may have been destroyed while waiting for the map to load: do
@@ -297,6 +313,10 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
       // not try to bind on a load that will never come.
       this.__offMapReady?.();
       this.__offMapReady = undefined;
+      // The style-reload watch was bound to the now-dead map: drop it too so no
+      // `style.load` re-injection ever fires against a removed map.
+      this.__offStyleReload?.();
+      this.__offStyleReload = undefined;
       this.__readyMap = undefined;
       this.__readyMapboxMap = undefined;
 
@@ -309,6 +329,49 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
 
     map.on('remove', handler);
     this.__offMapRemove = () => map.off('remove', handler);
+  }
+
+  /**
+   * Subscribe to the map's `style.load` so the child re-runs its injection after
+   * a `setStyle` replaces the whole style, re-adding the source/layer/sprite it
+   * would otherwise have silently lost.
+   *
+   * `style.load` fires once per style load — Mapbox's own recommended hook for
+   * re-adding custom sources and layers when switching base style — so it does
+   * not need the `styledata` de-duplication a broader `styledata` handler would.
+   * The handler bails until the child has actually finished its first injection
+   * on this map (`__readyMap === map`): at the *initial* style load `__readyMap`
+   * is not set yet (the first injection runs on `map-load`), so this never
+   * double-injects on mount and only re-injects on a genuine later `setStyle`.
+   * @private
+   * @param {Map} map
+   */
+  __bindStyleReload(map: Map): void {
+    this.__offStyleReload?.();
+    this.__offStyleReload = undefined;
+
+    // Degrade gracefully for minimal map doubles without an event emitter.
+    if (typeof map?.on !== 'function') {
+      return;
+    }
+
+    const handler = () => {
+      // Only re-inject once the first injection has run against this very map,
+      // and only while still mounted with work to do. Re-runs against a map the
+      // child no longer owns (removed/replaced) are the `remove` path's job.
+      if (!this.$isMounted || !this.__readyCallback || this.__readyMap !== map) {
+        return;
+      }
+
+      // Reuse the first-injection containment. Each subclass callback guards on
+      // whether its resource is already present (`getSource`/`getLayer`/
+      // `hasImage`), so re-running is safe and re-claims ownership with a fresh
+      // liveness probe against the new style.
+      this.__runReadyCallback(map);
+    };
+
+    map.on('style.load', handler);
+    this.__offStyleReload = () => map.off('style.load', handler);
   }
 
   /**
@@ -365,6 +428,8 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
     this.__offMapReady = undefined;
     this.__offMapRemove?.();
     this.__offMapRemove = undefined;
+    this.__offStyleReload?.();
+    this.__offStyleReload = undefined;
     this.__offConnected?.();
     this.__offConnected = undefined;
     this.__readyCallback = undefined;

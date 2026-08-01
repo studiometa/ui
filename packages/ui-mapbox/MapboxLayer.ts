@@ -1,5 +1,5 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import type { LayerSpecification, Map } from 'mapbox-gl';
+import type { LayerSpecification, Map, MapSourceDataEvent } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
@@ -50,25 +50,52 @@ export class MapboxLayer<T extends BaseProps = BaseProps> extends AbstractMapbox
   }
 
   /**
-   * Add the layer to the map as soon as its referenced source is available on
-   * the map, then stop listening for source updates.
-   *
-   * The layer is added in a microtask rather than synchronously: `sourcedata`
-   * can fire from within mapbox-gl's render loop and mutating the style there
-   * can leave a layer half-initialized and crash the symbol placement pass.
+   * The source id this layer references, when it references one by string.
    * @private
    */
-  __handleSourceData = () => {
+  get __sourceId(): string | undefined {
+    const { source } = this.$options.layer as { source?: unknown };
+    return typeof source === 'string' ? source : undefined;
+  }
+
+  /**
+   * Add (or re-add) the layer whenever its referenced source becomes available
+   * and the layer is not currently on the map.
+   *
+   * This is a *standing* recovery watch, not a one-shot: it stays subscribed for
+   * the layer's whole life so the layer re-commits itself if its source
+   * disappears and comes back — e.g. a sibling `MapboxSource` teardown removes
+   * this still-mounted layer to drop its source, then the source is re-added
+   * later (H7, PR #567 review). Committing once and unsubscribing (the previous
+   * behaviour) left such a layer gone for good.
+   *
+   * It is kept cheap: `sourcedata` fires often, so the handler early-returns
+   * unless this layer is actually missing, and — when the event identifies a
+   * source — ignores events for any source other than this layer's. The commit
+   * itself is deferred to a microtask because mutating the style from within
+   * mapbox-gl's render loop can leave a layer half-initialized and crash the
+   * symbol placement pass.
+   * @private
+   * @param {MapSourceDataEvent} [event]
+   */
+  __handleSourceData = (event?: MapSourceDataEvent) => {
     const map = this.__readyMap;
     const { id } = this.$options;
+
+    // Ignore events for an unrelated source when the event tells us which one it
+    // is: this gates the standing watch to this layer's source id.
+    if (event?.sourceId && this.__sourceId && event.sourceId !== this.__sourceId) {
+      return;
+    }
 
     if (!map || map.getLayer(id) || !this.__sourceIsAvailable(map)) {
       return;
     }
 
-    map.off('sourcedata', this.__handleSourceData);
     queueMicrotask(() => {
-      if (this.$isMounted) {
+      // Re-check under the microtask: the map may have been removed/replaced, the
+      // component destroyed, or the layer committed by another path in between.
+      if (this.$isMounted && this.__readyMap === map && !map.getLayer(id)) {
         this.__commitLayer(map);
       }
     });
@@ -100,14 +127,20 @@ export class MapboxLayer<T extends BaseProps = BaseProps> extends AbstractMapbox
       if (getMapboxOwner(map, this.__ownershipKey)) {
         map.removeLayer(id);
         map.addLayer(layer, beforeId);
-        claimMapboxOwnership(map, this.__ownershipKey, this);
+        const added = map.getLayer(id);
+        claimMapboxOwnership(map, this.__ownershipKey, this, () => map.getLayer(id) === added);
         this.__added = true;
       }
       return;
     }
 
     map.addLayer(layer, beforeId);
-    claimMapboxOwnership(map, this.__ownershipKey, this);
+    // Own the id, keyed to the very layer object just added: the liveness probe
+    // reports the entry stale the moment this layer is removed (a `setStyle`
+    // wipe, a sibling source teardown, an external `removeLayer`) or replaced
+    // under the same id, so it can never misclassify a stranger's later layer.
+    const added = map.getLayer(id);
+    claimMapboxOwnership(map, this.__ownershipKey, this, () => map.getLayer(id) === added);
     this.__added = true;
   }
 
@@ -130,22 +163,26 @@ export class MapboxLayer<T extends BaseProps = BaseProps> extends AbstractMapbox
    */
   mounted() {
     this.whenMapReady((map) => {
+      // Install (or re-install, on a `style.load` re-injection) the standing
+      // recovery watch exactly once. `off` before `on` keeps a single
+      // subscription when `whenMapReady`'s callback re-runs after a `setStyle`.
+      map.off('sourcedata', this.__handleSourceData);
+      map.on('sourcedata', this.__handleSourceData);
+
       // The referenced source may be declared by a sibling `MapboxSource` that
       // has not mounted yet — sibling mount order is not guaranteed. Adding a
-      // layer before its source silently fails, so wait for the source to be
-      // available.
+      // layer before its source silently fails, so commit now when the source is
+      // available and otherwise let the standing watch commit once it arrives.
       if (this.__sourceIsAvailable(map)) {
         this.__commitLayer(map);
-      } else {
-        map.on('sourcedata', this.__handleSourceData);
       }
     });
   }
 
   /**
-   * Flush the pending `sourcedata` listener against the map being removed, while
-   * it is still referenceable — `__onDestroyed` runs later with `__readyMap`
-   * already cleared and could not reach the map to unsubscribe.
+   * Flush the standing `sourcedata` recovery watch against the map being
+   * removed, while it is still referenceable — `__onDestroyed` runs later with
+   * `__readyMap` already cleared and could not reach the map to unsubscribe.
    * @protected
    * @param {Map} map
    */

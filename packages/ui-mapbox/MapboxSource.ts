@@ -103,20 +103,28 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
 
       if (!map.getSource(id)) {
         map.addSource(id, source);
-        claimMapboxOwnership(map, this.__ownershipKey, this);
+        // Own the id, keyed to the very source object just added: the liveness
+        // probe reports the entry stale the moment this source is removed (a
+        // `setStyle` wipe, an external `removeSource`) or replaced under the same
+        // id, so it can never misclassify a stranger's later source (H6).
+        const added = map.getSource(id);
+        claimMapboxOwnership(map, this.__ownershipKey, this, () => map.getSource(id) === added);
         this.__added = true;
         return;
       }
 
       // The id is taken. Only adopt it from another family instance; an
-      // externally declared source stays untouched.
+      // externally declared source stays untouched. `getMapboxOwner` validates
+      // the existing owner's liveness, so a stale entry left by a wiped/removed
+      // source does not read as owned and is not adopted here.
       if (getMapboxOwner(map, this.__ownershipKey)) {
         if (source.type === 'geojson' && 'data' in source) {
           const existing = map.getSource<GeoJSONSource>(id);
           existing?.setData(source.data as GeoJSONSourceSpecification['data']);
         }
 
-        claimMapboxOwnership(map, this.__ownershipKey, this);
+        const existing = map.getSource(id);
+        claimMapboxOwnership(map, this.__ownershipKey, this, () => map.getSource(id) === existing);
         this.__added = true;
       }
     });
@@ -139,15 +147,14 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
       // Remove every layer tied to the source before removing the source itself,
       // otherwise Mapbox throws because layers still reference a missing source.
       //
-      // KNOWN LIMITATION (deferred, see PR #567 review H7): this also removes
-      // layers owned by still-mounted `MapboxLayer` instances, which stop
-      // listening to `sourcedata` after their first commit and so do not
-      // reappear if a source with the same id is later re-added. A robust fix —
-      // coordinating source teardown with layer ownership, or having layers keep
-      // a standing `sourcedata`/`styledata` recovery listener — carries a
-      // per-layer listener cost and needs browser validation, so it is left as a
-      // follow-up. The common case (a `Fetch` swap replacing source AND layers
-      // together) is unaffected: the replacement layers re-commit on their own.
+      // H7 (PR #567 review): this also removes layers owned by still-mounted
+      // `MapboxLayer` instances. Those layers now keep a standing `sourcedata`
+      // recovery watch (see `MapboxLayer.__handleSourceData`), so when a source
+      // with the same id is later re-added they re-commit themselves rather than
+      // vanishing permanently. The removal here is unavoidable (Mapbox rejects
+      // removing a source still referenced by a layer); recovery is the layer's
+      // job. The common `Fetch` swap (source AND layers replaced together) is
+      // likewise fine: the replacement layers re-commit on their own.
       for (const layer of map.getStyle().layers) {
         if ('source' in layer && layer.source === id) {
           map.removeLayer(layer.id);

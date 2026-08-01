@@ -88,7 +88,10 @@ export class MapboxImage<T extends BaseProps = BaseProps> extends AbstractMapbox
       // this mounted replacement now depends on. An unowned external sprite is
       // left untouched (and unclaimed).
       if (added || getMapboxOwner(map, this.__ownershipKey)) {
-        claimMapboxOwnership(map, this.__ownershipKey, this);
+        // Sprites expose no object identity, so liveness can only probe
+        // `hasImage`: enough to drop the entry after a `setStyle` wipe or an
+        // external `removeImage`, and to re-own on a `style.load` re-injection.
+        claimMapboxOwnership(map, this.__ownershipKey, this, () => map.hasImage(name));
         this.__owned = true;
       }
 

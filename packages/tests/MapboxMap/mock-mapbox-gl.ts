@@ -88,7 +88,7 @@ export class MockMap {
   });
   getLayer = vi.fn((id: string) => this._layers.find((layer) => layer.id === id));
 
-  addSource = vi.fn((id: string, source: any) => {
+  addSource = vi.fn(function (this: MockMap, id: string, source: any) {
     this._sources[id] = {
       ...source,
       getClusterExpansionZoom: vi.fn((_clusterId: number, cb: Function) => cb(null, 5)),
@@ -96,12 +96,31 @@ export class MockMap {
         this.data = data;
       }),
     };
+    // Mirror mapbox-gl: adding a source eventually emits `sourcedata` once its
+    // data is loaded. A `MapboxLayer` waiting on its source (initial mount or
+    // recovery after the source was re-added) commits off this event.
+    this.fire('sourcedata', { sourceId: id, isSourceLoaded: true });
   });
   removeSource = vi.fn((id: string) => {
     delete this._sources[id];
   });
   getSource = vi.fn((id: string) => this._sources[id]);
   getStyle = vi.fn(() => ({ layers: this._layers }));
+
+  isStyleLoaded = vi.fn(() => true);
+
+  /**
+   * Mirror mapbox-gl `Map#setStyle`: a full style replacement drops every
+   * source, layer and sprite the previous style held, then fires `style.load`
+   * once the new style is ready. Declarative children listen to `style.load` to
+   * re-inject their contributions onto the fresh style.
+   */
+  setStyle = vi.fn(function (this: MockMap, _style?: any, _options?: any) {
+    this._sources = {};
+    this._layers = [];
+    this._images = {};
+    this.fire('style.load');
+  });
 
   queryRenderedFeatures = vi.fn(() => [] as any[]);
   getCanvas = vi.fn(() => ({ style: {} as Record<string, string> }));

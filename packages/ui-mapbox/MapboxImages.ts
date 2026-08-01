@@ -104,7 +104,10 @@ export class MapboxImages<T extends BaseProps = BaseProps> extends AbstractMapbo
    */
   __adopt(map: Map, name: string, added: boolean) {
     if (added || getMapboxOwner(map, this.__ownershipKey(name))) {
-      claimMapboxOwnership(map, this.__ownershipKey(name), this);
+      // Sprites expose no object identity, so liveness can only probe
+      // `hasImage`: enough to drop the entry after a `setStyle` wipe or an
+      // external `removeImage`, and to re-own on a `style.load` re-injection.
+      claimMapboxOwnership(map, this.__ownershipKey(name), this, () => map.hasImage(name));
       if (!this.__ownedNames.includes(name)) {
         this.__ownedNames.push(name);
       }
