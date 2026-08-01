@@ -243,3 +243,5 @@ export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps>
     this.emitSync(EVENTS.ERROR, requestInit.trigger, url, requestInit, error);
   }
 }
+
+export default Frame;

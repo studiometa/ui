@@ -10,3 +10,7 @@ export * from './ScrollAnimationWithEase.js';
 export * from './ScrollAnimationChild.js';
 export * from './ScrollAnimationChildWithEase.js';
 export * from './ScrollAnimationParent.js';
+
+// Re-export the main component as the default export for the
+// `@studiometa/ui/ScrollAnimation` subpath.
+export { default } from './ScrollAnimation.js';

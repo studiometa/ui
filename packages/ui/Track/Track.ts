@@ -67,3 +67,5 @@ export class Track<T extends BaseProps = BaseProps> extends AbstractTrack<T> {
     window.dataLayer.push(payload);
   }
 }
+
+export default Track;

@@ -45,3 +45,5 @@ export class Transition<T extends BaseProps = BaseProps> extends withTransition<
     name: 'Transition',
   };
 }
+
+export default Transition;

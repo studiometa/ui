@@ -94,3 +94,5 @@ export class ViewTransition<T extends BaseProps = BaseProps> extends Base<T & Vi
     return this.state === 'entering' ? this.leave() : this.enter();
   }
 }
+
+export default ViewTransition;

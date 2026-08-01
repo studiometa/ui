@@ -57,3 +57,5 @@ export class AnchorNav<T extends BaseProps = BaseProps> extends Base<T & AnchorN
     });
   }
 }
+
+export default AnchorNav;

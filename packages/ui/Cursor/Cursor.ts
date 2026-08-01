@@ -161,3 +161,5 @@ export class Cursor<T extends BaseProps = BaseProps> extends Base<CursorProps & 
     this.$el.style.transform = `translateZ(0) ${transform}`;
   }
 }
+
+export default Cursor;

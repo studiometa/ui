@@ -285,3 +285,5 @@ export class Modal<T extends BaseProps = BaseProps> extends withDeprecation(
     ).then(() => Promise.resolve());
   }
 }
+
+export default Modal;

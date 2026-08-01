@@ -19,3 +19,5 @@ export class Sentinel extends withIntersectionObserver(Base, { threshold: [0, 1]
     name: 'Sentinel',
   };
 }
+
+export default Sentinel;

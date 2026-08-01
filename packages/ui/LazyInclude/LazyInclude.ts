@@ -85,3 +85,5 @@ export class LazyInclude<T extends BaseProps = BaseProps>
     }
   }
 }
+
+export default LazyInclude;

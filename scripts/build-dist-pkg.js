@@ -1,0 +1,97 @@
+import fs from 'node:fs';
+
+function resolve(path) {
+  return new URL(path, import.meta.url).pathname;
+}
+
+const root = resolve('../');
+const uiRoot = resolve('../packages/ui/');
+const distRoot = resolve('../dist/');
+
+/**
+ * List the component directories exposing a public `index.ts` entrypoint.
+ *
+ * These map to the `@studiometa/ui/<Component>` subpaths and must be declared
+ * as explicit (non-pattern) `exports` keys so they resolve to the directory
+ * `index` module rather than being swallowed by the greedy `./*` wildcard used
+ * for deep-file imports (a single `*` matches across slashes in Node's subpath
+ * patterns, so dir-index and deep-file resolution cannot share one pattern).
+ *
+ * @returns {string[]}
+ */
+function listComponentDirs() {
+  return fs
+    .readdirSync(uiRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name !== 'node_modules')
+    .map((entry) => entry.name)
+    .filter((name) => fs.existsSync(`${uiRoot}/${name}/index.ts`))
+    .sort();
+}
+
+/**
+ * Build the `exports` map for the published package.
+ *
+ * Mirrors the source `exports` map from `packages/ui/package.json` but points
+ * at the emitted `.js`/`.d.ts` artefacts instead of the `.ts` sources. Every
+ * path that resolves against the source package keeps resolving against the
+ * published one:
+ *
+ * - `.`                              → the barrel index;
+ * - `./<Component>` / `.js`          → the component directory index (explicit
+ *   keys so they win over the wildcard);
+ * - `./<Component>/<File>` / `.js`   → deep imports of individual modules.
+ *
+ * @param   {string[]} componentDirs
+ * @returns {Record<string, unknown>}
+ */
+function buildExports(componentDirs) {
+  const exportsMap = {
+    '.': { types: './index.d.ts', import: './index.js' },
+  };
+
+  for (const dir of componentDirs) {
+    const target = { types: `./${dir}/index.d.ts`, import: `./${dir}/index.js` };
+    exportsMap[`./${dir}`] = target;
+    exportsMap[`./${dir}.js`] = target;
+  }
+
+  // Greedy wildcards for deep-file imports, e.g. `@studiometa/ui/Frame/types`.
+  // The `.js`-extensioned variant is declared first so it takes precedence over
+  // the extensionless one for `.js` specifiers.
+  exportsMap['./*.js'] = { types: './*.d.ts', import: './*.js' };
+  exportsMap['./*'] = { types: './*.d.ts', import: './*.js' };
+
+  return exportsMap;
+}
+
+/**
+ * Write the files consumed when publishing the `dist/` folder to NPM:
+ *
+ * - a `package.json` derived from the source one, with the entrypoints and
+ *   `exports` map rewritten to point at the emitted `.js`/`.d.ts` files
+ *   (the source ones resolve to `.ts` for in-repo consumption);
+ * - the `README.md` and `LICENSE.md`, copied from the repository root.
+ */
+function writeDistPackage() {
+  console.log('Writing dist/package.json...');
+  const pkg = JSON.parse(fs.readFileSync(`${uiRoot}/package.json`, 'utf8'));
+
+  pkg.main = 'index.js';
+  pkg.types = 'index.d.ts';
+  pkg.exports = buildExports(listComponentDirs());
+
+  const json = `${JSON.stringify(pkg, null, 2)}\n`;
+  fs.writeFileSync(`${distRoot}/package.json`, json);
+  console.log(json);
+
+  for (const file of ['LICENSE.md', 'README.md']) {
+    const source = `${root}/${file}`;
+    if (fs.existsSync(source)) {
+      fs.copyFileSync(source, `${distRoot}/${file}`);
+    }
+  }
+
+  console.log('Done writing dist/package.json!');
+}
+
+writeDistPackage();

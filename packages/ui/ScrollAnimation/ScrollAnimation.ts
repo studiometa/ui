@@ -54,3 +54,5 @@ export class ScrollAnimation<
     }
   }
 }
+
+export default ScrollAnimation;

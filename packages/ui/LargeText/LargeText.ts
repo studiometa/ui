@@ -120,3 +120,5 @@ export class LargeText<T extends BaseProps = BaseProps>
     };
   }
 }
+
+export default LargeText;

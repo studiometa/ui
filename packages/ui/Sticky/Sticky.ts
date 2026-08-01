@@ -218,3 +218,5 @@ export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProp
     return parent;
   }
 }
+
+export default Sticky;

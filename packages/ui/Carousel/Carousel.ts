@@ -250,3 +250,5 @@ export class Carousel<T extends IndexableProps = IndexableProps> extends Indexab
     }
   }
 }
+
+export default Carousel;

@@ -29,3 +29,5 @@ export class Figure<T extends BaseProps = BaseProps> extends AbstractFigure<T> {
     this.$terminate();
   }
 }
+
+export default Figure;

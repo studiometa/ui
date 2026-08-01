@@ -172,3 +172,5 @@ export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {
     ]).then(() => Promise.resolve(this));
   }
 }
+
+export default Tabs;

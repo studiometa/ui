@@ -448,3 +448,5 @@ export class Fetch<T extends BaseProps = BaseProps>
     this.__abortController.abort(reason);
   }
 }
+
+export default Fetch;

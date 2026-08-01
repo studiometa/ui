@@ -146,3 +146,5 @@ export class Panel<T extends BaseProps = BaseProps> extends Modal<T & PanelProps
     return super.close();
   }
 }
+
+export default Panel;

@@ -430,3 +430,5 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     }
   }
 }
+
+export default Slider;

@@ -86,3 +86,5 @@ export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & 
     }
   }
 }
+
+export default Action;
