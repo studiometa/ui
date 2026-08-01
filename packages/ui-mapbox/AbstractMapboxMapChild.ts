@@ -1,8 +1,16 @@
-import { Base, type BaseProps } from '@studiometa/js-toolkit';
+import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import type { Map } from 'mapbox-gl';
 import type { MapboxMap } from './MapboxMap.js';
 
 export interface AbstractMapboxMapChildProps extends BaseProps {}
+
+/**
+ * Document-level event a `MapboxMap` dispatches when its instance mounts, so a
+ * child that mounted *before* its map (e.g. an eagerly registered child under a
+ * lazily imported map) can retry resolving its parent and inject itself once the
+ * map is connected. The dispatching `MapboxMap` instance travels in `detail`.
+ */
+export const MAPBOX_MAP_CONNECTED = 'mapbox-map:connected';
 
 /**
  * Base class for every component living inside a `MapboxMap`.
@@ -15,11 +23,36 @@ export interface AbstractMapboxMapChildProps extends BaseProps {}
  * statically, `Fetch`-injected or `appendChild`-ed — and terminates them when it
  * leaves, at which point they remove their contribution again.
  *
+ * The base hardens three things every child inherits, rather than relying on
+ * per-subclass discipline:
+ *
+ * 1. **Guarded injection & teardown** — mapbox-gl throws readily (a duplicate
+ *    source id, any style-touching call after `map.remove()`), and js-toolkit's
+ *    global queue runs lifecycle hooks with no try/catch: a single synchronous
+ *    throw wedges the queue and freezes every mount/destroy on the page. The
+ *    ready callback and the subclass teardown (`__onDestroyed`) are both run
+ *    inside a try/catch that routes to `$warn` + an `error` event and never
+ *    rethrows.
+ * 2. **Dead-map safety** — once ready, the child subscribes to the map's own
+ *    `remove` event; when it fires the cached map reference is dropped so no
+ *    teardown ever calls a method on a removed map (which throws `TypeError`).
+ * 3. **Retryable, standing resolution** — resolution is not one-shot: a child
+ *    with no map yet waits for `MAPBOX_MAP_CONNECTED`, and a map destroy →
+ *    remount re-injects the child on the new map's next load.
+ *
  * @see https://ui.studiometa.dev/-/components/MapboxMap/
  */
 export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Base<
   T & AbstractMapboxMapChildProps
 > {
+  /**
+   * Config.
+   */
+  static config: BaseConfig = {
+    name: 'AbstractMapboxMapChild',
+    emits: ['error'],
+  };
+
   /**
    * The parent `MapboxMap` resolved at ready-time.
    *
@@ -34,10 +67,19 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
   __readyMapboxMap?: MapboxMap;
 
   /**
-   * The Mapbox `Map` instance resolved at ready-time, cached for teardown.
+   * The Mapbox `Map` instance resolved at ready-time, cached for teardown. It is
+   * dropped as soon as the map's `remove` event fires so teardown never touches
+   * a removed map.
    * @private
    */
   __readyMap?: Map;
+
+  /**
+   * The injection callback registered through `whenMapReady`, kept so it can be
+   * re-run against a new map when the current one is destroyed and remounted.
+   * @private
+   */
+  __readyCallback?: (map: Map) => void;
 
   /**
    * Off handler for a still-pending `map-load` subscription, flushed on destroy
@@ -45,6 +87,18 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    * @private
    */
   __offMapReady?: () => void;
+
+  /**
+   * Off handler for the ready map's `remove` subscription.
+   * @private
+   */
+  __offMapRemove?: () => void;
+
+  /**
+   * Off handler for the document-level `MAPBOX_MAP_CONNECTED` retry subscription.
+   * @private
+   */
+  __offConnected?: () => void;
 
   /**
    * The closest parent `MapboxMap` component instance.
@@ -69,26 +123,72 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
   }
 
   /**
-   * Run a callback once the parent map is ready.
+   * Run a callback once the parent map is ready — now, on the next `map-load`,
+   * or once a `MapboxMap` connects if none exists yet.
    *
-   * Resolves the closest parent `MapboxMap`; if its map is already loaded the
-   * callback runs synchronously, otherwise it runs once on the map's `map-load`.
-   * The callback never fires after the child has been destroyed, and the
-   * resolved map/`MapboxMap` are cached before it runs so teardown can reach
-   * them even once the element is detached.
+   * The callback is stored so it can be re-run on a fresh map after a destroy →
+   * remount. It is wrapped so a throw never propagates into the global queue, is
+   * never fired after the child has been destroyed, and the resolved
+   * map/`MapboxMap` are cached before it runs so teardown can reach them even
+   * once the element is detached.
    *
    * @param {(map: Map) => void} cb The work to run against the ready map.
    */
   whenMapReady(cb: (map: Map) => void): void {
+    this.__readyCallback = cb;
+    this.__resolveMap();
+  }
+
+  /**
+   * Resolve the parent `MapboxMap` and bind to it, or wait for one to connect.
+   * @private
+   */
+  __resolveMap(): void {
     const mapboxMap = this.$closest<MapboxMap>('MapboxMap');
 
     if (!mapboxMap) {
-      this.$warn(
-        'Can not find the parent map, does this component has a parent MapboxMap component?',
-      );
+      this.__waitForConnectedMap();
       return;
     }
 
+    this.__bindToMap(mapboxMap);
+  }
+
+  /**
+   * Subscribe once to `MAPBOX_MAP_CONNECTED` and retry resolution when a map
+   * whose element is an ancestor of this child connects.
+   * @private
+   */
+  __waitForConnectedMap(): void {
+    if (this.__offConnected) {
+      return;
+    }
+
+    const handler = (event: Event) => {
+      const mapboxMap = (event as CustomEvent<MapboxMap>).detail;
+
+      // Ignore maps that are not an ancestor of this child: several independent
+      // maps can live on the same page.
+      if (!mapboxMap?.$el?.contains(this.$el)) {
+        return;
+      }
+
+      this.__offConnected?.();
+      this.__offConnected = undefined;
+      this.__resolveMap();
+    };
+
+    document.addEventListener(MAPBOX_MAP_CONNECTED, handler);
+    this.__offConnected = () => document.removeEventListener(MAPBOX_MAP_CONNECTED, handler);
+  }
+
+  /**
+   * Bind to a resolved `MapboxMap`: run the ready callback now if its map is
+   * already loaded, otherwise once on `map-load`.
+   * @private
+   * @param {MapboxMap} mapboxMap
+   */
+  __bindToMap(mapboxMap: MapboxMap): void {
     const run = () => {
       // The child may have been destroyed while waiting for the map to load: do
       // not inject anything into a map the child no longer belongs to.
@@ -98,8 +198,18 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
 
       this.__readyMapboxMap = mapboxMap;
       this.__readyMap = mapboxMap.map;
-      cb(this.__readyMap);
+      this.__bindMapRemove(this.__readyMap);
+
+      try {
+        this.__readyCallback?.(this.__readyMap);
+      } catch (err) {
+        this.__handleError(err);
+      }
     };
+
+    // Drop any stale pending subscription before (re)binding.
+    this.__offMapReady?.();
+    this.__offMapReady = undefined;
 
     if (mapboxMap.isLoaded) {
       run();
@@ -116,13 +226,81 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
   }
 
   /**
-   * Destroyed hook: flush any still-pending `map-load` subscription.
+   * Subscribe once to the map's own `remove` event so teardown never runs
+   * against a removed map, and so the child re-injects on a remounted map.
+   * @private
+   * @param {Map} map
+   */
+  __bindMapRemove(map: Map): void {
+    this.__offMapRemove?.();
+    this.__offMapRemove = undefined;
+
+    // Degrade gracefully for minimal map doubles without an event emitter: a
+    // real mapbox map always exposes `on`/`off`.
+    if (typeof map?.on !== 'function') {
+      return;
+    }
+
+    const handler = () => {
+      this.__offMapRemove?.();
+      this.__offMapRemove = undefined;
+      this.__readyMap = undefined;
+      this.__readyMapboxMap = undefined;
+
+      // The map went away, not the child: wait for a new one to connect and
+      // re-run the injection against it.
+      if (this.$isMounted && this.__readyCallback) {
+        this.__waitForConnectedMap();
+      }
+    };
+
+    map.on('remove', handler);
+    this.__offMapRemove = () => map.off('remove', handler);
+  }
+
+  /**
+   * Contain an error raised by a guarded injection or teardown: warn and emit an
+   * `error` event, but never rethrow into the global queue.
+   * @private
+   * @param {unknown} err
+   */
+  __handleError(err: unknown): void {
+    this.$warn(err);
+    this.$emit('error', err);
+  }
+
+  /**
+   * Teardown hook implemented by subclasses instead of `destroyed()`.
    *
-   * Subclasses overriding `destroyed()` must call `super.destroyed()`.
+   * It runs inside the base's guard (see `destroyed`) so a throwing teardown — a
+   * style-touching mapbox call, most often — can never wedge the global queue.
+   * Implementations read the cached `__readyMap`, which is already `undefined`
+   * when the map has been removed, and must not call `super`.
+   * @protected
+   */
+  __onDestroyed() {}
+
+  /**
+   * Destroyed hook.
+   *
+   * Runs the guarded subclass teardown, then flushes every base subscription
+   * (`map-load`, the map's `remove`, the connected retry). Subclasses override
+   * `__onDestroyed` rather than this method.
    */
   destroyed() {
+    try {
+      this.__onDestroyed();
+    } catch (err) {
+      this.__handleError(err);
+    }
+
     this.__offMapReady?.();
     this.__offMapReady = undefined;
+    this.__offMapRemove?.();
+    this.__offMapRemove = undefined;
+    this.__offConnected?.();
+    this.__offConnected = undefined;
+    this.__readyCallback = undefined;
   }
 }
 

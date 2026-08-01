@@ -74,17 +74,15 @@ export class MapboxImage<T extends BaseProps = BaseProps> extends AbstractMapbox
   }
 
   /**
-   * Destroyed hook.
+   * Teardown hook.
    */
-  destroyed() {
+  __onDestroyed() {
     const { name } = this.$options;
     const map = this.__readyMap;
 
     if (this.__added && map?.hasImage(name)) {
       map.removeImage(name);
     }
-
-    super.destroyed();
   }
 }
 

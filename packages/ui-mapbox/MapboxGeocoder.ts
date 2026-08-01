@@ -120,9 +120,9 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
   }
 
   /**
-   * Destroyed hook.
+   * Teardown hook.
    */
-  destroyed() {
+  __onDestroyed() {
     // The control may not exist yet: the dynamic import in `mounted()` might not
     // have resolved, or the geocoder module was never loaded.
     if (this.__control) {
@@ -133,8 +133,6 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
       }
       this.__control = undefined;
     }
-
-    super.destroyed();
   }
 }
 

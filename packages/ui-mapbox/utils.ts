@@ -1,6 +1,66 @@
 import type { Map } from 'mapbox-gl';
 
 /**
+ * Per-map ownership registry for id-addressed contributions (sources, layers).
+ *
+ * Keyed weakly by the Mapbox `Map` instance (so the entry drops with the map),
+ * then by a `kind:id` string, to the owning component instance. Authored ids
+ * (`MapboxSource`/`MapboxLayer`) are shared, so during a `Fetch` swap the new
+ * instance mounts — and adopts the id — before the old instance tears down. The
+ * registry lets ownership pass from the outgoing instance to the incoming one so
+ * the outgoing teardown never deletes the contribution the incoming one now
+ * owns, and lets an externally declared id (owned by nobody) stay untouched.
+ * @private
+ */
+const ownershipRegistry = new WeakMap<object, globalThis.Map<string, unknown>>();
+
+/**
+ * Claim ownership of an id-addressed contribution on a map for the given owner,
+ * taking over from any previous owner of the same id.
+ *
+ * @param {object}  map   The Mapbox map instance the contribution lives on.
+ * @param {string}  key   The `kind:id` ownership key.
+ * @param {unknown} owner The claiming component instance.
+ */
+export function claimMapboxOwnership(map: object, key: string, owner: unknown): void {
+  let owners = ownershipRegistry.get(map);
+
+  if (!owners) {
+    owners = new globalThis.Map();
+    ownershipRegistry.set(map, owners);
+  }
+
+  owners.set(key, owner);
+}
+
+/**
+ * The current owner of an id-addressed contribution, if any.
+ *
+ * @param   {object}  map The Mapbox map instance the contribution lives on.
+ * @param   {string}  key The `kind:id` ownership key.
+ * @returns {unknown}     The owning instance, or `undefined` when nobody owns it.
+ */
+export function getMapboxOwner(map: object, key: string): unknown {
+  return ownershipRegistry.get(map)?.get(key);
+}
+
+/**
+ * Release ownership of an id-addressed contribution, but only when the given
+ * owner is still the current one — a newer instance may already have taken over.
+ *
+ * @param {object}  map   The Mapbox map instance the contribution lives on.
+ * @param {string}  key   The `kind:id` ownership key.
+ * @param {unknown} owner The instance releasing the id.
+ */
+export function releaseMapboxOwnership(map: object, key: string, owner: unknown): void {
+  const owners = ownershipRegistry.get(map);
+
+  if (owners?.get(key) === owner) {
+    owners.delete(key);
+  }
+}
+
+/**
  * The kind of image the Mapbox `loadImage` method resolves with.
  */
 export type MapboxImage = ImageBitmap | HTMLImageElement | ImageData;

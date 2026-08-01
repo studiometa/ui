@@ -1,5 +1,5 @@
 import { Base, type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import type { MapboxCluster } from './MapboxCluster.js';
+import { MAPBOX_CLUSTER_CONNECTED, type MapboxCluster } from './MapboxCluster.js';
 
 export interface MapboxClusterItemProps extends BaseProps {
   $options: {
@@ -41,6 +41,7 @@ export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
    */
   static config: BaseConfig = {
     name: 'MapboxClusterItem',
+    emits: ['error'],
     options: {
       id: String,
       lngLat: {
@@ -65,6 +66,13 @@ export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
    * @private
    */
   __cluster?: MapboxCluster;
+
+  /**
+   * Off handler for the document-level `MAPBOX_CLUSTER_CONNECTED` retry
+   * subscription, used when the item mounts before its cluster.
+   * @private
+   */
+  __offClusterConnected?: () => void;
 
   /**
    * The item's stable identifier, used to match map features back to the item.
@@ -100,28 +108,74 @@ export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
   }
 
   /**
-   * Mounted hook: cache the cluster and register with it.
+   * Mounted hook: resolve the parent cluster and register with it.
    */
   mounted() {
-    this.__cluster = this.$closest<MapboxCluster>('MapboxCluster');
+    this.__resolveCluster();
+  }
 
-    if (!this.__cluster) {
-      this.$warn(
-        'Can not find the parent cluster, does this component has a parent MapboxCluster component?',
-      );
+  /**
+   * Resolve the parent `MapboxCluster` and register, or wait for one to connect.
+   *
+   * Resolution is retryable: an item eagerly registered under a lazily imported
+   * cluster mounts first and finds nothing, so it waits for
+   * `MAPBOX_CLUSTER_CONNECTED` and registers once its cluster is up.
+   * @private
+   */
+  __resolveCluster() {
+    const cluster = this.$closest<MapboxCluster>('MapboxCluster');
+
+    if (!cluster) {
+      this.__waitForConnectedCluster();
       return;
     }
 
-    this.__cluster.register(this);
+    this.__cluster = cluster;
+    cluster.register(this);
+  }
+
+  /**
+   * Subscribe once to `MAPBOX_CLUSTER_CONNECTED` and retry resolution when a
+   * cluster whose element is an ancestor of this item connects.
+   * @private
+   */
+  __waitForConnectedCluster() {
+    if (this.__offClusterConnected) {
+      return;
+    }
+
+    const handler = (event: Event) => {
+      const cluster = (event as CustomEvent<MapboxCluster>).detail;
+
+      if (!cluster?.$el?.contains(this.$el)) {
+        return;
+      }
+
+      this.__offClusterConnected?.();
+      this.__offClusterConnected = undefined;
+      this.__resolveCluster();
+    };
+
+    document.addEventListener(MAPBOX_CLUSTER_CONNECTED, handler);
+    this.__offClusterConnected = () =>
+      document.removeEventListener(MAPBOX_CLUSTER_CONNECTED, handler);
   }
 
   /**
    * Destroyed hook: unregister from the cached cluster, even if the element has
-   * already been detached from the DOM.
+   * already been detached from the DOM, and drop any pending retry subscription.
    */
   destroyed() {
-    this.__cluster?.unregister(this);
+    try {
+      this.__cluster?.unregister(this);
+    } catch (err) {
+      this.$warn(err);
+      this.$emit('error', err);
+    }
+
     this.__cluster = undefined;
+    this.__offClusterConnected?.();
+    this.__offClusterConnected = undefined;
   }
 
   /**

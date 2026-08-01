@@ -1,6 +1,7 @@
 import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import mapboxgl from 'mapbox-gl';
 import type { Map, MapOptions } from 'mapbox-gl';
+import { MAPBOX_MAP_CONNECTED } from './AbstractMapboxMapChild.js';
 
 const MAP_EVENTS = [
   'click',
@@ -121,6 +122,11 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
         this.$emit(event, e);
       });
     }
+
+    // Announce this map so any child that mounted before it — and is waiting on
+    // `MAPBOX_MAP_CONNECTED` — can resolve and inject itself now. This also fires
+    // on a remount, letting still-mounted children re-inject on the new map.
+    document.dispatchEvent(new CustomEvent(MAPBOX_MAP_CONNECTED, { detail: this }));
   }
 
   /**

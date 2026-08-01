@@ -69,7 +69,14 @@ export class MockMap {
     }
   }
 
-  remove = vi.fn();
+  /**
+   * Mirror mapbox-gl: `Map#remove()` fires a `remove` event before tearing the
+   * map down. Children subscribe to it to drop their cached map reference so no
+   * teardown ever touches a removed map.
+   */
+  remove = vi.fn(function (this: MockMap) {
+    (this._listeners.remove || []).forEach((fn) => fn());
+  });
   addControl = vi.fn();
   removeControl = vi.fn();
 

@@ -72,12 +72,14 @@ describe('MapboxLayer component', () => {
 
   it('should remove layer on destroy if it exists', async () => {
     const { instance, mockMap } = createLayer();
-    mockMap.getLayer = vi.fn(() => ({ id: 'test-layer' }));
 
     vi.useFakeTimers();
     instance.$mount();
     await vi.advanceTimersByTimeAsync(100);
 
+    // The layer was added on mount, so the default mock's `getLayer` (backed by
+    // `_layers`) now reports it — no need to force the mock, which would also
+    // make the layer look pre-existing at mount and defeat ownership tracking.
     instance.$destroy();
     await vi.advanceTimersByTimeAsync(100);
     vi.useRealTimers();
@@ -105,6 +107,65 @@ describe('MapboxLayer component', () => {
       expect.objectContaining({ id: 'test-layer' }),
       '',
     );
+  });
+
+  it('should tolerate an id owned by a sibling and not let the old teardown delete it (B3)', async () => {
+    // Both instances share ONE map with the referenced source already present.
+    const mockMap = new MockMap();
+    mockMap.addSource('test-source', { type: 'geojson' });
+    function bind(instance: MapboxLayer) {
+      instance.$closest = vi.fn((query: string) =>
+        query === 'MapboxMap'
+          ? ({ map: mockMap, isLoaded: true, $options: { accessToken: 'token' } } as any)
+          : undefined,
+      );
+    }
+    function makeLayer() {
+      const el = h('div', {
+        'data-component': 'MapboxLayer',
+        'data-option-id': 'stores-layer',
+        'data-option-layer': '{"type":"fill","source":"test-source"}',
+      });
+      const instance = new MapboxLayer(el);
+      bind(instance);
+      return instance;
+    }
+
+    const oldInstance = makeLayer();
+    vi.useFakeTimers();
+    oldInstance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.addLayer).toHaveBeenCalledTimes(1);
+
+    // The replacement mounts while the old instance still owns the id.
+    const newInstance = makeLayer();
+    vi.useFakeTimers();
+    newInstance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // Tolerate the already-present layer: no second `addLayer` (a duplicate id
+    // would throw), ownership passes to the newer instance.
+    expect(mockMap.addLayer).toHaveBeenCalledTimes(1);
+
+    // The old instance tears down: it must not delete the adopted layer.
+    vi.useFakeTimers();
+    oldInstance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.removeLayer).not.toHaveBeenCalled();
+    expect(mockMap.getLayer('stores-layer')).toBeDefined();
+
+    // The new instance, still the owner, removes it on its own teardown.
+    vi.useFakeTimers();
+    newInstance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.removeLayer).toHaveBeenCalledWith('stores-layer');
   });
 
   it('should not remove layer on destroy if it does not exist', async () => {

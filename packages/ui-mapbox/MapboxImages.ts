@@ -79,9 +79,9 @@ export class MapboxImages<T extends BaseProps = BaseProps> extends AbstractMapbo
   }
 
   /**
-   * Destroyed hook.
+   * Teardown hook.
    */
-  destroyed() {
+  __onDestroyed() {
     const map = this.__readyMap;
 
     for (const name of this.__addedNames) {
@@ -89,8 +89,6 @@ export class MapboxImages<T extends BaseProps = BaseProps> extends AbstractMapbo
         map.removeImage(name);
       }
     }
-
-    super.destroyed();
   }
 }
 

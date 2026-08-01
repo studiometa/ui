@@ -83,12 +83,11 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
   }
 
   /**
-   * Destroyed hook.
+   * Teardown hook.
    */
-  destroyed() {
+  __onDestroyed() {
     this.__popup?.remove();
     this.__popup = undefined;
-    super.destroyed();
   }
 }
 

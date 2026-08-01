@@ -151,6 +151,78 @@ describe('MapboxSource component', () => {
     expect(mockMap.removeSource).not.toHaveBeenCalled();
   });
 
+  it('should adopt an id owned by a sibling instead of throwing, and not let the old teardown delete it (B3)', async () => {
+    // Both instances share ONE map, as a `Fetch` swap of the same-id source would.
+    const mockMap = new MockMap();
+    function bind(instance: MapboxSource) {
+      instance.$closest = vi.fn((query: string) =>
+        query === 'MapboxMap'
+          ? ({ map: mockMap, isLoaded: true, $options: { accessToken: 'token' } } as any)
+          : undefined,
+      );
+    }
+
+    const oldEl = h('div', {
+      'data-component': 'MapboxSource',
+      'data-option-id': 'stores',
+      'data-option-source': '{"type":"geojson","data":{"type":"FeatureCollection","features":[]}}',
+    });
+    const oldInstance = new MapboxSource(oldEl);
+    bind(oldInstance);
+
+    vi.useFakeTimers();
+    oldInstance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.addSource).toHaveBeenCalledTimes(1);
+    const source = mockMap.getSource('stores');
+
+    // The replacement mounts (mount scan runs before the terminate scan) while
+    // the old instance still owns the id.
+    const newData = {
+      type: 'FeatureCollection',
+      features: [
+        { type: 'Feature', geometry: { type: 'Point', coordinates: [1, 2] }, properties: {} },
+      ],
+    };
+    const newEl = h('div', {
+      'data-component': 'MapboxSource',
+      'data-option-id': 'stores',
+      'data-option-source': JSON.stringify({ type: 'geojson', data: newData }),
+    });
+    const newInstance = new MapboxSource(newEl);
+    bind(newInstance);
+
+    vi.useFakeTimers();
+    newInstance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // Adopt-or-replace: no second `addSource` (which would throw a duplicate id),
+    // the existing source's data is updated instead.
+    expect(mockMap.addSource).toHaveBeenCalledTimes(1);
+    expect(source.setData).toHaveBeenCalledWith(newData);
+
+    // The old instance now tears down. It must NOT delete the source the new
+    // instance has adopted.
+    vi.useFakeTimers();
+    oldInstance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.removeSource).not.toHaveBeenCalled();
+    expect(mockMap.getSource('stores')).toBeDefined();
+
+    // The new instance, still the owner, removes it on its own teardown.
+    vi.useFakeTimers();
+    newInstance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.removeSource).toHaveBeenCalledWith('stores');
+  });
+
   it('should not remove the source on destroy if it does not exist', async () => {
     const { instance, mockMap } = createSource();
 

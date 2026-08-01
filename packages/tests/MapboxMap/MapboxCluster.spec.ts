@@ -223,6 +223,35 @@ describe('MapboxClusterItem component', () => {
     expect(cluster.featureCollection.features).toHaveLength(1);
   });
 
+  it('should register once its cluster connects when none existed at mount (M1)', async () => {
+    const { instance: cluster } = createCluster();
+    // Give the cluster a real element containing the item so the ancestry check
+    // in the item's connected handler passes.
+    const clusterEl = h('div', { 'data-component': 'MapboxCluster' });
+    (cluster as any).$el = clusterEl;
+    await mountAndFlush(cluster);
+
+    const itemEl = h('li', {
+      'data-component': 'MapboxClusterItem',
+      'data-option-id': 'late',
+      'data-option-lng-lat': '[9, 9]',
+    });
+    clusterEl.append(itemEl);
+    const item = new MapboxClusterItem(itemEl);
+    // No cluster resolvable at mount.
+    item.$closest = vi.fn(() => undefined);
+
+    await mountAndFlush(item);
+    expect(cluster.featureCollection.features).toHaveLength(0);
+
+    // The cluster announces itself; make it resolvable and dispatch the event.
+    item.$closest = vi.fn((query: string) => (query === 'MapboxCluster' ? cluster : undefined));
+    document.dispatchEvent(new CustomEvent('mapbox-cluster:connected', { detail: cluster }));
+
+    expect(cluster.featureCollection.features).toHaveLength(1);
+    expect(cluster.featureCollection.features[0].properties).toMatchObject({ id: 'late' });
+  });
+
   it('should unregister from the cached cluster on destroy, even when detached', async () => {
     const { instance: cluster } = createCluster();
     await mountAndFlush(cluster);

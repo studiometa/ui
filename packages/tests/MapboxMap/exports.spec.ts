@@ -11,6 +11,8 @@ test('@studiometa/ui-mapbox exports', () => {
     [
       "AbstractMapboxControl",
       "AbstractMapboxMapChild",
+      "MAPBOX_CLUSTER_CONNECTED",
+      "MAPBOX_MAP_CONNECTED",
       "MapboxCluster",
       "MapboxClusterItem",
       "MapboxFullscreenControl",

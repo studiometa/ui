@@ -21,6 +21,14 @@ import {
 import type { MapboxClusterItem } from './MapboxClusterItem.js';
 
 /**
+ * Document-level event a `MapboxCluster` dispatches when its instance mounts, so
+ * a `MapboxClusterItem` that mounted *before* its cluster can retry resolving it
+ * and register itself once the cluster is connected. The dispatching
+ * `MapboxCluster` instance travels in `detail`.
+ */
+export const MAPBOX_CLUSTER_CONNECTED = 'mapbox-cluster:connected';
+
+/**
  * Module level counter used to generate a unique base id per instance.
  */
 let clusterCount = 0;
@@ -561,6 +569,12 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
    * viewport sync — all once the map is ready.
    */
   mounted() {
+    // Announce the cluster so any `MapboxClusterItem` that mounted before it —
+    // and is waiting on `MAPBOX_CLUSTER_CONNECTED` — can register now. Items
+    // register independently of map readiness, so this fires outside the
+    // `whenMapReady` gate.
+    document.dispatchEvent(new CustomEvent(MAPBOX_CLUSTER_CONNECTED, { detail: this }));
+
     this.whenMapReady((map) => {
       const {
         clusterMaxZoom,
@@ -640,9 +654,9 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
   }
 
   /**
-   * Destroyed hook: tear down listeners, layers, source and popup.
+   * Teardown hook: tear down listeners, layers, source and popup.
    */
-  destroyed() {
+  __onDestroyed() {
     const map = this.__readyMap;
 
     if (map) {
@@ -674,8 +688,6 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
     this.__popup = undefined;
     this.__items = [];
     this.__selected = undefined;
-
-    super.destroyed();
   }
 }
 

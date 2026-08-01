@@ -82,14 +82,13 @@ export class AbstractMapboxControl<T extends BaseProps = BaseProps> extends Abst
   }
 
   /**
-   * Destroyed hook.
+   * Teardown hook.
    */
-  destroyed() {
+  __onDestroyed() {
     if (this.__control) {
       this.__readyMap?.removeControl(this.__control);
       this.__control = undefined;
     }
-    super.destroyed();
   }
 }
 
