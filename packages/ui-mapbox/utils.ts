@@ -10,6 +10,17 @@ import type { Map } from 'mapbox-gl';
  * registry lets ownership pass from the outgoing instance to the incoming one so
  * the outgoing teardown never deletes the contribution the incoming one now
  * owns, and lets an externally declared id (owned by nobody) stay untouched.
+ *
+ * KNOWN LIMITATION (deferred, see PR #567 review H6): an entry only clears when
+ * its owner *releases* it during teardown. If the underlying resource disappears
+ * some other way — a full `map.setStyle()` replacement, or an external
+ * `removeSource`/`removeLayer` — the entry is left dangling, still pointing at
+ * the old component. A later resource created externally under the same id can
+ * then be misclassified as family-owned and adopted. A robust fix (e.g. clearing
+ * the registry on `styledata`/`style.load`, or re-validating ownership against
+ * the live map on adopt) needs browser validation of Mapbox's style-lifecycle
+ * events and is left as a follow-up; the common family-only `Fetch`-swap path is
+ * unaffected because those entries are always released on teardown.
  * @private
  */
 const ownershipRegistry = new WeakMap<object, globalThis.Map<string, unknown>>();

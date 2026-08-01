@@ -130,6 +130,54 @@ describe('MapboxGeocoder component', () => {
     expect(instance.control).toBe(instance.control);
   });
 
+  it('should remove the previous element-targeted control when the map is replaced (H9)', async () => {
+    // The geocoder lives inside the map element so the connected-map filter
+    // (an ancestor check) resolves it to this child.
+    const mapEl = h('div', { 'data-component': 'MapboxMap' });
+    const el = h('div', {
+      'data-component': 'MapboxGeocoder',
+      'data-option-options': '{"accessToken":"geo-token"}',
+    });
+    mapEl.append(el);
+
+    const firstMap = new MockMap();
+    const firstMapbox = {
+      map: firstMap,
+      isLoaded: true,
+      $el: mapEl,
+      $options: { accessToken: 'parent-token' },
+    };
+    const instance = new MapboxGeocoder(el);
+    instance.$closest = vi.fn((query: string) =>
+      query === 'MapboxMap' ? (firstMapbox as any) : undefined,
+    );
+
+    await mountAndFlush(instance);
+    const control1 = instance.control!;
+    expect(control1.addTo).toHaveBeenCalledWith(el);
+
+    // The map is removed and a replacement connects: the standing ready callback
+    // re-runs. It must remove the previous element-attached control before
+    // creating the new one, or each replacement stacks another geocoder on `$el`.
+    firstMap.remove();
+    const secondMap = new MockMap();
+    const secondMapbox = {
+      map: secondMap,
+      isLoaded: true,
+      $el: mapEl,
+      $options: { accessToken: 'parent-token' },
+    };
+    instance.$closest = vi.fn((query: string) =>
+      query === 'MapboxMap' ? (secondMapbox as any) : undefined,
+    );
+    document.dispatchEvent(new CustomEvent('mapbox-map:connected', { detail: secondMapbox }));
+
+    expect(control1.onRemove).toHaveBeenCalledTimes(1);
+    const control2 = instance.control!;
+    expect(control2).not.toBe(control1);
+    expect(control2.addTo).toHaveBeenCalledWith(el);
+  });
+
   it('should re-emit the control `result` event as a component `result` event', async () => {
     const { instance } = createGeocoder();
 

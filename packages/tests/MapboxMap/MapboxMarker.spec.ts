@@ -78,6 +78,40 @@ describe('MapboxMarker component', () => {
     expect(instance.$options.markerOptions).toEqual({});
   });
 
+  it('should attach a child popup that is present at mount (H8 pull side)', async () => {
+    const { instance } = createMarker();
+    const fakePopup = { popup: { id: 'popup-instance' } };
+    Object.defineProperty(instance, 'popup', { get: () => fakePopup, configurable: true });
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    const marker = instance.marker as unknown as MockMarker;
+    expect(marker.setPopup).toHaveBeenCalledWith(fakePopup.popup);
+  });
+
+  it('should attach a child popup pushed after mount via setChildPopup (H8 push side)', async () => {
+    const { instance } = createMarker();
+    // No popup present when the marker mounts (dynamic append: the popup mounts
+    // later and pushes itself).
+    Object.defineProperty(instance, 'popup', { get: () => undefined, configurable: true });
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    const marker = instance.marker as unknown as MockMarker;
+    expect(marker.setPopup).not.toHaveBeenCalled();
+
+    // The popup mounts afterwards and pushes itself onto the marker.
+    const fakePopup = { popup: { id: 'late-popup' } } as any;
+    instance.setChildPopup(fakePopup);
+    expect(marker.setPopup).toHaveBeenCalledWith(fakePopup.popup);
+  });
+
   it('should remove marker on destroy', async () => {
     const { instance } = createMarker();
 

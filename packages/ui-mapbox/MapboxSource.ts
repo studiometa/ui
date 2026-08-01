@@ -138,6 +138,16 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
     ) {
       // Remove every layer tied to the source before removing the source itself,
       // otherwise Mapbox throws because layers still reference a missing source.
+      //
+      // KNOWN LIMITATION (deferred, see PR #567 review H7): this also removes
+      // layers owned by still-mounted `MapboxLayer` instances, which stop
+      // listening to `sourcedata` after their first commit and so do not
+      // reappear if a source with the same id is later re-added. A robust fix —
+      // coordinating source teardown with layer ownership, or having layers keep
+      // a standing `sourcedata`/`styledata` recovery listener — carries a
+      // per-layer listener cost and needs browser validation, so it is left as a
+      // follow-up. The common case (a `Fetch` swap replacing source AND layers
+      // together) is unaffected: the replacement layers re-commit on their own.
       for (const layer of map.getStyle().layers) {
         if ('source' in layer && layer.source === id) {
           map.removeLayer(layer.id);

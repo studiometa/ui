@@ -146,17 +146,22 @@ describe('MapboxLayer component', () => {
     await vi.advanceTimersByTimeAsync(100);
     vi.useRealTimers();
 
-    // Tolerate the already-present layer: no second `addLayer` (a duplicate id
-    // would throw), ownership passes to the newer instance.
-    expect(mockMap.addLayer).toHaveBeenCalledTimes(1);
+    // Adopt AND refresh: a same-id swap may change source/type/paint/layout/
+    // filter/zoom-range/beforeId, so the replacement re-applies its definition by
+    // removing the existing layer and re-adding its own (never a bare duplicate
+    // `addLayer`, which would throw), then takes over ownership.
+    expect(mockMap.removeLayer).toHaveBeenCalledTimes(1);
+    expect(mockMap.addLayer).toHaveBeenCalledTimes(2);
+    expect(mockMap.getLayer('stores-layer')).toBeDefined();
 
-    // The old instance tears down: it must not delete the adopted layer.
+    // The old instance tears down: it must not delete the adopted layer (the new
+    // instance owns it now), so the remove count stays put.
     vi.useFakeTimers();
     oldInstance.$destroy();
     await vi.advanceTimersByTimeAsync(100);
     vi.useRealTimers();
 
-    expect(mockMap.removeLayer).not.toHaveBeenCalled();
+    expect(mockMap.removeLayer).toHaveBeenCalledTimes(1);
     expect(mockMap.getLayer('stores-layer')).toBeDefined();
 
     // The new instance, still the owner, removes it on its own teardown.
@@ -165,7 +170,8 @@ describe('MapboxLayer component', () => {
     await vi.advanceTimersByTimeAsync(100);
     vi.useRealTimers();
 
-    expect(mockMap.removeLayer).toHaveBeenCalledWith('stores-layer');
+    expect(mockMap.removeLayer).toHaveBeenCalledTimes(2);
+    expect(mockMap.removeLayer).toHaveBeenLastCalledWith('stores-layer');
   });
 
   it('should not remove layer on destroy if it does not exist', async () => {

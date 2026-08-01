@@ -84,6 +84,12 @@ export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
 
   /**
    * The item's stable identifier, used to match map features back to the item.
+   *
+   * Expected to be non-empty and unique within a cluster. Duplicate ids are not
+   * rejected, but their behavior is defined rather than undefined: a click on
+   * any duplicate resolves to the FIRST registered item carrying that id (see
+   * `MapboxCluster.__handleUnclusteredClick`). Integrators wanting a distinct
+   * selection per element must give each item a unique id.
    */
   get id(): string {
     return this.$options.id;

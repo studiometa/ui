@@ -3,7 +3,14 @@ import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
 } from './AbstractMapboxMapChild.js';
-import { addMapboxImage, type MapboxImageDefinition } from './utils.js';
+import type { Map } from 'mapbox-gl';
+import {
+  addMapboxImage,
+  claimMapboxOwnership,
+  getMapboxOwner,
+  releaseMapboxOwnership,
+  type MapboxImageDefinition,
+} from './utils.js';
 
 export interface MapboxImagesProps extends AbstractMapboxMapChildProps {
   $options: {
@@ -37,12 +44,22 @@ export class MapboxImages<T extends BaseProps = BaseProps> extends AbstractMapbo
   };
 
   /**
-   * The names of the images this instance actually added to the map sprite.
-   * Only these may be removed on teardown; pre-existing sprites (registered by
-   * someone else) are left untouched.
+   * The names of the sprites this instance owns. Only these may be removed on
+   * teardown; pre-existing sprites (registered by someone else) are left
+   * untouched, and a sprite a newer sibling has since adopted is left to it.
    * @private
    */
-  __addedNames: string[] = [];
+  __ownedNames: string[] = [];
+
+  /**
+   * The `kind:name` ownership key for the given sprite.
+   * @private
+   * @param   {string} name
+   * @returns {string}
+   */
+  __ownershipKey(name: string): string {
+    return `image:${name}`;
+  }
 
   /**
    * Mounted hook.
@@ -50,45 +67,72 @@ export class MapboxImages<T extends BaseProps = BaseProps> extends AbstractMapbo
   mounted() {
     this.whenMapReady(async (map) => {
       const { sources } = this.$options;
-      const results = await Promise.all(sources.map((source) => addMapboxImage(map, source)));
+      const images = await Promise.all(
+        sources.map(async (source) => {
+          const { image, added } = await addMapboxImage(map, source);
+          // Take ownership incrementally, as each image settles, rather than
+          // after the whole batch: if a later entry rejects, `Promise.all`
+          // rejects, but the sprites already added stay owned and removable on
+          // teardown instead of orphaned.
+          this.__adopt(map, source.name, added);
+          return image;
+        }),
+      );
 
-      // The component may have been destroyed while the images were loading. Each
-      // image this call added is already registered on the map sprite, so remove
-      // the ones we own and bail before emitting to avoid leaving orphan sprites
-      // behind (`destroyed()` already ran and found nothing to remove).
-      if (!this.$isMounted) {
-        sources.forEach((source, index) => {
-          if (results[index].added && map.hasImage(source.name)) {
-            map.removeImage(source.name);
-          }
-        });
+      // The component may have been destroyed — or the map removed/replaced —
+      // while the images were loading. Remove the ones we own (only while the
+      // map is still current & alive) and bail before emitting to avoid orphans.
+      if (!this.$isMounted || this.__readyMap !== map) {
+        if (this.__readyMap === map) {
+          this.__removeOwned(map);
+        }
         return;
       }
 
-      // Track which sprites this instance actually added so teardown never
-      // removes a pre-existing one.
-      this.__addedNames = sources
-        .filter((_source, index) => results[index].added)
-        .map((source) => source.name);
-
-      this.$emit(
-        'ready',
-        results.map((result) => result.image),
-      );
+      this.$emit('ready', images);
     });
+  }
+
+  /**
+   * Own a sprite this instance added, or adopt one from a family sibling (a
+   * same-name `Fetch` swap), so the outgoing instance's teardown does not remove
+   * a sprite this replacement now depends on.
+   * @private
+   * @param {Map}     map
+   * @param {string}  name
+   * @param {boolean} added
+   */
+  __adopt(map: Map, name: string, added: boolean) {
+    if (added || getMapboxOwner(map, this.__ownershipKey(name))) {
+      claimMapboxOwnership(map, this.__ownershipKey(name), this);
+      if (!this.__ownedNames.includes(name)) {
+        this.__ownedNames.push(name);
+      }
+    }
+  }
+
+  /**
+   * Remove every sprite this instance still owns from the given map, releasing
+   * ownership as it goes.
+   * @private
+   * @param {Map | undefined} map
+   */
+  __removeOwned(map?: Map) {
+    for (const name of this.__ownedNames) {
+      const key = this.__ownershipKey(name);
+      if (getMapboxOwner(map as object, key) === this && map?.hasImage(name)) {
+        map.removeImage(name);
+        releaseMapboxOwnership(map, key, this);
+      }
+    }
+    this.__ownedNames = [];
   }
 
   /**
    * Teardown hook.
    */
   __onDestroyed() {
-    const map = this.__readyMap;
-
-    for (const name of this.__addedNames) {
-      if (map?.hasImage(name)) {
-        map.removeImage(name);
-      }
-    }
+    this.__removeOwned(this.__readyMap);
   }
 }
 

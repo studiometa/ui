@@ -1,6 +1,7 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
 import { debounce } from '@studiometa/js-toolkit/utils';
 import type {
+  Map,
   CircleLayerSpecification,
   SymbolLayerSpecification,
   LayerSpecification,
@@ -162,10 +163,12 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
    *
    * Read-only surface for an orchestrator (e.g. `StoreLocator`) that needs to
    * iterate the item set for viewport filtering, distance sorting or selection —
-   * the cluster owns the registry, consumers only read it.
+   * the cluster owns the registry, consumers only read it. A defensive copy is
+   * returned so a consumer can not splice the live registry (which would corrupt
+   * click resolution and source generation without scheduling a rebuild).
    */
-  get items(): MapboxClusterItem[] {
-    return this.__items;
+  get items(): readonly MapboxClusterItem[] {
+    return [...this.__items];
   }
 
   /**
@@ -232,6 +235,12 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
    * Kept for manual/imperative control; the common path is to let registered
    * items drive the data. Safe to call before mount or after teardown.
    *
+   * NOTE: this bypasses the registry-is-source invariant, so anything pushed
+   * here is transient — the next registry rebuild (any item mount/unmount, or a
+   * debounced `__scheduleRebuild`) derives the source from `featureCollection`
+   * again and silently overwrites it. Use it only for one-off imperative
+   * overlays that do not need to survive an item-set change.
+   *
    * @param {GeoJSONSourceSpecification['data']} data
    */
   setData(data: GeoJSONSourceSpecification['data']) {
@@ -268,7 +277,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
     this.setData(this.featureCollection as GeoJSONSourceSpecification['data']);
     // Let an orchestrator react to the new item set (fit the map, refilter the
     // list). The cluster itself never fits or filters — it only reports.
-    this.$emit('update', this.__items);
+    this.$emit('update', this.items);
   }
 
   /**
@@ -301,7 +310,17 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
     const source = map.getSource<GeoJSONSource>(this.__getId('source'));
 
     source?.getClusterExpansionZoom(clusterId, (error, zoom) => {
-      if (error || zoom === null || zoom === undefined || feature.geometry.type !== 'Point') {
+      // The expansion zoom resolves asynchronously: the map may have been
+      // removed (or replaced) in the meantime, in which case the base cleared
+      // `__readyMap`. Bail unless the captured map is still the current one so
+      // `easeTo` never runs against a dead map.
+      if (
+        this.__readyMap !== map ||
+        error ||
+        zoom === null ||
+        zoom === undefined ||
+        feature.geometry.type !== 'Point'
+      ) {
         return;
       }
 
@@ -461,8 +480,36 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
 
       // Announce the seeded item set so an orchestrator can run its first fit +
       // viewport filter against a cluster that was already populated at load.
-      this.$emit('update', this.__items);
+      this.$emit('update', this.items);
     });
+  }
+
+  /**
+   * Detach every map-scoped listener wired in `mounted`.
+   * @private
+   * @param {Map} map
+   */
+  __offClusterListeners(map: Map) {
+    const clustersId = this.__getId('clusters');
+    const unclusteredPointId = this.__getId('unclustered-point');
+
+    map.off('click', clustersId, this.__handleClustersClick);
+    map.off('mouseenter', clustersId, this.__handleClustersMouseenter);
+    map.off('mouseleave', clustersId, this.__handleClustersMouseleave);
+    map.off('click', unclusteredPointId, this.__handleUnclusteredClick);
+    map.off('mouseenter', unclusteredPointId, this.__handleUnclusteredMouseenter);
+    map.off('mouseleave', unclusteredPointId, this.__handleUnclusteredMouseleave);
+  }
+
+  /**
+   * Flush the per-layer listeners against the map being removed, while it is
+   * still referenceable — `__onDestroyed` runs later with `__readyMap` already
+   * cleared and could not reach the map to unsubscribe.
+   * @protected
+   * @param {Map} map
+   */
+  __onMapRemove(map: Map) {
+    this.__offClusterListeners(map);
   }
 
   /**
@@ -477,12 +524,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
       const unclusteredPointId = this.__getId('unclustered-point');
       const sourceId = this.__getId('source');
 
-      map.off('click', clustersId, this.__handleClustersClick);
-      map.off('mouseenter', clustersId, this.__handleClustersMouseenter);
-      map.off('mouseleave', clustersId, this.__handleClustersMouseleave);
-      map.off('click', unclusteredPointId, this.__handleUnclusteredClick);
-      map.off('mouseenter', unclusteredPointId, this.__handleUnclusteredMouseenter);
-      map.off('mouseleave', unclusteredPointId, this.__handleUnclusteredMouseleave);
+      this.__offClusterListeners(map);
 
       for (const id of [clustersId, clusterCountId, unclusteredPointId]) {
         if (map.getLayer(id)) {

@@ -46,6 +46,14 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
   __popup: Popup;
 
   /**
+   * Whether this component hid its own source element (to avoid rendering the
+   * content twice). Tracked so teardown restores the original visibility only
+   * when it was the one to change it.
+   * @private
+   */
+  __didHide = false;
+
+  /**
    * The mapbox Popup instance.
    */
   get popup() {
@@ -69,14 +77,22 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
       if (content) {
         popup.setHTML(content);
         // Hide the source markup so the content is not rendered twice: once in
-        // the popup and once in the document.
-        $el.hidden = true;
+        // the popup and once in the document. Remember we did so — only when it
+        // was visible — to restore it on teardown.
+        if (!$el.hidden) {
+          $el.hidden = true;
+          this.__didHide = true;
+        }
       }
 
-      // Only add the popup directly to the map when it is not inside a marker:
-      // a marker owns its popup and attaches it through `setPopup`.
+      // When inside a marker, hand the popup to it rather than adding it to the
+      // map directly (the marker owns its popup via `setPopup`). Pushing to the
+      // marker — instead of letting the marker pull us — also covers the dynamic
+      // append case where the marker mounted first and found no popup to query.
       const marker = this.$closest<MapboxMarker>('MapboxMarker');
-      if (!marker) {
+      if (marker) {
+        marker.setChildPopup(this);
+      } else {
         popup.addTo(map);
       }
     });
@@ -88,6 +104,13 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
   __onDestroyed() {
     this.__popup?.remove();
     this.__popup = undefined;
+
+    // Restore the source element's visibility only if this component hid it, so
+    // a reused or remounted element keeps its original state.
+    if (this.__didHide) {
+      this.$el.hidden = false;
+      this.__didHide = false;
+    }
   }
 }
 

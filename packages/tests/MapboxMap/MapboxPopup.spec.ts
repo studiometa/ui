@@ -113,6 +113,54 @@ describe('MapboxPopup component', () => {
     expect(instance.$el.hidden).toBe(true);
   });
 
+  it('should push itself to an ancestor marker instead of adding to the map (H8)', async () => {
+    const mockMap = new MockMap();
+    const setChildPopup = vi.fn();
+    const el = h('div', {
+      'data-component': 'MapboxPopup',
+      'data-option-lng-lat': '[1, 2]',
+    });
+    const instance = new MapboxPopup(el);
+    instance.$closest = vi.fn((query: string) => {
+      if (query === 'MapboxMap') {
+        return { map: mockMap, isLoaded: true, $options: { accessToken: 't' } } as any;
+      }
+      if (query === 'MapboxMarker') {
+        return { setChildPopup } as any;
+      }
+      return undefined;
+    });
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // The popup handed itself to the marker (covers the dynamic-append case where
+    // the marker mounted first and found no popup to query) rather than adding
+    // itself to the map directly.
+    expect(setChildPopup).toHaveBeenCalledWith(instance);
+    expect((instance.popup as unknown as MockPopup).addTo).not.toHaveBeenCalled();
+  });
+
+  it('should restore the source element visibility on teardown when it hid it (minor)', async () => {
+    const { instance } = createPopup();
+    instance.$el.innerHTML = '<p>Popup content</p>';
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(instance.$el.hidden).toBe(true);
+
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // The element it hid is made visible again so a reused/remounted element
+    // keeps its original state.
+    expect(instance.$el.hidden).toBe(false);
+  });
+
   it('should remove popup on destroy', async () => {
     const { instance } = createPopup();
 

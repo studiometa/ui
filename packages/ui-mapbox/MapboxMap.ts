@@ -92,6 +92,14 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
   __map: Map;
 
   /**
+   * Off handles for every forwarding listener attached to the map, flushed on
+   * teardown so a retained reference to a removed `Map` does not keep this
+   * component (and its `$emit` closures) alive.
+   * @private
+   */
+  __offMapListeners: Array<() => void> = [];
+
+  /**
    * The mapbox Map instance.
    */
   get map() {
@@ -112,15 +120,19 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
    * Mounted hook.
    */
   mounted() {
-    this.map.on('load', () => {
+    const onLoad = () => {
       this.isLoaded = true;
       this.$emit('map-load', this.map);
-    });
+    };
+    this.map.on('load', onLoad);
+    this.__offMapListeners.push(() => this.__map?.off('load', onLoad));
 
     for (const event of MAP_EVENTS) {
-      this.map.on(event, (e) => {
+      const handler = (e: unknown) => {
         this.$emit(event, e);
-      });
+      };
+      this.map.on(event, handler);
+      this.__offMapListeners.push(() => this.__map?.off(event, handler));
     }
 
     // Announce this map so any child that mounted before it — and is waiting on
@@ -133,6 +145,13 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
    * Destroyed hook.
    */
   destroyed() {
+    // Flush the forwarding listeners before removing the map so neither the map
+    // nor this component leaks through a retained `Map` reference.
+    for (const off of this.__offMapListeners) {
+      off();
+    }
+    this.__offMapListeners = [];
+
     this.__map?.remove();
     this.__map = undefined;
     this.isLoaded = false;

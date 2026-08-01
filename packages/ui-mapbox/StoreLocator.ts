@@ -3,7 +3,8 @@ import { nextTick } from '@studiometa/js-toolkit/utils';
 import mapboxgl from 'mapbox-gl';
 import type { Map, LngLatLike, LngLatBoundsLike, Popup } from 'mapbox-gl';
 import { MapboxMap } from './MapboxMap.js';
-import type { MapboxCluster } from './MapboxCluster.js';
+import { MAPBOX_MAP_CONNECTED } from './AbstractMapboxMapChild.js';
+import { MAPBOX_CLUSTER_CONNECTED, type MapboxCluster } from './MapboxCluster.js';
 import type { MapboxClusterItem } from './MapboxClusterItem.js';
 import type { MapboxGeocoder } from './MapboxGeocoder.js';
 
@@ -50,8 +51,12 @@ export interface StoreLocatorProps extends BaseProps {
  *    and the `select` event.
  *
  * The orchestrator requires its `MapboxCluster` (and `MapboxMap`) to live within
- * its own subtree; it resolves them with `$query` and retries a few ticks for
- * asynchronously-mounted children. Register the family with
+ * its own subtree; it resolves them with `$query`, retries a few ticks for
+ * asynchronously-mounted children, and — like the map children — subscribes to
+ * the `MAPBOX_MAP_CONNECTED` / `MAPBOX_CLUSTER_CONNECTED` events so a late or
+ * replaced map/cluster (re)binds instead of stranding the orchestrator on a
+ * destroyed instance, and to the map's own `remove` event so a removed map is
+ * never called into. Register the family with
  * `registerMapboxComponents` (or register `StoreLocator`, `MapboxMap`,
  * `MapboxCluster` and `MapboxClusterItem` yourself) — the orchestrator declares
  * no child components so nothing is ever double-mounted.
@@ -127,11 +132,48 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   __popup?: Popup;
 
   /**
-   * Unsubscribe callbacks for every child listener attached at runtime, flushed
-   * on destroy.
+   * Unsubscribe callbacks for the `MapboxCluster` listeners, flushed both on
+   * destroy and when the cluster is replaced (so the orchestrator re-wires onto
+   * the new instance rather than staying subscribed to the destroyed one).
    * @private
    */
-  __offHandlers: Array<() => void> = [];
+  __offCluster: Array<() => void> = [];
+
+  /**
+   * Unsubscribe callbacks for the `MapboxGeocoder` listeners, flushed on destroy.
+   * @private
+   */
+  __offGeocoder: Array<() => void> = [];
+
+  /**
+   * Off handle for the pending `map-load` subscription.
+   * @private
+   */
+  __offMapLoad?: () => void;
+
+  /**
+   * Off handle for the ready map's own `remove` subscription, used to drop the
+   * cached map the moment it is removed so no listener/teardown ever calls a
+   * method on a dead map.
+   * @private
+   */
+  __offMapRemove?: () => void;
+
+  /**
+   * Off handle for the standing document-level `MAPBOX_MAP_CONNECTED` retry
+   * subscription, so a map that mounts (or a replacement that mounts after the
+   * previous was removed) rebinds the orchestrator.
+   * @private
+   */
+  __offMapConnected?: () => void;
+
+  /**
+   * Off handle for the standing document-level `MAPBOX_CLUSTER_CONNECTED` retry
+   * subscription, so a cluster that mounts late — or replaces the wired one — is
+   * (re)wired instead of stranding the orchestrator on a destroyed instance.
+   * @private
+   */
+  __offClusterConnected?: () => void;
 
   /**
    * Whether the `MapboxCluster` listeners are already attached.
@@ -182,7 +224,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   /**
    * The registered items, read from the cluster (their single source of truth).
    */
-  get items(): MapboxClusterItem[] {
+  get items(): readonly MapboxClusterItem[] {
     return this.__cluster?.items ?? [];
   }
 
@@ -224,6 +266,11 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   /**
    * Open (or move) the selection popup on the given item, using its popup
    * content. A content-less item closes any open popup instead.
+   *
+   * NOTE: closing this popup through Mapbox's own close-button UI does NOT clear
+   * the selection — `data-active`/`aria-current`/`__selected` stay set by design.
+   * Popup visibility and selection are independent: dismissing the popup does not
+   * deselect the store. Call `deselect()` explicitly to clear the selection.
    * @private
    * @param {MapboxClusterItem} item
    */
@@ -384,8 +431,13 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    * @private
    */
   __handleClusterUpdate = () => {
+    // The selected store may have been removed by the swap. Run the full
+    // deselect cleanup — not just clearing `__selected` — so its popup is
+    // removed from the map and `deselect` is emitted, instead of leaving the
+    // removed store's popup stranded while the locator claims nothing is
+    // selected.
     if (this.__selected && !this.items.includes(this.__selected)) {
-      this.__selected = undefined;
+      this.deselect();
     }
 
     this.__refresh();
@@ -423,23 +475,171 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   };
 
   /**
-   * React to the map being ready: cache it, bind the viewport listener, wire the
-   * children and run the first refresh.
+   * React to the map being ready: cache it, subscribe to its `remove`, bind the
+   * viewport listener and wire the children.
+   *
+   * Idempotent for the same map (a re-entrant `map-load` or connected event does
+   * not double-bind `moveend`), and rebinds cleanly onto a replacement map.
    * @private
    */
   __handleMapLoad = () => {
+    const map = this.mapboxMap?.map;
+
+    if (!map) {
+      return;
+    }
+
+    // Rebinding onto a replacement: drop the viewport listener from the previous
+    // map before caching and binding the new one.
+    if (this.__map && this.__map !== map) {
+      this.__map.off('moveend', this.__handleMoveEnd);
+    }
+
     this.isLoaded = true;
-    this.__map = this.mapboxMap?.map;
-    this.__map?.on('moveend', this.__handleMoveEnd);
+    this.__map = map;
+    this.__bindMapRemove(map);
+    map.off('moveend', this.__handleMoveEnd);
+    map.on('moveend', this.__handleMoveEnd);
     this.__wireChildren();
   };
+
+  /**
+   * Subscribe once to the ready map's own `remove` event so a map removed while
+   * the orchestrator stays mounted drops the cached (now dead) map instead of
+   * calling `flyTo`/`getBounds`/`fitBounds`/`off` on it. A replacement map
+   * announces itself through `MAPBOX_MAP_CONNECTED` and rebinds the orchestrator.
+   * @private
+   * @param {Map} map
+   */
+  __bindMapRemove(map: Map) {
+    this.__offMapRemove?.();
+    this.__offMapRemove = undefined;
+
+    // Degrade gracefully for minimal map doubles without an event emitter.
+    if (typeof map?.on !== 'function') {
+      return;
+    }
+
+    const handler = () => {
+      this.__offMapRemove?.();
+      this.__offMapRemove = undefined;
+      this.__map?.off('moveend', this.__handleMoveEnd);
+      this.__map = undefined;
+      this.isLoaded = false;
+    };
+
+    map.on('remove', handler);
+    this.__offMapRemove = () => map.off('remove', handler);
+  }
+
+  /**
+   * Resolve the child `MapboxMap` and bind to it — now if it is already loaded,
+   * otherwise once on `map-load`. When none exists yet the standing
+   * `MAPBOX_MAP_CONNECTED` subscription rebinds later.
+   * @private
+   */
+  __bindMap() {
+    const { mapboxMap } = this;
+
+    if (!mapboxMap) {
+      return;
+    }
+
+    if (mapboxMap.isLoaded) {
+      this.__handleMapLoad();
+    } else {
+      this.__offMapLoad?.();
+      this.__offMapLoad = mapboxMap.$on('map-load', this.__handleMapLoad, { once: true });
+    }
+  }
+
+  /**
+   * Subscribe once to `MAPBOX_MAP_CONNECTED` and (re)bind when a `MapboxMap`
+   * inside this orchestrator connects — a late-mounted map, or a replacement for
+   * one that was removed. Ignores maps outside this subtree (several independent
+   * locators/maps can share a page).
+   * @private
+   */
+  __waitForConnectedMap() {
+    if (this.__offMapConnected) {
+      return;
+    }
+
+    const handler = (event: Event) => {
+      const mapboxMap = (event as CustomEvent<MapboxMap>).detail;
+
+      // The map lives *inside* the orchestrator: filter to descendants.
+      if (!mapboxMap?.$el || !this.$el.contains(mapboxMap.$el)) {
+        return;
+      }
+
+      // Already bound to this exact, loaded map: nothing to do.
+      if (this.__map && this.__map === mapboxMap.map) {
+        return;
+      }
+
+      this.__bindMap();
+    };
+
+    document.addEventListener(MAPBOX_MAP_CONNECTED, handler);
+    this.__offMapConnected = () => document.removeEventListener(MAPBOX_MAP_CONNECTED, handler);
+  }
+
+  /**
+   * Subscribe once to `MAPBOX_CLUSTER_CONNECTED` and (re)wire when a
+   * `MapboxCluster` inside this orchestrator connects. A cluster that replaces
+   * the wired one drops the stale wiring and re-wires onto the new instance, so
+   * list clicks, viewport filtering and selection keep working after a swap.
+   * @private
+   */
+  __waitForConnectedCluster() {
+    if (this.__offClusterConnected) {
+      return;
+    }
+
+    const handler = (event: Event) => {
+      const cluster = (event as CustomEvent<MapboxCluster>).detail;
+
+      if (!cluster?.$el || !this.$el.contains(cluster.$el)) {
+        return;
+      }
+
+      if (this.__cluster && this.__cluster !== cluster) {
+        // A replacement cluster: drop the stale wiring and re-wire onto it.
+        this.__unwireCluster();
+      }
+
+      if (!this.__clusterWired) {
+        this.__wireChildren();
+      }
+    };
+
+    document.addEventListener(MAPBOX_CLUSTER_CONNECTED, handler);
+    this.__offClusterConnected = () =>
+      document.removeEventListener(MAPBOX_CLUSTER_CONNECTED, handler);
+  }
+
+  /**
+   * Detach the current cluster listeners and reset the wiring flag so
+   * `__wireChildren` binds afresh onto a replacement cluster.
+   * @private
+   */
+  __unwireCluster() {
+    for (const off of this.__offCluster) {
+      off();
+    }
+    this.__offCluster = [];
+    this.__clusterWired = false;
+    this.__cluster = undefined;
+  }
 
   /**
    * Attach the `MapboxCluster`/`MapboxGeocoder` listeners once those children
    * are available. Both mount asynchronously (the geocoder even lazy-imports its
    * module), so we poll a bounded number of ticks until *each* is wired — the
    * cluster is required, the geocoder optional. A locator missing the geocoder
-   * simply polls to the attempt cap (bounded and harmless).
+   * simply polls to the attempt cap (bounded and harmless). The standing
+   * connected-event subscriptions cover anything that mounts after the cap.
    * @private
    * @param {number} attempt
    */
@@ -452,8 +652,8 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     if (cluster && cluster.$isMounted && !this.__clusterWired) {
       this.__clusterWired = true;
       this.__cluster = cluster;
-      this.__offHandlers.push(cluster.$on('item-click', this.__handleItemClick));
-      this.__offHandlers.push(cluster.$on('update', this.__handleClusterUpdate));
+      this.__offCluster.push(cluster.$on('item-click', this.__handleItemClick));
+      this.__offCluster.push(cluster.$on('update', this.__handleClusterUpdate));
       // Catch up on the cluster's current item set: it may have emitted its
       // seeded `update` before we subscribed.
       this.__refresh();
@@ -462,7 +662,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     if (geocoder && !this.__geocoderWired) {
       this.__geocoderWired = true;
       this.__geocoder = geocoder;
-      this.__offHandlers.push(geocoder.$on('result', this.__handleGeocoderResult));
+      this.__offGeocoder.push(geocoder.$on('result', this.__handleGeocoderResult));
     }
 
     if ((!this.__clusterWired || !this.__geocoderWired) && attempt < WIRE_CHILDREN_MAX_ATTEMPTS) {
@@ -475,23 +675,16 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   }
 
   /**
-   * Mounted hook: bind the delegated sidebar click and wait for the map to load
-   * before wiring anything.
+   * Mounted hook: bind the delegated sidebar click, resolve and bind the map,
+   * and install the standing connected-event subscriptions so a late or replaced
+   * map/cluster (re)binds instead of stranding the orchestrator.
    */
   mounted() {
-    const { mapboxMap } = this;
-
     this.$el.addEventListener('click', this.__handleListClick);
 
-    if (!mapboxMap) {
-      return;
-    }
-
-    if (mapboxMap.isLoaded) {
-      this.__handleMapLoad();
-    } else {
-      this.__offHandlers.push(mapboxMap.$on('map-load', this.__handleMapLoad, { once: true }));
-    }
+    this.__bindMap();
+    this.__waitForConnectedMap();
+    this.__waitForConnectedCluster();
   }
 
   /**
@@ -499,10 +692,23 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    * references — even when the element has already been detached from the DOM.
    */
   destroyed() {
-    for (const off of this.__offHandlers) {
+    for (const off of this.__offCluster) {
       off();
     }
-    this.__offHandlers = [];
+    for (const off of this.__offGeocoder) {
+      off();
+    }
+    this.__offCluster = [];
+    this.__offGeocoder = [];
+
+    this.__offMapLoad?.();
+    this.__offMapLoad = undefined;
+    this.__offMapRemove?.();
+    this.__offMapRemove = undefined;
+    this.__offMapConnected?.();
+    this.__offMapConnected = undefined;
+    this.__offClusterConnected?.();
+    this.__offClusterConnected = undefined;
 
     this.__map?.off('moveend', this.__handleMoveEnd);
     this.$el.removeEventListener('click', this.__handleListClick);

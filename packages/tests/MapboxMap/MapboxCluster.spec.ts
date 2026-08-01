@@ -143,9 +143,11 @@ describe('MapboxCluster component', () => {
     await mountAndFlush(item);
 
     expect(update).toHaveBeenCalled();
-    // The payload is the live registered item set — an orchestrator reads it to
-    // fit and filter.
-    expect(update.mock.calls.at(-1)?.[0].detail[0]).toBe(instance.items);
+    // The payload carries the registered item set — an orchestrator reads it to
+    // fit and filter. It is a defensive copy (not the live internal array), so a
+    // consumer can not splice the registry: assert by content, not identity.
+    expect(update.mock.calls.at(-1)?.[0].detail[0]).toEqual([...instance.items]);
+    expect(update.mock.calls.at(-1)?.[0].detail[0]).not.toBe((instance as any).__items);
     expect(instance.items).toHaveLength(1);
   });
 
@@ -170,6 +172,40 @@ describe('MapboxCluster component', () => {
     expect(handler).toHaveBeenCalledTimes(1);
     expect(handler.mock.calls[0][0].detail[0]).toBe(42);
     expect(mockMap.easeTo).toHaveBeenCalledWith({ center: [1, 2], zoom: 5 });
+  });
+
+  it('should not ease to the expansion zoom when the map is removed mid-flight (D4)', async () => {
+    const { instance, mockMap } = createCluster();
+
+    mockMap.queryRenderedFeatures = vi.fn(() => [
+      { properties: { cluster_id: 7 }, geometry: { type: 'Point', coordinates: [1, 2] } },
+    ]) as any;
+
+    await mountAndFlush(instance);
+
+    // Defer the async expansion-zoom callback so the map can be removed before it
+    // resolves, reproducing the captured-map race.
+    const sourceId = (instance as any).__getId('source');
+    let deferred: ((error: unknown, zoom: number) => void) | undefined;
+    mockMap.getSource(sourceId).getClusterExpansionZoom = vi.fn(
+      (_clusterId: number, cb: (error: unknown, zoom: number) => void) => {
+        deferred = cb;
+      },
+    );
+
+    const clustersId = (instance as any).__getId('clusters');
+    mockMap.fire('click', clustersId, {
+      point: { x: 0, y: 0 },
+      defaultPrevented: false,
+      preventDefault() {},
+    });
+
+    // The map is removed before the expansion zoom resolves; the base clears
+    // `__readyMap`, invalidating the captured map.
+    mockMap.remove();
+    deferred?.(null, 5);
+
+    expect(mockMap.easeTo).not.toHaveBeenCalled();
   });
 
   it('should emit item-click with the resolved item on unclustered point click', async () => {

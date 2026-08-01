@@ -133,6 +133,30 @@ describe('MapboxMap component', () => {
     vi.useRealTimers();
   });
 
+  it('should detach every forwarding listener from the map on destroy (H3)', async () => {
+    const root = createMapboxMap();
+    const instance = new MapboxMap(root);
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+
+    const mockMap = instance.map as unknown as MockMap;
+    // Forwarding listeners are registered for `load` and every forwarded event.
+    expect((mockMap._listeners['click'] ?? []).length).toBeGreaterThan(0);
+    expect((mockMap._listeners['load'] ?? []).length).toBeGreaterThan(0);
+
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // A retained reference to the removed map keeps no forwarding closures — and
+    // therefore does not keep this component alive.
+    expect(mockMap._listeners['click'] ?? []).toHaveLength(0);
+    expect(mockMap._listeners['load'] ?? []).toHaveLength(0);
+    expect(mockMap._listeners['moveend'] ?? []).toHaveLength(0);
+  });
+
   it('should not construct a map on destroy when the map was never created', async () => {
     const root = createMapboxMap();
     const instance = new MapboxMap(root);

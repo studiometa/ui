@@ -61,18 +61,31 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapbo
   }
 
   /**
+   * Attach a child `MapboxPopup`'s popup to this marker.
+   *
+   * Called from either side of the wiring, whichever mounts last: the marker
+   * pulls its child popup on ready, and the popup pushes itself here when it
+   * mounts after the marker (a dynamic append to an already-loaded map, where
+   * the marker mounted first and found no popup to query yet). Setting the same
+   * popup twice is idempotent.
+   * @param {MapboxPopup} popupComponent
+   */
+  setChildPopup(popupComponent: MapboxPopup) {
+    this.marker.setPopup(popupComponent.popup);
+  }
+
+  /**
    * Mounted hook.
    */
   mounted() {
     this.whenMapReady((map) => {
       this.marker.setLngLat(this.$options.lngLat).addTo(map);
 
-      // The optional child popup is registered globally too, so it has mounted
-      // itself by the time the map is ready and is queryable here. It detected
-      // it lives inside a marker and skipped adding itself to the map, letting
-      // the marker own it via `setPopup`.
+      // Pull the optional child popup if it has already mounted. When it mounts
+      // *after* the marker instead (dynamic append), the popup pushes itself via
+      // `setChildPopup`, so either mount order wires the pair.
       if (this.popup) {
-        this.marker.setPopup(this.popup.popup);
+        this.setChildPopup(this.popup);
       }
     });
   }

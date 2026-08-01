@@ -103,6 +103,19 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
     }
 
     this.whenMapReady(() => {
+      // The ready callback is standing: it re-runs on every map replacement. An
+      // element-targeted control (`addToMap` false) lives on `$el`, which
+      // survives the map swap, so a previous control must be removed first or
+      // each replacement would stack another geocoder onto the element. A
+      // map-targeted control went away with its (removed) map, so only its
+      // reference needs dropping.
+      if (this.__control) {
+        if (!this.$options.addToMap) {
+          this.__control.onRemove();
+        }
+        this.__control = undefined;
+      }
+
       const options = {
         ...this.$options.options,
         mapboxgl: mapboxgl as unknown as typeof import('mapbox-gl'),

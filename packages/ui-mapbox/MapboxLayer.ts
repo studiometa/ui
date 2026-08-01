@@ -90,7 +90,16 @@ export class MapboxLayer<T extends BaseProps = BaseProps> extends AbstractMapbox
     layer.id = id;
 
     if (map.getLayer(id)) {
+      // The id is taken. Only adopt it from another family instance (e.g. a
+      // `Fetch` swap that mounted the replacement before the original tore
+      // down); an externally declared layer stays untouched. Adopt AND refresh:
+      // the incoming definition may differ in source/type/paint/layout/filter/
+      // zoom range/beforeId, so re-add it (we own it) rather than leaving Mapbox
+      // rendering the outgoing definition — matching how `MapboxSource` refreshes
+      // its data on adopt.
       if (getMapboxOwner(map, this.__ownershipKey)) {
+        map.removeLayer(id);
+        map.addLayer(layer, beforeId);
         claimMapboxOwnership(map, this.__ownershipKey, this);
         this.__added = true;
       }
@@ -131,6 +140,17 @@ export class MapboxLayer<T extends BaseProps = BaseProps> extends AbstractMapbox
         map.on('sourcedata', this.__handleSourceData);
       }
     });
+  }
+
+  /**
+   * Flush the pending `sourcedata` listener against the map being removed, while
+   * it is still referenceable — `__onDestroyed` runs later with `__readyMap`
+   * already cleared and could not reach the map to unsubscribe.
+   * @protected
+   * @param {Map} map
+   */
+  __onMapRemove(map: Map) {
+    map.off('sourcedata', this.__handleSourceData);
   }
 
   /**

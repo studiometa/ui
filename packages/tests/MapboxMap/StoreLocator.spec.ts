@@ -492,6 +492,65 @@ describe('StoreLocator orchestrator', () => {
 
       expect((ctx.instance as any).__selected).toBeUndefined();
     });
+
+    it('runs the full deselect cleanup when the selected item is dropped by a swap (D2)', async () => {
+      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
+      await mountAndLoad(ctx);
+
+      const deselect = vi.fn();
+      ctx.instance.$on('deselect', deselect);
+
+      ctx.instance.selectItem(ctx.item('a'));
+      const popup = (ctx.instance as any).__popup;
+      expect(popup).toBeDefined();
+
+      // The selected store leaves the registry: the popup must be removed and
+      // `deselect` emitted, not just `__selected` cleared.
+      ctx.mockCluster.items = [] as any;
+      ctx.fireUpdate();
+
+      expect((ctx.instance as any).__selected).toBeUndefined();
+      expect(popup.remove).toHaveBeenCalled();
+      expect(deselect).toHaveBeenCalledTimes(1);
+    });
+
+    it('re-wires onto a replacement cluster announced via MAPBOX_CLUSTER_CONNECTED (D1)', async () => {
+      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
+      await mountAndLoad(ctx);
+
+      // Build a replacement cluster inside the locator with its own item set and
+      // its own listener registry.
+      const clusterEl = h('div', { 'data-component': 'MapboxCluster' });
+      ctx.instance.$el.append(clusterEl);
+      const newHandlers: Record<string, Array<(event: unknown) => void>> = {};
+      const itemEl = h('li', { 'data-component': 'MapboxClusterItem', 'data-option-id': 'z' });
+      const newItem = fakeItem(itemEl, 'z', [9, 9]);
+      const newCluster = {
+        $isMounted: true,
+        $el: clusterEl,
+        items: [newItem],
+        $on(event: string, callback: (event: unknown) => void) {
+          (newHandlers[event] ??= []).push(callback);
+          return () => {};
+        },
+      };
+      // The orchestrator now resolves the replacement cluster.
+      Object.defineProperty(ctx.instance, 'cluster', { get: () => newCluster, configurable: true });
+
+      const select = vi.fn();
+      ctx.instance.$on('select', select);
+
+      document.dispatchEvent(new CustomEvent('mapbox-cluster:connected', { detail: newCluster }));
+
+      // The stale wiring was dropped and the new cluster wired: an item-click
+      // through the REPLACEMENT cluster selects its item.
+      expect((ctx.instance as any).__cluster).toBe(newCluster);
+      (newHandlers['item-click'] ?? []).forEach((callback) =>
+        callback({ detail: [newItem, {}, {}] }),
+      );
+      expect(select).toHaveBeenCalledTimes(1);
+      expect(select.mock.calls[0][0].detail[0]).toBe(newItem);
+    });
   });
 
   // --- 7. Deferred cluster wiring (async mount timing) ---------------------
@@ -560,6 +619,29 @@ describe('StoreLocator orchestrator', () => {
 
       expect(filter).not.toHaveBeenCalled();
       expect(select).not.toHaveBeenCalled();
+      expect(ctx.mockMap.flyTo).not.toHaveBeenCalled();
+      expect(ctx.mockMap.fitBounds).not.toHaveBeenCalled();
+    });
+
+    it('drops the cached map on its remove event and never calls into the dead map (D3)', async () => {
+      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
+      await mountAndLoad(ctx);
+
+      expect((ctx.instance as any).__map).toBe(ctx.mockMap);
+
+      // The nested map is removed out from under the still-mounted orchestrator.
+      ctx.mockMap.remove();
+
+      expect((ctx.instance as any).__map).toBeUndefined();
+      expect(ctx.instance.isLoaded).toBe(false);
+
+      // A later selection, viewport recompute or geocoder result must not call
+      // into the removed map.
+      ctx.mockMap.flyTo.mockClear();
+      ctx.mockMap.fitBounds.mockClear();
+      ctx.instance.selectItem(ctx.item('a'));
+      ctx.fireMoveEnd();
+
       expect(ctx.mockMap.flyTo).not.toHaveBeenCalled();
       expect(ctx.mockMap.fitBounds).not.toHaveBeenCalled();
     });

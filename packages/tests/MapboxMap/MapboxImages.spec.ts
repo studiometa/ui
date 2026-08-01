@@ -113,6 +113,46 @@ describe('MapboxImages component', () => {
     expect(mockMap._images).toHaveProperty('one');
   });
 
+  it('should clean up already-added sprites when a later image in the batch fails (H5)', async () => {
+    const { instance, mockMap } = createImages();
+    instance.$options.log = true;
+    // `one` loads fine and is added; `two` fails to load, rejecting the batch
+    // after `one` was already added.
+    mockMap.loadImage = vi.fn((url: string, cb: (error: unknown, image: unknown) => void) => {
+      if (url === '/two.png') {
+        cb(new Error('load failed'), null);
+      } else {
+        cb(null, {});
+      }
+    });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const onError = vi.fn();
+    instance.$on('error', onError);
+
+    vi.useFakeTimers();
+    instance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    await Promise.resolve();
+    vi.useRealTimers();
+
+    // `one` was added before `two` rejected; the rejection is contained (routed
+    // to the `error` event, not an unhandled rejection).
+    expect(mockMap.addImage).toHaveBeenCalledWith('one', expect.anything(), undefined);
+    expect(onError).toHaveBeenCalled();
+
+    // Teardown removes the sprite that WAS added, even though the batch failed
+    // before completing — no orphan survives.
+    vi.useFakeTimers();
+    instance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.removeImage).toHaveBeenCalledWith('one');
+    expect(mockMap._images).toEqual({});
+
+    warn.mockRestore();
+  });
+
   it('should not leave orphan images when destroyed before the loads resolve', async () => {
     const { instance, mockMap } = createImages();
     // Defer every image load so the component can be destroyed while they are

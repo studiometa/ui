@@ -77,9 +77,13 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
   /**
    * The injection callback registered through `whenMapReady`, kept so it can be
    * re-run against a new map when the current one is destroyed and remounted.
+   *
+   * The callback may be synchronous or `async`: a returned promise is awaited
+   * inside the same containment as a synchronous body, so a rejection routes to
+   * `$warn` + the `error` event instead of surfacing as an unhandled rejection.
    * @private
    */
-  __readyCallback?: (map: Map) => void;
+  __readyCallback?: (map: Map) => void | Promise<void>;
 
   /**
    * Off handler for a still-pending `map-load` subscription, flushed on destroy
@@ -132,9 +136,15 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    * map/`MapboxMap` are cached before it runs so teardown can reach them even
    * once the element is detached.
    *
-   * @param {(map: Map) => void} cb The work to run against the ready map.
+   * The callback may be `async`: a subclass that awaits (image loading, cluster
+   * expansion, ...) must additionally guard against the map changing under it by
+   * checking `this.__readyMap === map` after every `await`, since the map it was
+   * handed can be removed — or replaced by another — while the promise is in
+   * flight. A rejected promise is contained here, never rethrown.
+   *
+   * @param {(map: Map) => void | Promise<void>} cb The work to run against the ready map.
    */
-  whenMapReady(cb: (map: Map) => void): void {
+  whenMapReady(cb: (map: Map) => void | Promise<void>): void {
     this.__readyCallback = cb;
     this.__resolveMap();
   }
@@ -189,6 +199,20 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    * @param {MapboxMap} mapboxMap
    */
   __bindToMap(mapboxMap: MapboxMap): void {
+    // Resolve the concrete map now — the getter builds it lazily, so it exists
+    // even before load — and subscribe to its `remove` immediately. Binding the
+    // remove handler here rather than after load means a map removed *while its
+    // load is still pending* re-resolves the child onto a replacement instead of
+    // stranding it: the pending `map-load` subscription is flushed and the child
+    // parks on `MAPBOX_MAP_CONNECTED` again.
+    const map = mapboxMap.map;
+
+    // Drop any stale pending subscription before (re)binding.
+    this.__offMapReady?.();
+    this.__offMapReady = undefined;
+
+    this.__bindMapRemove(map);
+
     const run = () => {
       // The child may have been destroyed while waiting for the map to load: do
       // not inject anything into a map the child no longer belongs to.
@@ -197,19 +221,9 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
       }
 
       this.__readyMapboxMap = mapboxMap;
-      this.__readyMap = mapboxMap.map;
-      this.__bindMapRemove(this.__readyMap);
-
-      try {
-        this.__readyCallback?.(this.__readyMap);
-      } catch (err) {
-        this.__handleError(err);
-      }
+      this.__readyMap = map;
+      this.__runReadyCallback(map);
     };
-
-    // Drop any stale pending subscription before (re)binding.
-    this.__offMapReady?.();
-    this.__offMapReady = undefined;
 
     if (mapboxMap.isLoaded) {
       run();
@@ -222,6 +236,30 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
         },
         { once: true },
       );
+    }
+  }
+
+  /**
+   * Run the ready callback inside a uniform containment for both synchronous
+   * throws and rejected promises: a synchronous body is wrapped in `try/catch`,
+   * and an `async` body's returned promise is awaited so its rejection routes to
+   * `$warn` + the `error` event instead of becoming an unhandled rejection.
+   * Neither path ever rethrows into the global lifecycle queue.
+   * @private
+   * @param {Map} map
+   */
+  __runReadyCallback(map: Map): void {
+    let result: void | Promise<void>;
+
+    try {
+      result = this.__readyCallback?.(map);
+    } catch (err) {
+      this.__handleError(err);
+      return;
+    }
+
+    if (result && typeof (result as Promise<void>).then === 'function') {
+      Promise.resolve(result).catch((err) => this.__handleError(err));
     }
   }
 
@@ -244,6 +282,21 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
     const handler = () => {
       this.__offMapRemove?.();
       this.__offMapRemove = undefined;
+
+      // Let the subclass flush any map-scoped listener while the map is still
+      // referenceable: once `__readyMap` is cleared its teardown can no longer
+      // reach the map to `off` them.
+      try {
+        this.__onMapRemove(map);
+      } catch (err) {
+        this.__handleError(err);
+      }
+
+      // A map removed before it finished loading still has a pending `map-load`
+      // subscription on the (now dead) `MapboxMap`: flush it so the child does
+      // not try to bind on a load that will never come.
+      this.__offMapReady?.();
+      this.__offMapReady = undefined;
       this.__readyMap = undefined;
       this.__readyMapboxMap = undefined;
 
@@ -268,6 +321,20 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
     this.$warn(err);
     this.$emit('error', err);
   }
+
+  /**
+   * Hook run when the ready map fires its own `remove` event, while the map is
+   * still referenceable (before `__readyMap` is cleared).
+   *
+   * Subclasses that attach map-scoped listeners (a layer waiting on
+   * `sourcedata`, a cluster's per-layer click/hover handlers) override this to
+   * `off` them against the map they were bound to — the removed map — since
+   * their `__onDestroyed` runs later with `__readyMap` already `undefined` and
+   * could not reach the map to unsubscribe.
+   * @protected
+   * @param {Map} _map The map being removed.
+   */
+  __onMapRemove(_map: Map) {}
 
   /**
    * Teardown hook implemented by subclasses instead of `destroyed()`.
