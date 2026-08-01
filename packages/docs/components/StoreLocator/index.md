@@ -71,7 +71,7 @@ registerMapboxComponents();
     class="grid h-full grid-cols-[20rem_1fr]">
     <!-- The cluster wraps the list; `contents` lets the items flow into the map grid. -->
     <div data-component="MapboxCluster" class="contents">
-      <ul data-ref="list" class="overflow-y-auto">
+      <ul class="overflow-y-auto">
         <li
           data-component="MapboxClusterItem"
           data-option-id="louvre"

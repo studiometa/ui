@@ -38,12 +38,6 @@ The coordinator. It owns no map rendering and no registry: the `MapboxCluster` d
 ```
 <!-- prettier-ignore-end -->
 
-### Refs
-
-| Ref    | Type          | Description                                                                                                                                       |
-| ------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `list` | `HTMLElement` | Optional. The container the in-view items are reordered inside by distance. When omitted, items are reordered inside their own shared DOM parent. |
-
 ### Getters
 
 | Getter      | Type                          | Description                                                                     |

@@ -16,9 +16,6 @@ import type { MapboxGeocoder } from './MapboxGeocoder.js';
 const WIRE_CHILDREN_MAX_ATTEMPTS = 10;
 
 export interface StoreLocatorProps extends BaseProps {
-  $refs: {
-    list?: HTMLElement;
-  };
   $options: {
     itemZoomLevel: number;
     noSort: boolean;
@@ -73,7 +70,6 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    */
   static config: BaseConfig = {
     name: 'StoreLocator',
-    refs: ['list'],
     emits: ['select', 'deselect', 'filter'],
     options: {
       itemZoomLevel: {
@@ -335,16 +331,16 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   /**
    * Reorder the in-view items so their DOM order matches the distance sort.
    * Appending a connected node moves it, keeping the list free of duplicates.
-   * Items are reordered inside the `list` ref when present, otherwise inside
-   * their own shared parent.
+   * Items are reordered inside their own shared parent — the sidebar list
+   * element — which is resolved per item so no `list` ref is required (a ref
+   * declared on the sidebar would not bind anyway: the items live inside the
+   * nested `MapboxCluster`, outside this orchestrator's ref scope).
    * @private
    * @param {MapboxClusterItem[]} items
    */
   __reorderList(items: MapboxClusterItem[]) {
-    const list = this.$refs.list;
-
     for (const item of items) {
-      (list ?? item.$el.parentElement)?.append(item.$el);
+      item.$el.parentElement?.append(item.$el);
     }
   }
 

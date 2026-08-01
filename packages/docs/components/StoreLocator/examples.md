@@ -47,7 +47,7 @@ The example above swaps the list client-side so it runs on a static page. In a r
 <div data-component="StoreLocator">
   <div data-component="MapboxMap">
     <div data-component="MapboxCluster">
-      <ul id="store-list" data-ref="list">
+      <ul id="store-list">
         <!-- The server responds with a fresh <ul id="store-list"> of MapboxClusterItems. -->
       </ul>
     </div>
