@@ -55,6 +55,19 @@ function buildExports(componentDirs) {
     exportsMap[`./${dir}.js`] = target;
   }
 
+  // Pass-through exports for published non-JS assets that resolved before the
+  // `exports` field existed and must keep resolving to the asset itself rather
+  // than being rewritten to a `.js` module by the greedy `./*` wildcard below:
+  //
+  // - `./package.json` so tooling can read the package manifest;
+  // - `./*.twig` so the 24 shipped Twig templates stay resolvable through
+  //   package resolution (the literal `.twig` suffix makes the pattern more
+  //   specific than `./*`, so it wins for `.twig` specifiers).
+  //
+  // These are pure assets, so both `import` and `types` point at the file.
+  exportsMap['./package.json'] = './package.json';
+  exportsMap['./*.twig'] = { types: './*.twig', import: './*.twig' };
+
   // Greedy wildcards for deep-file imports, e.g. `@studiometa/ui/Frame/types`.
   // The `.js`-extensioned variant is declared first so it takes precedence over
   // the extensionless one for `.js` specifiers.

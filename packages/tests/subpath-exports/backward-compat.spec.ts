@@ -1,4 +1,6 @@
 import { test, expect } from 'vitest';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import * as barrel from '@studiometa/ui';
 // Deep sub-component import: `@studiometa/ui/Accordion/AccordionItem` resolved
 // before the `exports` field was introduced and must keep resolving to the same
@@ -25,4 +27,32 @@ test('documented deep helper subpath still resolves', () => {
 test('directory-index subpath resolves for a package without a default export', () => {
   expect(DataBindSubpath).toBe(barrel.DataBind);
   expect('$isBase' in DataBindSubpath).toBe(true);
+});
+
+// The greedy `./*` wildcard added with the `exports` field rewrites every
+// unmatched subpath to a `.js`/`.ts` module. Without explicit pass-through
+// entries, published non-JS paths that resolved before the field existed would
+// now point at a nonexistent `<path>.js` file. These assertions use strict Node
+// resolution (`import.meta.resolve`, which honours the package `exports` map
+// without loading the target) to prove those paths resolve to the asset itself.
+// Vite/vitest do not transform these specifiers because the module is never
+// imported — only resolved. Before the fix each of these would resolve to a
+// missing `*.js` sibling and `existsSync` would fail.
+test.each([
+  // Tools read a package manifest through `@studiometa/ui/package.json`; the
+  // explicit `./package.json` entry keeps it exported.
+  ['@studiometa/ui/package.json', '/package.json'],
+  // The package ships 24 `.twig` templates; `./*.twig` keeps them resolvable
+  // through package resolution (the `.twig` suffix beats the greedy `./*`).
+  ['@studiometa/ui/Accordion/Accordion.twig', '/Accordion/Accordion.twig'],
+  ['@studiometa/ui/Button/Button.twig', '/Button/Button.twig'],
+])('non-JS published path %s resolves to the asset itself', (specifier, suffix) => {
+  // @ts-expect-error import.meta.resolve is available under Node's ESM loader.
+  const url: string = import.meta.resolve(specifier);
+  const path = fileURLToPath(url);
+  // Resolves to the asset, not a rewritten `<asset>.js` module.
+  expect(path.endsWith(suffix)).toBe(true);
+  expect(path.endsWith('.js')).toBe(false);
+  // And the resolved file actually exists on disk.
+  expect(fs.existsSync(path)).toBe(true);
 });

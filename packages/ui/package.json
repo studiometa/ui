@@ -81,6 +81,8 @@
     "./ViewTransition.js": "./ViewTransition/index.ts",
     "./decorators": "./decorators/index.ts",
     "./decorators.js": "./decorators/index.ts",
+    "./package.json": "./package.json",
+    "./*.twig": "./*.twig",
     "./*.js": "./*.ts",
     "./*": "./*.ts"
   },
