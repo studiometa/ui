@@ -54,6 +54,7 @@ function writePublishedFiles() {
   pkg.types = 'index.d.ts';
   pkg.exports = {
     '.': { types: './index.d.ts', import: './index.js' },
+    './*.js': { types: './*.d.ts', import: './*.js' },
     './*': { types: './*.d.ts', import: './*.js' },
   };
 
