@@ -54,48 +54,51 @@
     data-option-fit-on-update
     class="grid h-[500px] grid-cols-1 overflow-hidden rounded-lg border border-zinc-200 md:grid-cols-[minmax(0,20rem)_1fr] dark:border-zinc-700">
 
-    <ul
-      data-ref="list"
-      class="divide-y divide-zinc-200 overflow-y-auto bg-white dark:divide-zinc-700 dark:bg-zinc-900">
-      {% for store in stores %}
-        <li
-          data-component="StoreLocatorItem"
-          data-option-id="{{ store.id }}"
-          data-option-lng-lat="{{ store.lngLat|json_encode }}"
-          data-category="{{ store.bank }}">
-          <button
-            type="button"
-            data-ref="select"
-            class="block w-full px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800">
-            <span class="name block font-semibold">{{ store.name }}</span>
-            <span class="mt-0.5 block text-sm text-zinc-500 dark:text-zinc-400">
-              {{ store.address }}
-            </span>
-          </button>
-          <template>
-            <h2 class="text-xl font-bold">{{ store.name }}</h2>
-            <p class="mt-4 text-sm">{{ store.address }}</p>
-          </template>
-        </li>
-      {% endfor %}
-    </ul>
-
     <div
       data-component="MapboxMap"
       data-option-access-token="pk.eyJ1IjoiYWdlbmNlc3R1ZGlvbWV0YSIsImEiOiJjbXM5NTBycHMwa2Z4MndxeW02YndscmQyIn0.UitMikKpq-TRJOXM-rBcMg"
       data-option-zoom="5"
       data-option-center="[2.35, 48.86]"
       data-option-map-options='{"style":"mapbox://styles/mapbox/streets-v12"}'
-      class="h-full min-h-[300px] w-full">
-      <div data-ref="container" class="h-full w-full"></div>
+      class="contents">
 
+      {# The cluster wraps the swappable list; picking a facet replaces the
+         #store-list markup, and the cluster re-derives its source from the new
+         MapboxClusterItems. #}
       <div
-        hidden
         data-component="MapboxCluster"
         data-option-cluster-radius="60"
         data-option-clusters-paint='{ "circle-color": "#7c3aed", "circle-radius": 20 }'
         data-option-cluster-count-paint='{ "text-color": "#ffffff" }'
-        data-option-unclustered-point-paint='{ "circle-color": "#7c3aed", "circle-radius": 7, "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" }'></div>
+        data-option-unclustered-point-paint='{ "circle-color": "#7c3aed", "circle-radius": 7, "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" }'
+        class="contents">
+        <ul
+          id="store-list"
+          class="divide-y divide-zinc-200 overflow-y-auto bg-white dark:divide-zinc-700 dark:bg-zinc-900">
+          {% for store in stores %}
+            <li
+              data-component="MapboxClusterItem"
+              data-option-id="{{ store.id }}"
+              data-option-lng-lat="{{ store.lngLat|json_encode }}"
+              data-category="{{ store.bank }}">
+              <button
+                type="button"
+                class="block w-full px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                <span class="name block font-semibold">{{ store.name }}</span>
+                <span class="mt-0.5 block text-sm text-zinc-500 dark:text-zinc-400">
+                  {{ store.address }}
+                </span>
+              </button>
+              <template>
+                <h2 class="text-xl font-bold">{{ store.name }}</h2>
+                <p class="mt-4 text-sm">{{ store.address }}</p>
+              </template>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div data-ref="container" class="h-full min-h-[300px] w-full"></div>
     </div>
   </div>
 
@@ -131,20 +134,20 @@
 </div>
 
 <style>
-  [data-component='StoreLocatorItem']:not([data-in-bounds]) {
+  [data-component='MapboxClusterItem']:not([data-in-bounds]) {
     display: none;
   }
 
-  [data-component='StoreLocatorItem'][data-active] > button {
+  [data-component='MapboxClusterItem'][data-active] > button {
     background-color: #f5f3ff;
   }
-  [data-component='StoreLocatorItem'][data-active] .name {
+  [data-component='MapboxClusterItem'][data-active] .name {
     color: #6d28d9;
   }
-  html.dark [data-component='StoreLocatorItem'][data-active] > button {
+  html.dark [data-component='MapboxClusterItem'][data-active] > button {
     background-color: #2e1065;
   }
-  html.dark [data-component='StoreLocatorItem'][data-active] .name {
+  html.dark [data-component='MapboxClusterItem'][data-active] .name {
     color: #a78bfa;
   }
 

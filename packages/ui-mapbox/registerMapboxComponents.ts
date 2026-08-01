@@ -12,6 +12,7 @@ import { MapboxImage } from './MapboxImage.js';
 import { MapboxImages } from './MapboxImages.js';
 import { MapboxCluster } from './MapboxCluster.js';
 import { MapboxClusterItem } from './MapboxClusterItem.js';
+import { StoreLocator } from './StoreLocator.js';
 
 /**
  * Register the whole `@studiometa/ui-mapbox` family globally in one call.
@@ -40,6 +41,7 @@ export function registerMapboxComponents() {
     MapboxImages,
     MapboxCluster,
     MapboxClusterItem,
+    StoreLocator,
   );
 }
 

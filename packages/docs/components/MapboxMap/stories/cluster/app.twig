@@ -1,5 +1,13 @@
 <link rel="stylesheet" href="https://esm.sh/mapbox-gl@3.13.0/dist/mapbox-gl.css" />
 
+{% set points = [
+  [2.3522, 48.8566], [2.2945, 48.8584], [2.3376, 48.8606], [2.3499, 48.853],
+  [2.3212, 48.8656], [4.8357, 45.764], [4.8467, 45.7578], [5.3698, 43.2965],
+  [5.38, 43.29], [-0.5792, 44.8378], [-1.5536, 47.2184], [3.0573, 50.6292],
+  [7.7521, 48.5734], [1.4442, 43.6047], [1.4535, 43.6108], [-4.4861, 48.3904],
+  [4.3872, 50.8503], [6.1432, 46.2044]
+] %}
+
 <div
   data-component="MapboxMap"
   data-option-access-token="pk.eyJ1IjoiYWdlbmNlc3R1ZGlvbWV0YSIsImEiOiJjbXM5NTBycHMwa2Z4MndxeW02YndscmQyIn0.UitMikKpq-TRJOXM-rBcMg"
@@ -9,37 +17,22 @@
   class="h-96 w-full">
   <div data-ref="container" class="h-full w-full"></div>
 
-  {# Inline GeoJSON passed through a `geojson` script ref #}
+  {# The cluster derives its source from the MapboxClusterItems in its subtree.
+     Here they carry no visible list, so the wrapper is hidden — the same markup
+     would double as a sidebar in a StoreLocator. #}
   <div
     hidden
     data-component="MapboxCluster"
     data-option-cluster-radius="60"
     data-option-clusters-paint='{ "circle-color": "#51bbd6", "circle-radius": 20 }'
     data-option-unclustered-point-paint='{ "circle-color": "#f28cb1", "circle-radius": 6, "circle-stroke-width": 1, "circle-stroke-color": "#fff" }'>
-    <script data-ref="geojson" type="application/json">
-      {
-        "type": "FeatureCollection",
-        "features": [
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.3522, 48.8566] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.2945, 48.8584] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.3376, 48.8606] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.3499, 48.853] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.3212, 48.8656] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [4.8357, 45.764] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [4.8467, 45.7578] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [5.3698, 43.2965] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [5.38, 43.29] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-0.5792, 44.8378] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-1.5536, 47.2184] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [3.0573, 50.6292] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [7.7521, 48.5734] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [1.4442, 43.6047] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [1.4535, 43.6108] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-4.4861, 48.3904] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [4.3872, 50.8503] } },
-          { "type": "Feature", "geometry": { "type": "Point", "coordinates": [6.1432, 46.2044] } }
-        ]
-      }
-    </script>
+    <ul>
+      {% for point in points %}
+        <li
+          data-component="MapboxClusterItem"
+          data-option-id="p{{ loop.index }}"
+          data-option-lng-lat="{{ point|json_encode }}"></li>
+      {% endfor %}
+    </ul>
   </div>
 </div>

@@ -132,20 +132,21 @@ describe('MapboxCluster component', () => {
     expect(lastData.features).toHaveLength(0);
   });
 
-  it('should fly to, mark active and open a popup on the selected item', async () => {
-    const { instance, mockMap } = createCluster();
+  it('should emit an update event carrying the item set when it rebuilds', async () => {
+    const { instance } = createCluster();
     await mountAndFlush(instance);
 
-    const item = createItem(instance, { 'data-option-id': 'x', 'data-option-lng-lat': '[5, 6]' }, [
-      '<p>Store X</p>',
-    ]);
+    const update = vi.fn();
+    instance.$on('update', update);
+
+    const item = createItem(instance, { 'data-option-id': 'x', 'data-option-lng-lat': '[5, 6]' });
     await mountAndFlush(item);
 
-    instance.selectItem(item);
-
-    expect(mockMap.flyTo).toHaveBeenCalledWith(expect.objectContaining({ center: [5, 6] }));
-    expect(item.$el.hasAttribute('data-active')).toBe(true);
-    expect(item.$el.getAttribute('aria-current')).toBe('true');
+    expect(update).toHaveBeenCalled();
+    // The payload is the live registered item set — an orchestrator reads it to
+    // fit and filter.
+    expect(update.mock.calls.at(-1)?.[0].detail[0]).toBe(instance.items);
+    expect(instance.items).toHaveLength(1);
   });
 
   it('should emit cluster-click and ease to the expansion zoom on cluster click', async () => {
@@ -171,12 +172,15 @@ describe('MapboxCluster component', () => {
     expect(mockMap.easeTo).toHaveBeenCalledWith({ center: [1, 2], zoom: 5 });
   });
 
-  it('should select the item behind a clicked unclustered point', async () => {
+  it('should emit item-click with the resolved item on unclustered point click', async () => {
     const { instance, mockMap } = createCluster();
     await mountAndFlush(instance);
 
     const item = createItem(instance, { 'data-option-id': 'x', 'data-option-lng-lat': '[5, 6]' });
     await mountAndFlush(item);
+
+    const itemClick = vi.fn();
+    instance.$on('item-click', itemClick);
 
     const unclusteredId = (instance as any).__getId('unclustered-point');
     mockMap.fire('click', unclusteredId, {
@@ -185,8 +189,30 @@ describe('MapboxCluster component', () => {
       preventDefault() {},
     });
 
-    expect(item.$el.hasAttribute('data-active')).toBe(true);
-    expect(mockMap.flyTo).toHaveBeenCalled();
+    // The cluster resolves the feature id back to the registered item and reports
+    // it — it never selects or flies on its own (that is the orchestrator's job).
+    expect(itemClick).toHaveBeenCalledTimes(1);
+    expect(itemClick.mock.calls[0][0].detail[0]).toBe(item);
+    expect(item.$el.hasAttribute('data-active')).toBe(false);
+    expect(mockMap.flyTo).not.toHaveBeenCalled();
+  });
+
+  it('should emit item-click with an undefined item for an unknown feature id', async () => {
+    const { instance, mockMap } = createCluster();
+    await mountAndFlush(instance);
+
+    const itemClick = vi.fn();
+    instance.$on('item-click', itemClick);
+
+    const unclusteredId = (instance as any).__getId('unclustered-point');
+    mockMap.fire('click', unclusteredId, {
+      features: [{ properties: { id: 'nope' } }],
+      defaultPrevented: false,
+      preventDefault() {},
+    });
+
+    expect(itemClick).toHaveBeenCalledTimes(1);
+    expect(itemClick.mock.calls[0][0].detail[0]).toBeUndefined();
   });
 
   it('should remove the three layers and the source on destroy', async () => {

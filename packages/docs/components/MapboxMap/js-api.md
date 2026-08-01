@@ -13,7 +13,7 @@ You only ever register `MapboxMap` with [`registerComponent`](https://js-toolkit
 - **[Markers & Popups](#markers-popups)** — `MapboxMarker`, `MapboxPopup`
 - **[Controls](#controls)** — `MapboxNavigationControl`, `MapboxGeolocateControl`, `MapboxFullscreenControl`, `MapboxGeocoder`
 - **[Data](#data)** — `MapboxSource`, `MapboxLayer`, `MapboxImage`, `MapboxImages`
-- **[Cluster](#cluster)** — `MapboxCluster`
+- **[Cluster](#cluster)** — `MapboxCluster`, `MapboxClusterItem` (see also the [`StoreLocator`](/components/StoreLocator/) orchestrator)
 - **[AbstractMapboxMapChild](#abstractmapboxmapchild)** — the shared base class
 
 ## Reactivity and updates
@@ -312,43 +312,84 @@ Load and register a list of images against the map sprite in one component.
 
 ### MapboxCluster
 
-Display a clustered GeoJSON source. The component sets up the clustered source, the cluster circles layer, the cluster count labels layer and the unclustered points layer, together with the click-to-zoom interaction on clusters and pointer feedback on features.
+A clustered GeoJSON **source driver** whose features ARE its rendered items. The `MapboxClusterItem`s living in its subtree self-register, and the cluster derives its clustered GeoJSON source from that registry — the same markup drives both a sidebar list and the clustered points on the map. It sets up the clustered source, the cluster circles layer, the cluster count labels layer and the unclustered points layer, together with the click-to-zoom interaction on clusters and pointer feedback on features.
 
-::: tip Inline GeoJSON via the `geojson` ref
-js-toolkit options do not support union types, so the `data` option is declared as a `String` and only accepts the **URL of a `.geojson` file**. To pass inline GeoJSON declaratively, add a `<script data-ref="geojson" type="application/json">` child holding the GeoJSON — see the [`geojson` ref](#refs-2) below. When both are present, the `geojson` ref wins and the `data` option is used as a fallback.
-:::
+The cluster is deliberately thin: it owns only the map data and the clustering interaction. It does **not** select, fly to, filter by viewport or open popups — those search-UX concerns belong to the optional [`StoreLocator`](/components/StoreLocator/) orchestrator, which drives them on top of a cluster. Used on its own, a `MapboxCluster` still renders a working clustered map + list; it simply reports a click on an unclustered point through the `item-click` event and lets the caller decide what it means.
 
 #### Options
 
-| Option                         | Type     | Default                                                | Description                                                                                                                         |
-| ------------------------------ | -------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `data`                         | `String` | —                                                      | URL of a `.geojson` file used as the clustered source data. Used as a fallback when no inline [`geojson` ref](#refs-2) is provided. |
-| `cluster-max-zoom`             | `Number` | `14`                                                   | Max zoom at which points are clustered.                                                                                             |
-| `cluster-radius`               | `Number` | `50`                                                   | Radius of each cluster when clustering points.                                                                                      |
-| `cluster-min-points`           | `Number` | `2`                                                    | Minimum number of points to form a cluster.                                                                                         |
-| `cluster-properties`           | `Object` | `{}`                                                   | Custom [cluster properties](https://docs.mapbox.com/style-spec/reference/sources/#geojson-clusterProperties).                       |
-| `clusters-layout`              | `Object` | `{}`                                                   | Layout for the clusters circle layer.                                                                                               |
-| `clusters-paint`               | `Object` | `{ 'circle-color': '#000', 'circle-radius': 40 }`      | Paint for the clusters circle layer.                                                                                                |
-| `cluster-count-layout`         | `Object` | `{ 'text-field': ['get', 'point_count_abbreviated'] }` | Layout for the cluster count labels.                                                                                                |
-| `cluster-count-paint`          | `Object` | `{ 'text-color': 'white' }`                            | Paint for the cluster count labels.                                                                                                 |
-| `unclustered-point-layer-type` | `String` | `'circle'`                                             | Type of the unclustered points layer.                                                                                               |
-| `unclustered-point-layout`     | `Object` | `{}`                                                   | Layout for the unclustered points layer.                                                                                            |
-| `unclustered-point-paint`      | `Object` | `{ 'circle-color': '#000', 'circle-radius': 4 }`       | Paint for the unclustered points layer.                                                                                             |
+| Option                         | Type     | Default                                                | Description                                                                                                   |
+| ------------------------------ | -------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `cluster-max-zoom`             | `Number` | `14`                                                   | Max zoom at which points are clustered.                                                                       |
+| `cluster-radius`               | `Number` | `50`                                                   | Radius of each cluster when clustering points.                                                                |
+| `cluster-min-points`           | `Number` | `2`                                                    | Minimum number of points to form a cluster.                                                                   |
+| `cluster-properties`           | `Object` | `{}`                                                   | Custom [cluster properties](https://docs.mapbox.com/style-spec/reference/sources/#geojson-clusterProperties). |
+| `clusters-layout`              | `Object` | `{}`                                                   | Layout for the clusters circle layer.                                                                         |
+| `clusters-paint`               | `Object` | `{ 'circle-color': '#000', 'circle-radius': 40 }`      | Paint for the clusters circle layer.                                                                          |
+| `cluster-count-layout`         | `Object` | `{ 'text-field': ['get', 'point_count_abbreviated'] }` | Layout for the cluster count labels.                                                                          |
+| `cluster-count-paint`          | `Object` | `{ 'text-color': 'white' }`                            | Paint for the cluster count labels.                                                                           |
+| `unclustered-point-layer-type` | `String` | `'circle'`                                             | Type of the unclustered points layer.                                                                         |
+| `unclustered-point-layout`     | `Object` | `{}`                                                   | Layout for the unclustered points layer.                                                                      |
+| `unclustered-point-paint`      | `Object` | `{ 'circle-color': '#000', 'circle-radius': 4 }`       | Paint for the unclustered points layer.                                                                       |
 
-#### Refs
+#### Getters
 
-| Ref       | Type                | Description                                                                                                                                                                                                                                                  |
-| --------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `geojson` | `HTMLScriptElement` | Optional `<script data-ref="geojson" type="application/json">` element holding inline GeoJSON. When present, its parsed content is used as the clustered source data instead of the `data` URL. Invalid JSON falls back to the `data` option with a warning. |
+| Getter              | Type                  | Description                                                                              |
+| ------------------- | --------------------- | ---------------------------------------------------------------------------------------- |
+| `items`             | `MapboxClusterItem[]` | The registered items, in registration order — the read-only surface for an orchestrator. |
+| `featureCollection` | `FeatureCollection`   | The GeoJSON derived from the registered items — the data pushed to the source.           |
+
+#### Methods
+
+| Method             | Description                                                                                                                       |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `register(item)`   | Register a `MapboxClusterItem` and schedule a coalesced rebuild. Called automatically by items on mount.                          |
+| `unregister(item)` | Unregister a `MapboxClusterItem` and schedule a coalesced rebuild. Called automatically by items on destroy.                      |
+| `setData(data)`    | Replace the live source data directly, bypassing the item registry — for imperative control. Safe before mount or after teardown. |
 
 #### Events
 
-| Event                | Payload              | Description                                                                                        |
-| -------------------- | -------------------- | -------------------------------------------------------------------------------------------------- |
-| `cluster-click`      | `(clusterId, event)` | A cluster was clicked. Call `event.preventDefault()` to skip the default zoom-to-cluster behavior. |
-| `feature-click`      | `(feature, event)`   | An unclustered point was clicked.                                                                  |
-| `feature-mouseenter` | `(feature, event)`   | The pointer entered an unclustered point.                                                          |
-| `feature-mouseleave` | `(event)`            | The pointer left an unclustered point.                                                             |
+| Event           | Payload                  | Description                                                                                                                                    |
+| --------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cluster-click` | `(clusterId, event)`     | A cluster was clicked. Call `event.preventDefault()` to skip the default zoom-to-cluster behavior.                                             |
+| `item-click`    | `(item, feature, event)` | An unclustered point was clicked. `item` is the registered `MapboxClusterItem` behind the feature, or `undefined` when none could be resolved. |
+| `update`        | `(items)`                | The item set changed (a rebuild ran). Carries the live item set so an orchestrator can re-fit and re-filter.                                   |
+
+### MapboxClusterItem
+
+A single entry of a `MapboxCluster` — at once a rendered list item AND a map feature. It resolves the closest `MapboxCluster` ancestor, pushes itself into its registry on mount (`register`) and pulls itself out on destroy (`unregister`), so the cluster never has to query for its children. It is headless and passive: it never selects itself — a [`StoreLocator`](/components/StoreLocator/) orchestrator (when one wraps the cluster) drives its state setters.
+
+#### Options
+
+| Option       | Type     | Default  | Description                                                              |
+| ------------ | -------- | -------- | ------------------------------------------------------------------------ |
+| `id`         | `String` | —        | Stable identifier, used to match a clicked map feature back to the item. |
+| `lng-lat`    | `Array`  | `[0, 0]` | The point coordinates as `[longitude, latitude]`.                        |
+| `properties` | `Object` | `{}`     | Extra feature properties merged into the item's GeoJSON feature.         |
+
+#### Refs
+
+| Ref     | Type          | Description                                                                                                                      |
+| ------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `popup` | `HTMLElement` | Optional. Its inner HTML is used as the popup content on selection; otherwise the item's whole inner HTML is used as a fallback. |
+
+#### Getters
+
+| Getter         | Type                      | Description                                       |
+| -------------- | ------------------------- | ------------------------------------------------- |
+| `id`           | `string`                  | The item's stable identifier.                     |
+| `lngLat`       | `[number, number]`        | The item's `[lng, lat]` coordinates.              |
+| `properties`   | `Record<string, unknown>` | The extra feature properties.                     |
+| `popupContent` | `string`                  | The HTML used as the popup content when selected. |
+
+#### Methods
+
+The state setters below are called by a `StoreLocator` orchestrator; you generally read the resulting data-attributes from CSS rather than calling them yourself.
+
+| Method               | Description                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------------- |
+| `setInBounds(value)` | Toggle the `data-in-bounds` attribute — the list-visibility signal.                           |
+| `setActive(value)`   | Toggle the `data-active` attribute and the `aria-current="true"` state — the selected signal. |
 
 ## AbstractMapboxMapChild
 

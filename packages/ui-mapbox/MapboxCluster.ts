@@ -1,6 +1,5 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
 import { debounce } from '@studiometa/js-toolkit/utils';
-import mapboxgl from 'mapbox-gl';
 import type {
   CircleLayerSpecification,
   SymbolLayerSpecification,
@@ -10,8 +9,6 @@ import type {
   GeoJSONSource,
   MapMouseEvent,
   LngLatLike,
-  LngLatBoundsLike,
-  Popup,
 } from 'mapbox-gl';
 import type { FeatureCollection, Point } from 'geojson';
 import {
@@ -56,32 +53,28 @@ export interface MapboxClusterProps extends AbstractMapboxMapChildProps {
     unclusteredPointLayerType: string;
     unclusteredPointLayout: Record<string, unknown>;
     unclusteredPointPaint: Record<string, unknown>;
-    itemZoomLevel: number;
-    noSort: boolean;
-    fitOnUpdate: boolean;
-    popupOptions: Record<string, unknown>;
   };
 }
 
 /**
- * A clustered GeoJSON source whose features ARE its rendered items.
+ * A clustered GeoJSON **source driver** whose features ARE its rendered items.
  *
  * `MapboxCluster` merges the map source and the sidebar list of a classic
  * "store locator" into a single declarative unit: `MapboxClusterItem`s (rendered
  * list entries living outside the map) push themselves into the cluster's
  * registry, and the cluster derives its clustered GeoJSON source from that
- * registry. There is no separate `StoreLocator` coordinator and nothing observes
- * or `$query`s — items self-register, the cluster rebuilds (debounced) on every
- * registry change, gated on `whenMapReady`.
+ * registry. Items self-register, the cluster rebuilds (debounced) on every
+ * registry change, gated on `whenMapReady`, and nothing observes or `$query`s.
  *
- * Each item has three independent states:
- *
- * 1. **Registered** — the item exists in the DOM. Drives the **map data** and
- *    only changes when the item set changes (e.g. a `Fetch` swaps the list).
- * 2. **In bounds** — the item's `lngLat` is inside the current viewport. Drives
- *    **list visibility + distance sort only**, recomputed on map `moveend`.
- * 3. **Selected** — the chosen item. Drives fly-to, the popup, `active` styling
- *    and the `select` event.
+ * The cluster is deliberately **thin**: it owns only the map data and the
+ * clustering interaction (a clustered source, the three layers and the
+ * click-to-zoom on clusters). It does **not** select, fly to, filter by viewport
+ * or open popups — those search-UX concerns belong to the optional
+ * [`StoreLocator`](./StoreLocator.js) orchestrator, which drives them on top of a
+ * cluster. Used standalone, a `MapboxCluster` still renders a working clustered
+ * map + list (points render, clusters zoom on click); it simply reports a click
+ * on an unclustered point through the `item-click` event and lets the caller
+ * decide what it means.
  *
  * @see https://ui.studiometa.dev/-/components/MapboxMap/
  */
@@ -93,7 +86,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
    */
   static config: BaseConfig = {
     name: 'MapboxCluster',
-    emits: ['cluster-click', 'feature-click', 'select', 'deselect', 'filter'],
+    emits: ['cluster-click', 'item-click', 'update'],
     options: {
       clusterMaxZoom: {
         type: Number,
@@ -149,21 +142,6 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
           'circle-radius': 4,
         }),
       },
-      // Zoom level applied when flying to a selected item.
-      itemZoomLevel: {
-        type: Number,
-        default: 14,
-      },
-      // Boolean options default to `false`, so the distance sort is ON by
-      // default; `data-option-no-sort` disables the reorder of in-view items.
-      noSort: Boolean,
-      // Fit the map bounds to the item set whenever it changes.
-      fitOnUpdate: Boolean,
-      // Options forwarded to the `mapboxgl.Popup` opened on selection.
-      popupOptions: {
-        type: Object,
-        default: () => ({}),
-      },
     },
   };
 
@@ -180,16 +158,15 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
   __items: MapboxClusterItem[] = [];
 
   /**
-   * The currently selected item, if any.
-   * @private
+   * The registered `MapboxClusterItem`s, in registration order.
+   *
+   * Read-only surface for an orchestrator (e.g. `StoreLocator`) that needs to
+   * iterate the item set for viewport filtering, distance sorting or selection —
+   * the cluster owns the registry, consumers only read it.
    */
-  __selected?: MapboxClusterItem;
-
-  /**
-   * The popup opened for the selected item, created lazily.
-   * @private
-   */
-  __popup?: Popup;
+  get items(): MapboxClusterItem[] {
+    return this.__items;
+  }
 
   /**
    * Derive an id for the given suffix from the instance base id.
@@ -245,48 +222,8 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
 
     if (index > -1) {
       this.__items.splice(index, 1);
-
-      if (this.__selected === item) {
-        this.__selected = undefined;
-      }
-
       this.__scheduleRebuild();
     }
-  }
-
-  /**
-   * Select an item: deactivate the previous one, fly to the item, open its
-   * popup, mark it active and emit a `select` event.
-   * @param {MapboxClusterItem} item
-   */
-  selectItem(item: MapboxClusterItem) {
-    if (this.__selected && this.__selected !== item) {
-      this.__selected.setActive(false);
-    }
-
-    item.setActive(true);
-    this.__selected = item;
-
-    this.__readyMap?.flyTo({
-      center: item.lngLat as LngLatLike,
-      zoom: this.$options.itemZoomLevel,
-    });
-
-    this.__openPopup(item);
-    this.$emit('select', item);
-  }
-
-  /**
-   * Clear the current selection, close the popup and emit a `deselect` event.
-   */
-  deselect() {
-    if (this.__selected) {
-      this.__selected.setActive(false);
-      this.__selected = undefined;
-    }
-
-    this.__popup?.remove();
-    this.$emit('deselect');
   }
 
   /**
@@ -306,33 +243,6 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
   }
 
   /**
-   * Open (or move) the selection popup on the given item, using its popup
-   * content. A content-less item closes any open popup instead.
-   * @private
-   * @param {MapboxClusterItem} item
-   */
-  __openPopup(item: MapboxClusterItem) {
-    const map = this.__readyMap;
-
-    if (!map) {
-      return;
-    }
-
-    const content = item.popupContent;
-
-    if (!content) {
-      this.__popup?.remove();
-      return;
-    }
-
-    if (!this.__popup) {
-      this.__popup = new mapboxgl.Popup(this.$options.popupOptions);
-    }
-
-    this.__popup.setLngLat(item.lngLat as LngLatLike).setHTML(content).addTo(map);
-  }
-
-  /**
    * Coalesce rebuilds into a single trailing call, so a batch of registrations
    * spanning multiple ticks results in one map data update.
    * @private
@@ -344,9 +254,8 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
   }, 100);
 
   /**
-   * Push the derived feature collection to the source, optionally fit the map to
-   * the item set, then recompute the in-view list. No-op until the map is ready
-   * (the initial build happens in `whenMapReady`).
+   * Push the derived feature collection to the source and announce the change.
+   * No-op until the map is ready (the initial build happens in `whenMapReady`).
    * @private
    */
   __rebuild() {
@@ -357,91 +266,9 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
     }
 
     this.setData(this.featureCollection as GeoJSONSourceSpecification['data']);
-
-    if (this.$options.fitOnUpdate && this.__items.length > 0) {
-      map.fitBounds(this.__getItemsBounds(), { padding: 40 });
-    }
-
-    this.__syncViewport();
-  }
-
-  /**
-   * Compute the bounding box of the whole registered item set as a
-   * `[[minLng, minLat], [maxLng, maxLat]]` tuple.
-   * @private
-   * @returns {LngLatBoundsLike}
-   */
-  __getItemsBounds(): LngLatBoundsLike {
-    let minLng = Infinity;
-    let minLat = Infinity;
-    let maxLng = -Infinity;
-    let maxLat = -Infinity;
-
-    for (const item of this.__items) {
-      const [lng, lat] = item.lngLat;
-      minLng = Math.min(minLng, lng);
-      minLat = Math.min(minLat, lat);
-      maxLng = Math.max(maxLng, lng);
-      maxLat = Math.max(maxLat, lat);
-    }
-
-    return [
-      [minLng, minLat],
-      [maxLng, maxLat],
-    ];
-  }
-
-  /**
-   * Recompute the visible/sorted list = registered ∩ in-bounds, distance-sorted.
-   *
-   * Reflects the in-bounds state on every item, reorders the in-view items in
-   * their shared parent list (so DOM order matches distance) and emits `filter`
-   * with the in-view items. Never touches the map data.
-   * @private
-   */
-  __syncViewport() {
-    const map = this.__readyMap;
-
-    if (!map) {
-      return;
-    }
-
-    const bounds = map.getBounds();
-    const center = map.getCenter();
-    const inView: MapboxClusterItem[] = [];
-
-    for (const item of this.__items) {
-      const isInBounds = Boolean(bounds?.contains(item.lngLat as LngLatLike));
-      item.setInBounds(isInBounds);
-
-      if (isInBounds) {
-        inView.push(item);
-      }
-    }
-
-    if (!this.$options.noSort && center) {
-      inView.sort(
-        (a, b) =>
-          center.distanceTo(new mapboxgl.LngLat(a.lngLat[0], a.lngLat[1])) -
-          center.distanceTo(new mapboxgl.LngLat(b.lngLat[0], b.lngLat[1])),
-      );
-    }
-
-    this.__reorderList(inView);
-    this.$emit('filter', inView);
-  }
-
-  /**
-   * Reorder the in-view items inside their shared parent list so their DOM order
-   * matches the distance sort. Appending a connected node moves it, keeping the
-   * list free of duplicates.
-   * @private
-   * @param {MapboxClusterItem[]} items
-   */
-  __reorderList(items: MapboxClusterItem[]) {
-    for (const item of items) {
-      item.$el.parentElement?.append(item.$el);
-    }
+    // Let an orchestrator react to the new item set (fit the map, refilter the
+    // list). The cluster itself never fits or filters — it only reports.
+    this.$emit('update', this.__items);
   }
 
   /**
@@ -515,29 +342,21 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
   };
 
   /**
-   * Emit a `feature-click` for the clicked unclustered point and select the item
-   * behind it.
+   * Report a click on an unclustered point: resolve the feature back to the
+   * registered item behind it and emit `item-click`. The cluster makes no
+   * decision about what a click means — an orchestrator (e.g. `StoreLocator`)
+   * listens and selects, opens a popup, etc.
    * @private
    */
   __handleUnclusteredClick = (event: MapMouseEvent) => {
     const feature = event.features?.[0];
-    this.$emit('feature-click', feature, event);
-
-    if (event.defaultPrevented) {
-      return;
-    }
-
     const id = feature?.properties?.id;
+    const item =
+      id === undefined || id === null
+        ? undefined
+        : this.__items.find((candidate) => candidate.id === String(id));
 
-    if (id === undefined || id === null) {
-      return;
-    }
-
-    const item = this.__items.find((candidate) => candidate.id === String(id));
-
-    if (item) {
-      this.selectItem(item);
-    }
+    this.$emit('item-click', item, feature, event);
   };
 
   /**
@@ -557,16 +376,8 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
   };
 
   /**
-   * Recompute the in-view list whenever the viewport settles.
-   * @private
-   */
-  __handleMoveEnd = () => {
-    this.__syncViewport();
-  };
-
-  /**
-   * Mounted hook: build the source and layers, wire interactions, run the first
-   * viewport sync — all once the map is ready.
+   * Mounted hook: build the source and layers, wire the clustering interaction
+   * and announce the initial item set — all once the map is ready.
    */
   mounted() {
     // Announce the cluster so any `MapboxClusterItem` that mounted before it —
@@ -647,14 +458,15 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
       map.on('click', unclusteredPointId, this.__handleUnclusteredClick);
       map.on('mouseenter', unclusteredPointId, this.__handleUnclusteredMouseenter);
       map.on('mouseleave', unclusteredPointId, this.__handleUnclusteredMouseleave);
-      map.on('moveend', this.__handleMoveEnd);
 
-      this.__syncViewport();
+      // Announce the seeded item set so an orchestrator can run its first fit +
+      // viewport filter against a cluster that was already populated at load.
+      this.$emit('update', this.__items);
     });
   }
 
   /**
-   * Teardown hook: tear down listeners, layers, source and popup.
+   * Teardown hook: tear down listeners, layers and source.
    */
   __onDestroyed() {
     const map = this.__readyMap;
@@ -671,7 +483,6 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
       map.off('click', unclusteredPointId, this.__handleUnclusteredClick);
       map.off('mouseenter', unclusteredPointId, this.__handleUnclusteredMouseenter);
       map.off('mouseleave', unclusteredPointId, this.__handleUnclusteredMouseleave);
-      map.off('moveend', this.__handleMoveEnd);
 
       for (const id of [clustersId, clusterCountId, unclusteredPointId]) {
         if (map.getLayer(id)) {
@@ -684,10 +495,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
       }
     }
 
-    this.__popup?.remove();
-    this.__popup = undefined;
     this.__items = [];
-    this.__selected = undefined;
   }
 }
 

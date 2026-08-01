@@ -24,12 +24,20 @@ export interface MapboxClusterItemProps extends BaseProps {
  * to the cluster on mount (`register`) and PULLS itself out on destroy
  * (`unregister`), so the cluster never has to query for its children.
  *
- * The component is headless: state setters reflect state as data-attributes on
- * `$el` so the integrator can style the item with plain CSS:
+ * The component is headless and passive: it never selects itself. The state
+ * setters below reflect state as data-attributes on `$el` so the integrator can
+ * style the item with plain CSS, and they are driven by whoever coordinates the
+ * experience — a [`StoreLocator`](./StoreLocator.js) orchestrator on `moveend`
+ * and on selection, if one wraps the cluster:
  *
  * - `data-in-bounds` — present when the item's `lngLat` is inside the current
  *   map viewport (list-visibility signal).
  * - `data-active` + `aria-current="true"` — present when the item is selected.
+ *
+ * Used under a bare `MapboxCluster` (no orchestrator) the item still registers
+ * and renders as a clustered point; it just carries no selection affordance of
+ * its own — a click is reported by the cluster's `item-click` event for a
+ * caller to act on.
  *
  * @see https://ui.studiometa.dev/-/components/MapboxMap/
  */
@@ -179,16 +187,8 @@ export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
   }
 
   /**
-   * Click handler delegating the selection to the cluster so the map and the
-   * other items stay in sync. Auto-bound by js-toolkit to a click on `$el`.
-   */
-  onClick() {
-    this.__cluster?.selectItem(this);
-  }
-
-  /**
    * Reflect the "in the current map viewport" state as a `data-in-bounds`
-   * attribute. Called by the cluster on every map `moveend`.
+   * attribute. Called by a `StoreLocator` orchestrator on every map `moveend`.
    * @param {boolean} value
    */
   setInBounds(value: boolean) {
@@ -197,7 +197,7 @@ export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
 
   /**
    * Reflect the "selected/active" state as a `data-active` attribute and the
-   * `aria-current` state. Called by the cluster on selection.
+   * `aria-current` state. Called by a `StoreLocator` orchestrator on selection.
    * @param {boolean} value
    */
   setActive(value: boolean) {

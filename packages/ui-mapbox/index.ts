@@ -13,4 +13,5 @@ export * from './MapboxMarker.js';
 export * from './MapboxNavigationControl.js';
 export * from './MapboxPopup.js';
 export * from './MapboxSource.js';
+export * from './StoreLocator.js';
 export * from './registerMapboxComponents.js';

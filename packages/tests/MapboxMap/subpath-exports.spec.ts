@@ -10,6 +10,9 @@ import MapboxClusterItemDefault, {
 import MapboxClusterDefault, {
   MapboxCluster as MapboxClusterNamed,
 } from '@studiometa/ui-mapbox/MapboxCluster';
+import StoreLocatorDefault, {
+  StoreLocator as StoreLocatorNamed,
+} from '@studiometa/ui-mapbox/StoreLocator';
 // The `.js`-extensioned subpaths must resolve to the same modules as the
 // extensionless ones above.
 import MapboxMapJsDefault, {
@@ -21,11 +24,15 @@ import MapboxClusterItemJsDefault, {
 import MapboxClusterJsDefault, {
   MapboxCluster as MapboxClusterJsNamed,
 } from '@studiometa/ui-mapbox/MapboxCluster.js';
+import StoreLocatorJsDefault, {
+  StoreLocator as StoreLocatorJsNamed,
+} from '@studiometa/ui-mapbox/StoreLocator.js';
 
 test.each([
   ['MapboxMap', MapboxMapDefault, MapboxMapNamed, barrel.MapboxMap],
   ['MapboxClusterItem', MapboxClusterItemDefault, MapboxClusterItemNamed, barrel.MapboxClusterItem],
   ['MapboxCluster', MapboxClusterDefault, MapboxClusterNamed, barrel.MapboxCluster],
+  ['StoreLocator', StoreLocatorDefault, StoreLocatorNamed, barrel.StoreLocator],
 ])('%s is available at its own subpath as default and named export', (_name, def, named, fromBarrel) => {
   // Ensure the `mapbox-gl` mock is registered before the package is imported.
   expect(MockMap).toBeDefined();
@@ -45,6 +52,7 @@ test.each([
     barrel.MapboxClusterItem,
   ],
   ['MapboxCluster', MapboxClusterJsDefault, MapboxClusterJsNamed, barrel.MapboxCluster],
+  ['StoreLocator', StoreLocatorJsDefault, StoreLocatorJsNamed, barrel.StoreLocator],
 ])(
   '%s is available at its `.js`-extensioned subpath as default and named export',
   (_name, def, named, fromBarrel) => {

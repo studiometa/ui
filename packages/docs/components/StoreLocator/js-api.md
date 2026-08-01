@@ -5,26 +5,27 @@ outline: deep
 
 # JS API
 
-The store locator is made of two components:
+The store locator is an **orchestrator** built on the [`MapboxMap` family](/components/MapboxMap/js-api):
 
-- `StoreLocator` — the coordinator, wrapping a [`MapboxMap`](/components/MapboxMap/js-api#map) and the sidebar list.
-- `StoreLocatorItem` — a single store entry living in the sidebar.
+- `StoreLocator` — the coordinator, wrapping a [`MapboxMap`](/components/MapboxMap/js-api#map) that contains a [`MapboxCluster`](/components/MapboxMap/js-api#cluster).
+- [`MapboxClusterItem`](/components/MapboxMap/js-api#mapboxclusteritem) — a single store entry; it registers with the cluster (the owner of the item registry), and the orchestrator reads and drives it. There is **no** dedicated store-item class.
 
-You only ever register `StoreLocator` with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html): it declares `MapboxMap` and `StoreLocatorItem` internally, and the optional `MapboxCluster`/`MapboxGeocoder` inside the map are discovered automatically once the map has loaded.
+The `StoreLocator` declares no child components, so nothing is ever double-mounted. Register the family with [`registerMapboxComponents`](/components/MapboxMap/js-api#registermapboxcomponents), or register `StoreLocator`, `MapboxMap`, `MapboxCluster` and `MapboxClusterItem` yourself. The orchestrator discovers them in its subtree with `$query` once mounted, retrying a few ticks for asynchronously-mounted children (the geocoder lazy-imports its module).
 
-The coordinator reads its options **once, at mount time** — they are **not** reactive, like the rest of the [`MapboxMap` family](/components/MapboxMap/js-api#reactivity-and-updates). To change the store set afterwards, change the DOM of the list (add/remove `StoreLocatorItem` elements) and the coordinator re-derives the map data automatically.
+The orchestrator reads its options **once, at mount time** — they are **not** reactive, like the rest of the [`MapboxMap` family](/components/MapboxMap/js-api#reactivity-and-updates). To change the store set afterwards, change the DOM of the list (add/remove `MapboxClusterItem` elements): the cluster re-derives the map data and emits an `update`, and the orchestrator re-fits and re-filters automatically.
 
 ## StoreLocator
 
-The coordinator. It owns no map rendering: it registers the `StoreLocatorItem`s, derives a GeoJSON `FeatureCollection` from them, pushes it to the child `MapboxCluster` once the map is loaded, filters and sorts the list on every map move, and handles selection.
+The coordinator. It owns no map rendering and no registry: the `MapboxCluster` derives the GeoJSON source from its registered `MapboxClusterItem`s, and the orchestrator reads that item set to filter and sort the list on every map move, wire the geocoder, re-frame the map on item-set changes, and handle selection.
 
 ### Options
 
-| Option            | Type      | Default | Description                                                                                             |
-| ----------------- | --------- | ------- | ------------------------------------------------------------------------------------------------------- |
-| `item-zoom-level` | `Number`  | `14`    | The zoom level the map flies to when a store is selected.                                               |
-| `no-sort`         | `Boolean` | `false` | Disable the distance sort. By default the in-view items are reordered nearest-first on every map move.  |
-| `fit-on-update`   | `Boolean` | `false` | Fit the map bounds to the whole item set whenever it changes (on mount and on any add/remove of items). |
+| Option            | Type      | Default | Description                                                                                            |
+| ----------------- | --------- | ------- | ------------------------------------------------------------------------------------------------------ |
+| `item-zoom-level` | `Number`  | `14`    | The zoom level the map flies to when a store is selected.                                              |
+| `no-sort`         | `Boolean` | `false` | Disable the distance sort. By default the in-view items are reordered nearest-first on every map move. |
+| `fit-on-update`   | `Boolean` | `false` | Fit the map bounds to the whole item set whenever it changes (on load and on any add/remove of items). |
+| `popup-options`   | `Object`  | `{}`    | Options forwarded to the `mapboxgl.Popup` opened on selection.                                         |
 
 <!-- prettier-ignore-start -->
 ```html {3}
@@ -39,44 +40,38 @@ The coordinator. It owns no map rendering: it registers the `StoreLocatorItem`s,
 
 ### Refs
 
-| Ref    | Type          | Description                                                                                               |
-| ------ | ------------- | --------------------------------------------------------------------------------------------------------- |
-| `list` | `HTMLElement` | The sidebar container holding the `StoreLocatorItem`s. The coordinator reorders its children by distance. |
+| Ref    | Type          | Description                                                                                                                                       |
+| ------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list` | `HTMLElement` | Optional. The container the in-view items are reordered inside by distance. When omitted, items are reordered inside their own shared DOM parent. |
 
 ### Getters
 
-| Getter              | Type                          | Description                                                                     |
-| ------------------- | ----------------------------- | ------------------------------------------------------------------------------- |
-| `isLoaded`          | `boolean`                     | Whether the underlying map has finished loading. (a public field, not a getter) |
-| `mapboxMap`         | `MapboxMap`                   | The closest child `MapboxMap` component.                                        |
-| `map`               | `mapboxgl.Map`                | The underlying Mapbox `Map` instance. Only valid once the map has loaded.       |
-| `cluster`           | `MapboxCluster \| undefined`  | The optional `MapboxCluster` child, mounted by the `MapboxMap`.                 |
-| `geocoder`          | `MapboxGeocoder \| undefined` | The optional `MapboxGeocoder` child, mounted by the `MapboxMap`.                |
-| `featureCollection` | `FeatureCollection`           | The GeoJSON derived from the registered items — the data pushed to the source.  |
+| Getter      | Type                          | Description                                                                     |
+| ----------- | ----------------------------- | ------------------------------------------------------------------------------- |
+| `isLoaded`  | `boolean`                     | Whether the underlying map has finished loading. (a public field, not a getter) |
+| `mapboxMap` | `MapboxMap`                   | The child `MapboxMap` component.                                                |
+| `map`       | `mapboxgl.Map`                | The underlying Mapbox `Map` instance. Only valid once the map has loaded.       |
+| `cluster`   | `MapboxCluster \| undefined`  | The child `MapboxCluster` (the item registry + map data source).                |
+| `geocoder`  | `MapboxGeocoder \| undefined` | The optional child `MapboxGeocoder`.                                            |
+| `items`     | `MapboxClusterItem[]`         | The registered items, read from the cluster (their single source of truth).     |
 
 ### Methods
 
 #### `selectItem(item)`
 
-- Arguments: `StoreLocatorItem`
+- Arguments: `MapboxClusterItem`
 
-Select a store: deactivate the previous one, fly the map to the item at `item-zoom-level`, mark it active (`data-active` + `aria-current="true"`) and emit [`select`](#select). Called by an item's own click, by a cluster feature-click, and available for you to call directly.
+Select a store: deactivate the previous one, fly the map to the item at `item-zoom-level`, open a popup from the item's [`popupContent`](/components/MapboxMap/js-api#mapboxclusteritem), mark it active (`data-active` + `aria-current="true"`) and emit [`select`](#select). Called automatically on a sidebar click (delegated on the root), on the cluster's `item-click` (an unclustered pin), and available for you to call directly.
 
 #### `deselect()`
 
-Clear the current selection, remove the active state and emit [`deselect`](#deselect).
-
-#### `registerItem(item)` / `unregisterItem(item)`
-
-- Arguments: `StoreLocatorItem`
-
-Add/remove an item from the coordinator's registry and schedule a coalesced map-data sync. These are called automatically by the `StoreLocatorItem`s on mount/destroy — you rarely call them yourself, but they are the hook a `Fetch` list swap relies on.
+Clear the current selection, close the popup, remove the active state and emit [`deselect`](#deselect).
 
 ### Events
 
 #### `select`
 
-Emitted when a store is selected, with the selected `StoreLocatorItem` instance. Wire your detail panel here.
+Emitted when a store is selected, with the selected `MapboxClusterItem` instance. Wire your detail panel here.
 
 ```js
 onStoreLocatorSelect({ args: [item] }) {
@@ -98,64 +93,27 @@ onStoreLocatorFilter({ args: [items] }) {
 }
 ```
 
-## StoreLocatorItem
+## Store entries: `MapboxClusterItem`
 
-A single store entry. Unlike the other `@studiometa/ui-mapbox` components, it does **not** live inside the map: its DOM is in the sidebar list, and its context is the parent `StoreLocator` (resolved via `$closest('StoreLocator')`). It is headless — the coordinator only reflects state as data-attributes so you can style it with plain CSS.
-
-### Options
-
-| Option    | Type     | Default  | Description                                                              |
-| --------- | -------- | -------- | ------------------------------------------------------------------------ |
-| `id`      | `String` | —        | Stable identifier, used to match a clicked map feature back to the item. |
-| `lng-lat` | `Array`  | `[0, 0]` | The store coordinates as `[longitude, latitude]`.                        |
-
-### Refs
-
-| Ref      | Type          | Description                                                                                 |
-| -------- | ------------- | ------------------------------------------------------------------------------------------- |
-| `select` | `HTMLElement` | The element (typically a `<button>`) whose click selects the store through the coordinator. |
-
-### Getters
-
-| Getter         | Type               | Description                                    |
-| -------------- | ------------------ | ---------------------------------------------- |
-| `id`           | `string`           | The item's stable identifier.                  |
-| `lngLat`       | `[number, number]` | The item's `[lng, lat]` coordinates.           |
-| `storeLocator` | `StoreLocator`     | The closest parent `StoreLocator` coordinator. |
-
-### Methods
-
-The state setters below are called by the coordinator; you generally read the resulting data-attributes from CSS rather than calling them yourself.
-
-#### `setInBounds(value)`
-
-- Arguments: `boolean`
-
-Toggle the `data-in-bounds` attribute — the [list-visibility](#styling-contract) signal.
-
-#### `setActive(value)`
-
-- Arguments: `boolean`
-
-Toggle the `data-active` attribute and the `aria-current="true"` state — the [selected](#styling-contract) signal.
+A single store entry is a [`MapboxClusterItem`](/components/MapboxMap/js-api#mapboxclusteritem). It registers with the closest `MapboxCluster`, exposes `id`, `lngLat`, `properties` and `popupContent`, and reflects its state through `setInBounds`/`setActive` (driven by the orchestrator). Refer to its [reference](/components/MapboxMap/js-api#mapboxclusteritem) for the full API. The orchestrator itself never reintroduces a separate item class — it drives the cluster's items.
 
 ## Styling contract {#styling-contract}
 
-The coordinator never styles anything: it only reflects state as attributes on each `StoreLocatorItem`. You own the CSS.
+The orchestrator never styles anything: it only reflects state as attributes on each `MapboxClusterItem`. You own the CSS.
 
-| Attribute                      | Meaning                                                        | Typical CSS                                                                   |
-| ------------------------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `data-in-bounds`               | The item is inside the current map viewport (list visibility). | `[data-component='StoreLocatorItem']:not([data-in-bounds]) { display: none }` |
-| `data-active` + `aria-current` | The item is the selected one.                                  | `[data-component='StoreLocatorItem'][data-active] { /* highlight */ }`        |
+| Attribute                      | Meaning                                                        | Typical CSS                                                                    |
+| ------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `data-in-bounds`               | The item is inside the current map viewport (list visibility). | `[data-component='MapboxClusterItem']:not([data-in-bounds]) { display: none }` |
+| `data-active` + `aria-current` | The item is the selected one.                                  | `[data-component='MapboxClusterItem'][data-active] { /* highlight */ }`        |
 
 ```css
 /* Hide out-of-view stores from the list. */
-[data-component='StoreLocatorItem']:not([data-in-bounds]) {
+[data-component='MapboxClusterItem']:not([data-in-bounds]) {
   display: none;
 }
 
 /* Highlight the selected store. */
-[data-component='StoreLocatorItem'][data-active] {
+[data-component='MapboxClusterItem'][data-active] {
   background-color: #ecfdf5;
 }
 ```
