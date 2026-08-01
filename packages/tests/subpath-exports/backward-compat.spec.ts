@@ -10,8 +10,9 @@ import { AccordionItem as AccordionItemDeepJs } from '@studiometa/ui/Accordion/A
 // Deep helper import documented in `ScrollAnimation/withScrollAnimationDebug`.
 import { withScrollAnimationDebug as debugDeep } from '@studiometa/ui/ScrollAnimation/withScrollAnimationDebug';
 // A `Data*` primitive whose directory has no single "main" component and thus
-// exposes no default export, but whose directory-index subpath must still work.
-import { DataBind as DataBindSubpath } from '@studiometa/ui/Data';
+// exposes no default export, but which is exposed at its own flat top-level
+// member subpath (`@studiometa/ui/DataBind`, not a `.../Data` family aggregate).
+import { DataBind as DataBindSubpath } from '@studiometa/ui/DataBind';
 
 test('deep sub-component subpaths still resolve after adding exports', () => {
   expect(AccordionItemDeep).toBe(barrel.AccordionItem);
@@ -24,9 +25,22 @@ test('documented deep helper subpath still resolves', () => {
   expect(debugDeep).toBe(barrel.withScrollAnimationDebug);
 });
 
-test('directory-index subpath resolves for a package without a default export', () => {
+test('flat member subpath resolves for a package without a default export', () => {
   expect(DataBindSubpath).toBe(barrel.DataBind);
   expect('$isBase' in DataBindSubpath).toBe(true);
+});
+
+// The former `@studiometa/ui/Data` family-aggregate subpath was removed in
+// favour of flat per-member subpaths. With no explicit key, it now falls through
+// to the greedy `./*` wildcard, which points at a nonexistent root-level
+// `Data.ts` — so it no longer resolves to the family `Data/index.ts` barrel and
+// no importable module lives at that path.
+test('the removed family-aggregate subpath no longer resolves to a real module', () => {
+  // @ts-expect-error import.meta.resolve is available under Node's ESM loader.
+  const url: string = import.meta.resolve('@studiometa/ui/Data');
+  const path = fileURLToPath(url);
+  expect(path.endsWith('/Data/index.ts')).toBe(false);
+  expect(fs.existsSync(path)).toBe(false);
 });
 
 // The greedy `./*` wildcard added with the `exports` field rewrites every

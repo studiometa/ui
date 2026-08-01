@@ -16,6 +16,9 @@ import ModalJsDefault, { Modal as ModalJsNamed } from '@studiometa/ui/Modal.js';
 import TabsJsDefault, { Tabs as TabsJsNamed } from '@studiometa/ui/Tabs.js';
 import SliderJsDefault, { Slider as SliderJsNamed } from '@studiometa/ui/Slider.js';
 import FrameJsDefault, { Frame as FrameJsNamed } from '@studiometa/ui/Frame.js';
+// A "family" member has no default export — only its named export — exposed at
+// a flat top-level subpath (`@studiometa/ui/DataBind`, not `.../Data`).
+import { DataBind as DataBindNamed } from '@studiometa/ui/DataBind';
 
 test.each([
   ['Accordion', AccordionDefault, AccordionNamed, barrel.Accordion],
@@ -54,17 +57,28 @@ test.each([
 
 // A component subpath must resolve to its MAIN component module (`X/X.ts`), not
 // the `index.ts` barrel — the subpath now exposes the lean component module
-// directly. Components without a main file (e.g. `Data`) keep resolving to their
-// directory index. Strict Node resolution (`import.meta.resolve`) honours the
-// package `exports` map without importing the target.
+// directly. "Family" directories (e.g. `Data`, `decorators`, `Prefetch`) have
+// no single main file; instead each of their exported members is exposed at its
+// own flat top-level subpath resolving straight to the member module. Strict
+// Node resolution (`import.meta.resolve`) honours the package `exports` map
+// without importing the target.
 test.each([
   ['@studiometa/ui/Accordion', '/Accordion/Accordion.ts'],
   ['@studiometa/ui/Modal', '/Modal/Modal.ts'],
-  // No single main component → resolves to the directory index.
-  ['@studiometa/ui/Data', '/Data/index.ts'],
+  // Family members resolve to their own module at a flat top-level subpath.
+  ['@studiometa/ui/DataBind', '/Data/DataBind.ts'],
+  ['@studiometa/ui/withTransition', '/decorators/withTransition.ts'],
+  ['@studiometa/ui/PrefetchWhenVisible', '/Prefetch/PrefetchWhenVisible.ts'],
 ])('%s resolves to its main module (not the index barrel)', (specifier, suffix) => {
   // @ts-expect-error import.meta.resolve is available under Node's ESM loader.
   const url: string = import.meta.resolve(specifier);
   const path = fileURLToPath(url);
   expect(path.endsWith(suffix)).toBe(true);
+});
+
+// Family members carry no default export, only their named export, which must
+// match the class/function re-exported from the barrel.
+test('family member flat subpath exposes the named export matching the barrel', () => {
+  expect(DataBindNamed).toBeDefined();
+  expect(DataBindNamed).toBe(barrel.DataBind);
 });
