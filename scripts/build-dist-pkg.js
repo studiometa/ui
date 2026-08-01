@@ -1,7 +1,10 @@
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 function resolve(path) {
-  return new URL(path, import.meta.url).pathname;
+  // `fileURLToPath` decodes percent-escapes and normalises platform paths,
+  // unlike `URL.pathname` which leaves `%20`/`/C:/…` and breaks `fs.*Sync`.
+  return fileURLToPath(new URL(path, import.meta.url));
 }
 
 const root = resolve('../');
