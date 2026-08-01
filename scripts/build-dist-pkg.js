@@ -50,7 +50,12 @@ function buildExports(componentDirs) {
   };
 
   for (const dir of componentDirs) {
-    const target = { types: `./${dir}/index.d.ts`, import: `./${dir}/index.js` };
+    // Point the component subpath at its main module (`<dir>/<dir>.js`) when the
+    // component has one — the lean class module carrying the default export —
+    // rather than the `index` barrel. Components without a main file (e.g.
+    // `Data`, `decorators`, `Prefetch`) keep resolving to their directory index.
+    const base = fs.existsSync(`${uiRoot}/${dir}/${dir}.ts`) ? `${dir}/${dir}` : `${dir}/index`;
+    const target = { types: `./${base}.d.ts`, import: `./${base}.js` };
     exportsMap[`./${dir}`] = target;
     exportsMap[`./${dir}.js`] = target;
   }

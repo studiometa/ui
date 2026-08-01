@@ -1,4 +1,5 @@
 import { test, expect } from 'vitest';
+import { fileURLToPath } from 'node:url';
 import * as barrel from '@studiometa/ui';
 // Extensionless `@studiometa/ui/<Component>` subpaths must expose the main
 // component both as the default export and as a named export, matching the
@@ -50,3 +51,20 @@ test.each([
     expect(def).toBe(fromBarrel);
   },
 );
+
+// A component subpath must resolve to its MAIN component module (`X/X.ts`), not
+// the `index.ts` barrel — the subpath now exposes the lean component module
+// directly. Components without a main file (e.g. `Data`) keep resolving to their
+// directory index. Strict Node resolution (`import.meta.resolve`) honours the
+// package `exports` map without importing the target.
+test.each([
+  ['@studiometa/ui/Accordion', '/Accordion/Accordion.ts'],
+  ['@studiometa/ui/Modal', '/Modal/Modal.ts'],
+  // No single main component → resolves to the directory index.
+  ['@studiometa/ui/Data', '/Data/index.ts'],
+])('%s resolves to its main module (not the index barrel)', (specifier, suffix) => {
+  // @ts-expect-error import.meta.resolve is available under Node's ESM loader.
+  const url: string = import.meta.resolve(specifier);
+  const path = fileURLToPath(url);
+  expect(path.endsWith(suffix)).toBe(true);
+});
