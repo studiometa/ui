@@ -67,6 +67,10 @@ function buildExports(componentDirs) {
   // These are pure assets, so both `import` and `types` point at the file.
   exportsMap['./package.json'] = './package.json';
   exportsMap['./*.twig'] = { types: './*.twig', import: './*.twig' };
+  // NOTE: no `./*.svg` entry here — the SVG assets live under `packages/ui/svg/`
+  // in the source tree but are not copied into `dist/`, so they were never
+  // resolvable in the published package. The source `package.json` keeps its
+  // `./*.svg` entry for in-repo consumers.
   // NOTE: no `./*.ts` entry here. The published `dist/` ships `.js` + `.d.ts`
   // only (no `.ts` source), so a `.ts` subpath has no target — it was never
   // resolvable in the published package. The source `package.json` keeps its

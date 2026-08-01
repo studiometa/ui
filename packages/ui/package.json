@@ -83,6 +83,7 @@
     "./decorators.js": "./decorators/index.ts",
     "./package.json": "./package.json",
     "./*.twig": "./*.twig",
+    "./*.svg": "./*.svg",
     "./*.ts": "./*.ts",
     "./*.js": "./*.ts",
     "./*": "./*.ts"

@@ -46,6 +46,9 @@ test.each([
   // through package resolution (the `.twig` suffix beats the greedy `./*`).
   ['@studiometa/ui/Accordion/Accordion.twig', '/Accordion/Accordion.twig'],
   ['@studiometa/ui/Button/Button.twig', '/Button/Button.twig'],
+  // SVG assets live under `svg/` in the source tree; `./*.svg` keeps them
+  // resolvable in-repo (they are not published to `dist/`).
+  ['@studiometa/ui/svg/chevron.svg', '/svg/chevron.svg'],
   // In-repo, `@studiometa/ui` resolves to the `.ts` sources, so the source
   // `package.json` keeps a `./*.ts` entry to preserve `.ts`-extensioned deep
   // imports (otherwise `./*` rewrites them to `<path>.ts.ts`). The published
