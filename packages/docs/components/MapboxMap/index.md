@@ -72,3 +72,22 @@ registerComponent(MapboxMap);
 ::: tip Options are read once at mount
 Component options are read a single time when the map mounts and are **not** reactive, unlike the Vue library. To move the map or update its data afterwards, call the underlying Mapbox objects directly (e.g. `instance.map.setCenter(...)`). See the [reactivity note](./js-api#reactivity-and-updates) for details.
 :::
+
+## Lazy loading
+
+`mapbox-gl` is a heavy dependency (~230&nbsp;kB gzipped, more with the geocoder). Registering `MapboxMap` eagerly pulls it into your main bundle even on pages that never render a map. Prefer **lazy registration** so the map is code-split into its own chunk and only loaded when it is actually needed.
+
+js-toolkit ships [`importWhen*` helpers](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) for this. `importWhenVisible` defers the dynamic import until a `MapboxMap` element scrolls into view, then hands the resolved component to `registerComponent`:
+
+```js
+import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
+
+registerComponent(
+  importWhenVisible(
+    () => import('@studiometa/ui-mapbox').then(({ MapboxMap }) => MapboxMap),
+    'MapboxMap',
+  ),
+);
+```
+
+Because every marker, popup, control, source, layer, image and cluster is a child of `MapboxMap`, deferring the map defers the whole family — `mapbox-gl` included. Reach for a different trigger when it fits better: `importWhenIdle` (load during browser idle time), `importOnInteraction` (wait for a first click/focus/touch on the element) or `importOnMediaQuery` (load only above a breakpoint, e.g. to skip the map on small screens).
