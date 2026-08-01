@@ -272,3 +272,5 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
     });
   }
 }
+
+export default Draggable;

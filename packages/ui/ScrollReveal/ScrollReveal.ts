@@ -81,3 +81,5 @@ export class ScrollReveal<T extends BaseProps = BaseProps> extends withMountWhen
     }
   }
 }
+
+export default ScrollReveal;

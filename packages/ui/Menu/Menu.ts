@@ -208,3 +208,5 @@ export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
     this.menuList.toggle();
   }
 }
+
+export default Menu;

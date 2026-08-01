@@ -144,3 +144,5 @@ export class Dialog<T extends BaseProps = BaseProps> extends Base<T & DialogProp
     }
   }
 }
+
+export default Dialog;

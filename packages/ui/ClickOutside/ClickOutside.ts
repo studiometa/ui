@@ -32,3 +32,5 @@ export class ClickOutside<T extends BaseProps = BaseProps> extends Base<ClickOut
     }
   }
 }
+
+export default ClickOutside;

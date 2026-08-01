@@ -66,3 +66,5 @@ export class CircularMarquee extends Base<CircularMarqueeProps> {
     };
   }
 }
+
+export default CircularMarquee;

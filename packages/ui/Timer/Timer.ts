@@ -191,3 +191,5 @@ export class Timer<T extends BaseProps = BaseProps> extends Base<TimerProps & T>
     this.__timer = null;
   }
 }
+
+export default Timer;

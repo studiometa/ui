@@ -41,3 +41,5 @@ export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<Anchor
     }
   }
 }
+
+export default AnchorScrollTo;

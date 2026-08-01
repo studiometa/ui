@@ -17,3 +17,5 @@ export class Indexable<T extends BaseProps = BaseProps> extends withIndex<Base>(
     name: 'Indexable',
   };
 }
+
+export default Indexable;

@@ -132,3 +132,5 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePoin
     };
   }
 }
+
+export default Hoverable;

@@ -34,3 +34,5 @@ export class InView extends withMountWhenInView(Base) {
     this.$emit('out-of-view');
   }
 }
+
+export default InView;

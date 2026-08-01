@@ -21,3 +21,5 @@ export class Accordion<T extends BaseProps = BaseProps> extends AccordionCore<T 
     },
   };
 }
+
+export default Accordion;

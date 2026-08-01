@@ -145,3 +145,5 @@ export class FigureVideo<T extends BaseProps = BaseProps> extends withMountWhenI
     this.$terminate();
   }
 }
+
+export default FigureVideo;
