@@ -81,3 +81,5 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapbo
     this.__marker = undefined;
   }
 }
+
+export default MapboxMarker;

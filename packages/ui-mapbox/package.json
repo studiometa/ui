@@ -9,6 +9,10 @@
   "sideEffects": false,
   "main": "index.ts",
   "types": "index.d.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*.ts"
+  },
   "scripts": {
     "build": "npm run build:pkg && npm run build:types",
     "build:pkg": "node scripts/build.js",

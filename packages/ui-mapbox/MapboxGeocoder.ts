@@ -133,3 +133,5 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
     this.__control = undefined;
   }
 }
+
+export default MapboxGeocoder;

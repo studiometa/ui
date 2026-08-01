@@ -23,3 +23,5 @@ export class MapboxFullscreenControl extends withExtraConfig(AbstractMapboxContr
     return new mapboxgl.FullscreenControl(options);
   }
 }
+
+export default MapboxFullscreenControl;

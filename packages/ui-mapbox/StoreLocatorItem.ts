@@ -140,3 +140,5 @@ export class StoreLocatorItem<T extends BaseProps = BaseProps> extends Base<
     }
   }
 }
+
+export default StoreLocatorItem;

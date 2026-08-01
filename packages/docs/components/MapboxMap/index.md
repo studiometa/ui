@@ -82,12 +82,9 @@ js-toolkit ships [`importWhen*` helpers](https://js-toolkit.studiometa.dev/api/h
 ```js
 import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
 
-registerComponent(
-  importWhenVisible(
-    () => import('@studiometa/ui-mapbox').then(({ MapboxMap }) => MapboxMap),
-    'MapboxMap',
-  ),
-);
+registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'));
 ```
+
+Every component is also available at its own subpath (`@studiometa/ui-mapbox/<Component>`), whose default export is the component class — so the dynamic import needs no destructuring.
 
 Because every marker, popup, control, source, layer, image and cluster is a child of `MapboxMap`, deferring the map defers the whole family — `mapbox-gl` included. Reach for a different trigger when it fits better: `importWhenIdle` (load during browser idle time), `importOnInteraction` (wait for a first click/focus/touch on the element) or `importOnMediaQuery` (load only above a breakpoint, e.g. to skip the map on small screens).

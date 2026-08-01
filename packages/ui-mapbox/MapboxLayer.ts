@@ -102,3 +102,5 @@ export class MapboxLayer<T extends BaseProps = BaseProps> extends AbstractMapbox
     }
   }
 }
+
+export default MapboxLayer;

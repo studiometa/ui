@@ -33,3 +33,5 @@ export class MapboxGeolocateControl extends withExtraConfig(AbstractMapboxContro
     return new mapboxgl.GeolocateControl(options);
   }
 }
+
+export default MapboxGeolocateControl;

@@ -106,11 +106,10 @@ Registering `StoreLocator` pulls in `MapboxMap` and its heavy `mapbox-gl` depend
 import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
 
 registerComponent(
-  importWhenVisible(
-    () => import('@studiometa/ui-mapbox').then(({ StoreLocator }) => StoreLocator),
-    'StoreLocator',
-  ),
+  importWhenVisible(() => import('@studiometa/ui-mapbox/StoreLocator'), 'StoreLocator'),
 );
 ```
+
+Every component is also available at its own subpath (`@studiometa/ui-mapbox/<Component>`), whose default export is the component class — so the dynamic import needs no destructuring.
 
 `importWhenIdle`, `importOnInteraction` and `importOnMediaQuery` are available too — see the [MapboxMap lazy-loading note](/components/MapboxMap/#lazy-loading).

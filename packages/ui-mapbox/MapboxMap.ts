@@ -156,3 +156,5 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
     this.isLoaded = false;
   }
 }
+
+export default MapboxMap;
