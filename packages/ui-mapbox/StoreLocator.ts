@@ -1,5 +1,5 @@
 import { Base, type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import { debounce, nextTick } from '@studiometa/js-toolkit/utils';
+import { debounce } from '@studiometa/js-toolkit/utils';
 import mapboxgl from 'mapbox-gl';
 import type { LngLatLike, LngLatBoundsLike, GeoJSONSourceSpecification } from 'mapbox-gl';
 import type { FeatureCollection, Point } from 'geojson';
@@ -9,12 +9,26 @@ import type { MapboxCluster } from './MapboxCluster.js';
 import type { MapboxGeocoder } from './MapboxGeocoder.js';
 
 /**
- * Maximum number of `nextTick` retries used to wire the optional `MapboxCluster`
- * and `MapboxGeocoder` children. They are mounted asynchronously by the
- * `MapboxMap` once its map has loaded, so they may not be queryable yet on the
- * `map-load` event: we poll a few ticks before giving up.
+ * Wall-clock delay, in milliseconds, between two attempts to wire the optional
+ * `MapboxCluster`/`MapboxGeocoder` children.
+ *
+ * The children are now **lazy-loaded**: the `MapboxMap` fetches each child's
+ * chunk over the network before mounting it, so a child can appear hundreds of
+ * milliseconds after `map-load`. Retrying on a real time interval (rather than
+ * on `nextTick`/microtasks, which all drain within a millisecond or two and can
+ * exhaust long before a network round-trip) makes wiring survive that latency.
  */
-const WIRE_CHILDREN_MAX_ATTEMPTS = 10;
+const WIRE_CHILDREN_POLL_INTERVAL = 250;
+
+/**
+ * Maximum number of wiring re-checks, capping the total wait at
+ * `WIRE_CHILDREN_POLL_INTERVAL * WIRE_CHILDREN_MAX_POLLS` (~5s) of wall-clock
+ * time. This is the latency budget for a still-loading child; it dwarfs a
+ * realistic chunk fetch (tens to a few hundred ms) yet stays bounded so a
+ * `StoreLocator` whose optional children are simply absent settles and stops
+ * retrying instead of spinning forever.
+ */
+const WIRE_CHILDREN_MAX_POLLS = 20;
 
 export interface StoreLocatorProps extends BaseProps {
   $refs: {
@@ -120,6 +134,28 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    * @private
    */
   __geocoderWired = false;
+
+  /**
+   * Whether the initial `__handleMapLoad` sync has run. Until it does, a
+   * cluster wired on the first synchronous pass must NOT trigger its own sync
+   * (that first sync is `__handleMapLoad`'s responsibility); afterwards, a
+   * cluster that mounts late DOES sync so its freshly-added source gets the
+   * derived data.
+   * @private
+   */
+  __initialWireDone = false;
+
+  /**
+   * Pending wiring-retry timer id, if a retry is scheduled.
+   * @private
+   */
+  __wireTimer?: ReturnType<typeof setTimeout>;
+
+  /**
+   * Number of wiring re-checks performed so far, bounding the retry loop.
+   * @private
+   */
+  __wirePolls = 0;
 
   /**
    * The closest child `MapboxMap` component.
@@ -414,39 +450,41 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   __handleMapLoad = () => {
     this.isLoaded = true;
     this.map?.on('moveend', this.__handleMoveEnd);
+    // First synchronous wiring pass: covers children already mounted at load.
     this.__wireChildren();
+    this.__initialWireDone = true;
+    // The single initial data push (a cluster wired above intentionally did not
+    // sync yet, deferring to this call).
     this.__syncItems();
+    // Anything still missing (a lazily-fetched child not mounted yet) is wired
+    // by the latency-safe retry machinery below.
+    this.__armWiringRetries();
   };
 
   /**
-   * Attach the `MapboxCluster`/`MapboxGeocoder` listeners once those children
-   * are available. Both are optional and mount asynchronously and independently
-   * after the map loads, so we poll a bounded number of ticks until *each* of
-   * them is wired (not just the first to appear): if the cluster mounts before
-   * the geocoder, stopping as soon as the cluster is wired would leave the
-   * geocoder's `result` listener unattached. A `StoreLocator` missing one (or
-   * both) of these children simply polls to the attempt cap — bounded and
-   * harmless.
+   * Attach the `MapboxCluster`/`MapboxGeocoder` listeners for whichever of those
+   * children is currently available. Idempotent: each child is wired at most
+   * once, so it is safe to call any number of times from any wiring trigger.
+   *
+   * The cluster is an async child of the `MapboxMap`: it becomes queryable as
+   * soon as it is constructed, but its GeoJSON source is only added from its
+   * `mounted()` hook. Pushing data before that hook runs would silently no-op
+   * (the source does not exist yet) and leave the map empty, so we wait until
+   * the cluster is fully mounted — `$isMounted` flips to `true` right before
+   * `mounted()` runs synchronously, so observing it here guarantees the source
+   * is ready.
    * @private
-   * @param {number} attempt
    */
-  __wireChildren(attempt = 0) {
+  __wireChildren() {
     const { cluster, geocoder } = this;
 
-    // The cluster is an async child of the `MapboxMap`: it becomes queryable as
-    // soon as it is constructed, but its GeoJSON source is only added from its
-    // `mounted()` hook. Pushing data before that hook runs would silently no-op
-    // (the source does not exist yet) and leave the map empty, so we wait until
-    // the cluster is fully mounted — `$isMounted` flips to `true` right before
-    // `mounted()` runs synchronously, so observing it here guarantees the source
-    // is ready. Until then we keep polling.
     if (cluster && cluster.$isMounted && !this.__clusterWired) {
       this.__clusterWired = true;
       this.__offHandlers.push(cluster.$on('feature-click', this.__handleClusterFeatureClick));
       // The cluster (and its source) are now ready: push the current data to it.
-      // Only resync when the cluster became available AFTER the initial pass; on
-      // the first pass `__handleMapLoad`'s own `__syncItems()` call already covers it.
-      if (attempt > 0) {
+      // Skip only on the initial synchronous pass, whose sync `__handleMapLoad`
+      // performs itself; a cluster that mounts later must (re)push here.
+      if (this.__initialWireDone) {
         this.__syncItems();
       }
     }
@@ -455,14 +493,105 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
       this.__geocoderWired = true;
       this.__offHandlers.push(geocoder.$on('result', this.__handleGeocoderResult));
     }
+  }
 
-    if ((!this.__clusterWired || !this.__geocoderWired) && attempt < WIRE_CHILDREN_MAX_ATTEMPTS) {
-      nextTick(() => {
-        if (this.$isMounted) {
-          this.__wireChildren(attempt + 1);
-        }
-      });
+  /**
+   * Whether every optional child that can be wired has been wired, i.e. there is
+   * nothing left to wait for.
+   * @private
+   * @returns {boolean}
+   */
+  __wiringSettled(): boolean {
+    return this.__clusterWired && this.__geocoderWired;
+  }
+
+  /**
+   * Arm the latency-safe wiring retries for any child not yet wired.
+   *
+   * With lazy-loaded children the cluster/geocoder can mount well after
+   * `map-load`, once their code-split chunks have been fetched. Two independent
+   * triggers make wiring robust to that delay:
+   *
+   * 1. A **real signal** — the map's `sourcedata` event. The cluster adds its
+   *    GeoJSON source from `mounted()`, which fires `sourcedata` no matter how
+   *    long its chunk took to arrive, so we re-check wiring immediately then.
+   *    This is what guarantees the cluster invariant (push `setData` + wire
+   *    `feature-click`) survives arbitrary network latency within the budget.
+   * 2. A **time-based poll** — a re-check every `WIRE_CHILDREN_POLL_INTERVAL`ms,
+   *    capped at `WIRE_CHILDREN_MAX_POLLS`. The geocoder adds no map source, so
+   *    it has no equivalent signal; the poll covers it (and doubles as a cluster
+   *    safety net). Being time-based rather than microtask-based is the actual
+   *    fix: it keeps checking across real network time instead of exhausting in
+   *    a couple of milliseconds.
+   *
+   * Both triggers are torn down as soon as wiring settles or the poll cap is
+   * reached, so a `StoreLocator` whose children are absent settles cleanly with
+   * no leaked timer or listener.
+   * @private
+   */
+  __armWiringRetries() {
+    if (this.__wiringSettled()) {
+      return;
     }
+
+    this.map?.on('sourcedata', this.__handleWireSignal);
+    this.__scheduleWirePoll();
+  }
+
+  /**
+   * Re-check wiring in response to a map `sourcedata` event (the cluster's
+   * source landing), and stop retrying once nothing is left to wire.
+   * @private
+   */
+  __handleWireSignal = () => {
+    if (!this.$isMounted) {
+      return;
+    }
+
+    this.__wireChildren();
+
+    if (this.__wiringSettled()) {
+      this.__stopWiringRetries();
+    }
+  };
+
+  /**
+   * Schedule the next time-based wiring re-check, unless the poll cap is hit.
+   * @private
+   */
+  __scheduleWirePoll() {
+    this.__wireTimer = setTimeout(() => {
+      this.__wireTimer = undefined;
+
+      if (!this.$isMounted) {
+        return;
+      }
+
+      this.__wirePolls += 1;
+      this.__wireChildren();
+
+      if (this.__wiringSettled() || this.__wirePolls >= WIRE_CHILDREN_MAX_POLLS) {
+        // Either everything is wired, or we have waited out the latency budget
+        // for a child that never appeared: settle and release the triggers.
+        this.__stopWiringRetries();
+      } else {
+        this.__scheduleWirePoll();
+      }
+    }, WIRE_CHILDREN_POLL_INTERVAL);
+  }
+
+  /**
+   * Tear down both wiring triggers (the pending poll timer and the `sourcedata`
+   * listener). Safe to call when nothing is armed.
+   * @private
+   */
+  __stopWiringRetries() {
+    if (this.__wireTimer !== undefined) {
+      clearTimeout(this.__wireTimer);
+      this.__wireTimer = undefined;
+    }
+
+    this.map?.off('sourcedata', this.__handleWireSignal);
   }
 
   /**
@@ -486,6 +615,10 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    * Destroyed hook: detach every listener and clear the registry.
    */
   destroyed() {
+    // Release the wiring triggers first, so a poll or `sourcedata` callback can
+    // never fire after teardown.
+    this.__stopWiringRetries();
+
     for (const off of this.__offHandlers) {
       off();
     }
@@ -498,6 +631,8 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     this.isLoaded = false;
     this.__clusterWired = false;
     this.__geocoderWired = false;
+    this.__initialWireDone = false;
+    this.__wirePolls = 0;
   }
 }
 

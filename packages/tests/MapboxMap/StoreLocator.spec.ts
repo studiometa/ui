@@ -155,15 +155,26 @@ function createStoreLocator(
 }
 
 /**
+ * Upper bound (ms) of the coordinator's time-based child-wiring retry window
+ * (`WIRE_CHILDREN_POLL_INTERVAL * WIRE_CHILDREN_MAX_POLLS`, ~5s). Flushing past
+ * it under fake timers lets the retry loop settle — wiring whatever appears and
+ * releasing its timer for the absent case — before real timers resume, so no
+ * background timer leaks across tests.
+ */
+const WIRE_WINDOW = 5500;
+
+/**
  * Mount the component, let the js-toolkit timer-based mount settle, then simulate
- * the map load so the coordinator wires itself. Leaves real timers active.
+ * the map load so the coordinator wires itself. Flushes the full child-wiring
+ * retry window so the coordinator settles (no pending timer) before real timers
+ * resume. Leaves real timers active.
  */
 async function mountAndLoad(ctx: ReturnType<typeof createStoreLocator>) {
   vi.useFakeTimers();
   ctx.instance.$mount();
   await vi.advanceTimersByTimeAsync(100);
   ctx.fireLoad();
-  await vi.advanceTimersByTimeAsync(100);
+  await vi.advanceTimersByTimeAsync(WIRE_WINDOW);
   vi.useRealTimers();
 }
 
@@ -675,7 +686,9 @@ describe('StoreLocator component', () => {
       // Listen before the load so the very first `filter` emission is counted.
       ctx.instance.$on('filter', filter);
       ctx.fireLoad();
-      await vi.advanceTimersByTimeAsync(200);
+      // Flush the full wiring-retry window (the geocoder is absent here, so the
+      // poll runs to its cap) to settle the coordinator before real timers.
+      await vi.advanceTimersByTimeAsync(WIRE_WINDOW);
       vi.useRealTimers();
 
       expect(ctx.mockCluster.setData).toHaveBeenCalledTimes(1);
