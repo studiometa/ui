@@ -26,12 +26,19 @@ export default defineWebpackConfig({
         'compute-scroll-into-view',
         'deepmerge',
         'morphdom',
+        { specifier: 'mapbox-gl', esmSh: { bundle: true } },
+        { specifier: '@mapbox/mapbox-gl-geocoder', esmSh: { bundle: true } },
         { specifier: '@studiometa/js-toolkit', esmSh: { bundle: false } },
         { specifier: '@studiometa/js-toolkit/utils', esmSh: { bundle: false } },
         {
           specifier: '@studiometa/ui',
           source: '../ui/**/*.ts',
           entry: '../ui/index.ts',
+        },
+        {
+          specifier: '@studiometa/ui-mapbox',
+          source: '../ui-mapbox/**/*.ts',
+          entry: '../ui-mapbox/index.ts',
         },
       ],
       defaults: {

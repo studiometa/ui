@@ -1,0 +1,24 @@
+<link rel="stylesheet" href="https://esm.sh/mapbox-gl@3.13.0/dist/mapbox-gl.css" />
+
+<div
+  data-component="MapboxMap"
+  data-option-access-token="pk.eyJ1IjoiYWdlbmNlc3R1ZGlvbWV0YSIsImEiOiJjbXM5NTBycHMwa2Z4MndxeW02YndscmQyIn0.UitMikKpq-TRJOXM-rBcMg"
+  data-option-zoom="12"
+  data-option-center="[2.35, 48.86]"
+  data-option-map-options='{"style":"mapbox://styles/mapbox/streets-v12"}'
+  class="h-96 w-full">
+  <div data-ref="container" class="h-full w-full"></div>
+
+  {# Marker with an attached popup, opened on click #}
+  <div hidden data-component="MapboxMarker" data-option-lng-lat="[2.35, 48.86]">
+    <div data-component="MapboxPopup">
+      <h3>Paris</h3>
+      <p>Capital of France</p>
+    </div>
+  </div>
+
+  {# Standalone popup, displayed directly on the map #}
+  <div hidden data-component="MapboxPopup" data-option-lng-lat="[2.29, 48.86]">
+    <p>Near the Eiffel Tower</p>
+  </div>
+</div>

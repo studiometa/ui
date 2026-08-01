@@ -1,0 +1,201 @@
+<link rel="stylesheet" href="https://esm.sh/mapbox-gl@3.13.0/dist/mapbox-gl.css" />
+
+{% set stores = [
+  { id: 'paris-1', name: 'Paris 1ᵉʳ — Louvre', address: '2 rue de Rivoli, 75001 Paris', bank: 'right', lngLat: [2.3364, 48.8592] },
+  { id: 'paris-2', name: 'Paris 2ᵉ — Bourse', address: '14 rue Vivienne, 75002 Paris', bank: 'right', lngLat: [2.3412, 48.8697] },
+  { id: 'paris-3', name: 'Paris 3ᵉ — Temple', address: '9 rue de Bretagne, 75003 Paris', bank: 'right', lngLat: [2.3620, 48.8637] },
+  { id: 'paris-4', name: 'Paris 4ᵉ — Marais', address: '30 rue des Archives, 75004 Paris', bank: 'right', lngLat: [2.3573, 48.8557] },
+  { id: 'paris-5', name: 'Paris 5ᵉ — Panthéon', address: '5 rue Soufflot, 75005 Paris', bank: 'left', lngLat: [2.3488, 48.8443] },
+  { id: 'paris-6', name: 'Paris 6ᵉ — Saint-Germain', address: '12 rue de Rennes, 75006 Paris', bank: 'left', lngLat: [2.3333, 48.8496] },
+  { id: 'paris-7', name: 'Paris 7ᵉ — Invalides', address: '40 rue de Grenelle, 75007 Paris', bank: 'left', lngLat: [2.3125, 48.8565] },
+  { id: 'paris-8', name: 'Paris 8ᵉ — Champs-Élysées', address: '68 avenue des Champs-Élysées, 75008 Paris', bank: 'right', lngLat: [2.3126, 48.8726] },
+  { id: 'paris-9', name: 'Paris 9ᵉ — Opéra', address: '22 boulevard Haussmann, 75009 Paris', bank: 'right', lngLat: [2.3390, 48.8768] },
+  { id: 'paris-10', name: 'Paris 10ᵉ — Canal', address: '18 quai de Valmy, 75010 Paris', bank: 'right', lngLat: [2.3608, 48.8760] },
+  { id: 'paris-11', name: 'Paris 11ᵉ — Bastille', address: '55 rue de la Roquette, 75011 Paris', bank: 'right', lngLat: [2.3800, 48.8594] },
+  { id: 'paris-13', name: 'Paris 13ᵉ — Gobelins', address: '30 avenue des Gobelins, 75013 Paris', bank: 'left', lngLat: [2.3620, 48.8322] },
+  { id: 'paris-14', name: 'Paris 14ᵉ — Montparnasse', address: '11 rue Daguerre, 75014 Paris', bank: 'left', lngLat: [2.3269, 48.8331] },
+  { id: 'paris-15', name: 'Paris 15ᵉ — Vaugirard', address: '76 rue du Commerce, 75015 Paris', bank: 'left', lngLat: [2.3000, 48.8412] },
+  { id: 'paris-16', name: 'Paris 16ᵉ — Passy', address: '20 rue de Passy, 75016 Paris', bank: 'right', lngLat: [2.2618, 48.8637] },
+  { id: 'paris-17', name: 'Paris 17ᵉ — Batignolles', address: '32 rue des Batignolles, 75017 Paris', bank: 'right', lngLat: [2.3068, 48.8848] },
+  { id: 'paris-18', name: 'Paris 18ᵉ — Montmartre', address: '6 rue des Abbesses, 75018 Paris', bank: 'right', lngLat: [2.3444, 48.8925] }
+] %}
+
+<div data-component="App">
+  {# Facet toolbar — lives outside the StoreLocator so its buttons are App refs.
+     Selecting a facet swaps the list markup; the coordinator re-derives the map
+     data from the new item set. #}
+  <div class="mb-3 flex flex-wrap gap-2">
+    <button
+      type="button"
+      data-ref="facet[]"
+      data-category="all"
+      data-active
+      class="facet rounded-full border border-zinc-300 px-3 py-1 text-sm dark:border-zinc-600">
+      All stores
+    </button>
+    <button
+      type="button"
+      data-ref="facet[]"
+      data-category="right"
+      class="facet rounded-full border border-zinc-300 px-3 py-1 text-sm dark:border-zinc-600">
+      Right bank
+    </button>
+    <button
+      type="button"
+      data-ref="facet[]"
+      data-category="left"
+      class="facet rounded-full border border-zinc-300 px-3 py-1 text-sm dark:border-zinc-600">
+      Left bank
+    </button>
+  </div>
+
+  <div
+    data-component="StoreLocator"
+    data-option-fit-on-update
+    class="grid h-[500px] grid-cols-1 overflow-hidden rounded-lg border border-zinc-200 md:grid-cols-[minmax(0,20rem)_1fr] dark:border-zinc-700">
+
+    <ul
+      data-ref="list"
+      class="divide-y divide-zinc-200 overflow-y-auto bg-white dark:divide-zinc-700 dark:bg-zinc-900">
+      {% for store in stores %}
+        <li
+          data-component="StoreLocatorItem"
+          data-option-id="{{ store.id }}"
+          data-option-lng-lat="{{ store.lngLat|json_encode }}"
+          data-category="{{ store.bank }}">
+          <button
+            type="button"
+            data-ref="select"
+            class="block w-full px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800">
+            <span class="name block font-semibold">{{ store.name }}</span>
+            <span class="mt-0.5 block text-sm text-zinc-500 dark:text-zinc-400">
+              {{ store.address }}
+            </span>
+          </button>
+          <template>
+            <h2 class="text-xl font-bold">{{ store.name }}</h2>
+            <p class="mt-4 text-sm">{{ store.address }}</p>
+          </template>
+        </li>
+      {% endfor %}
+    </ul>
+
+    <div
+      data-component="MapboxMap"
+      data-option-access-token="pk.eyJ1IjoiYWdlbmNlc3R1ZGlvbWV0YSIsImEiOiJjbXM5NTBycHMwa2Z4MndxeW02YndscmQyIn0.UitMikKpq-TRJOXM-rBcMg"
+      data-option-zoom="5"
+      data-option-center="[2.35, 48.86]"
+      data-option-map-options='{"style":"mapbox://styles/mapbox/streets-v12"}'
+      class="h-full min-h-[300px] w-full">
+      <div data-ref="container" class="h-full w-full"></div>
+
+      <div
+        hidden
+        data-component="MapboxCluster"
+        data-option-cluster-radius="60"
+        data-option-clusters-paint='{ "circle-color": "#7c3aed", "circle-radius": 20 }'
+        data-option-cluster-count-paint='{ "text-color": "#ffffff" }'
+        data-option-unclustered-point-paint='{ "circle-color": "#7c3aed", "circle-radius": 7, "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" }'></div>
+    </div>
+  </div>
+
+  <dialog
+    id="store-panel"
+    data-component="Action Dialog"
+    data-on:cancel.prevent="Dialog.close()"
+    data-on:click="event.target === $el && Dialog.close()"
+    class="fixed inset-0 m-0 h-full max-h-none w-full max-w-none overflow-hidden bg-transparent p-0">
+
+    <div
+      data-component="Action ViewTransition"
+      data-on:click="Dialog(#store-panel)->target.close()"
+      data-option-view-transition-name="store-panel-backdrop"
+      data-option-leave-to="opacity-0"
+      class="fixed inset-0 bg-black/50 opacity-0"></div>
+
+    <div
+      data-component="ViewTransition"
+      data-option-view-transition-name="store-panel-panel"
+      data-option-leave-to="translate-x-full opacity-0"
+      class="absolute inset-y-0 right-0 w-96 max-w-full translate-x-full overflow-y-auto bg-white p-8 text-black opacity-0 shadow-2xl">
+      <button
+        type="button"
+        data-component="Action"
+        data-on:click="Dialog(#store-panel)->target.close()"
+        class="mb-6 inline-flex items-center gap-1 border-b border-current text-sm">
+        Close
+      </button>
+      <div id="store-panel-content"></div>
+    </div>
+  </dialog>
+</div>
+
+<style>
+  [data-component='StoreLocatorItem']:not([data-in-bounds]) {
+    display: none;
+  }
+
+  [data-component='StoreLocatorItem'][data-active] > button {
+    background-color: #f5f3ff;
+  }
+  [data-component='StoreLocatorItem'][data-active] .name {
+    color: #6d28d9;
+  }
+  html.dark [data-component='StoreLocatorItem'][data-active] > button {
+    background-color: #2e1065;
+  }
+  html.dark [data-component='StoreLocatorItem'][data-active] .name {
+    color: #a78bfa;
+  }
+
+  .facet[data-active] {
+    background-color: #7c3aed;
+    border-color: #7c3aed;
+    color: #ffffff;
+  }
+
+  dialog::backdrop {
+    background: transparent;
+  }
+
+  ::view-transition-group(store-panel-panel) {
+    z-index: 2;
+  }
+  ::view-transition-group(store-panel-backdrop) {
+    z-index: 1;
+  }
+
+  @keyframes store-panel-slide-in {
+    from {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes store-panel-slide-out {
+    to {
+      transform: translateX(100%);
+    }
+  }
+  ::view-transition-new(store-panel-panel) {
+    animation: 300ms ease-out both store-panel-slide-in;
+  }
+  ::view-transition-old(store-panel-panel) {
+    animation: 300ms ease-in both store-panel-slide-out;
+  }
+
+  @keyframes store-panel-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes store-panel-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+  ::view-transition-new(store-panel-backdrop) {
+    animation: 300ms ease-out both store-panel-fade-in;
+  }
+  ::view-transition-old(store-panel-backdrop) {
+    animation: 300ms ease-in both store-panel-fade-out;
+  }
+</style>

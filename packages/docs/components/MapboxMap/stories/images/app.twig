@@ -1,0 +1,59 @@
+<link rel="stylesheet" href="https://esm.sh/mapbox-gl@3.13.0/dist/mapbox-gl.css" />
+
+<div
+  data-component="MapboxMap"
+  data-option-access-token="pk.eyJ1IjoiYWdlbmNlc3R1ZGlvbWV0YSIsImEiOiJjbXM5NTBycHMwa2Z4MndxeW02YndscmQyIn0.UitMikKpq-TRJOXM-rBcMg"
+  data-option-zoom="4"
+  data-option-center="[2.35, 48.86]"
+  data-option-map-options='{"style":"mapbox://styles/mapbox/streets-v12"}'
+  class="h-96 w-full">
+  <div data-ref="container" class="h-full w-full"></div>
+
+  {# Load several images at once into the map sprite #}
+  <div
+    hidden
+    data-component="MapboxImages"
+    data-option-sources='[
+      { "name": "cat", "url": "https://docs.mapbox.com/mapbox-gl-js/assets/cat.png" },
+      { "name": "dog", "url": "https://docs.mapbox.com/mapbox-gl-js/assets/dog.png" }
+    ]'></div>
+
+  {# Points carrying the icon name and label to use #}
+  <div
+    hidden
+    data-component="MapboxSource"
+    data-option-id="pets"
+    data-option-source='{
+      "type": "geojson",
+      "data": {
+        "type": "FeatureCollection",
+        "features": [
+          { "type": "Feature", "properties": { "icon": "cat", "label": "Cat" }, "geometry": { "type": "Point", "coordinates": [2.35, 48.86] } },
+          { "type": "Feature", "properties": { "icon": "dog", "label": "Dog" }, "geometry": { "type": "Point", "coordinates": [4.83, 45.76] } }
+        ]
+      }
+    }'></div>
+
+  {# A symbol layer rendering each point with its icon and a text label #}
+  <div
+    hidden
+    data-component="MapboxLayer"
+    data-option-id="pets-icons"
+    data-option-layer='{
+      "type": "symbol",
+      "source": "pets",
+      "layout": {
+        "icon-image": ["get", "icon"],
+        "icon-size": 0.15,
+        "icon-allow-overlap": true,
+        "text-field": ["get", "label"],
+        "text-offset": [0, 1.6],
+        "text-anchor": "top",
+        "text-size": 14
+      },
+      "paint": {
+        "text-halo-color": "#fff",
+        "text-halo-width": 1
+      }
+    }'></div>
+</div>
