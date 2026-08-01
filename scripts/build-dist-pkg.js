@@ -14,11 +14,12 @@ const distRoot = resolve('../dist/');
 /**
  * List the component directories exposing a public `index.ts` entrypoint.
  *
- * These map to the `@studiometa/ui/<Component>` subpaths and must be declared
- * as explicit (non-pattern) `exports` keys so they resolve to the directory
- * `index` module rather than being swallowed by the greedy `./*` wildcard used
- * for deep-file imports (a single `*` matches across slashes in Node's subpath
- * patterns, so dir-index and deep-file resolution cannot share one pattern).
+ * These are the directories whose `index.ts` re-exports one or more component
+ * modules, each of which is given its own explicit (non-pattern) `exports` key
+ * so it resolves to the module itself rather than being swallowed by the greedy
+ * `./*` wildcard used for deep-file imports (a single `*` matches across slashes
+ * in Node's subpath patterns, so flat and deep-file resolution cannot share one
+ * pattern).
  *
  * @returns {string[]}
  */
@@ -32,26 +33,26 @@ function listComponentDirs() {
 }
 
 /**
- * List the member modules re-exported by a "family" directory `index.ts`.
+ * List the module files re-exported by a directory `index.ts`.
  *
- * Family directories (e.g. `Data`, `decorators`, `Prefetch`) have no single
- * main module; their `index.ts` aggregates member modules via `export … from
- * './Member.js'` specifiers. This parses those specifiers to recover the exact
- * set of publicly exported members (modules not re-exported there stay internal
- * and get no subpath).
+ * Each directory's `index.ts` publicly re-exports its component modules via
+ * `export … from './File.js'` specifiers (`export *`, `export { … }`,
+ * `export type { … }`). This parses those specifiers to recover the exact set
+ * of publicly exported files — main modules, sub-components and family members
+ * alike. Files not re-exported there stay internal and get no subpath.
  *
  * @param   {string} dir
  * @returns {string[]}
  */
-function listFamilyMembers(dir) {
+function listReexportedFiles(dir) {
   const source = fs.readFileSync(`${uiRoot}/${dir}/index.ts`, 'utf8');
-  const members = new Set();
+  const files = new Set();
   const re = /from\s+['"]\.\/([^'"]+?)(?:\.js)?['"]/g;
   let match;
   while ((match = re.exec(source))) {
-    members.add(match[1]);
+    files.add(match[1]);
   }
-  return [...members].sort();
+  return [...files].sort();
 }
 
 /**
@@ -63,10 +64,11 @@ function listFamilyMembers(dir) {
  * published one:
  *
  * - `.`                              → the barrel index;
- * - `./<Component>` / `.js`          → the component main module (explicit keys
- *   so they win over the wildcard);
- * - `./<Member>` / `.js`             → a flat subpath per member of a "family"
- *   directory (`Data`, `decorators`, `Prefetch`), which has no main module;
+ * - `./<File>` / `.js`               → a flat top-level subpath per module
+ *   re-exported by a directory `index.ts` — main components (`./Accordion` →
+ *   `./Accordion/Accordion.js`), sub-components (`./AccordionItem` →
+ *   `./Accordion/AccordionItem.js`) and family members (`./DataBind` →
+ *   `./Data/DataBind.js`) alike (explicit keys so they win over the wildcard);
  * - `./<Component>/<File>` / `.js`   → deep imports of individual modules.
  *
  * @param   {string[]} componentDirs
@@ -77,29 +79,16 @@ function buildExports(componentDirs) {
     '.': { types: './index.d.ts', import: './index.js' },
   };
 
+  // For each directory, emit one flat top-level subpath per module its
+  // `index.ts` re-exports (`./<File>` → `./<Dir>/<File>.js`). This uniformly
+  // covers main components, sub-components and family members; modules a
+  // directory keeps internal (not re-exported) get no subpath.
   for (const dir of componentDirs) {
-    // Point the component subpath at its main module (`<dir>/<dir>.js`) when the
-    // component has one — the lean class module carrying the default export —
-    // rather than the `index` barrel.
-    if (fs.existsSync(`${uiRoot}/${dir}/${dir}.ts`)) {
-      const base = `${dir}/${dir}`;
+    for (const file of listReexportedFiles(dir)) {
+      const base = `${dir}/${file}`;
       const target = { types: `./${base}.d.ts`, import: `./${base}.js` };
-      exportsMap[`./${dir}`] = target;
-      exportsMap[`./${dir}.js`] = target;
-      continue;
-    }
-
-    // "Family" directories (e.g. `Data`, `decorators`, `Prefetch`) have no
-    // single main module — their `index.ts` only aggregates member modules.
-    // Instead of a family-aggregate subpath, expose each exported member at its
-    // own flat top-level subpath (e.g. `./DataBind` → `./Data/DataBind.js`).
-    // The member list is read from the family `index.ts` re-export specifiers,
-    // so only intentionally exported members get a subpath.
-    for (const member of listFamilyMembers(dir)) {
-      const base = `${dir}/${member}`;
-      const target = { types: `./${base}.d.ts`, import: `./${base}.js` };
-      exportsMap[`./${member}`] = target;
-      exportsMap[`./${member}.js`] = target;
+      exportsMap[`./${file}`] = target;
+      exportsMap[`./${file}.js`] = target;
     }
   }
 

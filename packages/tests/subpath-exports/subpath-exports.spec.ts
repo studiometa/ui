@@ -19,6 +19,13 @@ import FrameJsDefault, { Frame as FrameJsNamed } from '@studiometa/ui/Frame.js';
 // A "family" member has no default export — only its named export — exposed at
 // a flat top-level subpath (`@studiometa/ui/DataBind`, not `.../Data`).
 import { DataBind as DataBindNamed } from '@studiometa/ui/DataBind';
+// Sub-components of a main component are likewise exposed at their own flat
+// top-level subpath (`@studiometa/ui/AccordionItem`, not only the nested
+// `@studiometa/ui/Accordion/AccordionItem`). Like family members they carry no
+// default export, only their named export.
+import { AccordionItem as AccordionItemNamed } from '@studiometa/ui/AccordionItem';
+import { CarouselItem as CarouselItemNamed } from '@studiometa/ui/CarouselItem';
+import { TrackContext as TrackContextNamed } from '@studiometa/ui/TrackContext';
 
 test.each([
   ['Accordion', AccordionDefault, AccordionNamed, barrel.Accordion],
@@ -69,6 +76,13 @@ test.each([
   ['@studiometa/ui/DataBind', '/Data/DataBind.ts'],
   ['@studiometa/ui/withTransition', '/decorators/withTransition.ts'],
   ['@studiometa/ui/PrefetchWhenVisible', '/Prefetch/PrefetchWhenVisible.ts'],
+  // Sub-components resolve to their own module at a flat top-level subpath too,
+  // distinct from their parent component's main module.
+  ['@studiometa/ui/AccordionItem', '/Accordion/AccordionItem.ts'],
+  ['@studiometa/ui/CarouselItem', '/Carousel/CarouselItem.ts'],
+  ['@studiometa/ui/TrackContext', '/Track/TrackContext.ts'],
+  // The nested deep path still resolves too (backward-compat with the wildcard).
+  ['@studiometa/ui/Accordion/AccordionItem', '/Accordion/AccordionItem.ts'],
 ])('%s resolves to its main module (not the index barrel)', (specifier, suffix) => {
   // @ts-expect-error import.meta.resolve is available under Node's ESM loader.
   const url: string = import.meta.resolve(specifier);
@@ -81,4 +95,20 @@ test.each([
 test('family member flat subpath exposes the named export matching the barrel', () => {
   expect(DataBindNamed).toBeDefined();
   expect(DataBindNamed).toBe(barrel.DataBind);
+});
+
+// Sub-components carry no default export, only their named export, which must
+// match the class re-exported from the barrel. Cover sub-components from three
+// different parent directories.
+test.each([
+  ['AccordionItem', AccordionItemNamed, barrel.AccordionItem],
+  ['CarouselItem', CarouselItemNamed, barrel.CarouselItem],
+  ['TrackContext', TrackContextNamed, barrel.TrackContext],
+])('sub-component flat subpath %s exposes the named export matching the barrel', (
+  _name,
+  named,
+  fromBarrel,
+) => {
+  expect(named).toBeDefined();
+  expect(named).toBe(fromBarrel);
 });
