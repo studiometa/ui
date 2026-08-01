@@ -46,6 +46,10 @@ test.each([
   // through package resolution (the `.twig` suffix beats the greedy `./*`).
   ['@studiometa/ui/Accordion/Accordion.twig', '/Accordion/Accordion.twig'],
   ['@studiometa/ui/Button/Button.twig', '/Button/Button.twig'],
+  // The source `.ts` files also ship in the package; `./*.ts` keeps
+  // `.ts`-extensioned deep imports resolving instead of `<path>.ts.ts`/`.ts.js`.
+  ['@studiometa/ui/Accordion/Accordion.ts', '/Accordion/Accordion.ts'],
+  ['@studiometa/ui/index.ts', '/index.ts'],
 ])('non-JS published path %s resolves to the asset itself', (specifier, suffix) => {
   // @ts-expect-error import.meta.resolve is available under Node's ESM loader.
   const url: string = import.meta.resolve(specifier);
