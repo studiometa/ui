@@ -21,15 +21,19 @@ npm install @mapbox/mapbox-gl-geocoder
 
 ## Usage
 
-Every component is self-registering: `MapboxMap` no longer declares its children, so each component registers independently and resolves its parent map on its own. Register only the components your page uses — registration order does not matter, because a child registered before its `MapboxMap` still wires up once the map connects. `mapbox-gl` is heavy (~230&nbsp;kB gzipped), so the recommended default is to lazy-register each component with js-toolkit's `importWhen*` helpers and the per-component subpaths (each subpath's default export is the component class), keeping the dependency out of your main bundle until a map is actually on the page:
+Register each component your page uses: each one registers independently and resolves its parent map on its own. `mapbox-gl` is heavy (~230&nbsp;kB gzipped), so the recommended default is to lazy-register each component with js-toolkit's `importWhen*` helpers and the per-component subpaths (each subpath's default export is the component class), keeping the dependency out of your main bundle until a map is actually on the page:
 
 ```js
 import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
 
 // Register only the components your page uses; order doesn't matter.
 registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'));
-registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMarker'), 'MapboxMarker'));
-registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxPopup'), 'MapboxPopup'));
+registerComponent(
+  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMarker'), 'MapboxMarker'),
+);
+registerComponent(
+  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxPopup'), 'MapboxPopup'),
+);
 ```
 
 Other triggers are available too — `importWhenIdle`, `importOnInteraction` and `importOnMediaQuery` — see the [`importWhen*` helper docs](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html). Then author the map declaratively in your markup:

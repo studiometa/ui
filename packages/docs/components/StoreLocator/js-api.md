@@ -10,9 +10,9 @@ The store locator is an **orchestrator** built on the [`MapboxMap` family](/comp
 - `StoreLocator` — the coordinator, wrapping a [`MapboxMap`](/components/MapboxMap/js-api#map) that contains a [`MapboxCluster`](/components/MapboxMap/js-api#cluster).
 - [`MapboxClusterItem`](/components/MapboxMap/js-api#mapboxclusteritem) — a single store entry; it registers with the cluster (the owner of the item registry), and the orchestrator reads and drives it. There is **no** dedicated store-item class.
 
-The `StoreLocator` declares no child components, so nothing is ever double-mounted. Register `StoreLocator`, `MapboxMap`, `MapboxCluster` and `MapboxClusterItem` each independently with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) — ideally behind a lazy [`importWhen*` helper](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) (see [Lazy loading](/components/MapboxMap/#lazy-loading)); registration order does not matter because a child registered before its `MapboxMap` still wires up once the map connects. The orchestrator discovers them in its subtree with `$query` once mounted, retrying a few ticks for asynchronously-mounted children (the geocoder lazy-imports its module).
+The `StoreLocator` declares no child components, so nothing is ever double-mounted. [Register](/guide/usage/#registering-components) `StoreLocator`, `MapboxMap`, `MapboxCluster` and `MapboxClusterItem` each independently — ideally behind a lazy [`importWhen*` helper](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) (see [Lazy loading](/components/MapboxMap/#lazy-loading)). The orchestrator discovers them in its subtree with `$query` once mounted, retrying a few ticks for asynchronously-mounted children (the geocoder lazy-imports its module).
 
-The orchestrator reads its options **once, at mount time** — they are **not** reactive, like the rest of the [`MapboxMap` family](/components/MapboxMap/js-api#reactivity-and-updates). To change the store set afterwards, change the DOM of the list (add/remove `MapboxClusterItem` elements): the cluster re-derives the map data and emits an `update`, and the orchestrator re-fits and re-filters automatically.
+To change the store set after mount, change the DOM of the list (add/remove `MapboxClusterItem` elements): the cluster re-derives the map data and emits an `update`, and the orchestrator re-fits and re-filters automatically.
 
 ## StoreLocator
 
@@ -20,12 +20,33 @@ The coordinator. It owns no map rendering and no registry: the `MapboxCluster` d
 
 ### Options
 
-| Option            | Type      | Default | Description                                                                                            |
-| ----------------- | --------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| `item-zoom-level` | `Number`  | `14`    | The zoom level the map flies to when a store is selected.                                              |
-| `no-sort`         | `Boolean` | `false` | Disable the distance sort. By default the in-view items are reordered nearest-first on every map move. |
-| `fit-on-update`   | `Boolean` | `false` | Fit the map bounds to the whole item set whenever it changes (on load and on any add/remove of items). |
-| `popup-options`   | `Object`  | `{}`    | Options forwarded to the `mapboxgl.Popup` opened on selection.                                         |
+#### `item-zoom-level`
+
+- Type: `Number`
+- Default: `14`
+
+The zoom level the map flies to when a store is selected.
+
+#### `no-sort`
+
+- Type: `Boolean`
+- Default: `false`
+
+Disable the distance sort. Sorting is on by default, reordering the in-view items nearest-first on every map move, so add `data-option-no-sort` to turn it off.
+
+#### `fit-on-update`
+
+- Type: `Boolean`
+- Default: `false`
+
+Fit the map bounds to the whole item set whenever it changes (on load and on any add/remove of items).
+
+#### `popup-options`
+
+- Type: `Object`
+- Default: `{}`
+
+Options forwarded to the `mapboxgl.Popup` opened on selection.
 
 <!-- prettier-ignore-start -->
 ```html {3}
@@ -38,20 +59,43 @@ The coordinator. It owns no map rendering and no registry: the `MapboxCluster` d
 ```
 <!-- prettier-ignore-end -->
 
-::: warning Boolean options: presence, not value
-`no-sort` and `fit-on-update` are `Boolean` options — js-toolkit reads them by **attribute presence**, never by value. Enable one with the bare attribute (`data-option-fit-on-update`) and disable it by **omitting** the attribute; `data-option-fit-on-update="false"` still reads as `true`. Sorting is on by default, so add `data-option-no-sort` to turn it off. See the [Boolean options note](/components/MapboxMap/js-api#reactivity-and-updates).
-:::
-
 ### Getters
 
-| Getter      | Type                          | Description                                                                     |
-| ----------- | ----------------------------- | ------------------------------------------------------------------------------- |
-| `isLoaded`  | `boolean`                     | Whether the underlying map has finished loading. (a public field, not a getter) |
-| `mapboxMap` | `MapboxMap`                   | The child `MapboxMap` component.                                                |
-| `map`       | `mapboxgl.Map`                | The underlying Mapbox `Map` instance. Only valid once the map has loaded.       |
-| `cluster`   | `MapboxCluster \| undefined`  | The child `MapboxCluster` (the item registry + map data source).                |
-| `geocoder`  | `MapboxGeocoder \| undefined` | The optional child `MapboxGeocoder`.                                            |
-| `items`     | `MapboxClusterItem[]`         | The registered items, read from the cluster (their single source of truth).     |
+#### `isLoaded`
+
+- Type: `boolean`
+
+Whether the underlying map has finished loading (a public field, not a getter).
+
+#### `mapboxMap`
+
+- Type: `MapboxMap`
+
+The child `MapboxMap` component.
+
+#### `map`
+
+- Type: `mapboxgl.Map`
+
+The underlying Mapbox `Map` instance. Only valid once the map has loaded.
+
+#### `cluster`
+
+- Type: `MapboxCluster | undefined`
+
+The child `MapboxCluster` (the item registry + map data source).
+
+#### `geocoder`
+
+- Type: `MapboxGeocoder | undefined`
+
+The optional child `MapboxGeocoder`.
+
+#### `items`
+
+- Type: `MapboxClusterItem[]`
+
+The registered items, read from the cluster (their single source of truth).
 
 ### Methods
 
