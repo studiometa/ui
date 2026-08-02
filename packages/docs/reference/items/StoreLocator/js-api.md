@@ -12,7 +12,7 @@ The store locator is an **orchestrator** built on the [`MapboxMap` family](/refe
 
 The `StoreLocator` declares no child components, so nothing is ever double-mounted. [Register](/guide/usage/#registering-components) `StoreLocator`, `MapboxMap`, `MapboxCluster` and `MapboxClusterItem` each independently — ideally behind a lazy [`importWhen*` helper](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) (see [Lazy loading](/reference/items/MapboxMap/#lazy-loading)). The orchestrator discovers them in its subtree with `$query` once mounted, retrying a few ticks for asynchronously-mounted children (the geocoder lazy-imports its module).
 
-To change the store set after mount, change the DOM of the list (add/remove `MapboxClusterItem` elements): the cluster re-derives the map data and emits an `update`, and the orchestrator re-fits and re-filters automatically.
+To change the store set after mount, change the DOM of the list (add/remove `MapboxClusterItem` elements): the cluster re-derives the map data and emits a `map-update`, and the orchestrator re-fits and re-filters automatically.
 
 ## StoreLocator
 
@@ -103,34 +103,34 @@ The registered items, read from the cluster (their single source of truth).
 
 - Arguments: `MapboxClusterItem`
 
-Select a store: deactivate the previous one, fly the map to the item at `item-zoom-level`, open a popup from the item's [`popupContent`](/reference/items/MapboxMap/js-api#mapboxclusteritem), mark it active (`data-active` + `aria-current="true"`) and emit [`select`](#select). Called automatically on a sidebar click (delegated on the root), on the cluster's `item-click` (an unclustered pin), and available for you to call directly.
+Select a store: deactivate the previous one, fly the map to the item at `item-zoom-level`, open a popup from the item's [`popupContent`](/reference/items/MapboxMap/js-api#mapboxclusteritem), mark it active (`data-active` + `aria-current="true"`) and emit [`map-select`](#map-select). Called automatically on a sidebar click (delegated on the root), on the cluster's `map-item-click` (an unclustered pin), and available for you to call directly.
 
 #### `deselect()`
 
-Clear the current selection, close the popup, remove the active state and emit [`deselect`](#deselect).
+Clear the current selection, close the popup, remove the active state and emit [`map-deselect`](#map-deselect).
 
 ### Events
 
-#### `select`
+#### `map-select`
 
 Emitted when a store is selected, with the selected `MapboxClusterItem` instance. Wire your detail panel here.
 
 ```js
-onStoreLocatorSelect({ args: [item] }) {
+onStoreLocatorMapSelect({ args: [item] }) {
   // item.id, item.lngLat, item.$el …
 }
 ```
 
-#### `deselect`
+#### `map-deselect`
 
-Emitted when the selection is cleared through [`deselect()`](#deselect-1).
+Emitted when the selection is cleared through [`deselect()`](#deselect).
 
-#### `filter`
+#### `map-filter`
 
 Emitted whenever the in-view list is recomputed (on every map `moveend` and after an item-set change), with the array of in-view items in display order (nearest-first unless `no-sort` is set).
 
 ```js
-onStoreLocatorFilter({ args: [items] }) {
+onStoreLocatorMapFilter({ args: [items] }) {
   // e.g. update a "N stores in view" counter
 }
 ```

@@ -36,7 +36,7 @@ function fakeItem(el: HTMLElement, id: string, lngLat: [number, number]) {
  * `MapboxCluster` (owner of the item registry) plus an optional `MapboxGeocoder`.
  *
  * Like the other `@studiometa/ui-mapbox` child specs, the map/cluster/geocoder
- * and their `map-load` / `item-click` / `update` / `result` events are injected
+ * and their `map-load` / `map-item-click` / `map-update` / `map-result` events are injected
  * through the `mapboxMap`, `cluster` and `geocoder` getters, keeping the test
  * deterministic and free of the real `mapbox-gl`.
  */
@@ -118,17 +118,17 @@ function createStoreLocator(
       mockMap.fire('moveend');
     },
     fireItemClick(item: unknown) {
-      (clusterHandlers['item-click'] ?? []).forEach((callback) =>
+      (clusterHandlers['map-item-click'] ?? []).forEach((callback) =>
         callback({ detail: [item, {}, {}] }),
       );
     },
     fireUpdate() {
-      (clusterHandlers['update'] ?? []).forEach((callback) =>
+      (clusterHandlers['map-update'] ?? []).forEach((callback) =>
         callback({ detail: [mockCluster.items] }),
       );
     },
     fireGeocoderResult(result: unknown) {
-      (geocoderHandlers['result'] ?? []).forEach((callback) => callback({ detail: [result] }));
+      (geocoderHandlers['map-result'] ?? []).forEach((callback) => callback({ detail: [result] }));
     },
   };
 }
@@ -168,12 +168,12 @@ function listOrder(ctx: ReturnType<typeof createStoreLocator>): string[] {
 describe('StoreLocator orchestrator', () => {
   // --- 1. Selection --------------------------------------------------------
   describe('selection', () => {
-    it('flies to the item, marks it active/aria-current, opens a popup and emits select', async () => {
+    it('flies to the item, marks it active/aria-current, opens a popup and emits map-select', async () => {
       const ctx = createStoreLocator([{ id: 'a', lngLat: [3, 4] }]);
       await mountAndLoad(ctx);
 
       const select = vi.fn();
-      ctx.instance.$on('select', select);
+      ctx.instance.$on('map-select', select);
 
       const itemA = ctx.item('a');
       ctx.instance.selectItem(itemA);
@@ -214,12 +214,12 @@ describe('StoreLocator orchestrator', () => {
       expect(itemB.$el.getAttribute('aria-current')).toBe('true');
     });
 
-    it('clears the active state and emits deselect on deselect()', async () => {
+    it('clears the active state and emits map-deselect on deselect()', async () => {
       const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
       await mountAndLoad(ctx);
 
       const deselect = vi.fn();
-      ctx.instance.$on('deselect', deselect);
+      ctx.instance.$on('map-deselect', deselect);
 
       const itemA = ctx.item('a');
       ctx.instance.selectItem(itemA);
@@ -239,7 +239,7 @@ describe('StoreLocator orchestrator', () => {
       await mountAndLoad(ctx);
 
       const select = vi.fn();
-      ctx.instance.$on('select', select);
+      ctx.instance.$on('map-select', select);
 
       // Click the inner button of item `b`: the delegated handler resolves the
       // closest MapboxClusterItem element and selects its instance.
@@ -261,7 +261,7 @@ describe('StoreLocator orchestrator', () => {
       await mountAndLoad(ctx);
 
       const select = vi.fn();
-      ctx.instance.$on('select', select);
+      ctx.instance.$on('map-select', select);
 
       ctx.fireItemClick(ctx.item('b'));
 
@@ -275,7 +275,7 @@ describe('StoreLocator orchestrator', () => {
       await mountAndLoad(ctx);
 
       const select = vi.fn();
-      ctx.instance.$on('select', select);
+      ctx.instance.$on('map-select', select);
 
       expect(() => ctx.fireItemClick(undefined)).not.toThrow();
       expect(select).not.toHaveBeenCalled();
@@ -284,7 +284,7 @@ describe('StoreLocator orchestrator', () => {
 
   // --- 3. Viewport filtering (in-bounds + sort + filter) -------------------
   describe('viewport filtering on moveend', () => {
-    it('reflects data-in-bounds only for in-view items and emits filter with them', async () => {
+    it('reflects data-in-bounds only for in-view items and emits map-filter with them', async () => {
       const ctx = createStoreLocator([
         { id: 'a', lngLat: [1, 1] },
         { id: 'b', lngLat: [2, 2] },
@@ -296,7 +296,7 @@ describe('StoreLocator orchestrator', () => {
       boundsContainingLng(ctx, [1, 3]);
 
       const filter = vi.fn();
-      ctx.instance.$on('filter', filter);
+      ctx.instance.$on('map-filter', filter);
 
       ctx.fireMoveEnd();
 
@@ -333,7 +333,7 @@ describe('StoreLocator orchestrator', () => {
       await mountAndLoad(ctx);
 
       const filter = vi.fn();
-      ctx.instance.$on('filter', filter);
+      ctx.instance.$on('map-filter', filter);
 
       ctx.fireMoveEnd();
 
@@ -354,7 +354,7 @@ describe('StoreLocator orchestrator', () => {
       await mountAndLoad(ctx);
 
       const filter = vi.fn();
-      ctx.instance.$on('filter', filter);
+      ctx.instance.$on('map-filter', filter);
 
       ctx.fireMoveEnd();
 
@@ -461,7 +461,7 @@ describe('StoreLocator orchestrator', () => {
 
       boundsContainingLng(ctx, [7, 8]);
       const filter = vi.fn();
-      ctx.instance.$on('filter', filter);
+      ctx.instance.$on('map-filter', filter);
       ctx.mockMap.fitBounds.mockClear();
 
       // The cluster announces the item-set change; the orchestrator re-fits and
@@ -498,14 +498,14 @@ describe('StoreLocator orchestrator', () => {
       await mountAndLoad(ctx);
 
       const deselect = vi.fn();
-      ctx.instance.$on('deselect', deselect);
+      ctx.instance.$on('map-deselect', deselect);
 
       ctx.instance.selectItem(ctx.item('a'));
       const popup = (ctx.instance as any).__popup;
       expect(popup).toBeDefined();
 
       // The selected store leaves the registry: the popup must be removed and
-      // `deselect` emitted, not just `__selected` cleared.
+      // `map-deselect` emitted, not just `__selected` cleared.
       ctx.mockCluster.items = [] as any;
       ctx.fireUpdate();
 
@@ -538,14 +538,14 @@ describe('StoreLocator orchestrator', () => {
       Object.defineProperty(ctx.instance, 'cluster', { get: () => newCluster, configurable: true });
 
       const select = vi.fn();
-      ctx.instance.$on('select', select);
+      ctx.instance.$on('map-select', select);
 
       document.dispatchEvent(new CustomEvent('mapbox-cluster:connected', { detail: newCluster }));
 
       // The stale wiring was dropped and the new cluster wired: an item-click
       // through the REPLACEMENT cluster selects its item.
       expect((ctx.instance as any).__cluster).toBe(newCluster);
-      (newHandlers['item-click'] ?? []).forEach((callback) =>
+      (newHandlers['map-item-click'] ?? []).forEach((callback) =>
         callback({ detail: [newItem, {}, {}] }),
       );
       expect(select).toHaveBeenCalledTimes(1);
@@ -566,7 +566,7 @@ describe('StoreLocator orchestrator', () => {
       await mountAndLoad(ctx);
 
       const select = vi.fn();
-      ctx.instance.$on('select', select);
+      ctx.instance.$on('map-select', select);
 
       // Not wired yet: an item-click is ignored because the listener is not
       // attached until the cluster's source is ready.
@@ -598,8 +598,8 @@ describe('StoreLocator orchestrator', () => {
 
       const filter = vi.fn();
       const select = vi.fn();
-      ctx.instance.$on('filter', filter);
-      ctx.instance.$on('select', select);
+      ctx.instance.$on('map-filter', filter);
+      ctx.instance.$on('map-select', select);
 
       vi.useFakeTimers();
       ctx.instance.$destroy();

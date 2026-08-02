@@ -92,7 +92,7 @@ Add a [source](https://docs.mapbox.com/style-spec/reference/sources/) with `Mapb
 
 ## Images
 
-Register images against the map sprite so they can be referenced from a symbol layer's `icon-image`. Use `MapboxImage` for a single image, or `MapboxImages` to load several at once through its `sources` option. Both emit a `ready` event once the image(s) are loaded. The symbol layer below pairs each `icon-image` with a `text-field` label.
+Register images against the map sprite so they can be referenced from a symbol layer's `icon-image`. Use `MapboxImage` for a single image, or `MapboxImages` to load several at once through its `sources` option. Both emit a `map-ready` event once the image(s) are loaded. The symbol layer below pairs each `icon-image` with a `text-field` label.
 
 <PreviewPlayground
   :html="() => import('./stories/images/app.twig')"
@@ -133,7 +133,7 @@ The cluster owns no authored data. Each point is a `MapboxClusterItem` that self
 </div>
 ```
 
-The cluster reports a click on an unclustered point through its `item-click` event but never selects or flies on its own. To turn this into a full "find a store near you" experience — selection, popups, viewport filtering and address search — wrap the cluster in a [`StoreLocator`](/reference/items/StoreLocator/) orchestrator.
+The cluster reports a click on an unclustered point through its `map-item-click` event but never selects or flies on its own. To turn this into a full "find a store near you" experience — selection, popups, viewport filtering and address search — wrap the cluster in a [`StoreLocator`](/reference/items/StoreLocator/) orchestrator.
 
 ## Listening to map events
 
@@ -149,11 +149,11 @@ class App extends Base {
     components: { MapboxMap },
   };
 
-  onMapboxMapMapLoad(map) {
+  onMapboxMapMapLoad({ args: [map] }) {
     console.log('Map loaded', map);
   }
 
-  onMapboxMapMapClick(event) {
+  onMapboxMapMapClick({ args: [event] }) {
     console.log('Clicked at', event.lngLat);
   }
 }

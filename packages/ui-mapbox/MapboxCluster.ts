@@ -74,7 +74,7 @@ export interface MapboxClusterProps extends AbstractMapboxMapChildProps {
  * [`StoreLocator`](./StoreLocator.js) orchestrator, which drives them on top of a
  * cluster. Used standalone, a `MapboxCluster` still renders a working clustered
  * map + list (points render, clusters zoom on click); it simply reports a click
- * on an unclustered point through the `item-click` event and lets the caller
+ * on an unclustered point through the `map-item-click` event and lets the caller
  * decide what it means.
  *
  * @see https://ui.studiometa.dev/reference/items/MapboxMap/
@@ -87,7 +87,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
    */
   static config: BaseConfig = {
     name: 'MapboxCluster',
-    emits: ['cluster-click', 'item-click', 'update'],
+    emits: ['map-cluster-click', 'map-item-click', 'map-update'],
     options: {
       clusterMaxZoom: {
         type: Number,
@@ -277,7 +277,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
     this.setData(this.featureCollection as GeoJSONSourceSpecification['data']);
     // Let an orchestrator react to the new item set (fit the map, refilter the
     // list). The cluster itself never fits or filters — it only reports.
-    this.$emit('update', this.items);
+    this.$emit('map-update', this.items);
   }
 
   /**
@@ -301,7 +301,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
 
     const clusterId = feature.properties?.cluster_id as number;
 
-    this.$emit('cluster-click', clusterId, event);
+    this.$emit('map-cluster-click', clusterId, event);
 
     if (event.defaultPrevented) {
       return;
@@ -362,7 +362,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
 
   /**
    * Report a click on an unclustered point: resolve the feature back to the
-   * registered item behind it and emit `item-click`. The cluster makes no
+   * registered item behind it and emit `map-item-click`. The cluster makes no
    * decision about what a click means — an orchestrator (e.g. `StoreLocator`)
    * listens and selects, opens a popup, etc.
    * @private
@@ -375,7 +375,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
         ? undefined
         : this.__items.find((candidate) => candidate.id === String(id));
 
-    this.$emit('item-click', item, feature, event);
+    this.$emit('map-item-click', item, feature, event);
   };
 
   /**
@@ -504,7 +504,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
 
     // Announce the seeded item set so an orchestrator can run its first fit +
     // viewport filter against a cluster that was already populated at load.
-    this.$emit('update', this.items);
+    this.$emit('map-update', this.items);
   }
 
   /**

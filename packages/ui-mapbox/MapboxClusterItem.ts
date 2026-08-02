@@ -36,7 +36,7 @@ export interface MapboxClusterItemProps extends BaseProps {
  *
  * Used under a bare `MapboxCluster` (no orchestrator) the item still registers
  * and renders as a clustered point; it just carries no selection affordance of
- * its own — a click is reported by the cluster's `item-click` event for a
+ * its own — a click is reported by the cluster's `map-item-click` event for a
  * caller to act on.
  *
  * @see https://ui.studiometa.dev/reference/items/MapboxMap/
@@ -49,7 +49,7 @@ export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
    */
   static config: BaseConfig = {
     name: 'MapboxClusterItem',
-    emits: ['error'],
+    emits: ['map-error'],
     options: {
       id: String,
       lngLat: {
@@ -184,7 +184,7 @@ export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
       this.__cluster?.unregister(this);
     } catch (err) {
       this.$warn(err);
-      this.$emit('error', err);
+      this.$emit('map-error', err);
     }
 
     this.__cluster = undefined;

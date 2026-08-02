@@ -50,13 +50,13 @@ describe('MapboxImage component', () => {
     expect(mockMap.addImage).not.toHaveBeenCalled();
   });
 
-  it('should emit a ready event once the image is registered', async () => {
+  it('should emit a map-ready event once the image is registered', async () => {
     const { instance } = createImage();
     const handler = vi.fn();
 
     vi.useFakeTimers();
     instance.$mount();
-    instance.$on('ready', handler);
+    instance.$on('map-ready', handler);
     await vi.advanceTimersByTimeAsync(100);
     vi.useRealTimers();
 
@@ -197,7 +197,7 @@ describe('MapboxImage component', () => {
 
     vi.useFakeTimers();
     instance.$mount();
-    instance.$on('ready', ready);
+    instance.$on('map-ready', ready);
     await vi.advanceTimersByTimeAsync(100);
 
     // The load is still pending: nothing has been added to the sprite yet.
@@ -211,7 +211,7 @@ describe('MapboxImage component', () => {
     vi.useRealTimers();
 
     // The image added after teardown must be removed again: no orphan sprite and
-    // no `ready` event emitted after destroy.
+    // no `map-ready` event emitted after destroy.
     expect(mockMap.removeImage).toHaveBeenCalledWith('my-image');
     expect(mockMap._images).toEqual({});
     expect(ready).not.toHaveBeenCalled();

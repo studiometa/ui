@@ -132,12 +132,12 @@ describe('MapboxCluster component', () => {
     expect(lastData.features).toHaveLength(0);
   });
 
-  it('should emit an update event carrying the item set when it rebuilds', async () => {
+  it('should emit a map-update event carrying the item set when it rebuilds', async () => {
     const { instance } = createCluster();
     await mountAndFlush(instance);
 
     const update = vi.fn();
-    instance.$on('update', update);
+    instance.$on('map-update', update);
 
     const item = createItem(instance, { 'data-option-id': 'x', 'data-option-lng-lat': '[5, 6]' });
     await mountAndFlush(item);
@@ -151,7 +151,7 @@ describe('MapboxCluster component', () => {
     expect(instance.items).toHaveLength(1);
   });
 
-  it('should emit cluster-click and ease to the expansion zoom on cluster click', async () => {
+  it('should emit map-cluster-click and ease to the expansion zoom on cluster click', async () => {
     const { instance, mockMap } = createCluster();
     const handler = vi.fn();
 
@@ -160,7 +160,7 @@ describe('MapboxCluster component', () => {
     ]) as any;
 
     await mountAndFlush(instance);
-    instance.$on('cluster-click', handler);
+    instance.$on('map-cluster-click', handler);
 
     const clustersId = (instance as any).__getId('clusters');
     mockMap.fire('click', clustersId, {
@@ -208,7 +208,7 @@ describe('MapboxCluster component', () => {
     expect(mockMap.easeTo).not.toHaveBeenCalled();
   });
 
-  it('should emit item-click with the resolved item on unclustered point click', async () => {
+  it('should emit map-item-click with the resolved item on unclustered point click', async () => {
     const { instance, mockMap } = createCluster();
     await mountAndFlush(instance);
 
@@ -216,7 +216,7 @@ describe('MapboxCluster component', () => {
     await mountAndFlush(item);
 
     const itemClick = vi.fn();
-    instance.$on('item-click', itemClick);
+    instance.$on('map-item-click', itemClick);
 
     const unclusteredId = (instance as any).__getId('unclustered-point');
     mockMap.fire('click', unclusteredId, {
@@ -233,12 +233,12 @@ describe('MapboxCluster component', () => {
     expect(mockMap.flyTo).not.toHaveBeenCalled();
   });
 
-  it('should emit item-click with an undefined item for an unknown feature id', async () => {
+  it('should emit map-item-click with an undefined item for an unknown feature id', async () => {
     const { instance, mockMap } = createCluster();
     await mountAndFlush(instance);
 
     const itemClick = vi.fn();
-    instance.$on('item-click', itemClick);
+    instance.$on('map-item-click', itemClick);
 
     const unclusteredId = (instance as any).__getId('unclustered-point');
     mockMap.fire('click', unclusteredId, {

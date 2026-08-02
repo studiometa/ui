@@ -12,7 +12,7 @@ import { Action, Dialog, ViewTransition } from '@studiometa/ui';
  *
  * It declares the whole Mapbox family so a single `registerComponent(App)` call
  * mounts everything without double-registration. The `StoreLocator` stays
- * panel-agnostic: it only emits a `select` event with the chosen item. Here we
+ * panel-agnostic: it only emits a `map-select` event with the chosen item. Here we
  * react to it through the `on<Component><Event>` convention, copy the item's
  * `<template>` detail into the drawer and open it.
  */
@@ -41,7 +41,7 @@ class App extends Base {
    * Open the drawer with the selected store's detail.
    * @param {{ args: [MapboxClusterItem] }} props
    */
-  onStoreLocatorSelect({ args: [item] }) {
+  onStoreLocatorMapSelect({ args: [item] }) {
     const template = item.$el.querySelector('template');
     const content = this.$el.querySelector('#store-panel-content');
 

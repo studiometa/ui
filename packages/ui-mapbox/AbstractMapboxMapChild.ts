@@ -34,7 +34,7 @@ export const MAPBOX_MAP_CONNECTED = 'mapbox-map:connected';
  *    global queue runs lifecycle hooks with no try/catch: a single synchronous
  *    throw wedges the queue and freezes every mount/destroy on the page. The
  *    ready callback and the subclass teardown (`__onDestroyed`) are both run
- *    inside a try/catch that routes to `$warn` + an `error` event and never
+ *    inside a try/catch that routes to `$warn` + a `map-error` event and never
  *    rethrows.
  * 2. **Dead-map safety** — once ready, the child subscribes to the map's own
  *    `remove` event; when it fires the cached map reference is dropped so no
@@ -62,7 +62,7 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    */
   static config: BaseConfig = {
     name: 'AbstractMapboxMapChild',
-    emits: ['error'],
+    emits: ['map-error'],
   };
 
   /**
@@ -92,7 +92,7 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    *
    * The callback may be synchronous or `async`: a returned promise is awaited
    * inside the same containment as a synchronous body, so a rejection routes to
-   * `$warn` + the `error` event instead of surfacing as an unhandled rejection.
+   * `$warn` + the `map-error` event instead of surfacing as an unhandled rejection.
    * @private
    */
   __readyCallback?: (map: Map) => void | Promise<void>;
@@ -262,7 +262,7 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    * Run the ready callback inside a uniform containment for both synchronous
    * throws and rejected promises: a synchronous body is wrapped in `try/catch`,
    * and an `async` body's returned promise is awaited so its rejection routes to
-   * `$warn` + the `error` event instead of becoming an unhandled rejection.
+   * `$warn` + the `map-error` event instead of becoming an unhandled rejection.
    * Neither path ever rethrows into the global lifecycle queue.
    * @private
    * @param {Map} map
@@ -379,13 +379,13 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
 
   /**
    * Contain an error raised by a guarded injection or teardown: warn and emit an
-   * `error` event, but never rethrow into the global queue.
+   * `map-error` event, but never rethrow into the global queue.
    * @private
    * @param {unknown} err
    */
   __handleError(err: unknown): void {
     this.$warn(err);
-    this.$emit('error', err);
+    this.$emit('map-error', err);
   }
 
   /**

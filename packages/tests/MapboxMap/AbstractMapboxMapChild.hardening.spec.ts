@@ -10,7 +10,7 @@ import { AbstractMapboxMapChild, MapboxMarker } from '@studiometa/ui-mapbox';
 class ThrowingChild extends AbstractMapboxMapChild {
   static config = {
     name: 'ThrowingChild',
-    emits: ['error'],
+    emits: ['map-error'],
   };
 
   readyError?: Error;
@@ -76,14 +76,14 @@ function createDeferredMap(mockMap: MockMap) {
 }
 
 describe('AbstractMapboxMapChild — B1: guarded lifecycle', () => {
-  it('should contain a throwing ready callback: no rethrow, warns + emits error', async () => {
+  it('should contain a throwing ready callback: no rethrow, warns + emits map-error', async () => {
     const { instance } = createChild();
     instance.$options.log = true;
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const onError = vi.fn();
     const boom = new Error('ready boom');
     instance.readyError = boom;
-    instance.$on('error', onError);
+    instance.$on('map-error', onError);
 
     vi.useFakeTimers();
     // `$mount` resolves even though the ready callback threw: the throw was
@@ -103,13 +103,13 @@ describe('AbstractMapboxMapChild — B1: guarded lifecycle', () => {
     warn.mockRestore();
   });
 
-  it('should contain a throwing teardown: no rethrow, warns + emits error', async () => {
+  it('should contain a throwing teardown: no rethrow, warns + emits map-error', async () => {
     const { instance } = createChild();
     instance.$options.log = true;
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const onError = vi.fn();
     const boom = new Error('teardown boom');
-    instance.$on('error', onError);
+    instance.$on('map-error', onError);
 
     vi.useFakeTimers();
     instance.$mount();

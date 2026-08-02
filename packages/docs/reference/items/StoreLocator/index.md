@@ -12,24 +12,24 @@ It is part of the [`@studiometa/ui-mapbox`](https://www.npmjs.com/package/@studi
 
 The responsibilities are split in two:
 
-- The **`MapboxCluster`** is a pure source driver. Its `MapboxClusterItem`s self-register, and it derives a clustered GeoJSON source from that registry (the map data), handles the click-to-zoom on clusters, and reports a click on an unclustered point through an `item-click` event. Used on its own it renders a working clustered map + list, but it never selects, flies, filters by viewport or opens popups.
+- The **`MapboxCluster`** is a pure source driver. Its `MapboxClusterItem`s self-register, and it derives a clustered GeoJSON source from that registry (the map data), handles the click-to-zoom on clusters, and reports a click on an unclustered point through a `map-item-click` event. Used on its own it renders a working clustered map + list, but it never selects, flies, filters by viewport or opens popups.
 - The **`StoreLocator`** wraps such a cluster and adds exactly those search-UX concerns: it selects items (fly-to, `active` styling, popup), filters and sorts the list on every map move, wires the geocoder, and re-frames the map on item-set changes.
 
 ## The three-state model
 
 Each store has three independent states, each with its own source of truth. Keeping them separate is what makes the orchestrator predictable — panning the map never rebuilds the map data, and updating the item set never fights with the current viewport.
 
-| State          | Source of truth                            | Owner           | Drives                                          | Recomputed on        |
-| -------------- | ------------------------------------------ | --------------- | ----------------------------------------------- | -------------------- |
-| **Registered** | the item exists in the DOM                 | `MapboxCluster` | the **map data** (markers/clusters)             | item-set change only |
-| **In bounds**  | the item's `lngLat` is inside the viewport | `StoreLocator`  | **list visibility + distance sort** only        | every map `moveend`  |
-| **Selected**   | the chosen item                            | `StoreLocator`  | fly-to, popup, `active` styling, `select` event | selection            |
+| State          | Source of truth                            | Owner           | Drives                                              | Recomputed on        |
+| -------------- | ------------------------------------------ | --------------- | --------------------------------------------------- | -------------------- |
+| **Registered** | the item exists in the DOM                 | `MapboxCluster` | the **map data** (markers/clusters)                 | item-set change only |
+| **In bounds**  | the item's `lngLat` is inside the viewport | `StoreLocator`  | **list visibility + distance sort** only            | every map `moveend`  |
+| **Selected**   | the chosen item                            | `StoreLocator`  | fly-to, popup, `active` styling, `map-select` event | selection            |
 
-Because the map data is derived only from the cluster's registered items, swapping the list (for instance through a [`Fetch`](/reference/items/Fetch/)) updates both the list **and** the map at once: the cluster re-derives its source and emits an `update`, and the orchestrator re-fits and re-filters in response. See the [faceted example](./examples#faceted-list).
+Because the map data is derived only from the cluster's registered items, swapping the list (for instance through a [`Fetch`](/reference/items/Fetch/)) updates both the list **and** the map at once: the cluster re-derives its source and emits a `map-update`, and the orchestrator re-fits and re-filters in response. See the [faceted example](./examples#faceted-list).
 
 ## Composability
 
-The `StoreLocator` emits events and reflects state as data-attributes on each `MapboxClusterItem`; it makes no decision about how a selected store is presented beyond the built-in popup. The [examples](./examples.md) use a [`Dialog`](/reference/items/Dialog/) drawer as the detail panel, but a static `aside` would work just as well — wire whichever you like to the [`select`](./js-api#select) event.
+The `StoreLocator` emits events and reflects state as data-attributes on each `MapboxClusterItem`; it makes no decision about how a selected store is presented beyond the built-in popup. The [examples](./examples.md) use a [`Dialog`](/reference/items/Dialog/) drawer as the detail panel, but a static `aside` would work just as well — wire whichever you like to the [`map-select`](./js-api#map-select) event.
 
 ## Table of content
 

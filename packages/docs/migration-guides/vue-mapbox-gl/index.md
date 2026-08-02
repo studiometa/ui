@@ -110,16 +110,16 @@ A key structural difference: the map needs an explicit **`container` ref** child
 
 The Vue library re-emits Mapbox map events prefixed with `mb-` (e.g. `@mb-load`, `@mb-click`). The js-toolkit components use the `map-` prefix instead. Listen to the emitted events from a parent component with `on<ComponentName><EventName>` handler methods.
 
-| Vue listener                  | js-toolkit emitted event | Parent handler method         |
-| ----------------------------- | ------------------------ | ----------------------------- |
-| `@mb-load` (map loaded)       | `map-load`               | `onMapboxMapMapLoad`          |
-| `@mb-click`                   | `map-click`              | `onMapboxMapMapClick`         |
-| `@mb-moveend`                 | `map-moveend`            | `onMapboxMapMapMoveend`       |
-| `@mb-zoomend`                 | `map-zoomend`            | `onMapboxMapMapZoomend`       |
-| `MapboxCluster` cluster click | `cluster-click`          | `onMapboxClusterClusterClick` |
-| `MapboxCluster` feature click | `item-click`             | `onMapboxClusterItemClick`    |
+| Vue listener                  | js-toolkit emitted event | Parent handler method            |
+| ----------------------------- | ------------------------ | -------------------------------- |
+| `@mb-load` (map loaded)       | `map-load`               | `onMapboxMapMapLoad`             |
+| `@mb-click`                   | `map-click`              | `onMapboxMapMapClick`            |
+| `@mb-moveend`                 | `map-moveend`            | `onMapboxMapMapMoveend`          |
+| `@mb-zoomend`                 | `map-zoomend`            | `onMapboxMapMapZoomend`          |
+| `MapboxCluster` cluster click | `map-cluster-click`      | `onMapboxClusterMapClusterClick` |
+| `MapboxCluster` feature click | `map-item-click`         | `onMapboxClusterMapItemClick`    |
 
-The `MapboxMap` component re-emits the full list of Mapbox map events with the `map-` prefix; `MapboxCluster` emits `cluster-click`, `item-click` (an unclustered point, resolved back to the registered `MapboxClusterItem` behind it) and `update` (the item set changed); `MapboxGeocoder` emits `result`; `MapboxImage` and `MapboxImages` emit `ready`. See each component's events in the [JS API](/reference/items/MapboxMap/js-api).
+Every public event uses the `map-` prefix. The `MapboxMap` component re-emits the full list of Mapbox map events; `MapboxCluster` emits `map-cluster-click`, `map-item-click` (an unclustered point, resolved back to the registered `MapboxClusterItem` behind it) and `map-update` (the item set changed); `MapboxGeocoder` emits `map-result`; `MapboxImage` and `MapboxImages` emit `map-ready`; map children emit `map-error` when guarded lifecycle work fails; and `StoreLocator` emits `map-select`, `map-deselect` and `map-filter`. See each component's events in the [JS API](/reference/items/MapboxMap/js-api).
 
 ```js
 import { Base, createApp } from '@studiometa/js-toolkit';
@@ -131,11 +131,11 @@ class App extends Base {
     components: { MapboxMap },
   };
 
-  onMapboxMapMapLoad(map) {
+  onMapboxMapMapLoad({ args: [map] }) {
     console.log('Map is ready', map);
   }
 
-  onMapboxMapMapClick(event) {
+  onMapboxMapMapClick({ args: [event] }) {
     console.log('Clicked at', event.lngLat);
   }
 }
@@ -271,7 +271,7 @@ class App extends Base {
     components: { MapboxMap },
   };
 
-  onMapboxMapMapLoad(map) {
+  onMapboxMapMapLoad({ args: [map] }) {
     // former @mb-load handler
   }
 }
