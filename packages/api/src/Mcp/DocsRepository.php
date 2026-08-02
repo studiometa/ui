@@ -60,7 +60,7 @@ final class DocsRepository
             $concepts[] = [
                 'name' => $name,
                 'slug' => $slug,
-                'path' => 'index' === $slug ? '/guide/concepts/' : "/guide/concepts/$slug/",
+                'path' => 'index' === $slug ? '/guide/concepts/' : "/guide/concepts/$slug",
             ];
         }
 
