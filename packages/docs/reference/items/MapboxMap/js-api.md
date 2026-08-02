@@ -107,113 +107,109 @@ Whether the map has finished loading.
 
 #### Events
 
-The component emits a custom `map-load` event, plus all the common Mapbox GL map events, re-emitted under the same name. Each handler receives the corresponding Mapbox event object (the `map-load` handler receives the `map` instance).
+The component emits a custom `map-load` event, plus all the common Mapbox GL map events prefixed with `map-` to avoid conflicts with native events. Each handler receives the corresponding Mapbox event object (the `map-load` handler receives the `map` instance).
 
 ##### `map-load`
 
 The map finished loading (custom event).
 
-##### `load`
-
-Map resources are loaded.
-
-##### `idle`
+##### `map-idle`
 
 The map is idle after rendering.
 
-##### `render`
+##### `map-render`
 
 A frame is rendered.
 
-##### `resize`
+##### `map-resize`
 
 The map container is resized.
 
-##### `remove`
+##### `map-remove`
 
 The map is removed.
 
-##### `error`
+##### `map-error`
 
 An error occurred.
 
-##### `click`
+##### `map-click`
 
 A click on the map.
 
-##### `dblclick`
+##### `map-dblclick`
 
 A double-click on the map.
 
-##### `mouseenter`
+##### `map-mouseenter`
 
 The pointer enters the map canvas.
 
-##### `mouseleave`
+##### `map-mouseleave`
 
 The pointer leaves the map canvas.
 
-##### `mousemove`
+##### `map-mousemove`
 
 The pointer moves over the map.
 
-##### `movestart`
+##### `map-movestart`
 
 Map movement starts (pan, zoom, rotate).
 
-##### `move`
+##### `map-move`
 
 The map is moving.
 
-##### `moveend`
+##### `map-moveend`
 
 Map movement ends.
 
-##### `zoomstart`
+##### `map-zoomstart`
 
 A zoom transition starts.
 
-##### `zoom`
+##### `map-zoom`
 
 The zoom level changes.
 
-##### `zoomend`
+##### `map-zoomend`
 
 A zoom transition ends.
 
-##### `rotatestart`
+##### `map-rotatestart`
 
 Rotation starts.
 
-##### `rotate`
+##### `map-rotate`
 
 The map is rotating.
 
-##### `rotateend`
+##### `map-rotateend`
 
 Rotation ends.
 
-##### `pitchstart`
+##### `map-pitchstart`
 
 A pitch transition starts.
 
-##### `pitch`
+##### `map-pitch`
 
 The pitch changes.
 
-##### `pitchend`
+##### `map-pitchend`
 
 A pitch transition ends.
 
-##### `dragstart`
+##### `map-dragstart`
 
 A drag starts.
 
-##### `drag`
+##### `map-drag`
 
 The map is being dragged.
 
-##### `dragend`
+##### `map-dragend`
 
 A drag ends.
 
@@ -233,11 +229,11 @@ class App extends Base {
     console.log('Map is ready', map);
   }
 
-  onMapboxMapClick(event) {
+  onMapboxMapMapClick(event) {
     console.log('Clicked at', event.lngLat);
   }
 
-  onMapboxMapZoomend(event) {
+  onMapboxMapMapZoomend(event) {
     console.log('New zoom level', event.target.getZoom());
   }
 }
