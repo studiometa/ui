@@ -24,14 +24,12 @@ npm install @mapbox/mapbox-gl-geocoder
 Register each component your page uses: each one registers independently and resolves its parent map on its own. `mapbox-gl` is heavy (~230&nbsp;kB gzipped), so the recommended default is to lazy-register each component with js-toolkit's `importWhen*` helpers and the per-component subpaths (each subpath's default export is the component class), keeping the dependency out of your main bundle until a map is actually on the page:
 
 ```js
-import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
+import { registerComponents, importWhenVisible } from '@studiometa/js-toolkit';
 
 // Register only the components your page uses; order doesn't matter.
-registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'));
-registerComponent(
+registerComponents(
+  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'),
   importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMarker'), 'MapboxMarker'),
-);
-registerComponent(
   importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxPopup'), 'MapboxPopup'),
 );
 ```

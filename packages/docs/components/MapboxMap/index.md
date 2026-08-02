@@ -4,7 +4,7 @@ badges: [JS]
 
 # MapboxMap <Badges :texts="$frontmatter.badges" />
 
-The `MapboxMap` component and its family let you build [Mapbox GL](https://docs.mapbox.com/mapbox-gl-js/) maps declaratively, straight from your HTML, with [js-toolkit](https://js-toolkit.studiometa.dev/) — no Vue, no framework runtime. A `MapboxMap` element owns the underlying Mapbox `Map` instance, and every other component (markers, popups, controls, sources, layers, images, clusters) is authored as a child element that registers itself against that map once it is loaded.
+The `MapboxMap` component and its family let you build [Mapbox GL](https://docs.mapbox.com/mapbox-gl-js/) maps declaratively, straight from your HTML, with [js-toolkit](https://js-toolkit.studiometa.dev/). A `MapboxMap` element owns the underlying Mapbox `Map` instance, and every other component (markers, popups, controls, sources, layers, images, clusters) is authored as a child element that registers itself against that map once it is loaded.
 
 These components are published in the standalone [`@studiometa/ui-mapbox`](https://www.npmjs.com/package/@studiometa/ui-mapbox) package and replace the [`@studiometa/vue-mapbox-gl`](https://www.npmjs.com/package/@studiometa/vue-mapbox-gl) library. If you are coming from the Vue library, read the [migration guide](/migration-guides/vue-mapbox-gl/).
 
@@ -78,11 +78,13 @@ Keep `mapbox-gl` out of your main bundle by lazy-registering each component with
 Every component is available at its own subpath (`@studiometa/ui-mapbox/<Component>`), whose default export is the component class — so the dynamic import needs no destructuring. Because each component is registered independently, lazy-register each one you use: deferring `MapboxMap` pulls in `mapbox-gl`, but a marker or a cluster is its own module and must get its own lazy registration.
 
 ```js
-import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
+import { registerComponents, importWhenVisible } from '@studiometa/js-toolkit';
 
-for (const name of ['MapboxMap', 'MapboxMarker', 'MapboxPopup']) {
-  registerComponent(importWhenVisible(() => import(`@studiometa/ui-mapbox/${name}`), name));
-}
+registerComponents(
+  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'),
+  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMarker'), 'MapboxMarker'),
+  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxPopup'), 'MapboxPopup'),
+);
 ```
 
 Reach for a different trigger when it fits better: `importWhenIdle` (load during browser idle time), `importOnInteraction` (wait for a first click/focus/touch on the element) or `importOnMediaQuery` (load only above a breakpoint, e.g. to skip the map on small screens).

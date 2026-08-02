@@ -4,7 +4,7 @@ badges: [JS]
 
 # StoreLocator <Badges :texts="$frontmatter.badges" />
 
-The `StoreLocator` component adds a "find a store near you" experience on top of a [`MapboxMap`](/components/MapboxMap/). It is a thin **orchestrator**: it owns no map rendering and no item registry of its own. It wraps a `MapboxMap` containing a [`MapboxCluster`](/components/MapboxMap/js-api#cluster) — the declarative clustered map **and** list source driver, whose [`MapboxClusterItem`](/components/MapboxMap/js-api#mapboxclusteritem)s are the sidebar entries — plus an optional [`MapboxGeocoder`](/components/MapboxMap/js-api#mapboxgeocoder) (address search), and layers the search UX on top: selection, viewport filtering and address search. Everything is authored declaratively from your HTML with [js-toolkit](https://js-toolkit.studiometa.dev/), no framework runtime.
+The `StoreLocator` component adds a "find a store near you" experience on top of a [`MapboxMap`](/components/MapboxMap/). It is a thin **orchestrator**: it owns no map rendering and no item registry of its own. It wraps a `MapboxMap` containing a [`MapboxCluster`](/components/MapboxMap/js-api#cluster) — the declarative clustered map **and** list source driver, whose [`MapboxClusterItem`](/components/MapboxMap/js-api#mapboxclusteritem)s are the sidebar entries — plus an optional [`MapboxGeocoder`](/components/MapboxMap/js-api#mapboxgeocoder) (address search), and layers the search UX on top: selection, viewport filtering and address search. Everything is authored declaratively from your HTML with [js-toolkit](https://js-toolkit.studiometa.dev/).
 
 It is part of the [`@studiometa/ui-mapbox`](https://www.npmjs.com/package/@studiometa/ui-mapbox) package, alongside the rest of the [`MapboxMap` family](/components/MapboxMap/).
 
@@ -55,12 +55,15 @@ Because a `MapboxClusterItem` resolves its cluster and the cluster resolves its 
 ::: code-group
 
 ```js [app.js]
-import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
+import { registerComponents, importWhenVisible } from '@studiometa/js-toolkit';
 
 // Register only the components your page uses; order doesn't matter.
-for (const name of ['StoreLocator', 'MapboxMap', 'MapboxCluster', 'MapboxClusterItem']) {
-  registerComponent(importWhenVisible(() => import(`@studiometa/ui-mapbox/${name}`), name));
-}
+registerComponents(
+  importWhenVisible(() => import('@studiometa/ui-mapbox/StoreLocator'), 'StoreLocator'),
+  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'),
+  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxCluster'), 'MapboxCluster'),
+  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxClusterItem'), 'MapboxClusterItem'),
+);
 ```
 
 ```html [index.html]
