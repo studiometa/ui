@@ -22,16 +22,17 @@
   ] %}
 
   {% for item in items %}
+    {% set is_open = item.open ?? false %}
     <section
       data-component="Disclosure"
-      {{ item.open ? ' data-option-open' : '' }}>
+      {{ is_open ? ' data-option-open' : '' }}>
       <h3>
         <button
           id="faq-{{ item.id }}-trigger"
           type="button"
           data-ref="trigger"
           aria-controls="faq-{{ item.id }}-panel"
-          aria-expanded="{{ item.open ? 'true' : 'false' }}"
+          aria-expanded="{{ is_open ? 'true' : 'false' }}"
           class="flex w-full items-center justify-between gap-4 p-4 text-left font-semibold">
           {{ item.title }}
           <span aria-hidden="true">+</span>
@@ -42,7 +43,7 @@
         data-ref="panel"
         aria-labelledby="faq-{{ item.id }}-trigger"
         class="px-4 pb-4 text-gray-600"
-        {{ item.open ? '' : 'hidden' }}>
+        {{ is_open ? '' : 'hidden' }}>
         {{ item.content }}
       </div>
     </section>
