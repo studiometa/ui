@@ -1,0 +1,51 @@
+<div
+  data-component="DisclosureGroup"
+  data-option-no-multiple
+  class="divide-y divide-gray-200 rounded border border-gray-200">
+  {% set items = [
+    {
+      id: 'shipping',
+      title: 'How long does shipping take?',
+      content: 'Standard shipping usually takes three to five business days.',
+      open: true
+    },
+    {
+      id: 'returns',
+      title: 'Can I return my order?',
+      content: 'Unused products can be returned within thirty days.'
+    },
+    {
+      id: 'tracking',
+      title: 'Where can I find tracking information?',
+      content: 'A tracking link is included in the shipping confirmation email.'
+    }
+  ] %}
+
+  {% for item in items %}
+    {% set is_open = item.open ?? false %}
+    <section
+      data-component="Disclosure"
+      {{ is_open ? ' data-option-open' : '' }}>
+      <h3>
+        <button
+          id="faq-{{ item.id }}-trigger"
+          type="button"
+          data-ref="trigger"
+          aria-controls="faq-{{ item.id }}-panel"
+          aria-expanded="{{ is_open ? 'true' : 'false' }}"
+          class="flex w-full items-center justify-between gap-4 p-4 text-left font-semibold">
+          {{ item.title }}
+          <span aria-hidden="true">+</span>
+        </button>
+      </h3>
+      <div
+        id="faq-{{ item.id }}-panel"
+        data-ref="panel"
+        aria-labelledby="faq-{{ item.id }}-trigger"
+        class="px-4 pb-4 text-gray-600"
+        {{ is_open ? '' : 'hidden' }}>
+        {{ item.content }}
+      </div>
+    </section>
+  {% endfor %}
+</div>

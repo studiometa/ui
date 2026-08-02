@@ -61,6 +61,7 @@ describe('AccordionItem component', () => {
     expect(content.getAttribute('aria-labelledby')).toBe(item.$id);
     expect(btn.getAttribute('aria-expanded')).toBe('false');
     expect(content.getAttribute('aria-hidden')).toBe('true');
+    expect(item.$refs.container.style.visibility).toBe('hidden');
   });
 
   it('should open and close', async () => {
@@ -71,6 +72,7 @@ describe('AccordionItem component', () => {
     expect(spy).toHaveBeenLastCalledWith('transform', 'rotate-180');
     await item.close();
     expect(content.getAttribute('aria-hidden')).toBe('true');
+    expect(item.$refs.container.style.visibility).toBe('hidden');
     expect(spy).toHaveBeenLastCalledWith('transform', 'rotate-0');
     btn.click();
     await wait(200);

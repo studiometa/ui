@@ -1,0 +1,103 @@
+{#
+/**
+ * @file
+ * Accessible disclosure group template.
+ *
+ * @param string $id
+ *   A unique ID for this disclosure group. Used as the prefix for trigger and
+ *   panel IDs.
+ * @param array<{ title: string, content: unknown, open?: bool, disabled?: bool, id?: string, attr?: array, trigger_attr?: array, panel_attr?: array }> $items
+ *   Disclosure items.
+ * @param string $heading_tag
+ *   Heading element used for each trigger. Defaults to `h3`; choose the level
+ *   appropriate for the page outline.
+ * @param array $attr
+ *   Root DisclosureGroup attributes.
+ * @param array $item_attr
+ *   Default attributes for every Disclosure.
+ * @param array $trigger_attr
+ *   Default attributes for every trigger button.
+ * @param array $panel_attr
+ *   Default attributes for every panel. Add `role: 'region'` only when the
+ *   additional landmark is useful.
+ *
+ * @block $title
+ *   Customize each trigger's label.
+ * @block $content
+ *   Customize each panel's content.
+ */
+#}
+
+{% set heading_tag = heading_tag ?? 'h3' %}
+{% set heading_attributes = {} %}
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    {
+      id: id,
+      data_component: 'DisclosureGroup'
+    }
+  )
+%}
+
+<div {{ html_attributes(attributes) }}>
+  {% for item in items %}
+    {% set item_id = item.id ?? (id ~ '-item-' ~ loop.index) %}
+    {% set trigger_id = item_id ~ '-trigger' %}
+    {% set panel_id = item_id ~ '-panel' %}
+    {% set is_open = item.open ?? false %}
+    {% set is_disabled = item.disabled ?? false %}
+    {% set item_attributes =
+      merge_html_attributes(
+        item_attr ?? null,
+        item.attr ?? null,
+        {
+          data_component: 'Disclosure',
+          data_option_open: is_open ? true : null,
+          data_option_disabled: is_disabled ? true : null
+        }
+      )
+    %}
+    {% set trigger_attributes =
+      merge_html_attributes(
+        trigger_attr ?? null,
+        item.trigger_attr ?? null,
+        {
+          id: trigger_id,
+          type: 'button',
+          data_ref: 'trigger',
+          aria_controls: panel_id,
+          aria_expanded: is_open ? 'true' : 'false',
+          disabled: is_disabled ? true : null
+        }
+      )
+    %}
+    {% set panel_attributes =
+      merge_html_attributes(
+        panel_attr ?? null,
+        item.panel_attr ?? null,
+        {
+          id: panel_id,
+          data_ref: 'panel',
+          aria_labelledby: trigger_id,
+          hidden: is_open ? null : true
+        }
+      )
+    %}
+
+    <section {{ html_attributes(item_attributes) }}>
+      {% html_element heading_tag with heading_attributes %}
+        <button {{ html_attributes(trigger_attributes) }}>
+          {% block title %}
+            {{ item.title }}
+          {% endblock %}
+        </button>
+      {% end_html_element %}
+      <div {{ html_attributes(panel_attributes) }}>
+        {% block content %}
+          {{ item.content }}
+        {% endblock %}
+      </div>
+    </section>
+  {% endfor %}
+</div>

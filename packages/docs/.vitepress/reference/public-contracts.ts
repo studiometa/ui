@@ -255,6 +255,22 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'DisclosureGroupProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Disclosure/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'DisclosureProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Disclosure/js-api',
+    status: 'stable',
+  },
+  {
     name: 'DraggableProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',
