@@ -75,7 +75,7 @@ export default defineConfig({
     socialLinks: [{ icon: 'github', link: 'https://github.com/studiometa/ui' }],
 
     nav: [
-      { text: 'Guide', link: '/guide/concepts/' },
+      { text: 'Guide', link: '/guide/' },
       {
         text: 'Reference',
         link: '/reference/',
@@ -105,7 +105,21 @@ function getGuideSidebar() {
     {
       text: 'Guide',
       items: [
-        { text: 'Concepts', link: '/guide/concepts/' },
+        { text: 'Overview', link: '/guide/' },
+        {
+          text: 'Concepts',
+          link: '/guide/concepts/',
+          items: [
+            { text: 'Overview', link: '/guide/concepts/' },
+            { text: 'Packages and surfaces', link: '/guide/concepts/packages-and-surfaces' },
+            { text: 'Declarative runtime', link: '/guide/concepts/declarative-runtime' },
+            { text: 'Composition', link: '/guide/concepts/composition' },
+            {
+              text: 'Templates and customization',
+              link: '/guide/concepts/templates-and-customization',
+            },
+          ],
+        },
         { text: 'Installation', link: '/guide/installation/' },
         { text: 'Usage', link: '/guide/usage/' },
         { text: 'Contributing', link: '/guide/contributing/' },

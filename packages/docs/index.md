@@ -8,13 +8,13 @@ hero:
   actions:
     - theme: brand
       text: Get Started →
-      link: /guide/concepts/
+      link: /guide/
     - theme: alt
       text: View on GitHub
       link: https://github.com/studiometa/ui
 features:
   - title: Primitives
-    details: High-level Javascript functions and classes to help you scaffold components
+    details: Low-level JavaScript functions and classes for composing specialized behavior
   - title: JavaScript components
     details: Fully functional components based on the @studiometa/js-toolkit framework
   - title: Twig templates

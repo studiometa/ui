@@ -1,41 +1,44 @@
 # Concepts
 
-`@studiometa/ui` is a library of primitives and components that you include or copy into a Twig or Vue project. This page explains how the library is built and which words it uses, so the rest of the documentation reads clearly. For installation steps see the [Installation guide](/guide/installation/), and for day-to-day snippets see the [Usage guide](/guide/usage/).
+`@studiometa/ui` combines server-rendered markup with declarative JavaScript behavior. This section explains the mental model shared by every package and Reference item. Use the [Guide](/guide/) for task-oriented instructions and the [Reference](/reference/) for exact APIs.
 
-## Two ways a component ships
+## Mental model
 
-A component is delivered as a Twig template, a JavaScript class, or both. The badges at the top of each component page show which formats it provides.
+1. **Start with meaningful markup.** Write HTML directly or render a Twig or Liquid template. Native HTML semantics remain the baseline.
+2. **Add behavior declaratively.** Register JavaScript component classes once, then connect them to markup with `data-component`, `data-option-*` and `data-ref` attributes.
+3. **Compose focused parts.** Ready-to-use components can contain child components, reuse primitives, apply decorators or share an element with another behavior.
+4. **Customize at the narrowest boundary.** Prefer options and template parameters first, composition second, and class extension or template overrides only when the public configuration is not enough.
 
-- A **Twig template** renders the markup and the [Tailwind CSS](https://tailwind-config.studiometa.dev) classes. It is configured with **parameters** passed through the `with { … }` clause of an `include` or `embed`.
-- A **JavaScript component** adds behavior. It is a class from the [`@studiometa/js-toolkit`](https://js-toolkit.studiometa.dev) framework and is configured with **options**.
+This separation keeps markup visible to the server and browser while JavaScript progressively enhances it.
 
-The two halves meet in the HTML through data attributes:
+## Learn the architecture
 
-- `data-component="Name"` mounts the JavaScript class on an element.
-- `data-option-<name>="…"` sets an option on that instance.
-- `data-ref="name"` marks a child element the instance reads or updates.
+- [Packages and surfaces](./packages-and-surfaces.md) explains what the NPM and Composer packages provide and how JavaScript, Twig and Liquid differ.
+- [Declarative runtime](./declarative-runtime.md) explains registration, data attributes, events, lifecycle and application-level orchestration.
+- [Composition](./composition.md) explains components, primitives, decorators, helpers and compound families.
+- [Templates and customization](./templates-and-customization.md) explains parameters, blocks, attributes, namespaces, overrides and styling ownership.
 
-A Twig template sets these attributes for you, so a component often works with a Twig `include` on the markup side and a single `import` on the JavaScript side.
+## Vocabulary
 
-## Words this documentation uses
+The documentation uses a small, consistent vocabulary:
 
-The library uses a small, fixed vocabulary:
-
-- **Component** — a ready-to-use interface or behavior solution, such as `Dialog` or `Slider`. It can be visual or headless.
-- **Primitive** — a low-level, usually headless building block intended primarily for composition, such as [`Transition`](/reference/items/Transition/) or [`Sentinel`](/reference/items/Sentinel/). Depending on its contract, a primitive can be mounted directly, extended, or exposed through a decorator.
+- **Reference item** — a documented public concept with one canonical page, such as `Dialog`, `Transition` or `withTransition`.
+- **Symbol** — a named public export documented by a Reference item, such as a class, function, type, constant or template.
+- **Component** — a ready-to-use interface or behavior solution, such as [`Dialog`](/reference/items/Dialog/) or [`Slider`](/reference/items/Slider/). It can be visual or headless.
+- **Primitive** — a low-level, usually headless building block intended primarily for composition, such as [`Transition`](/reference/items/Transition/) or [`Sentinel`](/reference/items/Sentinel/).
 - **Decorator** — a higher-order function that adds reusable behavior to a js-toolkit component class, such as [`withTransition`](/reference/items/withTransition/).
 - **Helper** — a supported plain function that operates independently of a component class, such as [`viewTransition`](/reference/items/view-transition-helper/).
-- **Surface** — the format through which an item ships: JavaScript, Twig or Liquid. Surfaces are capabilities rather than component categories.
-- **Parameter** — a value passed to a **Twig template**. Twig API pages list parameters.
-- **Option** — a value passed to a **JavaScript component**, set in HTML with a `data-option-<name>` attribute. JS API pages list options.
+- **Family** — related symbols that cooperate as one feature, such as `Accordion` and `AccordionItem`.
+- **Surface** — the runtime or authoring format through which an item is used: JavaScript, Twig or Liquid.
+- **Parameter** — a value passed to a Twig template. Twig API pages document parameters and blocks.
+- **Option** — a value passed to a JavaScript component, commonly through a `data-option-*` attribute. JavaScript API pages document options, refs, methods and events.
+- **Status** — the support stage of an item or symbol: stable, preview or deprecated.
 
-## Behavior without a JavaScript class
+## Declarative behavior without a custom class
 
-Some components let you wire behavior and reactivity straight in your HTML with `data-…` attributes, so you rarely need to write a JavaScript class of your own.
+Some components let you express application behavior directly in HTML instead of writing a new JavaScript class.
 
-### The `Action` component
-
-[`Action`](/reference/items/Action/) runs a piece of behavior in response to an event — a click, a hover, an input — and can target other components or elements. The effect is declared in a `data-option-effect` or `data-on:<event>` attribute:
+[`Action`](/reference/items/Action/) runs an effect in response to an event:
 
 ```html
 <button data-component="Action" data-option-effect="this.classList.toggle('is-active')">
@@ -43,32 +46,20 @@ Some components let you wire behavior and reactivity straight in your HTML with 
 </button>
 ```
 
-### The `Data` family
+### The Data family
 
-Five components add reactivity to plain HTML, without writing a JavaScript class:
+The Data family adds scoped reactivity to plain HTML:
 
-- [`DataModel`](/reference/items/DataModel/) reads values from form inputs.
-- [`DataBind`](/reference/items/DataBind/) writes a value into the DOM.
-- [`DataComputed`](/reference/items/DataComputed/) transforms a value.
-- [`DataEffect`](/reference/items/DataEffect/) runs code when a value changes.
-- [`DataScope`](/reference/items/DataScope/) groups the above inside one widget.
+- [`DataModel`](/reference/items/DataModel/) reads values from form controls.
+- [`DataBind`](/reference/items/DataBind/) writes values into the DOM.
+- [`DataComputed`](/reference/items/DataComputed/) derives values.
+- [`DataEffect`](/reference/items/DataEffect/) runs an effect when a value changes.
+- [`DataScope`](/reference/items/DataScope/) defines the boundary shared by those components.
 
-## Template namespaces
+Use these components for local declarative state. Use an application component when behavior needs methods, shared refs or coordination across unrelated parts of the page.
 
-The Twig extension registers three namespaces (see the [Installation guide](/guide/installation/#in-a-twig-project) for setup):
+## Next steps
 
-- `@ui` resolves a template first from your project, then from the package. Use it to include a component.
-- `@ui-pkg` resolves a template only from the package. Use it when you extend a component, to avoid an infinite inclusion loop.
-- `@svg` resolves SVG files the same way `@ui` resolves templates.
-
-## Where to go next
-
-- [Installation](/guide/installation/) — set up the package in a Twig or Vue project.
-- [Usage](/guide/usage/) — import a JavaScript component and include a Twig template.
-- [Reference](/reference/) — browse components, primitives, decorators, helpers and public types.
-
-## Ecosystem
-
-- [@studiometa/js-toolkit](https://js-toolkit.studiometa.dev)
-- [@studiometa/tailwind-config](https://tailwind-config.studiometa.dev)
-- [@studiometa/twig-toolkit](https://github.com/studiometa/twig-toolkit)
+- [Install the packages](/guide/installation/).
+- [Follow the usage quickstart](/guide/usage/).
+- [Browse the complete Reference](/reference/).

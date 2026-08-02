@@ -1,0 +1,64 @@
+# Packages and surfaces
+
+The project publishes behavior, templates and integrations through separate packages. A Reference item's surface describes how it is used; it is not a separate component category.
+
+## Packages
+
+| Package | Provides | Install when |
+| --- | --- | --- |
+| [`@studiometa/ui`](https://www.npmjs.com/package/@studiometa/ui) | JavaScript classes, decorators, helpers, public types and source templates | You need browser behavior or consume package files from a JavaScript build |
+| [`studiometa/ui`](https://packagist.org/packages/studiometa/ui) | Twig extension, package templates, SVG namespaces and icon management | Your server renders Twig templates |
+| [`@studiometa/ui-mapbox`](https://www.npmjs.com/package/@studiometa/ui-mapbox) | Declarative js-toolkit components for Mapbox GL | Your interface contains an interactive Mapbox map |
+
+The JavaScript packages are ESM-only and use [`@studiometa/js-toolkit`](https://js-toolkit.studiometa.dev) as their component runtime. `@studiometa/ui-mapbox` also expects `mapbox-gl`; its geocoder integration has an optional peer dependency.
+
+## JavaScript surface
+
+A JavaScript surface is a class, decorator, helper, constant or type exported by an NPM package. Import several symbols from the package root:
+
+```js
+import { Action, Dialog, Transition } from '@studiometa/ui';
+```
+
+Public component subpaths are also available when a build needs a focused entry point:
+
+```js
+import { Dialog } from '@studiometa/ui/Dialog';
+```
+
+The [All exports](/reference/all-exports/) view is the canonical inventory of public root exports. The [Types](/reference/types/) view lists public type contracts.
+
+## Twig surface
+
+A Twig surface is a server-rendered template. Templates accept parameters and blocks and expose a root `attr` value for HTML attributes. Install the Composer package to register the `@ui` and `@svg` lookup namespaces, then include templates from your application:
+
+```twig
+{% include '@ui/Button/Button.twig' with { label: 'Continue' } %}
+```
+
+Twig templates can render structural or Tailwind utility classes and can wire the data attributes expected by a JavaScript component. A template does not automatically register its JavaScript class; your application entry point still controls which behavior is loaded.
+
+## Liquid surface
+
+A Liquid surface documents markup intended for a Liquid environment, primarily Shopify integrations. The package does not provide a Liquid component runtime comparable to its Twig extension. Liquid examples show how to render markup and data attributes consumed by the corresponding JavaScript behavior.
+
+## Styling ownership
+
+The JavaScript behavior is generally headless: it manages state, events, accessibility attributes and DOM behavior without importing a visual theme. Twig templates range from structural markup to Tailwind-styled variants. They provide useful defaults, not a complete product theme.
+
+Treat styling as an explicit application concern:
+
+- configure documented style options or template parameters when available;
+- pass classes through template attributes and blocks;
+- override or extend a Twig template when its markup contract must change;
+- include any required Tailwind configuration or application CSS in your own build.
+
+## Framework boundary
+
+The JavaScript packages expose plain TypeScript classes built on js-toolkit. They do not ship Vue component wrappers and do not require Vue. They can be used in any server-rendered or client-rendered project that owns the resulting DOM and registers the components at the appropriate time.
+
+## Related concepts
+
+- [Declarative runtime](./declarative-runtime.md)
+- [Templates and customization](./templates-and-customization.md)
+- [Installation](/guide/installation/)
