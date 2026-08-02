@@ -4,6 +4,10 @@ badges: [Twig, JS]
 
 # Accordion <Badges :texts="$frontmatter.badges" />
 
+::: warning Legacy component
+`Accordion` remains available for backward compatibility. Use [`Disclosure` and `DisclosureGroup`](/reference/items/Disclosure/) for new work: they provide accessible `hidden`/`inert` state, independent dynamic child registration, nested groups and composable transitions without changing this legacy API.
+:::
+
 ## Usage
 
 After you install the [package](/guide/installation/), include the template in your project:

@@ -1,0 +1,48 @@
+<div
+  data-component="DisclosureGroup"
+  data-option-no-multiple
+  class="grid gap-2">
+  {% set items = [
+    {
+      id: 'composition',
+      title: 'Composable transitions',
+      content: 'Each disclosure orchestrates only the Transition children it owns.'
+    },
+    {
+      id: 'focus',
+      title: 'Safe focus handling',
+      content: 'Focus returns to the trigger before a panel containing it closes.'
+    }
+  ] %}
+
+  {% for item in items %}
+    <section data-component="Disclosure" class="rounded border border-gray-200">
+      <h3>
+        <button
+          id="transition-{{ item.id }}-trigger"
+          type="button"
+          data-ref="trigger"
+          aria-controls="transition-{{ item.id }}-panel"
+          aria-expanded="false"
+          class="block w-full p-4 text-left font-semibold">
+          {{ item.title }}
+        </button>
+      </h3>
+      <div
+        id="transition-{{ item.id }}-panel"
+        data-ref="panel"
+        aria-labelledby="transition-{{ item.id }}-trigger"
+        class="overflow-hidden px-4 pb-4"
+        hidden>
+        <div
+          data-component="Transition"
+          data-option-enter-active="transition duration-300 ease-out"
+          data-option-enter-from="-translate-y-2 opacity-0"
+          data-option-leave-active="transition duration-200 ease-in"
+          data-option-leave-to="-translate-y-2 opacity-0">
+          {{ item.content }}
+        </div>
+      </div>
+    </section>
+  {% endfor %}
+</div>
