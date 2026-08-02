@@ -1,0 +1,34 @@
+<div id="faq" data-component="DisclosureGroup" data-option-no-multiple data-option-no-collapsible>
+  <section data-component="Disclosure" data-option-open>
+    <h2>
+      <button
+        id="faq-item-1-trigger"
+        type="button"
+        data-ref="trigger"
+        aria-controls="faq-item-1-panel"
+        aria-expanded="true">
+        Shipping
+      </button>
+    </h2>
+    <div role="region" id="faq-item-1-panel" data-ref="panel" aria-labelledby="faq-item-1-trigger">
+      Shipping information
+    </div>
+  </section>
+
+  <section data-component="Disclosure" data-option-disabled>
+    <h2>
+      <button
+        id="returns-trigger"
+        type="button"
+        data-ref="trigger"
+        aria-controls="returns-panel"
+        aria-expanded="false"
+        disabled>
+        Returns
+      </button>
+    </h2>
+    <div id="returns-panel" data-ref="panel" aria-labelledby="returns-trigger" hidden>
+      Returns information
+    </div>
+  </section>
+</div>
