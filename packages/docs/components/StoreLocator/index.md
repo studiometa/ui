@@ -48,16 +48,19 @@ The [Mapbox GL stylesheet](/components/MapboxMap/#installation) and a [Mapbox ac
 
 ## Usage
 
-The `StoreLocator` declares no child components — `MapboxMap`, `MapboxCluster`, `MapboxClusterItem` and the optional `MapboxGeocoder` are all registered globally and mount on their own. Register the whole family in one call with [`registerMapboxComponents`](/components/MapboxMap/js-api#registermapboxcomponents) (or register `StoreLocator` alongside `MapboxMap`, `MapboxCluster` and `MapboxClusterItem` yourself). The orchestrator then discovers them in its subtree once mounted.
+The `StoreLocator` declares no child components — `StoreLocator`, `MapboxMap`, `MapboxCluster`, `MapboxClusterItem` and the optional `MapboxGeocoder` are each registered independently and mount on their own; the orchestrator then discovers them in its subtree once mounted. Registration order does not matter, because a child registered before its `MapboxMap` still wires up once the map connects. As with a plain map, the recommended default is to lazy-register each component with js-toolkit's [`importWhen*` helpers](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) and the per-component subpaths (each subpath's default export is the component class), keeping the heavy `mapbox-gl` dependency out of your main bundle until the store locator is on the page.
 
 Because a `MapboxClusterItem` resolves its cluster and the cluster resolves its map through the closest matching ancestor, the DOM nests them: the `MapboxCluster` wraps the sidebar list of `MapboxClusterItem`s **inside** the `MapboxMap`, next to the map container. The `StoreLocator` wraps the map. The cluster carries **no** authored data — it derives its source from the registered items.
 
 ::: code-group
 
 ```js [app.js]
-import { registerMapboxComponents } from '@studiometa/ui-mapbox';
+import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
 
-registerMapboxComponents();
+// Register only the components your page uses; order doesn't matter.
+for (const name of ['StoreLocator', 'MapboxMap', 'MapboxCluster', 'MapboxClusterItem']) {
+  registerComponent(importWhenVisible(() => import(`@studiometa/ui-mapbox/${name}`), name));
+}
 ```
 
 ```html [index.html]

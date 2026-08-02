@@ -56,10 +56,12 @@ export interface StoreLocatorProps extends BaseProps {
  * the `MAPBOX_MAP_CONNECTED` / `MAPBOX_CLUSTER_CONNECTED` events so a late or
  * replaced map/cluster (re)binds instead of stranding the orchestrator on a
  * destroyed instance, and to the map's own `remove` event so a removed map is
- * never called into. Register the family with
- * `registerMapboxComponents` (or register `StoreLocator`, `MapboxMap`,
- * `MapboxCluster` and `MapboxClusterItem` yourself) — the orchestrator declares
- * no child components so nothing is ever double-mounted.
+ * never called into. Register each component independently (e.g. with
+ * `registerComponent`, optionally behind a lazy `importWhen*` helper):
+ * `StoreLocator`, `MapboxMap`, `MapboxCluster` and `MapboxClusterItem`.
+ * Registration order does not matter because children resolve their map through
+ * the connected-event retry, and the orchestrator declares no child components
+ * so nothing is ever double-mounted.
  *
  * @see https://ui.studiometa.dev/-/components/MapboxMap/
  */
@@ -68,10 +70,10 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    * Config.
    *
    * No child components are declared: `MapboxMap`, `MapboxCluster`,
-   * `MapboxClusterItem` and `MapboxGeocoder` are all registered globally (see
-   * `registerMapboxComponents`) and mount on their own. The orchestrator
-   * discovers them through `$query` once available — declaring them here would
-   * double-mount them.
+   * `MapboxClusterItem` and `MapboxGeocoder` are each registered independently
+   * (e.g. with `registerComponent`, optionally behind a lazy `importWhen*`
+   * helper) and mount on their own. The orchestrator discovers them through
+   * `$query` once available — declaring them here would double-mount them.
    */
   static config: BaseConfig = {
     name: 'StoreLocator',

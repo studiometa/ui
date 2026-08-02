@@ -32,15 +32,16 @@ The Mapbox GL stylesheet is still required. Keep importing it as before:
 @import 'mapbox-gl/dist/mapbox-gl.css';
 ```
 
-Instead of registering the components on a Vue app, register them with js-toolkit. Every component is self-registering — `MapboxMap` no longer declares its children, so each one must be registered. Register the whole family in one call:
+Instead of registering the components on a Vue app, register them with js-toolkit. Every component is self-registering — `MapboxMap` no longer declares its children, so each one must be registered with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html). Register only the ones you use — a bare map needs only `MapboxMap`, but every marker, control, source or cluster you declare needs its own registration. Registration order does not matter, because a child registered before its `MapboxMap` still wires up once the map connects. Because `mapbox-gl` is heavy (~230&nbsp;kB gzipped), the recommended default is to lazy-register each component with js-toolkit's [`importWhen*` helpers](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) and the per-component subpaths (each subpath's default export is the component class):
 
 ```js
-import { registerMapboxComponents } from '@studiometa/ui-mapbox';
+import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
 
-registerMapboxComponents();
+// Register only the components your page uses; order doesn't matter.
+registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'));
+registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMarker'), 'MapboxMarker'));
+registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxPopup'), 'MapboxPopup'));
 ```
-
-Or register only the ones you use with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) — a bare map needs only `MapboxMap`, but every marker, control, source or cluster you declare needs its own registration.
 
 ## Component mapping
 

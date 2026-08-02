@@ -7,14 +7,13 @@ outline: deep
 
 This page documents thirteen components — a single root component, `MapboxMap`, which owns the Mapbox `Map` instance, plus the twelve children below — built on the `AbstractMapboxMapChild` (and, for controls, `AbstractMapboxControl`) base classes. The [`StoreLocator`](/components/StoreLocator/) orchestrator completes the family on its own page. Every child resolves the closest parent `MapboxMap` on its own and registers itself against its map once it is loaded.
 
-Each component is **self-registering**: `MapboxMap` no longer declares its children, so every component must be registered for js-toolkit to mount it. Register the whole family in one call with [`registerMapboxComponents`](#registermapboxcomponents), or register only the ones you use with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html).
+Each component is **self-registering**: `MapboxMap` no longer declares its children, so every component must be registered for js-toolkit to mount it. Register only the ones you use with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) — ideally behind a lazy [`importWhen*` helper](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) so the heavy `mapbox-gl` dependency stays out of your main bundle (see [Lazy loading](/components/MapboxMap/#lazy-loading)). Registration order does not matter — a child registered before its `MapboxMap` still wires up once the map connects.
 
 - **[Map](#map)** — `MapboxMap`
 - **[Markers & Popups](#markers-popups)** — `MapboxMarker`, `MapboxPopup`
 - **[Controls](#controls)** — `MapboxNavigationControl`, `MapboxGeolocateControl`, `MapboxFullscreenControl`, `MapboxGeocoder`
 - **[Data](#data)** — `MapboxSource`, `MapboxLayer`, `MapboxImage`, `MapboxImages`
 - **[Cluster](#cluster)** — `MapboxCluster`, `MapboxClusterItem` (see also the [`StoreLocator`](/components/StoreLocator/) orchestrator)
-- **[Registering the family](#registermapboxcomponents)** — `registerMapboxComponents`
 - **[AbstractMapboxMapChild](#abstractmapboxmapchild)** — the shared base class
 
 ## Reactivity and updates
@@ -413,18 +412,6 @@ The state setters below are called by a `StoreLocator` orchestrator; you general
 | -------------------- | --------------------------------------------------------------------------------------------- |
 | `setInBounds(value)` | Toggle the `data-in-bounds` attribute — the list-visibility signal.                           |
 | `setActive(value)`   | Toggle the `data-active` attribute and the `aria-current="true"` state — the selected signal. |
-
-## registerMapboxComponents
-
-Register the whole `@studiometa/ui-mapbox` family globally in a single call. Because `MapboxMap` no longer declares its children, every component must be registered so js-toolkit's document-wide `MutationObserver` mounts it whenever its element enters the DOM — statically, `Fetch`-injected or `appendChild`-ed.
-
-```js
-import { registerMapboxComponents } from '@studiometa/ui-mapbox';
-
-registerMapboxComponents();
-```
-
-It registers `MapboxMap`, `MapboxMarker`, `MapboxPopup`, `MapboxNavigationControl`, `MapboxGeolocateControl`, `MapboxFullscreenControl`, `MapboxGeocoder`, `MapboxSource`, `MapboxLayer`, `MapboxImage`, `MapboxImages`, `MapboxCluster`, `MapboxClusterItem` and `StoreLocator` at once, and returns the promise from [`registerComponents`](https://js-toolkit.studiometa.dev/api/helpers/registerComponents.html). When you only need a subset, call [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) per component instead — each is exported by name and also available at its own `@studiometa/ui-mapbox/<Component>` subpath (default export = the class), which is what makes [lazy registration](/components/MapboxMap/#lazy-loading) possible.
 
 ## AbstractMapboxMapChild
 

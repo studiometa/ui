@@ -4,7 +4,7 @@ title: StoreLocator examples
 
 # Examples
 
-Both examples register the whole Mapbox family with `registerMapboxComponents` and add a small root component for the detail panel. The `StoreLocator` orchestrates a `MapboxMap` containing a `MapboxCluster` whose `MapboxClusterItem`s are the sidebar entries. Each example loads the [Mapbox GL stylesheet](/components/MapboxMap/#installation) from a CDN and picks a Mapbox style through the `map-options` option. Replace the access token with your own [access token](https://docs.mapbox.com/help/getting-started/access-tokens/); the token used here is a public, restricted demo token.
+Both examples register the Mapbox components they use (`StoreLocator`, `MapboxMap`, `MapboxCluster`, `MapboxClusterItem`) independently — see [Usage](./#usage) for the recommended lazy registration — and add a small root component for the detail panel. The `StoreLocator` orchestrates a `MapboxMap` containing a `MapboxCluster` whose `MapboxClusterItem`s are the sidebar entries. Each example loads the [Mapbox GL stylesheet](/components/MapboxMap/#installation) from a CDN and picks a Mapbox style through the `map-options` option. Replace the access token with your own [access token](https://docs.mapbox.com/help/getting-started/access-tokens/); the token used here is a public, restricted demo token.
 
 ## Basic store locator
 

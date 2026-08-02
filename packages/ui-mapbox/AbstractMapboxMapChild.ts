@@ -17,9 +17,12 @@ export const MAPBOX_MAP_CONNECTED = 'mapbox-map:connected';
  *
  * Children are self-sufficient and dynamic-DOM-native: they resolve their
  * parent `MapboxMap` on their own via `$closest`, wait for the map to be ready
- * with `whenMapReady`, then inject their contribution. Because they are
- * registered globally (see `registerMapboxComponents`), js-toolkit's document
- * wide `MutationObserver` mounts them whenever their element enters the DOM —
+ * with `whenMapReady`, then inject their contribution. Each component is
+ * registered independently (e.g. with `registerComponent`, optionally behind a
+ * lazy `importWhen*` helper); registration order does not matter because a child
+ * resolves its map through the connected-event retry. Once registered,
+ * js-toolkit's document-wide `MutationObserver` mounts them whenever their
+ * element enters the DOM —
  * statically, `Fetch`-injected or `appendChild`-ed — and terminates them when it
  * leaves, at which point they remove their contribution again.
  *

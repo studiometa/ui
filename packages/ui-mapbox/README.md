@@ -21,13 +21,18 @@ npm install @mapbox/mapbox-gl-geocoder
 
 ## Usage
 
-Every component is self-registering: `MapboxMap` no longer declares its children, so each component registers independently and resolves its parent map on its own. Register the whole family in one call with `registerMapboxComponents`, then author the map declaratively in your markup:
+Every component is self-registering: `MapboxMap` no longer declares its children, so each component registers independently and resolves its parent map on its own. Register only the components your page uses — registration order does not matter, because a child registered before its `MapboxMap` still wires up once the map connects. `mapbox-gl` is heavy (~230&nbsp;kB gzipped), so the recommended default is to lazy-register each component with js-toolkit's `importWhen*` helpers and the per-component subpaths (each subpath's default export is the component class), keeping the dependency out of your main bundle until a map is actually on the page:
 
 ```js
-import { registerMapboxComponents } from '@studiometa/ui-mapbox';
+import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
 
-registerMapboxComponents();
+// Register only the components your page uses; order doesn't matter.
+registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'));
+registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMarker'), 'MapboxMarker'));
+registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxPopup'), 'MapboxPopup'));
 ```
+
+Other triggers are available too — `importWhenIdle`, `importOnInteraction` and `importOnMediaQuery` — see the [`importWhen*` helper docs](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html). Then author the map declaratively in your markup:
 
 ```html
 <div
@@ -41,7 +46,14 @@ registerMapboxComponents();
 </div>
 ```
 
-When you only need a subset, register those components individually with `registerComponent` from `@studiometa/js-toolkit` instead — each component is exported by name and also available at its own `@studiometa/ui-mapbox/<Component>` subpath (default export = the class) for lazy loading.
+If you do not need code-splitting, register eagerly instead — each component is exported by name from the package:
+
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
+import { MapboxMap } from '@studiometa/ui-mapbox';
+
+registerComponent(MapboxMap);
+```
 
 Do not forget to include the `mapbox-gl` stylesheet so the map renders correctly.
 

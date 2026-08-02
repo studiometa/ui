@@ -27,7 +27,6 @@ test('@studiometa/ui-mapbox exports', () => {
       "MapboxPopup",
       "MapboxSource",
       "StoreLocator",
-      "registerMapboxComponents",
     ]
   `);
 
