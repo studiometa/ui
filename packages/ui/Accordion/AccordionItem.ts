@@ -125,7 +125,7 @@ export class AccordionItem<T extends BaseProps = BaseProps> extends Base<T & Acc
    * Update the refs' attributes according to the given type.
    */
   updateAttributes(isOpen: boolean) {
-    this.$refs.container.style.visibility = isOpen ? '' : 'invisible';
+    this.$refs.container.style.visibility = isOpen ? '' : 'hidden';
     this.$refs.container.style.height = isOpen ? '' : '0';
     this.$refs.content.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
     this.$refs.btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
@@ -208,7 +208,7 @@ export class AccordionItem<T extends BaseProps = BaseProps> extends Base<T & Acc
         // Add end styles only if the item has not been re-opened before the end
         if (!this.$options.isOpen) {
           refs.container.style.height = '0';
-          refs.container.style.visibility = 'invisible';
+          refs.container.style.visibility = 'hidden';
           this.updateAttributes(this.$options.isOpen);
         }
         return Promise.resolve();
