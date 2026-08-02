@@ -43,12 +43,12 @@ export interface StoreLocatorProps extends BaseProps {
  * 1. **Registered** — the item exists in the DOM. Owned by the `MapboxCluster`,
  *    it drives the **map data** and only changes when the item set changes (e.g.
  *    a `Fetch` swaps the list). The orchestrator is notified through the
- *    cluster's `update` event.
+ *    cluster's `map-update` event.
  * 2. **In bounds** — the item's `lngLat` is inside the current viewport. Drives
  *    **list visibility + distance sort only**, recomputed on map `moveend`, and
  *    never touches the map data.
  * 3. **Selected** — the chosen item. Drives fly-to, the popup, `active` styling
- *    and the `select` event.
+ *    and the `map-select` event.
  *
  * The orchestrator requires its `MapboxCluster` (and `MapboxMap`) to live within
  * its own subtree; it resolves them with `$query`, retries a few ticks for
@@ -77,7 +77,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    */
   static config: BaseConfig = {
     name: 'StoreLocator',
-    emits: ['select', 'deselect', 'filter'],
+    emits: ['map-select', 'map-deselect', 'map-filter'],
     options: {
       itemZoomLevel: {
         type: Number,
@@ -184,7 +184,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   __clusterWired = false;
 
   /**
-   * Whether the `MapboxGeocoder` `result` listener is already attached.
+   * Whether the `MapboxGeocoder` `map-result` listener is already attached.
    * @private
    */
   __geocoderWired = false;
@@ -232,7 +232,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
 
   /**
    * Select an item: deactivate the previous one, fly to the item, open its
-   * popup, mark it active and emit a `select` event.
+   * popup, mark it active and emit a `map-select` event.
    * @param {MapboxClusterItem} item
    */
   selectItem(item: MapboxClusterItem) {
@@ -249,11 +249,11 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     });
 
     this.__openPopup(item);
-    this.$emit('select', item);
+    this.$emit('map-select', item);
   }
 
   /**
-   * Clear the current selection, close the popup and emit a `deselect` event.
+   * Clear the current selection, close the popup and emit a `map-deselect` event.
    */
   deselect() {
     if (this.__selected) {
@@ -262,7 +262,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     }
 
     this.__popup?.remove();
-    this.$emit('deselect');
+    this.$emit('map-deselect');
   }
 
   /**
@@ -299,7 +299,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
 
   /**
    * Fit the map to the whole item set (when `fitOnUpdate`) then recompute the
-   * in-view list. Runs on an item-set change (the cluster's `update` event) and
+   * in-view list. Runs on an item-set change (the cluster's `map-update` event) and
    * when the cluster is first wired.
    * @private
    */
@@ -341,7 +341,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    * Recompute the visible/sorted list = registered ∩ in-bounds, distance-sorted.
    *
    * Reflects the in-bounds state on every item, reorders the in-view items in
-   * their shared parent list (so DOM order matches distance) and emits `filter`
+   * their shared parent list (so DOM order matches distance) and emits `map-filter`
    * with the in-view items. Never touches the map data.
    * @private
    */
@@ -374,7 +374,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     }
 
     this.__reorderList(inView);
-    this.$emit('filter', inView);
+    this.$emit('map-filter', inView);
   }
 
   /**
@@ -394,7 +394,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   }
 
   /**
-   * Handle the cluster's `item-click`: select the item behind the clicked
+   * Handle the cluster's `map-item-click`: select the item behind the clicked
    * unclustered point, if one was resolved.
    * @private
    */
@@ -428,14 +428,14 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   };
 
   /**
-   * Handle the cluster's `update` (the item set changed): re-fit and re-filter.
+   * Handle the cluster's `map-update` (the item set changed): re-fit and re-filter.
    * Drops a stale selection whose item is no longer registered.
    * @private
    */
   __handleClusterUpdate = () => {
     // The selected store may have been removed by the swap. Run the full
     // deselect cleanup — not just clearing `__selected` — so its popup is
-    // removed from the map and `deselect` is emitted, instead of leaving the
+    // removed from the map and `map-deselect` is emitted, instead of leaving the
     // removed store's popup stranded while the locator claims nothing is
     // selected.
     if (this.__selected && !this.items.includes(this.__selected)) {
@@ -446,7 +446,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   };
 
   /**
-   * Handle a `MapboxGeocoder` `result`: frame the map on the geocoded location.
+   * Handle a `MapboxGeocoder` `map-result`: frame the map on the geocoded location.
    * @private
    */
   __handleGeocoderResult = (event: Event) => {
@@ -654,17 +654,17 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     if (cluster && cluster.$isMounted && !this.__clusterWired) {
       this.__clusterWired = true;
       this.__cluster = cluster;
-      this.__offCluster.push(cluster.$on('item-click', this.__handleItemClick));
-      this.__offCluster.push(cluster.$on('update', this.__handleClusterUpdate));
+      this.__offCluster.push(cluster.$on('map-item-click', this.__handleItemClick));
+      this.__offCluster.push(cluster.$on('map-update', this.__handleClusterUpdate));
       // Catch up on the cluster's current item set: it may have emitted its
-      // seeded `update` before we subscribed.
+      // seeded `map-update` before we subscribed.
       this.__refresh();
     }
 
     if (geocoder && !this.__geocoderWired) {
       this.__geocoderWired = true;
       this.__geocoder = geocoder;
-      this.__offGeocoder.push(geocoder.$on('result', this.__handleGeocoderResult));
+      this.__offGeocoder.push(geocoder.$on('map-result', this.__handleGeocoderResult));
     }
 
     if ((!this.__clusterWired || !this.__geocoderWired) && attempt < WIRE_CHILDREN_MAX_ATTEMPTS) {

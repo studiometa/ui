@@ -107,113 +107,109 @@ Whether the map has finished loading.
 
 #### Events
 
-The component emits a custom `map-load` event, plus all the common Mapbox GL map events, re-emitted under the same name. Each handler receives the corresponding Mapbox event object (the `map-load` handler receives the `map` instance).
+The component emits a custom `map-load` event, plus all the common Mapbox GL map events prefixed with `map-` to avoid conflicts with native events. Each handler receives the corresponding Mapbox event object (the `map-load` handler receives the `map` instance).
 
 ##### `map-load`
 
 The map finished loading (custom event).
 
-##### `load`
-
-Map resources are loaded.
-
-##### `idle`
+##### `map-idle`
 
 The map is idle after rendering.
 
-##### `render`
+##### `map-render`
 
 A frame is rendered.
 
-##### `resize`
+##### `map-resize`
 
 The map container is resized.
 
-##### `remove`
+##### `map-remove`
 
 The map is removed.
 
-##### `error`
+##### `map-error`
 
 An error occurred.
 
-##### `click`
+##### `map-click`
 
 A click on the map.
 
-##### `dblclick`
+##### `map-dblclick`
 
 A double-click on the map.
 
-##### `mouseenter`
+##### `map-mouseenter`
 
 The pointer enters the map canvas.
 
-##### `mouseleave`
+##### `map-mouseleave`
 
 The pointer leaves the map canvas.
 
-##### `mousemove`
+##### `map-mousemove`
 
 The pointer moves over the map.
 
-##### `movestart`
+##### `map-movestart`
 
 Map movement starts (pan, zoom, rotate).
 
-##### `move`
+##### `map-move`
 
 The map is moving.
 
-##### `moveend`
+##### `map-moveend`
 
 Map movement ends.
 
-##### `zoomstart`
+##### `map-zoomstart`
 
 A zoom transition starts.
 
-##### `zoom`
+##### `map-zoom`
 
 The zoom level changes.
 
-##### `zoomend`
+##### `map-zoomend`
 
 A zoom transition ends.
 
-##### `rotatestart`
+##### `map-rotatestart`
 
 Rotation starts.
 
-##### `rotate`
+##### `map-rotate`
 
 The map is rotating.
 
-##### `rotateend`
+##### `map-rotateend`
 
 Rotation ends.
 
-##### `pitchstart`
+##### `map-pitchstart`
 
 A pitch transition starts.
 
-##### `pitch`
+##### `map-pitch`
 
 The pitch changes.
 
-##### `pitchend`
+##### `map-pitchend`
 
 A pitch transition ends.
 
-##### `dragstart`
+##### `map-dragstart`
 
 A drag starts.
 
-##### `drag`
+##### `map-drag`
 
 The map is being dragged.
 
-##### `dragend`
+##### `map-dragend`
 
 A drag ends.
 
@@ -229,15 +225,15 @@ class App extends Base {
     components: { MapboxMap },
   };
 
-  onMapboxMapMapLoad(map) {
+  onMapboxMapMapLoad({ args: [map] }) {
     console.log('Map is ready', map);
   }
 
-  onMapboxMapClick(event) {
+  onMapboxMapMapClick({ args: [event] }) {
     console.log('Clicked at', event.lngLat);
   }
 
-  onMapboxMapZoomend(event) {
+  onMapboxMapMapZoomend({ args: [event] }) {
     console.log('New zoom level', event.target.getZoom());
   }
 }
@@ -455,7 +451,7 @@ Where the control is mounted, depending on `add-to-map`.
 
 #### Events
 
-##### `result`
+##### `map-result`
 
 - Payload: `result`
 
@@ -548,7 +544,7 @@ Options forwarded to [`map.addImage`](https://docs.mapbox.com/mapbox-gl-js/api/m
 
 #### Events
 
-##### `ready`
+##### `map-ready`
 
 - Payload: `{ name, image, options }`
 
@@ -569,7 +565,7 @@ A list of image definitions, each `{ name, url, options? }`. See [`MapboxImage`]
 
 #### Events
 
-##### `ready`
+##### `map-ready`
 
 - Payload: `MapboxImage[]`
 
@@ -581,7 +577,7 @@ Emitted once every image has been loaded and added.
 
 A clustered GeoJSON **source driver** whose features ARE its rendered items. The `MapboxClusterItem`s living in its subtree self-register, and the cluster derives its clustered GeoJSON source from that registry — the same markup drives both a sidebar list and the clustered points on the map. It sets up the clustered source, the cluster circles layer, the cluster count labels layer and the unclustered points layer, together with the click-to-zoom interaction on clusters and pointer feedback on features.
 
-The cluster is deliberately thin: it owns only the map data and the clustering interaction. It does **not** select, fly to, filter by viewport or open popups — those search-UX concerns belong to the optional [`StoreLocator`](/reference/items/StoreLocator/) orchestrator, which drives them on top of a cluster. Used on its own, a `MapboxCluster` still renders a working clustered map + list; it simply reports a click on an unclustered point through the `item-click` event and lets the caller decide what it means.
+The cluster is deliberately thin: it owns only the map data and the clustering interaction. It does **not** select, fly to, filter by viewport or open popups — those search-UX concerns belong to the optional [`StoreLocator`](/reference/items/StoreLocator/) orchestrator, which drives them on top of a cluster. Used on its own, a `MapboxCluster` still renders a working clustered map + list; it simply reports a click on an unclustered point through the `map-item-click` event and lets the caller decide what it means.
 
 #### Options
 
@@ -692,19 +688,19 @@ Replace the live source data directly, bypassing the item registry — for imper
 
 #### Events
 
-##### `cluster-click`
+##### `map-cluster-click`
 
 - Payload: `(clusterId, event)`
 
 A cluster was clicked. Call `event.preventDefault()` to skip the default zoom-to-cluster behavior.
 
-##### `item-click`
+##### `map-item-click`
 
 - Payload: `(item, feature, event)`
 
 An unclustered point was clicked. `item` is the registered `MapboxClusterItem` behind the feature, or `undefined` when none could be resolved.
 
-##### `update`
+##### `map-update`
 
 - Payload: `(items)`
 
@@ -782,6 +778,12 @@ Toggle the `data-in-bounds` attribute — the list-visibility signal.
 
 Toggle the `data-active` attribute and the `aria-current="true"` state — the selected signal.
 
+#### Events
+
+##### `map-error`
+
+Emitted when unregistering the item throws. The error is contained and passed as the payload.
+
 ## AbstractMapboxMapChild
 
 The base class every child component extends (controls extend `AbstractMapboxControl`, itself a thin subclass that adds the shared `position` option and the `map.addControl`/`removeControl` lifecycle). It resolves the closest parent `MapboxMap` and exposes its Mapbox `Map` instance so children can register themselves against it. Beyond `mapboxMap`/`map`, it hardens the whole family's lifecycle: guarded injection and teardown, dead-map safety, retryable parent resolution (a child mounted before its map re-resolves on `mapbox-map:connected`), and automatic re-injection after a `map.setStyle(…)`. Extend it to build your own map children.
@@ -799,6 +801,12 @@ The closest parent `MapboxMap` component instance.
 - Type: `mapboxgl.Map`
 
 The Mapbox `Map` instance of the parent map.
+
+#### Events
+
+##### `map-error`
+
+Emitted when guarded map injection or teardown throws. The error is contained and passed as the payload.
 
 ```js
 import { AbstractMapboxMapChild } from '@studiometa/ui-mapbox';

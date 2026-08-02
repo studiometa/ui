@@ -178,13 +178,13 @@ describe('MapboxGeocoder component', () => {
     expect(control2.addTo).toHaveBeenCalledWith(el);
   });
 
-  it('should re-emit the control `result` event as a component `result` event', async () => {
+  it('should re-emit the control `result` event as a component `map-result` event', async () => {
     const { instance } = createGeocoder();
 
     await mountAndFlush(instance);
 
     const result = vi.fn();
-    instance.$on('result', result);
+    instance.$on('map-result', result);
 
     const payload = { center: [1, 2], bbox: [0, 0, 3, 3] };
     // The mocked control captures its `result` handlers; fire one as the real

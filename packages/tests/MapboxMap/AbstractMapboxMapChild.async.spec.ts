@@ -11,7 +11,7 @@ import { AbstractMapboxMapChild, MapboxMarker } from '@studiometa/ui-mapbox';
 class AsyncChild extends AbstractMapboxMapChild {
   static config = {
     name: 'AsyncChild',
-    emits: ['error', 'done'],
+    emits: ['map-error', 'done'],
   };
 
   rejectWith?: Error;
@@ -52,7 +52,7 @@ function createAsyncChild(mapboxMap: unknown) {
 }
 
 describe('AbstractMapboxMapChild — async ready callbacks (F-async)', () => {
-  it('should contain a rejected async callback: no unhandled rejection, warns + emits error', async () => {
+  it('should contain a rejected async callback: no unhandled rejection, warns + emits map-error', async () => {
     const mockMap = new MockMap();
     const mapboxMap = { map: mockMap, isLoaded: true, $options: { accessToken: 't' } };
     const instance = createAsyncChild(mapboxMap);
@@ -62,7 +62,7 @@ describe('AbstractMapboxMapChild — async ready callbacks (F-async)', () => {
     const onError = vi.fn();
     const boom = new Error('async boom');
     instance.rejectWith = boom;
-    instance.$on('error', onError);
+    instance.$on('map-error', onError);
 
     // A global unhandledrejection would fail the test run, so assert none fires.
     const onUnhandled = vi.fn();

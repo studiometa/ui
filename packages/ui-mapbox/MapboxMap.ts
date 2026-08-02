@@ -3,7 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import type { Map, MapOptions } from 'mapbox-gl';
 import { MAPBOX_MAP_CONNECTED } from './AbstractMapboxMapChild.js';
 
-const MAP_EVENTS = [
+const FORWARDED_MAP_EVENTS = [
   'click',
   'dblclick',
   'mouseenter',
@@ -24,7 +24,6 @@ const MAP_EVENTS = [
   'dragstart',
   'drag',
   'dragend',
-  'load',
   'idle',
   'render',
   'resize',
@@ -54,7 +53,7 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
    */
   static config: BaseConfig = {
     name: 'MapboxMap',
-    emits: ['map-load', ...MAP_EVENTS],
+    emits: ['map-load', ...FORWARDED_MAP_EVENTS.map((event) => `map-${event}`)],
     refs: ['container'],
     options: {
       accessToken: String,
@@ -127,9 +126,9 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
     this.map.on('load', onLoad);
     this.__offMapListeners.push(() => this.__map?.off('load', onLoad));
 
-    for (const event of MAP_EVENTS) {
+    for (const event of FORWARDED_MAP_EVENTS) {
       const handler = (e: unknown) => {
-        this.$emit(event, e);
+        this.$emit(`map-${event}`, e);
       };
       this.map.on(event, handler);
       this.__offMapListeners.push(() => this.__map?.off(event, handler));

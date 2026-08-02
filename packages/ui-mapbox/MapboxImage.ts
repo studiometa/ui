@@ -35,7 +35,7 @@ export class MapboxImage<T extends BaseProps = BaseProps> extends AbstractMapbox
    */
   static config: BaseConfig = {
     name: 'MapboxImage',
-    emits: ['ready'],
+    emits: ['map-ready'],
     options: {
       name: String,
       url: String,
@@ -95,7 +95,7 @@ export class MapboxImage<T extends BaseProps = BaseProps> extends AbstractMapbox
         this.__owned = true;
       }
 
-      this.$emit('ready', { name, image, options });
+      this.$emit('map-ready', { name, image, options });
     });
   }
 

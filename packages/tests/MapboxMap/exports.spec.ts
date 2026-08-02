@@ -34,3 +34,20 @@ test('@studiometa/ui-mapbox exports', () => {
     expect(exported).toBeDefined();
   }
 });
+
+test('@studiometa/ui-mapbox public events use the map- prefix', () => {
+  const emitters = [
+    components.AbstractMapboxMapChild,
+    components.MapboxCluster,
+    components.MapboxClusterItem,
+    components.MapboxGeocoder,
+    components.MapboxImage,
+    components.MapboxImages,
+    components.MapboxMap,
+    components.StoreLocator,
+  ];
+
+  for (const component of emitters) {
+    expect(component.config.emits?.every((event) => event.startsWith('map-'))).toBe(true);
+  }
+});

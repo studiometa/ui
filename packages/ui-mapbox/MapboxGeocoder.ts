@@ -57,7 +57,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
    */
   static config: BaseConfig = {
     name: 'MapboxGeocoder',
-    emits: ['result'],
+    emits: ['map-result'],
     options: {
       addToMap: Boolean,
       options: Object,
@@ -125,9 +125,9 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
       this.__control = new GeocoderControlClass(
         options as ConstructorParameters<typeof GeocoderControlClass>[0],
       );
-      // Re-emit the control's `result` event as a component event so consumers
-      // (e.g. a `MapboxCluster`) can react to a geocoded address.
-      this.__control.on?.('result', (event) => this.$emit('result', event.result));
+      // Re-emit the control's `result` event as a prefixed component event so
+      // consumers (e.g. a `StoreLocator`) can react to a geocoded address.
+      this.__control.on?.('result', (event) => this.$emit('map-result', event.result));
       this.__control.addTo(this.target);
     });
   }

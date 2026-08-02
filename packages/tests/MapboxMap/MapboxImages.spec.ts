@@ -38,13 +38,13 @@ describe('MapboxImages component', () => {
     expect(mockMap.addImage).toHaveBeenCalledWith('two', expect.anything(), undefined);
   });
 
-  it('should emit a single ready event with every image', async () => {
+  it('should emit a single map-ready event with every image', async () => {
     const { instance } = createImages();
     const handler = vi.fn();
 
     vi.useFakeTimers();
     instance.$mount();
-    instance.$on('ready', handler);
+    instance.$on('map-ready', handler);
     await vi.advanceTimersByTimeAsync(100);
     vi.useRealTimers();
 
@@ -127,7 +127,7 @@ describe('MapboxImages component', () => {
     });
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const onError = vi.fn();
-    instance.$on('error', onError);
+    instance.$on('map-error', onError);
 
     vi.useFakeTimers();
     instance.$mount();
@@ -136,7 +136,7 @@ describe('MapboxImages component', () => {
     vi.useRealTimers();
 
     // `one` was added before `two` rejected; the rejection is contained (routed
-    // to the `error` event, not an unhandled rejection).
+    // to the `map-error` event, not an unhandled rejection).
     expect(mockMap.addImage).toHaveBeenCalledWith('one', expect.anything(), undefined);
     expect(onError).toHaveBeenCalled();
 
@@ -165,7 +165,7 @@ describe('MapboxImages component', () => {
 
     vi.useFakeTimers();
     instance.$mount();
-    instance.$on('ready', ready);
+    instance.$on('map-ready', ready);
     await vi.advanceTimersByTimeAsync(100);
 
     // The loads are still pending: nothing has been added to the sprite yet.
@@ -179,7 +179,7 @@ describe('MapboxImages component', () => {
     vi.useRealTimers();
 
     // Every image added after teardown must be removed again: no orphan sprites
-    // and no `ready` event emitted after destroy.
+    // and no `map-ready` event emitted after destroy.
     expect(mockMap.removeImage).toHaveBeenCalledWith('one');
     expect(mockMap.removeImage).toHaveBeenCalledWith('two');
     expect(mockMap._images).toEqual({});

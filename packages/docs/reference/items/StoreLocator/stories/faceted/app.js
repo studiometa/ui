@@ -15,7 +15,7 @@ import { Action, Dialog, ViewTransition } from '@studiometa/ui';
  * instead — see the prose in the examples page. Either way, the important part
  * is identical: the DOM of the `#store-list` changes, js-toolkit mounts and
  * terminates the `MapboxClusterItem`s accordingly, and the `MapboxCluster`
- * re-derives the map data from the new item set and emits an `update` the
+ * re-derives the map data from the new item set and emits a `map-update` the
  * `StoreLocator` reacts to (markers and clusters follow).
  */
 class App extends Base {
@@ -100,7 +100,7 @@ class App extends Base {
    * Open the drawer with the selected store's detail.
    * @param {{ args: [MapboxClusterItem] }} props
    */
-  onStoreLocatorSelect({ args: [item] }) {
+  onStoreLocatorMapSelect({ args: [item] }) {
     const template = item.$el.querySelector('template');
     const content = this.$el.querySelector('#store-panel-content');
 

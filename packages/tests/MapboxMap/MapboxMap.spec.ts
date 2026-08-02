@@ -86,34 +86,39 @@ describe('MapboxMap component', () => {
     (instance.map as unknown as MockMap).fire('load');
     await vi.advanceTimersByTimeAsync(100);
 
-    expect(handler).toHaveBeenCalled();
+    expect(handler).toHaveBeenCalledOnce();
     vi.useRealTimers();
   });
 
-  it('should forward map events', async () => {
+  it('should forward map events with a map- prefix', async () => {
     const root = createMapboxMap();
     const instance = new MapboxMap(root);
     const clickHandler = vi.fn();
     const zoomHandler = vi.fn();
     const dragHandler = vi.fn();
+    const unprefixedClickHandler = vi.fn();
 
     vi.useFakeTimers();
     instance.$mount();
     await vi.advanceTimersByTimeAsync(100);
 
-    instance.$on('click', clickHandler);
-    instance.$on('zoom', zoomHandler);
-    instance.$on('drag', dragHandler);
+    instance.$on('map-click', clickHandler);
+    instance.$on('map-zoom', zoomHandler);
+    instance.$on('map-drag', dragHandler);
+    instance.$on('click', unprefixedClickHandler);
 
     const mockMap = instance.map as unknown as MockMap;
-    mockMap.fire('click', { type: 'click' });
+    const clickEvent = { type: 'click' };
+    mockMap.fire('click', clickEvent);
     mockMap.fire('zoom', { type: 'zoom' });
     mockMap.fire('drag', { type: 'drag' });
     await vi.advanceTimersByTimeAsync(100);
 
-    expect(clickHandler).toHaveBeenCalled();
+    const [emittedClickEvent] = clickHandler.mock.calls[0] as [CustomEvent];
+    expect(emittedClickEvent.detail[0]).toEqual(clickEvent);
     expect(zoomHandler).toHaveBeenCalled();
     expect(dragHandler).toHaveBeenCalled();
+    expect(unprefixedClickHandler).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
 
