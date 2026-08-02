@@ -3,18 +3,18 @@
 namespace App\Mcp;
 
 /**
- * Reads component documentation from the built VitePress output.
+ * Reads Reference documentation from the built VitePress output.
  *
  * The docs build (`vitepress-plugin-llms`) emits an `llms.txt` index and one
- * LLM-friendly Markdown file per page (`/components/<Slug>.md`,
- * `/components/<Slug>/twig-api.md`, ...). This repository is a thin reader over
+ * LLM-friendly Markdown file per page (`/reference/items/<Slug>.md`,
+ * `/reference/items/<Slug>/twig-api.md`, ...). This repository is a thin reader over
  * those artifacts so the MCP tools carry no duplicated knowledge: whenever the
  * docs are rebuilt, the tools reflect the new content for free.
  */
 final class DocsRepository
 {
     /**
-     * @var array<string, string>|null Map of lower-cased component name/slug to on-disk slug.
+     * @var array<string, string>|null Map of exact Reference item name/slug to on-disk slug.
      */
     private ?array $slugMap = null;
 
@@ -24,7 +24,7 @@ final class DocsRepository
     }
 
     /**
-     * List every documented component with the doc pages available for it.
+     * List every documented Reference item with the doc pages available for it.
      *
      * @return list<array{name: string, slug: string, pages: list<string>}>
      */
@@ -44,10 +44,10 @@ final class DocsRepository
     }
 
     /**
-     * Return the API documentation for a component.
+     * Return the API or canonical usage documentation for a Reference item.
      *
      * Prefers the Twig API (playgrounds are Twig-first) and appends the JS API
-     * when present, so JS-only components still return something useful.
+     * when present. Items without dedicated API pages return their overview.
      */
     public function getComponentApi(string $name): string
     {
@@ -62,8 +62,15 @@ final class DocsRepository
         }
 
         if ([] === $parts) {
+            $content = $this->readPage("$slug/index.md");
+            if (null !== $content) {
+                $parts[] = $content;
+            }
+        }
+
+        if ([] === $parts) {
             throw new \RuntimeException(\sprintf(
-                'No API documentation found for "%s". Available pages: %s.',
+                'No documentation found for "%s". Available pages: %s.',
                 $name,
                 implode(', ', $this->availablePages($slug)) ?: 'none',
             ));
@@ -73,7 +80,7 @@ final class DocsRepository
     }
 
     /**
-     * Return the usage examples (Twig + JS snippets) for a component.
+     * Return examples or canonical usage documentation for a Reference item.
      */
     public function getComponentExample(string $name): string
     {
@@ -81,8 +88,12 @@ final class DocsRepository
         $content = $this->readPage("$slug/examples.md");
 
         if (null === $content) {
+            $content = $this->readPage("$slug/index.md");
+        }
+
+        if (null === $content) {
             throw new \RuntimeException(\sprintf(
-                'No examples found for "%s". Available pages: %s.',
+                'No examples or usage documentation found for "%s". Available pages: %s.',
                 $name,
                 implode(', ', $this->availablePages($slug)) ?: 'none',
             ));
@@ -92,24 +103,42 @@ final class DocsRepository
     }
 
     /**
-     * Resolve a component name (or slug) to its on-disk slug, case-insensitively.
+     * Resolve a Reference item name (or slug) to its on-disk slug, case-insensitively.
      */
     public function resolveSlug(string $name): string
     {
-        $key = strtolower(trim($name));
+        $key = trim($name);
         $map = $this->slugMap();
 
-        if (!isset($map[$key])) {
-            throw new \RuntimeException(\sprintf('Unknown component "%s".', $name));
+        if (isset($map[$key])) {
+            return $map[$key];
         }
 
-        return $map[$key];
+        $matches = [];
+        foreach ($map as $alias => $slug) {
+            if (0 === strcasecmp($alias, $key)) {
+                $matches[$slug] = true;
+            }
+        }
+
+        if (1 === count($matches)) {
+            return array_key_first($matches);
+        }
+
+        if (count($matches) > 1) {
+            throw new \RuntimeException(\sprintf(
+                'Ambiguous Reference item "%s". Use its exact casing.',
+                $name,
+            ));
+        }
+
+        throw new \RuntimeException(\sprintf('Unknown Reference item "%s".', $name));
     }
 
     /**
-     * Parse the component index from `llms.txt`.
+     * Parse every Reference item from `llms.txt`.
      *
-     * @return array<string, string> Map of component name to on-disk slug.
+     * @return array<string, string> Map of Reference item name to on-disk slug.
      */
     private function parseIndex(): array
     {
@@ -124,18 +153,15 @@ final class DocsRepository
         $components = [];
         $lines = file($index, \FILE_IGNORE_NEW_LINES) ?: [];
 
-        // Component index pages are the only links shaped `/components/<slug>.md`
-        // (sub-pages live under `/components/<slug>/...`), so this pattern alone
-        // isolates them without tracking the current heading.
         foreach ($lines as $line) {
-            if (1 === preg_match('#^- \[(?<label>.+?)\]\(/components/(?<slug>[^/)]+)\.md\)#', $line, $m)) {
+            if (1 === preg_match('#^- \[(?<label>.+?)\]\(/reference/items/(?<slug>[^/)]+)\.md\)#', $line, $m)) {
                 $name = trim(preg_replace('/<[^>]+>/', '', $m['label']) ?? '');
                 $components[$name] = $m['slug'];
             }
         }
 
         if ([] === $components) {
-            throw new \RuntimeException('No components found in the documentation index.');
+            throw new \RuntimeException('No Reference items found in the documentation index.');
         }
 
         return $components;
@@ -152,8 +178,8 @@ final class DocsRepository
 
         $map = [];
         foreach ($this->parseIndex() as $name => $slug) {
-            $map[strtolower($name)] = $slug;
-            $map[strtolower($slug)] = $slug;
+            $map[$name] = $slug;
+            $map[$slug] = $slug;
         }
 
         return $this->slugMap = $map;
@@ -164,12 +190,13 @@ final class DocsRepository
      */
     private function availablePages(string $slug): array
     {
-        $dir = $this->docsDistDir.'/components/'.$slug;
-        if (!is_dir($dir)) {
-            return [];
+        $dir = $this->docsDistDir.'/reference/items/'.$slug;
+        $pages = [];
+
+        if (is_file($this->docsDistDir.'/reference/items/'.$slug.'.md')) {
+            $pages[] = 'index.md';
         }
 
-        $pages = [];
         foreach (glob($dir.'/*.md') ?: [] as $file) {
             $pages[] = basename($file);
         }
@@ -187,7 +214,9 @@ final class DocsRepository
      */
     private function readPage(string $relativePath): ?string
     {
-        $path = $this->docsDistDir.'/components/'.$relativePath;
+        $path = str_ends_with($relativePath, '/index.md')
+            ? $this->docsDistDir.'/reference/items/'.substr($relativePath, 0, -9).'.md'
+            : $this->docsDistDir.'/reference/items/'.$relativePath;
         if (!is_file($path)) {
             return null;
         }

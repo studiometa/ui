@@ -3,7 +3,7 @@
 Small Symfony application powering [ui.studiometa.dev](https://ui.studiometa.dev):
 
 - renders `@ui/` Twig templates for the playground iframe (`/`, `/source`);
-- exposes an **MCP server** so agents can discover components and generate playgrounds.
+- exposes an **MCP server** so agents can discover Reference items and generate playgrounds.
 
 ## MCP server
 
@@ -17,9 +17,12 @@ POST https://ui.studiometa.dev/api/mcp
 
 | Tool | Description |
 | --- | --- |
-| `list_components` | List every `@studiometa/ui` component and the doc pages available for each. |
-| `get_component_api` | Twig parameters/blocks (and JS options/refs/events) of a component. |
-| `get_component_example` | Ready-to-use Twig and JS snippets for a component. |
+| `list_reference_items` | List every documented component, primitive, decorator and helper with its available pages. |
+| `get_reference_item` | Get an item's Twig/JavaScript API or its canonical usage documentation. |
+| `get_reference_item_examples` | Get an item's examples or fall back to its canonical usage documentation. |
+| `list_components` | Backwards-compatible alias for `list_reference_items`. |
+| `get_component_api` | Backwards-compatible alias for `get_reference_item`. |
+| `get_component_example` | Backwards-compatible alias for `get_reference_item_examples`. |
 | `build_playground_url` | Turn Twig/HTML, JavaScript and CSS into a shareable, live playground URL. |
 | `parse_playground_url` | Decode a shared playground URL back into its Twig/HTML, JavaScript, CSS and theme. |
 
