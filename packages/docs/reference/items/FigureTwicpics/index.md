@@ -78,7 +78,7 @@ Setting the domain and path via getters in JavaScript will work with lazyloaded 
 
 If your project uses Twig as a templating language, it is recommended to define the domain and path for TwicPics in Twig. This will allow the usage of TwicPics for placeholders.
 
-The best way to implement this is to define an override for the `Figure.twig` template in your project by adding an `atoms/Figure/Figure.twig` file and using the `@ui` namespace to include the component `{% include '@ui/Figure/Figure.twig' with {} %}`. You will then be able to extends the `FigureTwicpics.twig` template:
+Define an override for `Figure/FigureTwicpics.twig` in your configured project template directory. Extend the package implementation through `@ui-pkg` so normal `@ui/Figure/FigureTwicpics.twig` includes resolve to your override:
 
 ```twig
 {% extends '@ui-pkg/Figure/FigureTwicpics.twig' %}

@@ -3,7 +3,7 @@ layout: home
 sidebar: false
 hero:
   name: '@studiometa/ui'
-  text: A library of unstyled and accessible components
+  text: A library of accessible and composable components
   tagline: A feature-rich library of primitives and components built with ♥️ by <a href="https://www.studiometa.fr" target="_blank" rel="noopener">Studio Meta</a>
   actions:
     - theme: brand

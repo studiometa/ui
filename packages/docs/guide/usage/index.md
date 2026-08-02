@@ -1,30 +1,25 @@
 # Usage
 
-## Using JS components
-
-Import the [JS Toolkit](https://github.com/studiometa/js-toolkit) components from the NPM package and add them to your application or use them to build other components.
-
-```js
-// app.js
-import { registerComponent } from '@studiometa/js-toolkit';
-import { Accordion, Cursor } from '@studiometa/ui';
-
-registerComponent(Accordion);
-registerComponent(Cursor);
-```
+This page is a quickstart for rendering markup and registering behavior. Read the [Concepts](/guide/concepts/) section for the underlying architecture and use the [Reference](/reference/) for exact APIs.
 
 ## Registering components
 
-Use [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) to mount a component on every matching `data-component` element. It is the default way to register components, with no `App` boilerplate:
+Import the components your page uses and register them with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) or `registerComponents`:
 
 ```js
-import { registerComponent } from '@studiometa/js-toolkit';
-import { Accordion } from '@studiometa/ui';
+import { registerComponents } from '@studiometa/js-toolkit';
+import { Accordion, Cursor } from '@studiometa/ui';
 
-registerComponent(Accordion);
+registerComponents(Accordion, Cursor);
 ```
 
-Pass a name or selector as the second argument when the DOM uses a different `data-component` value, or to bind a component to a CSS selector:
+Registered classes mount on matching `data-component` elements:
+
+```html
+<div data-component="Accordion">…</div>
+```
+
+Pass an alias or selector when the DOM uses a different component name:
 
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
@@ -33,56 +28,56 @@ import { AnchorScrollTo } from '@studiometa/ui';
 registerComponent(AnchorScrollTo, 'a[href^="#"]');
 ```
 
-Reach for [`createApp`](https://js-toolkit.studiometa.dev/api/helpers/createApp.html) only when you need app-level orchestration, such as shared `refs`, `on*` handlers or methods that coordinate across children:
+See [Declarative runtime](/guide/concepts/declarative-runtime) for options, refs, events, lifecycle, multiple components on one element and when to use `createApp`.
 
-```js
-import { Base, createApp } from '@studiometa/js-toolkit';
-import { Transition } from '@studiometa/ui';
+## Rendering Twig templates
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    refs: ['enterBtn', 'leaveBtn'],
-    components: {
-      Transition,
-    },
-  };
-
-  onEnterBtnClick() {
-    this.$children.Transition[0].enter();
-  }
-
-  onLeaveBtnClick() {
-    this.$children.Transition[0].leave();
-  }
-}
-
-export default createApp(App, document.body);
-```
-
-## Using Twig components
-
-Twig components can be used as is in your project by including or embeding them:
+After installing and configuring the Composer package, include templates through the project-aware `@ui` namespace:
 
 ```twig
-{% include '@ui/Button/Button.twig' with { label: 'Click me' } %}
+{% include '@ui/Button/Button.twig' with {
+  label: 'Click me',
+  attr: { class: 'rounded' },
+} %}
 ```
 
-Or they can be extended for customization and propagate the extended version in every other components where they are used:
+A template can render the `data-component`, options and refs expected by its JavaScript counterpart, but your JavaScript entry point still controls registration.
+
+Use parameters and blocks for supported customization. If the markup itself must change, create the matching relative template path in your project and extend the package implementation through `@ui-pkg`:
 
 ```twig
-{# atoms/Button/Button.twig #}
+{# templates/Button/Button.twig #}
 {% extends '@ui-pkg/Button/Button.twig' %}
 
-{% set attr = attr|default({})|merge({
-  class: 'p-4 rounded text-white bg-blue-500'
+{% set attr = (attr|default({}))|merge({
+  class: 'rounded bg-blue-600 px-4 py-2 text-white'
 }) %}
 ```
 
-::: tip The <code>@ui-pkg</code> namespace
-**When extending components, use the `@ui-pkg` namespace instead of `@ui`** to avoid infinite loops. This namespace only points to the templates from the package whereas `@ui` points to both the templates from your project and the package.
-:::
+See [Templates and customization](/guide/concepts/templates-and-customization) for namespace lookup, root attributes, overrides and styling ownership.
 
-## Using Vue components
+## Combining markup and behavior
 
-This package does not have Vue components yet.
+For an item with Twig and JavaScript surfaces, render its template and register its class:
+
+```twig
+{% include '@ui/CircularMarquee/CircularMarquee.twig' with {
+  id: 'services',
+  content: 'Our services',
+} %}
+```
+
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
+import { CircularMarquee } from '@studiometa/ui';
+
+registerComponent(CircularMarquee);
+```
+
+The badges and API links on each Reference item show which surfaces it supports.
+
+## Next steps
+
+- [Browse components by task](/reference/components/).
+- [Learn composition patterns](/guide/concepts/composition).
+- [Open the playground](/play/).

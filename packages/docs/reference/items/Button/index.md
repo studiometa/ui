@@ -11,5 +11,5 @@ Use this component to create buttons.
 After you install the [package](/guide/installation/), include the template in your project:
 
 ```twig
-{% include '@ui-pkg/Button/Button.twig' %}
+{% include '@ui/Button/Button.twig' %}
 ```
