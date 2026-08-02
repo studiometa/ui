@@ -1,11 +1,13 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import ts from 'typescript';
+import { conceptCatalog } from '../.vitepress/concepts/catalog.ts';
 import { allReferenceSymbols, referenceCatalog } from '../.vitepress/reference/catalog.ts';
 
 const docsRoot = resolve(import.meta.dirname, '..');
 const repositoryRoot = resolve(docsRoot, '../..');
 const itemsRoot = resolve(docsRoot, 'reference/items');
+const conceptsRoot = resolve(docsRoot, 'guide/concepts');
 const errors: string[] = [];
 
 function report(condition: unknown, message: string) {
@@ -30,6 +32,40 @@ for (const duplicate of duplicates(
 )) {
   errors.push(`Duplicate reference symbol: ${duplicate}`);
 }
+for (const duplicate of duplicates(conceptCatalog.map((concept) => concept.slug))) {
+  errors.push(`Duplicate concept slug: ${duplicate}`);
+}
+for (const duplicate of duplicates(conceptCatalog.map((concept) => concept.path))) {
+  errors.push(`Duplicate concept path: ${duplicate}`);
+}
+
+const conceptFiles = readdirSync(conceptsRoot)
+  .filter((file) => file.endsWith('.md'))
+  .toSorted();
+const catalogConceptFiles = conceptCatalog
+  .map((concept) => `${concept.slug}.md`)
+  .toSorted();
+
+for (const file of conceptFiles) {
+  report(catalogConceptFiles.includes(file), `Unregistered concept page: ${file}`);
+}
+for (const file of catalogConceptFiles) {
+  report(conceptFiles.includes(file), `Missing concept page: ${file}`);
+}
+for (const concept of conceptCatalog) {
+  report(Boolean(concept.title.trim()), `Missing title for concept ${concept.slug}`);
+  report(Boolean(concept.summary.trim()), `Missing summary for concept ${concept.slug}`);
+  const expectedPath =
+    concept.slug === 'index'
+      ? '/guide/concepts/'
+      : `/guide/concepts/${concept.slug}`;
+  report(concept.path === expectedPath, `Non-canonical path for concept ${concept.slug}`);
+}
+
+const conceptsOverview = readFileSync(resolve(conceptsRoot, 'index.md'), 'utf8');
+const usageGuide = readFileSync(resolve(docsRoot, 'guide/usage/index.md'), 'utf8');
+report(/^### The Data family$/m.test(conceptsOverview), 'Missing legacy #the-data-family anchor');
+report(/^## Registering components$/m.test(usageGuide), 'Missing legacy #registering-components anchor');
 
 const itemDirectories = readdirSync(itemsRoot, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
@@ -173,15 +209,29 @@ collectMarkdown(docsRoot);
 
 for (const file of markdownFiles) {
   const content = readFileSync(file, 'utf8');
-  report(!content.includes('/components/'), `Legacy /components/ link remains in ${file}`);
+  report(
+    !/(?<!\/reference)\/components\//.test(content),
+    `Legacy /components/ link remains in ${file}`,
+  );
+
+  if (!file.includes('/migration-guides/')) {
+    report(!/(?:atoms|molecules|organisms)\//.test(content), `Atomic-design path remains in ${file}`);
+    report(
+      !/\{%\s*(?:include|embed)\s+['"]@ui-pkg\//.test(content),
+      `Package-only namespace used for a normal include in ${file}`,
+    );
+    for (const phrase of ['JavaScript and Vue parts', 'Using Vue components', 'Twig or Vue project']) {
+      report(!content.includes(phrase), `Legacy phrase "${phrase}" remains in ${file}`);
+    }
+  }
 }
 
 if (errors.length) {
-  console.error(`Reference validation failed with ${errors.length} error(s):`);
+  console.error(`Documentation validation failed with ${errors.length} error(s):`);
   for (const error of errors) console.error(`- ${error}`);
   process.exitCode = 1;
 } else {
   console.log(
-    `Reference validation passed: ${referenceCatalog.length} entries and ${allReferenceSymbols.length} symbols.`,
+    `Documentation validation passed: ${referenceCatalog.length} Reference entries, ${allReferenceSymbols.length} symbols and ${conceptCatalog.length} concepts.`,
   );
 }

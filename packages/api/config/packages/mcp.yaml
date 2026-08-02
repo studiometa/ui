@@ -3,8 +3,8 @@ mcp:
     version: '1.0.0'
     description: 'Discover the @studiometa/ui Reference and generate playgrounds.'
     instructions: |
-        This server exposes every documented @studiometa/ui component, primitive, decorator and helper so you can understand the public API and build playgrounds.
-        Typical flow: call `list_reference_items` to discover Reference items, then `get_reference_item` and `get_reference_item_examples` to learn how to use one, then `build_playground_url` to turn Twig/HTML, JavaScript and CSS into a shareable, live playground link. The older component-named tools remain available as aliases.
+        This server exposes the @studiometa/ui architecture and every documented component, primitive, decorator and helper so you can understand the public API and build playgrounds.
+        Call `list_concepts` and `get_concept` for package, runtime, composition and customization guidance. Call `list_reference_items`, then `get_reference_item` and `get_reference_item_examples`, for a specific public item. Use `build_playground_url` to turn Twig/HTML, JavaScript and CSS into a shareable, live playground link. The older component-named tools remain available as aliases.
     client_transports:
         http: true
     http:

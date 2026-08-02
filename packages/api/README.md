@@ -17,6 +17,8 @@ POST https://ui.studiometa.dev/api/mcp
 
 | Tool | Description |
 | --- | --- |
+| `list_concepts` | List the architectural concepts and their canonical documentation paths. |
+| `get_concept` | Get documentation about packages, runtime behavior, composition or customization. |
 | `list_reference_items` | List every documented component, primitive, decorator and helper with its available pages. |
 | `get_reference_item` | Get an item's Twig/JavaScript API or its canonical usage documentation. |
 | `get_reference_item_examples` | Get an item's examples or fall back to its canonical usage documentation. |

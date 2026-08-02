@@ -5,6 +5,7 @@ import { withLeadingSlash } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
 import { defineConfig } from 'vitepress';
 import pkg from '../package.json' with { type: 'json' };
+import { conceptCatalog } from './concepts/catalog.js';
 import { componentTaskLabels, referenceCatalog } from './reference/catalog.js';
 import type { ReferenceKind } from './reference/types.js';
 
@@ -109,16 +110,10 @@ function getGuideSidebar() {
         {
           text: 'Concepts',
           link: '/guide/concepts/',
-          items: [
-            { text: 'Overview', link: '/guide/concepts/' },
-            { text: 'Packages and surfaces', link: '/guide/concepts/packages-and-surfaces' },
-            { text: 'Declarative runtime', link: '/guide/concepts/declarative-runtime' },
-            { text: 'Composition', link: '/guide/concepts/composition' },
-            {
-              text: 'Templates and customization',
-              link: '/guide/concepts/templates-and-customization',
-            },
-          ],
+          items: conceptCatalog.map((concept) => ({
+            text: concept.slug === 'index' ? 'Overview' : concept.title,
+            link: concept.path,
+          })),
         },
         { text: 'Installation', link: '/guide/installation/' },
         { text: 'Usage', link: '/guide/usage/' },
