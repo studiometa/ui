@@ -38,6 +38,10 @@ The coordinator. It owns no map rendering and no registry: the `MapboxCluster` d
 ```
 <!-- prettier-ignore-end -->
 
+::: warning Boolean options: presence, not value
+`no-sort` and `fit-on-update` are `Boolean` options — js-toolkit reads them by **attribute presence**, never by value. Enable one with the bare attribute (`data-option-fit-on-update`) and disable it by **omitting** the attribute; `data-option-fit-on-update="false"` still reads as `true`. Sorting is on by default, so add `data-option-no-sort` to turn it off. See the [Boolean options note](/components/MapboxMap/js-api#reactivity-and-updates).
+:::
+
 ### Getters
 
 | Getter      | Type                          | Description                                                                     |

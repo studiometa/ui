@@ -5,15 +5,16 @@ outline: deep
 
 # JS API
 
-The `@studiometa/ui-mapbox` package exposes twelve components plus the `AbstractMapboxMapChild` base class. They are organized around a single root component, `MapboxMap`, which owns the Mapbox `Map` instance. Every other component is a child that resolves the closest parent `MapboxMap` and registers itself against its map once it is loaded.
+This page documents thirteen components — a single root component, `MapboxMap`, which owns the Mapbox `Map` instance, plus the twelve children below — built on the `AbstractMapboxMapChild` (and, for controls, `AbstractMapboxControl`) base classes. The [`StoreLocator`](/components/StoreLocator/) orchestrator completes the family on its own page. Every child resolves the closest parent `MapboxMap` on its own and registers itself against its map once it is loaded.
 
-You only ever register `MapboxMap` with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html): all child components are declared internally and resolved automatically.
+Each component is **self-registering**: `MapboxMap` no longer declares its children, so every component must be registered for js-toolkit to mount it. Register the whole family in one call with [`registerMapboxComponents`](#registermapboxcomponents), or register only the ones you use with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html).
 
 - **[Map](#map)** — `MapboxMap`
 - **[Markers & Popups](#markers-popups)** — `MapboxMarker`, `MapboxPopup`
 - **[Controls](#controls)** — `MapboxNavigationControl`, `MapboxGeolocateControl`, `MapboxFullscreenControl`, `MapboxGeocoder`
 - **[Data](#data)** — `MapboxSource`, `MapboxLayer`, `MapboxImage`, `MapboxImages`
 - **[Cluster](#cluster)** — `MapboxCluster`, `MapboxClusterItem` (see also the [`StoreLocator`](/components/StoreLocator/) orchestrator)
+- **[Registering the family](#registermapboxcomponents)** — `registerMapboxComponents`
 - **[AbstractMapboxMapChild](#abstractmapboxmapchild)** — the shared base class
 
 ## Reactivity and updates
@@ -35,6 +36,14 @@ marker.marker.setLngLat([2.29, 48.86]);
 ```
 
 Every component documents the Mapbox object it exposes (`map`, `marker`, `popup`, `control`, …) in its **Getters** section below.
+
+::: tip Switching base style keeps your layers
+Calling `map.setStyle(…)` wipes the entire style — every source, layer and sprite — while the map instance and the still-mounted child components survive. Each map child subscribes to the map's `style.load` and **re-injects** its contribution automatically, so your declarative sources, layers, images and clusters re-appear on the new base style instead of silently vanishing (resolving a long-standing [`vue-mapbox-gl` limitation](https://github.com/studiometa/vue-mapbox-gl/issues/248)). You can switch the base style at runtime without re-declaring your data.
+:::
+
+::: warning Boolean options: presence, not value
+js-toolkit reads a `Boolean` option by **attribute presence**, never by its value. A `data-option-*="false"` attribute is still _present_, so it reads as `true`. For a Boolean that defaults to `false` (like the geocoder's [`add-to-map`](#mapboxgeocoder)), enable it by adding the bare attribute (`data-option-add-to-map`) and disable it by **omitting** the attribute entirely. Never write `data-option-add-to-map="false"` — it reads as `true`. Options exposed as a negation of a default-on behaviour (like the `StoreLocator`'s [`no-sort`](/components/StoreLocator/js-api#options)) follow the same rule: add `data-option-no-sort` to turn sorting off, omit it to leave it on.
+:::
 
 ## Map
 
@@ -152,11 +161,10 @@ Add a [marker](https://docs.mapbox.com/mapbox-gl-js/api/markers/#marker) to the 
 
 #### Getters
 
-| Getter          | Type              | Description                                   |
-| --------------- | ----------------- | --------------------------------------------- |
-| `marker`        | `mapboxgl.Marker` | The underlying Marker instance.               |
-| `popup`         | `MapboxPopup`     | The first nested `MapboxPopup` child, if any. |
-| `markerOptions` | `Object`          | The resolved marker options.                  |
+| Getter   | Type              | Description                                   |
+| -------- | ----------------- | --------------------------------------------- |
+| `marker` | `mapboxgl.Marker` | The underlying Marker instance.               |
+| `popup`  | `MapboxPopup`     | The first nested `MapboxPopup` child, if any. |
 
 ### MapboxPopup
 
@@ -171,10 +179,9 @@ Display a [popup](https://docs.mapbox.com/mapbox-gl-js/api/markers/#popup) on th
 
 #### Getters
 
-| Getter         | Type             | Description                    |
-| -------------- | ---------------- | ------------------------------ |
-| `popup`        | `mapboxgl.Popup` | The underlying Popup instance. |
-| `popupOptions` | `Object`         | The resolved popup options.    |
+| Getter  | Type             | Description                    |
+| ------- | ---------------- | ------------------------------ |
+| `popup` | `mapboxgl.Popup` | The underlying Popup instance. |
 
 ## Controls
 
@@ -231,10 +238,14 @@ Add an address search control powered by [`@mapbox/mapbox-gl-geocoder`](https://
 
 | Option       | Type      | Default | Description                                                                                                                                                                                                           |
 | ------------ | --------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `add-to-map` | `Boolean` | `false` | When `true`, the geocoder is added to the map as a control. Otherwise it is rendered inside the component's element.                                                                                                  |
+| `add-to-map` | `Boolean` | `false` | Add the geocoder to the map as a control. Otherwise it is rendered inside the component's element.                                                                                                                    |
 | `options`    | `Object`  | `{}`    | [Geocoder options](https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md#parameters). Non-serializable options (`filter`, `externalGeocoder`, `render`, `getItemValue`, `localGeocoder`) are not supported. |
 
 The `accessToken` is inherited from the parent `MapboxMap` when it is not set in `options`.
+
+::: warning `add-to-map` is a Boolean — presence, not value
+`add-to-map` defaults to `false`, so enable it with the bare `data-option-add-to-map` attribute and disable it by **omitting** the attribute. Writing `data-option-add-to-map="false"` reads as `true` (see the [Boolean options note](#reactivity-and-updates)).
+:::
 
 #### Getters
 
@@ -242,6 +253,12 @@ The `accessToken` is inherited from the parent `MapboxMap` when it is not set in
 | --------- | -------------------- | -------------------------------------------------------- |
 | `control` | `MapboxGeocoder`     | The underlying `mapbox-gl-geocoder` control instance.    |
 | `target`  | `Map \| HTMLElement` | Where the control is mounted, depending on `add-to-map`. |
+
+#### Events
+
+| Event    | Payload  | Description                                                                                             |
+| -------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| `result` | `result` | Emitted when the geocoder resolves an address, carrying the geocoder's `result` (its selected feature). |
 
 ## Data
 
@@ -261,6 +278,12 @@ Add a [source](https://docs.mapbox.com/style-spec/reference/sources/) to the map
 | Ref       | Type                | Description                                                                                                                                                                                                      |
 | --------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `geojson` | `HTMLScriptElement` | Optional `<script data-ref="geojson" type="application/json">` element holding inline GeoJSON. When present, its parsed content is injected as the source spec's `data`. Invalid JSON is ignored with a warning. |
+
+#### Getters
+
+| Getter   | Type                  | Description                                                                                              |
+| -------- | --------------------- | -------------------------------------------------------------------------------------------------------- |
+| `source` | `SourceSpecification` | The resolved source specification, with the `geojson` ref's inline data injected as `data` when present. |
 
 ### MapboxLayer
 
@@ -391,9 +414,21 @@ The state setters below are called by a `StoreLocator` orchestrator; you general
 | `setInBounds(value)` | Toggle the `data-in-bounds` attribute — the list-visibility signal.                           |
 | `setActive(value)`   | Toggle the `data-active` attribute and the `aria-current="true"` state — the selected signal. |
 
+## registerMapboxComponents
+
+Register the whole `@studiometa/ui-mapbox` family globally in a single call. Because `MapboxMap` no longer declares its children, every component must be registered so js-toolkit's document-wide `MutationObserver` mounts it whenever its element enters the DOM — statically, `Fetch`-injected or `appendChild`-ed.
+
+```js
+import { registerMapboxComponents } from '@studiometa/ui-mapbox';
+
+registerMapboxComponents();
+```
+
+It registers `MapboxMap`, `MapboxMarker`, `MapboxPopup`, `MapboxNavigationControl`, `MapboxGeolocateControl`, `MapboxFullscreenControl`, `MapboxGeocoder`, `MapboxSource`, `MapboxLayer`, `MapboxImage`, `MapboxImages`, `MapboxCluster`, `MapboxClusterItem` and `StoreLocator` at once, and returns the promise from [`registerComponents`](https://js-toolkit.studiometa.dev/api/helpers/registerComponents.html). When you only need a subset, call [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) per component instead — each is exported by name and also available at its own `@studiometa/ui-mapbox/<Component>` subpath (default export = the class), which is what makes [lazy registration](/components/MapboxMap/#lazy-loading) possible.
+
 ## AbstractMapboxMapChild
 
-The base class every child component extends. It resolves the closest parent `MapboxMap` and exposes its Mapbox `Map` instance so children can register themselves against it. Extend it to build your own map children.
+The base class every child component extends (controls extend `AbstractMapboxControl`, itself a thin subclass that adds the shared `position` option and the `map.addControl`/`removeControl` lifecycle). It resolves the closest parent `MapboxMap` and exposes its Mapbox `Map` instance so children can register themselves against it. Beyond `mapboxMap`/`map`, it hardens the whole family's lifecycle: guarded injection and teardown, dead-map safety, retryable parent resolution (a child mounted before its map re-resolves on `mapbox-map:connected`), and automatic re-injection after a `map.setStyle(…)`. Extend it to build your own map children.
 
 #### Getters
 

@@ -32,38 +32,40 @@ The Mapbox GL stylesheet is still required. Keep importing it as before:
 @import 'mapbox-gl/dist/mapbox-gl.css';
 ```
 
-Instead of registering the components on a Vue app, register the `MapboxMap` component with js-toolkit. All child components are declared internally, so a single registration is enough:
+Instead of registering the components on a Vue app, register them with js-toolkit. Every component is self-registering — `MapboxMap` no longer declares its children, so each one must be registered. Register the whole family in one call:
 
 ```js
-import { registerComponent } from '@studiometa/js-toolkit';
-import { MapboxMap } from '@studiometa/ui-mapbox';
+import { registerMapboxComponents } from '@studiometa/ui-mapbox';
 
-registerComponent(MapboxMap);
+registerMapboxComponents();
 ```
+
+Or register only the ones you use with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) — a bare map needs only `MapboxMap`, but every marker, control, source or cluster you declare needs its own registration.
 
 ## Component mapping
 
-Every Vue component has a one-to-one js-toolkit equivalent, with the same name. You author them as `data-component` elements nested inside a `MapboxMap` instead of Vue templates.
+Most Vue components have a same-named js-toolkit equivalent, which you author as `data-component` elements nested inside a `MapboxMap` instead of Vue templates. The clustering and store-locator components are the exception — they were re-architected around a new `MapboxClusterItem`, detailed below the table.
 
-| `@studiometa/vue-mapbox-gl` | `@studiometa/ui-mapbox`   | Notes                                                                                             |
-| --------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------- |
-| `MapboxMap`                 | `MapboxMap`               | Root component, owns the map instance.                                                            |
-| `MapboxMarker`              | `MapboxMarker`            |                                                                                                   |
-| `MapboxPopup`               | `MapboxPopup`             | Content comes from the element's inner HTML.                                                      |
-| `MapboxNavigationControl`   | `MapboxNavigationControl` |                                                                                                   |
-| `MapboxGeolocateControl`    | `MapboxGeolocateControl`  |                                                                                                   |
-| `MapboxFullscreenControl`   | `MapboxFullscreenControl` | Ported.                                                                                           |
-| `MapboxGeocoder`            | `MapboxGeocoder`          | Needs the optional `@mapbox/mapbox-gl-geocoder`.                                                  |
-| `MapboxSource`              | `MapboxSource`            | Ported.                                                                                           |
-| `MapboxLayer`               | `MapboxLayer`             |                                                                                                   |
-| `MapboxImage`               | `MapboxImage`             | Ported.                                                                                           |
-| `MapboxImages`              | `MapboxImages`            | Ported.                                                                                           |
-| `MapboxCluster`             | `MapboxCluster`           | Ported. `data` accepts a URL; inline GeoJSON via a script ref — see [below](#mapboxcluster-data). |
-| `StoreLocator`              | —                         | **Not yet available** — planned follow-up.                                                        |
-| `VueScroller`               | —                         | **Not yet available** — planned follow-up.                                                        |
+| `@studiometa/vue-mapbox-gl` | `@studiometa/ui-mapbox`   | Notes                                                                                                                                                |
+| --------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MapboxMap`                 | `MapboxMap`               | Root component, owns the map instance.                                                                                                               |
+| `MapboxMarker`              | `MapboxMarker`            |                                                                                                                                                      |
+| `MapboxPopup`               | `MapboxPopup`             | Content comes from the element's inner HTML.                                                                                                         |
+| `MapboxNavigationControl`   | `MapboxNavigationControl` |                                                                                                                                                      |
+| `MapboxGeolocateControl`    | `MapboxGeolocateControl`  |                                                                                                                                                      |
+| `MapboxFullscreenControl`   | `MapboxFullscreenControl` | Ported.                                                                                                                                              |
+| `MapboxGeocoder`            | `MapboxGeocoder`          | Needs the optional `@mapbox/mapbox-gl-geocoder`.                                                                                                     |
+| `MapboxSource`              | `MapboxSource`            | Ported.                                                                                                                                              |
+| `MapboxLayer`               | `MapboxLayer`             |                                                                                                                                                      |
+| `MapboxImage`               | `MapboxImage`             | Ported.                                                                                                                                              |
+| `MapboxImages`              | `MapboxImages`            | Ported.                                                                                                                                              |
+| `MapboxCluster`             | `MapboxCluster`           | Re-architected — the source is derived from child `MapboxClusterItem`s, not a `data` prop. See [below](#mapboxcluster-data).                         |
+| —                           | `MapboxClusterItem`       | **New** — a rendered cluster entry (list item + map feature). See [below](#mapboxcluster-data).                                                      |
+| `StoreLocator`              | `StoreLocator`            | Re-implemented as a thin orchestrator over `MapboxMap` + `MapboxCluster` + `MapboxClusterItem`s. See its [documentation](/components/StoreLocator/). |
+| `VueScroller`               | —                         | No equivalent needed — the store list is a plain scrollable element, styled with CSS.                                                                |
 
-::: warning Not yet ported
-`StoreLocator` and its internal `VueScroller` helper have no js-toolkit equivalent yet. They are planned as a follow-up. If you rely on `StoreLocator`, keep it on `@studiometa/vue-mapbox-gl` for now, or rebuild the layout on top of `MapboxMap` + `MapboxMarker` + `MapboxCluster`.
+::: tip StoreLocator is now available
+`StoreLocator` has been re-implemented as a thin **orchestrator** over a `MapboxMap` + `MapboxCluster` + `MapboxClusterItem`s (plus an optional `MapboxGeocoder`). The single-purpose `StoreLocatorItem` class of the Vue library is gone: each store is a `MapboxClusterItem` that is at once the sidebar list entry and the map feature. The `VueScroller` helper has no equivalent — the list is a plain scrollable element you style with CSS. See the [`StoreLocator` documentation](/components/StoreLocator/).
 :::
 
 ## API translation
@@ -110,9 +112,9 @@ The Vue library re-emits Mapbox map events prefixed with `mb-` (e.g. `@mb-load`,
 | `@mb-moveend`                 | `moveend`                | `onMapboxMapMoveend`          |
 | `@mb-zoomend`                 | `zoomend`                | `onMapboxMapZoomend`          |
 | `MapboxCluster` cluster click | `cluster-click`          | `onMapboxClusterClusterClick` |
-| `MapboxCluster` feature click | `feature-click`          | `onMapboxClusterFeatureClick` |
+| `MapboxCluster` feature click | `item-click`             | `onMapboxClusterItemClick`    |
 
-The `MapboxMap` component re-emits the full list of Mapbox map events; `MapboxCluster` emits `cluster-click`, `feature-click`, `feature-mouseenter` and `feature-mouseleave`; `MapboxImage` and `MapboxImages` emit `ready`. See each component's events in the [JS API](/components/MapboxMap/js-api).
+The `MapboxMap` component re-emits the full list of Mapbox map events; `MapboxCluster` emits `cluster-click`, `item-click` (an unclustered point, resolved back to the registered `MapboxClusterItem` behind it) and `update` (the item set changed); `MapboxGeocoder` emits `result`; `MapboxImage` and `MapboxImages` emit `ready`. See each component's events in the [JS API](/components/MapboxMap/js-api).
 
 ```js
 import { Base, createApp } from '@studiometa/js-toolkit';
@@ -163,7 +165,24 @@ Vue slots become real DOM children:
 
 ### MapboxCluster data {#mapboxcluster-data}
 
-In the Vue library, the `MapboxCluster` `data` prop accepts either a URL string or an inline GeoJSON object. In js-toolkit, options cannot express a `String | Object` union, so `data` is declared as a `String` and only accepts the **URL of a `.geojson` file** when set via the data attribute. To keep the inline-GeoJSON case, add a `<script data-ref="geojson" type="application/json">` child holding the GeoJSON: when this `geojson` ref is present, its parsed content is used as the clustered source data and the `data` option becomes a fallback. Together, the URL option and the ref cover both halves of the original `String | Object` prop.
+In the Vue library, the `MapboxCluster` `data` prop accepted a URL string or an inline GeoJSON object. The re-architected `MapboxCluster` has **no `data` option at all**: it is a pure source driver whose features _are_ its rendered children. Each point is a `MapboxClusterItem` element (living in the cluster's subtree, typically a sidebar list `<li>`) that self-registers with its closest `MapboxCluster`; the cluster derives its clustered GeoJSON `FeatureCollection` from that registry and rebuilds it (debounced) whenever items mount or unmount. The same markup is at once the sidebar list and the map source.
+
+```html
+<div hidden data-component="MapboxCluster" data-option-cluster-radius="60">
+  <ul>
+    <li
+      data-component="MapboxClusterItem"
+      data-option-id="a"
+      data-option-lng-lat="[2.35, 48.86]"></li>
+    <li
+      data-component="MapboxClusterItem"
+      data-option-id="b"
+      data-option-lng-lat="[2.29, 48.86]"></li>
+  </ul>
+</div>
+```
+
+To load points from a server, render the `MapboxClusterItem` list from your backend (or swap it with a [`Fetch`](/components/Fetch/)): mounting/terminating the items drives the map data, no `data` URL needed. For one-off imperative control you can still push a `FeatureCollection` straight to the source with the cluster's `setData(data)` method, but the registry remains the source of truth and the next item change overwrites it. See the [`MapboxCluster` reference](/components/MapboxMap/js-api#mapboxcluster) and the [`StoreLocator`](/components/StoreLocator/) built on top of it.
 
 ## Reactivity caveat
 
@@ -186,6 +205,11 @@ mapboxMap.map.getSource('points').setData(newGeoJson);
 ```
 
 Each component exposes its Mapbox object (`map`, `marker`, `popup`, `control`, …). See the [JS API](/components/MapboxMap/js-api#reactivity-and-updates) for the full list.
+
+Two things the new lifecycle now handles for you, which the Vue library did not:
+
+- **Switching the base style keeps your layers.** Calling `map.setStyle(…)` wipes every source, layer and sprite, but each declarative child re-injects its contribution on the map's `style.load`, so your sources, layers, images and clusters survive a base-style change (resolving [`vue-mapbox-gl` #248](https://github.com/studiometa/vue-mapbox-gl/issues/248)). You no longer need to re-declare data after a style switch.
+- **Async ergonomics are internal.** Children resolve their parent map, wait for it to load, adopt or re-add resources across `Fetch` swaps and map remounts, and load the geocoder module on demand — all inside the shared base class, so you author plain declarative markup instead of orchestrating imperative `map.on('load', …)` wiring.
 
 ## Before / after
 

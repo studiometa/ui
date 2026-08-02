@@ -39,7 +39,15 @@ You will also need a [Mapbox access token](https://docs.mapbox.com/help/getting-
 
 ## Usage
 
-Register the `MapboxMap` component with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html). All child components are declared internally, so you only ever register `MapboxMap` itself — they are resolved automatically once the map is loaded.
+Every component in the family is **self-registering**: `MapboxMap` no longer declares its children, so each one registers independently and resolves its parent map on its own (through `$closest('MapboxMap')`, then waits for readiness). Register the whole family in one call with [`registerMapboxComponents`](./js-api#registermapboxcomponents), and js-toolkit's document-wide `MutationObserver` mounts each component whenever its element enters the DOM.
+
+```js
+import { registerMapboxComponents } from '@studiometa/ui-mapbox';
+
+registerMapboxComponents();
+```
+
+You can also register only the components you actually use with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) — every component is exported by name from the package. A map with nothing but a `container` needs only `MapboxMap`; the moment you add markers, controls, sources or clusters you must register those components too, otherwise their elements are inert.
 
 Author the map with a root `MapboxMap` element holding a `container` ref, and give it a size through CSS.
 
@@ -49,6 +57,9 @@ Author the map with a root `MapboxMap` element holding a `container` ref, and gi
 import { registerComponent } from '@studiometa/js-toolkit';
 import { MapboxMap } from '@studiometa/ui-mapbox';
 
+// A bare map with no child components only needs `MapboxMap`.
+// Add `registerMapboxComponents()` (or register each child) as soon as you
+// declare markers, popups, controls, sources, layers, images or clusters.
 registerComponent(MapboxMap);
 ```
 
@@ -85,6 +96,14 @@ import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
 registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'));
 ```
 
-Every component is also available at its own subpath (`@studiometa/ui-mapbox/<Component>`), whose default export is the component class — so the dynamic import needs no destructuring.
+Every component is also available at its own subpath (`@studiometa/ui-mapbox/<Component>`), whose default export is the component class — so the dynamic import needs no destructuring. Because each component is now registered independently, lazy-register each one you use: deferring `MapboxMap` pulls in `mapbox-gl`, but a marker or a cluster is its own module and must get its own lazy registration.
 
-Because every marker, popup, control, source, layer, image and cluster is a child of `MapboxMap`, deferring the map defers the whole family — `mapbox-gl` included. Reach for a different trigger when it fits better: `importWhenIdle` (load during browser idle time), `importOnInteraction` (wait for a first click/focus/touch on the element) or `importOnMediaQuery` (load only above a breakpoint, e.g. to skip the map on small screens).
+```js
+import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
+
+for (const name of ['MapboxMap', 'MapboxMarker', 'MapboxPopup']) {
+  registerComponent(importWhenVisible(() => import(`@studiometa/ui-mapbox/${name}`), name));
+}
+```
+
+Reach for a different trigger when it fits better: `importWhenIdle` (load during browser idle time), `importOnInteraction` (wait for a first click/focus/touch on the element) or `importOnMediaQuery` (load only above a breakpoint, e.g. to skip the map on small screens).
