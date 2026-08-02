@@ -19,14 +19,28 @@ By default, each class mounts on elements whose `data-component` value contains 
 <div data-component="Dialog">…</div>
 ```
 
-Pass an alias or CSS selector when existing markup cannot use the component name:
+Pass a different component name when markup needs an alias:
 
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
+import { Dialog } from '@studiometa/ui';
+
+registerComponent(Dialog, 'SiteDialog');
+```
+
+```html
+<div data-component="SiteDialog">…</div>
+```
+
+A selector-like lowercase value targets matching DOM elements instead:
+
+```js
 import { AnchorScrollTo } from '@studiometa/ui';
 
 registerComponent(AnchorScrollTo, 'a[href^="#"]');
 ```
+
+A name is first matched as a `data-component` token. When no matching token exists and the value starts with a lowercase character, js-toolkit treats it as a CSS selector. Prefer an explicit component name when you control the markup.
 
 Registration is the default application boundary. It keeps feature imports explicit and avoids an application class when components do not need to coordinate with one another.
 
@@ -57,7 +71,13 @@ Each class owns its documented options and events. Use this pattern when indepen
 </div>
 ```
 
-Strings and booleans can be written directly. Arrays and objects are commonly encoded as JSON:
+Values are parsed from the option type declared by the component:
+
+- strings keep their attribute value;
+- numbers use JavaScript number conversion;
+- a boolean whose default is `false` becomes `true` when its attribute is present;
+- a boolean whose default is `true` becomes `false` through `data-option-no-<name>`;
+- arrays and objects use JSON.
 
 ```html
 <div data-component="InView" data-option-intersection-observer='{ "rootMargin": "100px" }'>
@@ -65,7 +85,7 @@ Strings and booleans can be written directly. Arrays and objects are commonly en
 </div>
 ```
 
-Follow each item's JavaScript API for accepted values, defaults and negated boolean attributes.
+Follow each item's JavaScript API for its accepted type and default. Quote JSON with valid double-quoted keys and values.
 
 ## Refs
 
@@ -80,7 +100,7 @@ Follow each item's JavaScript API for accepted values, defaults and negated bool
 </div>
 ```
 
-Refs belong to the nearest component contract that declares them. Item-specific anatomy pages show required structure when order or nesting matters.
+A component reads declared refs below its root until another component boundary owns them. Co-located components can both read the same unprefixed ref when both contracts declare that name. Prefix a ref with the component name, such as `data-ref="Modal.close[]"`, when the ownership must be explicit. Item-specific anatomy pages show required structure when order or nesting matters.
 
 ## Events and component hooks
 
@@ -120,7 +140,7 @@ Components such as [`Fetch`](/reference/items/Fetch/) and [`Frame`](/reference/i
 
 ## When to use `createApp`
 
-Use [`createApp`](https://js-toolkit.studiometa.dev/api/helpers/createApp.html) when the page needs app-level refs, event handlers or methods that coordinate multiple children. Do not introduce an app class only to register unrelated components.
+Use a normal custom component for reusable or page-local behavior owned by one root element. Use [`createApp`](https://js-toolkit.studiometa.dev/api/helpers/createApp.html) only when the page itself needs root-level refs, event handlers or methods that coordinate multiple children. Do not introduce an app class only to register unrelated components.
 
 ```js
 import { Base, createApp } from '@studiometa/js-toolkit';
@@ -134,7 +154,7 @@ class App extends Base {
   };
 
   onEnterBtnClick() {
-    this.$children.Transition[0].enter();
+    this.$query('Transition')[0]?.enter();
   }
 }
 

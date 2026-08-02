@@ -12,6 +12,8 @@ The project publishes behavior, templates and integrations through separate pack
 
 The JavaScript packages are ESM-only and use [`@studiometa/js-toolkit`](https://js-toolkit.studiometa.dev) as their component runtime. `@studiometa/ui-mapbox` also expects `mapbox-gl`; its geocoder integration has an optional peer dependency.
 
+The NPM and Composer distributions use the same template sources from `packages/ui`. NPM exposes those source files to JavaScript build tools, while the Composer extension registers them with Twig through namespace-based lookup. Install the distribution used by your rendering pipeline; projects combining JavaScript behavior with Twig normally install both.
+
 ## JavaScript surface
 
 A JavaScript surface is a class, decorator, helper, constant or type exported by an NPM package. Import several symbols from the package root:
@@ -40,11 +42,13 @@ Twig templates can render structural or Tailwind utility classes and can wire th
 
 ## Liquid surface
 
-A Liquid surface documents markup intended for a Liquid environment, primarily Shopify integrations. The package does not provide a Liquid component runtime comparable to its Twig extension. Liquid examples show how to render markup and data attributes consumed by the corresponding JavaScript behavior.
+A Liquid surface documents markup intended for a Liquid environment, primarily Shopify integrations. The package does not provide a Liquid component runtime or installable Liquid template set comparable to its Twig extension. Liquid examples live in this documentation and show application authors how to render markup and data attributes consumed by the corresponding NPM JavaScript behavior.
 
 ## Styling ownership
 
 The JavaScript behavior is generally headless: it manages state, events, accessibility attributes and DOM behavior without importing a visual theme. Twig templates range from structural markup to Tailwind-styled variants. They provide useful defaults, not a complete product theme.
+
+The packages do not ship compiled CSS or a Tailwind preset. Template sources contain utility class strings; your application must include the relevant classes in its CSS build. [`@studiometa/tailwind-config`](https://tailwind-config.studiometa.dev) is a separate optional project configuration.
 
 Treat styling as an explicit application concern:
 

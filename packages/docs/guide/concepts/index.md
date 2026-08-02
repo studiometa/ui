@@ -56,7 +56,7 @@ The Data family adds scoped reactivity to plain HTML:
 - [`DataEffect`](/reference/items/DataEffect/) runs an effect when a value changes.
 - [`DataScope`](/reference/items/DataScope/) defines the boundary shared by those components.
 
-Use these components for local declarative state. Use an application component when behavior needs methods, shared refs or coordination across unrelated parts of the page.
+Use these components for local declarative state. Write a normal custom component for reusable behavior owned by one root element; use an application component only for page-level refs or coordination across otherwise unrelated features.
 
 ## Next steps
 
