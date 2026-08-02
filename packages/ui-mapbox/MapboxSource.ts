@@ -22,7 +22,7 @@ export interface MapboxSourceProps extends AbstractMapboxMapChildProps {
 
 /**
  * Add a source to the map.
- * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapboxMapChild<
   T & MapboxSourceProps

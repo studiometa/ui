@@ -24,7 +24,7 @@ export interface MapboxImagesProps extends AbstractMapboxMapChildProps {
 
 /**
  * Load and register a list of images against the map sprite.
- * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class MapboxImages<T extends BaseProps = BaseProps> extends AbstractMapboxMapChild<
   T & MapboxImagesProps

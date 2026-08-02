@@ -62,11 +62,11 @@ Most Vue components have a same-named js-toolkit equivalent, which you author as
 | `MapboxImages`              | `MapboxImages`            | Ported.                                                                                                                                              |
 | `MapboxCluster`             | `MapboxCluster`           | Re-architected — the source is derived from child `MapboxClusterItem`s, not a `data` prop. See [below](#mapboxcluster-data).                         |
 | —                           | `MapboxClusterItem`       | **New** — a rendered cluster entry (list item + map feature). See [below](#mapboxcluster-data).                                                      |
-| `StoreLocator`              | `StoreLocator`            | Re-implemented as a thin orchestrator over `MapboxMap` + `MapboxCluster` + `MapboxClusterItem`s. See its [documentation](/components/StoreLocator/). |
+| `StoreLocator`              | `StoreLocator`            | Re-implemented as a thin orchestrator over `MapboxMap` + `MapboxCluster` + `MapboxClusterItem`s. See its [documentation](/reference/items/StoreLocator/). |
 | `VueScroller`               | —                         | No equivalent needed — the store list is a plain scrollable element, styled with CSS.                                                                |
 
 ::: tip StoreLocator is now available
-`StoreLocator` has been re-implemented as a thin **orchestrator** over a `MapboxMap` + `MapboxCluster` + `MapboxClusterItem`s (plus an optional `MapboxGeocoder`). The single-purpose `StoreLocatorItem` class of the Vue library is gone: each store is a `MapboxClusterItem` that is at once the sidebar list entry and the map feature. The `VueScroller` helper has no equivalent — the list is a plain scrollable element you style with CSS. See the [`StoreLocator` documentation](/components/StoreLocator/).
+`StoreLocator` has been re-implemented as a thin **orchestrator** over a `MapboxMap` + `MapboxCluster` + `MapboxClusterItem`s (plus an optional `MapboxGeocoder`). The single-purpose `StoreLocatorItem` class of the Vue library is gone: each store is a `MapboxClusterItem` that is at once the sidebar list entry and the map feature. The `VueScroller` helper has no equivalent — the list is a plain scrollable element you style with CSS. See the [`StoreLocator` documentation](/reference/items/StoreLocator/).
 :::
 
 ## API translation
@@ -98,7 +98,7 @@ Vue props become js-toolkit `data-option-*` attributes on the corresponding elem
 </div>
 ```
 
-The js-toolkit `MapboxMap` exposes a focused set of options (`access-token`, `zoom`, `center`) and forwards them to the Mapbox `Map` constructor, so any other serializable map option can be added as a `data-option-*` attribute. See the [full options reference](/components/MapboxMap/js-api).
+The js-toolkit `MapboxMap` exposes a focused set of options (`access-token`, `zoom`, `center`) and forwards them to the Mapbox `Map` constructor, so any other serializable map option can be added as a `data-option-*` attribute. See the [full options reference](/reference/items/MapboxMap/js-api).
 
 A key structural difference: the map needs an explicit **`container` ref** child (`<div data-ref="container">`), and child components that only act as declarative definitions (markers, popups, controls, sources, layers, images, clusters) are wrapped in a `hidden` element so they do not take part in the document flow.
 
@@ -115,7 +115,7 @@ The Vue library re-emits Mapbox map events prefixed with `mb-` (e.g. `@mb-load`,
 | `MapboxCluster` cluster click | `cluster-click`          | `onMapboxClusterClusterClick` |
 | `MapboxCluster` feature click | `item-click`             | `onMapboxClusterItemClick`    |
 
-The `MapboxMap` component re-emits the full list of Mapbox map events; `MapboxCluster` emits `cluster-click`, `item-click` (an unclustered point, resolved back to the registered `MapboxClusterItem` behind it) and `update` (the item set changed); `MapboxGeocoder` emits `result`; `MapboxImage` and `MapboxImages` emit `ready`. See each component's events in the [JS API](/components/MapboxMap/js-api).
+The `MapboxMap` component re-emits the full list of Mapbox map events; `MapboxCluster` emits `cluster-click`, `item-click` (an unclustered point, resolved back to the registered `MapboxClusterItem` behind it) and `update` (the item set changed); `MapboxGeocoder` emits `result`; `MapboxImage` and `MapboxImages` emit `ready`. See each component's events in the [JS API](/reference/items/MapboxMap/js-api).
 
 ```js
 import { Base, createApp } from '@studiometa/js-toolkit';
@@ -183,7 +183,7 @@ In the Vue library, the `MapboxCluster` `data` prop accepted a URL string or an 
 </div>
 ```
 
-To load points from a server, render the `MapboxClusterItem` list from your backend (or swap it with a [`Fetch`](/components/Fetch/)): mounting/terminating the items drives the map data, no `data` URL needed. For one-off imperative control you can still push a `FeatureCollection` straight to the source with the cluster's `setData(data)` method, but the registry remains the source of truth and the next item change overwrites it. See the [`MapboxCluster` reference](/components/MapboxMap/js-api#mapboxcluster) and the [`StoreLocator`](/components/StoreLocator/) built on top of it.
+To load points from a server, render the `MapboxClusterItem` list from your backend (or swap it with a [`Fetch`](/reference/items/Fetch/)): mounting/terminating the items drives the map data, no `data` URL needed. For one-off imperative control you can still push a `FeatureCollection` straight to the source with the cluster's `setData(data)` method, but the registry remains the source of truth and the next item change overwrites it. See the [`MapboxCluster` reference](/reference/items/MapboxMap/js-api#mapboxcluster) and the [`StoreLocator`](/reference/items/StoreLocator/) built on top of it.
 
 ## Reactivity caveat
 
@@ -205,7 +205,7 @@ mapboxMap.map.setZoom(12);
 mapboxMap.map.getSource('points').setData(newGeoJson);
 ```
 
-Each component exposes its Mapbox object (`map`, `marker`, `popup`, `control`, …). See the [JS API](/components/MapboxMap/js-api#reactivity-and-updates) for the full list.
+Each component exposes its Mapbox object (`map`, `marker`, `popup`, `control`, …). See the [JS API](/reference/items/MapboxMap/js-api#reactivity-and-updates) for the full list.
 
 Two things the new lifecycle now handles for you, which the Vue library did not:
 

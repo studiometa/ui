@@ -2,7 +2,7 @@
   "name": "studiometa/ui",
   "type": "composer-plugin",
   "version": "1.9.0",
-  "description": "A set of opiniated, unstyled and accessible components.",
+  "description": "Accessible and composable JavaScript behaviors and Twig templates.",
   "license": "MIT",
   "require": {
     "composer-plugin-api": "^2.0",

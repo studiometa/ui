@@ -9,7 +9,7 @@
 
 ### Setup
 
-Install the JavaScript and Vue parts with NPM:
+Install the JavaScript package with NPM:
 
 ```bash
 npm install @studiometa/ui
@@ -154,20 +154,6 @@ Configure the Twig extension from the `studiometa/ui` package in your project:
         - { name: twig.extension }
   ```
 
-The Twig extension will install the [`studiometa/twig-toolkit` extension](https://github.com/studiometa/twig-toolkit) and add the `@ui` and `@svg` namespaces to the loader.
+The Twig extension installs the [`studiometa/twig-toolkit` extension](https://github.com/studiometa/twig-toolkit) and registers the `@ui`, `@ui-pkg`, `@svg` and `@svg-pkg` namespaces. The project-aware namespaces resolve your templates or SVGs before falling back to the package; the `-pkg` namespaces resolve package files directly.
 
-The `@ui` namespace will try to resolve files first from your project's templates and then from the package templates. The configuration is the same for the `@svg` namespace. This will help you override some templates without having to rewrite them all.
-
-For example, the `Modal.twig` template uses the `Button.twig` template. You do not have to override both templates to use a custom button for the modal, you can simply add a template `atoms/Button/Button.twig` in your project and it will be picked up by the Twig filesystem loader.
-
-::: warning
-If you try to extend an existing component to override it, do not use the `@ui` namespace as it will trigger an infinite inclusion loop. Instead, use the `@ui-pkg` namespace which references only the templates from the package.
-:::
-
-## In a Vue project
-
-Install the package with NPM:
-
-```bash
-npm install @studiometa/ui
-```
+See [Templates and customization](/guide/concepts/templates-and-customization) for namespace lookup, project overrides and safe template extension.

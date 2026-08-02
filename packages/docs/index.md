@@ -3,20 +3,38 @@ layout: home
 sidebar: false
 hero:
   name: '@studiometa/ui'
-  text: A library of unstyled and accessible components
-  tagline: A feature-rich library of primitives and components built with ♥️ by <a href="https://www.studiometa.fr" target="_blank" rel="noopener">Studio Meta</a>
+  text: Build accessible interfaces from meaningful markup
+  tagline: Composable TypeScript behavior and server-rendered templates, designed for progressive enhancement and application-owned styling.
   actions:
     - theme: brand
-      text: Get Started →
-      link: /guide/concepts/
+      text: Get started →
+      link: /guide/
     - theme: alt
-      text: View on GitHub
-      link: https://github.com/studiometa/ui
+      text: Browse the Reference
+      link: /reference/
 features:
-  - title: Primitives
-    details: High-level Javascript functions and classes to help you scaffold components
-  - title: JavaScript components
-    details: Fully functional components based on the @studiometa/js-toolkit framework
-  - title: Twig templates
-    details: Customisable and ready-to-use templates written in Twig with Tailwind CSS
+  - title: Declarative behavior
+    details: Register behavior once, then configure components from semantic HTML with visible options, refs and events.
+    link: /guide/concepts/declarative-runtime
+    linkText: Understand the runtime
+  - title: Ready-to-use components
+    details: Build navigation, overlays, media, data binding, content loading, maps and animation from supported interface contracts.
+    link: /reference/components/
+    linkText: Browse components
+  - title: Composition first
+    details: Combine focused components, primitives, decorators and helpers instead of rebuilding state and lifecycle behavior.
+    link: /guide/concepts/composition
+    linkText: Learn composition
+  - title: Server-rendered templates
+    details: Render Twig markup on the server, customize parameters and blocks, and override templates through project-aware namespaces.
+    link: /guide/concepts/templates-and-customization
+    linkText: Customize templates
+  - title: Typed public API
+    details: Discover every supported class, function, constant and type through a validated, searchable Reference catalog.
+    link: /reference/all-exports/
+    linkText: Explore all exports
+  - title: Live playground
+    details: Prototype Twig, JavaScript and CSS together, then share the complete example through a single URL.
+    link: /play/
+    linkText: Open the playground
 ---

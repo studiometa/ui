@@ -8,7 +8,7 @@ import { AbstractPrefetch } from './AbstractPrefetch.js';
  * An `AbstractPrefetch` using the `withMountWhenInView` decorator so it mounts
  * only when the link enters the viewport, prefetching its URL on mount.
  *
- * @link https://ui.studiometa.dev/components/Prefetch/
+ * @link https://ui.studiometa.dev/reference/items/Prefetch/
  */
 export class PrefetchWhenVisible extends withMountWhenInView<AbstractPrefetch>(AbstractPrefetch) {
   /**

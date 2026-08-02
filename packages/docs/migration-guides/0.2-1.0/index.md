@@ -17,7 +17,7 @@ The v1 of [@studiometa/ui](https://github.com/studiometa/ui) now depends on [@st
 
 ## Update the options of the `Action` component
 
-The [`Action` component](/components/Action/) has been reworked and its options has changed. The `method` and `selector` options have been removed.
+The [`Action` component](/reference/items/Action/) has been reworked and its options has changed. The `method` and `selector` options have been removed.
 
 ```diff
   <button
@@ -62,7 +62,7 @@ As we upgraded the [studiometa/twig-toolkit](https://github.com/studiometa/twig-
 
 ## The `TableOfContent` component has been removed
 
-The `TableOfContent` component has been deprecated for a while, it is removed in v1. The [AnchorNav component](/components/AnchorNav/) can be used as a replacement.
+The `TableOfContent` component has been deprecated for a while, it is removed in v1. The [AnchorNav component](/reference/items/AnchorNav/) can be used as a replacement.
 
 ## Some Twig parameters have been renamed
 

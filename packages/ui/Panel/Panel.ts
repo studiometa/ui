@@ -18,7 +18,7 @@ const DEFAULT_POSITION = 'left';
  * container's transform and the overlay's opacity on open and close.
  * Deprecated in favour of the `Dialog` component.
  *
- * @link https://ui.studiometa.dev/components/Panel/
+ * @link https://ui.studiometa.dev/reference/items/Panel/
  */
 export class Panel<T extends BaseProps = BaseProps> extends Modal<T & PanelProps> {
   /**

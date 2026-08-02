@@ -1,7 +1,7 @@
 {
   "name": "@studiometa/ui",
   "version": "1.9.0",
-  "description": "A set of opiniated, unstyled and accessible components",
+  "description": "Accessible and composable JavaScript behaviors and templates",
   "publishConfig": {
     "access": "public"
   },

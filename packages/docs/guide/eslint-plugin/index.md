@@ -78,7 +78,7 @@ class MyMenu extends Menu {}
 
 ### `ui/prefer-transition`
 
-Detects `Base` subclasses that manually implement both `open()` and `close()` methods. This pattern is already handled by the [`Transition`](/components/Transition/) component, which manages CSS class transitions declaratively.
+Detects `Base` subclasses that manually implement both `open()` and `close()` methods. This pattern is already handled by the [`Transition`](/reference/items/Transition/) component, which manages CSS class transitions declaratively.
 
 ```js
 // ❌ Incorrect
@@ -99,7 +99,7 @@ class Drawer extends Transition {}
 
 ### `ui/no-manual-fetch`
 
-Detects `Base` subclasses that combine a native `fetch()` call with DOM injection via `innerHTML` or `insertAdjacentHTML`. The [`Fetch`](/components/Fetch/) component handles this declaratively.
+Detects `Base` subclasses that combine a native `fetch()` call with DOM injection via `innerHTML` or `insertAdjacentHTML`. The [`Fetch`](/reference/items/Fetch/) component handles this declaratively.
 
 ```js
 // ❌ Incorrect
@@ -118,7 +118,7 @@ class ProductList extends Fetch {}
 
 ### `ui/prefer-data-model`
 
-Detects `Base` subclasses with an `onInput*` or `onChange*` method that writes to `this.$refs.*` DOM properties (`textContent`, `innerHTML`, or `value`). The [`DataModel`](/components/DataModel/) and [`DataEffect`](/components/DataEffect/) components handle reactive bindings declaratively without manual wiring.
+Detects `Base` subclasses with an `onInput*` or `onChange*` method that writes to `this.$refs.*` DOM properties (`textContent`, `innerHTML`, or `value`). The [`DataModel`](/reference/items/DataModel/) and [`DataEffect`](/reference/items/DataEffect/) components handle reactive bindings declaratively without manual wiring.
 
 ```js
 // ❌ Incorrect
@@ -135,7 +135,7 @@ import { DataModel, DataEffect } from '@studiometa/ui';
 
 ### `ui/prefer-action`
 
-Detects `Base` subclasses whose only logic is a single simple event handler (`onClick`, `onMouseenter`, `onMouseleave`, etc.) with no other methods. The [`Action`](/components/Action/) component handles this use case declaratively via data attributes, without needing a JavaScript class.
+Detects `Base` subclasses whose only logic is a single simple event handler (`onClick`, `onMouseenter`, `onMouseleave`, etc.) with no other methods. The [`Action`](/reference/items/Action/) component handles this use case declaratively via data attributes, without needing a JavaScript class.
 
 ```js
 // ❌ Incorrect

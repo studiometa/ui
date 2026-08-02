@@ -59,7 +59,7 @@ registerComponent(MapboxMap);
 
 Do not forget to include the `mapbox-gl` stylesheet so the map renders correctly.
 
-Heads up to [ui.studiometa.dev](https://ui.studiometa.dev/-/components/MapboxMap/) for the full documentation.
+Heads up to [ui.studiometa.dev](https://ui.studiometa.dev/reference/items/MapboxMap/) for the full documentation.
 
 ## Contributing
 

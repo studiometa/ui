@@ -94,7 +94,7 @@ async function __flush() {
  *
  * @param   update The DOM mutation to run inside the view transition.
  * @returns A promise resolved once the transition has finished.
- * @link https://ui.studiometa.dev/components/ViewTransition/
+ * @link https://ui.studiometa.dev/reference/items/ViewTransition/
  */
 export function viewTransition(update: ViewTransitionUpdate): Promise<void> {
   return new Promise((resolve, reject) => {

@@ -46,7 +46,7 @@ interface PartialsModule {
  *   parsed `Document` fragment, and `partials.apply` owns DOM swapping, View Transitions
  *   and focus/selection/form/scroll preservation.
  *
- * @link https://ui.studiometa.dev/components/Fetch/
+ * @link https://ui.studiometa.dev/reference/items/Fetch/
  */
 export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
   T & { $options: { partials: string } }

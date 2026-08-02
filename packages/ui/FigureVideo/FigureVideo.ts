@@ -21,7 +21,7 @@ export interface FigureVideoProps extends BaseProps {
  * `lazy` is set, runs the enter transition, emits `load`, and then terminates
  * itself.
  *
- * @link https://ui.studiometa.dev/components/FigureVideo/
+ * @link https://ui.studiometa.dev/reference/items/FigureVideo/
  */
 export class FigureVideo<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(
   Transition,

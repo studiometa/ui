@@ -34,7 +34,7 @@ export interface HoverableProps extends BaseProps {
  * `reversed` option inverts the movement and `contained` stops it once the
  * pointer leaves the element.
  *
- * @link https://ui.studiometa.dev/components/Hoverable/
+ * @link https://ui.studiometa.dev/reference/items/Hoverable/
  */
 export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePointer(Base)<
   T & HoverableProps

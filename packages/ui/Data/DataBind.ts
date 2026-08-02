@@ -43,7 +43,7 @@ type VirtualBinding =
  * or text from the same value. It also exposes `set`, `toggle`, `increment` and
  * `cycle` helpers to publish changes back to the group.
  *
- * @link https://ui.studiometa.dev/components/DataBind/
+ * @link https://ui.studiometa.dev/reference/items/DataBind/
  */
 export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, DataScope>(
   Base,

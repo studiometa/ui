@@ -29,7 +29,7 @@ export type TransitionConstructor<T extends Transition = Transition> = {
  * and emits the corresponding transition lifecycle events
  * (`transition-enter`, `transition-leave` and their start/end variants).
  *
- * @link https://ui.studiometa.dev/components/Transition/
+ * @link https://ui.studiometa.dev/reference/items/Transition/
  */
 export class Transition<T extends BaseProps = BaseProps> extends withTransition<Base>(Base)<T> {
   /**

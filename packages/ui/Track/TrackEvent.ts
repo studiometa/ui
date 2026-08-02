@@ -21,7 +21,7 @@ export interface ParsedEvent {
 /**
  * Parse an event definition string into its components.
  *
- * @link https://ui.studiometa.dev/components/Track/js-api.html#event-modifiers
+ * @link https://ui.studiometa.dev/reference/items/Track/js-api.html#event-modifiers
  *
  * @param eventDefinition - Event string like "click.prevent.stop" or "input.debounce300"
  * @returns Parsed event with modifiers and timing delays
@@ -60,7 +60,7 @@ export function parseEventDefinition(eventDefinition: string): ParsedEvent {
 /**
  * Resolve `$detail.*` placeholders in tracking data with values from event.detail.
  *
- * @link https://ui.studiometa.dev/components/Track/js-api.html#custom-events
+ * @link https://ui.studiometa.dev/reference/items/Track/js-api.html#custom-events
  *
  * @param data - The tracking data object
  * @param detail - The event.detail object from a CustomEvent
@@ -124,7 +124,7 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
 /**
  * TrackEvent handles DOM event binding for the Track component.
  *
- * @link https://ui.studiometa.dev/components/Track/js-api.html#events
+ * @link https://ui.studiometa.dev/reference/items/Track/js-api.html#events
  */
 export class TrackEvent {
   track: AbstractTrack;

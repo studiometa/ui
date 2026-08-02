@@ -19,7 +19,7 @@ export interface ScrollAnimationProps extends BaseProps {
  * `ScrollAnimationTarget` children instead.
  *
  * @deprecated Use `ScrollAnimationTimeline` with `ScrollAnimationTarget` children instead.
- * @link https://ui.studiometa.dev/components/ScrollAnimation/
+ * @link https://ui.studiometa.dev/reference/items/ScrollAnimation/
  */
 export class ScrollAnimation<
   T extends BaseProps = BaseProps,

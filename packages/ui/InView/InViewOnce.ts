@@ -9,7 +9,7 @@ import { InView } from './InView.js';
  * `withMountWhenInView` decorator disconnects its observer on `terminated`, so
  * the event never fires again and no `out-of-view` event is ever emitted.
  *
- * @link https://ui.studiometa.dev/components/InViewOnce/
+ * @link https://ui.studiometa.dev/reference/items/InViewOnce/
  */
 export class InViewOnce extends InView {
   /**

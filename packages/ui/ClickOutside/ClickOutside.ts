@@ -13,7 +13,7 @@ export interface ClickOutsideProps extends BaseProps {}
  * this lets HTML react to outside clicks — closing a dropdown or popover for
  * example — via `data-on:click-outside="..."` without writing any JavaScript.
  *
- * @link https://ui.studiometa.dev/components/ClickOutside/
+ * @link https://ui.studiometa.dev/reference/items/ClickOutside/
  */
 export class ClickOutside<T extends BaseProps = BaseProps> extends Base<ClickOutsideProps & T> {
   /**

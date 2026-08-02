@@ -1,10 +1,10 @@
 mcp:
     app: '@studiometa/ui'
     version: '1.0.0'
-    description: 'Discover @studiometa/ui components and generate playgrounds.'
+    description: 'Discover the @studiometa/ui Reference and generate playgrounds.'
     instructions: |
-        This server exposes the @studiometa/ui component library so you can build playgrounds.
-        Typical flow: call `list_components` to discover components, then `get_component_api` and `get_component_example` to learn how to use one, then `build_playground_url` to turn Twig/HTML, JavaScript and CSS into a shareable, live playground link.
+        This server exposes the @studiometa/ui architecture and every documented component, primitive, decorator and helper so you can understand the public API and build playgrounds.
+        Call `list_concepts` and `get_concept` for package, runtime, composition and customization guidance. Call `list_reference_items`, then `get_reference_item` and `get_reference_item_examples`, for a specific public item. Use `build_playground_url` to turn Twig/HTML, JavaScript and CSS into a shareable, live playground link. The older component-named tools remain available as aliases.
     client_transports:
         http: true
     http:

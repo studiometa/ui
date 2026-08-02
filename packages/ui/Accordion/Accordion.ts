@@ -11,7 +11,7 @@ import { AccordionItem } from './AccordionItem.js';
  * on a container with nested `AccordionItem` elements yields a fully working,
  * optionally auto-closing accordion without any custom item class.
  *
- * @link https://ui.studiometa.dev/components/Accordion/
+ * @link https://ui.studiometa.dev/reference/items/Accordion/
  */
 export class Accordion<T extends BaseProps = BaseProps> extends AccordionCore<T & AccordionProps> {
   static config: BaseConfig = {

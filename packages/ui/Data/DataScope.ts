@@ -65,7 +65,7 @@ function isCurrentValueSource(instance: DataScopeMember) {
 
 /**
  * Define a local boundary and a default group for descendant Data components.
- * @link https://ui.studiometa.dev/components/DataScope/
+ * @link https://ui.studiometa.dev/reference/items/DataScope/
  */
 export class DataScope<T extends BaseProps = BaseProps> extends Base<DataScopeProps & T> {
   static config: BaseConfig = {

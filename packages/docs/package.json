@@ -7,7 +7,8 @@
     "dev": "concurrently 'npm run dev:playground' 'npm run dev:vitepress' --names 'play,docs'",
     "dev:playground": "npm run watch --workspace=@studiometa/ui-playground",
     "dev:vitepress": "vitepress dev .",
-    "prebuild": "npm run build --workspace=@studiometa/ui-playground",
+    "validate:reference": "node --experimental-strip-types scripts/validate-reference.ts",
+    "prebuild": "npm run validate:reference && npm run build --workspace=@studiometa/ui-playground",
     "build": "vitepress build .",
     "postbuild": "ln -sf ../../../api/public .vitepress/dist/api"
   },
@@ -22,6 +23,7 @@
     "autoprefixer": "10.4.27",
     "concurrently": "9.2.1",
     "tailwindcss": "3.4.19",
+    "typescript": "5.9.3",
     "unplugin-icons": "22.5.0",
     "unplugin-vue-components": "30.0.0",
     "vitepress": "2.0.0-alpha.17",

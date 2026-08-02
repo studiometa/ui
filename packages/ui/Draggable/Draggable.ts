@@ -35,7 +35,7 @@ export interface DraggableProps extends BaseProps {
  * `drag-inertia`, `drag-stop`, `drag-fit` and `drag-render` events across the
  * drag lifecycle.
  *
- * @link https://ui.studiometa.dev/components/Draggable/
+ * @link https://ui.studiometa.dev/reference/items/Draggable/
  */
 export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   // @ts-expect-error draggable is instance of Draggable.

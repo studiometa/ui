@@ -22,7 +22,7 @@ export interface LargeTextProps extends BaseProps {
  * option, with an optional `skew` effect. Built on the `withMountWhenInView`
  * decorator so it only runs while visible.
  *
- * @link https://ui.studiometa.dev/components/LargeText/
+ * @link https://ui.studiometa.dev/reference/items/LargeText/
  */
 export class LargeText<T extends BaseProps = BaseProps>
   extends withMountWhenInView(Base, { rootMargin: '50%' })<T & LargeTextProps>

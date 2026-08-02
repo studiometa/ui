@@ -47,7 +47,7 @@ export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
  * demand with a dynamic `import()` when the component mounts, so the rest of the
  * package keeps working without it installed.
  *
- * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMapboxMapChild<
   T & MapboxGeocoderProps

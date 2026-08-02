@@ -11,7 +11,7 @@ export interface FigureProps extends AbstractFigureProps {}
  * `data-src` source when the element scrolls into view, then terminates itself
  * once the image has loaded, as it has no further work to do after the reveal.
  *
- * @link https://ui.studiometa.dev/components/Figure/
+ * @link https://ui.studiometa.dev/reference/items/Figure/
  */
 export class Figure<T extends BaseProps = BaseProps> extends AbstractFigure<T> {
   /**

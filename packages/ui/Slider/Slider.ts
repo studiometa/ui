@@ -55,7 +55,7 @@ export interface SliderProps extends BaseProps {
  * `sensitivity` and `dropSensitivity` options, and arrow-key navigation is
  * supported when the wrapper is focused.
  *
- * @link https://ui.studiometa.dev/components/Slider/
+ * @link https://ui.studiometa.dev/reference/items/Slider/
  * @todo a11y
  */
 export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProps> {

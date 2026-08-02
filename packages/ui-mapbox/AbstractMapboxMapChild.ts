@@ -52,7 +52,7 @@ export const MAPBOX_MAP_CONNECTED = 'mapbox-map:connected';
  *    the same containment as the first injection and is guarded on the resource
  *    already being present, so it never double-injects.
  *
- * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Base<
   T & AbstractMapboxMapChildProps

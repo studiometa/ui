@@ -20,7 +20,7 @@ export interface TimerProps extends BaseProps {
  * Events bubble, so an ancestor `Action` can catch and route them; use the
  * `.stop` event modifier to contain them in nested setups.
  *
- * @link https://ui.studiometa.dev/components/Timer/
+ * @link https://ui.studiometa.dev/reference/items/Timer/
  */
 export class Timer<T extends BaseProps = BaseProps> extends Base<TimerProps & T> {
   /**

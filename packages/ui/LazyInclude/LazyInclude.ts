@@ -20,7 +20,7 @@ export interface LazyIncludeProps extends BaseProps {
  * `content`, `error` and `always`, and can self-terminate once loaded via the
  * `terminateOnLoad` option.
  *
- * @link https://ui.studiometa.dev/components/LazyInclude/
+ * @link https://ui.studiometa.dev/reference/items/LazyInclude/
  */
 export class LazyInclude<T extends BaseProps = BaseProps>
   extends Base<T & LazyIncludeProps>

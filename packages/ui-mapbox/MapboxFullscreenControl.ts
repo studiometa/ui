@@ -10,7 +10,7 @@ export interface MapboxFullscreenControlProps extends AbstractMapboxControlProps
 
 /**
  * Add a fullscreen control to the map.
- * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class MapboxFullscreenControl extends withExtraConfig(AbstractMapboxControl, {
   name: 'MapboxFullscreenControl',

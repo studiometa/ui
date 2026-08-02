@@ -1,10 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
-import { defineConfig } from 'vitepress';
 import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
 import { withLeadingSlash } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
+import { defineConfig } from 'vitepress';
 import pkg from '../package.json' with { type: 'json' };
+import { conceptCatalog } from './concepts/catalog.js';
+import { componentTaskLabels, referenceCatalog } from './reference/catalog.js';
+import type { ReferenceKind } from './reference/types.js';
 
 export default defineConfig({
   vue: {
@@ -73,10 +76,10 @@ export default defineConfig({
     socialLinks: [{ icon: 'github', link: 'https://github.com/studiometa/ui' }],
 
     nav: [
-      { text: 'Guide', link: '/guide/concepts/' },
+      { text: 'Guide', link: '/guide/' },
       {
-        text: 'Components',
-        link: '/components/',
+        text: 'Reference',
+        link: '/reference/',
       },
       {
         text: 'Playground',
@@ -92,7 +95,7 @@ export default defineConfig({
       },
     ],
     sidebar: {
-      '/components/': getComponentsSidebar(),
+      '/reference/': getReferenceSidebar(),
       '/': getGuideSidebar(),
     },
   },
@@ -103,7 +106,15 @@ function getGuideSidebar() {
     {
       text: 'Guide',
       items: [
-        { text: 'Concepts', link: '/guide/concepts/' },
+        { text: 'Overview', link: '/guide/' },
+        {
+          text: 'Concepts',
+          link: '/guide/concepts/',
+          items: conceptCatalog.map((concept) => ({
+            text: concept.slug === 'index' ? 'Overview' : concept.title,
+            link: concept.path,
+          })),
+        },
         { text: 'Installation', link: '/guide/installation/' },
         { text: 'Usage', link: '/guide/usage/' },
         { text: 'Contributing', link: '/guide/contributing/' },
@@ -120,14 +131,57 @@ function getGuideSidebar() {
   ];
 }
 
-function getComponentsSidebar() {
+function getReferenceSidebar() {
+  function linksForKind(kind: ReferenceKind) {
+    return referenceCatalog
+      .filter((entry) => entry.kind === kind)
+      .toSorted((a, b) => a.title.localeCompare(b.title))
+      .map((entry) => ({ text: entry.title, link: entry.path }));
+  }
+
+  const componentGroups = Object.entries(componentTaskLabels)
+    .map(([task, text]) => ({
+      text,
+      collapsed: true,
+      items: referenceCatalog
+        .filter((entry) => entry.kind === 'component' && entry.primaryTask === task)
+        .toSorted((a, b) => a.title.localeCompare(b.title))
+        .map((entry) => ({ text: entry.title, link: entry.path })),
+    }))
+    .filter((group) => group.items.length);
+
   return [
     {
+      text: 'Reference',
+      link: '/reference/',
+      items: [
+        { text: 'Overview', link: '/reference/' },
+        { text: 'All exports', link: '/reference/all-exports/' },
+        { text: 'Types', link: '/reference/types/' },
+      ],
+    },
+    {
       text: 'Components',
-      items: generateSidebarLinksFromPath('components/*/index.md', {
-        extractTitle: true,
-        collapsed: true,
-      }),
+      link: '/reference/components/',
+      items: componentGroups,
+    },
+    {
+      text: 'Primitives',
+      link: '/reference/primitives/',
+      collapsed: true,
+      items: linksForKind('primitive'),
+    },
+    {
+      text: 'Decorators',
+      link: '/reference/decorators/',
+      collapsed: true,
+      items: linksForKind('decorator'),
+    },
+    {
+      text: 'Helpers and utilities',
+      link: '/reference/helpers/',
+      collapsed: true,
+      items: linksForKind('helper'),
     },
   ];
 }

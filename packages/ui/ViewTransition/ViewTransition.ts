@@ -20,7 +20,7 @@ export interface ViewTransitionProps extends BaseProps {
  * anywhere a `Transition` is. The animation itself is authored in CSS via the
  * `::view-transition-old()` / `::view-transition-new()` pseudo-elements.
  *
- * @link https://ui.studiometa.dev/components/ViewTransition/
+ * @link https://ui.studiometa.dev/reference/items/ViewTransition/
  */
 export class ViewTransition<T extends BaseProps = BaseProps> extends Base<T & ViewTransitionProps> {
   /**

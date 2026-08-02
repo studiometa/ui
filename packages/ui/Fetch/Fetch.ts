@@ -35,7 +35,7 @@ export type FetchConstructor<T extends Fetch = Fetch> = {
  * `prepend`, `append` or `morph`). It optionally pushes browser history, wraps the update in a
  * View Transition and emits a full set of lifecycle events.
  *
- * @link https://ui.studiometa.dev/components/Fetch/
+ * @link https://ui.studiometa.dev/reference/items/Fetch/
  */
 export class Fetch<T extends BaseProps = BaseProps>
   extends Base<T & FetchProps>

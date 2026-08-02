@@ -5,7 +5,7 @@ export default {
   overrides: [
     ...prettier.overrides,
     {
-      files: ['packages/docs/components/**/*.twig', 'packages/docs/components/**/*.js'],
+      files: ['packages/docs/reference/items/**/*.twig', 'packages/docs/reference/items/**/*.js'],
       options: {
         printWidth: 80,
         twigPrintWidth: 80,

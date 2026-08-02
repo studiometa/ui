@@ -24,7 +24,7 @@ export interface MenuProps extends BaseProps {
  * and it wires up ARIA attributes, keyboard handling (Enter/Escape),
  * click-outside dismissal and mutual closing of sibling submenus.
  *
- * @link https://ui.studiometa.dev/components/Menu/
+ * @link https://ui.studiometa.dev/reference/items/Menu/
  */
 export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
   /**

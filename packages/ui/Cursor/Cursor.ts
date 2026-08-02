@@ -24,7 +24,7 @@ export interface CursorProps extends BaseProps {
  * `scale`, `growTo` and `shrinkTo` factors with per-transition damping options
  * and applying the result as a `transform` on the root element.
  *
- * @link https://ui.studiometa.dev/components/Cursor/
+ * @link https://ui.studiometa.dev/reference/items/Cursor/
  */
 export class Cursor<T extends BaseProps = BaseProps> extends Base<CursorProps & T> {
   static config: BaseConfig = {

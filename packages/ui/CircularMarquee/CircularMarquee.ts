@@ -16,7 +16,7 @@ export interface CircularMarqueeProps extends BaseProps {
  * by the `sensitivity` option (`data-option-sensitivity`, default `0.1`), then
  * applied through a CSS transform.
  *
- * @link https://ui.studiometa.dev/components/CircularMarquee/
+ * @link https://ui.studiometa.dev/reference/items/CircularMarquee/
  */
 export class CircularMarquee extends Base<CircularMarqueeProps> {
   /**
