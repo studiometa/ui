@@ -19,15 +19,15 @@ A Twig template sets these attributes for you, so a component often works with a
 
 ## Words this documentation uses
 
-The library reuses a small, fixed vocabulary. Each term means one thing:
+The library uses a small, fixed vocabulary:
 
-- **Component** — a reusable unit, ready to use as is (for example `Modal` or `Slider`).
-- **Primitive** — a base class meant to be extended to build your own components, not used directly (for example [`Transition`](/components/Transition/) and [`Sentinel`](/components/Sentinel/)).
-- **Decorator** — a higher-order function from `@studiometa/js-toolkit` that adds a behavior to a class (for example `withTransition`).
+- **Component** — a ready-to-use interface or behavior solution, such as `Dialog` or `Slider`. It can be visual or headless.
+- **Primitive** — a low-level, usually headless building block intended primarily for composition, such as [`Transition`](/reference/items/Transition/) or [`Sentinel`](/reference/items/Sentinel/). Depending on its contract, a primitive can be mounted directly, extended, or exposed through a decorator.
+- **Decorator** — a higher-order function that adds reusable behavior to a js-toolkit component class, such as [`withTransition`](/reference/items/withTransition/).
+- **Helper** — a supported plain function that operates independently of a component class, such as [`viewTransition`](/reference/items/view-transition-helper/).
+- **Surface** — the format through which an item ships: JavaScript, Twig or Liquid. Surfaces are capabilities rather than component categories.
 - **Parameter** — a value passed to a **Twig template**. Twig API pages list parameters.
 - **Option** — a value passed to a **JavaScript component**, set in HTML with a `data-option-<name>` attribute. JS API pages list options.
-
-The words _atom_, _molecule_ and _organism_ appear in some component descriptions. They come from [atomic design](https://atomicdesign.bradfrost.com/) and describe only the rough size of a component, from the smallest building block to a full section. They are not a strict classification.
 
 ## Behavior without a JavaScript class
 
@@ -35,7 +35,7 @@ Some components let you wire behavior and reactivity straight in your HTML with 
 
 ### The `Action` component
 
-[`Action`](/components/Action/) runs a piece of behavior in response to an event — a click, a hover, an input — and can target other components or elements. The effect is declared in a `data-option-effect` or `data-on:<event>` attribute:
+[`Action`](/reference/items/Action/) runs a piece of behavior in response to an event — a click, a hover, an input — and can target other components or elements. The effect is declared in a `data-option-effect` or `data-on:<event>` attribute:
 
 ```html
 <button data-component="Action" data-option-effect="this.classList.toggle('is-active')">
@@ -47,11 +47,11 @@ Some components let you wire behavior and reactivity straight in your HTML with 
 
 Five components add reactivity to plain HTML, without writing a JavaScript class:
 
-- [`DataModel`](/components/DataModel/) reads values from form inputs.
-- [`DataBind`](/components/DataBind/) writes a value into the DOM.
-- [`DataComputed`](/components/DataComputed/) transforms a value.
-- [`DataEffect`](/components/DataEffect/) runs code when a value changes.
-- [`DataScope`](/components/DataScope/) groups the above inside one widget.
+- [`DataModel`](/reference/items/DataModel/) reads values from form inputs.
+- [`DataBind`](/reference/items/DataBind/) writes a value into the DOM.
+- [`DataComputed`](/reference/items/DataComputed/) transforms a value.
+- [`DataEffect`](/reference/items/DataEffect/) runs code when a value changes.
+- [`DataScope`](/reference/items/DataScope/) groups the above inside one widget.
 
 ## Template namespaces
 
@@ -65,7 +65,7 @@ The Twig extension registers three namespaces (see the [Installation guide](/gui
 
 - [Installation](/guide/installation/) — set up the package in a Twig or Vue project.
 - [Usage](/guide/usage/) — import a JavaScript component and include a Twig template.
-- [Components](/components/) — the full list, each with examples and an API reference.
+- [Reference](/reference/) — browse components, primitives, decorators, helpers and public types.
 
 ## Ecosystem
 

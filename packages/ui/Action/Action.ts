@@ -21,7 +21,7 @@ export interface ActionProps extends BaseProps {
  * mount and detached on destroy. This lets HTML trigger methods or property
  * changes on other components without writing any JavaScript.
  *
- * @link https://ui.studiometa.dev/components/Action/
+ * @link https://ui.studiometa.dev/reference/items/Action/
  */
 export class Action<T extends BaseProps = BaseProps> extends Base<ActionProps & T> {
   static config: BaseConfig = {

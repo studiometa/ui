@@ -6,12 +6,12 @@ The following components have been updated:
 
 | Component                           | Previous version                  | New version            | Changed                             |
 | ----------------------------------- | --------------------------------- | ---------------------- | ----------------------------------- |
-| [Button](/components/Button/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| [Cursor](/components/Cursor/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| [Figure](/components/Figure/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| [Accordion](/components/Accordion/) | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| [Modal](/components/Modal/)         | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| [Sticky](/components/Sticky/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Button](/reference/items/Button/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Cursor](/reference/items/Cursor/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Figure](/reference/items/Figure/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Accordion](/reference/items/Accordion/) | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Modal](/reference/items/Modal/)         | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Sticky](/reference/items/Sticky/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
 
 ## Install the Twig extension
 
@@ -26,11 +26,11 @@ composer require studiometa/ui
 
 Before this release, the Twig templates were not ready for inclusion in your project. This is now possible for the following components:
 
-- [Button](/components/Button/)
-- [Cursor](/components/Cursor/)
-- [Figure](/components/Figure/)
-- [Accordion](/components/Accordion/)
-- [Modal](/components/Modal/)
-- [Sticky](/components/Sticky/)
+- [Button](/reference/items/Button/)
+- [Cursor](/reference/items/Cursor/)
+- [Figure](/reference/items/Figure/)
+- [Accordion](/reference/items/Accordion/)
+- [Modal](/reference/items/Modal/)
+- [Sticky](/reference/items/Sticky/)
 
 These components have seen their version number increased from `0.0.0` to `0.1.0` to indicate this change.

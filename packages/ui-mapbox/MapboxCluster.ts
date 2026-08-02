@@ -77,7 +77,7 @@ export interface MapboxClusterProps extends AbstractMapboxMapChildProps {
  * on an unclustered point through the `item-click` event and lets the caller
  * decide what it means.
  *
- * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapboxMapChild<
   T & MapboxClusterProps

@@ -19,7 +19,7 @@ export interface AnchorNavProps extends BaseProps {
  * the target's element id are toggled active via their `enter()`/`leave()`
  * methods, keeping the navigation highlight in sync with the visible section.
  *
- * @link https://ui.studiometa.dev/components/AnchorNav/
+ * @link https://ui.studiometa.dev/reference/items/AnchorNav/
  */
 export class AnchorNav<T extends BaseProps = BaseProps> extends Base<T & AnchorNavProps> {
   /**

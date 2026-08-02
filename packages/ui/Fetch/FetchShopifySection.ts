@@ -27,7 +27,7 @@ export type FetchShopifySectionConstructor<
  * boilerplate required. When no `sections` are configured the component degrades to the base
  * {@link Fetch} behaviour (a plain text response and id-based swap of the fetched page).
  *
- * @link https://ui.studiometa.dev/components/FetchShopifySection/
+ * @link https://ui.studiometa.dev/reference/items/FetchShopifySection/
  */
 export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
   T & { $options: { sections: string } }

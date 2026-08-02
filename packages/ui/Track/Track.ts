@@ -17,7 +17,7 @@ export interface TrackProps extends AbstractTrackProps {}
  * consumer of `window.dataLayer` (GA4, Segment, …). Consent is expected to be
  * handled at the tag level by the tag manager or CMP.
  *
- * @link https://ui.studiometa.dev/components/Track/
+ * @link https://ui.studiometa.dev/reference/items/Track/
  *
  * @example
  * ```html

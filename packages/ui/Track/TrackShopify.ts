@@ -21,7 +21,7 @@ export interface TrackShopifyProps extends AbstractTrackProps {}
  * publishes the resolved payload through the `window.Shopify.analytics.publish`
  * API, using the payload's `event` key as the event name.
  *
- * @link https://ui.studiometa.dev/components/Track/
+ * @link https://ui.studiometa.dev/reference/items/Track/
  *
  * @example
  * ```html

@@ -16,7 +16,7 @@ export interface MapboxMarkerProps extends AbstractMapboxMapChildProps {
 
 /**
  * Add a marker to Mapbox map.
- * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapboxMapChild<
   T & MapboxMarkerProps

@@ -18,7 +18,7 @@ export interface AbstractMapboxControlProps extends AbstractMapboxMapChildProps 
  * and the add/remove lifecycle. Concrete controls only need to implement the
  * `createControl` method to build their specific `mapboxgl.*Control` instance.
  *
- * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class AbstractMapboxControl<T extends BaseProps = BaseProps> extends AbstractMapboxMapChild<
   T & AbstractMapboxControlProps

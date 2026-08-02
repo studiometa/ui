@@ -32,7 +32,7 @@ export interface FrameProps extends BaseProps {
  * drives `FrameLoader` children during the request and re-runs `$root.$update()` so newly
  * injected components are mounted.
  *
- * @link https://ui.studiometa.dev/components/Frame/
+ * @link https://ui.studiometa.dev/reference/items/Frame/
  */
 export class Frame<T extends BaseProps = BaseProps> extends Base<T & FrameProps> {
   /**

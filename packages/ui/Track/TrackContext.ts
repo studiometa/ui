@@ -22,7 +22,7 @@ export interface TrackContextProps extends BaseProps {
  * the context of every ancestor TrackContext (outermost first, innermost
  * wins).
  *
- * @link https://ui.studiometa.dev/components/Track/js-api.html#trackcontext
+ * @link https://ui.studiometa.dev/reference/items/Track/js-api.html#trackcontext
  *
  * @example
  * ```html

@@ -53,7 +53,7 @@ export interface TransitionInterface extends BaseInterface {
 
 /**
  * Extend a class to add transition capabilities.
- * @link https://ui.studiometa.dev/components/Transition/
+ * @link https://ui.studiometa.dev/reference/items/Transition/
  */
 export function withTransition<S extends Base>(
   BaseClass: typeof Base,

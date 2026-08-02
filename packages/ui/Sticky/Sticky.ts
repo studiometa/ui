@@ -25,7 +25,7 @@ export interface StickyProps extends BaseProps {
  * `hideWhenUp` and `hideWhenDown` options let it hide on scroll direction, and the `zIndex`
  * option sets the base stacking order.
  *
- * @link https://ui.studiometa.dev/components/Sticky/
+ * @link https://ui.studiometa.dev/reference/items/Sticky/
  */
 export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProps> {
   /**

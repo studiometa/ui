@@ -12,7 +12,7 @@ export interface MapboxGeolocateControlProps extends AbstractMapboxControlProps 
 
 /**
  * Add a geolocate control to the map.
- * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class MapboxGeolocateControl extends withExtraConfig(AbstractMapboxControl, {
   name: 'MapboxGeolocateControl',

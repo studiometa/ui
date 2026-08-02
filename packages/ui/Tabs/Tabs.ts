@@ -32,7 +32,7 @@ export interface TabsProps extends BaseProps {
  * open and closed states defined by the `styles` option while keeping ARIA
  * attributes in sync. Emits `enable` and `disable`.
  *
- * @link https://ui.studiometa.dev/components/Tabs/
+ * @link https://ui.studiometa.dev/reference/items/Tabs/
  */
 export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {
   /**

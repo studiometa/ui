@@ -46,7 +46,7 @@ export interface MapboxMapProps extends BaseProps {
 
 /**
  * Display a Mapbox GL map.
- * @see https://ui.studiometa.dev/-/components/MapboxMap/
+ * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxMapProps> {
   /**

@@ -7,7 +7,7 @@ import { AbstractPrefetch } from './AbstractPrefetch.js';
  * An `AbstractPrefetch` that prefetches the link's URL when the pointer enters
  * the anchor, via its `onMouseenter` handler.
  *
- * @link https://ui.studiometa.dev/components/Prefetch/
+ * @link https://ui.studiometa.dev/reference/items/Prefetch/
  */
 export class PrefetchWhenOver<T extends BaseProps = BaseProps> extends AbstractPrefetch<T> {
   /**

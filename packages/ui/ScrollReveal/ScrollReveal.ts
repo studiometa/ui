@@ -20,7 +20,7 @@ export interface ScrollRevealProps extends BaseProps {
  * which case it re-runs the transition on each entry while tracking scroll
  * direction to skip reveals when scrolling up.
  *
- * @link https://ui.studiometa.dev/components/ScrollReveal/
+ * @link https://ui.studiometa.dev/reference/items/ScrollReveal/
  */
 export class ScrollReveal<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(
   Transition,

@@ -31,7 +31,7 @@ const isBot = /bot|crawl|slurp|spider/i.test(navigator.userAgent);
  * and the measured dimensions, multiplied by the device pixel ratio unless `dpr`
  * is disabled or a bot is detected.
  *
- * @link https://ui.studiometa.dev/components/FigureTwicpics/
+ * @link https://ui.studiometa.dev/reference/items/FigureTwicpics/
  */
 export class FigureTwicpics<T extends BaseProps = BaseProps> extends AbstractFigureDynamic<
   T & FigureTwicpicsProps

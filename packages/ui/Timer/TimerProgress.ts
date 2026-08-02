@@ -14,7 +14,7 @@ import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
  * countdown is armed — so it is throttled with every other component and torn
  * down automatically on destroy.
  *
- * @link https://ui.studiometa.dev/components/Timer/
+ * @link https://ui.studiometa.dev/reference/items/Timer/
  */
 export class TimerProgress<T extends BaseProps = BaseProps> extends Timer<T> {
   /**

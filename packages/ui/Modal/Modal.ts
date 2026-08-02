@@ -52,11 +52,11 @@ export interface ModalProps extends BaseProps {
  * an element and relocate its markup in the DOM via the `move` option, and
  * emits `open` and `close`. Deprecated in favour of the `Dialog` component.
  *
- * @link https://ui.studiometa.dev/components/Modal/
+ * @link https://ui.studiometa.dev/reference/items/Modal/
  */
 export class Modal<T extends BaseProps = BaseProps> extends withDeprecation(
   Base,
-  'Use the Dialog component instead: https://ui.studiometa.dev/components/Dialog/',
+  'Use the Dialog component instead: https://ui.studiometa.dev/reference/items/Dialog/',
 )<T & ModalProps> {
   /**
    * Config.
