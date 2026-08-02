@@ -1,6 +1,7 @@
 export * from './AbstractMapboxControl.js';
 export * from './AbstractMapboxMapChild.js';
 export * from './MapboxCluster.js';
+export * from './MapboxClusterItem.js';
 export * from './MapboxFullscreenControl.js';
 export * from './MapboxGeocoder.js';
 export * from './MapboxGeolocateControl.js';
@@ -13,4 +14,3 @@ export * from './MapboxNavigationControl.js';
 export * from './MapboxPopup.js';
 export * from './MapboxSource.js';
 export * from './StoreLocator.js';
-export * from './StoreLocatorItem.js';

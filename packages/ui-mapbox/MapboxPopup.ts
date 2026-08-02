@@ -46,6 +46,14 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
   __popup: Popup;
 
   /**
+   * Whether this component hid its own source element (to avoid rendering the
+   * content twice). Tracked so teardown restores the original visibility only
+   * when it was the one to change it.
+   * @private
+   */
+  __didHide = false;
+
+  /**
    * The mapbox Popup instance.
    */
   get popup() {
@@ -60,31 +68,49 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
    * Mounted hook.
    */
   mounted() {
-    const { popup, $el, map, $options } = this;
+    this.whenMapReady((map) => {
+      const { popup, $el, $options } = this;
 
-    popup.setLngLat($options.lngLat);
+      popup.setLngLat($options.lngLat);
 
-    const content = $el.innerHTML.trim();
-    if (content) {
-      popup.setHTML(content);
-      // Hide the source markup so the content is not rendered twice: once in
-      // the popup and once in the document.
-      $el.hidden = true;
-    }
+      const content = $el.innerHTML.trim();
+      if (content) {
+        popup.setHTML(content);
+        // Hide the source markup so the content is not rendered twice: once in
+        // the popup and once in the document. Remember we did so — only when it
+        // was visible — to restore it on teardown.
+        if (!$el.hidden) {
+          $el.hidden = true;
+          this.__didHide = true;
+        }
+      }
 
-    // Only add popup directly to map if not inside a marker
-    const marker = this.$closest<MapboxMarker>('MapboxMarker');
-    if (map && !marker) {
-      popup.addTo(map);
-    }
+      // When inside a marker, hand the popup to it rather than adding it to the
+      // map directly (the marker owns its popup via `setPopup`). Pushing to the
+      // marker — instead of letting the marker pull us — also covers the dynamic
+      // append case where the marker mounted first and found no popup to query.
+      const marker = this.$closest<MapboxMarker>('MapboxMarker');
+      if (marker) {
+        marker.setChildPopup(this);
+      } else {
+        popup.addTo(map);
+      }
+    });
   }
 
   /**
-   * Destroyed hook.
+   * Teardown hook.
    */
-  destroyed() {
+  __onDestroyed() {
     this.__popup?.remove();
     this.__popup = undefined;
+
+    // Restore the source element's visibility only if this component hid it, so
+    // a reused or remounted element keeps its original state.
+    if (this.__didHide) {
+      this.$el.hidden = false;
+      this.__didHide = false;
+    }
   }
 }
 

@@ -34,9 +34,6 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapbo
       // Marker options. (https://docs.mapbox.com/mapbox-gl-js/api/markers#marker)
       markerOptions: Object,
     },
-    components: {
-      MapboxPopup,
-    },
   };
 
   /**
@@ -64,19 +61,39 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapbo
   }
 
   /**
-   * Mounted hook.
+   * Attach a child `MapboxPopup`'s popup to this marker.
+   *
+   * Called from either side of the wiring, whichever mounts last: the marker
+   * pulls its child popup on ready, and the popup pushes itself here when it
+   * mounts after the marker (a dynamic append to an already-loaded map, where
+   * the marker mounted first and found no popup to query yet). Setting the same
+   * popup twice is idempotent.
+   * @param {MapboxPopup} popupComponent
    */
-  mounted() {
-    this.marker.setLngLat(this.$options.lngLat).addTo(this.map);
-    if (this.popup) {
-      this.marker.setPopup(this.popup.popup);
-    }
+  setChildPopup(popupComponent: MapboxPopup) {
+    this.marker.setPopup(popupComponent.popup);
   }
 
   /**
-   * Destroyed hook.
+   * Mounted hook.
    */
-  destroyed() {
+  mounted() {
+    this.whenMapReady((map) => {
+      this.marker.setLngLat(this.$options.lngLat).addTo(map);
+
+      // Pull the optional child popup if it has already mounted. When it mounts
+      // *after* the marker instead (dynamic append), the popup pushes itself via
+      // `setChildPopup`, so either mount order wires the pair.
+      if (this.popup) {
+        this.setChildPopup(this.popup);
+      }
+    });
+  }
+
+  /**
+   * Teardown hook.
+   */
+  __onDestroyed() {
     this.__marker?.remove();
     this.__marker = undefined;
   }

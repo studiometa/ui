@@ -4,19 +4,19 @@ title: StoreLocator examples
 
 # Examples
 
-Both examples register a single root component that declares the `StoreLocator` — its `MapboxMap` and `StoreLocatorItem` children are resolved automatically, and the `MapboxCluster` inside the map is fed by the coordinator once the map has loaded. Each example loads the [Mapbox GL stylesheet](/components/MapboxMap/#installation) from a CDN and picks a Mapbox style through the `map-options` option. Replace the access token with your own [access token](https://docs.mapbox.com/help/getting-started/access-tokens/); the token used here is a public, restricted demo token.
+Both examples register the Mapbox components they use (`StoreLocator`, `MapboxMap`, `MapboxCluster`, `MapboxClusterItem`) independently — see [Usage](./#usage) for the recommended lazy registration — and add a small root component for the detail panel. The `StoreLocator` orchestrates a `MapboxMap` containing a `MapboxCluster` whose `MapboxClusterItem`s are the sidebar entries. Each example loads the [Mapbox GL stylesheet](/components/MapboxMap/#installation) from a CDN and picks a Mapbox style through the `map-options` option. Replace the access token with your own [access token](https://docs.mapbox.com/help/getting-started/access-tokens/); the token used here is a public, restricted demo token.
 
 ## Basic store locator
 
-A `StoreLocator` wrapping a sidebar list of Paris stores and a clustered map. Note that the `MapboxCluster` has **no** authored data: the coordinator derives a GeoJSON `FeatureCollection` from the list items and pushes it to the cluster after the map loads.
+A `StoreLocator` wrapping a clustered map whose `MapboxCluster` holds a sidebar list of Paris `MapboxClusterItem`s. The cluster has **no** authored data: it derives a GeoJSON `FeatureCollection` from its registered items, and the orchestrator adds selection, viewport filtering and the detail drawer on top.
 
 Try it out:
 
 - **Pan or zoom the map** — the sidebar filters to the in-view stores and reorders them nearest-first.
-- **Click a store in the list** — the map flies there, the item is marked active and the detail drawer opens.
+- **Click a store in the list** — the map flies there, the item is marked active, a popup opens and the detail drawer opens.
 - **Click a cluster** — the map zooms in and splits it; click an individual pin to select its store.
 
-The detail panel is the integrator's choice. Here it is a [`Dialog`](/components/Dialog/) drawer, opened from the [`select`](./js-api#select) event through a small root component's `onStoreLocatorSelect` handler, which copies the selected item's `<template>` detail into the drawer. A [`MapboxPopup`](/components/MapboxMap/js-api#mapboxpopup) or a static `aside` bound to the same event would work too.
+The detail panel is the integrator's choice. Here it is a [`Dialog`](/components/Dialog/) drawer, opened from the [`select`](./js-api#select) event through a small root component's `onStoreLocatorSelect` handler, which copies the selected item's `<template>` detail into the drawer. A static `aside` bound to the same event would work too.
 
 <PreviewPlayground
   :html="() => import('./stories/basic/app.twig')"
@@ -26,7 +26,7 @@ The detail panel is the integrator's choice. Here it is a [`Dialog`](/components
 
 ## Faceted list {#faceted-list}
 
-Because the map data is [derived from the registered items](./#the-three-state-model), replacing the list updates both the list **and** the map. This example swaps the `data-ref="list"` markup when a facet is picked: js-toolkit mounts and terminates the `StoreLocatorItem`s accordingly, the coordinator re-derives the map data from the new item set, and the clusters/markers follow. With `fit-on-update` set, the map also re-frames to the new subset.
+Because the map data is [derived from the registered items](./#the-three-state-model), replacing the list updates both the list **and** the map. This example swaps the list markup when a facet is picked: js-toolkit mounts and terminates the `MapboxClusterItem`s accordingly, the cluster re-derives the map data from the new item set and emits an `update`, and the orchestrator re-fits and re-filters. With `fit-on-update` set, the map also re-frames to the new subset.
 
 <PreviewPlayground
   :html="() => import('./stories/faceted/app.twig')"
@@ -36,18 +36,22 @@ Because the map data is [derived from the registered items](./#the-three-state-m
 
 ### Doing it with `Fetch`
 
-The example above swaps the list client-side so it runs on a static page. In a real integration you would instead [`Fetch`](/components/Fetch/) the new list fragment from a server endpoint and let it replace the `data-ref="list"` container — the coordinator reacts to the mounted/terminated items exactly the same way, so nothing else changes. The debounced item-set sync coalesces a whole `Fetch` swap into a single map-data update.
+The example above swaps the list client-side so it runs on a static page. In a real integration you would instead [`Fetch`](/components/Fetch/) the new list fragment from a server endpoint and let it replace the list container — the cluster reacts to the mounted/terminated `MapboxClusterItem`s exactly the same way, so nothing else changes. The cluster's debounced rebuild coalesces a whole `Fetch` swap into a single map-data update and a single `update` the orchestrator reacts to.
 
 ```html
-<form data-component="Fetch" action="/stores" method="GET" data-option-selector="[data-ref='list']">
+<form data-component="Fetch" action="/stores" method="GET" data-option-selector="#store-list">
   <button type="submit" name="bank" value="left">Left bank</button>
   <button type="submit" name="bank" value="right">Right bank</button>
 </form>
 
 <div data-component="StoreLocator">
-  <ul id="store-list" data-ref="list">
-    <!-- The server responds with a fresh <ul id="store-list"> of items. -->
-  </ul>
-  <div data-component="MapboxMap"><!-- … --></div>
+  <div data-component="MapboxMap">
+    <div data-component="MapboxCluster">
+      <ul id="store-list">
+        <!-- The server responds with a fresh <ul id="store-list"> of MapboxClusterItems. -->
+      </ul>
+    </div>
+    <div data-ref="container"><!-- … --></div>
+  </div>
 </div>
 ```

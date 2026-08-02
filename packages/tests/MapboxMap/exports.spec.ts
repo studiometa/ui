@@ -11,7 +11,10 @@ test('@studiometa/ui-mapbox exports', () => {
     [
       "AbstractMapboxControl",
       "AbstractMapboxMapChild",
+      "MAPBOX_CLUSTER_CONNECTED",
+      "MAPBOX_MAP_CONNECTED",
       "MapboxCluster",
+      "MapboxClusterItem",
       "MapboxFullscreenControl",
       "MapboxGeocoder",
       "MapboxGeolocateControl",
@@ -24,7 +27,6 @@ test('@studiometa/ui-mapbox exports', () => {
       "MapboxPopup",
       "MapboxSource",
       "StoreLocator",
-      "StoreLocatorItem",
     ]
   `);
 

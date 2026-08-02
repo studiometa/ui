@@ -1,4 +1,15 @@
-import { registerComponent } from '@studiometa/js-toolkit';
-import { MapboxMap } from '@studiometa/ui-mapbox';
+import { registerComponents } from '@studiometa/js-toolkit';
+import {
+  MapboxMap,
+  MapboxNavigationControl,
+  MapboxGeolocateControl,
+  MapboxFullscreenControl,
+} from '@studiometa/ui-mapbox';
 
-registerComponent(MapboxMap);
+// Register every component the markup uses.
+registerComponents(
+  MapboxMap,
+  MapboxNavigationControl,
+  MapboxGeolocateControl,
+  MapboxFullscreenControl,
+);

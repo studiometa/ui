@@ -16,7 +16,7 @@ function createImage(attrs: Record<string, string> = {}) {
   // Mock $closest since async component resolution doesn't set it up
   instance.$closest = vi.fn((query: string) => {
     if (query === 'MapboxMap') {
-      return { map: mockMap, $options: { accessToken: 'token' } } as any;
+      return { map: mockMap, isLoaded: true, $options: { accessToken: 'token' } } as any;
     }
     return undefined;
   });
@@ -127,6 +127,62 @@ describe('MapboxImage component', () => {
     expect(mockMap.addImage).not.toHaveBeenCalled();
     expect(mockMap.removeImage).not.toHaveBeenCalled();
     expect(mockMap._images).toHaveProperty('my-image');
+  });
+
+  it('should keep the sprite on a same-name swap: outgoing does not remove the adopted one (H5)', async () => {
+    const mockMap = new MockMap();
+    function make() {
+      const el = h('div', {
+        'data-component': 'MapboxImage',
+        'data-option-name': 'shared',
+        'data-option-url': '/shared.png',
+      });
+      const inst = new MapboxImage(el);
+      inst.$closest = vi.fn((query: string) =>
+        query === 'MapboxMap'
+          ? ({ map: mockMap, isLoaded: true, $options: { accessToken: 't' } } as any)
+          : undefined,
+      );
+      return inst;
+    }
+
+    const oldInstance = make();
+    vi.useFakeTimers();
+    oldInstance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.addImage).toHaveBeenCalledTimes(1);
+
+    // The replacement mounts while the outgoing instance still owns the sprite.
+    const newInstance = make();
+    vi.useFakeTimers();
+    newInstance.$mount();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    // The sprite already existed (owned by the outgoing instance): the
+    // replacement adopts ownership rather than re-adding a duplicate.
+    expect(mockMap.addImage).toHaveBeenCalledTimes(1);
+
+    // The outgoing instance tears down: it must NOT remove the sprite the mounted
+    // replacement now owns.
+    vi.useFakeTimers();
+    oldInstance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.removeImage).not.toHaveBeenCalled();
+    expect(mockMap._images).toHaveProperty('shared');
+
+    // The replacement, now the owner, removes the sprite on its own teardown.
+    vi.useFakeTimers();
+    newInstance.$destroy();
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    expect(mockMap.removeImage).toHaveBeenCalledWith('shared');
+    expect(mockMap._images).toEqual({});
   });
 
   it('should not leave an orphan image when destroyed before the load resolves', async () => {

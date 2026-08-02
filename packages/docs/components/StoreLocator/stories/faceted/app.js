@@ -1,5 +1,10 @@
 import { Base, registerComponent } from '@studiometa/js-toolkit';
-import { StoreLocator, StoreLocatorItem } from '@studiometa/ui-mapbox';
+import {
+  StoreLocator,
+  MapboxMap,
+  MapboxCluster,
+  MapboxClusterItem,
+} from '@studiometa/ui-mapbox';
 import { Action, Dialog, ViewTransition } from '@studiometa/ui';
 
 /**
@@ -8,15 +13,24 @@ import { Action, Dialog, ViewTransition } from '@studiometa/ui';
  * The facets swap the list markup client-side to keep the playground static.
  * A real integration would `Fetch` the new list fragment from the server
  * instead — see the prose in the examples page. Either way, the important part
- * is identical: the DOM of the `data-ref="list"` changes, js-toolkit mounts and
- * terminates the `StoreLocatorItem`s accordingly, and the `StoreLocator`
- * re-derives the map data from the new item set (markers and clusters follow).
+ * is identical: the DOM of the `#store-list` changes, js-toolkit mounts and
+ * terminates the `MapboxClusterItem`s accordingly, and the `MapboxCluster`
+ * re-derives the map data from the new item set and emits an `update` the
+ * `StoreLocator` reacts to (markers and clusters follow).
  */
 class App extends Base {
   static config = {
     name: 'App',
     refs: ['facet[]'],
-    components: { StoreLocator, StoreLocatorItem, Dialog, Action, ViewTransition },
+    components: {
+      StoreLocator,
+      MapboxMap,
+      MapboxCluster,
+      MapboxClusterItem,
+      Dialog,
+      Action,
+      ViewTransition,
+    },
   };
 
   /**
@@ -29,13 +43,6 @@ class App extends Base {
   __allItems = [];
 
   /**
-   * The store locator child.
-   */
-  get storeLocator() {
-    return this.$query('StoreLocator')[0];
-  }
-
-  /**
    * The detail panel Dialog child.
    */
   get panel() {
@@ -43,10 +50,17 @@ class App extends Base {
   }
 
   /**
+   * The swappable list container.
+   */
+  get list() {
+    return this.$el.querySelector('#store-list');
+  }
+
+  /**
    * Capture the initial (full) item set.
    */
   mounted() {
-    const list = this.storeLocator?.$refs.list;
+    const { list } = this;
     if (list) {
       this.__allItems = [...list.children].map((item) => ({
         category: item.dataset.category,
@@ -62,7 +76,7 @@ class App extends Base {
   onFacetClick({ index }) {
     const button = this.$refs.facet[index];
     const { category } = button.dataset;
-    const list = this.storeLocator?.$refs.list;
+    const { list } = this;
 
     if (!list) {
       return;
@@ -73,9 +87,9 @@ class App extends Base {
     }
 
     // Rebuild the list from fresh markup — the same thing a `Fetch` response
-    // does. js-toolkit terminates the old `StoreLocatorItem`s (→ unregister) and
-    // mounts the new ones (→ register); the coordinator coalesces the batch into
-    // a single map-data update, so markers and clusters follow the new set.
+    // does. js-toolkit terminates the old `MapboxClusterItem`s (→ unregister) and
+    // mounts the new ones (→ register); the cluster coalesces the batch into a
+    // single map-data update, so markers and clusters follow the new set.
     list.innerHTML = this.__allItems
       .filter((item) => category === 'all' || item.category === category)
       .map((item) => item.html)
@@ -84,7 +98,7 @@ class App extends Base {
 
   /**
    * Open the drawer with the selected store's detail.
-   * @param {{ args: [StoreLocatorItem] }} props
+   * @param {{ args: [MapboxClusterItem] }} props
    */
   onStoreLocatorSelect({ args: [item] }) {
     const template = item.$el.querySelector('template');

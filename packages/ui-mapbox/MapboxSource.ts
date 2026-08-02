@@ -1,9 +1,10 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import type { SourceSpecification, GeoJSONSourceSpecification } from 'mapbox-gl';
+import type { SourceSpecification, GeoJSONSourceSpecification, GeoJSONSource } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
 } from './AbstractMapboxMapChild.js';
+import { claimMapboxOwnership, getMapboxOwner, releaseMapboxOwnership } from './utils.js';
 
 export interface MapboxSourceProps extends AbstractMapboxMapChildProps {
   $refs: {
@@ -67,50 +68,102 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
   }
 
   /**
-   * Whether this instance actually added the source to the map. Only a source
-   * this instance added — along with the layers tied to it — may be removed on
-   * teardown; a pre-existing source (declared by someone else) must be left
-   * untouched.
+   * Whether this instance owns the source under its id. Only a source this
+   * instance owns — along with the layers tied to it — may be removed on
+   * teardown; a source declared by someone else outside the family is left
+   * untouched, and a source a newer sibling has since adopted is left to that
+   * sibling.
    * @private
    */
   __added = false;
 
   /**
-   * Mounted hook.
+   * The `kind:id` ownership key for this source.
+   * @private
    */
-  mounted() {
-    const { id } = this.$options;
-    const { source } = this;
-
-    if (!this.map.getSource(id)) {
-      this.map.addSource(id, source);
-      this.__added = true;
-    }
+  get __ownershipKey(): string {
+    return `source:${this.$options.id}`;
   }
 
   /**
-   * Destroyed hook.
+   * Mounted hook.
+   *
+   * Adopt-or-add: when the id is free, add the source and claim ownership. When
+   * a source with this id already exists, adding it again would throw a
+   * duplicate-id error, so instead update its data (for GeoJSON) and — when the
+   * existing source belongs to a sibling `MapboxSource` (e.g. a `Fetch` swap
+   * mounted the replacement before the original tore down) — take over
+   * ownership. A source declared outside the family is left untouched and not
+   * owned.
    */
-  destroyed() {
-    if (!this.__added) {
-      return;
-    }
+  mounted() {
+    this.whenMapReady((map) => {
+      const { id } = this.$options;
+      const { source } = this;
 
+      if (!map.getSource(id)) {
+        map.addSource(id, source);
+        // Own the id, keyed to the very source object just added: the liveness
+        // probe reports the entry stale the moment this source is removed (a
+        // `setStyle` wipe, an external `removeSource`) or replaced under the same
+        // id, so it can never misclassify a stranger's later source (H6).
+        const added = map.getSource(id);
+        claimMapboxOwnership(map, this.__ownershipKey, this, () => map.getSource(id) === added);
+        this.__added = true;
+        return;
+      }
+
+      // The id is taken. Only adopt it from another family instance; an
+      // externally declared source stays untouched. `getMapboxOwner` validates
+      // the existing owner's liveness, so a stale entry left by a wiped/removed
+      // source does not read as owned and is not adopted here.
+      if (getMapboxOwner(map, this.__ownershipKey)) {
+        if (source.type === 'geojson' && 'data' in source) {
+          const existing = map.getSource<GeoJSONSource>(id);
+          existing?.setData(source.data as GeoJSONSourceSpecification['data']);
+        }
+
+        const existing = map.getSource(id);
+        claimMapboxOwnership(map, this.__ownershipKey, this, () => map.getSource(id) === existing);
+        this.__added = true;
+      }
+    });
+  }
+
+  /**
+   * Teardown hook.
+   */
+  __onDestroyed() {
+    const map = this.__readyMap;
     const { id } = this.$options;
 
-    if (!this.map.getSource(id)) {
-      return;
-    }
-
-    // Remove every layer tied to the source before removing the source itself,
-    // otherwise Mapbox throws because layers still reference a missing source.
-    for (const layer of this.map.getStyle().layers) {
-      if ('source' in layer && layer.source === id) {
-        this.map.removeLayer(layer.id);
+    // Only remove a source this instance still owns: a newer sibling may have
+    // adopted the id, and a removed map is already gone (`__readyMap` is unset).
+    if (
+      this.__added &&
+      getMapboxOwner(map as object, this.__ownershipKey) === this &&
+      map?.getSource(id)
+    ) {
+      // Remove every layer tied to the source before removing the source itself,
+      // otherwise Mapbox throws because layers still reference a missing source.
+      //
+      // H7 (PR #567 review): this also removes layers owned by still-mounted
+      // `MapboxLayer` instances. Those layers now keep a standing `sourcedata`
+      // recovery watch (see `MapboxLayer.__handleSourceData`), so when a source
+      // with the same id is later re-added they re-commit themselves rather than
+      // vanishing permanently. The removal here is unavoidable (Mapbox rejects
+      // removing a source still referenced by a layer); recovery is the layer's
+      // job. The common `Fetch` swap (source AND layers replaced together) is
+      // likewise fine: the replacement layers re-commit on their own.
+      for (const layer of map.getStyle().layers) {
+        if ('source' in layer && layer.source === id) {
+          map.removeLayer(layer.id);
+        }
       }
-    }
 
-    this.map.removeSource(id);
+      map.removeSource(id);
+      releaseMapboxOwnership(map, this.__ownershipKey, this);
+    }
   }
 }
 

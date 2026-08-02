@@ -76,15 +76,17 @@ export class AbstractMapboxControl<T extends BaseProps = BaseProps> extends Abst
    * Mounted hook.
    */
   mounted() {
-    this.map?.addControl(this.control, this.$options.position);
+    this.whenMapReady((map) => {
+      map.addControl(this.control, this.$options.position);
+    });
   }
 
   /**
-   * Destroyed hook.
+   * Teardown hook.
    */
-  destroyed() {
+  __onDestroyed() {
     if (this.__control) {
-      this.map?.removeControl(this.__control);
+      this.__readyMap?.removeControl(this.__control);
       this.__control = undefined;
     }
   }

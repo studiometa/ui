@@ -4,7 +4,7 @@ title: MapboxMap examples
 
 # Examples
 
-Every example below registers a single `MapboxMap` component — the child components (markers, popups, controls, sources, layers, images, clusters) are resolved automatically once the map is loaded. Each example loads the [Mapbox GL stylesheet](./#installation) from a CDN and picks a Mapbox style through the `map-options` option, which forwards any [`Map` option](https://docs.mapbox.com/mapbox-gl-js/api/map/#map-parameters) to mapbox-gl. Replace the access token with your own [access token](https://docs.mapbox.com/help/getting-started/access-tokens/); the token used here is a public, restricted demo token.
+Every component in the family is self-registering, so each example registers exactly the components it uses — `MapboxMap` on its own for a bare map, plus the child components it declares (markers, popups, controls, sources, layers, images, clusters). Each child resolves its parent `MapboxMap` on its own once mounted. Each example loads the [Mapbox GL stylesheet](./#installation) from a CDN and picks a Mapbox style through the `map-options` option, which forwards any [`Map` option](https://docs.mapbox.com/mapbox-gl-js/api/map/#map-parameters) to mapbox-gl. Replace the access token with your own [access token](https://docs.mapbox.com/help/getting-started/access-tokens/); the token used here is a public, restricted demo token.
 
 Child components that should not take part in the normal document flow (markers, popups, controls, sources, layers, images, clusters) are wrapped in a `hidden` element: their markup is only used as a declarative definition, the actual rendering happens on the map canvas.
 
@@ -102,7 +102,7 @@ Register images against the map sprite so they can be referenced from a symbol l
 
 ## Cluster
 
-The `MapboxCluster` component displays a clustered GeoJSON source, wiring the cluster circles, the cluster count labels and the unclustered points, together with the click-to-zoom interaction. Its `data` option takes the URL of a `.geojson` file, or you can pass inline GeoJSON through a [`geojson` script ref](#inline-geojson-cluster). The example below passes the points inline; click a cluster to zoom in and split it.
+The `MapboxCluster` component is a clustered GeoJSON **source driver**: it derives its source from the `MapboxClusterItem`s in its subtree, wiring the cluster circles, the cluster count labels and the unclustered points, together with the click-to-zoom interaction. Each item is at once a list entry and a map feature — the same markup drives both. The example below declares a hidden list of items; click a cluster to zoom in and split it.
 
 <PreviewPlayground
   :html="() => import('./stories/cluster/app.twig')"
@@ -110,29 +110,30 @@ The `MapboxCluster` component displays a clustered GeoJSON source, wiring the cl
   :css="() => import('./stories/cluster/app.css?raw')"
   />
 
-### Inline GeoJSON cluster {#inline-geojson-cluster}
+### Items drive the source {#cluster-items}
 
-Instead of a `data` URL, pass the GeoJSON inline through a `<script data-ref="geojson" type="application/json">` child. When the ref is present, its parsed content is used as the clustered source data and the `data` option is ignored:
+The cluster owns no authored data. Each point is a `MapboxClusterItem` that self-registers with the closest `MapboxCluster` ancestor; the cluster derives a clustered GeoJSON `FeatureCollection` from the registry and rebuilds it (debounced) whenever items mount or unmount:
 
 ```html
-<div
-  hidden
-  data-component="MapboxCluster"
-  data-option-cluster-radius="60"
-  data-option-clusters-paint='{ "circle-color": "#51bbd6", "circle-radius": 20 }'
-  data-option-unclustered-point-paint='{ "circle-color": "#11b4da", "circle-radius": 5 }'>
-  <script data-ref="geojson" type="application/json">
-    {
-      "type": "FeatureCollection",
-      "features": [
-        { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.35, 48.86] } },
-        { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.29, 48.86] } },
-        { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-0.13, 51.51] } }
-      ]
-    }
-  </script>
+<div hidden data-component="MapboxCluster" data-option-cluster-radius="60">
+  <ul>
+    <li
+      data-component="MapboxClusterItem"
+      data-option-id="a"
+      data-option-lng-lat="[2.35, 48.86]"></li>
+    <li
+      data-component="MapboxClusterItem"
+      data-option-id="b"
+      data-option-lng-lat="[2.29, 48.86]"></li>
+    <li
+      data-component="MapboxClusterItem"
+      data-option-id="c"
+      data-option-lng-lat="[-0.13, 51.51]"></li>
+  </ul>
 </div>
 ```
+
+The cluster reports a click on an unclustered point through its `item-click` event but never selects or flies on its own. To turn this into a full "find a store near you" experience — selection, popups, viewport filtering and address search — wrap the cluster in a [`StoreLocator`](/components/StoreLocator/) orchestrator.
 
 ## Listening to map events
 

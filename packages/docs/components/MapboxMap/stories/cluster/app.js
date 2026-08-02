@@ -1,4 +1,4 @@
-import { registerComponent } from '@studiometa/js-toolkit';
-import { MapboxMap } from '@studiometa/ui-mapbox';
+import { registerComponents } from '@studiometa/js-toolkit';
+import { MapboxMap, MapboxCluster, MapboxClusterItem } from '@studiometa/ui-mapbox';
 
-registerComponent(MapboxMap);
+registerComponents(MapboxMap, MapboxCluster, MapboxClusterItem);
