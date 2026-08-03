@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "bytes": {
+    "entry:autoload": 2700,
+    "entry:loader": 250,
+    "entry:manifest": 165,
+    "initial:autoload": 60000,
+    "initial:loader": 34000,
+    "initial:manifest": 25000,
+    "graph:component:Action": 57000,
+    "graph:family:Accordion": 58000,
+    "chunk:js-toolkit-shared": 27000,
+    "graph:mapbox-core": 2100000,
+    "graph:geocoder-incremental": 71000,
+    "style:mapbox-gl": 45000,
+    "style:mapbox-geocoder": 6000,
+    "total:esm": 2400000,
+    "total:source-maps": 11800000,
+    "total:release": 14400000
+  }
+}
