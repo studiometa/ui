@@ -26,9 +26,9 @@ export interface VersionsIndex {
   releases: string[];
   channels: string[];
   distTags: {
-    latest: string;
-    next: string;
-    main: string;
+    latest?: string;
+    next?: string;
+    main?: string;
   };
 }
 

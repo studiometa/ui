@@ -50,21 +50,23 @@ export function parseVersionsIndex(value: unknown): VersionsIndex {
   }
   if (!isRecord(value.distTags)) throw new Error('Invalid distribution tags.');
   const { latest, next, main } = value.distTags;
-  if (typeof latest !== 'string' || typeof next !== 'string' || typeof main !== 'string') {
-    throw new Error('Invalid distribution tags.');
+  // Distribution tags are optional: a freshly bootstrapped index, a stable-only release with no
+  // main channel yet, or a channel-only index with no stable release are all valid states. Each
+  // tag is validated only when present, and next/main stay coupled whenever either one is set.
+  if (latest !== undefined) {
+    if (typeof latest !== 'string') throw new Error('Invalid distribution tags.');
+    const latestVersion = parseSemver(latest);
+    if (!latestVersion || latestVersion.prerelease || !value.releases.includes(latest)) {
+      throw new Error('The latest tag must name a published stable release.');
+    }
   }
-  const latestVersion = parseSemver(latest);
-  if (!latestVersion || latestVersion.prerelease || !value.releases.includes(latest)) {
-    throw new Error('The latest tag must name a published stable release.');
-  }
-  if (
-    !CHANNEL_PATTERN.test(next) ||
-    !CHANNEL_PATTERN.test(main) ||
-    !value.channels.includes(next) ||
-    !value.channels.includes(main) ||
-    next !== main
-  ) {
-    throw new Error('The next and main tags must name the same published immutable channel.');
+  if (next !== undefined || main !== undefined) {
+    if (typeof next !== 'string' || typeof main !== 'string') {
+      throw new Error('Invalid distribution tags.');
+    }
+    if (next !== main || !CHANNEL_PATTERN.test(next) || !value.channels.includes(next)) {
+      throw new Error('The next and main tags must name the same published immutable channel.');
+    }
   }
   return value as unknown as VersionsIndex;
 }
@@ -96,9 +98,12 @@ export function resolveVersion(index: VersionsIndex, requested: string): ExactVe
   if (CHANNEL_PATTERN.test(requested)) {
     return index.channels.includes(requested) ? exactChannel(requested) : undefined;
   }
-  if (requested === 'latest') return exactRelease(index.distTags.latest);
+  if (requested === 'latest') {
+    return index.distTags.latest ? exactRelease(index.distTags.latest) : undefined;
+  }
   if (requested === 'next' || requested === 'main') {
-    return exactChannel(index.distTags[requested]);
+    const channel = index.distTags[requested];
+    return channel ? exactChannel(channel) : undefined;
   }
 
   const alias = ALIAS_PATTERN.exec(requested);
