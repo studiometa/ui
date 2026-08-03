@@ -9,7 +9,6 @@ import {
   responseHeaders,
 } from './responses.ts';
 import type {
-  BuildComponent,
   BuildMetadata,
   ExactVersion,
   IntegrityMetadata,
@@ -18,6 +17,7 @@ import type {
   WorkerEnvironment,
 } from './types.ts';
 import { isMutableVersion, parseVersionsIndex, resolveVersion } from './versions.ts';
+import { classifyVersion, emitObservation, ObservationRecorder } from './observability.ts';
 
 const MAX_LINK_HEADER_BYTES = 7_500;
 const PUBLIC_PACKAGE_NAME = '@studiometa/ui-cdn';
@@ -173,19 +173,35 @@ function objectEtag(object: R2ObjectBodyLike): string | undefined {
   return object.etag.startsWith('"') ? object.etag : `"${object.etag}"`;
 }
 
-async function handleRequest(request: Request, environment: WorkerEnvironment): Promise<Response> {
-  if (request.method === 'OPTIONS') return optionsResponse();
-  if (request.method !== 'GET' && request.method !== 'HEAD') return errorResponse(405);
+async function handleRequest(
+  request: Request,
+  environment: WorkerEnvironment,
+  recorder: ObservationRecorder,
+): Promise<Response> {
+  if (request.method === 'OPTIONS') {
+    recorder.routeKind('preflight');
+    return optionsResponse();
+  }
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    recorder.routeKind('method-not-allowed');
+    return errorResponse(405);
+  }
 
   const url = new URL(request.url);
   const route = parseRoute(url.pathname);
   const indexValue = await readJsonObject(environment.ASSETS, 'versions.json');
-  if (indexValue === undefined) return errorResponse(502);
+  if (indexValue === undefined) {
+    recorder.r2('index', 'miss');
+    return errorResponse(502);
+  }
+  recorder.r2('index', 'hit');
   const versions = parseVersionsIndex(indexValue);
   const exact = resolveVersion(versions, route.requestedVersion);
+  recorder.versionKind(classifyVersion(route.requestedVersion, exact));
   if (!exact) return errorResponse(404);
 
   const metadata = await loadRelease(environment.ASSETS, exact);
+  recorder.r2('release-metadata', metadata ? 'hit' : 'miss');
   if (!metadata || !metadata.files.has(route.assetPath)) return errorResponse(404);
 
   const query = canonicalizeQuery(
@@ -193,12 +209,17 @@ async function handleRequest(request: Request, environment: WorkerEnvironment): 
     route.assetPath,
     new Set(Object.keys(metadata.build.components)),
   );
+  recorder.componentCount(query.components.length);
   if (isMutableVersion(route.requestedVersion, exact) || !query.canonical) {
     return redirectResponse(canonicalLocation(url, exact.version, route.assetPath, query.search));
   }
 
   const object = await environment.ASSETS.get(`${exact.objectPrefix}/${route.assetPath}`);
-  if (!object) return errorResponse(404);
+  if (!object) {
+    recorder.r2('asset', 'miss');
+    return errorResponse(404);
+  }
+  recorder.r2('asset', 'hit');
   const etag = objectEtag(object);
   const link = preloadHeader(exact.version, query.components, metadata);
   const headers = responseHeaders({
@@ -221,13 +242,16 @@ function finalizeResponse(request: Request, response: Response): Response {
 }
 
 export async function fetch(request: Request, environment: WorkerEnvironment): Promise<Response> {
+  const recorder = new ObservationRecorder();
+  let response: Response;
   try {
-    return finalizeResponse(request, await handleRequest(request, environment));
+    response = finalizeResponse(request, await handleRequest(request, environment, recorder));
   } catch (error) {
-    const response =
-      error instanceof RequestValidationError ? errorResponse(error.status) : errorResponse(502);
-    return finalizeResponse(request, response);
+    const status = error instanceof RequestValidationError ? error.status : (502 as const);
+    response = finalizeResponse(request, errorResponse(status));
   }
+  emitObservation(environment, recorder, response.status);
+  return response;
 }
 
 export default { fetch };

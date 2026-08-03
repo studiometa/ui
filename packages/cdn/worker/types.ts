@@ -9,8 +9,16 @@ export interface R2BucketLike {
   get(key: string): Promise<R2ObjectBodyLike | null>;
 }
 
+export interface AnalyticsDatasetLike {
+  writeDataPoint(event: { blobs?: string[]; doubles?: number[]; indexes?: string[] }): void;
+}
+
 export interface WorkerEnvironment {
   ASSETS: R2BucketLike;
+  /** Optional Cloudflare Analytics Engine binding; absent locally and in tests. */
+  ANALYTICS?: AnalyticsDatasetLike;
+  /** Optional 0..1 fraction of requests that also emit a structured console log line. */
+  OBSERVABILITY_SAMPLE_RATE?: string;
 }
 
 export interface VersionsIndex {
