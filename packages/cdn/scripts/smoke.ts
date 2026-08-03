@@ -143,12 +143,29 @@ async function checkSourceMap(config: SmokeConfig, version: string): Promise<voi
   assert(parsed.version === 3, `Unexpected source map version: ${parsed.version}.`);
 }
 
-async function checkAliasRedirect(config: SmokeConfig, alias: string): Promise<void> {
-  const response = await fetchWithTimeout(endpoint(config, alias, 'autoload.js'), config, {
-    redirect: 'manual',
-  });
-  assert(response.status === 307, `The ${alias} alias returned HTTP ${response.status}.`);
-  versionFromLocation(response.headers.get('Location'));
+async function checkNextAlias(config: SmokeConfig): Promise<CheckResult> {
+  const name = 'Next alias redirect';
+  try {
+    const response = await fetchWithTimeout(endpoint(config, 'next', 'autoload.js'), config, {
+      redirect: 'manual',
+    });
+    // The `next` channel only exists once a main channel has been published. A stable-only
+    // deployment legitimately has no `next` alias, so treat a 404 as skipped, not failed.
+    if (response.status === 404) {
+      return { name, status: 'skipped', detail: 'No main channel is published.' };
+    }
+    if (response.status !== 307) {
+      return { name, status: 'failed', detail: `The next alias returned HTTP ${response.status}.` };
+    }
+    versionFromLocation(response.headers.get('Location'));
+    return { name, status: 'passed' };
+  } catch (error) {
+    return {
+      name,
+      status: 'failed',
+      detail: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 async function checkBrowserExecution(config: SmokeConfig, version: string): Promise<CheckResult> {
@@ -223,7 +240,7 @@ async function main(): Promise<void> {
   const results: CheckResult[] = [];
   results.push({ name: 'Latest alias redirect', status: 'passed' });
   results.push(await run(() => checkExactAutoload(config, version), 'Exact autoload'));
-  results.push(await run(() => checkAliasRedirect(config, 'next'), 'Next alias redirect'));
+  results.push(await checkNextAlias(config));
   if (eagerComponent) {
     results.push(
       await run(() => checkEagerPreload(config, version, eagerComponent), 'Eager preload'),
