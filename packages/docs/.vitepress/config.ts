@@ -7,7 +7,7 @@ import { defineConfig } from 'vitepress';
 import pkg from '../package.json' with { type: 'json' };
 import { conceptCatalog } from './concepts/catalog.js';
 import { componentTaskLabels, referenceCatalog } from './reference/catalog.js';
-import type { ReferenceKind } from './reference/types.js';
+import type { ReferenceCatalogEntry, ReferenceKind } from './reference/types.js';
 
 export default defineConfig({
   vue: {
@@ -136,7 +136,7 @@ function getReferenceSidebar() {
     return referenceCatalog
       .filter((entry) => entry.kind === kind)
       .toSorted((a, b) => a.title.localeCompare(b.title))
-      .map((entry) => ({ text: entry.title, link: entry.path }));
+      .map(getReferenceSidebarItem);
   }
 
   const componentGroups = Object.entries(componentTaskLabels)
@@ -146,7 +146,7 @@ function getReferenceSidebar() {
       items: referenceCatalog
         .filter((entry) => entry.kind === 'component' && entry.primaryTask === task)
         .toSorted((a, b) => a.title.localeCompare(b.title))
-        .map((entry) => ({ text: entry.title, link: entry.path })),
+        .map(getReferenceSidebarItem),
     }))
     .filter((group) => group.items.length);
 
@@ -186,29 +186,53 @@ function getReferenceSidebar() {
   ];
 }
 
+function getReferenceSidebarItem(entry: ReferenceCatalogEntry) {
+  return {
+    ...generateSidebarLinkFromEntry(`${entry.path.slice(1)}index.md`, {
+      extractTitle: true,
+      collapsed: true,
+    }),
+    text: entry.title,
+    link: entry.path,
+  };
+}
+
 function generateSidebarLinksFromPath(
   globs: string | string[],
+  options: { extractTitle?: boolean; collapsed?: boolean } = {},
+) {
+  return glob.sync(globs).map((entry) => generateSidebarLinkFromEntry(entry, options));
+}
+
+function generateSidebarLinkFromEntry(
+  entry: string,
   {
     extractTitle = false,
     collapsed = undefined,
   }: { extractTitle?: boolean; collapsed?: boolean } = {},
 ) {
-  return glob.sync(globs).map((entry) => ({
+  const childEntries = entry.endsWith('/index.md')
+    ? [
+        ...glob.sync(entry.replace(/\/index\.md$/, '/*/index.md')),
+        ...glob
+          .sync(entry.replace(/\/index\.md$/, '/*.md'))
+          .filter((childEntry) => basename(childEntry) !== 'index.md'),
+      ]
+    : [];
+
+  return {
     text: extractTitle ? getEntryTitle(entry) : basename(dirname(entry)),
     link: withLeadingSlash(entry.replace(/\/index\.md$/, '/').replace(/\.md$/, '.html')),
-    items: entry.endsWith('/index.md')
-      ? [
-          ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*/index.md'), {
-            extractTitle: true,
-            collapsed: true,
-          }),
-          ...generateSidebarLinksFromPath(entry.replace(/\/index\.md$/, '/*[!index]*.md'), {
-            extractTitle: true,
-          }),
-        ].sort((a, b) => a.text.localeCompare(b.text))
-      : [],
+    items: childEntries
+      .map((childEntry) =>
+        generateSidebarLinkFromEntry(childEntry, {
+          extractTitle: true,
+          collapsed: childEntry.endsWith('/index.md') ? true : undefined,
+        }),
+      )
+      .sort((a, b) => a.text.localeCompare(b.text)),
     collapsed,
-  }));
+  };
 }
 
 function getEntryTitle(entry) {
