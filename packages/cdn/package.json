@@ -9,7 +9,9 @@
   ],
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "manifest:generate": "node scripts/generate-manifest.ts",
+    "manifest:check": "node scripts/generate-manifest.ts --check"
   },
   "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
   "license": "MIT",

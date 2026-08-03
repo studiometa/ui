@@ -10,6 +10,7 @@
     "noImplicitThis": true,
     "esModuleInterop": true,
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "paths": {
       "#private/*": ["./packages/ui/*"],
