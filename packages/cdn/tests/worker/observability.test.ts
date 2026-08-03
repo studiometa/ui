@@ -29,10 +29,15 @@ function syntheticBucket(): MemoryR2 {
   bucket.put(
     'versions.json',
     JSON.stringify({
-      schemaVersion: 1,
-      releases: ['1.2.0'],
-      channels: ['main-abcdef1'],
-      distTags: { latest: '1.2.0', next: 'main-abcdef1', main: 'main-abcdef1' },
+      schemaVersion: 2,
+      packages: {
+        ui: {
+          releases: ['1.2.0'],
+          channels: ['main-abcdef1'],
+          distTags: { latest: '1.2.0', next: 'main-abcdef1', main: 'main-abcdef1' },
+        },
+        'js-toolkit': { releases: [] },
+      },
     }),
   );
   const build = {
@@ -48,9 +53,9 @@ function syntheticBucket(): MemoryR2 {
     excludes: ['integrity.json'],
     files: { 'autoload.js': 'sha384-AAAA', 'build.json': 'sha384-AAAA' },
   };
-  bucket.put('releases/1.2.0/build.json', JSON.stringify(build));
-  bucket.put('releases/1.2.0/integrity.json', JSON.stringify(integrity));
-  bucket.put('releases/1.2.0/autoload.js', 'export const cdn = 1;');
+  bucket.put('releases/ui/1.2.0/build.json', JSON.stringify(build));
+  bucket.put('releases/ui/1.2.0/integrity.json', JSON.stringify(integrity));
+  bucket.put('releases/ui/1.2.0/autoload.js', 'export const cdn = 1;');
   return bucket;
 }
 

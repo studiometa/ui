@@ -1,4 +1,4 @@
-import type { ExactVersion, VersionsIndex } from './types.ts';
+import type { ExactVersion, PackageName, VersionsIndex } from './types.ts';
 
 const SEMVER_PATTERN =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
@@ -38,10 +38,8 @@ function isUniqueStringArray(
   );
 }
 
-export function parseVersionsIndex(value: unknown): VersionsIndex {
-  if (!isRecord(value) || value.schemaVersion !== 1) {
-    throw new Error('Unsupported versions index.');
-  }
+function validateUiPackage(value: unknown): void {
+  if (!isRecord(value)) throw new Error('Invalid ui package index.');
   if (!isUniqueStringArray(value.releases, (item) => parseSemver(item) !== undefined)) {
     throw new Error('Invalid releases index.');
   }
@@ -68,6 +66,23 @@ export function parseVersionsIndex(value: unknown): VersionsIndex {
       throw new Error('The next and main tags must name the same published immutable channel.');
     }
   }
+}
+
+function validateJsToolkitPackage(value: unknown): void {
+  // js-toolkit is exact-version only: an inventory of published releases with no channels or tags.
+  if (!isRecord(value)) throw new Error('Invalid js-toolkit package index.');
+  if (!isUniqueStringArray(value.releases, (item) => parseSemver(item) !== undefined)) {
+    throw new Error('Invalid js-toolkit releases index.');
+  }
+}
+
+export function parseVersionsIndex(value: unknown): VersionsIndex {
+  if (!isRecord(value) || value.schemaVersion !== 2) {
+    throw new Error('Unsupported versions index.');
+  }
+  if (!isRecord(value.packages)) throw new Error('Invalid packages index.');
+  validateUiPackage(value.packages.ui);
+  validateJsToolkitPackage(value.packages['js-toolkit']);
   return value as unknown as VersionsIndex;
 }
 
@@ -82,27 +97,47 @@ function compareStableVersions(left: string, right: string): number {
   return left.localeCompare(right);
 }
 
-function exactRelease(version: string): ExactVersion {
-  return { kind: 'release', version, objectPrefix: `releases/${version}` };
+function exactRelease(packageName: PackageName, version: string): ExactVersion {
+  return { kind: 'release', version, objectPrefix: `releases/${packageName}/${version}` };
 }
 
 function exactChannel(version: string): ExactVersion {
   return { kind: 'channel', version, objectPrefix: `channels/${version}` };
 }
 
-export function resolveVersion(index: VersionsIndex, requested: string): ExactVersion | undefined {
+/**
+ * Resolves a requested version for a package. The `ui` package keeps the full semantics — exact
+ * semver, immutable `main-<sha>` channels, the `latest`/`next`/`main` distribution tags, major and
+ * minor aliases, and (via a `latest` request) the versionless default. The `js-toolkit` package is
+ * exact-version only: it resolves solely to an exact semver present in its release inventory, so
+ * every alias, channel, and distribution tag (including `latest` and the versionless default) is a
+ * 404.
+ */
+export function resolveVersion(
+  index: VersionsIndex,
+  packageName: PackageName,
+  requested: string,
+): ExactVersion | undefined {
+  if (packageName === 'js-toolkit') {
+    if (parseSemver(requested) === undefined) return undefined;
+    return index.packages['js-toolkit'].releases.includes(requested)
+      ? exactRelease('js-toolkit', requested)
+      : undefined;
+  }
+
+  const ui = index.packages.ui;
   const parsed = parseSemver(requested);
   if (parsed) {
-    return index.releases.includes(requested) ? exactRelease(requested) : undefined;
+    return ui.releases.includes(requested) ? exactRelease('ui', requested) : undefined;
   }
   if (CHANNEL_PATTERN.test(requested)) {
-    return index.channels.includes(requested) ? exactChannel(requested) : undefined;
+    return ui.channels.includes(requested) ? exactChannel(requested) : undefined;
   }
   if (requested === 'latest') {
-    return index.distTags.latest ? exactRelease(index.distTags.latest) : undefined;
+    return ui.distTags.latest ? exactRelease('ui', ui.distTags.latest) : undefined;
   }
   if (requested === 'next' || requested === 'main') {
-    const channel = index.distTags[requested];
+    const channel = ui.distTags[requested];
     return channel ? exactChannel(channel) : undefined;
   }
 
@@ -110,7 +145,7 @@ export function resolveVersion(index: VersionsIndex, requested: string): ExactVe
   if (!alias) return undefined;
   const major = BigInt(alias[1]);
   const minor = alias[2] === undefined ? undefined : BigInt(alias[2]);
-  const matches = index.releases.filter((release) => {
+  const matches = ui.releases.filter((release) => {
     const version = parseSemver(release);
     return (
       version !== undefined &&
@@ -121,7 +156,7 @@ export function resolveVersion(index: VersionsIndex, requested: string): ExactVe
   });
   matches.sort(compareStableVersions);
   const resolved = matches.at(-1);
-  return resolved ? exactRelease(resolved) : undefined;
+  return resolved ? exactRelease('ui', resolved) : undefined;
 }
 
 export function isMutableVersion(requested: string, resolved: ExactVersion): boolean {

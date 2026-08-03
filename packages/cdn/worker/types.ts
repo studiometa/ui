@@ -21,14 +21,27 @@ export interface WorkerEnvironment {
   OBSERVABILITY_SAMPLE_RATE?: string;
 }
 
-export interface VersionsIndex {
-  schemaVersion: 1;
+export type PackageName = 'ui' | 'js-toolkit';
+
+export interface UiPackageIndex {
   releases: string[];
   channels: string[];
   distTags: {
     latest?: string;
     next?: string;
     main?: string;
+  };
+}
+
+export interface JsToolkitPackageIndex {
+  releases: string[];
+}
+
+export interface VersionsIndex {
+  schemaVersion: 2;
+  packages: {
+    ui: UiPackageIndex;
+    'js-toolkit': JsToolkitPackageIndex;
   };
 }
 
@@ -48,6 +61,7 @@ export interface BuildMetadata {
     name: string;
     version: string;
   };
+  dependencies?: Record<string, string>;
   entries: Record<string, BuildGraph>;
   components: Record<string, BuildComponent>;
   outputs: Record<string, unknown>;
@@ -68,6 +82,7 @@ export type ExactVersion =
   | { kind: 'channel'; version: string; objectPrefix: string };
 
 export interface ParsedRoute {
+  packageName: PackageName;
   requestedVersion: string;
   assetPath: string;
 }

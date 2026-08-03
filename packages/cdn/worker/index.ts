@@ -12,6 +12,7 @@ import type {
   BuildMetadata,
   ExactVersion,
   IntegrityMetadata,
+  PackageName,
   R2BucketLike,
   R2ObjectBodyLike,
   WorkerEnvironment,
@@ -20,7 +21,12 @@ import { isMutableVersion, parseVersionsIndex, resolveVersion } from './versions
 import { classifyVersion, emitObservation, ObservationRecorder } from './observability.ts';
 
 const MAX_LINK_HEADER_BYTES = 7_500;
-const PUBLIC_PACKAGE_NAME = '@studiometa/ui-cdn';
+// Each versioned package tree carries its own build identity so a release prefix can only be
+// validated against the package it claims to belong to.
+const PUBLIC_PACKAGE_NAMES: Record<PackageName, string> = {
+  ui: '@studiometa/ui-cdn',
+  'js-toolkit': '@studiometa/ui-cdn-js-toolkit',
+};
 const SAFE_METADATA_PATH = /^(?!\/)(?!.*(?:^|\/)\.\.?(?:\/|$))(?!.*\\)[0-9A-Za-z._@+/-]+$/;
 
 interface ReleaseMetadata {
@@ -57,6 +63,7 @@ function parseReleaseMetadata(
   buildValue: unknown,
   integrityValue: unknown,
   exact: ExactVersion,
+  expectedPackageName: string,
 ): ReleaseMetadata | undefined {
   if (
     !isRecord(integrityValue) ||
@@ -86,7 +93,7 @@ function parseReleaseMetadata(
     !isRecord(buildValue) ||
     buildValue.schemaVersion !== 1 ||
     !isRecord(buildValue.package) ||
-    buildValue.package.name !== PUBLIC_PACKAGE_NAME ||
+    buildValue.package.name !== expectedPackageName ||
     typeof buildValue.package.version !== 'string' ||
     !isRecord(buildValue.entries) ||
     !isRecord(buildValue.components) ||
@@ -124,25 +131,28 @@ function parseReleaseMetadata(
 async function loadRelease(
   bucket: R2BucketLike,
   exact: ExactVersion,
+  expectedPackageName: string,
 ): Promise<ReleaseMetadata | undefined> {
   const [build, integrity] = await Promise.all([
     readJsonObject(bucket, `${exact.objectPrefix}/build.json`),
     readJsonObject(bucket, `${exact.objectPrefix}/integrity.json`),
   ]);
   if (build === undefined || integrity === undefined) return undefined;
-  return parseReleaseMetadata(build, integrity, exact);
+  return parseReleaseMetadata(build, integrity, exact, expectedPackageName);
 }
 
 function canonicalLocation(
   url: URL,
+  packageName: PackageName,
   exactVersion: string,
   assetPath: string,
   search: string,
 ): string {
-  return `${url.origin}/ui@${exactVersion}/${assetPath}${search}`;
+  return `${url.origin}/${packageName}@${exactVersion}/${assetPath}${search}`;
 }
 
 function preloadHeader(
+  packageName: PackageName,
   exactVersion: string,
   components: readonly string[],
   metadata: ReleaseMetadata,
@@ -158,7 +168,7 @@ function preloadHeader(
   let length = 0;
   for (const path of paths) {
     if (!metadata.files.has(path)) continue;
-    const link = `</ui@${exactVersion}/${path}>; rel=modulepreload`;
+    const link = `</${packageName}@${exactVersion}/${path}>; rel=modulepreload`;
     const nextLength = length + (links.length > 0 ? 2 : 0) + link.length;
     if (nextLength > MAX_LINK_HEADER_BYTES) break;
     links.push(link);
@@ -196,11 +206,15 @@ async function handleRequest(
   }
   recorder.r2('index', 'hit');
   const versions = parseVersionsIndex(indexValue);
-  const exact = resolveVersion(versions, route.requestedVersion);
+  const exact = resolveVersion(versions, route.packageName, route.requestedVersion);
   recorder.versionKind(classifyVersion(route.requestedVersion, exact));
   if (!exact) return errorResponse(404);
 
-  const metadata = await loadRelease(environment.ASSETS, exact);
+  const metadata = await loadRelease(
+    environment.ASSETS,
+    exact,
+    PUBLIC_PACKAGE_NAMES[route.packageName],
+  );
   recorder.r2('release-metadata', metadata ? 'hit' : 'miss');
   if (!metadata || !metadata.files.has(route.assetPath)) return errorResponse(404);
 
@@ -211,7 +225,9 @@ async function handleRequest(
   );
   recorder.componentCount(query.components.length);
   if (isMutableVersion(route.requestedVersion, exact) || !query.canonical) {
-    return redirectResponse(canonicalLocation(url, exact.version, route.assetPath, query.search));
+    return redirectResponse(
+      canonicalLocation(url, route.packageName, exact.version, route.assetPath, query.search),
+    );
   }
 
   const object = await environment.ASSETS.get(`${exact.objectPrefix}/${route.assetPath}`);
@@ -221,7 +237,7 @@ async function handleRequest(
   }
   recorder.r2('asset', 'hit');
   const etag = objectEtag(object);
-  const link = preloadHeader(exact.version, query.components, metadata);
+  const link = preloadHeader(route.packageName, exact.version, query.components, metadata);
   const headers = responseHeaders({
     'Cache-Control': IMMUTABLE_CACHE_CONTROL,
     'Content-Type': contentType(route.assetPath),

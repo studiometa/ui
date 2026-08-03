@@ -78,6 +78,37 @@ describe('CDN Worker version routing', () => {
     expect((await request('/ui@4.0.0/autoload.js')).status).toBe(404);
     expect((await request('/ui@1.0.0/not-published.js')).status).toBe(404);
   });
+
+  it('serves the manually-importable ui barrel', async () => {
+    const response = await request('/ui@1.2.0/index.js');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    expect(await response.text()).toBe(fixture.files['index.js']);
+  });
+});
+
+describe('CDN Worker js-toolkit package routing', () => {
+  it('serves the exact-versioned js-toolkit index and utils entries', async () => {
+    const index = await request(`/js-toolkit@${fixture.jsToolkitVersion}/index.js`);
+    const utils = await request(`/js-toolkit@${fixture.jsToolkitVersion}/utils/index.js`);
+
+    expect(index.status).toBe(200);
+    expect(index.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    expect(index.headers.get('Cache-Control')).toBe(IMMUTABLE_CACHE_CONTROL);
+    expectCrossOriginHeaders(index);
+
+    expect(utils.status).toBe(200);
+    expect(utils.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+  });
+
+  it('resolves js-toolkit by exact semver only, never by alias or the versionless default', async () => {
+    const major = fixture.jsToolkitVersion.split('.')[0];
+    expect((await request('/js-toolkit/index.js')).status).toBe(404);
+    expect((await request('/js-toolkit@latest/index.js')).status).toBe(404);
+    expect((await request(`/js-toolkit@${major}/index.js`)).status).toBe(404);
+    expect((await request('/js-toolkit@main-abcdef1/index.js')).status).toBe(404);
+    expect((await request('/js-toolkit@9.9.9/index.js')).status).toBe(404);
+  });
 });
 
 describe('CDN Worker eager component queries', () => {
@@ -255,31 +286,31 @@ describe('CDN Worker storage failures', () => {
     const original = fixture.bucket.objects.get('versions.json') as NonNullable<
       ReturnType<typeof fixture.bucket.objects.get>
     >;
-    fixture.bucket.put('versions.json', '{"schemaVersion":2}');
+    fixture.bucket.put('versions.json', '{"schemaVersion":1}');
     expect((await request('/ui@1.2.0/autoload.js')).status).toBe(502);
 
     const divergentChannels = structuredClone(
       JSON.parse(original.contents) as {
-        distTags: { main: string };
+        packages: { ui: { distTags: { main: string } } };
       },
     );
-    divergentChannels.distTags.main = 'main-abcdef1';
+    divergentChannels.packages.ui.distTags.main = 'main-abcdef1';
     fixture.bucket.put('versions.json', JSON.stringify(divergentChannels));
     expect((await request('/ui@main/autoload.js')).status).toBe(502);
     fixture.bucket.objects.set('versions.json', original);
   });
 
   it('distinguishes missing assets from R2 metadata and asset failures', async () => {
-    fixture.bucket.failures.add('releases/1.2.0/build.json');
+    fixture.bucket.failures.add('releases/ui/1.2.0/build.json');
     expect((await request('/ui@1.2.0/autoload.js')).status).toBe(502);
-    fixture.bucket.failures.delete('releases/1.2.0/build.json');
+    fixture.bucket.failures.delete('releases/ui/1.2.0/build.json');
 
-    fixture.bucket.failures.add('releases/1.2.0/autoload.js');
+    fixture.bucket.failures.add('releases/ui/1.2.0/autoload.js');
     expect((await request('/ui@1.2.0/autoload.js')).status).toBe(502);
-    fixture.bucket.failures.delete('releases/1.2.0/autoload.js');
+    fixture.bucket.failures.delete('releases/ui/1.2.0/autoload.js');
 
-    fixture.bucket.put('releases/1.2.0/unknown.js', 'uploaded but not published');
+    fixture.bucket.put('releases/ui/1.2.0/unknown.js', 'uploaded but not published');
     expect((await request('/ui@1.2.0/unknown.js')).status).toBe(404);
-    fixture.bucket.objects.delete('releases/1.2.0/unknown.js');
+    fixture.bucket.objects.delete('releases/ui/1.2.0/unknown.js');
   });
 });

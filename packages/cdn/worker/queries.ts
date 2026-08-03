@@ -1,4 +1,6 @@
-import type { CanonicalQuery, ParsedRoute } from './types.ts';
+import type { CanonicalQuery, PackageName, ParsedRoute } from './types.ts';
+
+const PACKAGE_NAMES: ReadonlySet<PackageName> = new Set(['ui', 'js-toolkit']);
 
 const VERSION_TOKEN_PATTERN = /^[0-9A-Za-z.+-]+$/;
 const ASSET_SEGMENT_PATTERN = /^[0-9A-Za-z._@+-]+$/;
@@ -34,12 +36,13 @@ export function parseRoute(pathname: string): ParsedRoute {
   const packageSegment = segments[1];
   const separator = packageSegment.indexOf('@');
   const packageName = separator === -1 ? packageSegment : packageSegment.slice(0, separator);
-  if (packageName !== 'ui') {
+  if (!PACKAGE_NAMES.has(packageName as PackageName)) {
     throw new RequestValidationError('Unknown CDN package.', 404);
   }
 
-  // A versionless package segment (e.g. /ui/autoload.js) resolves to the latest stable release,
-  // redirecting to the exact version like the /ui@latest/ alias does.
+  // A versionless package segment (e.g. /ui/autoload.js) resolves to `latest`, which redirects to
+  // the exact version like the /ui@latest/ alias. For js-toolkit `latest` never resolves, so a
+  // versionless js-toolkit request is a 404 — js-toolkit is exact-version only.
   const requestedVersion = separator === -1 ? 'latest' : packageSegment.slice(separator + 1);
   if (!requestedVersion || !VERSION_TOKEN_PATTERN.test(requestedVersion)) {
     throw new RequestValidationError('The CDN version is malformed.');
@@ -52,7 +55,11 @@ export function parseRoute(pathname: string): ParsedRoute {
   ) {
     throw new RequestValidationError('The asset path is malformed.');
   }
-  return { requestedVersion, assetPath: assetSegments.join('/') };
+  return {
+    packageName: packageName as PackageName,
+    requestedVersion,
+    assetPath: assetSegments.join('/'),
+  };
 }
 
 export function canonicalizeQuery(
