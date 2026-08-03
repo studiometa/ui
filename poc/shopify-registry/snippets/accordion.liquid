@@ -1,0 +1,34 @@
+{%- comment -%}
+  Accordion — Liquid twin of @studiometa/ui `Accordion.twig`.
+
+  This emits the exact same data-* contract the published Accordion /
+  AccordionItem js-toolkit classes consume, so the JS drives it with zero
+  changes. In a real theme this snippet is rendered from a section whose
+  blocks build the `items` array.
+
+  Params:
+    items: array of { title, content, open }
+{%- endcomment -%}
+<div data-component="Accordion">
+  {%- for item in items -%}
+    <div data-component="AccordionItem"{% if item.open %} data-option-is-open{% endif %}>
+      <button
+        data-ref="btn"
+        type="button"
+        class="accordion__btn"
+        aria-expanded="{% if item.open %}true{% else %}false{% endif %}"
+      >
+        {{ item.title }}
+      </button>
+      <div
+        data-ref="container"
+        class="accordion__container"
+        {% unless item.open %}style="visibility: hidden; height: 0;"{% endunless %}
+      >
+        <div data-ref="content" aria-hidden="{% if item.open %}false{% else %}true{% endif %}">
+          {{ item.content }}
+        </div>
+      </div>
+    </div>
+  {%- endfor -%}
+</div>

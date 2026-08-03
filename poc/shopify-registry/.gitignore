@@ -1,0 +1,5 @@
+node_modules/
+# Build + render outputs (regenerate with `npm run build:barrel && npm run render`)
+assets/studiometa-ui.mjs
+index.html
+rendered-accordion.html

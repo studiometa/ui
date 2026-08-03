@@ -1,0 +1,42 @@
+{%- comment -%}
+  Disclosure — Liquid twin of @studiometa/ui `Disclosure.twig`.
+  Emits the data-* contract consumed by the Disclosure / DisclosureGroup JS.
+  The JS auto-wires aria-controls / aria-labelledby / ids, so the twin stays lean.
+
+  Params:
+    id:    unique prefix for this group
+    items: array of { title, content, open, disabled }
+{%- endcomment -%}
+<div data-component="DisclosureGroup" id="{{ id }}">
+  {%- for item in items -%}
+    {%- assign item_id = id | append: '-item-' | append: forloop.index -%}
+    <section
+      data-component="Disclosure"
+      {% if item.open %}data-option-open{% endif %}
+      {% if item.disabled %}data-option-disabled{% endif %}
+    >
+      <h3>
+        <button
+          id="{{ item_id }}-trigger"
+          type="button"
+          data-ref="trigger"
+          class="disclosure__trigger"
+          aria-controls="{{ item_id }}-panel"
+          aria-expanded="{% if item.open %}true{% else %}false{% endif %}"
+          {% if item.disabled %}disabled{% endif %}
+        >
+          {{ item.title }}
+        </button>
+      </h3>
+      <div
+        id="{{ item_id }}-panel"
+        data-ref="panel"
+        class="disclosure__panel"
+        aria-labelledby="{{ item_id }}-trigger"
+        {% unless item.open %}hidden{% endunless %}
+      >
+        {{ item.content }}
+      </div>
+    </section>
+  {%- endfor -%}
+</div>

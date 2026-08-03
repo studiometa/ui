@@ -1,0 +1,16 @@
+{
+  "name": "@studiometa/ui-shopify-registry-poc",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 proof-of-concept: distribute @studiometa/ui components to Shopify themes as Liquid twins hydrated by a DOM-scanning auto-loader.",
+  "scripts": {
+    "build:barrel": "esbuild barrel-entry.mjs --bundle --format=esm --platform=browser --target=es2022 --outfile=assets/studiometa-ui.mjs",
+    "render": "node render.mjs",
+    "serve": "python3 -m http.server 8899",
+    "start": "npm run build:barrel && npm run render && npm run serve"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.0",
+    "liquidjs": "^10.0.0"
+  }
+}
