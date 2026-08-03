@@ -12,6 +12,7 @@ Click a button to push a toast. Info and success toasts go to the polite region,
 <PreviewPlayground
   :html="() => import('./stories/basic/app.twig')"
   :script="() => import('./stories/basic/app.js?raw')"
+  :css="() => import('./stories/basic/app.css?raw')"
   />
 </llm-exclude>
 <llm-only>
@@ -20,6 +21,7 @@ Click a button to push a toast. Info and success toasts go to the polite region,
 
 <<< ./stories/basic/app.twig
 <<< ./stories/basic/app.js
+<<< ./stories/basic/app.css
 
 :::
 

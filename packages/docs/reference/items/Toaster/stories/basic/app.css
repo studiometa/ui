@@ -1,0 +1,52 @@
+/* Share one set of view-transition pseudos across every toast, while each
+   element keeps its own unique `view-transition-name` (set by the class). */
+.toast {
+  view-transition-class: toast;
+}
+.toast[data-type='info'] {
+  border-color: #3b82f6;
+}
+.toast[data-type='success'] {
+  border-color: #10b981;
+}
+.toast[data-type='error'] {
+  border-color: #ef4444;
+}
+
+/* Position/size interpolation for toasts that merely change slot. */
+::view-transition-group(.toast) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Slide ONLY genuinely entering/leaving toasts. `:only-child` matches when the
+   image-pair holds just a new (entering) or just an old (leaving) snapshot; a
+   persisting toast has both, so it keeps the default cross-fade and never
+   shimmies as the stack reflows around it. */
+::view-transition-new(.toast):only-child {
+  animation: toast-in 300ms ease-out both;
+}
+::view-transition-old(.toast):only-child {
+  animation: toast-out 200ms ease-in both;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* Honour reduced-motion: drop the slide, keep the (instant) state change. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(.toast),
+  ::view-transition-new(.toast):only-child,
+  ::view-transition-old(.toast):only-child {
+    animation: none;
+  }
+}
