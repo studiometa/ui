@@ -1,0 +1,103 @@
+<div class="flex flex-wrap gap-3 p-2">
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="Toaster->target.show('Heads up — an informational message.')"
+    class="px-4 py-2 rounded bg-blue-600 text-white font-semibold">
+    Info
+  </button>
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="Toaster->target.show('Your changes have been saved.', { type: 'success' })"
+    class="px-4 py-2 rounded bg-emerald-600 text-white font-semibold">
+    Success
+  </button>
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="Toaster->target.show('Could not save. Please try again.', { type: 'error' })"
+    class="px-4 py-2 rounded bg-red-600 text-white font-semibold">
+    Error
+  </button>
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="Toaster->[1, 2, 3].forEach(function (n) { target.show('Stacked notification ' + n + ' of 3.') })"
+    class="px-4 py-2 rounded bg-gray-900 text-white font-semibold">
+    Stack 3
+  </button>
+</div>
+
+{# A fixed, click-through positioning layer holding the two live regions and the
+   toast template. It carries NO aria-live itself — each region does.
+   `pointer-events-none` lets clicks fall through the empty layer; each toast
+   re-enables pointer events on itself. #}
+<div
+  data-component="Toaster"
+  class="pointer-events-none fixed inset-0 z-50 flex flex-col items-end justify-end gap-2 p-4 sm:p-6">
+
+  {# Polite region: info & success. Announced when the screen reader is idle. #}
+  <div
+    data-ref="polite"
+    aria-live="polite"
+    aria-atomic="false"
+    aria-relevant="additions"
+    class="flex w-full flex-col items-end gap-2"></div>
+
+  {# Assertive region: errors. Interrupts the screen reader. #}
+  <div
+    data-ref="assertive"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="false"
+    aria-relevant="additions"
+    class="flex w-full flex-col items-end gap-2"></div>
+
+  {# One toast, cloned per call. Plain DOM (no data-component) so there is
+     nothing to mount; `[data-message]` receives the text and `[data-close]`
+     dismisses. #}
+  <template data-ref="template">
+    <div class="toast pointer-events-auto flex w-80 max-w-[calc(100vw-3rem)] items-start gap-3 rounded-lg border-l-4 bg-white p-4 text-gray-900 shadow-lg ring-1 ring-black/5">
+      <p data-message class="min-w-0 flex-1 text-sm"></p>
+      <button
+        type="button"
+        data-close
+        aria-label="Dismiss notification"
+        class="-mr-1 -mt-1 shrink-0 rounded p-1 leading-none text-gray-400 transition-colors hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">
+        <span aria-hidden="true" class="text-xl">&times;</span>
+      </button>
+    </div>
+  </template>
+</div>
+
+<style>
+  /* Share one set of view-transition pseudos across every toast, while each
+     element keeps its own unique `view-transition-name` (set by the class). */
+  .toast { view-transition-class: toast; }
+  .toast[data-type='info'] { border-color: #3b82f6; }
+  .toast[data-type='success'] { border-color: #10b981; }
+  .toast[data-type='error'] { border-color: #ef4444; }
+
+  /* Position/size interpolation for toasts that merely change slot. */
+  ::view-transition-group(.toast) {
+    animation-duration: 300ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Slide ONLY genuinely entering/leaving toasts. `:only-child` matches when
+     the image-pair holds just a new (entering) or just an old (leaving)
+     snapshot; a persisting toast has both, so it keeps the default cross-fade
+     and never shimmies as the stack reflows around it. */
+  ::view-transition-new(.toast):only-child { animation: toast-in 300ms ease-out both; }
+  ::view-transition-old(.toast):only-child { animation: toast-out 200ms ease-in both; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(12px); } }
+  @keyframes toast-out { to { opacity: 0; transform: translateY(12px); } }
+
+  /* Honour reduced-motion: drop the slide, keep the (instant) state change. */
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(.toast),
+    ::view-transition-new(.toast):only-child,
+    ::view-transition-old(.toast):only-child { animation: none; }
+  }
+</style>

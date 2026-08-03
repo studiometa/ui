@@ -175,6 +175,8 @@
     "./Timer.js": "./Timer/Timer.ts",
     "./TimerProgress": "./Timer/TimerProgress.ts",
     "./TimerProgress.js": "./Timer/TimerProgress.ts",
+    "./Toaster": "./Toaster/Toaster.ts",
+    "./Toaster.js": "./Toaster/Toaster.ts",
     "./Track": "./Track/Track.ts",
     "./Track.js": "./Track/Track.ts",
     "./TrackContext": "./Track/TrackContext.ts",

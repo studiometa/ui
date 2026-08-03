@@ -83,6 +83,7 @@ test('components exports', () => {
       "Target",
       "Timer",
       "TimerProgress",
+      "Toaster",
       "Track",
       "TrackContext",
       "TrackShopify",
