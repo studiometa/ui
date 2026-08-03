@@ -58,13 +58,31 @@ afterEach(() => {
 });
 
 describe('CDN autoload', () => {
-  it('warns and stops when the marked script is missing, repeated, or conflicting', async () => {
+  it('starts discovery without a marked script (e.g. imported from a module) and does not warn', async () => {
+    const { startAutoload } = await import('../src/autoload.js');
+    const logger = { warn: vi.fn(), error: vi.fn() };
+
+    const runtime = startAutoload({
+      document: createDocument(), // no data-studiometa-ui script, as when imported from JS
+      globalObject: {},
+      version: '1.2.3',
+      manifest: {},
+      loaderDependencies: {
+        MutationObserver: undefined,
+        registerComponent: vi.fn(async () => []),
+        console: logger,
+      },
+      console: logger,
+    });
+
+    expect(runtime).toMatchObject({ packageName: '@studiometa/ui-cdn', version: '1.2.3' });
+    expect(logger.warn.mock.calls.flat().join(' ')).not.toContain('data-studiometa-ui');
+  });
+
+  it('warns and stops for repeated or conflicting marked scripts', async () => {
     const { startAutoload } = await import('../src/autoload.js');
     const logger = { warn: vi.fn() };
 
-    expect(
-      startAutoload({ document: createDocument(), globalObject: {}, console: logger }),
-    ).toBeUndefined();
     expect(
       startAutoload({
         document: createDocument('https://cdn.test/ui.js', 'https://cdn.test/ui.js'),
@@ -81,7 +99,6 @@ describe('CDN autoload', () => {
     ).toBeUndefined();
 
     expect(logger.warn.mock.calls.map(([message]) => message)).toEqual([
-      '[@studiometa/ui-cdn] No script marked with data-studiometa-ui was found.',
       '[@studiometa/ui-cdn] Repeated data-studiometa-ui scripts were found; loading stopped.',
       '[@studiometa/ui-cdn] Conflicting data-studiometa-ui scripts were found; loading stopped.',
     ]);

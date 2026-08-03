@@ -57,11 +57,9 @@ export function startAutoload(options: AutoloadOptions = {}): CdnRuntime | undef
   const logger = options.console ?? console;
   const scripts = [...documentObject.querySelectorAll<HTMLScriptElement>(SCRIPT_SELECTOR)];
 
-  if (scripts.length === 0) {
-    logger.warn(`${DIAGNOSTIC_PREFIX} No script marked with data-studiometa-ui was found.`);
-    return undefined;
-  }
-
+  // A marked script is optional: it only carries the eager `?components=` hint and anchors
+  // duplicate detection. When the module is imported directly from JavaScript there is no such
+  // script, so start component discovery silently instead of warning about a missing attribute.
   if (scripts.length > 1) {
     const sources = new Set(scripts.map((script) => script.src));
     logger.warn(
@@ -105,7 +103,10 @@ export function startAutoload(options: AutoloadOptions = {}): CdnRuntime | undef
     loader,
   };
   runtimeHost[RUNTIME_KEY] = runtime;
-  loader.start({ eagerComponents: getEagerComponents(scripts[0], logger) });
+  const markedScript = scripts[0];
+  loader.start({
+    eagerComponents: markedScript ? getEagerComponents(markedScript, logger) : [],
+  });
   return runtime;
 }
 
