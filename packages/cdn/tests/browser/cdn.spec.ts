@@ -296,9 +296,19 @@ test('duplicate and conflicting versions keep the first runtime and diagnose bot
 test('public source maps are reachable cross-origin', async ({ page, cdn }) => {
   const diagnostics = captureDiagnostics(page);
   await page.goto(cdn.fixtureUrl({ body: '', script: 'none' }));
-  const paths = [cdn.build.entries.autoload.sourceMap, `${cdn.build.components.Action.entry}.map`];
+  // js-toolkit is externalized, so a component's entry chunk can be a thin re-export shim whose
+  // map carries no original sources — the implementation (and its sources) lives in the shared
+  // preload chunks. Assert every map in the component's graph plus the autoload entry map is
+  // reachable and valid JSON, and that the graph as a whole is source-mapped (total sources > 0).
+  const action = cdn.build.components.Action;
+  const maps = [
+    cdn.build.entries.autoload.sourceMap,
+    `${action.entry}.map`,
+    ...action.preload.map((chunk) => `${chunk}.map`),
+  ];
 
-  for (const path of paths) {
+  let totalSources = 0;
+  for (const path of maps) {
     const result = await page.evaluate(async (url) => {
       const response = await fetch(url);
       const map = (await response.json()) as { sources: string[] };
@@ -308,13 +318,10 @@ test('public source maps are reachable cross-origin', async ({ page, cdn }) => {
         sources: map.sources.length,
       };
     }, cdn.exactUrl(path));
-    expect(result).toEqual({
-      contentType: 'application/json; charset=utf-8',
-      ok: true,
-      sources: expect.any(Number),
-    });
-    expect(result.sources).toBeGreaterThan(0);
+    expect(result).toMatchObject({ contentType: 'application/json; charset=utf-8', ok: true });
+    totalSources += result.sources;
   }
+  expect(totalSources).toBeGreaterThan(0);
   expectNoBrowserErrors(diagnostics);
 });
 

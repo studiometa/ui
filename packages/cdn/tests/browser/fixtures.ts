@@ -9,6 +9,7 @@ const outputDirectory = resolve(packageDirectory, 'dist');
 
 interface BuildMetadata {
   package: { version: string };
+  dependencies: Record<string, string>;
   build: { identifier: string };
   entries: Record<string, { path: string; sourceMap: string; preload: string[] }>;
   components: Record<
@@ -116,16 +117,63 @@ function finishLog(response: ServerResponse, entry: RequestLog): void {
   });
 }
 
+async function resolveWithin(
+  baseDirectory: string,
+  realBaseDirectory: string,
+  relativePath: string,
+): Promise<string | undefined> {
+  const realPath = await realpath(resolve(baseDirectory, relativePath)).catch(() => undefined);
+  if (
+    !realPath ||
+    (!realPath.startsWith(`${realBaseDirectory}${sep}`) && realPath !== realBaseDirectory)
+  ) {
+    return undefined;
+  }
+  return realPath;
+}
+
 async function createServers(): Promise<{ fixture: CdnServers; close: () => Promise<void> }> {
+  // The distribution is namespaced per package: releases/ui/<version>/ and
+  // releases/js-toolkit/<version>/. The ui bundle imports js-toolkit through the absolute
+  // /js-toolkit@<version>/ URL, so this server mirrors that namespace on a single origin — every
+  // consumer resolves the one js-toolkit URL, exactly like the real Worker.
+  const uiVersion = (
+    JSON.parse(await readFile(resolve(packageDirectory, 'package.json'), 'utf8')) as {
+      version: string;
+    }
+  ).version;
+  const uiOutputDirectory = resolve(outputDirectory, 'releases/ui', uiVersion);
   const build = JSON.parse(
-    await readFile(resolve(outputDirectory, 'build.json'), 'utf8'),
+    await readFile(resolve(uiOutputDirectory, 'build.json'), 'utf8'),
   ) as BuildMetadata;
-  const realOutputDirectory = await realpath(outputDirectory);
+  const jsToolkitVersion = build.dependencies['@studiometa/js-toolkit'];
+  const jsToolkitOutputDirectory = resolve(outputDirectory, 'releases/js-toolkit', jsToolkitVersion);
+  const realUiDirectory = await realpath(uiOutputDirectory);
+  const realJsToolkitDirectory = await realpath(jsToolkitOutputDirectory);
   const requests: RequestLog[] = [];
   const delays = new Map<string, number>();
   const encodedIdentifier = encodeURIComponent(build.build.identifier);
   let artifactOrigin = '';
   let pageOrigin = '';
+
+  const notFound = (response: ServerResponse): void => {
+    response.statusCode = 404;
+    addArtifactHeaders(response, MIME_TYPES['.txt']);
+    response.end('Not found.');
+  };
+  const send = async (
+    response: ServerResponse,
+    realPath: string,
+    relativePath: string,
+    contents: Buffer,
+  ): Promise<void> => {
+    const responseDelay = delays.get(relativePath) ?? 0;
+    if (responseDelay > 0) await delay(responseDelay);
+    response.statusCode = 200;
+    addArtifactHeaders(response, MIME_TYPES[extname(realPath)] ?? 'application/octet-stream');
+    response.setHeader('Server-Timing', `fixture;dur=${responseDelay}`);
+    response.end(contents);
+  };
 
   const artifactServer = createServer(async (request, response) => {
     const url = new URL(request.url ?? '/', artifactOrigin);
@@ -140,32 +188,27 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
       return;
     }
 
-    const match = url.pathname.match(/^\/cdn\/([^/]+)\/(.+)$/);
-    if (!match) {
-      response.statusCode = 404;
-      addArtifactHeaders(response, MIME_TYPES['.txt']);
-      response.end('Not found.');
+    // The externalized, versioned js-toolkit artifact at its own absolute URL namespace.
+    const toolkit = url.pathname.match(/^\/js-toolkit@([^/]+)\/(.+)$/);
+    if (toolkit) {
+      const version = decodeURIComponent(toolkit[1]);
+      const relativePath = decodeURIComponent(toolkit[2]);
+      const realPath =
+        version === jsToolkitVersion
+          ? await resolveWithin(jsToolkitOutputDirectory, realJsToolkitDirectory, relativePath)
+          : undefined;
+      if (!realPath) return notFound(response);
+      await send(response, realPath, relativePath, await readFile(realPath));
       return;
     }
+
+    const match = url.pathname.match(/^\/cdn\/([^/]+)\/(.+)$/);
+    if (!match) return notFound(response);
 
     const identifier = decodeURIComponent(match[1]);
     const relativePath = decodeURIComponent(match[2]);
-    const path = resolve(outputDirectory, relativePath);
-    const realPath = await realpath(path).catch(() => undefined);
-    if (
-      !realPath ||
-      (!realPath.startsWith(`${realOutputDirectory}${sep}`) && realPath !== realOutputDirectory)
-    ) {
-      response.statusCode = 404;
-      addArtifactHeaders(response, MIME_TYPES['.txt']);
-      response.end('Not found.');
-      return;
-    }
-
-    const responseDelay = delays.get(relativePath) ?? 0;
-    if (responseDelay > 0) {
-      await delay(responseDelay);
-    }
+    const realPath = await resolveWithin(uiOutputDirectory, realUiDirectory, relativePath);
+    if (!realPath) return notFound(response);
 
     let contents = await readFile(realPath);
     if (relativePath === build.entries.autoload.path && identifier !== build.build.identifier) {
@@ -180,10 +223,7 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
       contents = Buffer.from(source.replace(versionMarker, `version:"${identifier}"`));
     }
 
-    response.statusCode = 200;
-    addArtifactHeaders(response, MIME_TYPES[extname(relativePath)] ?? 'application/octet-stream');
-    response.setHeader('Server-Timing', `fixture;dur=${responseDelay}`);
-    response.end(contents);
+    await send(response, realPath, relativePath, contents);
   });
   artifactOrigin = await listen(artifactServer);
 
