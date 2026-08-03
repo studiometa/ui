@@ -8,8 +8,8 @@ Read this together with [infrastructure](./infrastructure.md) (bucket layout, `v
 
 A release is two things published in order:
 
-1. **A new immutable prefix** in the bucket holding a complete, verified build — `releases/<version>/` for a stable release, or `channels/main-<commit>/` for a preview channel.
-2. **An updated `versions.json`** at the bucket root that adds the new prefix to its inventory and, where appropriate, moves a distribution tag (`latest`, `next`, `main`) to point at it.
+1. **New immutable prefixes** in the bucket holding a complete, verified build — `releases/ui/<version>/` for a stable `@studiometa/ui` release (or `channels/main-<commit>/` for a preview channel), plus the shared `releases/js-toolkit/<jtVersion>/` artifact the ui build imports by URL. The js-toolkit artifact is immutable and published only when its exact version is not already present; an existing one is left untouched.
+2. **An updated `versions.json`** (`schemaVersion: 2`) at the bucket root that adds the ui version to `packages.ui.releases` (moving a distribution tag where appropriate) and the js-toolkit version to `packages["js-toolkit"].releases` when new.
 
 The index is the source of truth the Worker reads first. A prefix that exists in the bucket but is absent from `versions.json` is invisible to the Worker; a tag in `versions.json` that names a missing prefix would fail validation. The two must stay consistent, and the index must be updated last.
 
@@ -40,8 +40,8 @@ The publish step must preserve the append-only, index-last contract:
 
 1. **Upload to a temporary location.** Stage the built files under a non-served temporary key so a partially uploaded release is never reachable through the index.
 2. **Verify the upload.** Re-check every file against `integrity.json` (SHA-384) after upload. Confirm the file inventory matches `build.json` outputs. The upload is only considered good if every digest matches.
-3. **Copy into the final immutable prefix.** Move the verified files to `releases/<version>/` (or `channels/main-<commit>/`). This prefix is immutable: it is written once and never overwritten. If a prefix for that exact version already exists, stop — re-publishing an existing version is not allowed.
-4. **Update `versions.json` atomically.** Write a new index that adds the new prefix to `releases` (or `channels`) and, if this release should become current, sets the relevant distribution tag. `versions.json` is the only mutable object touched by a release, and it is written as a single object so the Worker never observes a half-updated index. Preserve the schema invariants: `latest` must name a published stable release with no pre-release identifier, and `next` must equal `main` and name a published channel.
+3. **Copy into the final immutable prefixes.** Move the verified files to `releases/ui/<version>/` (or `channels/main-<commit>/`) and, when the exact js-toolkit version is not yet present, to `releases/js-toolkit/<jtVersion>/`. These prefixes are immutable: each is written once and never overwritten. If a prefix for that exact version already exists, stop — re-publishing an existing version is not allowed (js-toolkit simply keeps its existing artifact). Publish js-toolkit before the ui tree that imports it becomes visible.
+4. **Update `versions.json` atomically.** Write a new `schemaVersion: 2` index that adds the ui version to `packages.ui.releases` (or `packages.ui.channels`) and the js-toolkit version to `packages["js-toolkit"].releases`, and, if this ui release should become current, sets the relevant distribution tag. `versions.json` is the only mutable object touched by a release, and it is written as a single object so the Worker never observes a half-updated index. Preserve the schema invariants: `latest` must name a published stable release with no pre-release identifier, and `next` must equal `main` and name a published channel.
 
 Uploading the immutable prefix before touching the index guarantees that every version the index references is already fully present and verified.
 

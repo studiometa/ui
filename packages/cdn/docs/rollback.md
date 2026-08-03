@@ -13,8 +13,10 @@ Consumers pinned to an exact version (`ui@1.9.0`) or an exact channel (`ui@main-
 
 ## Steps
 
-1. **Identify the target.** Choose the known-good version or channel to return to. It must already be listed in `versions.json` (`releases` or `channels`); rollback only re-points tags, it never introduces a new prefix.
-2. **Rewrite the index atomically.** Publish a new `versions.json` that sets `distTags.latest` (and/or `distTags.next` and `distTags.main` together) to the target, keeping every schema invariant: `latest` names a published stable release with no pre-release identifier, and `next` equals `main` and names a published channel. Write the index as a single object so the Worker never reads a half-updated state.
+Rollback applies to `@studiometa/ui` only: it is the sole package with distribution tags. `js-toolkit` has no tags — it is exact-version only — so there is nothing to roll back for it.
+
+1. **Identify the target.** Choose the known-good version or channel to return to. It must already be listed in `versions.json` under `packages.ui` (`releases` or `channels`); rollback only re-points tags, it never introduces a new prefix.
+2. **Rewrite the index atomically.** Publish a new `versions.json` that sets `packages.ui.distTags.latest` (and/or `packages.ui.distTags.next` and `.main` together) to the target, keeping every schema invariant: `latest` names a published stable release with no pre-release identifier, and `next` equals `main` and names a published channel. Write the index as a single object so the Worker never reads a half-updated state.
 3. **Purge the mutable cache.** The `307` alias redirects are cached with `max-age=300` (browser) and `s-maxage=3600` (edge). After moving a tag, purge the edge cache for the affected alias URLs (for example `https://cdn.studiometa.dev/ui@latest/autoload.js`) so the edge stops handing out the old redirect before its hour is up. Browsers may still hold a stale redirect for up to five minutes; this is expected and self-heals. Immutable exact URLs need no purge.
 4. **Verify through the Worker.** Fetch the alias and confirm the `307` now points at the target exact URL, and that the target `autoload.js` serves `200` with the immutable cache header. Confirm `build.json` under the target prefix reports the expected version.
 

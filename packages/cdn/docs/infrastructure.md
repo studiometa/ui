@@ -22,54 +22,73 @@ The CDN consists of:
 
 ### Object Structure
 
-The Worker reads a single `versions.json` index at the bucket root and serves each release from an immutable, per-version prefix. Stable releases live under `releases/<version>/` and preview builds under `channels/<channel>/` (channel names have the form `main-<commit>`):
+The Worker reads a single `versions.json` index at the bucket root and serves each release from an immutable, per-version prefix. Releases are namespaced by package: `@studiometa/ui` under `releases/ui/<version>/` and the shared `@studiometa/js-toolkit` runtime under `releases/js-toolkit/<version>/`. Preview builds live under `channels/<channel>/` (channel names have the form `main-<commit>`; only `ui` has channels). The URL maps directly onto the prefix: `/ui@<v>/<asset>` → `releases/ui/<v>/<asset>` and `/js-toolkit@<v>/<asset>` → `releases/js-toolkit/<v>/<asset>`.
 
 ```
 versions.json                          # Version index (bucket root)
 releases/
-└── 1.9.0/                             # Exact stable release (releases/<version>)
-    ├── autoload.js                    # Runtime entry point
-    ├── autoload.js.map                # Source map
-    ├── loader.js                      # Standalone loader entry
-    ├── manifest.js                    # Component manifest entry
-    ├── chunks/                        # Code-split component chunks
-    │   ├── Action-[hash].js
-    │   ├── Accordion-[hash].js
-    │   └── ...
-    ├── styles/                        # External stylesheets (not auto-injected)
-    │   ├── mapbox-gl.css
-    │   └── mapbox-gl-geocoder.css
-    ├── licenses/                      # Bundled third-party notices
-    │   ├── THIRD_PARTY_LICENSES.txt
-    │   ├── mapbox-gl-LICENSE.txt
-    │   └── mapbox-gl-geocoder-LICENSE
-    ├── build.json                     # Build metadata (schemaVersion 1)
-    └── integrity.json                 # SHA-384 digests (schemaVersion 1)
+├── ui/
+│   └── 1.9.0/                         # Exact stable ui release (releases/ui/<version>)
+│       ├── autoload.js                # Runtime entry point
+│       ├── autoload.js.map            # Source map
+│       ├── loader.js                  # Standalone loader entry
+│       ├── manifest.js                # Component manifest entry
+│       ├── index.js                   # Full @studiometa/ui barrel (manual import)
+│       ├── chunks/                    # Code-split component chunks
+│       │   ├── Action-[hash].js
+│       │   ├── Accordion-[hash].js
+│       │   └── ...
+│       ├── styles/                    # External stylesheets (not auto-injected)
+│       │   ├── mapbox-gl.css
+│       │   └── mapbox-gl-geocoder.css
+│       ├── licenses/                  # Bundled third-party notices
+│       │   ├── THIRD_PARTY_LICENSES.txt
+│       │   ├── mapbox-gl-LICENSE.txt
+│       │   └── mapbox-gl-geocoder-LICENSE
+│       ├── build.json                 # Build metadata (schemaVersion 1; records the js-toolkit version)
+│       └── integrity.json             # SHA-384 digests (schemaVersion 1)
+└── js-toolkit/
+    └── 3.8.0/                         # Exact js-toolkit artifact (releases/js-toolkit/<version>)
+        ├── index.js                   # @studiometa/js-toolkit
+        ├── utils/index.js             # @studiometa/js-toolkit/utils
+        ├── chunks/                    # js-toolkit's own shared chunks
+        ├── licenses/THIRD_PARTY_LICENSES.txt
+        ├── build.json
+        └── integrity.json
 channels/
-└── main-abcd123/                      # Exact preview channel (channels/<channel>)
-    └── ...                            # Same layout as a release prefix
+└── main-abcd123/                      # Exact ui preview channel (channels/<channel>)
+    └── ...                            # Same layout as a ui release prefix
 ```
 
-The Worker resolves an incoming version to an exact prefix, then reads `build.json` and `integrity.json` from that prefix and validates them before serving any asset. The prefix name is the exact version (for example `releases/1.9.0`); the commit hash and source-tree digest are recorded inside `build.json`, not in the prefix name.
+Every `@studiometa/ui` output — `autoload.js`, each component chunk and the `index.js` barrel — imports js-toolkit by the absolute, origin-relative URL `/js-toolkit@<version>/index.js` (and `/js-toolkit@<version>/utils/index.js`). Because browser module identity is keyed by URL, this guarantees exactly one js-toolkit instance and one component registry shared across the autoload runtime, every component, the ui barrel, and any manual `import '/js-toolkit@<version>/index.js'`.
+
+The Worker resolves an incoming version to an exact prefix, then reads `build.json` and `integrity.json` from that prefix and validates them before serving any asset. The prefix name is the exact version (for example `releases/ui/1.9.0`); the commit hash and source-tree digest are recorded inside `build.json`, not in the prefix name.
 
 ### Version Index
 
-`versions.json` uses `schemaVersion: 1` and lists the published stable releases, the published preview channels, and the mutable distribution tags:
+`versions.json` uses `schemaVersion: 2` and is namespaced per package. `ui` lists its published stable releases, published preview channels, and mutable distribution tags; `js-toolkit` is exact-version only and carries just a release inventory:
 
 ```json
 {
-  "schemaVersion": 1,
-  "releases": ["1.8.0", "1.9.0"],
-  "channels": ["main-abcd123"],
-  "distTags": {
-    "latest": "1.9.0",
-    "next": "main-abcd123",
-    "main": "main-abcd123"
+  "schemaVersion": 2,
+  "packages": {
+    "ui": {
+      "releases": ["1.8.0", "1.9.0"],
+      "channels": ["main-abcd123"],
+      "distTags": {
+        "latest": "1.9.0",
+        "next": "main-abcd123",
+        "main": "main-abcd123"
+      }
+    },
+    "js-toolkit": {
+      "releases": ["3.8.0"]
+    }
   }
 }
 ```
 
-The Worker enforces several invariants when parsing the index: `releases` entries must be valid semantic versions and unique; `channels` entries must match `main-<commit>` and be unique; `latest` must name a published stable release with no pre-release identifier; and `next` and `main` must name the same published channel. A `latest` alias resolves to `distTags.latest`; `next` and `main` both resolve to `distTags.next` (equivalently `distTags.main`). A bare major (`ui@1`) or major.minor (`ui@1.9`) alias resolves to the highest matching stable release in `releases`.
+The Worker enforces several invariants when parsing the index. For `ui`: `releases` entries must be valid, unique semantic versions; `channels` entries must match `main-<commit>` and be unique; `latest` must name a published stable release with no pre-release identifier; and `next` and `main` must name the same published channel. A `ui@latest` alias resolves to `packages.ui.distTags.latest`; `ui@next` and `ui@main` both resolve to `packages.ui.distTags.next` (equivalently `.main`); a bare major (`ui@1`) or major.minor (`ui@1.9`) alias resolves to the highest matching stable release; and a versionless `/ui/...` resolves to `latest`. For `js-toolkit`: only an exact semantic version present in `packages["js-toolkit"].releases` resolves — there are no channels, distribution tags, aliases, or versionless default, so `/js-toolkit/...`, `/js-toolkit@latest/...`, and `/js-toolkit@3/...` all `404`.
 
 ### Versioning Strategy
 
@@ -99,8 +118,8 @@ The Worker enforces several invariants when parsing the index: `releases` entrie
 
 The Worker requires these environment bindings:
 
-| Binding | Type | Value | Purpose |
-|---------|------|-------|---------|
+| Binding  | Type      | Value                      | Purpose                                 |
+| -------- | --------- | -------------------------- | --------------------------------------- |
 | `ASSETS` | R2 Bucket | `studiometa-ui-cdn-assets` | Read-only access to versioned artifacts |
 
 No additional environment variables or secrets are required.
@@ -108,6 +127,7 @@ No additional environment variables or secrets are required.
 ### CORS and Caching Behavior
 
 **CORS / CORP Headers** (set on every response):
+
 - `Access-Control-Allow-Origin: *` (public CDN)
 - `Access-Control-Allow-Methods: GET, HEAD, OPTIONS`
 - `Access-Control-Allow-Headers: If-None-Match`
@@ -117,6 +137,7 @@ No additional environment variables or secrets are required.
 `OPTIONS` preflight returns `204`. Only `GET`, `HEAD`, and `OPTIONS` are allowed; any other method returns `405` with an `Allow` header.
 
 **Cache Control:**
+
 - **Immutable assets** (exact release or exact channel): `Cache-Control: public, max-age=31536000, immutable` (1 year).
 - **Mutable redirects** (alias and distribution-tag lookups, served as `307`): `Cache-Control: public, max-age=300, s-maxage=3600` — 5 minutes in the browser, 1 hour at the shared edge cache.
 - **Error responses**: `Cache-Control: no-store`.
@@ -152,7 +173,7 @@ No deployment has been performed. This document describes the intended topology 
 The CDN bundles Mapbox GL JS and the Mapbox geocoder library for distribution. Public redistribution of these components requires explicit legal review against:
 
 - Mapbox GL JS license terms
-- Mapbox geocoder license terms  
+- Mapbox geocoder license terms
 - Current Mapbox service terms
 - Redistribution clauses and attribution requirements
 
