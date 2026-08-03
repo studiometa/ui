@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Toaster:** add the `Toaster` component — a headless notifications region built on two `aria-live` regions so toasts are announced without moving focus, with a pausable auto-dismiss timer and stacking animated through the `viewTransition` scheduler ([#572](https://github.com/studiometa/ui/pull/572))
+
 ## [v1.9.0](https://github.com/studiometa/ui/compare/1.8.0..1.9.0) (2026-07-29)
 
 This release promotes the `1.9.0` beta line to stable. It bundles every change published across `1.9.0-beta.0` through `1.9.0-beta.5` — see the sections below for the per-beta breakdown and pull request references.
