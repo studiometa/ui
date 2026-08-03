@@ -1,0 +1,40 @@
+<button
+  type="button"
+  id="tip-trigger"
+  data-component="Action"
+  data-on:mouseenter="Popover(#tip)->target.open()"
+  data-on:mouseleave="Popover(#tip)->target.close()"
+  data-on:focus="Popover(#tip)->target.open()"
+  data-on:blur="Popover(#tip)->target.close()"
+  aria-describedby="tip"
+  class="px-4 py-2 rounded border border-current">
+  Hover / focus me
+</button>
+
+{# A tooltip is the same primitive, opened on hover/focus instead of click. #}
+<div popover="manual" id="tip" role="tooltip" data-component="Popover">
+  <div
+    data-component="Transition"
+    data-option-enter-active="transition duration-150 ease-out"
+    data-option-enter-from="opacity-0"
+    data-option-leave-active="transition duration-100 ease-in"
+    data-option-leave-to="opacity-0"
+    data-option-leave-keep
+    class="px-2.5 py-1.5 rounded-md bg-gray-900 text-white text-sm shadow-lg opacity-0">
+    A headless tooltip, positioned with your own CSS.
+  </div>
+</div>
+
+<style>
+  #tip-trigger { anchor-name: --tip; }
+  #tip {
+    position: fixed;
+    inset: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    position-anchor: --tip;
+    position-area: top;
+    margin: 0 0 0.5rem;
+  }
+</style>

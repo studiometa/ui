@@ -1,0 +1,47 @@
+<button
+  type="button"
+  id="menu-trigger"
+  data-component="Action"
+  data-on:click="Popover(#menu)->target.toggle()"
+  aria-haspopup="true"
+  aria-controls="menu"
+  class="px-4 py-2 rounded bg-emerald-600 text-white font-semibold">
+  Menu &#9662;
+</button>
+
+{# `popover="manual"` so the component owns show/hide and the enter/leave
+   transitions always play. Esc and the items close it, wired with Action. #}
+<div
+  popover="manual"
+  id="menu"
+  data-component="Action Popover"
+  data-on:keydown="event.key === 'Escape' && Popover.close()">
+  <div
+    data-component="Transition"
+    data-option-enter-active="transition duration-200 ease-out"
+    data-option-enter-from="opacity-0"
+    data-option-leave-active="transition duration-150 ease-in"
+    data-option-leave-to="opacity-0"
+    data-option-leave-keep
+    class="min-w-48 p-2 rounded-lg bg-white text-black shadow-xl ring-1 ring-black/10 opacity-0">
+    <a href="#" data-component="Action" data-on:click="Popover(#menu)->target.close()" class="block px-3 py-2 rounded hover:bg-black/5">Profile</a>
+    <a href="#" data-component="Action" data-on:click="Popover(#menu)->target.close()" class="block px-3 py-2 rounded hover:bg-black/5">Settings</a>
+    <a href="#" data-component="Action" data-on:click="Popover(#menu)->target.close()" class="block px-3 py-2 rounded hover:bg-black/5">Sign out</a>
+  </div>
+</div>
+
+<style>
+  /* Headless popover host: drop the UA overlay styles, then position it
+     yourself — here with native CSS anchor positioning. */
+  #menu-trigger { anchor-name: --menu; }
+  #menu {
+    position: fixed;
+    inset: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    position-anchor: --menu;
+    position-area: bottom span-right;
+    margin: 0.5rem 0 0;
+  }
+</style>

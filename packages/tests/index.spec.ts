@@ -60,6 +60,7 @@ test('components exports', () => {
       "Modal",
       "ModalWithTransition",
       "Panel",
+      "Popover",
       "PrefetchWhenOver",
       "PrefetchWhenVisible",
       "ScrollAnimation",
