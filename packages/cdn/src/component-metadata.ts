@@ -113,6 +113,8 @@ const uiComponents: readonly CuratedComponentMetadata[] = [
   { token: 'Tabs', group: 'tabs' },
   { token: 'Timer', group: 'timer' },
   { token: 'TimerProgress', group: 'timer' },
+  { token: 'Toast', group: 'toaster' },
+  { token: 'Toaster', group: 'toaster', children: ['Toast'] },
   { token: 'Track', group: 'track' },
   { token: 'TrackContext', group: 'track' },
   { token: 'TrackShopify', group: 'track', integrations: ['shopify'] },
