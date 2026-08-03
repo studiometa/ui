@@ -1,15 +1,31 @@
+import { readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { createS3ObjectStore, loadObjectStoreConfig } from './lib/object-store.ts';
+import {
+  createS3ObjectStore,
+  loadObjectStoreConfig,
+  type ObjectStore,
+} from './lib/object-store.ts';
 import {
   publish,
   readArtifact,
   validatePublishability,
+  type Artifact,
   type PublishTarget,
 } from './lib/publication.ts';
 import { loadCloudflarePurgeConfig, purgeMutableAliases } from './lib/cloudflare.ts';
 
 const packageDirectory = resolve(new URL('.', import.meta.url).pathname, '..');
+
+/** Resolves the single versioned tree directory a build emitted under a package prefix. */
+async function singleTreeDirectory(root: string): Promise<{ version: string; directory: string }> {
+  const entries = await readdir(root, { withFileTypes: true });
+  const versions = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+  if (versions.length !== 1) {
+    throw new Error(`Expected exactly one versioned tree under ${root}, found ${versions.length}.`);
+  }
+  return { version: versions[0], directory: resolve(root, versions[0]) };
+}
 
 const HELP = `Usage: node scripts/publish.ts [options]
 
@@ -27,6 +43,30 @@ Environment:
   CDN_MAPBOX_REDISTRIBUTION_APPROVED=true                                          (legal gate)
   CDN_CLOUDFLARE_API_TOKEN, CDN_CLOUDFLARE_ZONE_ID, CDN_PUBLIC_BASE_URL            (optional purge)
 `;
+
+/**
+ * Publishes the immutable js-toolkit tree unless the exact version is already present. js-toolkit
+ * releases are immutable and never overwritten; an existing version is left untouched and its
+ * release inventory entry is preserved.
+ */
+async function ensureJsToolkitPublished(
+  store: ObjectStore,
+  artifact: Artifact,
+  version: string,
+  log: (message: string) => void,
+): Promise<void> {
+  if ((await store.head(`releases/js-toolkit/${version}/build.json`)) !== undefined) {
+    log(`js-toolkit ${version} is already published; leaving it untouched.`);
+    return;
+  }
+  const result = await publish(
+    store,
+    artifact,
+    { kind: 'release', packageName: 'js-toolkit', version },
+    { log },
+  );
+  log(`Published js-toolkit ${result.identity} to ${result.finalPrefix}.`);
+}
 
 async function main(): Promise<void> {
   const { values } = parseArgs({
@@ -51,20 +91,31 @@ async function main(): Promise<void> {
   }
 
   const outputDirectory = resolve(packageDirectory, values['output-dir'] ?? 'dist');
-  const artifact = await readArtifact(outputDirectory);
-  validatePublishability(artifact.build, {
+
+  const uiTree = await singleTreeDirectory(resolve(outputDirectory, 'releases/ui'));
+  const jsToolkitTree = await singleTreeDirectory(resolve(outputDirectory, 'releases/js-toolkit'));
+  const uiArtifact = await readArtifact(uiTree.directory);
+  const jsToolkitArtifact = await readArtifact(jsToolkitTree.directory);
+
+  // The ui build carries the Mapbox redistribution gate; the js-toolkit build only needs to be
+  // clean and publishable. Both trees come from the same source state.
+  validatePublishability(uiArtifact.build, {
     requireClean: true,
     mapboxRedistributionApproved: process.env.CDN_MAPBOX_REDISTRIBUTION_APPROVED === 'true',
   });
+  validatePublishability(jsToolkitArtifact.build, {
+    requireClean: true,
+    mapboxRedistributionApproved: true,
+  });
 
-  let target: PublishTarget;
+  let uiTarget: PublishTarget;
   let mutableAliases: string[];
   if (values['git-tag']) {
-    target = { kind: 'release', version: values['git-tag'] };
+    uiTarget = { kind: 'release', packageName: 'ui', version: values['git-tag'] };
     mutableAliases = ['ui@latest/autoload.js'];
   } else if (values.channel === 'main') {
-    const commit = values.commit ?? artifact.build.build.commit;
-    target = { kind: 'channel', commit };
+    const commit = values.commit ?? uiArtifact.build.build.commit;
+    uiTarget = { kind: 'channel', commit };
     mutableAliases = ['ui@next/autoload.js', 'ui@main/autoload.js'];
   } else {
     throw new Error(
@@ -73,9 +124,15 @@ async function main(): Promise<void> {
   }
 
   const store = createS3ObjectStore(loadObjectStoreConfig(process.env));
-  const result = await publish(store, artifact, target, {
-    log: (message) => process.stdout.write(`${message}\n`),
-  });
+  function log(message: string): void {
+    process.stdout.write(`${message}\n`);
+  }
+
+  // js-toolkit is an immutable, shared artifact: publish it once, and only if the exact version is
+  // not already present. It must exist before the ui tree that imports it becomes visible.
+  await ensureJsToolkitPublished(store, jsToolkitArtifact, jsToolkitTree.version, log);
+
+  const result = await publish(store, uiArtifact, uiTarget, { log });
   process.stdout.write(`Published ${result.identity} to ${result.finalPrefix}.\n`);
 
   const purge = loadCloudflarePurgeConfig(process.env);

@@ -13,10 +13,15 @@ import { makeArtifact, MemoryObjectStore, seedVersionsIndex } from './store-fixt
 
 function seed(): WorkingVersionsIndex {
   return {
-    schemaVersion: 1,
-    releases: ['1.0.0', '2.0.0'],
-    channels: ['main-000000000001', 'main-000000000002'],
-    distTags: { latest: '2.0.0', next: 'main-000000000002', main: 'main-000000000002' },
+    schemaVersion: 2,
+    packages: {
+      ui: {
+        releases: ['1.0.0', '2.0.0'],
+        channels: ['main-000000000001', 'main-000000000002'],
+        distTags: { latest: '2.0.0', next: 'main-000000000002', main: 'main-000000000002' },
+      },
+      'js-toolkit': { releases: ['3.8.0'] },
+    },
   };
 }
 
@@ -26,16 +31,16 @@ function seededStore(): MemoryObjectStore {
   return store;
 }
 
-const releaseTarget: PublishTarget = { kind: 'release', version: '2.1.0' };
+const releaseTarget: PublishTarget = { kind: 'release', packageName: 'ui', version: '2.1.0' };
 
 describe('CDN publication', () => {
-  it('stages, verifies, copies and finalizes a stable release before touching versions.json', async () => {
+  it('stages, verifies, copies and finalizes a stable ui release before touching versions.json', async () => {
     const store = seededStore();
     const result = await publish(store, makeArtifact(), releaseTarget, { publicationId: 'pub1' });
 
-    expect(result.finalPrefix).toBe('releases/2.1.0');
-    expect(store.objects.has('releases/2.1.0/autoload.js')).toBe(true);
-    expect(store.objects.has('releases/2.1.0/build.json')).toBe(true);
+    expect(result.finalPrefix).toBe('releases/ui/2.1.0');
+    expect(store.objects.has('releases/ui/2.1.0/autoload.js')).toBe(true);
+    expect(store.objects.has('releases/ui/2.1.0/build.json')).toBe(true);
 
     // versions.json is written only after every final copy is verified.
     const versionsPut = store.indexOfPut('versions.json');
@@ -52,7 +57,7 @@ describe('CDN publication', () => {
     expect(firstDelete).toBeGreaterThan(versionsPut);
 
     // The resulting index advances latest and stays valid for the Worker.
-    expect(result.index.distTags.latest).toBe('2.1.0');
+    expect(result.index.packages.ui.distTags.latest).toBe('2.1.0');
     expect(() => parseVersionsIndex(result.index)).not.toThrow();
   });
 
@@ -60,16 +65,32 @@ describe('CDN publication', () => {
     const stable = await publish(seededStore(), makeArtifact(), releaseTarget, {
       publicationId: 'p',
     });
-    expect(stable.index.distTags.latest).toBe('2.1.0');
+    expect(stable.index.packages.ui.distTags.latest).toBe('2.1.0');
 
     const prerelease = await publish(
       seededStore(),
       makeArtifact({ version: '2.2.0-beta.1' }),
-      { kind: 'release', version: '2.2.0-beta.1' },
+      { kind: 'release', packageName: 'ui', version: '2.2.0-beta.1' },
       { publicationId: 'p' },
     );
-    expect(prerelease.index.distTags.latest).toBe('2.0.0');
-    expect(prerelease.index.releases).toContain('2.2.0-beta.1');
+    expect(prerelease.index.packages.ui.distTags.latest).toBe('2.0.0');
+    expect(prerelease.index.packages.ui.releases).toContain('2.2.0-beta.1');
+  });
+
+  it('publishes an immutable js-toolkit release into its own namespaced prefix', async () => {
+    const store = seededStore();
+    const result = await publish(
+      store,
+      makeArtifact({ version: '3.9.0' }),
+      { kind: 'release', packageName: 'js-toolkit', version: '3.9.0' },
+      { publicationId: 'jt' },
+    );
+    expect(result.finalPrefix).toBe('releases/js-toolkit/3.9.0');
+    expect(store.objects.has('releases/js-toolkit/3.9.0/build.json')).toBe(true);
+    expect(result.index.packages['js-toolkit'].releases).toContain('3.9.0');
+    // js-toolkit has no distribution tags, so nothing else moves.
+    expect(result.index.packages.ui.distTags.latest).toBe('2.0.0');
+    expect(() => parseVersionsIndex(result.index)).not.toThrow();
   });
 
   it('publishes a main channel and moves next and main together', async () => {
@@ -81,15 +102,15 @@ describe('CDN publication', () => {
       { publicationId: 'chan' },
     );
     expect(result.identity).toBe('main-bbbbbbbbbbbb');
-    expect(result.index.distTags.next).toBe('main-bbbbbbbbbbbb');
-    expect(result.index.distTags.main).toBe('main-bbbbbbbbbbbb');
+    expect(result.index.packages.ui.distTags.next).toBe('main-bbbbbbbbbbbb');
+    expect(result.index.packages.ui.distTags.main).toBe('main-bbbbbbbbbbbb');
     expect(store.objects.has('channels/main-bbbbbbbbbbbb/build.json')).toBe(true);
     expect(() => parseVersionsIndex(result.index)).not.toThrow();
   });
 
   it('refuses to overwrite an already published immutable prefix', async () => {
     const store = seededStore();
-    store.objects.set('releases/2.1.0/build.json', {
+    store.objects.set('releases/ui/2.1.0/build.json', {
       body: new Uint8Array(),
       sha384: 'sha384-existing',
     });
@@ -105,7 +126,7 @@ describe('CDN publication', () => {
       publish(store, makeArtifact(), releaseTarget, { publicationId: 'pub1' }),
     ).rejects.toThrow(/Injected upload failure/);
 
-    expect(store.objects.has('releases/2.1.0/build.json')).toBe(false);
+    expect(store.objects.has('releases/ui/2.1.0/build.json')).toBe(false);
     expect(store.keysWithPrefix('tmp/pub1/').length).toBeGreaterThan(0);
     expect(store.indexOfPut('versions.json')).toBe(-1);
   });
@@ -116,13 +137,13 @@ describe('CDN publication', () => {
     await expect(
       publish(store, makeArtifact(), releaseTarget, { publicationId: 'pub1' }),
     ).rejects.toThrow(/verification failed/);
-    expect(store.objects.has('releases/2.1.0/autoload.js')).toBe(false);
+    expect(store.objects.has('releases/ui/2.1.0/autoload.js')).toBe(false);
     expect(store.keysWithPrefix('tmp/pub1/').length).toBeGreaterThan(0);
   });
 
   it('rejects a corrupted final copy', async () => {
     const store = seededStore();
-    store.corruptKeys.add('releases/2.1.0/autoload.js');
+    store.corruptKeys.add('releases/ui/2.1.0/autoload.js');
     await expect(
       publish(store, makeArtifact(), releaseTarget, { publicationId: 'pub1' }),
     ).rejects.toThrow(/Final upload verification failed/);
@@ -178,7 +199,7 @@ describe('publishability gates', () => {
 describe('CDN rollback', () => {
   function rollbackStore(): MemoryObjectStore {
     const store = seededStore();
-    store.objects.set('releases/1.0.0/build.json', { body: new Uint8Array(), sha384: 'x' });
+    store.objects.set('releases/ui/1.0.0/build.json', { body: new Uint8Array(), sha384: 'x' });
     store.objects.set('channels/main-000000000001/build.json', {
       body: new Uint8Array(),
       sha384: 'x',
@@ -189,7 +210,7 @@ describe('CDN rollback', () => {
   it('repoints latest at an older indexed release without touching immutable objects', async () => {
     const store = rollbackStore();
     const result = await rollback(store, { kind: 'release', version: '1.0.0' });
-    expect(result.index.distTags.latest).toBe('1.0.0');
+    expect(result.index.packages.ui.distTags.latest).toBe('1.0.0');
     expect(store.operations.every((entry) => entry.op !== 'copy' && entry.op !== 'delete')).toBe(
       true,
     );
@@ -202,8 +223,8 @@ describe('CDN rollback', () => {
       kind: 'channel',
       channelId: 'main-000000000001',
     });
-    expect(result.index.distTags.next).toBe('main-000000000001');
-    expect(result.index.distTags.main).toBe('main-000000000001');
+    expect(result.index.packages.ui.distTags.next).toBe('main-000000000001');
+    expect(result.index.packages.ui.distTags.main).toBe('main-000000000001');
   });
 
   it('refuses a rollback to a target that is not indexed', async () => {

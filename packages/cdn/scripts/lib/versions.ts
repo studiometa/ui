@@ -8,16 +8,29 @@ export interface DistributionTags {
   main?: string;
 }
 
-/**
- * Working representation of `versions.json`. It intentionally allows partial distribution tags so
- * the tooling can bootstrap the index before both a stable release and a main channel exist. Once
- * fully populated it satisfies the strict schema the Worker validates on read.
- */
-export interface WorkingVersionsIndex {
-  schemaVersion: 1;
+export interface UiPackageIndex {
   releases: string[];
   channels: string[];
   distTags: DistributionTags;
+}
+
+export interface JsToolkitPackageIndex {
+  releases: string[];
+}
+
+/**
+ * Working representation of the schemaVersion 2 `versions.json`. Releases are namespaced per
+ * package: `ui` keeps releases, immutable channels and distribution tags; `js-toolkit` is
+ * exact-version only and carries just a release inventory. It intentionally allows partial `ui`
+ * distribution tags so the tooling can bootstrap the index before a stable release and a main
+ * channel exist. Once fully populated it satisfies the strict schema the Worker validates on read.
+ */
+export interface WorkingVersionsIndex {
+  schemaVersion: 2;
+  packages: {
+    ui: UiPackageIndex;
+    'js-toolkit': JsToolkitPackageIndex;
+  };
 }
 
 interface ParsedSemver {
@@ -66,43 +79,61 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+function emptyIndex(): WorkingVersionsIndex {
+  return {
+    schemaVersion: 2,
+    packages: {
+      ui: { releases: [], channels: [], distTags: {} },
+      'js-toolkit': { releases: [] },
+    },
+  };
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
+}
+
 /**
- * Parses an existing `versions.json` payload leniently, returning an empty index when the object
- * is absent or unreadable so a first publication can bootstrap it. Known entries are preserved.
+ * Parses an existing schemaVersion 2 `versions.json` payload leniently, returning an empty index
+ * when the object is absent so a first publication can bootstrap it. Known entries are preserved.
  */
 export function parseWorkingVersionsIndex(text: string | undefined): WorkingVersionsIndex {
-  const empty: WorkingVersionsIndex = {
-    schemaVersion: 1,
-    releases: [],
-    channels: [],
-    distTags: {},
-  };
-  if (text === undefined) return empty;
+  if (text === undefined) return emptyIndex();
   let value: unknown;
   try {
     value = JSON.parse(text);
   } catch {
     throw new Error('The existing versions.json is not valid JSON; refusing to overwrite it.');
   }
-  if (!isRecord(value) || value.schemaVersion !== 1) {
+  if (!isRecord(value) || value.schemaVersion !== 2 || !isRecord(value.packages)) {
     throw new Error(
       'The existing versions.json has an unsupported schema; refusing to overwrite it.',
     );
   }
-  const releases = Array.isArray(value.releases)
-    ? value.releases.filter((item): item is string => typeof item === 'string')
-    : [];
-  const channels = Array.isArray(value.channels)
-    ? value.channels.filter((item): item is string => typeof item === 'string')
-    : [];
+  const ui = isRecord(value.packages.ui) ? value.packages.ui : {};
+  const jsToolkit = isRecord(value.packages['js-toolkit']) ? value.packages['js-toolkit'] : {};
   const distTags: DistributionTags = {};
-  if (isRecord(value.distTags)) {
+  if (isRecord(ui.distTags)) {
     for (const tag of ['latest', 'next', 'main'] as const) {
-      const candidate = value.distTags[tag];
+      const candidate = ui.distTags[tag];
       if (typeof candidate === 'string') distTags[tag] = candidate;
     }
   }
-  return { schemaVersion: 1, releases, channels, distTags };
+  return {
+    schemaVersion: 2,
+    packages: {
+      ui: {
+        releases: stringArray(ui.releases),
+        channels: stringArray(ui.channels),
+        distTags,
+      },
+      'js-toolkit': {
+        releases: stringArray(jsToolkit.releases),
+      },
+    },
+  };
 }
 
 /**
@@ -110,45 +141,89 @@ export function parseWorkingVersionsIndex(text: string | undefined): WorkingVers
  * distribution tags emitted in a stable key order. This keeps published payloads reproducible.
  */
 export function serializeVersionsIndex(index: WorkingVersionsIndex): string {
-  const releases = [...new Set(index.releases)].sort(compareStableVersions);
-  const channels = [...new Set(index.channels)].sort();
+  const ui = index.packages.ui;
   const distTags: DistributionTags = {};
-  if (index.distTags.latest !== undefined) distTags.latest = index.distTags.latest;
-  if (index.distTags.next !== undefined) distTags.next = index.distTags.next;
-  if (index.distTags.main !== undefined) distTags.main = index.distTags.main;
-  return `${JSON.stringify({ schemaVersion: 1, releases, channels, distTags }, null, 2)}\n`;
+  if (ui.distTags.latest !== undefined) distTags.latest = ui.distTags.latest;
+  if (ui.distTags.next !== undefined) distTags.next = ui.distTags.next;
+  if (ui.distTags.main !== undefined) distTags.main = ui.distTags.main;
+  const payload = {
+    schemaVersion: 2,
+    packages: {
+      ui: {
+        releases: [...new Set(ui.releases)].sort(compareStableVersions),
+        channels: [...new Set(ui.channels)].sort(),
+        distTags,
+      },
+      'js-toolkit': {
+        releases: [...new Set(index.packages['js-toolkit'].releases)].sort(compareStableVersions),
+      },
+    },
+  };
+  return `${JSON.stringify(payload, null, 2)}\n`;
 }
 
 /**
- * Records a stable release in the index. The `latest` distribution tag is advanced only for
- * non-prerelease versions; prereleases are indexed but never become `latest`.
+ * Records a stable ui release. The `latest` distribution tag is advanced only for non-prerelease
+ * versions; prereleases are indexed but never become `latest`.
  */
-export function addRelease(index: WorkingVersionsIndex, version: string): WorkingVersionsIndex {
+export function addUiRelease(index: WorkingVersionsIndex, version: string): WorkingVersionsIndex {
   if (parseSemver(version) === undefined) {
     throw new Error(`Refusing to index a non-semver release: ${version}.`);
   }
-  const releases = index.releases.includes(version)
-    ? [...index.releases]
-    : [...index.releases, version];
-  const distTags = { ...index.distTags };
+  const ui = index.packages.ui;
+  const releases = ui.releases.includes(version) ? [...ui.releases] : [...ui.releases, version];
+  const distTags = { ...ui.distTags };
   if (isStableVersion(version)) distTags.latest = version;
-  return { ...index, releases: releases.sort(compareStableVersions), distTags };
+  return {
+    ...index,
+    packages: {
+      ...index.packages,
+      ui: { ...ui, releases: releases.sort(compareStableVersions), distTags },
+    },
+  };
 }
 
 /**
- * Records an immutable main channel and advances the `next` and `main` distribution tags together,
- * as the Worker requires them to always name the same channel.
+ * Records an immutable ui main channel and advances the `next` and `main` distribution tags
+ * together, as the Worker requires them to always name the same channel.
  */
-export function addChannel(index: WorkingVersionsIndex, channelId: string): WorkingVersionsIndex {
+export function addUiChannel(index: WorkingVersionsIndex, channelId: string): WorkingVersionsIndex {
   if (!isChannelId(channelId)) {
     throw new Error(`Refusing to index a malformed channel identity: ${channelId}.`);
   }
-  const channels = index.channels.includes(channelId)
-    ? [...index.channels]
-    : [...index.channels, channelId];
+  const ui = index.packages.ui;
+  const channels = ui.channels.includes(channelId) ? [...ui.channels] : [...ui.channels, channelId];
   return {
     ...index,
-    channels: channels.sort(),
-    distTags: { ...index.distTags, next: channelId, main: channelId },
+    packages: {
+      ...index.packages,
+      ui: {
+        ...ui,
+        channels: channels.sort(),
+        distTags: { ...ui.distTags, next: channelId, main: channelId },
+      },
+    },
+  };
+}
+
+/**
+ * Records a js-toolkit release in the exact-version-only inventory. js-toolkit has no channels or
+ * distribution tags, so nothing else is advanced.
+ */
+export function addJsToolkitRelease(
+  index: WorkingVersionsIndex,
+  version: string,
+): WorkingVersionsIndex {
+  if (parseSemver(version) === undefined) {
+    throw new Error(`Refusing to index a non-semver js-toolkit release: ${version}.`);
+  }
+  const current = index.packages['js-toolkit'].releases;
+  const releases = current.includes(version) ? [...current] : [...current, version];
+  return {
+    ...index,
+    packages: {
+      ...index.packages,
+      'js-toolkit': { releases: releases.sort(compareStableVersions) },
+    },
   };
 }

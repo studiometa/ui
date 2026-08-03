@@ -14,8 +14,18 @@ interface CheckResult {
 
 const USER_AGENT = 'studiometa-ui-cdn-smoke/1';
 
+function packageEndpoint(
+  config: SmokeConfig,
+  packageName: string,
+  version: string,
+  asset: string,
+  search = '',
+): string {
+  return `${config.baseUrl.replace(/\/$/, '')}/${packageName}@${version}/${asset}${search}`;
+}
+
 function endpoint(config: SmokeConfig, version: string, asset: string, search = ''): string {
-  return `${config.baseUrl.replace(/\/$/, '')}/ui@${version}/${asset}${search}`;
+  return packageEndpoint(config, 'ui', version, asset, search);
 }
 
 async function fetchWithTimeout(
@@ -63,6 +73,8 @@ interface BuildComponent {
 
 interface BuildJson {
   components: Record<string, BuildComponent>;
+  entries?: Record<string, { path: string; preload: string[] }>;
+  dependencies?: Record<string, string>;
 }
 
 async function loadBuild(config: SmokeConfig, version: string): Promise<BuildJson> {
@@ -130,6 +142,70 @@ async function checkDynamicChunk(
     'The dynamic chunk has a non-JavaScript content type.',
   );
   await response.text();
+}
+
+async function checkJsToolkitArtifact(
+  config: SmokeConfig,
+  jsToolkitVersion: string,
+): Promise<void> {
+  for (const asset of ['index.js', 'utils/index.js']) {
+    const response = await fetchWithTimeout(
+      packageEndpoint(config, 'js-toolkit', jsToolkitVersion, asset),
+      config,
+      { headers: { Origin: 'https://example.com' } },
+    );
+    assert(response.status === 200, `js-toolkit ${asset} returned HTTP ${response.status}.`);
+    assert(
+      (response.headers.get('Content-Type') ?? '').includes('javascript'),
+      `js-toolkit ${asset} has a non-JavaScript content type: ${response.headers.get('Content-Type')}.`,
+    );
+    assert(
+      (response.headers.get('Cache-Control') ?? '').includes('immutable'),
+      `js-toolkit ${asset} is not immutably cacheable.`,
+    );
+    assert(
+      response.headers.get('Access-Control-Allow-Origin') === '*',
+      `js-toolkit ${asset} is missing a permissive CORS header.`,
+    );
+    assert(
+      response.headers.get('Cross-Origin-Resource-Policy') === 'cross-origin',
+      `js-toolkit ${asset} is missing a cross-origin resource policy.`,
+    );
+    await response.text();
+  }
+
+  // js-toolkit is exact-version only: aliases and the versionless default must not resolve.
+  for (const requested of [`${jsToolkitVersion.split('.')[0]}`, 'latest']) {
+    const aliased = await fetchWithTimeout(
+      packageEndpoint(config, 'js-toolkit', requested, 'index.js'),
+      config,
+      { redirect: 'manual' },
+    );
+    assert(
+      aliased.status === 404,
+      `js-toolkit alias ${requested} should be 404 but returned HTTP ${aliased.status}.`,
+    );
+  }
+}
+
+async function checkSharedToolkitUrl(
+  config: SmokeConfig,
+  version: string,
+  jsToolkitVersion: string,
+  build: BuildJson,
+): Promise<void> {
+  const expectedUrl = `/js-toolkit@${jsToolkitVersion}/index.js`;
+  // The single external js-toolkit URL is imported from the entry's static graph — usually a shared
+  // chunk rather than the entry file itself. Scan the ui barrel's entry plus its preload graph (and
+  // fall back to autoload.js) and confirm at least one served ui module references the shared URL.
+  const indexEntry = build.entries?.index;
+  const graph = indexEntry ? [indexEntry.path, ...indexEntry.preload] : ['autoload.js'];
+  for (const asset of graph) {
+    const response = await fetchWithTimeout(endpoint(config, version, asset), config);
+    assert(response.status === 200, `ui ${asset} returned HTTP ${response.status}.`);
+    if ((await response.text()).includes(expectedUrl)) return;
+  }
+  throw new Error(`No served ui module references the shared js-toolkit URL ${expectedUrl}.`);
 }
 
 async function checkSourceMap(config: SmokeConfig, version: string): Promise<void> {
@@ -236,6 +312,7 @@ async function main(): Promise<void> {
   const { version } = await resolveLatest(config);
   const build = await loadBuild(config, version);
   const eagerComponent = Object.keys(build.components).sort()[0];
+  const jsToolkitVersion = build.dependencies?.['@studiometa/js-toolkit'];
 
   const results: CheckResult[] = [];
   results.push({ name: 'Latest alias redirect', status: 'passed' });
@@ -248,6 +325,23 @@ async function main(): Promise<void> {
   }
   results.push(await run(() => checkDynamicChunk(config, version, build), 'Dynamic chunk'));
   results.push(await run(() => checkSourceMap(config, version), 'Source map'));
+  if (jsToolkitVersion) {
+    results.push(
+      await run(() => checkJsToolkitArtifact(config, jsToolkitVersion), 'js-toolkit artifact'),
+    );
+    results.push(
+      await run(
+        () => checkSharedToolkitUrl(config, version, jsToolkitVersion, build),
+        'Shared js-toolkit URL',
+      ),
+    );
+  } else {
+    results.push({
+      name: 'js-toolkit artifact',
+      status: 'failed',
+      detail: 'The ui build.json does not record its @studiometa/js-toolkit dependency version.',
+    });
+  }
   if (config.browser) {
     results.push(await checkBrowserExecution(config, version));
   }

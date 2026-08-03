@@ -8,8 +8,9 @@ import {
   type ObjectStore,
 } from './object-store.ts';
 import {
-  addChannel,
-  addRelease,
+  addJsToolkitRelease,
+  addUiChannel,
+  addUiRelease,
   isChannelId,
   isStableVersion,
   parseSemver,
@@ -17,6 +18,8 @@ import {
   serializeVersionsIndex,
   type WorkingVersionsIndex,
 } from './versions.ts';
+
+export type PackageName = 'ui' | 'js-toolkit';
 
 const VERSIONS_KEY = 'versions.json';
 const FULL_COMMIT_PATTERN = /^[0-9a-f]{40}$/;
@@ -30,8 +33,9 @@ export interface ArtifactFile {
 
 export interface PublishBuildMetadata {
   package: { name: string; version: string };
+  dependencies?: Record<string, string>;
   build: { commit: string; clean: boolean; publishable: boolean };
-  releaseGates: {
+  releaseGates?: {
     publicMapboxRedistributionReview: {
       required: boolean;
       status: string;
@@ -100,8 +104,8 @@ export function validatePublishability(
   if (!build.build.publishable) {
     throw new Error('The build is marked non-publishable.');
   }
-  const gate = build.releaseGates.publicMapboxRedistributionReview;
-  if (gate.required && gate.blocksPublicRelease && gate.status !== 'approved') {
+  const gate = build.releaseGates?.publicMapboxRedistributionReview;
+  if (gate && gate.required && gate.blocksPublicRelease && gate.status !== 'approved') {
     if (!options.mapboxRedistributionApproved) {
       throw new Error(
         'Public Mapbox redistribution review is unresolved. Record approval in the build or set ' +
@@ -112,7 +116,7 @@ export function validatePublishability(
 }
 
 export type PublishTarget =
-  | { kind: 'release'; version: string }
+  | { kind: 'release'; packageName: PackageName; version: string }
   | { kind: 'channel'; commit: string };
 
 export interface PublishOptions {
@@ -134,7 +138,10 @@ function targetIdentity(target: PublishTarget): { identity: string; finalPrefix:
     if (parseSemver(target.version) === undefined) {
       throw new Error(`Invalid semantic version for a stable release: ${target.version}.`);
     }
-    return { identity: target.version, finalPrefix: `releases/${target.version}` };
+    return {
+      identity: target.version,
+      finalPrefix: `releases/${target.packageName}/${target.version}`,
+    };
   }
   if (!FULL_COMMIT_PATTERN.test(target.commit)) {
     throw new Error('A main channel publication requires a full 40-character commit sha.');
@@ -212,10 +219,14 @@ export async function publish(
 
   log('Updating versions.json.');
   const currentIndex = parseWorkingVersionsIndex(await store.getText(VERSIONS_KEY));
-  const nextIndex =
-    target.kind === 'release'
-      ? addRelease(currentIndex, target.version)
-      : addChannel(currentIndex, identity);
+  let nextIndex: WorkingVersionsIndex;
+  if (target.kind === 'channel') {
+    nextIndex = addUiChannel(currentIndex, identity);
+  } else if (target.packageName === 'ui') {
+    nextIndex = addUiRelease(currentIndex, target.version);
+  } else {
+    nextIndex = addJsToolkitRelease(currentIndex, target.version);
+  }
   const serialized = new Uint8Array(Buffer.from(serializeVersionsIndex(nextIndex), 'utf8'));
   await store.put(VERSIONS_KEY, serialized, {
     contentType: 'application/json; charset=utf-8',
@@ -261,24 +272,25 @@ export async function rollback(
     throw new Error('No versions.json is published; there is nothing to roll back.');
   }
   const index = parseWorkingVersionsIndex(existing);
+  const ui = index.packages.ui;
 
   if (target.kind === 'release') {
     if (!isStableVersion(target.version)) {
       throw new Error('The latest tag can only point at a stable, non-prerelease release.');
     }
-    if (!index.releases.includes(target.version)) {
+    if (!ui.releases.includes(target.version)) {
       throw new Error(`Release ${target.version} is not indexed; refusing to roll back to it.`);
     }
-    if ((await store.head(`releases/${target.version}/build.json`)) === undefined) {
+    if ((await store.head(`releases/ui/${target.version}/build.json`)) === undefined) {
       throw new Error(`Release ${target.version} has no immutable objects; refusing to roll back.`);
     }
-    index.distTags.latest = target.version;
+    ui.distTags.latest = target.version;
     log(`Rolling the latest tag back to ${target.version}.`);
   } else {
     if (!isChannelId(target.channelId)) {
       throw new Error(`Malformed channel identity: ${target.channelId}.`);
     }
-    if (!index.channels.includes(target.channelId)) {
+    if (!ui.channels.includes(target.channelId)) {
       throw new Error(`Channel ${target.channelId} is not indexed; refusing to roll back to it.`);
     }
     if ((await store.head(`channels/${target.channelId}/build.json`)) === undefined) {
@@ -286,8 +298,8 @@ export async function rollback(
         `Channel ${target.channelId} has no immutable objects; refusing to roll back.`,
       );
     }
-    index.distTags.next = target.channelId;
-    index.distTags.main = target.channelId;
+    ui.distTags.next = target.channelId;
+    ui.distTags.main = target.channelId;
     log(`Rolling the next and main tags back to ${target.channelId}.`);
   }
 
