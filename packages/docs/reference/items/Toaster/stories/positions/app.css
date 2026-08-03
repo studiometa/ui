@@ -1,0 +1,39 @@
+.toast {
+  view-transition-class: toast;
+}
+
+/* Toasts that merely change slot slide smoothly to their new position. */
+::view-transition-group(.toast) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* A position-agnostic fade + scale for entering/leaving toasts, so the same
+   animation reads well from any corner. Scope with `:only-child` so persisting
+   toasts keep the default cross-fade and don't shimmy. */
+::view-transition-new(.toast):only-child {
+  animation: toast-in 300ms ease-out both;
+}
+::view-transition-old(.toast):only-child {
+  animation: toast-out 200ms ease-in both;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(.toast),
+  ::view-transition-new(.toast):only-child,
+  ::view-transition-old(.toast):only-child {
+    animation: none;
+  }
+}

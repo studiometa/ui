@@ -26,3 +26,26 @@ Click a button to push a toast. Info and success toasts go to the polite region,
 :::
 
 </llm-only>
+
+## Positions
+
+A toaster's corner is nothing more than the region's flex alignment: `justify-start` / `justify-end` picks the top or bottom edge and the region's `items-start` / `items-end` the left or right one. Here four identical toasters are anchored to the four corners — click any button to pop a toast in that corner.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/positions/app.twig')"
+  :script="() => import('./stories/positions/app.js?raw')"
+  :css="() => import('./stories/positions/app.css?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/positions/app.twig
+<<< ./stories/positions/app.js
+<<< ./stories/positions/app.css
+
+:::
+
+</llm-only>
