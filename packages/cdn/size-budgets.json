@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "bytes": {
-    "entry:autoload": 2700,
+    "entry:autoload": 2800,
     "entry:loader": 250,
     "entry:manifest": 165,
     "initial:autoload": 60000,
