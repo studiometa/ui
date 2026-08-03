@@ -10,8 +10,8 @@ export interface ToasterShowOptions {
    */
   type?: string;
   /**
-   * How long the toast stays before it auto-dismisses, in milliseconds. Pass `0`
-   * for a sticky toast that only closes on demand. Defaults to the `duration`
+   * How long the toast stays before it auto-dismisses, in seconds. Pass `0` for
+   * a sticky toast that only closes on demand. Defaults to the `duration`
    * option.
    */
   duration?: number;
@@ -63,7 +63,8 @@ export class Toaster<T extends BaseProps = BaseProps> extends Base<T & ToasterPr
     refs: ['polite', 'assertive', 'template'],
     emits: ['show', 'dismiss'],
     options: {
-      duration: { type: Number, default: 5000 },
+      // In seconds, matching the Timer/TimerProgress convention.
+      duration: { type: Number, default: 5 },
     },
   };
 
@@ -131,7 +132,7 @@ export class Toaster<T extends BaseProps = BaseProps> extends Base<T & ToasterPr
    * @private
    */
   __autoDismiss(toast: HTMLElement, duration: number): void {
-    let remaining = duration;
+    let remaining = duration * 1000; // seconds → ms
     let start = performance.now();
 
     const arm = () => {

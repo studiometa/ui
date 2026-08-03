@@ -124,7 +124,7 @@ describe('The Toaster component', () => {
   });
 
   it('should auto-dismiss after the duration', async () => {
-    const { toaster } = await createToaster({ duration: 20 });
+    const { toaster } = await createToaster({ duration: 0.02 });
     const toast = toaster.show('Saved.');
     await wait(0);
     expect(toast.isConnected).toBe(true);
@@ -140,7 +140,7 @@ describe('The Toaster component', () => {
   });
 
   it('should pause the auto-dismiss timer while hovered and resume on leave', async () => {
-    const { toaster } = await createToaster({ duration: 20 });
+    const { toaster } = await createToaster({ duration: 0.02 });
     const toast = toaster.show('Saved.');
     // Pause synchronously, before the timer can ever fire.
     toast.dispatchEvent(new Event('mouseenter'));
@@ -183,7 +183,7 @@ describe('The Toaster component', () => {
   });
 
   it('should clear pending timers on destroy', async () => {
-    const { toaster } = await createToaster({ duration: 20 });
+    const { toaster } = await createToaster({ duration: 0.02 });
     const toast = toaster.show('Saved.');
     await wait(0);
     await toaster.$destroy();

@@ -10,14 +10,14 @@ outline: deep
 ### `duration`
 
 - Type: `Number`
-- Default: `5000`
+- Default: `5`
 
-The default lifetime of a toast, in milliseconds, before it auto-dismisses. Set it with `data-option-duration` on the `Toaster` element, or override it per toast through the `duration` field of [`show()`](#show). A value of `0` makes toasts sticky by default — they then close only via [`dismiss()`](#dismiss) or their close button.
+The default lifetime of a toast, in seconds (matching the [`Timer`](/reference/items/Timer/) convention), before it auto-dismisses. Set it with `data-option-duration` on the `Toaster` element, or override it per toast through the `duration` field of [`show()`](#show). A value of `0` makes toasts sticky by default — they then close only via [`dismiss()`](#dismiss) or their close button.
 
 <!-- prettier-ignore-start -->
 ```html {2}
 <div data-component="Toaster"
-  data-option-duration="8000">
+  data-option-duration="8">
   ...
 </div>
 ```
@@ -52,7 +52,7 @@ The `<template>` whose first element child is cloned for each toast. The clone s
 Create a toast holding `message`, append it to the matching region through the [`viewTransition`](/reference/items/ViewTransition/) scheduler, and arm its auto-dismiss timer. Returns the created toast element (usable later with [`dismiss()`](#dismiss)).
 
 - `type` — the toast kind, mirrored on the element as `data-type` for styling. `error` routes to the assertive region; any other value (default `'info'`) routes to the polite one.
-- `duration` — overrides the [`duration`](#duration) option for this toast. Pass `0` for a sticky toast.
+- `duration` — overrides the [`duration`](#duration) option (in seconds) for this toast. Pass `0` for a sticky toast.
 
 Emits [`show`](#show-1).
 
