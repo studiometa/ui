@@ -1,0 +1,83 @@
+<div class="flex min-h-screen flex-wrap items-center justify-center gap-4 p-6">
+  {{
+    include('@ui/Button/StyledButton.twig', {
+      label: 'Info',
+      attr: {
+        'data-component': 'Action',
+        'data-on:click': "Toaster->target.show('Heads up — an informational message.')"
+      }
+    })
+  }}
+  {{
+    include('@ui/Button/StyledButton.twig', {
+      label: 'Success',
+      attr: {
+        'data-component': 'Action',
+        'data-on:click': "Toaster->target.show('Your changes have been saved.', { type: 'success' })"
+      }
+    })
+  }}
+  {{
+    include('@ui/Button/StyledButton.twig', {
+      label: 'Error',
+      attr: {
+        'data-component': 'Action',
+        'data-on:click': "Toaster->target.show('Could not save. Please try again.', { type: 'error' })"
+      }
+    })
+  }}
+  {{
+    include('@ui/Button/StyledButton.twig', {
+      label: 'Stack 3',
+      theme: 'secondary',
+      attr: {
+        class: 'text-black dark:text-white',
+        'data-component': 'Action',
+        'data-on:click': "Toaster->[1, 2, 3].forEach(function (n) { target.show('Stacked notification ' + n + ' of 3.') })"
+      }
+    })
+  }}
+</div>
+
+{# A fixed, click-through positioning layer holding the two live regions and the
+   toast template. It carries NO aria-live itself — each region does.
+   `pointer-events-none` lets clicks fall through the empty layer; each toast
+   re-enables pointer events on itself. #}
+<div
+  data-component="Toaster"
+  class="pointer-events-none fixed inset-0 z-50 flex flex-col items-end justify-end gap-2 p-4 sm:p-6">
+
+  {# Polite region: info & success. Announced when the screen reader is idle. #}
+  <div
+    data-ref="polite"
+    aria-live="polite"
+    aria-atomic="false"
+    aria-relevant="additions"
+    class="flex w-full flex-col items-end gap-2"></div>
+
+  {# Assertive region: errors. Interrupts the screen reader. #}
+  <div
+    data-ref="assertive"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="false"
+    aria-relevant="additions"
+    class="flex w-full flex-col items-end gap-2"></div>
+
+  {# One toast, cloned per call. The Toaster tags the clone as a `Toast` (a
+     `Timer`) so the registry mounts it; it then counts down and dismisses
+     itself. `[data-message]` receives the text; the `close` ref dismisses. #}
+  <template data-ref="template">
+    <div
+      class="toast pointer-events-auto flex w-80 max-w-[calc(100vw-3rem)] items-start gap-3 rounded-lg border-l-4 bg-white p-4 text-gray-900 shadow-lg ring-1 ring-black/5">
+      <p data-message class="min-w-0 flex-1 text-sm"></p>
+      <button
+        type="button"
+        data-ref="close"
+        aria-label="Dismiss notification"
+        class="-mr-1 -mt-1 shrink-0 rounded p-1 leading-none text-gray-400 transition-colors hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">
+        <span aria-hidden="true" class="text-xl">&times;</span>
+      </button>
+    </div>
+  </template>
+</div>

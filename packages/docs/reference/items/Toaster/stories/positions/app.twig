@@ -1,0 +1,51 @@
+{% set positions = [
+  { id: 'tl', label: 'Top left', justify: 'justify-start', align: 'items-start' },
+  { id: 'tr', label: 'Top right', justify: 'justify-start', align: 'items-end' },
+  { id: 'bl', label: 'Bottom left', justify: 'justify-end', align: 'items-start' },
+  { id: 'br', label: 'Bottom right', justify: 'justify-end', align: 'items-end' },
+] %}
+
+<div class="flex min-h-screen flex-wrap items-center justify-center gap-4 p-6">
+  {% for pos in positions %}
+    {{
+      include('@ui/Button/StyledButton.twig', {
+        label: pos.label,
+        theme: 'secondary',
+        attr: {
+          class: 'text-black dark:text-white',
+          'data-component': 'Action',
+          'data-on:click': "Toaster(#toaster-#{pos.id})->target.show('#{pos.label} — a notification.')"
+        }
+      })
+    }}
+  {% endfor %}
+</div>
+
+{# One Toaster per corner. The corner is set entirely by the container's flex
+   alignment — `justify-start/end` picks the vertical edge, the region's
+   `items-start/end` the horizontal one. Everything else is identical. #}
+{% for pos in positions %}
+  <div
+    id="toaster-{{ pos.id }}"
+    data-component="Toaster"
+    class="pointer-events-none fixed inset-0 z-50 flex flex-col gap-2 p-4 sm:p-6 {{ pos.justify }}">
+    <div
+      data-ref="polite"
+      aria-live="polite"
+      aria-atomic="false"
+      aria-relevant="additions"
+      class="flex w-full flex-col gap-2 {{ pos.align }}"></div>
+    <template data-ref="template">
+      <div class="toast pointer-events-auto flex w-72 max-w-[calc(100vw-3rem)] items-start gap-3 rounded-lg bg-white p-4 text-gray-900 shadow-lg ring-1 ring-black/5">
+        <p data-message class="min-w-0 flex-1 text-sm"></p>
+        <button
+          type="button"
+          data-ref="close"
+          aria-label="Dismiss notification"
+          class="-mr-1 -mt-1 shrink-0 rounded p-1 leading-none text-gray-400 transition-colors hover:text-gray-900">
+          <span aria-hidden="true" class="text-xl">&times;</span>
+        </button>
+      </div>
+    </template>
+  </div>
+{% endfor %}
