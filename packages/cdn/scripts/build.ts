@@ -1,15 +1,6 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import {
-  copyFile,
-  mkdir,
-  readFile,
-  readdir,
-  realpath,
-  rm,
-  stat,
-  writeFile,
-} from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import esbuild, { type Metafile, type Plugin } from 'esbuild';
@@ -22,9 +13,21 @@ const defaultOutputDirectory = resolve(packageDirectory, 'dist');
 const packageMetadata = JSON.parse(
   await readFile(resolve(packageDirectory, 'package.json'), 'utf8'),
 );
+const jsToolkitMetadata = JSON.parse(
+  await readFile(
+    resolve(repositoryDirectory, 'node_modules/@studiometa/js-toolkit/package.json'),
+    'utf8',
+  ),
+);
 const sizeBudgets = JSON.parse(
   await readFile(resolve(packageDirectory, 'size-budgets.json'), 'utf8'),
 ) as SizeBudgets;
+
+const uiVersion: string = packageMetadata.version;
+const jsToolkitVersion: string = jsToolkitMetadata.version;
+const JS_TOOLKIT_BUILD_NAME = '@studiometa/ui-cdn-js-toolkit';
+const jsToolkitIndexUrl = `/js-toolkit@${jsToolkitVersion}/index.js`;
+const jsToolkitUtilsUrl = `/js-toolkit@${jsToolkitVersion}/utils/index.js`;
 
 const packageDirectories = {
   '@studiometa/ui': resolve(repositoryDirectory, 'packages/ui'),
@@ -209,6 +212,30 @@ function shopifyFallbackPlugin(): Plugin {
   };
 }
 
+/**
+ * Rewrites every `@studiometa/js-toolkit` (and `/utils`) import in the ui tree to the absolute,
+ * origin-relative URL of the separately built, versioned js-toolkit artifact and marks it external.
+ * This keeps js-toolkit out of the ui bundle so autoload, every component chunk, the ui barrel, and
+ * a manual `import '/js-toolkit@<version>/index.js'` all resolve to one browser module URL — one
+ * runtime instance and one component registry.
+ */
+function externalizeToolkitPlugin(): Plugin {
+  const mapping: Record<string, string> = {
+    '@studiometa/js-toolkit': jsToolkitIndexUrl,
+    '@studiometa/js-toolkit/utils': jsToolkitUtilsUrl,
+  };
+  return {
+    name: 'cdn-externalize-js-toolkit',
+    setup(build) {
+      build.onResolve({ filter: /^@studiometa\/js-toolkit(?:\/utils)?$/ }, (args) => {
+        const path = mapping[args.path];
+        if (!path) return undefined;
+        return { path, external: true };
+      });
+    },
+  };
+}
+
 function outputKeyForPath(metafile: Metafile, absolutePath: string): string {
   const normalized = resolve(absolutePath);
   const output = Object.keys(metafile.outputs).find(
@@ -277,27 +304,41 @@ function assertDoesNotContain(
   }
 }
 
-async function assertSingleToolkitIdentity(metafile: Metafile): Promise<string> {
-  const toolkitInputs = Object.keys(metafile.inputs).filter((input) =>
+function collectExternalImports(metafile: Metafile): string[] {
+  const external = new Set<string>();
+  for (const metadata of Object.values(metafile.outputs)) {
+    for (const imported of metadata.imports) {
+      if (imported.external) external.add(imported.path);
+    }
+  }
+  return [...external].sort();
+}
+
+/**
+ * Asserts the invariant at the heart of the versioned split: the ui tree bundles NO js-toolkit
+ * source and imports it only through the single absolute js-toolkit URL(s). Every external import
+ * must be one of the two allowed js-toolkit URLs for the built version, and the main index URL —
+ * the module that owns the shared component registry — must be present exactly once.
+ */
+function assertUiExternalToolkit(metafile: Metafile): string[] {
+  const external = collectExternalImports(metafile);
+  const allowed = new Set([jsToolkitIndexUrl, jsToolkitUtilsUrl]);
+  const disallowed = external.filter((url) => !allowed.has(url));
+  if (disallowed.length > 0) {
+    throw new Error(`The ui tree has unexpected external imports: ${disallowed.join(', ')}`);
+  }
+  if (!external.includes(jsToolkitIndexUrl)) {
+    throw new Error(`The ui tree does not import the js-toolkit URL ${jsToolkitIndexUrl}.`);
+  }
+  const bundledToolkit = Object.keys(metafile.inputs).filter((input) =>
     toPosix(input).includes('node_modules/@studiometa/js-toolkit/'),
   );
-  if (toolkitInputs.length === 0) throw new Error('The bundle contains no js-toolkit modules.');
-
-  const identities = new Set<string>();
-  for (const input of toolkitInputs) {
-    const absolute = resolve(repositoryDirectory, input);
-    const marker = `${sep}@studiometa${sep}js-toolkit${sep}`;
-    const packageRoot = absolute.slice(0, absolute.indexOf(marker) + marker.length - 1);
-    identities.add(await realpath(packageRoot));
+  if (bundledToolkit.length > 0) {
+    throw new Error(
+      `The ui tree bundled js-toolkit source instead of externalizing it: ${bundledToolkit.join(', ')}`,
+    );
   }
-  if (identities.size !== 1) {
-    throw new Error(`Expected one js-toolkit identity, found ${identities.size}.`);
-  }
-
-  const toolkitMetadata = JSON.parse(
-    await readFile(resolve([...identities][0], 'package.json'), 'utf8'),
-  );
-  return `@studiometa/js-toolkit@${toolkitMetadata.version}`;
+  return external;
 }
 
 async function listFiles(directory: string, root = directory): Promise<string[]> {
@@ -363,10 +404,11 @@ async function assertBrowserImports(
   metafile: Metafile,
   outputDirectory: string,
   files: readonly string[],
+  allowedExternalUrls: ReadonlySet<string>,
 ) {
   const externalImports = Object.entries(metafile.outputs).flatMap(([output, metadata]) =>
     metadata.imports
-      .filter((imported) => imported.external)
+      .filter((imported) => imported.external && !allowedExternalUrls.has(imported.path))
       .map((imported) => `${output}: ${imported.path}`),
   );
   if (externalImports.length > 0) {
@@ -389,7 +431,6 @@ async function assertBrowserImports(
 }
 
 function graphBytes(
-  metafile: Metafile,
   outputDirectory: string,
   sizes: Record<string, number>,
   outputs: Iterable<string>,
@@ -400,7 +441,7 @@ function graphBytes(
   );
 }
 
-function measureSizeBudgets(
+function measureUiSizeBudgets(
   metafile: Metafile,
   outputDirectory: string,
   entryOutputs: Record<string, string>,
@@ -408,12 +449,11 @@ function measureSizeBudgets(
   definitions: readonly ComponentDefinition[],
   geocoderDynamicOutput: string,
   sizes: Record<string, number>,
-) {
+): Record<string, number> {
   const observed: Record<string, number> = {};
   for (const [name, output] of Object.entries(entryOutputs)) {
     observed[`entry:${name}`] = sizes[publicPath(outputDirectory, output)];
     observed[`initial:${name}`] = graphBytes(
-      metafile,
       outputDirectory,
       sizes,
       staticOutputGraph(metafile, output),
@@ -427,13 +467,11 @@ function measureSizeBudgets(
     return output;
   }
   observed['graph:component:Action'] = graphBytes(
-    metafile,
     outputDirectory,
     sizes,
     staticOutputGraph(metafile, componentOutput('Action')),
   );
   observed['graph:family:Accordion'] = graphBytes(
-    metafile,
     outputDirectory,
     sizes,
     definitions
@@ -441,29 +479,7 @@ function measureSizeBudgets(
       .flatMap(({ token }) => staticOutputGraph(metafile, componentOutput(token))),
   );
 
-  const componentGraphs = definitions.map(({ token }) =>
-    staticOutputGraph(metafile, componentOutput(token)),
-  );
-  const sharedToolkitChunks = Object.entries(metafile.outputs)
-    .filter(([output, metadata]) => {
-      if (metadata.entryPoint) return false;
-      const hasToolkitInput = Object.keys(metadata.inputs).some((input) =>
-        toPosix(input).includes('node_modules/@studiometa/js-toolkit/'),
-      );
-      const graphCount = componentGraphs.filter((graph) => graph.includes(output)).length;
-      return hasToolkitInput && graphCount > 1;
-    })
-    .sort(
-      ([left], [right]) =>
-        sizes[publicPath(outputDirectory, right)] - sizes[publicPath(outputDirectory, left)] ||
-        left.localeCompare(right),
-    );
-  const sharedToolkitChunk = sharedToolkitChunks[0]?.[0];
-  if (!sharedToolkitChunk) throw new Error('Missing shared js-toolkit runtime chunk.');
-  observed['chunk:js-toolkit-shared'] = sizes[publicPath(outputDirectory, sharedToolkitChunk)];
-
   observed['graph:mapbox-core'] = graphBytes(
-    metafile,
     outputDirectory,
     sizes,
     staticOutputGraph(metafile, componentOutput('MapboxMap')),
@@ -472,7 +488,6 @@ function measureSizeBudgets(
     staticOutputGraph(metafile, componentOutput('MapboxGeocoder')),
   );
   observed['graph:geocoder-incremental'] = graphBytes(
-    metafile,
     outputDirectory,
     sizes,
     staticOutputGraph(metafile, geocoderDynamicOutput).filter(
@@ -481,13 +496,24 @@ function measureSizeBudgets(
   );
   observed['style:mapbox-gl'] = sizes['styles/mapbox-gl.css'];
   observed['style:mapbox-geocoder'] = sizes['styles/mapbox-gl-geocoder.css'];
-  observed['total:esm'] = Object.entries(sizes)
-    .filter(([file]) => file.endsWith('.js'))
-    .reduce((total, [, bytes]) => total + bytes, 0);
-  observed['total:source-maps'] = Object.entries(sizes)
-    .filter(([file]) => file.endsWith('.map'))
-    .reduce((total, [, bytes]) => total + bytes, 0);
-  observed['total:release'] = 0;
+  return observed;
+}
+
+function measureJsToolkitSizeBudgets(
+  metafile: Metafile,
+  outputDirectory: string,
+  entryOutputs: Record<string, string>,
+  sizes: Record<string, number>,
+): Record<string, number> {
+  const observed: Record<string, number> = {};
+  for (const [name, output] of Object.entries(entryOutputs)) {
+    observed[`js-toolkit:entry:${name}`] = sizes[publicPath(outputDirectory, output)];
+    observed[`js-toolkit:initial:${name}`] = graphBytes(
+      outputDirectory,
+      sizes,
+      staticOutputGraph(metafile, output),
+    );
+  }
   return observed;
 }
 
@@ -515,7 +541,33 @@ async function sha384(path: string): Promise<string> {
     .digest('base64')}`;
 }
 
+function sharedEsbuildOptions() {
+  return {
+    absWorkingDir: repositoryDirectory,
+    bundle: true,
+    splitting: true,
+    format: 'esm',
+    platform: 'browser',
+    target: 'es2020',
+    entryNames: '[dir]/[name]',
+    chunkNames: 'chunks/[name]-[hash]',
+    assetNames: 'assets/[name]-[hash]',
+    sourcemap: true,
+    metafile: true,
+    minify: true,
+    legalComments: 'eof',
+    charset: 'utf8',
+    define: { __DEV__: 'false' },
+    logLevel: 'info',
+  } as const;
+}
+
 const { outputDirectory, allowDirty } = parseBuildOptions();
+const uiTreePrefix = `releases/ui/${uiVersion}`;
+const jsToolkitTreePrefix = `releases/js-toolkit/${jsToolkitVersion}`;
+const uiOutputDirectory = resolve(outputDirectory, uiTreePrefix);
+const jsToolkitOutputDirectory = resolve(outputDirectory, jsToolkitTreePrefix);
+
 const currentSourceState = await sourceState();
 if (!currentSourceState.clean && !allowDirty) {
   throw new Error(
@@ -524,72 +576,82 @@ if (!currentSourceState.clean && !allowDirty) {
 }
 const definitions = await componentDefinitions();
 await rm(outputDirectory, { recursive: true, force: true });
-await mkdir(outputDirectory, { recursive: true });
+await mkdir(uiOutputDirectory, { recursive: true });
+await mkdir(jsToolkitOutputDirectory, { recursive: true });
 
-const result = await esbuild.build({
-  absWorkingDir: repositoryDirectory,
+const buildTime = reproducibleBuildTime();
+const commit = runGit('rev-parse', 'HEAD');
+const cleanBuildIdentifier = `${uiVersion}+${commit}`;
+const buildIdentifier = currentSourceState.clean
+  ? cleanBuildIdentifier
+  : `${cleanBuildIdentifier}.dirty.${currentSourceState.digest}`;
+
+// Pass A — the versioned js-toolkit artifact. It is bundled fully (no externals) so its own
+// internal chunks resolve relatively within its tree, and the ui tree can import it by URL.
+const jsToolkitResult = await esbuild.build({
+  ...sharedEsbuildOptions(),
+  entryPoints: {
+    index: 'packages/cdn/src/barrel-js-toolkit.ts',
+    'utils/index': 'packages/cdn/src/barrel-js-toolkit-utils.ts',
+  },
+  outdir: jsToolkitOutputDirectory,
+});
+
+// Pass B — the @studiometa/ui tree. js-toolkit is rewritten to its external, versioned URL and the
+// ui barrel is emitted as index.js. Autoload, loader, manifest, every component chunk and the
+// barrel now import the single external js-toolkit URL and carry no js-toolkit source.
+const uiResult = await esbuild.build({
+  ...sharedEsbuildOptions(),
   entryPoints: {
     autoload: 'packages/cdn/src/autoload.ts',
     loader: 'packages/cdn/src/loader.ts',
     manifest: 'packages/cdn/src/manifest.ts',
+    index: 'packages/cdn/src/barrel-ui.ts',
   },
-  outdir: outputDirectory,
-  bundle: true,
-  splitting: true,
-  format: 'esm',
-  platform: 'browser',
-  target: 'es2020',
-  entryNames: '[name]',
-  chunkNames: 'chunks/[name]-[hash]',
-  assetNames: 'assets/[name]-[hash]',
-  sourcemap: true,
-  metafile: true,
-  minify: true,
-  legalComments: 'eof',
-  charset: 'utf8',
-  define: { __DEV__: 'false' },
-  plugins: [shopifyFallbackPlugin()],
-  logLevel: 'info',
+  outdir: uiOutputDirectory,
+  plugins: [shopifyFallbackPlugin(), externalizeToolkitPlugin()],
 });
 
-await mkdir(resolve(outputDirectory, 'styles'), { recursive: true });
+await mkdir(resolve(uiOutputDirectory, 'styles'), { recursive: true });
 await copyFile(
   resolve(repositoryDirectory, 'node_modules/mapbox-gl/dist/mapbox-gl.css'),
-  resolve(outputDirectory, 'styles/mapbox-gl.css'),
+  resolve(uiOutputDirectory, 'styles/mapbox-gl.css'),
 );
 await copyFile(
   resolve(
     repositoryDirectory,
     'node_modules/@mapbox/mapbox-gl-geocoder/lib/mapbox-gl-geocoder.css',
   ),
-  resolve(outputDirectory, 'styles/mapbox-gl-geocoder.css'),
+  resolve(uiOutputDirectory, 'styles/mapbox-gl-geocoder.css'),
 );
-await writeThirdPartyNotices(result.metafile, outputDirectory);
+await writeThirdPartyNotices(uiResult.metafile, uiOutputDirectory);
 await copyFile(
   resolve(repositoryDirectory, 'node_modules/mapbox-gl/LICENSE.txt'),
-  resolve(outputDirectory, 'licenses/mapbox-gl-LICENSE.txt'),
+  resolve(uiOutputDirectory, 'licenses/mapbox-gl-LICENSE.txt'),
 );
 await copyFile(
   resolve(repositoryDirectory, 'node_modules/@mapbox/mapbox-gl-geocoder/LICENSE'),
-  resolve(outputDirectory, 'licenses/mapbox-gl-geocoder-LICENSE'),
+  resolve(uiOutputDirectory, 'licenses/mapbox-gl-geocoder-LICENSE'),
 );
+await writeThirdPartyNotices(jsToolkitResult.metafile, jsToolkitOutputDirectory);
 
+const uiEntryNames = ['autoload', 'loader', 'manifest', 'index'];
 const entryOutputs = Object.fromEntries(
-  ['autoload', 'loader', 'manifest'].map((name) => [
+  uiEntryNames.map((name) => [
     name,
-    outputKeyForPath(result.metafile, resolve(outputDirectory, `${name}.js`)),
+    outputKeyForPath(uiResult.metafile, resolve(uiOutputDirectory, `${name}.js`)),
   ]),
 );
 const componentOutputBySource = new Map<string, string>();
-for (const [output, metadata] of Object.entries(result.metafile.outputs)) {
+for (const [output, metadata] of Object.entries(uiResult.metafile.outputs)) {
   if (!metadata.entryPoint) continue;
   componentOutputBySource.set(resolve(repositoryDirectory, metadata.entryPoint), output);
 }
 
 const mapboxPatterns = [/(?:^|\/)node_modules\/mapbox-gl\//, /(?:^|\/)packages\/ui-mapbox\//];
 const geocoderPatterns = [/(?:^|\/)node_modules\/@mapbox\/mapbox-gl-geocoder\//];
-for (const name of ['autoload', 'loader', 'manifest']) {
-  const inputs = graphInputs(result.metafile, entryOutputs[name]);
+for (const name of uiEntryNames) {
+  const inputs = graphInputs(uiResult.metafile, entryOutputs[name]);
   assertDoesNotContain(inputs, [...mapboxPatterns, ...geocoderPatterns], `${name} startup graph`);
 }
 const uiDefinitions = definitions.filter(({ packageName }) => packageName === '@studiometa/ui');
@@ -597,7 +659,7 @@ for (const definition of uiDefinitions) {
   const output = componentOutputBySource.get(definition.sourcePath);
   if (!output) throw new Error(`Missing component output for ${definition.token}.`);
   assertDoesNotContain(
-    graphInputs(result.metafile, output),
+    graphInputs(uiResult.metafile, output),
     [...mapboxPatterns, ...geocoderPatterns],
     `${definition.token} graph`,
   );
@@ -607,7 +669,7 @@ for (const definition of nonGeocoderDefinitions) {
   const output = componentOutputBySource.get(definition.sourcePath);
   if (!output) throw new Error(`Missing component output for ${definition.token}.`);
   assertDoesNotContain(
-    graphInputs(result.metafile, output),
+    graphInputs(uiResult.metafile, output),
     geocoderPatterns,
     `${definition.token} graph`,
   );
@@ -616,7 +678,7 @@ const actionDefinition = definitions.find(({ token }) => token === 'Action');
 const actionOutput = actionDefinition && componentOutputBySource.get(actionDefinition.sourcePath);
 if (!actionOutput) throw new Error('Missing Action output for unrelated-family isolation.');
 assertDoesNotContain(
-  graphInputs(result.metafile, actionOutput),
+  graphInputs(uiResult.metafile, actionOutput),
   [/(?:^|\/)packages\/ui\/Accordion\//],
   'Action graph',
 );
@@ -625,9 +687,9 @@ const geocoderDefinition = definitions.find(({ token }) => token === 'MapboxGeoc
 const geocoderOutput =
   geocoderDefinition && componentOutputBySource.get(geocoderDefinition.sourcePath);
 if (!geocoderOutput) throw new Error('Missing MapboxGeocoder component output.');
-const geocoderIntegrationOutputs = dynamicOutputEntries(result.metafile, geocoderOutput).filter(
+const geocoderIntegrationOutputs = dynamicOutputEntries(uiResult.metafile, geocoderOutput).filter(
   (output) =>
-    graphInputs(result.metafile, output).some((input) =>
+    graphInputs(uiResult.metafile, output).some((input) =>
       geocoderPatterns.some((pattern) => pattern.test(toPosix(input))),
     ),
 );
@@ -638,57 +700,149 @@ if (geocoderIntegrationOutputs.length !== 1) {
 }
 const geocoderDynamicOutput = geocoderIntegrationOutputs[0];
 
-const toolkitIdentity = await assertSingleToolkitIdentity(result.metafile);
-const initialFiles = (await listFiles(outputDirectory)).filter((file) => !file.endsWith('.json'));
-await assertBrowserImports(result.metafile, outputDirectory, initialFiles);
-for (const file of initialFiles.filter((path) => path.endsWith('.js'))) {
-  if (!initialFiles.includes(`${file}.map`))
+const toolkitExternalUrls = assertUiExternalToolkit(uiResult.metafile);
+const toolkitIdentity = `@studiometa/js-toolkit@${jsToolkitVersion}`;
+
+const uiInitialFiles = (await listFiles(uiOutputDirectory)).filter(
+  (file) => !file.endsWith('.json'),
+);
+await assertBrowserImports(
+  uiResult.metafile,
+  uiOutputDirectory,
+  uiInitialFiles,
+  new Set(toolkitExternalUrls),
+);
+for (const file of uiInitialFiles.filter((path) => path.endsWith('.js'))) {
+  if (!uiInitialFiles.includes(`${file}.map`))
     throw new Error(`Missing public sourcemap for ${file}.`);
 }
-const sizes = await fileSizes(outputDirectory, initialFiles);
-const observedBudgets = measureSizeBudgets(
-  result.metafile,
-  outputDirectory,
-  entryOutputs,
-  componentOutputBySource,
-  definitions,
-  geocoderDynamicOutput,
-  sizes,
+const uiSizes = await fileSizes(uiOutputDirectory, uiInitialFiles);
+
+const jsToolkitEntryOutputs = Object.fromEntries(
+  (
+    [
+      ['index', 'index.js'],
+      ['utils', 'utils/index.js'],
+    ] as const
+  ).map(([name, file]) => [
+    name,
+    outputKeyForPath(jsToolkitResult.metafile, resolve(jsToolkitOutputDirectory, file)),
+  ]),
 );
+for (const name of Object.keys(jsToolkitEntryOutputs)) {
+  assertDoesNotContain(
+    graphInputs(jsToolkitResult.metafile, jsToolkitEntryOutputs[name]),
+    [...mapboxPatterns, ...geocoderPatterns],
+    `js-toolkit ${name} graph`,
+  );
+}
+const jsToolkitInitialFiles = (await listFiles(jsToolkitOutputDirectory)).filter(
+  (file) => !file.endsWith('.json'),
+);
+await assertBrowserImports(
+  jsToolkitResult.metafile,
+  jsToolkitOutputDirectory,
+  jsToolkitInitialFiles,
+  new Set(),
+);
+for (const file of jsToolkitInitialFiles.filter((path) => path.endsWith('.js'))) {
+  if (!jsToolkitInitialFiles.includes(`${file}.map`))
+    throw new Error(`Missing public sourcemap for ${file}.`);
+}
+const jsToolkitSizes = await fileSizes(jsToolkitOutputDirectory, jsToolkitInitialFiles);
+
+const observedBudgets: Record<string, number> = {
+  ...measureUiSizeBudgets(
+    uiResult.metafile,
+    uiOutputDirectory,
+    entryOutputs,
+    componentOutputBySource,
+    definitions,
+    geocoderDynamicOutput,
+    uiSizes,
+  ),
+  ...measureJsToolkitSizeBudgets(
+    jsToolkitResult.metafile,
+    jsToolkitOutputDirectory,
+    jsToolkitEntryOutputs,
+    jsToolkitSizes,
+  ),
+};
+// Totals span both trees, so they are measured over the whole dist listing (dist-relative paths
+// are unique, unlike the tree-relative keys of uiSizes/jsToolkitSizes which both contain index.js).
+const distFilesBeforeMetadata = await listFiles(outputDirectory);
+const distSizesBeforeMetadata = await fileSizes(outputDirectory, distFilesBeforeMetadata);
+observedBudgets['total:esm'] = Object.entries(distSizesBeforeMetadata)
+  .filter(([file]) => file.endsWith('.js'))
+  .reduce((total, [, bytes]) => total + bytes, 0);
+observedBudgets['total:source-maps'] = Object.entries(distSizesBeforeMetadata)
+  .filter(([file]) => file.endsWith('.map'))
+  .reduce((total, [, bytes]) => total + bytes, 0);
+observedBudgets['total:release'] = 0;
+
 const verifiedSourceState = await sourceState();
 if (JSON.stringify(verifiedSourceState) !== JSON.stringify(currentSourceState)) {
   throw new Error('Tracked build sources changed while the CDN build was running.');
 }
 
-const outputMetadata = Object.fromEntries(
-  initialFiles.map((file) => [
-    file,
-    {
-      bytes: sizes[file],
-      type: file.endsWith('.map')
-        ? 'source-map'
-        : file.endsWith('.css')
-          ? 'style'
-          : file.endsWith('.js')
-            ? 'module'
-            : 'notice',
-    },
-  ]),
-);
+function outputMetadataFor(
+  files: readonly string[],
+  sizes: Record<string, number>,
+): Record<string, { bytes: number; type: string }> {
+  return Object.fromEntries(
+    files.map((file) => [
+      file,
+      {
+        bytes: sizes[file],
+        type: file.endsWith('.map')
+          ? 'source-map'
+          : file.endsWith('.css')
+            ? 'style'
+            : file.endsWith('.js')
+              ? 'module'
+              : 'notice',
+      },
+    ]),
+  );
+}
+
+function entryMetadataFor(
+  metafile: Metafile,
+  outputDirectory: string,
+  entries: Record<string, string>,
+): Record<string, { path: string; sourceMap: string; preload: string[] }> {
+  return Object.fromEntries(
+    Object.entries(entries).map(([name, output]) => {
+      const path = publicPath(outputDirectory, output);
+      return [
+        name,
+        {
+          path,
+          sourceMap: `${path}.map`,
+          preload: staticOutputGraph(metafile, output)
+            .map((dependency) => publicPath(outputDirectory, dependency))
+            .filter((dependency) => dependency !== path)
+            .sort(),
+        },
+      ];
+    }),
+  );
+}
+
 const componentInventory = Object.fromEntries(
   definitions.map((definition) => {
     const output = componentOutputBySource.get(definition.sourcePath);
     if (!output) throw new Error(`Missing component entry chunk for ${definition.token}.`);
-    const graph = staticOutputGraph(result.metafile, output).map((dependency) =>
-      publicPath(outputDirectory, dependency),
+    const graph = staticOutputGraph(uiResult.metafile, output).map((dependency) =>
+      publicPath(uiOutputDirectory, dependency),
     );
-    const entry = publicPath(outputDirectory, output);
-    const dynamicImports = dynamicOutputEntries(result.metafile, output).map((dynamicOutput) => {
-      const dynamicEntry = publicPath(outputDirectory, dynamicOutput);
+    const entry = publicPath(uiOutputDirectory, output);
+    const dynamicImports = dynamicOutputEntries(uiResult.metafile, output).map((dynamicOutput) => {
+      const dynamicEntry = publicPath(uiOutputDirectory, dynamicOutput);
       return {
         entry: dynamicEntry,
-        preload: staticOutputGraph(result.metafile, dynamicOutput)
-          .map((dependency) => publicPath(outputDirectory, dependency))
+        preload: staticOutputGraph(uiResult.metafile, dynamicOutput)
+          .map((dependency) => publicPath(uiOutputDirectory, dependency))
           .filter((dependency) => dependency !== dynamicEntry)
           .sort(),
       };
@@ -711,32 +865,10 @@ const componentInventory = Object.fromEntries(
     ];
   }),
 );
-const buildTime = reproducibleBuildTime();
-const commit = runGit('rev-parse', 'HEAD');
-const cleanBuildIdentifier = `${packageMetadata.version}+${commit}`;
-const buildIdentifier = currentSourceState.clean
-  ? cleanBuildIdentifier
-  : `${cleanBuildIdentifier}.dirty.${currentSourceState.digest}`;
-const entryMetadata = Object.fromEntries(
-  Object.entries(entryOutputs).map(([name, output]) => {
-    const path = publicPath(outputDirectory, output);
-    return [
-      name,
-      {
-        path,
-        sourceMap: `${path}.map`,
-        preload: staticOutputGraph(result.metafile, output)
-          .map((dependency) => publicPath(outputDirectory, dependency))
-          .filter((dependency) => dependency !== path)
-          .sort(),
-      },
-    ];
-  }),
-);
 
-const geocoderIntegrationEntry = publicPath(outputDirectory, geocoderDynamicOutput);
+const geocoderIntegrationEntry = publicPath(uiOutputDirectory, geocoderDynamicOutput);
 
-const buildMetadata = {
+const uiBuildMetadata = {
   schemaVersion: 1,
   format: {
     name: 'studiometa-browser-cdn',
@@ -747,7 +879,8 @@ const buildMetadata = {
     sourcemaps: true,
     bundler: `esbuild@${esbuild.version}`,
   },
-  package: { name: packageMetadata.name, version: packageMetadata.version },
+  package: { name: packageMetadata.name, version: uiVersion },
+  dependencies: { '@studiometa/js-toolkit': jsToolkitVersion },
   build: {
     commit,
     identifier: buildIdentifier,
@@ -773,7 +906,7 @@ const buildMetadata = {
       publishable: currentSourceState.clean,
     },
     stable: {
-      value: packageMetadata.version,
+      value: uiVersion,
       suppliedBy: 'package-version',
       mutable: false,
     },
@@ -783,9 +916,9 @@ const buildMetadata = {
       mutable: true,
     },
   },
-  entries: entryMetadata,
+  entries: entryMetadataFor(uiResult.metafile, uiOutputDirectory, entryOutputs),
   components: componentInventory,
-  outputs: outputMetadata,
+  outputs: outputMetadataFor(uiInitialFiles, uiSizes),
   styles: {
     'mapbox-gl': { path: 'styles/mapbox-gl.css', autoInject: false },
     'mapbox-geocoder': { path: 'styles/mapbox-gl-geocoder.css', autoInject: false },
@@ -830,8 +963,8 @@ const buildMetadata = {
       status: 'bundled-separately-lazy',
       components: ['MapboxGeocoder'],
       entry: geocoderIntegrationEntry,
-      preload: staticOutputGraph(result.metafile, geocoderDynamicOutput)
-        .map((dependency) => publicPath(outputDirectory, dependency))
+      preload: staticOutputGraph(uiResult.metafile, geocoderDynamicOutput)
+        .map((dependency) => publicPath(uiOutputDirectory, dependency))
         .filter((dependency) => dependency !== geocoderIntegrationEntry)
         .sort(),
     },
@@ -842,6 +975,13 @@ const buildMetadata = {
       reason:
         'The optional preview adapter is absent from the lockfile and unavailable from the public npm registry; the CDN component diagnoses this and falls back to Fetch.',
     },
+    'js-toolkit': {
+      status: 'external-versioned-artifact',
+      version: jsToolkitVersion,
+      urls: toolkitExternalUrls,
+      release: jsToolkitTreePrefix,
+      note: 'js-toolkit is built as its own versioned artifact and imported by an absolute, origin-relative URL so every ui output shares one runtime instance.',
+    },
   },
   preload: {
     semantics:
@@ -849,6 +989,8 @@ const buildMetadata = {
   },
   assertions: {
     jsToolkitIdentities: [toolkitIdentity],
+    jsToolkitExternalUrls: toolkitExternalUrls,
+    uiTreeBundlesToolkit: false,
     noBareImports: true,
     publicSourceMaps: true,
     startupMapboxIsolated: true,
@@ -863,22 +1005,82 @@ const buildMetadata = {
   },
 };
 
-const integrityFiles = [...initialFiles, 'build.json'].sort();
-let releaseSizeConverged = false;
-for (let attempt = 0; attempt < 5; attempt += 1) {
-  await writeJson(resolve(outputDirectory, 'build.json'), buildMetadata);
+const jsToolkitBuildMetadata = {
+  schemaVersion: 1,
+  format: {
+    name: 'studiometa-browser-cdn-js-toolkit',
+    version: 1,
+    module: 'esm',
+    target: 'es2020',
+    splitting: true,
+    sourcemaps: true,
+    bundler: `esbuild@${esbuild.version}`,
+  },
+  package: { name: JS_TOOLKIT_BUILD_NAME, version: jsToolkitVersion },
+  build: {
+    commit,
+    identifier: `${JS_TOOLKIT_BUILD_NAME}@${jsToolkitVersion}+${commit}`,
+    clean: currentSourceState.clean,
+    publishable: currentSourceState.clean,
+    createdAt: buildTime.iso,
+    sourceDateEpoch: buildTime.epoch,
+    timeSource: buildTime.source,
+  },
+  entries: entryMetadataFor(
+    jsToolkitResult.metafile,
+    jsToolkitOutputDirectory,
+    jsToolkitEntryOutputs,
+  ),
+  components: {},
+  outputs: outputMetadataFor(jsToolkitInitialFiles, jsToolkitSizes),
+  licenses: {
+    thirdPartyNotices: 'licenses/THIRD_PARTY_LICENSES.txt',
+    esbuildLegalComments: 'eof',
+  },
+};
+
+// The js-toolkit tree is fully self-contained, so its metadata is stable and written once. Its
+// integrity manifest hashes every file including its own build.json.
+await writeJson(resolve(jsToolkitOutputDirectory, 'build.json'), jsToolkitBuildMetadata);
+{
+  const integrityFiles = [...jsToolkitInitialFiles, 'build.json'].sort();
   const integrity = {
     schemaVersion: 1,
     algorithm: 'sha384',
     excludes: ['integrity.json'],
     files: Object.fromEntries(
       await Promise.all(
-        integrityFiles.map(async (file) => [file, await sha384(resolve(outputDirectory, file))]),
+        integrityFiles.map(async (file) => [
+          file,
+          await sha384(resolve(jsToolkitOutputDirectory, file)),
+        ]),
       ),
     ),
   };
-  await writeJson(resolve(outputDirectory, 'integrity.json'), integrity);
-  const releaseFiles = [...integrityFiles, 'integrity.json'];
+  await writeJson(resolve(jsToolkitOutputDirectory, 'integrity.json'), integrity);
+}
+
+// The ui build.json records total:release, which depends on the byte size of build.json itself, so
+// the metadata, integrity manifest and total-release measurement are iterated until they converge.
+const uiIntegrityFiles = [...uiInitialFiles, 'build.json'].sort();
+let releaseSizeConverged = false;
+for (let attempt = 0; attempt < 5; attempt += 1) {
+  await writeJson(resolve(uiOutputDirectory, 'build.json'), uiBuildMetadata);
+  const integrity = {
+    schemaVersion: 1,
+    algorithm: 'sha384',
+    excludes: ['integrity.json'],
+    files: Object.fromEntries(
+      await Promise.all(
+        uiIntegrityFiles.map(async (file) => [
+          file,
+          await sha384(resolve(uiOutputDirectory, file)),
+        ]),
+      ),
+    ),
+  };
+  await writeJson(resolve(uiOutputDirectory, 'integrity.json'), integrity);
+  const releaseFiles = await listFiles(outputDirectory);
   const releaseSizes = await fileSizes(outputDirectory, releaseFiles);
   const measuredReleaseSize = Object.values(releaseSizes).reduce(
     (total, bytes) => total + bytes,
@@ -893,6 +1095,7 @@ for (let attempt = 0; attempt < 5; attempt += 1) {
 if (!releaseSizeConverged) throw new Error('The total release size did not converge.');
 enforceSizeBudgets(observedBudgets);
 
+const totalPublicFiles = (await listFiles(outputDirectory)).length;
 console.log(
-  `Built ${definitions.length} components and ${initialFiles.length + 2} public files in ${toPosix(relative(repositoryDirectory, outputDirectory))}.`,
+  `Built ${definitions.length} components and ${totalPublicFiles} public files across ${uiTreePrefix} and ${jsToolkitTreePrefix}.`,
 );

@@ -13,9 +13,24 @@ const firstOutput = resolve(outputRoot, 'first');
 const secondOutput = resolve(outputRoot, 'second');
 const fixedEpoch = '1700000000';
 
+const uiVersion = JSON.parse(await readFile(resolve(packageDirectory, 'package.json'), 'utf8'))
+  .version as string;
+const jsToolkitVersion = JSON.parse(
+  await readFile(
+    resolve(repositoryDirectory, 'node_modules/@studiometa/js-toolkit/package.json'),
+    'utf8',
+  ),
+).version as string;
+const uiTreePrefix = `releases/ui/${uiVersion}`;
+const jsToolkitTreePrefix = `releases/js-toolkit/${jsToolkitVersion}`;
+
 interface BuildMetadata {
+  package: { name: string; version: string };
+  dependencies: Record<string, string>;
   assertions: {
     jsToolkitIdentities: string[];
+    jsToolkitExternalUrls: string[];
+    uiTreeBundlesToolkit: boolean;
     noBareImports: boolean;
     publicSourceMaps: boolean;
     startupMapboxIsolated: boolean;
@@ -84,14 +99,14 @@ async function digest(path: string): Promise<string> {
 }
 
 async function staticGraphSources(
-  outputDirectory: string,
+  treeDirectory: string,
   graph: { entry: string; preload: string[] },
 ): Promise<string[]> {
   return (
     await Promise.all(
       [graph.entry, ...graph.preload].map(async (output) => {
         const sourceMap = JSON.parse(
-          await readFile(resolve(outputDirectory, `${output}.map`), 'utf8'),
+          await readFile(resolve(treeDirectory, `${output}.map`), 'utf8'),
         ) as { sources: string[] };
         return sourceMap.sources;
       }),
@@ -100,7 +115,17 @@ async function staticGraphSources(
 }
 
 let build: BuildMetadata;
-let files: string[];
+let jsToolkitBuild: {
+  package: { name: string; version: string };
+  entries: Record<string, { path: string }>;
+};
+// The whole dist tree (spanning both packages) used for reproducibility.
+let allFiles: string[];
+// The ui tree relative to its own release prefix, used for ui-relative build.json assertions.
+let uiFiles: string[];
+let jsToolkitFiles: string[];
+let uiTree: string;
+let jsToolkitTree: string;
 
 beforeAll(async () => {
   await rm(outputRoot, { recursive: true, force: true });
@@ -112,15 +137,39 @@ beforeAll(async () => {
       { cwd: repositoryDirectory, env: environment, stdio: 'pipe' },
     );
   }
-  build = await readJson(firstOutput, 'build.json');
-  files = await listFiles(firstOutput);
-}, 30_000);
+  uiTree = resolve(firstOutput, uiTreePrefix);
+  jsToolkitTree = resolve(firstOutput, jsToolkitTreePrefix);
+  build = await readJson(uiTree, 'build.json');
+  jsToolkitBuild = await readJson(jsToolkitTree, 'build.json');
+  allFiles = await listFiles(firstOutput);
+  uiFiles = await listFiles(uiTree);
+  jsToolkitFiles = await listFiles(jsToolkitTree);
+}, 60_000);
 
 afterAll(async () => {
   await rm(outputRoot, { recursive: true, force: true });
 });
 
 describe('browser CDN build', () => {
+  it('emits both a ui tree and a versioned js-toolkit tree', () => {
+    expect(allFiles.some((file) => file.startsWith(`${uiTreePrefix}/`))).toBe(true);
+    expect(allFiles.some((file) => file.startsWith(`${jsToolkitTreePrefix}/`))).toBe(true);
+    expect(build.package.name).toBe('@studiometa/ui-cdn');
+    expect(build.package.version).toBe(uiVersion);
+    expect(build.dependencies['@studiometa/js-toolkit']).toBe(jsToolkitVersion);
+    expect(jsToolkitBuild.package.name).toBe('@studiometa/ui-cdn-js-toolkit');
+    expect(jsToolkitBuild.package.version).toBe(jsToolkitVersion);
+  });
+
+  it('serves the js-toolkit index and utils entries from the js-toolkit tree', () => {
+    expect(jsToolkitFiles).toContain('index.js');
+    expect(jsToolkitFiles).toContain('utils/index.js');
+    expect(jsToolkitFiles).toContain('build.json');
+    expect(jsToolkitFiles).toContain('integrity.json');
+    expect(jsToolkitBuild.entries.index.path).toBe('index.js');
+    expect(jsToolkitBuild.entries.utils.path).toBe('utils/index.js');
+  });
+
   it('builds deterministic files and metadata with a reproducible timestamp', async () => {
     expect(build.build.sourceDateEpoch).toBe(Number(fixedEpoch));
     expect(build.build.publishable).toBe(build.build.clean);
@@ -131,13 +180,13 @@ describe('browser CDN build', () => {
       verified: true,
     });
     expect(build.build.identifier.includes('.dirty.')).toBe(!build.build.clean);
-    expect(await readJson(secondOutput, 'build.json')).toEqual(build);
-    expect(await readJson(secondOutput, 'integrity.json')).toEqual(
-      await readJson(firstOutput, 'integrity.json'),
+    expect(await readJson(resolve(secondOutput, uiTreePrefix), 'build.json')).toEqual(build);
+    expect(await readJson(resolve(secondOutput, uiTreePrefix), 'integrity.json')).toEqual(
+      await readJson(uiTree, 'integrity.json'),
     );
-    expect(await listFiles(secondOutput)).toEqual(files);
+    expect(await listFiles(secondOutput)).toEqual(allFiles);
 
-    for (const file of files) {
+    for (const file of allFiles) {
       expect(await digest(resolve(secondOutput, file))).toBe(
         await digest(resolve(firstOutput, file)),
       );
@@ -186,7 +235,10 @@ describe('browser CDN build', () => {
       [resolve(packageDirectory, 'scripts/build.ts'), '--outdir', dirtyOutput, '--allow-dirty'],
       { cwd: repositoryDirectory, env: environment, stdio: 'pipe' },
     );
-    const dirtyBuild = await readJson<BuildMetadata>(dirtyOutput, 'build.json');
+    const dirtyBuild = await readJson<BuildMetadata>(
+      resolve(dirtyOutput, uiTreePrefix),
+      'build.json',
+    );
     expect(dirtyBuild.build).toMatchObject({
       clean: false,
       publishable: false,
@@ -200,21 +252,48 @@ describe('browser CDN build', () => {
     });
   });
 
+  it('externalizes js-toolkit to one absolute URL and bundles no js-toolkit source in the ui tree', async () => {
+    expect(build.assertions.uiTreeBundlesToolkit).toBe(false);
+    expect(build.assertions.jsToolkitExternalUrls).toContain(
+      `/js-toolkit@${jsToolkitVersion}/index.js`,
+    );
+    // Every external URL points at the built js-toolkit version.
+    for (const url of build.assertions.jsToolkitExternalUrls) {
+      expect(url.startsWith(`/js-toolkit@${jsToolkitVersion}/`)).toBe(true);
+    }
+
+    const uiJsFiles = uiFiles.filter((file) => file.endsWith('.js'));
+    let importsIndexUrl = false;
+    for (const file of uiJsFiles) {
+      const contents = await readFile(resolve(uiTree, file), 'utf8');
+      // No ui output may carry bundled js-toolkit source.
+      expect(contents.includes('node_modules/@studiometa/js-toolkit')).toBe(false);
+      if (contents.includes(`/js-toolkit@${jsToolkitVersion}/index.js`)) importsIndexUrl = true;
+    }
+    expect(importsIndexUrl).toBe(true);
+
+    // The js-toolkit tree owns the source and never re-imports itself by URL.
+    for (const file of jsToolkitFiles.filter((path) => path.endsWith('.js'))) {
+      const contents = await readFile(resolve(jsToolkitTree, file), 'utf8');
+      expect(contents.includes('/js-toolkit@')).toBe(false);
+    }
+  });
+
   it('publishes complete entry, component, preload, and dynamic integration mappings', () => {
-    expect(Object.keys(build.entries)).toEqual(['autoload', 'loader', 'manifest']);
+    expect(Object.keys(build.entries).sort()).toEqual(['autoload', 'index', 'loader', 'manifest']);
     expect(Object.keys(build.components).length).toBeGreaterThan(80);
     for (const entry of Object.values(build.entries)) {
-      expect(files).toContain(entry.path);
-      expect(files).toContain(entry.sourceMap);
-      expect(entry.preload.every((dependency) => files.includes(dependency))).toBe(true);
+      expect(uiFiles).toContain(entry.path);
+      expect(uiFiles).toContain(entry.sourceMap);
+      expect(entry.preload.every((dependency) => uiFiles.includes(dependency))).toBe(true);
     }
     for (const component of Object.values(build.components)) {
-      expect(files).toContain(component.entry);
-      expect(component.preload.every((dependency) => files.includes(dependency))).toBe(true);
+      expect(uiFiles).toContain(component.entry);
+      expect(component.preload.every((dependency) => uiFiles.includes(dependency))).toBe(true);
       expect(
         component.dynamicImports.every(
           ({ entry, preload }) =>
-            files.includes(entry) && preload.every((dependency) => files.includes(dependency)),
+            uiFiles.includes(entry) && preload.every((dependency) => uiFiles.includes(dependency)),
         ),
       ).toBe(true);
     }
@@ -230,7 +309,7 @@ describe('browser CDN build', () => {
   it('identifies exactly one geocoder integration from static graph source evidence', async () => {
     const candidates = await Promise.all(
       build.components.MapboxGeocoder.dynamicImports.map(async (dynamicImport) => {
-        const sources = await staticGraphSources(firstOutput, dynamicImport);
+        const sources = await staticGraphSources(uiTree, dynamicImport);
         return {
           dynamicImport,
           containsGeocoderPackage: sources.some((source) =>
@@ -248,15 +327,15 @@ describe('browser CDN build', () => {
   it('emits public source maps, stable relative paths, and no unresolved browser imports', async () => {
     expect(build.assertions.noBareImports).toBe(true);
     expect(build.assertions.publicSourceMaps).toBe(true);
-    for (const file of files.filter((path) => path.endsWith('.js'))) {
-      expect(files).toContain(`${file}.map`);
+    for (const file of allFiles.filter((path) => path.endsWith('.js'))) {
+      expect(allFiles).toContain(`${file}.map`);
     }
 
-    for (const file of files.filter((path) => /\.(?:js|json)$/.test(path))) {
+    for (const file of allFiles.filter((path) => /\.(?:js|json)$/.test(path))) {
       const contents = await readFile(resolve(firstOutput, file), 'utf8');
       expect(contents).not.toContain(repositoryDirectory);
     }
-    for (const file of files.filter((path) => path.endsWith('.map'))) {
+    for (const file of allFiles.filter((path) => path.endsWith('.map'))) {
       const sourceMap = JSON.parse(await readFile(resolve(firstOutput, file), 'utf8')) as {
         sources: string[];
       };
@@ -267,7 +346,9 @@ describe('browser CDN build', () => {
   });
 
   it('uses one js-toolkit identity and keeps startup, Mapbox, and geocoder graphs isolated', async () => {
-    expect(build.assertions.jsToolkitIdentities).toEqual(['@studiometa/js-toolkit@3.8.0']);
+    expect(build.assertions.jsToolkitIdentities).toEqual([
+      `@studiometa/js-toolkit@${jsToolkitVersion}`,
+    ]);
     expect(build.assertions.startupMapboxIsolated).toBe(true);
     expect(build.assertions.uiComponentsMapboxIsolated).toEqual(
       Object.entries(build.components)
@@ -290,7 +371,7 @@ describe('browser CDN build', () => {
     const uiMapboxViolations: string[] = [];
     const nonGeocoderViolations: string[] = [];
     for (const [token, component] of Object.entries(build.components)) {
-      const sources = await staticGraphSources(firstOutput, component);
+      const sources = await staticGraphSources(uiTree, component);
       if (
         component.packageName === '@studiometa/ui' &&
         sources.some((source) => mapboxSources.some((pattern) => source.includes(pattern)))
@@ -306,7 +387,7 @@ describe('browser CDN build', () => {
     }
     expect(uiMapboxViolations).toEqual([]);
     expect(nonGeocoderViolations).toEqual([]);
-    const actionSources = await staticGraphSources(firstOutput, build.components.Action);
+    const actionSources = await staticGraphSources(uiTree, build.components.Action);
     expect(actionSources.some((source) => source.includes('/packages/ui/Accordion/'))).toBe(false);
 
     const geocoderEntry = (build.integrations['mapbox-geocoder'] as { entry: string }).entry;
@@ -329,13 +410,13 @@ describe('browser CDN build', () => {
       },
       'mapbox-gl': { path: 'styles/mapbox-gl.css', autoInject: false },
     });
-    expect(await readFile(resolve(firstOutput, build.styles['mapbox-gl'].path), 'utf8')).toBe(
+    expect(await readFile(resolve(uiTree, build.styles['mapbox-gl'].path), 'utf8')).toBe(
       await readFile(
         resolve(repositoryDirectory, 'node_modules/mapbox-gl/dist/mapbox-gl.css'),
         'utf8',
       ),
     );
-    expect(await readFile(resolve(firstOutput, build.styles['mapbox-geocoder'].path), 'utf8')).toBe(
+    expect(await readFile(resolve(uiTree, build.styles['mapbox-geocoder'].path), 'utf8')).toBe(
       await readFile(
         resolve(
           repositoryDirectory,
@@ -352,7 +433,7 @@ describe('browser CDN build', () => {
       'size-budgets.json',
     );
     for (const [file, output] of Object.entries(build.outputs)) {
-      expect((await stat(resolve(firstOutput, file))).size).toBe(output.bytes);
+      expect((await stat(resolve(uiTree, file))).size).toBe(output.bytes);
     }
     expect(Object.keys(build.assertions.sizeBudgets).sort()).toEqual(
       Object.keys(budgets.bytes).sort(),
@@ -361,35 +442,50 @@ describe('browser CDN build', () => {
       expect(build.assertions.sizeBudgets[name]).toBeTypeOf('number');
       expect(build.assertions.sizeBudgets[name]).toBeLessThanOrEqual(maximum);
     }
+
+    // total:release spans every published file across both trees.
     const releaseBytes = (
-      await Promise.all(files.map(async (file) => (await stat(resolve(firstOutput, file))).size))
+      await Promise.all(allFiles.map(async (file) => (await stat(resolve(firstOutput, file))).size))
     ).reduce((total, bytes) => total + bytes, 0);
     expect(build.assertions.sizeBudgets['total:release']).toBe(releaseBytes);
-    expect(build.assertions.sizeBudgets['total:esm']).toBe(
-      Object.entries(build.outputs)
-        .filter(([file]) => file.endsWith('.js'))
-        .reduce((total, [, output]) => total + output.bytes, 0),
-    );
-    expect(build.assertions.sizeBudgets['total:source-maps']).toBe(
-      Object.entries(build.outputs)
-        .filter(([file]) => file.endsWith('.map'))
-        .reduce((total, [, output]) => total + output.bytes, 0),
-    );
+
+    const esmBytes = (
+      await Promise.all(
+        allFiles
+          .filter((file) => file.endsWith('.js'))
+          .map(async (file) => (await stat(resolve(firstOutput, file))).size),
+      )
+    ).reduce((total, bytes) => total + bytes, 0);
+    expect(build.assertions.sizeBudgets['total:esm']).toBe(esmBytes);
+
+    const sourceMapBytes = (
+      await Promise.all(
+        allFiles
+          .filter((file) => file.endsWith('.map'))
+          .map(async (file) => (await stat(resolve(firstOutput, file))).size),
+      )
+    ).reduce((total, bytes) => total + bytes, 0);
+    expect(build.assertions.sizeBudgets['total:source-maps']).toBe(sourceMapBytes);
   });
 
-  it('hashes every public output except integrity.json', async () => {
-    const integrity = await readJson<{
-      algorithm: string;
-      excludes: string[];
-      files: Record<string, string>;
-    }>(firstOutput, 'integrity.json');
-    expect(integrity.algorithm).toBe('sha384');
-    expect(integrity.excludes).toEqual(['integrity.json']);
-    expect(Object.keys(integrity.files)).toEqual(
-      files.filter((file) => file !== 'integrity.json').sort((a, b) => a.localeCompare(b)),
-    );
-    for (const [file, hash] of Object.entries(integrity.files)) {
-      expect(hash).toBe(`sha384-${await digest(resolve(firstOutput, file))}`);
+  it('hashes every public output except integrity.json in each tree', async () => {
+    for (const [tree, treeFiles] of [
+      [uiTree, uiFiles],
+      [jsToolkitTree, jsToolkitFiles],
+    ] as const) {
+      const integrity = await readJson<{
+        algorithm: string;
+        excludes: string[];
+        files: Record<string, string>;
+      }>(tree, 'integrity.json');
+      expect(integrity.algorithm).toBe('sha384');
+      expect(integrity.excludes).toEqual(['integrity.json']);
+      expect(Object.keys(integrity.files)).toEqual(
+        treeFiles.filter((file) => file !== 'integrity.json').sort((a, b) => a.localeCompare(b)),
+      );
+      for (const [file, hash] of Object.entries(integrity.files)) {
+        expect(hash).toBe(`sha384-${await digest(resolve(tree, file))}`);
+      }
     }
   });
 
@@ -409,10 +505,10 @@ describe('browser CDN build', () => {
     expect(build.licenses.mapboxGl.authoritativeBundledNotice).toBe(true);
     expect(build.licenses.mapboxGl.note).toContain('authoritative notice');
     expect(build.licenses.mapboxGeocoder.authoritativeBundledNotice).toBe(true);
-    expect(await readFile(resolve(firstOutput, build.licenses.mapboxGl.path), 'utf8')).toBe(
+    expect(await readFile(resolve(uiTree, build.licenses.mapboxGl.path), 'utf8')).toBe(
       await readFile(resolve(repositoryDirectory, 'node_modules/mapbox-gl/LICENSE.txt'), 'utf8'),
     );
-    expect(await readFile(resolve(firstOutput, build.licenses.mapboxGeocoder.path), 'utf8')).toBe(
+    expect(await readFile(resolve(uiTree, build.licenses.mapboxGeocoder.path), 'utf8')).toBe(
       await readFile(
         resolve(repositoryDirectory, 'node_modules/@mapbox/mapbox-gl-geocoder/LICENSE'),
         'utf8',
@@ -422,19 +518,36 @@ describe('browser CDN build', () => {
 
   it('ships third-party notices and diagnoses the excluded Shopify preview adapter', async () => {
     expect(build.licenses.esbuildLegalComments).toBe('eof');
-    const notices = await readFile(resolve(firstOutput, build.licenses.thirdPartyNotices), 'utf8');
+    const notices = await readFile(resolve(uiTree, build.licenses.thirdPartyNotices), 'utf8');
     expect(notices).toContain('mapbox-gl@');
     expect(notices).toContain('@mapbox/mapbox-gl-geocoder@');
+    // js-toolkit is no longer bundled into the ui tree, so its notice lives in the js-toolkit tree.
+    const jsToolkitNotices = await readFile(
+      resolve(jsToolkitTree, 'licenses/THIRD_PARTY_LICENSES.txt'),
+      'utf8',
+    );
+    expect(jsToolkitNotices).toContain('@studiometa/js-toolkit@');
     expect(build.integrations['shopify-partial-rendering']).toMatchObject({
       status: 'excluded-with-runtime-fallback',
       requestedSpecifier: '@shopify/partial-rendering',
       components: ['FetchShopifyPartial'],
     });
-    const shopifyChunk = await readFile(
-      resolve(firstOutput, build.components.FetchShopifyPartial.entry),
-      'utf8',
+    // The ui barrel statically imports every component, so the FetchShopifyPartial implementation
+    // may live in a shared chunk within its static graph rather than its (thin) entry file.
+    const shopifyGraph = [
+      build.components.FetchShopifyPartial.entry,
+      ...build.components.FetchShopifyPartial.preload,
+    ];
+    const shopifySources = await Promise.all(
+      shopifyGraph.map((file) => readFile(resolve(uiTree, file), 'utf8')),
     );
-    expect(shopifyChunk).toContain('Shopify partial rendering is unavailable in this CDN build');
-    expect(shopifyChunk).not.toContain('import("@shopify/partial-rendering")');
+    expect(
+      shopifySources.some((source) =>
+        source.includes('Shopify partial rendering is unavailable in this CDN build'),
+      ),
+    ).toBe(true);
+    for (const source of shopifySources) {
+      expect(source).not.toContain('import("@shopify/partial-rendering")');
+    }
   });
 });
