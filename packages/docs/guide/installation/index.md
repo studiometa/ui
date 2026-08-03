@@ -1,5 +1,9 @@
 # Installation
 
+::: tip No build step?
+If you cannot run a bundler — a content site, a prototype, or a CMS template — you can load components directly from the [browser CDN](/guide/browser-cdn/) with a single script tag instead of installing the package.
+:::
+
 ## In a Twig project
 
 ### Requirements
