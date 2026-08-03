@@ -8,5 +8,9 @@
 }
 
 .VPHomeHero .text {
-  max-width: 12em;
+  max-width: 14em;
+}
+
+.VPHomeHero .tagline {
+  max-width: 34em;
 }
