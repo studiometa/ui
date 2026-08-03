@@ -13,6 +13,7 @@
     "cdn:test": "npm test -w @studiometa/ui-cdn",
     "cdn:test:build": "npm run test:build -w @studiometa/ui-cdn",
     "cdn:test:worker": "npm run test:worker -w @studiometa/ui-cdn",
+    "cdn:test:browser": "npm run test:browser -w @studiometa/ui-cdn",
     "cdn:manifest:generate": "npm run manifest:generate -w @studiometa/ui-cdn",
     "cdn:manifest:check": "npm run manifest:check -w @studiometa/ui-cdn",
     "build": "rm -rf dist && npm run build:pkg && npm run build:sizes && npm run build:types && npm run build:twig && npm run build:cp-files",
