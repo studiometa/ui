@@ -9,6 +9,7 @@
   "scripts": {
     "test": "npm run test -w @studiometa/ui-tests",
     "test:watch": "npm run test:watch -w @studiometa/ui-tests",
+    "cdn:test": "npm test -w @studiometa/ui-cdn",
     "build": "rm -rf dist && npm run build:pkg && npm run build:sizes && npm run build:types && npm run build:twig && npm run build:cp-files",
     "build:cp-files": "node scripts/build-dist-pkg.js",
     "build:twig": "rsync -avh --include='*/' --include='**/*.twig' --exclude='*' --prune-empty-dirs packages/ui/ dist/",
@@ -25,6 +26,7 @@
     "play:dev": "npm run dev -w @studiometa/ui-playground",
     "play:watch": "npm run watch -w @studiometa/ui-playground",
     "play:build": "npm run build -w @studiometa/ui-playground",
+    "cdn:test:watch": "npm run test:watch -w @studiometa/ui-cdn",
     "postversion": "npm version --workspaces $npm_package_version && node scripts/update-composer-version.js",
     "postinstall": "patch-package"
   },

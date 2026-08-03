@@ -1,0 +1,25 @@
+{
+  "name": "@studiometa/ui-cdn",
+  "version": "1.9.0",
+  "description": "Private browser CDN build for @studiometa/ui",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
+  "license": "MIT",
+  "dependencies": {
+    "@studiometa/ui": "file:../ui",
+    "@studiometa/ui-mapbox": "file:../ui-mapbox"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^20.8.8",
+    "happy-dom": "^20.8.8",
+    "vitest": "4.1.1"
+  }
+}

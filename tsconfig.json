@@ -19,6 +19,7 @@
   "include": [
     "packages/ui/**/*.ts",
     "packages/ui-mapbox/**/*.ts",
-    "packages/tests/**/*.ts"
+    "packages/tests/**/*.ts",
+    "packages/cdn/**/*.ts"
   ]
 }
