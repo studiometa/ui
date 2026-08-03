@@ -655,6 +655,14 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'ToastProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Toaster/js-api',
+    status: 'stable',
+  },
+  {
     name: 'ToasterProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',

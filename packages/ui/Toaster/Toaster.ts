@@ -1,5 +1,6 @@
 import { Base } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import { Toast } from './Toast.js';
 import { viewTransition } from '../ViewTransition/index.js';
 
 export interface ToasterShowOptions {
@@ -42,15 +43,15 @@ let count = 0;
  * A headless notifications region. Two permanent `aria-live` regions — declared
  * as the `polite` and `assertive` refs — live in the DOM from mount, so a toast
  * inserted into one is announced by assistive tech without focus ever moving.
- * The class owns only node creation, the pausable auto-dismiss timer and the
- * enter/leave orchestration; the markup, styling and the animation itself are
- * authored in HTML/CSS, exactly like `Dialog`.
  *
- * Each toast is cloned from the `template` ref and gets a unique
- * `view-transition-name`, then appended (or removed) through the shared
- * [`viewTransition`](/reference/items/ViewTransition/) scheduler. Bursts fired in
- * the same tick coalesce into a single coordinated transition; when the View
- * Transitions API is unavailable the mutation runs synchronously.
+ * The class is only a factory: it clones a toast from the `template` ref, fills
+ * in the message, type and a unique `view-transition-name`, then appends it to
+ * the matching region through the shared
+ * [`viewTransition`](/reference/items/ViewTransition/) scheduler. Everything
+ * else belongs to the [`Toast`](/reference/items/Toaster/) it inserts — the
+ * auto-dismiss countdown, pausing on hover/focus and the leave animation — which
+ * the js-toolkit registry mounts and destroys automatically. Bursts fired in the
+ * same tick coalesce into a single coordinated transition.
  *
  * @link https://ui.studiometa.dev/reference/items/Toaster/
  */
@@ -60,8 +61,11 @@ export class Toaster<T extends BaseProps = BaseProps> extends Base<T & ToasterPr
    */
   static config: BaseConfig = {
     name: 'Toaster',
+    // `Toast` lives inside the Toaster; declaring it as a child registers it,
+    // so the registry mounts every toast the factory inserts.
+    components: { Toast },
     refs: ['polite', 'assertive', 'template'],
-    emits: ['show', 'dismiss'],
+    emits: ['show'],
     options: {
       // In seconds, matching the Timer/TimerProgress convention.
       duration: { type: Number, default: 5 },
@@ -69,14 +73,9 @@ export class Toaster<T extends BaseProps = BaseProps> extends Base<T & ToasterPr
   };
 
   /**
-   * Auto-dismiss timers keyed by their toast, so a toast can be cancelled on
-   * demand and every pending timer cleared on destroy.
-   * @private
-   */
-  __timers = new Map<HTMLElement, number>();
-
-  /**
-   * Show a toast holding the given message.
+   * Show a toast holding the given message, and return its (not-yet-mounted)
+   * element. The inserted toast is a `Toast` component the registry mounts on
+   * append; it owns its own dismissal.
    */
   show(
     message: string,
@@ -85,6 +84,12 @@ export class Toaster<T extends BaseProps = BaseProps> extends Base<T & ToasterPr
     const region =
       type === 'error' ? (this.$refs.assertive ?? this.$refs.polite) : this.$refs.polite;
     const toast = this.$refs.template.content.firstElementChild!.cloneNode(true) as HTMLElement;
+
+    // Guarantee the clone is a `Toast`, whatever the template declares, so the
+    // registry mounts it. Composes with any other component already on the root.
+    const components = new Set((toast.dataset.component ?? '').split(' ').filter(Boolean));
+    components.add('Toast');
+    toast.dataset.component = [...components].join(' ');
 
     toast.dataset.type = type;
     count += 1;
@@ -95,81 +100,19 @@ export class Toaster<T extends BaseProps = BaseProps> extends Base<T & ToasterPr
       messageTarget.textContent = message;
     }
 
-    toast.querySelector('[data-close]')?.addEventListener('click', () => this.dismiss(toast));
+    // The toast is a `Toast` (a `Timer`): its `delay` is the lifetime, in
+    // seconds. A duration of 0 (or less) means sticky — disable the autostart so
+    // the countdown never runs and only the close control dismisses it.
+    if (duration > 0) {
+      toast.dataset.optionDelay = String(duration);
+    } else {
+      toast.setAttribute('data-option-no-autostart', '');
+    }
 
     this.$emit('show', toast, message, type);
     viewTransition(() => region.append(toast));
 
-    if (duration > 0) {
-      this.__autoDismiss(toast, duration);
-    }
-
     return toast;
-  }
-
-  /**
-   * Dismiss a toast returned by `show()`. A no-op once the toast is gone.
-   */
-  dismiss(toast: HTMLElement): void {
-    if (!toast.isConnected) {
-      return;
-    }
-
-    const timer = this.__timers.get(toast);
-    if (timer !== undefined) {
-      window.clearTimeout(timer);
-    }
-    this.__timers.delete(toast);
-
-    this.$emit('dismiss', toast);
-    viewTransition(() => toast.remove());
-  }
-
-  /**
-   * Arm a pausable auto-dismiss timer on the toast: it pauses while the pointer
-   * hovers or the focus is within the toast, and resumes on leave/blur, so a
-   * toast the user is reading or acting on never disappears under them.
-   * @private
-   */
-  __autoDismiss(toast: HTMLElement, duration: number): void {
-    let remaining = duration * 1000; // seconds → ms
-    let start = performance.now();
-
-    const arm = () => {
-      start = performance.now();
-      this.__timers.set(toast, window.setTimeout(() => this.dismiss(toast), Math.max(remaining, 0)));
-    };
-    const disarm = () => {
-      const timer = this.__timers.get(toast);
-      if (timer !== undefined) {
-        window.clearTimeout(timer);
-      }
-    };
-    const pause = () => {
-      disarm();
-      remaining -= performance.now() - start;
-    };
-    const resume = () => {
-      disarm();
-      arm();
-    };
-
-    toast.addEventListener('mouseenter', pause);
-    toast.addEventListener('mouseleave', resume);
-    toast.addEventListener('focusin', pause);
-    toast.addEventListener('focusout', resume);
-
-    arm();
-  }
-
-  /**
-   * Clear every pending timer so none fires after the component is torn down.
-   */
-  destroyed() {
-    for (const timer of this.__timers.values()) {
-      window.clearTimeout(timer);
-    }
-    this.__timers.clear();
   }
 }
 

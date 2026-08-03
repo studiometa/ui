@@ -64,15 +64,16 @@
     aria-relevant="additions"
     class="flex w-full flex-col items-end gap-2"></div>
 
-  {# One toast, cloned per call. Plain DOM (no data-component) so there is
-     nothing to mount; `[data-message]` receives the text and `[data-close]`
-     dismisses. #}
+  {# One toast, cloned per call. The Toaster tags the clone as a `Toast` (a
+     `Timer`) so the registry mounts it; it then counts down and dismisses
+     itself. `[data-message]` receives the text; the `close` ref dismisses. #}
   <template data-ref="template">
-    <div class="toast pointer-events-auto flex w-80 max-w-[calc(100vw-3rem)] items-start gap-3 rounded-lg border-l-4 bg-white p-4 text-gray-900 shadow-lg ring-1 ring-black/5">
+    <div
+      class="toast pointer-events-auto flex w-80 max-w-[calc(100vw-3rem)] items-start gap-3 rounded-lg border-l-4 bg-white p-4 text-gray-900 shadow-lg ring-1 ring-black/5">
       <p data-message class="min-w-0 flex-1 text-sm"></p>
       <button
         type="button"
-        data-close
+        data-ref="close"
         aria-label="Dismiss notification"
         class="-mr-1 -mt-1 shrink-0 rounded p-1 leading-none text-gray-400 transition-colors hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">
         <span aria-hidden="true" class="text-xl">&times;</span>

@@ -1214,9 +1214,12 @@ export const referenceCatalog = [
     surfaces: ['js'],
     packages: [uiPackage],
     status: 'stable',
-    symbols: [uiSymbol('Toaster', '/reference/items/Toaster/js-api')],
+    symbols: [
+      uiSymbol('Toaster', '/reference/items/Toaster/js-api'),
+      uiSymbol('Toast', '/reference/items/Toaster/js-api'),
+    ],
     capabilities: ['aria-live regions', 'pausable auto-dismiss', 'batched view transitions'],
-    related: ['action', 'dialog', 'view-transition'],
+    related: ['action', 'dialog', 'timer', 'view-transition'],
   },
   {
     id: 'track',

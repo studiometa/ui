@@ -4,13 +4,13 @@ badges: [JS]
 
 # Toaster <Badges :texts="$frontmatter.badges" />
 
-The `Toaster` component is a headless notifications region. It owns only what a toaster genuinely needs — creating a toast from a template, a pausable auto-dismiss timer, and orchestrating the enter/leave animation — and leaves the markup, styling and the animation itself to you, exactly like [`Dialog`](/reference/items/Dialog/).
+The `Toaster` component is a headless notifications region. It is a small factory: it clones a toast from your `<template>` and inserts it into an [`aria-live`](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Live_Regions) region. Each toast is a [`Toast`](#the-toast-component) — a component built on the [`Timer`](/reference/items/Timer/) primitive — that owns its own auto-dismiss countdown, pauses on hover/focus and animates itself out. Markup, styling and the animation are yours, exactly like [`Dialog`](/reference/items/Dialog/).
 
-It ships no markup: you author two permanent [`aria-live`](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Live_Regions) regions and a `<template>`, wire the triggers with [`Action`](/reference/items/Action/), and describe the animation in CSS. Because the regions live in the DOM from mount, a toast inserted into one is announced by assistive technology **without focus ever moving** — the reason a toaster is not just a non-modal `Dialog`.
+It ships no markup: you author two permanent `aria-live` regions and a `<template>`, wire the triggers with [`Action`](/reference/items/Action/), and describe the animation in CSS. Because the regions live in the DOM from mount, a toast inserted into one is announced by assistive technology **without focus ever moving** — the reason a toaster is not just a non-modal `Dialog`.
 
 ## Usage
 
-Register the component along with [`Action`](/reference/items/Action/):
+Register `Toaster` and [`Action`](/reference/items/Action/). The `Toaster` declares [`Toast`](#the-toast-component) as a child, so registering the `Toaster` registers the `Toast` too — the js-toolkit registry then mounts every toast the `Toaster` inserts, and destroys it when it leaves:
 
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
@@ -33,11 +33,13 @@ Author a fixed, click-through region that holds two live regions and the toast t
   <div data-ref="assertive" role="alert" aria-live="assertive" aria-atomic="false" aria-relevant="additions"
     class="flex w-full flex-col items-end gap-2"></div>
 
-  <!-- Cloned per toast. `[data-message]` receives the text, `[data-close]` dismisses. -->
+  <!-- Cloned per toast. The Toaster tags the clone as a `Toast`, so you only
+       provide the markup: `[data-message]` receives the text and the `close`
+       ref dismisses it. -->
   <template data-ref="template">
     <div class="toast pointer-events-auto flex w-80 items-start gap-3 rounded-lg border-l-4 bg-white p-4 shadow-lg">
       <p data-message class="min-w-0 flex-1 text-sm"></p>
-      <button type="button" data-close aria-label="Dismiss notification">&times;</button>
+      <button type="button" data-ref="close" aria-label="Dismiss notification">&times;</button>
     </div>
   </template>
 </div>
@@ -92,8 +94,16 @@ Author a `@media (prefers-reduced-motion: reduce)` block that sets these animati
 
 ## Triggers and transitions
 
-The `Toaster` class adds no listeners of its own beyond the per-toast close button and hover/focus handlers. Every trigger is wired declaratively with [`Action`](/reference/items/Action/), calling [`show()`](./js-api.md#show) on the target. Appends and removals run through the shared [`viewTransition`](/reference/items/ViewTransition/) scheduler, which **batches every mutation requested in the same tick into a single coordinated transition** — so firing three toasts at once animates them as one — and falls back to a synchronous update when the View Transitions API is unavailable, making the animation pure progressive enhancement.
+The `Toaster` adds no listeners of its own. Every trigger is wired declaratively with [`Action`](/reference/items/Action/), calling [`show()`](./js-api.md#show) on the target. Appends and removals run through the shared [`viewTransition`](/reference/items/ViewTransition/) scheduler, which **batches every mutation requested in the same tick into a single coordinated transition** — so firing three toasts at once animates them as one — and falls back to a synchronous update when the View Transitions API is unavailable, making the animation pure progressive enhancement.
 
-Each toast auto-dismisses after [`duration`](./js-api.md#duration) seconds. The timer **pauses while the pointer hovers or the focus is inside the toast** and resumes on leave, so a toast the user is reading or acting on never disappears under them ([WCAG 2.2.1](https://www.w3.org/WAI/WCAG21/Understanding/timing-adjustable.html)). Pass `duration: 0` for a sticky toast that only closes on demand.
+## The `Toast` component
+
+Each inserted toast is a [`Toast`](./js-api.md#toast), a thin component built on the [`Timer`](/reference/items/Timer/) primitive. Reusing `Timer` means the toast gets a real, pausable countdown for free — `Timer`'s `delay` is the toast lifetime (in seconds), `autostart` begins it on mount and `destroyed()` cancels it when the toast leaves. On top of that, `Toast` adds:
+
+- **Pause on hover/focus.** The countdown **pauses while the pointer is over the toast or the focus is inside it** and resumes on leave, so a toast the user is reading or acting on never disappears under them ([WCAG 2.2.1](https://www.w3.org/WAI/WCAG21/Understanding/timing-adjustable.html)).
+- **A close control.** A `close` ref dismisses the toast on click.
+- **Self-removal.** When the countdown ends (or the toast is dismissed) it animates itself out through the `viewTransition` scheduler and removes its element; the registry then destroys the component.
+
+The `Toaster`'s [`duration`](./js-api.md#duration) option is written onto each toast as `Timer`'s `delay`; a `duration` of `0` disables the autostart, leaving a sticky toast that only closes on demand.
 
 See the [examples](./examples.md) for a live demo, and the [JavaScript API](./js-api.md) for the full list of options, methods and events.
