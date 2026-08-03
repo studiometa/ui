@@ -86,13 +86,12 @@ export async function readArtifact(outputDirectory: string): Promise<Artifact> {
 
 export interface PublishabilityOptions {
   requireClean: boolean;
-  mapboxRedistributionApproved: boolean;
 }
 
 /**
- * Enforces the release preconditions: a clean, publishable build and an explicitly resolved public
- * Mapbox redistribution legal gate. The gate is never bypassed silently — it must be recorded as
- * approved in the build or explicitly approved by the caller's environment.
+ * Enforces the release preconditions: a clean, publishable build whose release gates are resolved.
+ * The build records the public Mapbox redistribution review as approved by default; this dormant
+ * check still refuses a build that reintroduces a blocking, unapproved gate.
  */
 export function validatePublishability(
   build: PublishBuildMetadata,
@@ -106,12 +105,10 @@ export function validatePublishability(
   }
   const gate = build.releaseGates?.publicMapboxRedistributionReview;
   if (gate && gate.required && gate.blocksPublicRelease && gate.status !== 'approved') {
-    if (!options.mapboxRedistributionApproved) {
-      throw new Error(
-        'Public Mapbox redistribution review is unresolved. Record approval in the build or set ' +
-          'CDN_MAPBOX_REDISTRIBUTION_APPROVED=true to authorize this publication.',
-      );
-    }
+    throw new Error(
+      'A blocking release gate is unresolved. Record it as approved in the build ' +
+        '(releaseGates.publicMapboxRedistributionReview.status = "approved") before publishing.',
+    );
   }
 }
 

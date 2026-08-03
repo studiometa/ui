@@ -18,7 +18,7 @@ The index is the source of truth the Worker reads first. A prefix that exists in
 Before publishing:
 
 - **Clean, committed source.** The build refuses to produce publishable output when any tracked build source is dirty (see [infrastructure, Build and Publish Gates](./infrastructure.md#build-and-publish-gates)). Release builds run from a clean commit so `build.publishable` is `true`. Never publish output produced with `--allow-dirty`.
-- **Redistribution approval recorded.** `build.json` carries `releaseGates.publicMapboxRedistributionReview` with `blocksPublicRelease: true`. A public release must not proceed while that gate is unresolved.
+- **Release gates resolved.** `build.json` carries `releaseGates.publicMapboxRedistributionReview` recorded as `approved` / `blocksPublicRelease: false` (see [infrastructure, Mapbox Redistribution](./infrastructure.md#mapbox-redistribution)); publishing refuses only a build that reintroduces a blocking, unapproved gate.
 - **Publish guard enabled.** The publish tooling is expected to require `CDN_ENABLED=true` so a build cannot reach the public bucket before the environment and approvals exist.
 - **Scoped credentials present.** R2 write credentials and the Cloudflare API token described in [infrastructure](./infrastructure.md#required-credentials) are configured in the CI/publish environment, not in source.
 

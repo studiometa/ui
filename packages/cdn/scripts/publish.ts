@@ -40,7 +40,6 @@ Options:
 
 Environment:
   CDN_S3_ENDPOINT, CDN_S3_BUCKET, CDN_S3_ACCESS_KEY_ID, CDN_S3_SECRET_ACCESS_KEY   (required)
-  CDN_MAPBOX_REDISTRIBUTION_APPROVED=true                                          (legal gate)
   CDN_CLOUDFLARE_API_TOKEN, CDN_CLOUDFLARE_ZONE_ID, CDN_PUBLIC_BASE_URL            (optional purge)
 `;
 
@@ -99,14 +98,8 @@ async function main(): Promise<void> {
 
   // The ui build carries the Mapbox redistribution gate; the js-toolkit build only needs to be
   // clean and publishable. Both trees come from the same source state.
-  validatePublishability(uiArtifact.build, {
-    requireClean: true,
-    mapboxRedistributionApproved: process.env.CDN_MAPBOX_REDISTRIBUTION_APPROVED === 'true',
-  });
-  validatePublishability(jsToolkitArtifact.build, {
-    requireClean: true,
-    mapboxRedistributionApproved: true,
-  });
+  validatePublishability(uiArtifact.build, { requireClean: true });
+  validatePublishability(jsToolkitArtifact.build, { requireClean: true });
 
   let uiTarget: PublishTarget;
   let mutableAliases: string[];

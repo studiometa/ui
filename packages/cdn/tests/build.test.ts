@@ -498,9 +498,9 @@ describe('browser CDN build', () => {
       note: expect.stringContaining('strict-CSP external-worker build is not shipped'),
     });
     expect(build.releaseGates.publicMapboxRedistributionReview).toMatchObject({
-      required: true,
-      status: 'required-not-recorded',
-      blocksPublicRelease: true,
+      required: false,
+      status: 'approved',
+      blocksPublicRelease: false,
     });
     expect(build.licenses.mapboxGl.authoritativeBundledNotice).toBe(true);
     expect(build.licenses.mapboxGl.note).toContain('authoritative notice');

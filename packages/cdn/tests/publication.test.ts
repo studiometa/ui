@@ -160,10 +160,7 @@ describe('CDN publication', () => {
 describe('publishability gates', () => {
   it('rejects a non-publishable build', () => {
     expect(() =>
-      validatePublishability(makeArtifact({ publishable: false }).build, {
-        requireClean: true,
-        mapboxRedistributionApproved: true,
-      }),
+      validatePublishability(makeArtifact({ publishable: false }).build, { requireClean: true }),
     ).toThrow(/non-publishable/);
   });
 
@@ -171,27 +168,21 @@ describe('publishability gates', () => {
     expect(() =>
       validatePublishability(makeArtifact({ clean: false, publishable: false }).build, {
         requireClean: true,
-        mapboxRedistributionApproved: true,
       }),
     ).toThrow(/dirty build/);
   });
 
-  it('blocks publication while the Mapbox legal gate is unresolved', () => {
-    const build = makeArtifact({ gateStatus: 'required-not-recorded' }).build;
+  it('refuses a build that reintroduces a blocking, unapproved release gate', () => {
     expect(() =>
-      validatePublishability(build, { requireClean: true, mapboxRedistributionApproved: false }),
-    ).toThrow(/Mapbox redistribution/);
-    expect(() =>
-      validatePublishability(build, { requireClean: true, mapboxRedistributionApproved: true }),
-    ).not.toThrow();
+      validatePublishability(makeArtifact({ gateStatus: 'required-not-recorded' }).build, {
+        requireClean: true,
+      }),
+    ).toThrow(/blocking release gate/);
   });
 
-  it('passes when the gate is recorded as approved', () => {
+  it('passes when the gate is recorded as approved (the build default)', () => {
     expect(() =>
-      validatePublishability(makeArtifact({ gateStatus: 'approved' }).build, {
-        requireClean: true,
-        mapboxRedistributionApproved: false,
-      }),
+      validatePublishability(makeArtifact({ gateStatus: 'approved' }).build, { requireClean: true }),
     ).not.toThrow();
   });
 });

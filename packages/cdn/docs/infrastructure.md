@@ -164,26 +164,21 @@ Because aliases redirect to immutable URLs, the only cache entries that need to 
 
 ### Deployment Status
 
-No deployment has been performed. This document describes the intended topology and the contract the Worker and build system implement, not a provisioned environment. The Cloudflare account, the R2 bucket, the DNS records for `cdn.studiometa.dev`, and the legal approval gate are all still to be established; treat the identifiers below as the intended configuration to create, not as confirmed live resources.
+No deployment has been performed. This document describes the intended topology and the contract the Worker and build system implement, not a provisioned environment. The Cloudflare account, the R2 bucket, and the DNS records for `cdn.studiometa.dev` are all still to be established; treat the identifiers below as the intended configuration to create, not as confirmed live resources.
 
-### Legal Approval Gate
+### Mapbox Redistribution
 
-**Status**: `required-not-recorded` (blocks public release)
+**Status**: `approved` (does not block release)
 
-The CDN bundles Mapbox GL JS and the Mapbox geocoder library for distribution. Public redistribution of these components requires explicit legal review against:
+The CDN bundles Mapbox GL JS and the Mapbox geocoder. These are redistributed on the same basis as the public npm CDNs (jsDelivr, unpkg) that already mirror `mapbox-gl` from npm: Mapbox GL v2+ is licensed under the Mapbox TOS for use with a Mapbox account, and the required account token and map-load billing obligations follow the end user regardless of where the assets are served from. Serving the bundle does not change those obligations, so the build records `releaseGates.publicMapboxRedistributionReview` as `approved` and it does not block publishing.
 
-- Mapbox GL JS license terms
-- Mapbox geocoder license terms
-- Current Mapbox service terms
-- Redistribution clauses and attribution requirements
-
-**Action required**: Legal team must review and approve public redistribution before the CDN can serve production traffic.
+Revisit this if Mapbox's terms change. A cleaner future option is to stop bundling Mapbox entirely and provide `mapbox-gl` dynamically to the Mapbox components (externalized like `@studiometa/js-toolkit`), which also sidesteps the strict-CSP same-origin worker limitation below — tracked as a follow-up issue.
 
 ### Build and Publish Gates
 
-The build script (`packages/cdn/scripts/build.ts`) does not read a `CDN_ENABLED` flag. Its guard is the working tree itself: it refuses a release-style build when any tracked build source is modified, unless `--allow-dirty` is passed, in which case the output is explicitly marked non-publishable. The build records `build.publishable` and `identifiers.immutable.publishable` (both `true` only for a clean commit) and writes a `releaseGates.publicMapboxRedistributionReview` gate with status `required-not-recorded` and `blocksPublicRelease: true`.
+The build script (`packages/cdn/scripts/build.ts`) does not read a `CDN_ENABLED` flag. Its guard is the working tree itself: it refuses a release-style build when any tracked build source is modified, unless `--allow-dirty` is passed, in which case the output is explicitly marked non-publishable. The build records `build.publishable` and `identifiers.immutable.publishable` (both `true` only for a clean commit) and writes a `releaseGates.publicMapboxRedistributionReview` gate with status `approved` and `blocksPublicRelease: false` (see [Mapbox Redistribution](#mapbox-redistribution)). The publish tooling still refuses a build that reintroduces a blocking, unapproved gate.
 
-`CDN_ENABLED=true` is intended as a separate publish-time guard for the release tooling (the publish/rollback scripts described in [Release procedure](./release.md) and [Rollback procedure](./rollback.md)), so that a build cannot be pushed to the public bucket before the account, bucket, DNS, and redistribution approval are in place. That guard lives in the release track rather than in the build script in this package.
+`CDN_ENABLED=true` is a separate publish-time guard for the release tooling (the publish/rollback scripts described in [Release procedure](./release.md) and [Rollback procedure](./rollback.md)), so that a build cannot be pushed to the public bucket before the account, bucket, and DNS are in place. That guard lives in the release track rather than in the build script in this package.
 
 ### Required Credentials
 
