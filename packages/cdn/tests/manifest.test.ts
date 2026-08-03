@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Base, type BaseConstructor } from '@studiometa/js-toolkit';
 import * as uiExports from '@studiometa/ui';
 import * as mapboxExports from '@studiometa/ui-mapbox';
@@ -138,7 +139,10 @@ describe('component manifest', () => {
   });
 
   it('keeps the generated file fresh', () => {
-    const generatorPath = resolve(process.cwd(), 'scripts/generate-manifest.ts');
+    // Resolve relative to this test file, not process.cwd(), so the check is correct regardless
+    // of which working directory the runner uses.
+    const packageDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+    const generatorPath = resolve(packageDirectory, 'scripts/generate-manifest.ts');
     expect(() => execFileSync(process.execPath, [generatorPath, '--check'])).not.toThrow();
   });
 });
