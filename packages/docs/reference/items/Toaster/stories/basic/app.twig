@@ -1,32 +1,41 @@
-<div class="flex flex-wrap gap-3 p-2">
-  <button
-    type="button"
-    data-component="Action"
-    data-on:click="Toaster->target.show('Heads up — an informational message.')"
-    class="px-4 py-2 rounded bg-blue-600 text-white font-semibold">
-    Info
-  </button>
-  <button
-    type="button"
-    data-component="Action"
-    data-on:click="Toaster->target.show('Your changes have been saved.', { type: 'success' })"
-    class="px-4 py-2 rounded bg-emerald-600 text-white font-semibold">
-    Success
-  </button>
-  <button
-    type="button"
-    data-component="Action"
-    data-on:click="Toaster->target.show('Could not save. Please try again.', { type: 'error' })"
-    class="px-4 py-2 rounded bg-red-600 text-white font-semibold">
-    Error
-  </button>
-  <button
-    type="button"
-    data-component="Action"
-    data-on:click="Toaster->[1, 2, 3].forEach(function (n) { target.show('Stacked notification ' + n + ' of 3.') })"
-    class="px-4 py-2 rounded bg-gray-900 text-white font-semibold">
-    Stack 3
-  </button>
+<div class="flex min-h-screen flex-wrap items-center justify-center gap-4 p-6">
+  {{
+    include('@ui/Button/StyledButton.twig', {
+      label: 'Info',
+      attr: {
+        'data-component': 'Action',
+        'data-on:click': "Toaster->target.show('Heads up — an informational message.')"
+      }
+    })
+  }}
+  {{
+    include('@ui/Button/StyledButton.twig', {
+      label: 'Success',
+      attr: {
+        'data-component': 'Action',
+        'data-on:click': "Toaster->target.show('Your changes have been saved.', { type: 'success' })"
+      }
+    })
+  }}
+  {{
+    include('@ui/Button/StyledButton.twig', {
+      label: 'Error',
+      attr: {
+        'data-component': 'Action',
+        'data-on:click': "Toaster->target.show('Could not save. Please try again.', { type: 'error' })"
+      }
+    })
+  }}
+  {{
+    include('@ui/Button/StyledButton.twig', {
+      label: 'Stack 3',
+      theme: 'secondary',
+      attr: {
+        'data-component': 'Action',
+        'data-on:click': "Toaster->[1, 2, 3].forEach(function (n) { target.show('Stacked notification ' + n + ' of 3.') })"
+      }
+    })
+  }}
 </div>
 
 {# A fixed, click-through positioning layer holding the two live regions and the
