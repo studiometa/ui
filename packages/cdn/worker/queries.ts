@@ -33,12 +33,14 @@ export function parseRoute(pathname: string): ParsedRoute {
   }
   const packageSegment = segments[1];
   const separator = packageSegment.indexOf('@');
-  if (separator === -1) throw new RequestValidationError('Unknown CDN package.', 404);
-  if (packageSegment.slice(0, separator) !== 'ui') {
+  const packageName = separator === -1 ? packageSegment : packageSegment.slice(0, separator);
+  if (packageName !== 'ui') {
     throw new RequestValidationError('Unknown CDN package.', 404);
   }
 
-  const requestedVersion = packageSegment.slice(separator + 1);
+  // A versionless package segment (e.g. /ui/autoload.js) resolves to the latest stable release,
+  // redirecting to the exact version like the /ui@latest/ alias does.
+  const requestedVersion = separator === -1 ? 'latest' : packageSegment.slice(separator + 1);
   if (!requestedVersion || !VERSION_TOKEN_PATTERN.test(requestedVersion)) {
     throw new RequestValidationError('The CDN version is malformed.');
   }

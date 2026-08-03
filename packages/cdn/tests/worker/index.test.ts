@@ -56,6 +56,14 @@ describe('CDN Worker version routing', () => {
     expectCrossOriginHeaders(response);
   });
 
+  it('resolves a versionless ui package to the latest stable release', async () => {
+    const response = await request('/ui/autoload.js');
+    expect(response.status).toBe(307);
+    expect(response.headers.get('Location')).toBe(`${origin}/ui@2.0.0/autoload.js`);
+    expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+    expectCrossOriginHeaders(response);
+  });
+
   it('serves published prereleases exactly but excludes them from aliases', async () => {
     expect((await request('/ui@3/autoload.js')).status).toBe(404);
     expect((await request('/ui@2.0.0-beta.1/autoload.js')).status).toBe(200);
