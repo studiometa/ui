@@ -8,6 +8,7 @@
     "build": "node scripts/build.ts",
     "test": "vitest run",
     "test:build": "vitest run tests/build.test.ts",
+    "test:worker": "vitest run tests/worker",
     "test:watch": "vitest",
     "manifest:generate": "node scripts/generate-manifest.ts",
     "manifest:check": "node scripts/generate-manifest.ts --check"
