@@ -4,7 +4,12 @@ import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import esbuild, { type Metafile, type Plugin } from 'esbuild';
-import { componentCatalogs } from '../src/component-metadata.ts';
+import { catalog as uiCatalog } from '@studiometa/ui/catalog';
+import { catalog as mapboxCatalog } from '@studiometa/ui-mapbox/catalog';
+
+// Each component package owns and exports its own autoload catalog; the CDN build simply composes
+// them in serving order (`@studiometa/ui` then `@studiometa/ui-mapbox`).
+const componentCatalogs = [uiCatalog, mapboxCatalog] as const;
 
 const scriptsDirectory = dirname(fileURLToPath(import.meta.url));
 const packageDirectory = resolve(scriptsDirectory, '..');
@@ -47,6 +52,7 @@ const buildSourcePathspecs = [
   'packages/cdn/src',
   'packages/cdn/size-budgets.json',
   'packages/ui',
+  'packages/ui-autoload',
   'packages/ui-mapbox',
 ] as const;
 
@@ -57,7 +63,7 @@ interface SizeBudgets {
 
 interface ComponentDefinition {
   token: string;
-  packageName: keyof typeof packageDirectories;
+  packageName: string;
   subpath: string;
   exportName: string;
   strategy: string;
@@ -349,7 +355,9 @@ function assertUiExternals(metafile: Metafile): {
   }
   for (const specifier of mapboxExternalSpecifiers) {
     if (!external.includes(specifier)) {
-      throw new Error(`The ui tree does not import Mapbox through the external specifier ${specifier}.`);
+      throw new Error(
+        `The ui tree does not import Mapbox through the external specifier ${specifier}.`,
+      );
     }
   }
   const bundled = Object.keys(metafile.inputs).filter((input) =>
@@ -680,8 +688,11 @@ for (const [output, metadata] of Object.entries(uiResult.metafile.outputs)) {
 // The Mapbox component family stays lazy, and the Mapbox libraries are external (import-map
 // resolved), so neither the component source nor the libraries may appear in the startup graph or
 // in any @studiometa/ui component graph. That the library source is bundled nowhere at all is
-// enforced globally by `assertUiExternals`.
-const uiMapboxSourcePattern = /(?:^|\/)packages\/ui-mapbox\//;
+// enforced globally by `assertUiExternals`. The `@studiometa/ui-mapbox/manifest` metadata module is
+// intentionally exempt: it is a plain map of lazy `() => import()` thunks (no component nor library
+// source of its own) and the composed manifest statically imports it so the loader can discover
+// every token up front while still loading each Mapbox component on demand.
+const uiMapboxSourcePattern = /(?:^|\/)packages\/ui-mapbox\/(?!manifest\.ts(?:$|[?#]))/;
 const mapboxLibPatterns = [
   /(?:^|\/)node_modules\/mapbox-gl\//,
   /(?:^|\/)node_modules\/@mapbox\/mapbox-gl-geocoder\//,

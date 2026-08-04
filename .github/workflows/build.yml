@@ -82,7 +82,7 @@ jobs:
           restore-keys: ${{ runner.os }}-node-
       - name: Install modules
         run: npm install --no-audit --no-fund
-      - name: Verify the CDN component manifest is in sync
-        run: npm run cdn:manifest:check
+      - name: Verify the component manifests are in sync
+        run: npm run manifest:check
       - name: Build the browser CDN distribution
         run: npm run cdn:build

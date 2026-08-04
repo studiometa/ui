@@ -12,8 +12,6 @@
     "test:publication": "vitest run tests/publication.test.ts tests/worker/observability.test.ts",
     "test:browser": "node scripts/build.ts --allow-dirty && playwright test --config playwright.config.ts",
     "test:watch": "vitest",
-    "manifest:generate": "node scripts/generate-manifest.ts",
-    "manifest:check": "node scripts/generate-manifest.ts --check",
     "publish": "node scripts/publish.ts",
     "rollback": "node scripts/rollback.ts",
     "smoke": "node scripts/smoke.ts"
@@ -22,6 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@studiometa/ui": "file:../ui",
+    "@studiometa/ui-autoload": "file:../ui-autoload",
     "@studiometa/ui-mapbox": "file:../ui-mapbox"
   },
   "devDependencies": {
