@@ -848,6 +848,41 @@ export const referenceCatalog = [
         '/reference/items/MapboxMap/js-api#abstractmapboxcontrol',
         'primitive',
       ),
+      mapboxSymbol(
+        'provideMapboxGl',
+        '/reference/items/MapboxMap/js-api#providing-the-mapbox-gl-dependency',
+        'helper',
+      ),
+      mapboxSymbol(
+        'provideMapboxGeocoder',
+        '/reference/items/MapboxMap/js-api#providing-the-mapbox-gl-dependency',
+        'helper',
+      ),
+      mapboxSymbol(
+        'resolveMapboxGl',
+        '/reference/items/MapboxMap/js-api#providing-the-mapbox-gl-dependency',
+        'helper',
+      ),
+      mapboxSymbol(
+        'resolveMapboxGeocoder',
+        '/reference/items/MapboxMap/js-api#providing-the-mapbox-gl-dependency',
+        'helper',
+      ),
+      mapboxSymbol(
+        'MapboxGl',
+        '/reference/items/MapboxMap/js-api#providing-the-mapbox-gl-dependency',
+        'type',
+      ),
+      mapboxSymbol(
+        'MapboxGeocoderControl',
+        '/reference/items/MapboxMap/js-api#providing-the-mapbox-gl-dependency',
+        'type',
+      ),
+      mapboxSymbol(
+        'MapboxGeocoderConstructor',
+        '/reference/items/MapboxMap/js-api#providing-the-mapbox-gl-dependency',
+        'type',
+      ),
     ],
     capabilities: ['clusters', 'controls', 'markers', 'sources and layers'],
     related: ['mapbox-static-map', 'store-locator'],

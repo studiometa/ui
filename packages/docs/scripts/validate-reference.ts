@@ -147,7 +147,12 @@ for (const subpath of explicitUiSubpaths) {
 }
 
 const mapboxIndex = readFileSync(resolve(repositoryRoot, 'packages/ui-mapbox/index.ts'), 'utf8');
-const mapboxExports = [...mapboxIndex.matchAll(/'\.\/([^']+)\.js'/g)].map((match) => match[1]);
+// Only whole-module (`export * from './X.js'`) re-exports map to a documented item; named
+// re-exports (e.g. the dependency-injection helpers from `./dependencies.js`) are covered by the
+// per-symbol export validation below.
+const mapboxExports = [...mapboxIndex.matchAll(/export \* from '\.\/([^']+)\.js'/g)].map(
+  (match) => match[1],
+);
 for (const exportedName of mapboxExports) {
   report(
     allReferenceSymbols.some(
