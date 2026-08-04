@@ -1,0 +1,40 @@
+name: cdn-preview
+
+# Uploads a preview version of the CDN Worker for a pull request that changes the Worker (or its
+# wrangler config) and comments the preview URL on the PR. `wrangler versions upload` creates a new
+# version with its own preview URL without shifting any production traffic, so the branch can be
+# tested against the live R2 bucket before the change is merged and deployed by `cdn-main`. Gated by
+# the CDN_ENABLED repository variable, like the other CDN workflows.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'packages/cdn/worker/**'
+      - 'packages/cdn/wrangler.jsonc'
+      - '.github/workflows/cdn-preview.yml'
+
+jobs:
+  cdn_preview:
+    if: ${{ vars.CDN_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm install --no-audit --no-fund
+      - name: Upload a preview version of the CDN Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CDN_CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CDN_CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: packages/cdn
+          command: versions upload
+          # With a token, wrangler-action comments the preview URL on the pull request.
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

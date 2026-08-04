@@ -176,13 +176,21 @@ The build script (`packages/cdn/scripts/build.ts`) does not read a `CDN_ENABLED`
 
 `CDN_ENABLED=true` is a separate publish-time guard for the release tooling (the publish/rollback scripts described in [Release procedure](./release.md) and [Rollback procedure](./rollback.md)), so that a build cannot be pushed to the public bucket before the account, bucket, and DNS are in place. That guard lives in the release track rather than in the build script in this package.
 
+### Worker deployment
+
+The Worker is deployed with the official [`cloudflare/wrangler-action`](https://github.com/cloudflare/wrangler-action) (`wrangler deploy`) from `packages/cdn`, reading `worker/index.ts` and `wrangler.jsonc`. It runs as the final step of the `cdn-main` workflow — after the R2 assets for the `main-<sha>` channel are published — gated by `CDN_ENABLED`. The Worker is version-agnostic (it serves whatever the immutable R2 prefixes and `versions.json` hold), so redeploying it on every main publish simply keeps the live Worker in step with the `worker/` sources on `main`. The R2 asset publication and the atomic `versions.json` update stay in `scripts/publish.ts`, since their immutable-prefix and atomic-index guarantees are not something an off-the-shelf action provides.
+
+**Pull-request previews.** The `cdn-preview` workflow runs on pull requests that touch `packages/cdn/worker/**` or `wrangler.jsonc` (gated by `CDN_ENABLED`) and uses the same action with `wrangler versions upload`. That uploads a new Worker version with its own preview URL **without shifting production traffic**, and `wrangler-action` comments the URL on the PR. Preview URLs require `preview_urls: true` in `wrangler.jsonc` (set) and a `workers.dev` subdomain on the account. A preview runs the PR's Worker code against the live R2 bucket, so it exercises Worker routing, headers and version resolution against already-published assets; it does not serve a PR's freshly-built component chunks unless those are separately published.
+
 ### Required Credentials
 
-The following scoped credentials must be configured for deployment:
+The following scoped credentials must be configured for deployment (as repository secrets unless noted):
 
-1. **Cloudflare API Token**: Worker deployment, zone management
-2. **R2 Access Credentials**: Bucket write access for artifact upload
-3. **DNS Management**: Domain configuration and routing updates
+1. **`CDN_CLOUDFLARE_API_TOKEN`**: a Cloudflare API token with Workers deploy (and, if cache purging is used, zone cache-purge) permissions. Consumed by both `wrangler-action` and the alias purge in `scripts/publish.ts`.
+2. **`CDN_CLOUDFLARE_ACCOUNT_ID`**: the Cloudflare account that owns the Worker and the R2 bucket. Passed to `wrangler-action`.
+3. **`CDN_S3_ENDPOINT` / `CDN_S3_BUCKET` / `CDN_S3_ACCESS_KEY_ID` / `CDN_S3_SECRET_ACCESS_KEY`**: scoped R2 (S3 API) write credentials for the artifact upload in `scripts/publish.ts`.
+4. **`CDN_CLOUDFLARE_ZONE_ID`** (optional): the zone for the mutable-alias cache purge; purging is skipped when it (or `CDN_PUBLIC_BASE_URL`) is absent.
+5. **DNS management**: `cdn.studiometa.dev` domain configuration and routing, set up in the Cloudflare dashboard.
 
 Credentials are stored in the deployment environment and not exposed in source code.
 

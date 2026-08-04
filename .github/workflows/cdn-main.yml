@@ -42,3 +42,14 @@ jobs:
           CDN_CLOUDFLARE_API_TOKEN: ${{ secrets.CDN_CLOUDFLARE_API_TOKEN }}
           CDN_CLOUDFLARE_ZONE_ID: ${{ secrets.CDN_CLOUDFLARE_ZONE_ID }}
           CDN_PUBLIC_BASE_URL: ${{ vars.CDN_PUBLIC_BASE_URL }}
+      # Deploy the Worker itself with the official Cloudflare action. It reads worker/index.ts and
+      # wrangler.jsonc from packages/cdn; the Worker is version-agnostic (it serves whatever the
+      # immutable R2 prefixes and versions.json hold), so redeploying it after each main publish
+      # simply keeps the live Worker in step with the worker/ sources on main.
+      - name: Deploy the CDN Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CDN_CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CDN_CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: packages/cdn
+          command: deploy
