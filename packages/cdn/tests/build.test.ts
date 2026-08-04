@@ -59,6 +59,8 @@ interface BuildMetadata {
     string,
     {
       packageName: string;
+      subpath: string;
+      exportName: string;
       entry: string;
       preload: string[];
       dynamicImports: Array<{ entry: string; preload: string[] }>;
@@ -300,6 +302,46 @@ describe('browser CDN build', () => {
     // bundled Mapbox chunk — MapboxGeocoder and MapboxMap alike have no dynamic imports.
     expect(build.components.MapboxGeocoder.dynamicImports).toEqual([]);
     expect(build.components.MapboxMap.dynamicImports).toEqual([]);
+  });
+
+  it('emits a stable, non-hashed <subpath>.js entry at the ui tree root for every component', async () => {
+    const reserved = new Set(['autoload.js', 'loader.js', 'manifest.js', 'index.js']);
+    const seen = new Set<string>();
+    for (const component of Object.values(build.components)) {
+      // The entry is the stable subpath file at the tree root, not a hashed shared chunk.
+      expect(component.entry).toBe(`${component.subpath}.js`);
+      expect(component.entry).not.toMatch(/^chunks\//);
+      expect(component.entry).not.toMatch(/-[0-9A-Z]{8}\.js$/);
+      expect(reserved.has(component.entry)).toBe(false);
+      expect(uiFiles).toContain(component.entry);
+      expect(uiFiles).toContain(`${component.entry}.map`);
+      // Subpaths mirror the npm subpath exports one-to-one, so entries never collide.
+      expect(seen.has(component.entry)).toBe(false);
+      seen.add(component.entry);
+    }
+
+    // A @studiometa/ui and a @studiometa/ui-mapbox sample are each served and re-export the
+    // component, so `import { X } from "/ui@<ref>/X.js"` mirrors the npm subpath export.
+    for (const [subpath, exportName] of [
+      ['Action', 'Action'],
+      ['MapboxMap', 'MapboxMap'],
+    ] as const) {
+      const component = Object.values(build.components).find((entry) => entry.subpath === subpath);
+      expect(component).toBeDefined();
+      expect(uiFiles).toContain(`${subpath}.js`);
+      const source = await readFile(resolve(uiTree, `${subpath}.js`), 'utf8');
+      expect(source).toMatch(new RegExp(`\\bas ${exportName}\\b`));
+      // js-toolkit is resolved through the single external URL somewhere in the entry's static
+      // graph (the entry or a shared chunk it imports, depending on code-splitting), never by
+      // bundling js-toolkit source.
+      const graph = [`${subpath}.js`, ...component!.preload];
+      const graphSources = await Promise.all(
+        graph.map((file) => readFile(resolve(uiTree, file), 'utf8')),
+      );
+      expect(
+        graphSources.some((text) => text.includes(`/js-toolkit@${jsToolkitVersion}/index.js`)),
+      ).toBe(true);
+    }
   });
 
   it('externalizes Mapbox and the geocoder instead of bundling their source', async () => {

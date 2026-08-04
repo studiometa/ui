@@ -162,6 +162,21 @@ export function resolveVersion(
   return resolved ? exactRelease('ui', resolved) : undefined;
 }
 
+/**
+ * Resolves the exact version a bare package root redirects to. The `ui` root follows the `latest`
+ * distribution tag; the tagless `js-toolkit` root follows its highest published release. Either
+ * yields `undefined` when the package has no eligible release yet, which the Worker turns into a
+ * 404.
+ */
+export function resolveBareRoot(
+  index: VersionsIndex,
+  packageName: PackageName,
+): ExactVersion | undefined {
+  if (packageName === 'ui') return resolveVersion(index, 'ui', 'latest');
+  const highest = [...index.packages['js-toolkit'].releases].sort(compareStableVersions).at(-1);
+  return highest ? exactRelease('js-toolkit', highest) : undefined;
+}
+
 export function isMutableVersion(requested: string, resolved: ExactVersion): boolean {
   return requested !== resolved.version;
 }

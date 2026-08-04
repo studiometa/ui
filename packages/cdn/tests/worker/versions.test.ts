@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { describe, expect, it } from 'vitest';
-import { parseVersionsIndex, resolveVersion } from '../../worker/versions.ts';
+import { parseVersionsIndex, resolveBareRoot, resolveVersion } from '../../worker/versions.ts';
 
 function uiIndex(ui: { releases: string[]; channels: string[]; distTags: Record<string, string> }) {
   return {
@@ -122,5 +122,38 @@ describe('js-toolkit version resolution', () => {
     expect(resolveVersion(index, 'js-toolkit', 'main')).toBeUndefined();
     expect(resolveVersion(index, 'js-toolkit', 'main-abcdef1')).toBeUndefined();
     expect(resolveVersion(index, 'js-toolkit', '9.9.9')).toBeUndefined();
+  });
+});
+
+describe('bare package root resolution', () => {
+  const index = parseVersionsIndex({
+    schemaVersion: 2,
+    packages: {
+      ui: { releases: ['1.9.0', '2.0.0'], channels: [], distTags: { latest: '2.0.0' } },
+      // Deliberately unordered and spanning a two-digit minor to prove numeric (not lexical) order.
+      'js-toolkit': { releases: ['3.7.0', '3.10.0', '3.8.0'] },
+    },
+  });
+
+  it('resolves the ui root to the latest stable release', () => {
+    expect(resolveBareRoot(index, 'ui')).toEqual({
+      kind: 'release',
+      version: '2.0.0',
+      objectPrefix: 'releases/ui/2.0.0',
+    });
+  });
+
+  it('resolves the js-toolkit root to the highest published release', () => {
+    expect(resolveBareRoot(index, 'js-toolkit')).toEqual({
+      kind: 'release',
+      version: '3.10.0',
+      objectPrefix: 'releases/js-toolkit/3.10.0',
+    });
+  });
+
+  it('resolves to nothing when the package has no eligible release', () => {
+    const empty = parseVersionsIndex(uiIndex({ releases: [], channels: [], distTags: {} }));
+    expect(resolveBareRoot(empty, 'ui')).toBeUndefined();
+    expect(resolveBareRoot(empty, 'js-toolkit')).toBeUndefined();
   });
 });

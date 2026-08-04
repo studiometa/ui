@@ -62,6 +62,16 @@ export function parseRoute(pathname: string): ParsedRoute {
   };
 }
 
+// A bare package root is the package name alone, with no version and no asset segment: `/ui`,
+// `/ui/`, `/js-toolkit`, `/js-toolkit/`. It redirects to a usable latest asset (resolved by the
+// caller). Anything with a version (`/ui@1.2.0`) or an asset (`/ui/autoload.js`) falls through to
+// `parseRoute`, so this recognizes only the bare name.
+export function parseBareRoot(pathname: string): PackageName | undefined {
+  const name = (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname).slice(1);
+  if (name === '' || name.includes('/')) return undefined;
+  return PACKAGE_NAMES.has(name as PackageName) ? (name as PackageName) : undefined;
+}
+
 export function canonicalizeQuery(
   url: URL,
   assetPath: string,

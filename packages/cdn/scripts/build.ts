@@ -619,9 +619,31 @@ const jsToolkitResult = await esbuild.build({
   outdir: jsToolkitOutputDirectory,
 });
 
+// Every @studiometa/ui and @studiometa/ui-mapbox component is emitted as a stable, non-hashed ESM
+// entry named `<subpath>.js` at the ui tree root, so a consumer can import a single component by a
+// path that mirrors the npm subpath export (e.g. `/ui@<ref>/Action.js`). Pointing an entry straight
+// at the component source module re-exports its public exports. js-toolkit gets no per-symbol files
+// (pass A keeps only index.js + utils/index.js). Subpaths must not collide with the reserved ui
+// entries (autoload/loader/manifest/index) and no two components may share a subpath — both trees
+// share this one ui release tree.
+const reservedUiEntryNames = new Set(['autoload', 'loader', 'manifest', 'index']);
+const componentEntryPoints: Record<string, string> = {};
+for (const definition of definitions) {
+  const entryName = definition.subpath;
+  if (reservedUiEntryNames.has(entryName)) {
+    throw new Error(`Component subpath "${entryName}" collides with a reserved ui entry name.`);
+  }
+  const source = toPosix(relative(repositoryDirectory, definition.sourcePath));
+  const existing = componentEntryPoints[entryName];
+  if (existing && existing !== source) {
+    throw new Error(`Two components share the CDN subpath "${entryName}".`);
+  }
+  componentEntryPoints[entryName] = source;
+}
+
 // Pass B — the @studiometa/ui tree. js-toolkit is rewritten to its external, versioned URL and the
-// ui barrel is emitted as index.js. Autoload, loader, manifest, every component chunk and the
-// barrel now import the single external js-toolkit URL and carry no js-toolkit source.
+// ui barrel is emitted as index.js. Autoload, loader, manifest, every stable component entry and
+// the barrel now import the single external js-toolkit URL and carry no js-toolkit source.
 const uiResult = await esbuild.build({
   ...sharedEsbuildOptions(),
   entryPoints: {
@@ -629,6 +651,7 @@ const uiResult = await esbuild.build({
     loader: 'packages/cdn/src/loader.ts',
     manifest: 'packages/cdn/src/manifest.ts',
     index: 'packages/cdn/src/barrel-ui.ts',
+    ...componentEntryPoints,
   },
   outdir: uiOutputDirectory,
   external: [...mapboxExternalSpecifiers],

@@ -1,4 +1,4 @@
-import { canonicalizeQuery, parseRoute, RequestValidationError } from './queries.ts';
+import { canonicalizeQuery, parseBareRoot, parseRoute, RequestValidationError } from './queries.ts';
 import {
   contentType,
   errorResponse,
@@ -17,7 +17,7 @@ import type {
   R2ObjectBodyLike,
   WorkerEnvironment,
 } from './types.ts';
-import { isMutableVersion, parseVersionsIndex, resolveVersion } from './versions.ts';
+import { isMutableVersion, parseVersionsIndex, resolveBareRoot, resolveVersion } from './versions.ts';
 import { classifyVersion, emitObservation, ObservationRecorder } from './observability.ts';
 
 const MAX_LINK_HEADER_BYTES = 7_500;
@@ -198,7 +198,11 @@ async function handleRequest(
   }
 
   const url = new URL(request.url);
-  const route = parseRoute(url.pathname);
+  const bareRoot = parseBareRoot(url.pathname);
+  // Validate an asset route up front so a malformed path is rejected before any storage access; a
+  // bare package root skips validation and resolves against the index below.
+  const route = bareRoot === undefined ? parseRoute(url.pathname) : undefined;
+
   const indexValue = await readJsonObject(environment.ASSETS, 'versions.json');
   if (indexValue === undefined) {
     recorder.r2('index', 'miss');
@@ -206,6 +210,18 @@ async function handleRequest(
   }
   recorder.r2('index', 'hit');
   const versions = parseVersionsIndex(indexValue);
+
+  if (route === undefined) {
+    // A bare package root redirects to its latest usable asset: `/ui` to the `latest` stable
+    // autoload entry, and the tagless `/js-toolkit` to the highest published bare index entry.
+    // Both classify as a dist-tag hop — a moving pointer resolved to an exact version.
+    const resolved = resolveBareRoot(versions, bareRoot as PackageName);
+    recorder.versionKind(classifyVersion(resolved ? 'latest' : undefined, resolved));
+    if (!resolved) return errorResponse(404);
+    const entry = bareRoot === 'ui' ? 'autoload.js' : 'index.js';
+    return redirectResponse(`${url.origin}/${bareRoot}@${resolved.version}/${entry}`);
+  }
+
   const exact = resolveVersion(versions, route.packageName, route.requestedVersion);
   recorder.versionKind(classifyVersion(route.requestedVersion, exact));
   if (!exact) return errorResponse(404);
