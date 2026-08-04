@@ -3,7 +3,8 @@ import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import esbuild, { type Metafile, type Plugin } from 'esbuild';
+import { build as tsdownBuild } from 'tsdown';
+import type { Plugin } from 'rolldown';
 import { catalog as uiCatalog } from '@studiometa/ui/catalog';
 import { catalog as mapboxCatalog } from '@studiometa/ui-mapbox/catalog';
 
@@ -15,6 +16,14 @@ const scriptsDirectory = dirname(fileURLToPath(import.meta.url));
 const packageDirectory = resolve(scriptsDirectory, '..');
 const repositoryDirectory = resolve(packageDirectory, '../..');
 const defaultOutputDirectory = resolve(packageDirectory, 'dist');
+
+// tsdown resolves both its `tsconfig` and its package.json-based dependency externalization from the
+// process working directory. Pin it to the repository root so the build behaves identically whether
+// it is launched from the repo root (as the tests do) or from `packages/cdn` (as `npm run build`
+// does); every path in this script is absolute, so the working directory only steers tsdown. Left
+// unpinned, a run from `packages/cdn` would externalize the workspace `@studiometa/ui*` packages
+// (they are that manifest's dependencies) and resolve the narrower package tsconfig.
+process.chdir(repositoryDirectory);
 const packageMetadata = JSON.parse(
   await readFile(resolve(packageDirectory, 'package.json'), 'utf8'),
 );
@@ -24,6 +33,13 @@ const jsToolkitMetadata = JSON.parse(
     'utf8',
   ),
 );
+const tsdownMetadata = JSON.parse(
+  await readFile(resolve(packageDirectory, 'node_modules/tsdown/package.json'), 'utf8'),
+);
+const rolldownMetadata = JSON.parse(
+  await readFile(resolve(repositoryDirectory, 'node_modules/rolldown/package.json'), 'utf8'),
+);
+const bundlerLabel = `tsdown@${tsdownMetadata.version} (rolldown@${rolldownMetadata.version})`;
 const sizeBudgets = JSON.parse(
   await readFile(resolve(packageDirectory, 'size-budgets.json'), 'utf8'),
 ) as SizeBudgets;
@@ -39,6 +55,15 @@ const jsToolkitUtilsUrl = `/js-toolkit@${jsToolkitVersion}/utils/index.js`;
 // (or an injected instance via `provideMapboxGl`). This sidesteps redistributing the proprietary
 // Mapbox GL build and lets strict-CSP consumers self-host the same-origin GL worker.
 const mapboxExternalSpecifiers = ['mapbox-gl', '@mapbox/mapbox-gl-geocoder'] as const;
+
+// The declarations import js-toolkit types by their bare specifier so the ui `.d.ts` files resolve
+// against the separately built js-toolkit declarations (served from its own versioned tree) instead
+// of inlining them. Only the JavaScript rewrites js-toolkit to its absolute, origin-relative URL.
+const declarationExternals = [
+  '@studiometa/js-toolkit',
+  '@studiometa/js-toolkit/utils',
+  ...mapboxExternalSpecifiers,
+] as const;
 
 const packageDirectories = {
   '@studiometa/ui': resolve(repositoryDirectory, 'packages/ui'),
@@ -72,6 +97,40 @@ interface ComponentDefinition {
   styles: readonly string[];
   integrations: readonly string[];
   sourcePath: string;
+}
+
+// esbuild derived the release graph from its metafile. tsdown/rolldown expose the same information
+// on each Rollup-style output chunk (`imports`/`dynamicImports`/`moduleIds`/`facadeModuleId`), so
+// the build re-projects the chunk output into this minimal metafile shape and keeps every downstream
+// graph helper (preload derivation, isolation assertions, third-party notices) unchanged. Output
+// keys are tree-relative POSIX paths (e.g. `Action.js`, `chunks/Action-<hash>.js`) and input keys
+// are repository-relative POSIX paths, matching what esbuild's metafile exposed to these helpers.
+interface MetafileImport {
+  path: string;
+  kind: 'import-statement' | 'dynamic-import';
+  external: boolean;
+}
+interface MetafileOutput {
+  imports: MetafileImport[];
+  inputs: Record<string, unknown>;
+  entryPoint?: string;
+  bytes: number;
+}
+interface Metafile {
+  outputs: Record<string, MetafileOutput>;
+  inputs: Record<string, unknown>;
+}
+
+// A minimal view of the rolldown output chunk this build relies on.
+interface OutputChunkLike {
+  type: 'chunk' | 'asset';
+  fileName: string;
+  isEntry: boolean;
+  facadeModuleId: string | null;
+  moduleIds: string[];
+  imports: string[];
+  dynamicImports: string[];
+  code?: string;
 }
 
 function toPosix(path: string): string {
@@ -206,20 +265,17 @@ function shopifyFallbackPlugin(): Plugin {
   const sourcePath = resolve(repositoryDirectory, 'packages/ui/Fetch/FetchShopifyPartial.ts');
   return {
     name: 'cdn-shopify-partial-rendering-policy',
-    setup(build) {
-      build.onLoad({ filter: /FetchShopifyPartial\.ts$/ }, async (args) => {
-        if (resolve(args.path) !== sourcePath) return undefined;
-        const source = await readFile(args.path, 'utf8');
-        const original = '    return import(this.__PARTIALS_MODULE);';
-        if (!source.includes(original)) {
-          throw new Error('The CDN Shopify fallback transform is stale.');
-        }
-        const replacement = [
-          "    console.warn('[@studiometa/ui-cdn] Shopify partial rendering is unavailable in this CDN build; falling back to Fetch.');",
-          "    throw new Error('The optional @shopify/partial-rendering adapter is excluded from this CDN build.');",
-        ].join('\n');
-        return { contents: source.replace(original, replacement), loader: 'ts' };
-      });
+    transform(source: string, id: string) {
+      if (resolve(id.split('?')[0]) !== sourcePath) return undefined;
+      const original = '    return import(this.__PARTIALS_MODULE);';
+      if (!source.includes(original)) {
+        throw new Error('The CDN Shopify fallback transform is stale.');
+      }
+      const replacement = [
+        "    console.warn('[@studiometa/ui-cdn] Shopify partial rendering is unavailable in this CDN build; falling back to Fetch.');",
+        "    throw new Error('The optional @shopify/partial-rendering adapter is excluded from this CDN build.');",
+      ].join('\n');
+      return { code: source.replace(original, replacement) };
     },
   };
 }
@@ -238,33 +294,70 @@ function externalizeToolkitPlugin(): Plugin {
   };
   return {
     name: 'cdn-externalize-js-toolkit',
-    setup(build) {
-      build.onResolve({ filter: /^@studiometa\/js-toolkit(?:\/utils)?$/ }, (args) => {
-        const path = mapping[args.path];
-        if (!path) return undefined;
-        return { path, external: true };
-      });
+    resolveId(id: string) {
+      const path = mapping[id];
+      if (!path) return undefined;
+      return { id: path, external: true };
     },
   };
 }
 
-function outputKeyForPath(metafile: Metafile, absolutePath: string): string {
-  const normalized = resolve(absolutePath);
-  const output = Object.keys(metafile.outputs).find(
-    (key) => resolve(repositoryDirectory, key) === normalized,
-  );
-  if (!output) throw new Error(`Missing metafile output for ${absolutePath}`);
-  return output;
+// Rolldown reports every module id it bundles as an absolute path; keep only real, in-repository
+// source files (dropping rolldown's virtual/runtime modules) and normalise them to the same
+// repository-relative POSIX keys esbuild's metafile inputs used.
+function toRepositoryInput(id: string | null | undefined): string | undefined {
+  if (!id) return undefined;
+  const clean = id.split('?')[0];
+  if (clean.includes('\0') || !isAbsolute(clean)) return undefined;
+  const rel = toPosix(relative(repositoryDirectory, clean));
+  return rel.startsWith('..') ? undefined : rel;
 }
 
+// Projects the rolldown output chunks into the minimal metafile the graph helpers consume. Static
+// imports and dynamic imports keep their kind, and any import whose path is not itself an output
+// chunk is an external browser import (a js-toolkit URL or a bare Mapbox specifier).
+function metafileFromChunks(chunks: readonly OutputChunkLike[]): Metafile {
+  const jsChunks = chunks.filter(
+    (chunk) => chunk.type === 'chunk' && chunk.fileName.endsWith('.js'),
+  );
+  const outputKeys = new Set(jsChunks.map((chunk) => chunk.fileName));
+  const outputs: Record<string, MetafileOutput> = {};
+  const inputs: Record<string, unknown> = {};
+  for (const chunk of jsChunks) {
+    const chunkInputs: Record<string, unknown> = {};
+    for (const moduleId of chunk.moduleIds) {
+      const input = toRepositoryInput(moduleId);
+      if (!input) continue;
+      chunkInputs[input] = {};
+      inputs[input] = {};
+    }
+    const imports: MetafileImport[] = [
+      ...chunk.imports.map((path) => ({
+        path,
+        kind: 'import-statement' as const,
+        external: !outputKeys.has(path),
+      })),
+      ...chunk.dynamicImports.map((path) => ({
+        path,
+        kind: 'dynamic-import' as const,
+        external: !outputKeys.has(path),
+      })),
+    ];
+    outputs[chunk.fileName] = {
+      imports,
+      inputs: chunkInputs,
+      entryPoint: chunk.isEntry ? toRepositoryInput(chunk.facadeModuleId) : undefined,
+      bytes: chunk.code?.length ?? 0,
+    };
+  }
+  return { outputs, inputs };
+}
+
+// A rolldown import path already is the tree-relative output key, so no importer-relative resolution
+// is needed; assert the referenced chunk actually exists.
 function importedOutputKey(metafile: Metafile, importer: string, imported: string): string {
   if (metafile.outputs[imported]) return imported;
-  const resolved = toPosix(resolve(dirname(resolve(repositoryDirectory, importer)), imported));
-  const output = Object.keys(metafile.outputs).find(
-    (key) => toPosix(resolve(repositoryDirectory, key)) === resolved,
-  );
-  if (!output) throw new Error(`Missing imported output ${imported} from ${importer}`);
-  return output;
+  throw new Error(`Missing imported output ${imported} from ${importer}`);
 }
 
 function staticOutputGraph(metafile: Metafile, root: string): string[] {
@@ -299,8 +392,9 @@ function dynamicOutputEntries(metafile: Metafile, root: string): string[] {
     .sort();
 }
 
-function publicPath(outputDirectory: string, outputKey: string): string {
-  return toPosix(relative(outputDirectory, resolve(repositoryDirectory, outputKey)));
+// Output keys are already tree-relative POSIX paths, so the public path is the key itself.
+function publicPath(_outputDirectory: string, outputKey: string): string {
+  return outputKey;
 }
 
 function assertDoesNotContain(
@@ -327,19 +421,19 @@ function collectExternalImports(metafile: Metafile): string[] {
 }
 
 /**
- * Asserts the ui tree's externalization invariants and returns the external specifiers, split into
- * the js-toolkit URLs and the Mapbox specifiers:
+ * Asserts the ui tree's externalization invariants and returns the js-toolkit external URLs:
  *
  * - js-toolkit is imported only through its single absolute URL(s), and the main index URL — the
  *   module that owns the shared component registry — is present, with no js-toolkit source bundled.
- * - Mapbox GL and the optional geocoder are imported only as their bare specifiers (resolved by the
- *   consumer's import map) and neither library's source is bundled anywhere in the tree.
+ * - Mapbox GL and the optional geocoder source is bundled nowhere in the tree.
  * - No other external import is allowed.
+ *
+ * Rolldown surfaces static externals (the js-toolkit URLs) on the chunk graph but does not list a
+ * bare *dynamic* external (Mapbox is loaded through `import('mapbox-gl')`) there, so the presence of
+ * the Mapbox external specifiers is verified separately against the emitted code by
+ * `assertMapboxDynamicExternals`.
  */
-function assertUiExternals(metafile: Metafile): {
-  toolkitUrls: string[];
-  mapboxSpecifiers: string[];
-} {
+function assertUiExternals(metafile: Metafile): { toolkitUrls: string[] } {
   const external = collectExternalImports(metafile);
   const allowed = new Set<string>([
     jsToolkitIndexUrl,
@@ -352,13 +446,6 @@ function assertUiExternals(metafile: Metafile): {
   }
   if (!external.includes(jsToolkitIndexUrl)) {
     throw new Error(`The ui tree does not import the js-toolkit URL ${jsToolkitIndexUrl}.`);
-  }
-  for (const specifier of mapboxExternalSpecifiers) {
-    if (!external.includes(specifier)) {
-      throw new Error(
-        `The ui tree does not import Mapbox through the external specifier ${specifier}.`,
-      );
-    }
   }
   const bundled = Object.keys(metafile.inputs).filter((input) =>
     [
@@ -374,10 +461,32 @@ function assertUiExternals(metafile: Metafile): {
   }
   return {
     toolkitUrls: external.filter((url) => url === jsToolkitIndexUrl || url === jsToolkitUtilsUrl),
-    mapboxSpecifiers: external.filter((url) =>
-      (mapboxExternalSpecifiers as readonly string[]).includes(url),
-    ),
   };
+}
+
+// Rolldown keeps a bare *dynamic* external as a runtime `import('<specifier>')` in the emitted code
+// without recording it on the chunk graph, so the Mapbox externalization is asserted directly
+// against the built modules: every Mapbox specifier must appear as a bare dynamic import, resolved
+// by the consumer's import map. Returns the specifiers actually found, in sorted order.
+async function assertMapboxDynamicExternals(
+  outputDirectory: string,
+  files: readonly string[],
+): Promise<string[]> {
+  const pattern = /\bimport\(\s*[`'"]([^`'"]+)[`'"]\s*\)/g;
+  const found = new Set<string>();
+  for (const file of files.filter((path) => path.endsWith('.js'))) {
+    const source = await readFile(resolve(outputDirectory, file), 'utf8');
+    for (const match of source.matchAll(pattern)) {
+      if ((mapboxExternalSpecifiers as readonly string[]).includes(match[1])) found.add(match[1]);
+    }
+  }
+  const missing = mapboxExternalSpecifiers.filter((specifier) => !found.has(specifier));
+  if (missing.length > 0) {
+    throw new Error(
+      `The ui tree does not import Mapbox through the external specifier ${missing.join(', ')}.`,
+    );
+  }
+  return [...found].sort();
 }
 
 async function listFiles(directory: string, root = directory): Promise<string[]> {
@@ -396,6 +505,34 @@ async function fileSizes(outputDirectory: string, files: readonly string[]) {
       files.map(async (file) => [file, (await stat(resolve(outputDirectory, file))).size] as const),
     ),
   );
+}
+
+// Rolldown emits no source map for a pure re-export facade entry (`export { X as Action } …`), the
+// same shape esbuild emitted with an empty (`sources: []`) map. Synthesize that empty, source-free
+// map for every such `.js` so the public "one source map per module" invariant still holds and the
+// facade stays sourcemap-linked.
+async function synthesizeFacadeSourceMaps(treeDirectory: string): Promise<void> {
+  const files = await listFiles(treeDirectory);
+  const present = new Set(files);
+  for (const file of files) {
+    if (!file.endsWith('.js') || present.has(`${file}.map`)) continue;
+    const absolute = resolve(treeDirectory, file);
+    const base = file.split('/').pop() as string;
+    const map = {
+      version: 3,
+      file: base,
+      sources: [],
+      sourcesContent: [],
+      names: [],
+      mappings: '',
+    };
+    await writeFile(`${absolute}.map`, `${JSON.stringify(map)}\n`);
+    let source = await readFile(absolute, 'utf8');
+    if (!source.includes('# sourceMappingURL=')) {
+      source = `${source.replace(/\s+$/, '')}\n//# sourceMappingURL=${base}.map\n`;
+      await writeFile(absolute, source);
+    }
+  }
 }
 
 async function writeThirdPartyNotices(metafile: Metafile, outputDirectory: string): Promise<void> {
@@ -454,7 +591,7 @@ async function assertBrowserImports(
     throw new Error(`Unresolved external browser imports: ${externalImports.join(', ')}`);
   }
 
-  const dynamicLiteralPattern = /\bimport\(\s*['"]([^'"]+)['"]\s*\)/g;
+  const dynamicLiteralPattern = /\bimport\(\s*[`'"]([^`'"]+)[`'"]\s*\)/g;
   for (const file of files.filter((path) => path.endsWith('.js'))) {
     const source = await readFile(resolve(outputDirectory, file), 'utf8');
     for (const match of source.matchAll(dynamicLiteralPattern)) {
@@ -571,25 +708,69 @@ async function sha384(path: string): Promise<string> {
     .digest('base64')}`;
 }
 
-function sharedEsbuildOptions() {
+// Shared tsdown/rolldown options for a bundled JavaScript tree. Splitting is automatic with several
+// entry points; entries stay at stable, non-hashed `<name>.js` paths and shared code is content
+// hashed under `chunks/`. Source maps embed `sourcesContent`, and the build is reproducible.
+function sharedBundleOptions(outputDirectory: string) {
   return {
-    absWorkingDir: repositoryDirectory,
-    bundle: true,
-    splitting: true,
-    format: 'esm',
-    platform: 'browser',
+    format: 'esm' as const,
+    platform: 'browser' as const,
     target: 'es2020',
-    entryNames: '[dir]/[name]',
-    chunkNames: 'chunks/[name]-[hash]',
-    assetNames: 'assets/[name]-[hash]',
+    outDir: outputDirectory,
+    clean: false,
+    write: true,
     sourcemap: true,
-    metafile: true,
     minify: true,
-    legalComments: 'eof',
-    charset: 'utf8',
+    treeshake: true,
+    dts: false as const,
+    config: false,
+    logLevel: 'silent' as const,
     define: { __DEV__: 'false' },
-    logLevel: 'info',
-  } as const;
+    outputOptions: {
+      entryFileNames: '[name].js',
+      chunkFileNames: 'chunks/[name]-[hash].js',
+      sourcemapExcludeSources: false,
+    },
+  };
+}
+
+// Shared tsdown options for a declarations-only pass. `eager` resolves the barrel's transitive
+// re-exports so `index.d.ts` re-exports every component, and `emitDtsOnly` leaves the JavaScript
+// pass to own the `.js`/`.map` outputs. Declaration entries stay at `<name>.d.ts` and shared
+// declaration chunks are hashed under `chunks/`.
+//
+// The `tsconfig` is pinned to the repository root config by absolute path so the eager tsc program
+// compiles the same bounded set of files regardless of the process working directory. Left to
+// discovery, a run from `packages/cdn` would pick up that package's narrower `tsconfig.json` (which
+// does not include the ui/ui-mapbox sources) and pull in an unbounded file set, exhausting memory.
+const declarationTsconfig = resolve(repositoryDirectory, 'tsconfig.json');
+function sharedDeclarationOptions(outputDirectory: string, external: readonly string[]) {
+  return {
+    format: 'esm' as const,
+    platform: 'browser' as const,
+    target: 'es2020',
+    outDir: outputDirectory,
+    clean: false,
+    write: true,
+    sourcemap: false,
+    tsconfig: declarationTsconfig,
+    dts: { eager: true, emitDtsOnly: true, tsconfig: declarationTsconfig },
+    config: false,
+    logLevel: 'silent' as const,
+    external: [...external],
+    outputOptions: {
+      entryFileNames: '[name].js',
+      chunkFileNames: 'chunks/[name]-[hash].js',
+    },
+  };
+}
+
+function chunksOf(results: Awaited<ReturnType<typeof tsdownBuild>>): OutputChunkLike[] {
+  const chunks: OutputChunkLike[] = [];
+  for (const result of results as unknown as Array<{ chunks?: OutputChunkLike[] }>) {
+    for (const chunk of result.chunks ?? []) chunks.push(chunk);
+  }
+  return chunks;
 }
 
 const { outputDirectory, allowDirty } = parseBuildOptions();
@@ -616,16 +797,23 @@ const buildIdentifier = currentSourceState.clean
   ? cleanBuildIdentifier
   : `${cleanBuildIdentifier}.dirty.${currentSourceState.digest}`;
 
+const jsToolkitEntryPoints = {
+  index: resolve(repositoryDirectory, 'packages/cdn/src/barrel-js-toolkit.ts'),
+  'utils/index': resolve(repositoryDirectory, 'packages/cdn/src/barrel-js-toolkit-utils.ts'),
+};
+
 // Pass A — the versioned js-toolkit artifact. It is bundled fully (no externals) so its own
-// internal chunks resolve relatively within its tree, and the ui tree can import it by URL.
-const jsToolkitResult = await esbuild.build({
-  ...sharedEsbuildOptions(),
-  entryPoints: {
-    index: 'packages/cdn/src/barrel-js-toolkit.ts',
-    'utils/index': 'packages/cdn/src/barrel-js-toolkit-utils.ts',
-  },
-  outdir: jsToolkitOutputDirectory,
+// internal chunks resolve relatively within its tree, and the ui tree can import it by URL. Its
+// declarations bundle js-toolkit's own types into `index.d.ts` and `utils/index.d.ts`.
+const jsToolkitResults = await tsdownBuild({
+  ...sharedBundleOptions(jsToolkitOutputDirectory),
+  entry: jsToolkitEntryPoints,
 });
+await tsdownBuild({
+  ...sharedDeclarationOptions(jsToolkitOutputDirectory, []),
+  entry: jsToolkitEntryPoints,
+});
+const jsToolkitMetafile = metafileFromChunks(chunksOf(jsToolkitResults));
 
 // Every @studiometa/ui and @studiometa/ui-mapbox component is emitted as a stable, non-hashed ESM
 // entry named `<subpath>.js` at the ui tree root, so a consumer can import a single component by a
@@ -646,41 +834,55 @@ for (const definition of definitions) {
   if (existing && existing !== source) {
     throw new Error(`Two components share the CDN subpath "${entryName}".`);
   }
-  componentEntryPoints[entryName] = source;
+  componentEntryPoints[entryName] = definition.sourcePath;
 }
+
+const uiEntryPoints = {
+  autoload: resolve(repositoryDirectory, 'packages/cdn/src/autoload.ts'),
+  loader: resolve(repositoryDirectory, 'packages/cdn/src/loader.ts'),
+  manifest: resolve(repositoryDirectory, 'packages/cdn/src/manifest.ts'),
+  index: resolve(repositoryDirectory, 'packages/cdn/src/barrel-ui.ts'),
+  ...componentEntryPoints,
+};
 
 // Pass B — the @studiometa/ui tree. js-toolkit is rewritten to its external, versioned URL and the
 // ui barrel is emitted as index.js. Autoload, loader, manifest, every stable component entry and
-// the barrel now import the single external js-toolkit URL and carry no js-toolkit source.
-const uiResult = await esbuild.build({
-  ...sharedEsbuildOptions(),
-  entryPoints: {
-    autoload: 'packages/cdn/src/autoload.ts',
-    loader: 'packages/cdn/src/loader.ts',
-    manifest: 'packages/cdn/src/manifest.ts',
-    index: 'packages/cdn/src/barrel-ui.ts',
-    ...componentEntryPoints,
-  },
-  outdir: uiOutputDirectory,
+// the barrel now import the single external js-toolkit URL and carry no js-toolkit source. The
+// declarations pass keeps js-toolkit external as a bare specifier so the ui `.d.ts` files resolve
+// against the js-toolkit declarations tree rather than inlining its types.
+const uiResults = await tsdownBuild({
+  ...sharedBundleOptions(uiOutputDirectory),
+  entry: uiEntryPoints,
   external: [...mapboxExternalSpecifiers],
   plugins: [shopifyFallbackPlugin(), externalizeToolkitPlugin()],
 });
+await tsdownBuild({
+  ...sharedDeclarationOptions(uiOutputDirectory, declarationExternals),
+  entry: uiEntryPoints,
+});
+const uiMetafile = metafileFromChunks(chunksOf(uiResults));
+
+// Re-export facade entries carry no source map from rolldown; synthesize the empty maps so the
+// public source-map invariant holds across both trees.
+await synthesizeFacadeSourceMaps(jsToolkitOutputDirectory);
+await synthesizeFacadeSourceMaps(uiOutputDirectory);
 
 // Mapbox GL and the geocoder are external (import-map resolved) and no longer bundled, so the CDN
 // serves neither their JavaScript, their stylesheets nor their license notices — consumers load
 // those from the same source they point their import map at.
-await writeThirdPartyNotices(uiResult.metafile, uiOutputDirectory);
-await writeThirdPartyNotices(jsToolkitResult.metafile, jsToolkitOutputDirectory);
+await writeThirdPartyNotices(uiMetafile, uiOutputDirectory);
+await writeThirdPartyNotices(jsToolkitMetafile, jsToolkitOutputDirectory);
 
 const uiEntryNames = ['autoload', 'loader', 'manifest', 'index'];
 const entryOutputs = Object.fromEntries(
-  uiEntryNames.map((name) => [
-    name,
-    outputKeyForPath(uiResult.metafile, resolve(uiOutputDirectory, `${name}.js`)),
-  ]),
+  uiEntryNames.map((name) => {
+    const key = `${name}.js`;
+    if (!uiMetafile.outputs[key]) throw new Error(`Missing ui entry output ${key}.`);
+    return [name, key];
+  }),
 );
 const componentOutputBySource = new Map<string, string>();
-for (const [output, metadata] of Object.entries(uiResult.metafile.outputs)) {
+for (const [output, metadata] of Object.entries(uiMetafile.outputs)) {
   if (!metadata.entryPoint) continue;
   componentOutputBySource.set(resolve(repositoryDirectory, metadata.entryPoint), output);
 }
@@ -699,7 +901,7 @@ const mapboxLibPatterns = [
 ];
 const mapboxIsolationPatterns = [uiMapboxSourcePattern, ...mapboxLibPatterns];
 for (const name of uiEntryNames) {
-  const inputs = graphInputs(uiResult.metafile, entryOutputs[name]);
+  const inputs = graphInputs(uiMetafile, entryOutputs[name]);
   assertDoesNotContain(inputs, mapboxIsolationPatterns, `${name} startup graph`);
 }
 const uiDefinitions = definitions.filter(({ packageName }) => packageName === '@studiometa/ui');
@@ -707,7 +909,7 @@ for (const definition of uiDefinitions) {
   const output = componentOutputBySource.get(definition.sourcePath);
   if (!output) throw new Error(`Missing component output for ${definition.token}.`);
   assertDoesNotContain(
-    graphInputs(uiResult.metafile, output),
+    graphInputs(uiMetafile, output),
     mapboxIsolationPatterns,
     `${definition.token} graph`,
   );
@@ -716,20 +918,23 @@ const actionDefinition = definitions.find(({ token }) => token === 'Action');
 const actionOutput = actionDefinition && componentOutputBySource.get(actionDefinition.sourcePath);
 if (!actionOutput) throw new Error('Missing Action output for unrelated-family isolation.');
 assertDoesNotContain(
-  graphInputs(uiResult.metafile, actionOutput),
+  graphInputs(uiMetafile, actionOutput),
   [/(?:^|\/)packages\/ui\/Accordion\//],
   'Action graph',
 );
 
-const { toolkitUrls: toolkitExternalUrls, mapboxSpecifiers: mapboxExternalSpecifiersFound } =
-  assertUiExternals(uiResult.metafile);
+const { toolkitUrls: toolkitExternalUrls } = assertUiExternals(uiMetafile);
 const toolkitIdentity = `@studiometa/js-toolkit@${jsToolkitVersion}`;
 
 const uiInitialFiles = (await listFiles(uiOutputDirectory)).filter(
   (file) => !file.endsWith('.json'),
 );
+const mapboxExternalSpecifiersFound = await assertMapboxDynamicExternals(
+  uiOutputDirectory,
+  uiInitialFiles,
+);
 await assertBrowserImports(
-  uiResult.metafile,
+  uiMetafile,
   uiOutputDirectory,
   uiInitialFiles,
   new Set([...toolkitExternalUrls, ...mapboxExternalSpecifiersFound]),
@@ -746,14 +951,15 @@ const jsToolkitEntryOutputs = Object.fromEntries(
       ['index', 'index.js'],
       ['utils', 'utils/index.js'],
     ] as const
-  ).map(([name, file]) => [
-    name,
-    outputKeyForPath(jsToolkitResult.metafile, resolve(jsToolkitOutputDirectory, file)),
-  ]),
+  ).map(([name, file]) => {
+    if (!jsToolkitMetafile.outputs[file])
+      throw new Error(`Missing js-toolkit entry output ${file}.`);
+    return [name, file];
+  }),
 );
 for (const name of Object.keys(jsToolkitEntryOutputs)) {
   assertDoesNotContain(
-    graphInputs(jsToolkitResult.metafile, jsToolkitEntryOutputs[name]),
+    graphInputs(jsToolkitMetafile, jsToolkitEntryOutputs[name]),
     mapboxIsolationPatterns,
     `js-toolkit ${name} graph`,
   );
@@ -762,7 +968,7 @@ const jsToolkitInitialFiles = (await listFiles(jsToolkitOutputDirectory)).filter
   (file) => !file.endsWith('.json'),
 );
 await assertBrowserImports(
-  jsToolkitResult.metafile,
+  jsToolkitMetafile,
   jsToolkitOutputDirectory,
   jsToolkitInitialFiles,
   new Set(),
@@ -773,9 +979,15 @@ for (const file of jsToolkitInitialFiles.filter((path) => path.endsWith('.js')))
 }
 const jsToolkitSizes = await fileSizes(jsToolkitOutputDirectory, jsToolkitInitialFiles);
 
+function declarationBytes(sizes: Record<string, number>): number {
+  return Object.entries(sizes)
+    .filter(([file]) => file.endsWith('.d.ts'))
+    .reduce((total, [, bytes]) => total + bytes, 0);
+}
+
 const observedBudgets: Record<string, number> = {
   ...measureUiSizeBudgets(
-    uiResult.metafile,
+    uiMetafile,
     uiOutputDirectory,
     entryOutputs,
     componentOutputBySource,
@@ -783,12 +995,18 @@ const observedBudgets: Record<string, number> = {
     uiSizes,
   ),
   ...measureJsToolkitSizeBudgets(
-    jsToolkitResult.metafile,
+    jsToolkitMetafile,
     jsToolkitOutputDirectory,
     jsToolkitEntryOutputs,
     jsToolkitSizes,
   ),
 };
+// The declaration budgets mirror the JavaScript per-entry style: a per-barrel ceiling for each of
+// the three importable roots (the ui barrel and the two js-toolkit entries) plus a total across
+// every emitted `.d.ts` (entries and shared declaration chunks) in both trees.
+observedBudgets['dts:entry:index'] = uiSizes['index.d.ts'];
+observedBudgets['dts:js-toolkit:entry:index'] = jsToolkitSizes['index.d.ts'];
+observedBudgets['dts:js-toolkit:entry:utils'] = jsToolkitSizes['utils/index.d.ts'];
 // Totals span both trees, so they are measured over the whole dist listing (dist-relative paths
 // are unique, unlike the tree-relative keys of uiSizes/jsToolkitSizes which both contain index.js).
 const distFilesBeforeMetadata = await listFiles(outputDirectory);
@@ -798,6 +1016,9 @@ observedBudgets['total:esm'] = Object.entries(distSizesBeforeMetadata)
   .reduce((total, [, bytes]) => total + bytes, 0);
 observedBudgets['total:source-maps'] = Object.entries(distSizesBeforeMetadata)
   .filter(([file]) => file.endsWith('.map'))
+  .reduce((total, [, bytes]) => total + bytes, 0);
+observedBudgets['total:declarations'] = Object.entries(distSizesBeforeMetadata)
+  .filter(([file]) => file.endsWith('.d.ts'))
   .reduce((total, [, bytes]) => total + bytes, 0);
 observedBudgets['total:release'] = 0;
 
@@ -815,13 +1036,15 @@ function outputMetadataFor(
       file,
       {
         bytes: sizes[file],
-        type: file.endsWith('.map')
-          ? 'source-map'
-          : file.endsWith('.css')
-            ? 'style'
-            : file.endsWith('.js')
-              ? 'module'
-              : 'notice',
+        type: file.endsWith('.d.ts')
+          ? 'declaration'
+          : file.endsWith('.map')
+            ? 'source-map'
+            : file.endsWith('.css')
+              ? 'style'
+              : file.endsWith('.js')
+                ? 'module'
+                : 'notice',
       },
     ]),
   );
@@ -854,15 +1077,15 @@ const componentInventory = Object.fromEntries(
   definitions.map((definition) => {
     const output = componentOutputBySource.get(definition.sourcePath);
     if (!output) throw new Error(`Missing component entry chunk for ${definition.token}.`);
-    const graph = staticOutputGraph(uiResult.metafile, output).map((dependency) =>
+    const graph = staticOutputGraph(uiMetafile, output).map((dependency) =>
       publicPath(uiOutputDirectory, dependency),
     );
     const entry = publicPath(uiOutputDirectory, output);
-    const dynamicImports = dynamicOutputEntries(uiResult.metafile, output).map((dynamicOutput) => {
+    const dynamicImports = dynamicOutputEntries(uiMetafile, output).map((dynamicOutput) => {
       const dynamicEntry = publicPath(uiOutputDirectory, dynamicOutput);
       return {
         entry: dynamicEntry,
-        preload: staticOutputGraph(uiResult.metafile, dynamicOutput)
+        preload: staticOutputGraph(uiMetafile, dynamicOutput)
           .map((dependency) => publicPath(uiOutputDirectory, dependency))
           .filter((dependency) => dependency !== dynamicEntry)
           .sort(),
@@ -900,7 +1123,8 @@ const uiBuildMetadata = {
     target: 'es2020',
     splitting: true,
     sourcemaps: true,
-    bundler: `esbuild@${esbuild.version}`,
+    declarations: true,
+    bundler: bundlerLabel,
   },
   package: { name: packageMetadata.name, version: uiVersion },
   dependencies: { '@studiometa/js-toolkit': jsToolkitVersion },
@@ -939,7 +1163,7 @@ const uiBuildMetadata = {
       mutable: true,
     },
   },
-  entries: entryMetadataFor(uiResult.metafile, uiOutputDirectory, entryOutputs),
+  entries: entryMetadataFor(uiMetafile, uiOutputDirectory, entryOutputs),
   components: componentInventory,
   outputs: outputMetadataFor(uiInitialFiles, uiSizes),
   // The CDN serves no stylesheets: Mapbox GL and the geocoder — the only components that needed
@@ -947,7 +1171,7 @@ const uiBuildMetadata = {
   styles: {},
   licenses: {
     thirdPartyNotices: 'licenses/THIRD_PARTY_LICENSES.txt',
-    esbuildLegalComments: 'eof',
+    legalComments: 'none',
   },
   // The public Mapbox-redistribution review gate is gone: this CDN no longer serves Mapbox GL or
   // the geocoder (their JavaScript, stylesheets and license notices), so there is nothing to review.
@@ -984,6 +1208,10 @@ const uiBuildMetadata = {
     semantics:
       'Each preload list contains sorted transitive static ESM dependencies; order is not significant, and dynamic component and optional-integration edges are excluded.',
   },
+  declarations: {
+    semantics:
+      'Every importable entry emits a bundled `.d.ts` alongside its `.js`, sharing hashed declaration chunks under `chunks/`. The ui declarations import `@studiometa/js-toolkit` externally so they resolve against the js-toolkit declarations tree instead of inlining its types.',
+  },
   assertions: {
     jsToolkitIdentities: [toolkitIdentity],
     jsToolkitExternalUrls: toolkitExternalUrls,
@@ -1011,7 +1239,8 @@ const jsToolkitBuildMetadata = {
     target: 'es2020',
     splitting: true,
     sourcemaps: true,
-    bundler: `esbuild@${esbuild.version}`,
+    declarations: true,
+    bundler: bundlerLabel,
   },
   package: { name: JS_TOOLKIT_BUILD_NAME, version: jsToolkitVersion },
   build: {
@@ -1023,16 +1252,12 @@ const jsToolkitBuildMetadata = {
     sourceDateEpoch: buildTime.epoch,
     timeSource: buildTime.source,
   },
-  entries: entryMetadataFor(
-    jsToolkitResult.metafile,
-    jsToolkitOutputDirectory,
-    jsToolkitEntryOutputs,
-  ),
+  entries: entryMetadataFor(jsToolkitMetafile, jsToolkitOutputDirectory, jsToolkitEntryOutputs),
   components: {},
   outputs: outputMetadataFor(jsToolkitInitialFiles, jsToolkitSizes),
   licenses: {
     thirdPartyNotices: 'licenses/THIRD_PARTY_LICENSES.txt',
-    esbuildLegalComments: 'eof',
+    legalComments: 'none',
   },
 };
 
