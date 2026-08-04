@@ -69,10 +69,18 @@ async function main(): Promise<void> {
   const store = createS3ObjectStore(loadObjectStoreConfig(process.env));
   await rollback(store, target, { log: (message) => process.stdout.write(`${message}\n`) });
 
+  // Best-effort: a failed cache purge must not fail an otherwise-successful rollback (the index is
+  // already updated; the purge only shortens how long a mutable alias redirect may be stale).
   const purge = loadCloudflarePurgeConfig(process.env);
   if (purge) {
-    await purgeMutableAliases(purge, mutableAliases);
-    process.stdout.write('Purged the mutable alias cache.\n');
+    try {
+      await purgeMutableAliases(purge, mutableAliases);
+      process.stdout.write('Purged the mutable alias cache.\n');
+    } catch (error) {
+      process.stderr.write(
+        `Warning: mutable alias cache purge failed (non-fatal): ${error instanceof Error ? error.message : error}\n`,
+      );
+    }
   }
 }
 

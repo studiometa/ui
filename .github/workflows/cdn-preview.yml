@@ -57,17 +57,31 @@ jobs:
           CDN_PUBLIC_BASE_URL: ${{ vars.CDN_PUBLIC_BASE_URL }}
         with:
           script: |
+            const fs = require('fs');
             const base = (process.env.CDN_PUBLIC_BASE_URL || '').replace(/\/$/, '');
             const channel = `pr-${process.env.PR_NUMBER}-${process.env.HEAD_SHA.slice(0, 12)}`;
+            // Read the js-toolkit version this build pins from the emitted build.json so the manual
+            // import example points at the exact URL the ui tree resolves internally.
+            const uiRoot = 'packages/cdn/dist/releases/ui';
+            const uiVersion = fs.readdirSync(uiRoot)[0];
+            const build = JSON.parse(fs.readFileSync(`${uiRoot}/${uiVersion}/build.json`, 'utf8'));
+            const jsToolkit = build.dependencies['@studiometa/js-toolkit'];
             const marker = '<!-- cdn-asset-preview -->';
             const body = [
               marker,
               '### CDN asset preview',
               '',
-              `This pull request's build is published as the immutable channel \`${channel}\`:`,
+              `This pull request's build is published as the immutable channel \`${channel}\`.`,
               '',
+              '**Declarative autoloader** — one script; components mount from their `data-component`:',
               '```html',
               `<script type="module" src="${base}/ui@${channel}/autoload.js" data-studiometa-ui></script>`,
+              '```',
+              '',
+              '**Manual ESM imports** — the full package surfaces at their pinned URLs:',
+              '```js',
+              `import { Base, createApp } from "${base}/js-toolkit@${jsToolkit}/index.js";`,
+              `import { Action } from "${base}/ui@${channel}/index.js";`,
               '```',
               '',
               'It is pruned from the index automatically when the PR closes.',
