@@ -326,10 +326,21 @@ describe('browser CDN build', () => {
       ['Action', 'Action'],
       ['MapboxMap', 'MapboxMap'],
     ] as const) {
+      const component = Object.values(build.components).find((entry) => entry.subpath === subpath);
+      expect(component).toBeDefined();
       expect(uiFiles).toContain(`${subpath}.js`);
       const source = await readFile(resolve(uiTree, `${subpath}.js`), 'utf8');
       expect(source).toMatch(new RegExp(`\\bas ${exportName}\\b`));
-      expect(source).toContain(`/js-toolkit@${jsToolkitVersion}/index.js`);
+      // js-toolkit is resolved through the single external URL somewhere in the entry's static
+      // graph (the entry or a shared chunk it imports, depending on code-splitting), never by
+      // bundling js-toolkit source.
+      const graph = [`${subpath}.js`, ...component!.preload];
+      const graphSources = await Promise.all(
+        graph.map((file) => readFile(resolve(uiTree, file), 'utf8')),
+      );
+      expect(
+        graphSources.some((text) => text.includes(`/js-toolkit@${jsToolkitVersion}/index.js`)),
+      ).toBe(true);
     }
   });
 
