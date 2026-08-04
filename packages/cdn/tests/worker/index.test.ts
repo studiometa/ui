@@ -56,6 +56,38 @@ describe('CDN Worker version routing', () => {
     expectCrossOriginHeaders(response);
   });
 
+  it('resolves /ui@next/ to a release version when next is decoupled from main', async () => {
+    // The future Phase-2 shape: next names the latest published prerelease release (decoupled from
+    // the main channel that main still names). The tolerant Worker must redirect /ui@next/ to that
+    // exact release, while /ui@main/ still redirects to the channel. The shared fixture bucket is
+    // temporarily rewritten to this shape and restored afterwards so sibling tests are unaffected.
+    const decoupled = {
+      schemaVersion: 2 as const,
+      packages: {
+        ui: {
+          releases: fixture.versionsIndex.packages.ui.releases,
+          channels: fixture.versionsIndex.packages.ui.channels,
+          distTags: { latest: '2.0.0', next: '2.0.0-beta.1', main: 'main-fedcba9' },
+        },
+        'ui-mapbox': fixture.versionsIndex.packages['ui-mapbox'],
+        'js-toolkit': fixture.versionsIndex.packages['js-toolkit'],
+      },
+    };
+    fixture.bucket.put('versions.json', JSON.stringify(decoupled), 'versions-decoupled');
+    try {
+      const next = await request('/ui@next/autoload.js');
+      expect(next.status).toBe(307);
+      expect(next.headers.get('Location')).toBe(`${origin}/ui@2.0.0-beta.1/autoload.js`);
+      expect(next.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+
+      const main = await request('/ui@main/autoload.js');
+      expect(main.status).toBe(307);
+      expect(main.headers.get('Location')).toBe(`${origin}/ui@main-fedcba9/autoload.js`);
+    } finally {
+      fixture.bucket.put('versions.json', JSON.stringify(fixture.versionsIndex), 'versions');
+    }
+  });
+
   it('resolves a versionless ui package to the latest stable release', async () => {
     const response = await request('/ui/autoload.js');
     expect(response.status).toBe(307);
@@ -612,13 +644,16 @@ describe('CDN Worker storage failures', () => {
     fixture.bucket.put('versions.json', '{"schemaVersion":1}');
     expect((await request('/ui@1.2.0/autoload.js')).status).toBe(502);
 
-    const divergentChannels = structuredClone(
+    // A next tag naming neither a published channel nor a known release is invalid: the index fails
+    // to parse and the Worker returns a non-leaking 502. (A next that diverges from main but still
+    // names a valid channel or release is now a valid, tolerated shape and is covered elsewhere.)
+    const invalidNextTag = structuredClone(
       JSON.parse(original.contents) as {
-        packages: { ui: { distTags: { main: string } } };
+        packages: { ui: { distTags: { next: string } } };
       },
     );
-    divergentChannels.packages.ui.distTags.main = 'main-abcdef1';
-    fixture.bucket.put('versions.json', JSON.stringify(divergentChannels));
+    invalidNextTag.packages.ui.distTags.next = '9.9.9';
+    fixture.bucket.put('versions.json', JSON.stringify(invalidNextTag));
     expect((await request('/ui@main/autoload.js')).status).toBe(502);
     fixture.bucket.objects.set('versions.json', original);
   });

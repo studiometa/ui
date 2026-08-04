@@ -35,25 +35,14 @@ describe('versions index parsing (schemaVersion 2)', () => {
     expect(resolveVersion(index, 'js-toolkit', '3.8.0')).toBeUndefined();
   });
 
-  it('keeps next and main coupled to the same published channel when either is set', () => {
-    const base = { releases: ['1.9.0'], channels: ['main-abcdef1', 'main-fedcba9'] };
-    // next without main is inconsistent and must be rejected.
-    expect(() =>
-      parseVersionsIndex(uiIndex({ ...base, distTags: { latest: '1.9.0', next: 'main-abcdef1' } })),
-    ).toThrow(/distribution tags/);
-    // next and main must be equal.
-    expect(() =>
-      parseVersionsIndex(
-        uiIndex({
-          ...base,
-          distTags: { latest: '1.9.0', next: 'main-abcdef1', main: 'main-fedcba9' },
-        }),
-      ),
-    ).toThrow(/next and main/);
-    // Both equal and published is accepted, and resolves the channel.
+  it('accepts the legacy coupled shape (next === main === channel) and resolves both to the channel', () => {
+    // This is the exact shape the currently-live production index carries and that publish.ts keeps
+    // writing in this PR: next and main both name the same published main channel. The tolerant
+    // Worker must keep accepting it verbatim.
     const index = parseVersionsIndex(
       uiIndex({
-        ...base,
+        releases: ['1.9.0'],
+        channels: ['main-abcdef1', 'main-fedcba9'],
         distTags: { latest: '1.9.0', next: 'main-abcdef1', main: 'main-abcdef1' },
       }),
     );
@@ -62,6 +51,98 @@ describe('versions index parsing (schemaVersion 2)', () => {
       version: 'main-abcdef1',
       objectPrefix: 'channels/main-abcdef1',
     });
+    expect(resolveVersion(index, 'ui', 'main')).toEqual({
+      kind: 'channel',
+      version: 'main-abcdef1',
+      objectPrefix: 'channels/main-abcdef1',
+    });
+  });
+
+  it('accepts the decoupled shape (next names a prerelease release, main a channel) and resolves next to that release', () => {
+    // The future Phase-2 shape: main still names the main channel, but next names the latest
+    // published prerelease release, decoupled from main (next !== main). `/ui@next/` must resolve to
+    // that exact release, while `/ui@main/` still resolves to the channel.
+    const index = parseVersionsIndex(
+      uiIndex({
+        releases: ['1.9.0', '2.0.0-beta.1'],
+        channels: ['main-abcdef1'],
+        distTags: { latest: '1.9.0', next: '2.0.0-beta.1', main: 'main-abcdef1' },
+      }),
+    );
+    expect(resolveVersion(index, 'ui', 'next')).toEqual({
+      kind: 'release',
+      version: '2.0.0-beta.1',
+      objectPrefix: 'releases/ui/2.0.0-beta.1',
+    });
+    expect(resolveVersion(index, 'ui', 'main')).toEqual({
+      kind: 'channel',
+      version: 'main-abcdef1',
+      objectPrefix: 'channels/main-abcdef1',
+    });
+  });
+
+  it('accepts next decoupled from main without requiring them to be equal', () => {
+    // next and main may name different published channels; the equality requirement is gone.
+    const index = parseVersionsIndex(
+      uiIndex({
+        releases: ['1.9.0'],
+        channels: ['main-abcdef1', 'main-fedcba9'],
+        distTags: { latest: '1.9.0', next: 'main-fedcba9', main: 'main-abcdef1' },
+      }),
+    );
+    expect(resolveVersion(index, 'ui', 'next')).toMatchObject({ version: 'main-fedcba9' });
+    expect(resolveVersion(index, 'ui', 'main')).toMatchObject({ version: 'main-abcdef1' });
+  });
+
+  it('rejects a next tag that is neither a published channel nor a known release', () => {
+    const base = { releases: ['1.9.0'], channels: ['main-abcdef1'] };
+    // A channel-shaped id that is not in the channels inventory.
+    expect(() =>
+      parseVersionsIndex(uiIndex({ ...base, distTags: { latest: '1.9.0', next: 'main-0000000' } })),
+    ).toThrow(/next tag/);
+    // A release version that is not in the releases inventory.
+    expect(() =>
+      parseVersionsIndex(uiIndex({ ...base, distTags: { latest: '1.9.0', next: '9.9.9' } })),
+    ).toThrow(/next tag/);
+  });
+
+  it('rejects a main tag that does not name a published immutable channel', () => {
+    const base = { releases: ['1.9.0', '2.0.0-beta.1'], channels: ['main-abcdef1'] };
+    // main must be a channel, never a release version.
+    expect(() =>
+      parseVersionsIndex(uiIndex({ ...base, distTags: { latest: '1.9.0', main: '2.0.0-beta.1' } })),
+    ).toThrow(/main tag/);
+    // main naming an unindexed channel is rejected.
+    expect(() =>
+      parseVersionsIndex(uiIndex({ ...base, distTags: { latest: '1.9.0', main: 'main-0000000' } })),
+    ).toThrow(/main tag/);
+  });
+
+  it('accepts a next tag set without a main tag', () => {
+    // With next decoupled from main, next may be set on its own (main omitted). Both a channel next
+    // and a release next are valid standalone.
+    const channelNext = parseVersionsIndex(
+      uiIndex({
+        releases: ['1.9.0'],
+        channels: ['main-abcdef1'],
+        distTags: { latest: '1.9.0', next: 'main-abcdef1' },
+      }),
+    );
+    expect(resolveVersion(channelNext, 'ui', 'next')).toMatchObject({ version: 'main-abcdef1' });
+    expect(resolveVersion(channelNext, 'ui', 'main')).toBeUndefined();
+
+    const releaseNext = parseVersionsIndex(
+      uiIndex({
+        releases: ['1.9.0', '2.0.0-beta.1'],
+        channels: [],
+        distTags: { latest: '1.9.0', next: '2.0.0-beta.1' },
+      }),
+    );
+    expect(resolveVersion(releaseNext, 'ui', 'next')).toMatchObject({
+      kind: 'release',
+      version: '2.0.0-beta.1',
+    });
+    expect(resolveVersion(releaseNext, 'ui', 'main')).toBeUndefined();
   });
 
   it('resolves a per-PR preview channel by its exact id without it being a distribution tag', () => {

@@ -51,9 +51,9 @@ function validateUiPackage(value: unknown): void {
   }
   if (!isRecord(value.distTags)) throw new Error('Invalid distribution tags.');
   const { latest, next, main } = value.distTags;
-  // Distribution tags are optional: a freshly bootstrapped index, a stable-only release with no
-  // main channel yet, or a channel-only index with no stable release are all valid states. Each
-  // tag is validated only when present, and next/main stay coupled whenever either one is set.
+  // Distribution tags are optional and validated only when present: a freshly bootstrapped index, a
+  // stable-only release with no main channel yet, or a channel-only index with no stable release are
+  // all valid states.
   if (latest !== undefined) {
     if (typeof latest !== 'string') throw new Error('Invalid distribution tags.');
     const latestVersion = parseSemver(latest);
@@ -61,12 +61,23 @@ function validateUiPackage(value: unknown): void {
       throw new Error('The latest tag must name a published stable release.');
     }
   }
-  if (next !== undefined || main !== undefined) {
-    if (typeof next !== 'string' || typeof main !== 'string') {
-      throw new Error('Invalid distribution tags.');
+  // `main` always names an immutable main channel when present.
+  if (main !== undefined) {
+    if (typeof main !== 'string' || !CHANNEL_PATTERN.test(main) || !value.channels.includes(main)) {
+      throw new Error('The main tag must name a published immutable channel.');
     }
-    if (next !== main || !CHANNEL_PATTERN.test(next) || !value.channels.includes(next)) {
-      throw new Error('The next and main tags must name the same published immutable channel.');
+  }
+  // `next` is tolerant of both shapes so this Worker keeps parsing the currently-live index while a
+  // later publish change migrates it: the legacy coupled shape names the same main channel as `main`
+  // (`next === main`), and the new decoupled shape names a published release version (the latest
+  // prerelease, so any entry of `releases` — prereleases included — is accepted). It stays optional,
+  // and no longer has to equal `main`.
+  if (next !== undefined) {
+    if (typeof next !== 'string') throw new Error('Invalid distribution tags.');
+    const isChannel = CHANNEL_PATTERN.test(next) && value.channels.includes(next);
+    const isRelease = value.releases.includes(next);
+    if (!isChannel && !isRelease) {
+      throw new Error('The next tag must name a published immutable channel or release version.');
     }
   }
 }
@@ -150,9 +161,20 @@ function resolveUiLikeVersion(
   if (requested === 'latest') {
     return pkg.distTags.latest ? exactRelease(packageName, pkg.distTags.latest) : undefined;
   }
-  if (requested === 'next' || requested === 'main') {
-    const channel = pkg.distTags[requested];
+  if (requested === 'main') {
+    const channel = pkg.distTags.main;
     return channel ? exactChannel(packageName, channel) : undefined;
+  }
+  if (requested === 'next') {
+    // `next` may name an immutable channel (legacy coupled shape, `next === main`) or an exact
+    // release version (decoupled shape). Resolve it to whichever kind its target names; the two
+    // namespaces are disjoint (a channel id never parses as semver), so the check is unambiguous.
+    const target = pkg.distTags.next;
+    if (!target) return undefined;
+    if (CHANNEL_PATTERN.test(target) && pkg.channels.includes(target)) {
+      return exactChannel(packageName, target);
+    }
+    return pkg.releases.includes(target) ? exactRelease(packageName, target) : undefined;
   }
 
   const alias = ALIAS_PATTERN.exec(requested);
