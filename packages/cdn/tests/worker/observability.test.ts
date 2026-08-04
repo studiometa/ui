@@ -44,7 +44,15 @@ function syntheticBucket(): MemoryR2 {
     schemaVersion: 1,
     package: { name: '@studiometa/ui-cdn', version: '1.2.0' },
     entries: { autoload: { path: 'autoload.js', preload: [] } },
-    components: { Action: { entry: 'autoload.js', preload: [], strategy: 'eager' } },
+    components: {
+      Action: {
+        entry: 'autoload.js',
+        preload: [],
+        strategy: 'eager',
+        packageName: '@studiometa/ui',
+        subpath: 'Action',
+      },
+    },
     outputs: { 'autoload.js': { bytes: 1, type: 'module' } },
   };
   const integrity = {

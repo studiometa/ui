@@ -125,7 +125,14 @@ function parseReleaseMetadata(
       (component) =>
         !validGraph(component, files, 'entry') ||
         !isRecord(component) ||
-        typeof component.strategy !== 'string',
+        typeof component.strategy !== 'string' ||
+        // packageName and subpath feed the registry's component/entry URLs, so a readable but
+        // malformed build.json that omits or mistypes them would otherwise surface as
+        // `package: undefined` or a URL ending in `undefined.js` instead of degrading.
+        typeof component.packageName !== 'string' ||
+        component.packageName.length === 0 ||
+        typeof component.subpath !== 'string' ||
+        component.subpath.length === 0,
     )
   ) {
     throw new Error('Invalid component graph.');

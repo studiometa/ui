@@ -422,6 +422,30 @@ describe('CDN Worker registry', () => {
     expect(registry.entries).toEqual({});
   });
 
+  it('drops entries and components when the current build.json is malformed', async () => {
+    // A readable release manifest whose component omits `packageName`/`subpath` must not surface
+    // as `package: undefined` or a `…/undefined.js` URL; the invalid build is rejected while the
+    // package inventory and current refs still resolve from the index.
+    const key = 'releases/ui/2.0.0/build.json';
+    const original = fixture.bucket.objects.get(key) as NonNullable<
+      ReturnType<typeof fixture.bucket.objects.get>
+    >;
+    const malformed = JSON.parse(original.contents) as {
+      components: Record<string, { packageName?: string }>;
+    };
+    delete malformed.components.Action.packageName;
+    fixture.bucket.put(key, JSON.stringify(malformed));
+    const registry = (await (await request('/')).json()) as Registry;
+    fixture.bucket.objects.set(key, original);
+
+    expect(registry.current.ui).toBe('2.0.0');
+    expect(registry.packages.ui.releases).toEqual(fixture.versionsIndex.packages.ui.releases);
+    expect(registry.entries).toEqual({
+      'js-toolkit': `${origin}/js-toolkit@${fixture.jsToolkitVersion}/index.js`,
+    });
+    expect(registry.components).toEqual([]);
+  });
+
   it('leaves non-root routes unaffected', async () => {
     const asset = await request('/ui@1.2.0/autoload.js');
     expect(asset.status).toBe(200);
