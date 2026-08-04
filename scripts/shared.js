@@ -8,13 +8,14 @@ export const resolve = (path, origin = import.meta.url) => fileURLToPath(new URL
 
 const repositoryRoot = resolve('../');
 
-export const outdir = resolve('../dist');
+/** The `@studiometa/ui` sources build into their own package-local `dist/`. */
+export const outdir = resolve('../packages/ui/dist');
 
 // Mirror the previous esbuild entry set: every `.js`/`.ts` module under
-// `packages/ui`, excluding dependencies. `unbundle` keeps the output tree
-// one-to-one with these sources.
+// `packages/ui`, excluding the emitted `dist/` and dependencies. `unbundle`
+// keeps the output tree one-to-one with these sources.
 const entryPoints = glob.sync(
-  ['packages/ui/**/*.js', 'packages/ui/**/*.ts', '!**/node_modules/**'],
+  ['packages/ui/**/*.js', 'packages/ui/**/*.ts', '!packages/ui/dist/**', '!**/node_modules/**'],
   { cwd: repositoryRoot, absolute: true },
 );
 

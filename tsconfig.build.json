@@ -3,11 +3,10 @@
   "compilerOptions": {
     "noEmit": false,
     "declaration": true,
-    "declarationDir": "dist",
+    "declarationDir": "packages/ui/dist",
     "emitDeclarationOnly": true,
     "rootDir": "packages/ui"
   },
-  "include": [
-    "packages/ui/**/*.ts"
-  ]
+  "include": ["packages/ui/**/*.ts"],
+  "exclude": ["packages/ui/dist", "node_modules"]
 }

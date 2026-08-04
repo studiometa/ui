@@ -15,7 +15,7 @@ jobs:
       # Detect which packages the pull request affects. Each package re-runs when
       # its own sources, the build tooling it actually uses, the shared root
       # TypeScript config it extends, or the lockfile change. `scripts/**` builds
-      # only `@studiometa/ui` (into the root `dist`); `@studiometa/ui-mapbox` and
+      # only `@studiometa/ui` (into `packages/ui/dist`); `@studiometa/ui-mapbox` and
       # `@studiometa/ui-autoload` are built by their own `packages/*/scripts/**`,
       # already covered by their own globs.
       - uses: dorny/paths-filter@v3
@@ -59,7 +59,7 @@ jobs:
             fi
           }
           count=0
-          [ "$ui" = "true" ] && count=$((count + 1)) && add "dist"
+          [ "$ui" = "true" ] && count=$((count + 1)) && add "packages/ui/dist"
           [ "$mapbox" = "true" ] && count=$((count + 1)) && add "packages/ui-mapbox/dist"
           [ "$autoload" = "true" ] && count=$((count + 1)) && add "packages/ui-autoload/dist"
           if [ "$count" -ge 2 ]; then
