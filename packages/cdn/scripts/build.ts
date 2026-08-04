@@ -302,6 +302,28 @@ function externalizeToolkitPlugin(): Plugin {
   };
 }
 
+/**
+ * Rewrites every dynamic `import('./<Component>.js')` of a @studiometa/ui-mapbox component module in
+ * the ui tree — the calls the composed autoload's bundled `@studiometa/ui-mapbox/manifest` issues —
+ * to the absolute, origin-relative URL of that component in the separately built ui-mapbox tree, and
+ * marks it external. This keeps every ui-mapbox component source out of the ui tree entirely: the
+ * composed manifest still discovers every Mapbox token up front, but each Mapbox component now
+ * lazy-loads from `/ui-mapbox@<version>/<Component>.js` instead of from a chunk emitted into the ui
+ * tree. It mirrors `externalizeToolkitPlugin`, resolving relative specifiers against their importer
+ * so the ui-mapbox package's own `./<Component>.js` manifest imports are matched by absolute path.
+ */
+function externalizeUiMapboxPlugin(urlByModule: ReadonlyMap<string, string>): Plugin {
+  return {
+    name: 'cdn-externalize-ui-mapbox',
+    resolveId(id: string, importer: string | undefined) {
+      if (!importer || !id.startsWith('.')) return undefined;
+      const resolved = resolve(dirname(importer.split('?')[0]), id);
+      const url = urlByModule.get(resolved);
+      return url ? { id: url, external: true } : undefined;
+    },
+  };
+}
+
 // Rolldown reports every module id it bundles as an absolute path; keep only real, in-repository
 // source files (dropping rolldown's virtual/runtime modules) and normalise them to the same
 // repository-relative POSIX keys esbuild's metafile inputs used.
@@ -433,12 +455,16 @@ function collectExternalImports(metafile: Metafile): string[] {
  * the Mapbox external specifiers is verified separately against the emitted code by
  * `assertMapboxDynamicExternals`.
  */
-function assertUiExternals(metafile: Metafile): { toolkitUrls: string[] } {
+function assertUiExternals(
+  metafile: Metafile,
+  additionalAllowedUrls: readonly string[] = [],
+): { toolkitUrls: string[] } {
   const external = collectExternalImports(metafile);
   const allowed = new Set<string>([
     jsToolkitIndexUrl,
     jsToolkitUtilsUrl,
     ...mapboxExternalSpecifiers,
+    ...additionalAllowedUrls,
   ]);
   const disallowed = external.filter((url) => !allowed.has(url));
   if (disallowed.length > 0) {
@@ -726,6 +752,11 @@ function sharedBundleOptions(outputDirectory: string) {
     config: false,
     logLevel: 'silent' as const,
     define: { __DEV__: 'false' },
+    // Keep origin-relative external URLs (js-toolkit's `/js-toolkit@<v>/…` and the composed
+    // manifest's `/ui-mapbox@<v>/…` dynamic imports) verbatim. Rolldown otherwise rewrites an
+    // absolute external into a chunk-relative `../../…` path, which a browser cannot resolve back to
+    // the intended versioned CDN URL — breaking the composed autoload's cross-tree lazy imports.
+    inputOptions: { makeAbsoluteExternalsRelative: false as const },
     outputOptions: {
       entryFileNames: '[name].js',
       chunkFileNames: 'chunks/[name]-[hash].js',
@@ -774,10 +805,16 @@ function chunksOf(results: Awaited<ReturnType<typeof tsdownBuild>>): OutputChunk
 }
 
 const { outputDirectory, allowDirty } = parseBuildOptions();
+// The ui-mapbox tree is versioned in lockstep with ui: it always carries the same version as ui, so
+// it reuses `uiVersion` rather than reading @studiometa/ui-mapbox's own package version separately.
 const uiTreePrefix = `releases/ui/${uiVersion}`;
+const uiMapboxTreePrefix = `releases/ui-mapbox/${uiVersion}`;
 const jsToolkitTreePrefix = `releases/js-toolkit/${jsToolkitVersion}`;
 const uiOutputDirectory = resolve(outputDirectory, uiTreePrefix);
+const uiMapboxOutputDirectory = resolve(outputDirectory, uiMapboxTreePrefix);
 const jsToolkitOutputDirectory = resolve(outputDirectory, jsToolkitTreePrefix);
+const UI_MAPBOX_BUILD_NAME = '@studiometa/ui-cdn-mapbox';
+const uiMapboxComponentUrl = (subpath: string): string => `/ui-mapbox@${uiVersion}/${subpath}.js`;
 
 const currentSourceState = await sourceState();
 if (!currentSourceState.clean && !allowDirty) {
@@ -786,8 +823,13 @@ if (!currentSourceState.clean && !allowDirty) {
   );
 }
 const definitions = await componentDefinitions();
+const uiDefinitions = definitions.filter(({ packageName }) => packageName === '@studiometa/ui');
+const mapboxDefinitions = definitions.filter(
+  ({ packageName }) => packageName === '@studiometa/ui-mapbox',
+);
 await rm(outputDirectory, { recursive: true, force: true });
 await mkdir(uiOutputDirectory, { recursive: true });
+await mkdir(uiMapboxOutputDirectory, { recursive: true });
 await mkdir(jsToolkitOutputDirectory, { recursive: true });
 
 const buildTime = reproducibleBuildTime();
@@ -815,27 +857,49 @@ await tsdownBuild({
 });
 const jsToolkitMetafile = metafileFromChunks(chunksOf(jsToolkitResults));
 
-// Every @studiometa/ui and @studiometa/ui-mapbox component is emitted as a stable, non-hashed ESM
-// entry named `<subpath>.js` at the ui tree root, so a consumer can import a single component by a
-// path that mirrors the npm subpath export (e.g. `/ui@<ref>/Action.js`). Pointing an entry straight
-// at the component source module re-exports its public exports. js-toolkit gets no per-symbol files
-// (pass A keeps only index.js + utils/index.js). Subpaths must not collide with the reserved ui
-// entries (autoload/loader/manifest/index) and no two components may share a subpath — both trees
-// share this one ui release tree.
-const reservedUiEntryNames = new Set(['autoload', 'loader', 'manifest', 'index']);
-const componentEntryPoints: Record<string, string> = {};
-for (const definition of definitions) {
-  const entryName = definition.subpath;
-  if (reservedUiEntryNames.has(entryName)) {
-    throw new Error(`Component subpath "${entryName}" collides with a reserved ui entry name.`);
+// Every component is emitted as a stable, non-hashed ESM entry named `<subpath>.js` at its own
+// package tree root, so a consumer can import a single component by a path that mirrors the npm
+// subpath export (`@studiometa/ui` → `/ui@<ref>/Action.js`, `@studiometa/ui-mapbox` →
+// `/ui-mapbox@<ref>/MapboxMap.js`). Pointing an entry straight at the component source module
+// re-exports its public exports. js-toolkit gets no per-symbol files (pass A keeps only index.js +
+// utils/index.js). Subpaths must not collide with a tree's reserved entries and no two components
+// in the same tree may share a subpath.
+function componentEntryPointsFor(
+  componentDefinitions: readonly ComponentDefinition[],
+  reservedEntryNames: ReadonlySet<string>,
+  treeLabel: string,
+): Record<string, string> {
+  const entryPoints: Record<string, string> = {};
+  for (const definition of componentDefinitions) {
+    const entryName = definition.subpath;
+    if (reservedEntryNames.has(entryName)) {
+      throw new Error(
+        `Component subpath "${entryName}" collides with a reserved ${treeLabel} entry name.`,
+      );
+    }
+    const existing = entryPoints[entryName];
+    if (existing && existing !== definition.sourcePath) {
+      throw new Error(`Two ${treeLabel} components share the CDN subpath "${entryName}".`);
+    }
+    entryPoints[entryName] = definition.sourcePath;
   }
-  const source = toPosix(relative(repositoryDirectory, definition.sourcePath));
-  const existing = componentEntryPoints[entryName];
-  if (existing && existing !== source) {
-    throw new Error(`Two components share the CDN subpath "${entryName}".`);
-  }
-  componentEntryPoints[entryName] = definition.sourcePath;
+  return entryPoints;
 }
+
+const reservedUiEntryNames = new Set(['autoload', 'loader', 'manifest', 'index']);
+const componentEntryPoints = componentEntryPointsFor(uiDefinitions, reservedUiEntryNames, 'ui');
+
+// The composed autoload's bundled `@studiometa/ui-mapbox/manifest` lazy-imports each Mapbox
+// component by its `./<Component>.js` module; map each of those source modules to the ui-mapbox tree
+// URL so the ui build externalizes them there instead of bundling them into the ui tree.
+const uiMapboxUrlByModule = new Map<string, string>();
+const uiMapboxExternalUrls: string[] = [];
+for (const definition of mapboxDefinitions) {
+  const url = uiMapboxComponentUrl(definition.subpath);
+  uiMapboxUrlByModule.set(definition.sourcePath.replace(/\.ts$/, '.js'), url);
+  uiMapboxExternalUrls.push(url);
+}
+uiMapboxExternalUrls.sort();
 
 const uiEntryPoints = {
   autoload: resolve(repositoryDirectory, 'packages/cdn/src/autoload.ts'),
@@ -854,7 +918,11 @@ const uiResults = await tsdownBuild({
   ...sharedBundleOptions(uiOutputDirectory),
   entry: uiEntryPoints,
   external: [...mapboxExternalSpecifiers],
-  plugins: [shopifyFallbackPlugin(), externalizeToolkitPlugin()],
+  plugins: [
+    shopifyFallbackPlugin(),
+    externalizeToolkitPlugin(),
+    externalizeUiMapboxPlugin(uiMapboxUrlByModule),
+  ],
 });
 await tsdownBuild({
   ...sharedDeclarationOptions(uiOutputDirectory, declarationExternals),
@@ -862,15 +930,45 @@ await tsdownBuild({
 });
 const uiMetafile = metafileFromChunks(chunksOf(uiResults));
 
+// Pass C — the @studiometa/ui-mapbox tree, versioned in lockstep with ui. Every Mapbox component is
+// emitted as a stable `<subpath>.js` entry (plus the barrel `index.js`) at the ui-mapbox tree root.
+// js-toolkit is rewritten to the same external, versioned URL the ui tree uses (so both trees share
+// one runtime instance and one component registry), and mapbox-gl and the geocoder stay external
+// bare specifiers resolved by the consumer's import map. @studiometa/ui-mapbox has no
+// @studiometa/ui dependency, so nothing ui-related is bundled or externalized here.
+const reservedUiMapboxEntryNames = new Set(['index']);
+const uiMapboxComponentEntryPoints = componentEntryPointsFor(
+  mapboxDefinitions,
+  reservedUiMapboxEntryNames,
+  'ui-mapbox',
+);
+const uiMapboxEntryPoints = {
+  index: resolve(repositoryDirectory, 'packages/cdn/src/barrel-ui-mapbox.ts'),
+  ...uiMapboxComponentEntryPoints,
+};
+const uiMapboxResults = await tsdownBuild({
+  ...sharedBundleOptions(uiMapboxOutputDirectory),
+  entry: uiMapboxEntryPoints,
+  external: [...mapboxExternalSpecifiers],
+  plugins: [externalizeToolkitPlugin()],
+});
+await tsdownBuild({
+  ...sharedDeclarationOptions(uiMapboxOutputDirectory, declarationExternals),
+  entry: uiMapboxEntryPoints,
+});
+const uiMapboxMetafile = metafileFromChunks(chunksOf(uiMapboxResults));
+
 // Re-export facade entries carry no source map from rolldown; synthesize the empty maps so the
 // public source-map invariant holds across both trees.
 await synthesizeFacadeSourceMaps(jsToolkitOutputDirectory);
 await synthesizeFacadeSourceMaps(uiOutputDirectory);
+await synthesizeFacadeSourceMaps(uiMapboxOutputDirectory);
 
 // Mapbox GL and the geocoder are external (import-map resolved) and no longer bundled, so the CDN
 // serves neither their JavaScript, their stylesheets nor their license notices — consumers load
 // those from the same source they point their import map at.
 await writeThirdPartyNotices(uiMetafile, uiOutputDirectory);
+await writeThirdPartyNotices(uiMapboxMetafile, uiMapboxOutputDirectory);
 await writeThirdPartyNotices(jsToolkitMetafile, jsToolkitOutputDirectory);
 
 const uiEntryNames = ['autoload', 'loader', 'manifest', 'index'];
@@ -904,7 +1002,6 @@ for (const name of uiEntryNames) {
   const inputs = graphInputs(uiMetafile, entryOutputs[name]);
   assertDoesNotContain(inputs, mapboxIsolationPatterns, `${name} startup graph`);
 }
-const uiDefinitions = definitions.filter(({ packageName }) => packageName === '@studiometa/ui');
 for (const definition of uiDefinitions) {
   const output = componentOutputBySource.get(definition.sourcePath);
   if (!output) throw new Error(`Missing component output for ${definition.token}.`);
@@ -923,27 +1020,58 @@ assertDoesNotContain(
   'Action graph',
 );
 
-const { toolkitUrls: toolkitExternalUrls } = assertUiExternals(uiMetafile);
+// The ui tree externalizes js-toolkit and the ui-mapbox component URLs; Mapbox GL and the geocoder
+// no longer appear in the ui tree at all (their components moved to the ui-mapbox tree), so the ui
+// tree's only allowed externals are the js-toolkit URLs and the `/ui-mapbox@<version>/*.js` URLs.
+const { toolkitUrls: toolkitExternalUrls } = assertUiExternals(uiMetafile, uiMapboxExternalUrls);
 const toolkitIdentity = `@studiometa/js-toolkit@${jsToolkitVersion}`;
 
 const uiInitialFiles = (await listFiles(uiOutputDirectory)).filter(
   (file) => !file.endsWith('.json'),
 );
-const mapboxExternalSpecifiersFound = await assertMapboxDynamicExternals(
-  uiOutputDirectory,
-  uiInitialFiles,
-);
 await assertBrowserImports(
   uiMetafile,
   uiOutputDirectory,
   uiInitialFiles,
-  new Set([...toolkitExternalUrls, ...mapboxExternalSpecifiersFound]),
+  new Set([...toolkitExternalUrls, ...uiMapboxExternalUrls]),
 );
 for (const file of uiInitialFiles.filter((path) => path.endsWith('.js'))) {
   if (!uiInitialFiles.includes(`${file}.map`))
     throw new Error(`Missing public sourcemap for ${file}.`);
 }
 const uiSizes = await fileSizes(uiOutputDirectory, uiInitialFiles);
+
+// The ui-mapbox tree owns the Mapbox component source. Like the ui tree it externalizes js-toolkit
+// (asserted by the shared `assertUiExternals`) and keeps mapbox-gl and the geocoder as external bare
+// dynamic imports (verified against the emitted code by `assertMapboxDynamicExternals`).
+const { toolkitUrls: uiMapboxToolkitExternalUrls } = assertUiExternals(uiMapboxMetafile);
+const uiMapboxInitialFiles = (await listFiles(uiMapboxOutputDirectory)).filter(
+  (file) => !file.endsWith('.json'),
+);
+const mapboxExternalSpecifiersFound = await assertMapboxDynamicExternals(
+  uiMapboxOutputDirectory,
+  uiMapboxInitialFiles,
+);
+await assertBrowserImports(
+  uiMapboxMetafile,
+  uiMapboxOutputDirectory,
+  uiMapboxInitialFiles,
+  new Set([...uiMapboxToolkitExternalUrls, ...mapboxExternalSpecifiersFound]),
+);
+for (const file of uiMapboxInitialFiles.filter((path) => path.endsWith('.js'))) {
+  if (!uiMapboxInitialFiles.includes(`${file}.map`))
+    throw new Error(`Missing public sourcemap for ${file}.`);
+}
+const uiMapboxSizes = await fileSizes(uiMapboxOutputDirectory, uiMapboxInitialFiles);
+const uiMapboxComponentOutputBySource = new Map<string, string>();
+for (const [output, metadata] of Object.entries(uiMapboxMetafile.outputs)) {
+  if (!metadata.entryPoint) continue;
+  uiMapboxComponentOutputBySource.set(resolve(repositoryDirectory, metadata.entryPoint), output);
+}
+const uiMapboxEntryOutputs = { index: 'index.js' };
+if (!uiMapboxMetafile.outputs['index.js']) {
+  throw new Error('Missing ui-mapbox entry output index.js.');
+}
 
 const jsToolkitEntryOutputs = Object.fromEntries(
   (
@@ -1073,46 +1201,66 @@ function entryMetadataFor(
   );
 }
 
-const componentInventory = Object.fromEntries(
-  definitions.map((definition) => {
-    const output = componentOutputBySource.get(definition.sourcePath);
-    if (!output) throw new Error(`Missing component entry chunk for ${definition.token}.`);
-    const graph = staticOutputGraph(uiMetafile, output).map((dependency) =>
-      publicPath(uiOutputDirectory, dependency),
-    );
-    const entry = publicPath(uiOutputDirectory, output);
-    const dynamicImports = dynamicOutputEntries(uiMetafile, output).map((dynamicOutput) => {
-      const dynamicEntry = publicPath(uiOutputDirectory, dynamicOutput);
-      return {
-        entry: dynamicEntry,
-        preload: staticOutputGraph(uiMetafile, dynamicOutput)
-          .map((dependency) => publicPath(uiOutputDirectory, dependency))
-          .filter((dependency) => dependency !== dynamicEntry)
-          .sort(),
-      };
-    });
-    return [
-      definition.token,
-      {
-        packageName: definition.packageName,
-        subpath: definition.subpath,
-        exportName: definition.exportName,
-        strategy: definition.strategy,
-        group: definition.group,
-        children: [...definition.children].sort(),
-        styles: [...definition.styles].sort(),
-        integrations: [...definition.integrations].sort(),
-        entry,
-        preload: graph.filter((path) => path !== entry).sort(),
-        dynamicImports,
-      },
-    ];
-  }),
+function componentInventoryFor(
+  componentDefinitions: readonly ComponentDefinition[],
+  metafile: Metafile,
+  treeOutputDirectory: string,
+  outputBySource: ReadonlyMap<string, string>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    componentDefinitions.map((definition) => {
+      const output = outputBySource.get(definition.sourcePath);
+      if (!output) throw new Error(`Missing component entry chunk for ${definition.token}.`);
+      const graph = staticOutputGraph(metafile, output).map((dependency) =>
+        publicPath(treeOutputDirectory, dependency),
+      );
+      const entry = publicPath(treeOutputDirectory, output);
+      const dynamicImports = dynamicOutputEntries(metafile, output).map((dynamicOutput) => {
+        const dynamicEntry = publicPath(treeOutputDirectory, dynamicOutput);
+        return {
+          entry: dynamicEntry,
+          preload: staticOutputGraph(metafile, dynamicOutput)
+            .map((dependency) => publicPath(treeOutputDirectory, dependency))
+            .filter((dependency) => dependency !== dynamicEntry)
+            .sort(),
+        };
+      });
+      return [
+        definition.token,
+        {
+          packageName: definition.packageName,
+          subpath: definition.subpath,
+          exportName: definition.exportName,
+          strategy: definition.strategy,
+          group: definition.group,
+          children: [...definition.children].sort(),
+          styles: [...definition.styles].sort(),
+          integrations: [...definition.integrations].sort(),
+          entry,
+          preload: graph.filter((path) => path !== entry).sort(),
+          dynamicImports,
+        },
+      ];
+    }),
+  );
+}
+
+// The ui and ui-mapbox component inventories are each computed against their own tree: ui component
+// entries live under `/ui@<v>/…` and Mapbox component entries under `/ui-mapbox@<v>/…`.
+const componentInventory = componentInventoryFor(
+  uiDefinitions,
+  uiMetafile,
+  uiOutputDirectory,
+  componentOutputBySource,
+);
+const uiMapboxComponentInventory = componentInventoryFor(
+  mapboxDefinitions,
+  uiMapboxMetafile,
+  uiMapboxOutputDirectory,
+  uiMapboxComponentOutputBySource,
 );
 
-const mapboxComponents = definitions
-  .filter(({ packageName }) => packageName === '@studiometa/ui-mapbox')
-  .map(({ token }) => token);
+const mapboxComponents = mapboxDefinitions.map(({ token }) => token);
 
 const uiBuildMetadata = {
   schemaVersion: 1,
@@ -1261,25 +1409,91 @@ const jsToolkitBuildMetadata = {
   },
 };
 
-// The js-toolkit tree is fully self-contained, so its metadata is stable and written once. Its
-// integrity manifest hashes every file including its own build.json.
-await writeJson(resolve(jsToolkitOutputDirectory, 'build.json'), jsToolkitBuildMetadata);
-{
-  const integrityFiles = [...jsToolkitInitialFiles, 'build.json'].sort();
+const uiMapboxBuildMetadata = {
+  schemaVersion: 1,
+  format: {
+    name: 'studiometa-browser-cdn-mapbox',
+    version: 1,
+    module: 'esm',
+    target: 'es2020',
+    splitting: true,
+    sourcemaps: true,
+    declarations: true,
+    bundler: bundlerLabel,
+  },
+  // The ui-mapbox tree is versioned in lockstep with ui, so it reports the ui version.
+  package: { name: UI_MAPBOX_BUILD_NAME, version: uiVersion },
+  dependencies: { '@studiometa/js-toolkit': jsToolkitVersion },
+  build: {
+    commit,
+    identifier: `${UI_MAPBOX_BUILD_NAME}@${uiVersion}+${commit}`,
+    clean: currentSourceState.clean,
+    publishable: currentSourceState.clean,
+    createdAt: buildTime.iso,
+    sourceDateEpoch: buildTime.epoch,
+    timeSource: buildTime.source,
+  },
+  entries: entryMetadataFor(uiMapboxMetafile, uiMapboxOutputDirectory, uiMapboxEntryOutputs),
+  components: uiMapboxComponentInventory,
+  outputs: outputMetadataFor(uiMapboxInitialFiles, uiMapboxSizes),
+  styles: {},
+  licenses: {
+    thirdPartyNotices: 'licenses/THIRD_PARTY_LICENSES.txt',
+    legalComments: 'none',
+  },
+  releaseGates: {},
+  integrations: {
+    'mapbox-gl': {
+      status: 'external-import-map',
+      importSpecifier: 'mapbox-gl',
+      components: mapboxComponents,
+      note: 'mapbox-gl is not bundled or served by this CDN. The Mapbox components resolve it from the consuming page (an import map entry for "mapbox-gl", or an instance injected through provideMapboxGl). Because the consumer owns the mapbox-gl module, its GL worker is same-origin with the page, so strict-CSP consumers can self-host it without a blob: worker-src exception.',
+    },
+    'mapbox-geocoder': {
+      status: 'external-import-map',
+      importSpecifier: '@mapbox/mapbox-gl-geocoder',
+      components: ['MapboxGeocoder'],
+      note: 'The optional geocoder is not bundled or served by this CDN. MapboxGeocoder resolves it from the consuming page (an import map entry for "@mapbox/mapbox-gl-geocoder", or an instance injected through provideMapboxGeocoder).',
+    },
+    'js-toolkit': {
+      status: 'external-versioned-artifact',
+      version: jsToolkitVersion,
+      urls: uiMapboxToolkitExternalUrls,
+      release: jsToolkitTreePrefix,
+      note: 'js-toolkit is built as its own versioned artifact and imported by an absolute, origin-relative URL so every ui-mapbox output shares one runtime instance with the ui tree.',
+    },
+  },
+  assertions: {
+    jsToolkitIdentities: [toolkitIdentity],
+    jsToolkitExternalUrls: uiMapboxToolkitExternalUrls,
+    treeBundlesToolkit: false,
+    mapboxExternalSpecifiers: mapboxExternalSpecifiersFound,
+    treeBundlesMapbox: false,
+    onlyAllowedBareExternals: true,
+    publicSourceMaps: true,
+  },
+};
+
+// The js-toolkit and ui-mapbox trees are each self-contained (they record no total:release), so
+// their metadata is stable and written once. Each integrity manifest hashes every file in its tree
+// including its own build.json.
+for (const [treeDirectory, treeFiles, metadata] of [
+  [jsToolkitOutputDirectory, jsToolkitInitialFiles, jsToolkitBuildMetadata] as const,
+  [uiMapboxOutputDirectory, uiMapboxInitialFiles, uiMapboxBuildMetadata] as const,
+]) {
+  await writeJson(resolve(treeDirectory, 'build.json'), metadata);
+  const integrityFiles = [...treeFiles, 'build.json'].sort();
   const integrity = {
     schemaVersion: 1,
     algorithm: 'sha384',
     excludes: ['integrity.json'],
     files: Object.fromEntries(
       await Promise.all(
-        integrityFiles.map(async (file) => [
-          file,
-          await sha384(resolve(jsToolkitOutputDirectory, file)),
-        ]),
+        integrityFiles.map(async (file) => [file, await sha384(resolve(treeDirectory, file))]),
       ),
     ),
   };
-  await writeJson(resolve(jsToolkitOutputDirectory, 'integrity.json'), integrity);
+  await writeJson(resolve(treeDirectory, 'integrity.json'), integrity);
 }
 
 // The ui build.json records total:release, which depends on the byte size of build.json itself, so
@@ -1319,5 +1533,5 @@ enforceSizeBudgets(observedBudgets);
 
 const totalPublicFiles = (await listFiles(outputDirectory)).length;
 console.log(
-  `Built ${definitions.length} components and ${totalPublicFiles} public files across ${uiTreePrefix} and ${jsToolkitTreePrefix}.`,
+  `Built ${definitions.length} components and ${totalPublicFiles} public files across ${uiTreePrefix}, ${uiMapboxTreePrefix} and ${jsToolkitTreePrefix}.`,
 );
