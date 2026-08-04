@@ -15,6 +15,8 @@
     "build:types": "tsgo --build tsconfig.build.json",
     "build:pkg": "node scripts/build.js",
     "build:sizes": "node scripts/sizes.js",
+    "build:mapbox": "npm run build --workspace=@studiometa/ui-mapbox",
+    "build:export-size": "npm run build && npm run build:mapbox",
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
     "lint:static": "oxlint --tsconfig ./tsconfig.json --type-aware",
     "lint:types": "tsgo --build tsconfig.lint.json",

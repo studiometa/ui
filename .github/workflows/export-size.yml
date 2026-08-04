@@ -35,20 +35,22 @@ jobs:
       # Build and measure only the affected packages. The export-size action
       # renders one comment with a section per path, so a single invocation with
       # the comma-joined paths avoids the comment clobbering that separate jobs
-      # (which share one comment) would cause.
+      # (which share one comment) would cause. The action runs `build_script`
+      # without a shell, so each case is a single npm command (the combined case
+      # lives in the `build:export-size` script where `&&` runs under npm's shell).
       - id: plan
         run: |
-          build=""
-          paths=""
-          if [ "${{ steps.filter.outputs.ui }}" = "true" ]; then
+          ui='${{ steps.filter.outputs.ui }}'
+          mapbox='${{ steps.filter.outputs.ui_mapbox }}'
+          if [ "$ui" = "true" ] && [ "$mapbox" = "true" ]; then
+            build="npm run build:export-size"
+            paths="dist,packages/ui-mapbox/dist"
+          elif [ "$ui" = "true" ]; then
             build="npm run build"
             paths="dist"
-          fi
-          if [ "${{ steps.filter.outputs.ui_mapbox }}" = "true" ]; then
-            [ -n "$build" ] && build="$build && "
-            build="${build}npm run build --workspace=@studiometa/ui-mapbox"
-            [ -n "$paths" ] && paths="$paths,"
-            paths="${paths}packages/ui-mapbox/dist"
+          elif [ "$mapbox" = "true" ]; then
+            build="npm run build:mapbox"
+            paths="packages/ui-mapbox/dist"
           fi
           {
             echo "build=$build"
