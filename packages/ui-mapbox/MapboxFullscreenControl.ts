@@ -1,10 +1,10 @@
 import { withExtraConfig } from '@studiometa/js-toolkit';
-import mapboxgl from 'mapbox-gl';
 import type { FullscreenControlOptions } from 'mapbox-gl';
 import {
   AbstractMapboxControl,
   type AbstractMapboxControlProps,
 } from './AbstractMapboxControl.js';
+import { getMapboxGl } from './dependencies.js';
 
 export interface MapboxFullscreenControlProps extends AbstractMapboxControlProps {}
 
@@ -20,7 +20,7 @@ export class MapboxFullscreenControl extends withExtraConfig(AbstractMapboxContr
    * @protected
    */
   createControl(options: FullscreenControlOptions) {
-    return new mapboxgl.FullscreenControl(options);
+    return new (getMapboxGl().FullscreenControl)(options);
   }
 }
 

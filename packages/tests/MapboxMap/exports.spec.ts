@@ -27,6 +27,10 @@ test('@studiometa/ui-mapbox exports', () => {
       "MapboxPopup",
       "MapboxSource",
       "StoreLocator",
+      "provideMapboxGeocoder",
+      "provideMapboxGl",
+      "resolveMapboxGeocoder",
+      "resolveMapboxGl",
     ]
   `);
 

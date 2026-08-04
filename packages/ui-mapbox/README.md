@@ -59,6 +59,25 @@ registerComponent(MapboxMap);
 
 Do not forget to include the `mapbox-gl` stylesheet so the map renders correctly.
 
+## Providing `mapbox-gl`
+
+By default the components resolve `mapbox-gl` (and the optional `@mapbox/mapbox-gl-geocoder`) with a lazy `import()` the first time a map is built, so the dependency stays out of your main bundle until it is needed. You never have to configure anything for the default to work — just keep `mapbox-gl` installed.
+
+When you need to control which `mapbox-gl` the components use — a specific version, a self-hosted build (e.g. a same-origin worker under a strict CSP), or a module served from an import map or a CDN — inject your own instance once, before the components mount:
+
+```js
+import mapboxgl from 'mapbox-gl';
+import { provideMapboxGl, provideMapboxGeocoder } from '@studiometa/ui-mapbox';
+
+provideMapboxGl(mapboxgl);
+
+// Optional: inject the geocoder control constructor as well.
+import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
+provideMapboxGeocoder(MapboxGeocoder);
+```
+
+Once provided, `@studiometa/ui-mapbox` never imports `mapbox-gl` by specifier — it uses the instance you handed it. `resolveMapboxGl()` / `resolveMapboxGeocoder()` are also exported if you want to trigger (and await) resolution yourself, for example to preload the module.
+
 Heads up to [ui.studiometa.dev](https://ui.studiometa.dev/reference/items/MapboxMap/) for the full documentation.
 
 ## Contributing

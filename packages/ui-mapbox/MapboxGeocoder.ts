@@ -1,27 +1,14 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import mapboxgl from 'mapbox-gl';
 import type { Map, IControl } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
 } from './AbstractMapboxMapChild.js';
-
-/**
- * Minimal structural shape of the optional Mapbox geocoder control used by this
- * component. It is declared locally so the optional geocoder peer dependency
- * never appears in the public type surface — and therefore never in the emitted
- * declarations — which would otherwise break consumers who install
- * `@studiometa/ui-mapbox` without the optional geocoder peer installed.
- */
-interface GeocoderControlLike {
-  addTo(target: Map | HTMLElement | string): void;
-  onRemove(): void;
-  /**
-   * Subscribe to a geocoder control event. Declared optional so the structural
-   * type stays satisfiable by minimal test doubles and older control versions.
-   */
-  on?(type: string, callback: (event: { result: unknown }) => void): void;
-}
+import {
+  getMapboxGl,
+  resolveMapboxGeocoder,
+  type MapboxGeocoderControl,
+} from './dependencies.js';
 
 export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
   $options: {
@@ -68,12 +55,12 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
    * Control instance, created once the lazily imported module resolves.
    * @private
    */
-  __control?: GeocoderControlLike;
+  __control?: MapboxGeocoderControl;
 
   /**
    * The Mapbox geocoder control instance, if it has been created yet.
    */
-  get control(): GeocoderControlLike | undefined {
+  get control(): MapboxGeocoderControl | undefined {
     return this.__control;
   }
 
@@ -92,7 +79,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
    * control once the parent map is ready.
    */
   async mounted() {
-    const { default: GeocoderControlClass } = await import('@mapbox/mapbox-gl-geocoder');
+    const GeocoderControlClass = await resolveMapboxGeocoder();
 
     // The component may have been destroyed while the dynamic import was still
     // resolving. Bail out before creating and adding the control, otherwise it
@@ -118,7 +105,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
 
       const options = {
         ...this.$options.options,
-        mapboxgl: mapboxgl as unknown as typeof import('mapbox-gl'),
+        mapboxgl: getMapboxGl(),
         accessToken:
           this.$options.options.accessToken ?? this.__readyMapboxMap?.$options.accessToken,
       };

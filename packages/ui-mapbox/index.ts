@@ -1,5 +1,14 @@
 export * from './AbstractMapboxControl.js';
 export * from './AbstractMapboxMapChild.js';
+export {
+  provideMapboxGl,
+  provideMapboxGeocoder,
+  resolveMapboxGl,
+  resolveMapboxGeocoder,
+  type MapboxGl,
+  type MapboxGeocoderControl,
+  type MapboxGeocoderConstructor,
+} from './dependencies.js';
 export * from './MapboxCluster.js';
 export * from './MapboxClusterItem.js';
 export * from './MapboxFullscreenControl.js';

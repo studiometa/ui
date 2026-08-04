@@ -1,7 +1,7 @@
 import { Base, type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
 import { nextTick } from '@studiometa/js-toolkit/utils';
-import mapboxgl from 'mapbox-gl';
 import type { Map, LngLatLike, LngLatBoundsLike, Popup } from 'mapbox-gl';
+import { getMapboxGl } from './dependencies.js';
 import { MapboxMap } from './MapboxMap.js';
 import { MAPBOX_MAP_CONNECTED } from './AbstractMapboxMapChild.js';
 import { MAPBOX_CLUSTER_CONNECTED, type MapboxCluster } from './MapboxCluster.js';
@@ -291,7 +291,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     }
 
     if (!this.__popup) {
-      this.__popup = new mapboxgl.Popup(this.$options.popupOptions);
+      this.__popup = new (getMapboxGl().Popup)(this.$options.popupOptions);
     }
 
     this.__popup.setLngLat(item.lngLat as LngLatLike).setHTML(content).addTo(map);
@@ -366,10 +366,11 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     }
 
     if (!this.$options.noSort && center) {
+      const { LngLat } = getMapboxGl();
       inView.sort(
         (a, b) =>
-          center.distanceTo(new mapboxgl.LngLat(a.lngLat[0], a.lngLat[1])) -
-          center.distanceTo(new mapboxgl.LngLat(b.lngLat[0], b.lngLat[1])),
+          center.distanceTo(new LngLat(a.lngLat[0], a.lngLat[1])) -
+          center.distanceTo(new LngLat(b.lngLat[0], b.lngLat[1])),
       );
     }
 

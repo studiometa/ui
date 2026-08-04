@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { provideMapboxGl, type MapboxGl } from '@studiometa/ui-mapbox';
 
 export class MockLngLat {
   lng: number;
@@ -242,17 +243,24 @@ export class MockNavigationControl {
 export class MockGeolocateControl {}
 export class MockFullscreenControl {}
 
-vi.mock('mapbox-gl', () => ({
-  default: {
-    Map: MockMap,
-    Marker: MockMarker,
-    Popup: MockPopup,
-    NavigationControl: MockNavigationControl,
-    GeolocateControl: MockGeolocateControl,
-    FullscreenControl: MockFullscreenControl,
-    LngLat: MockLngLat,
-  },
-}));
+const mockMapboxGl = {
+  Map: MockMap,
+  Marker: MockMarker,
+  Popup: MockPopup,
+  NavigationControl: MockNavigationControl,
+  GeolocateControl: MockGeolocateControl,
+  FullscreenControl: MockFullscreenControl,
+  LngLat: MockLngLat,
+};
+
+vi.mock('mapbox-gl', () => ({ default: mockMapboxGl }));
+
+// Inject the mock namespace so components that never mount a real `MapboxMap`
+// (the child-component and `StoreLocator` specs stub the map) can still read
+// `mapbox-gl` synchronously through `getMapboxGl()`. Specs that do mount a
+// `MapboxMap` resolve the same instance, since `provideMapboxGl` short-circuits
+// the fallback `import('mapbox-gl')`.
+provideMapboxGl(mockMapboxGl as unknown as MapboxGl);
 
 vi.mock('@mapbox/mapbox-gl-geocoder', () => {
   class MockGeocoder {

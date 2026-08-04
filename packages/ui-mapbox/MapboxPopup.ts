@@ -1,10 +1,10 @@
 import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
-import mapboxgl from 'mapbox-gl';
 import type { Popup, PopupOptions } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
 } from './AbstractMapboxMapChild.js';
+import { getMapboxGl } from './dependencies.js';
 import type { MapboxMarker } from './MapboxMarker.js';
 
 export interface MapboxPopupProps extends AbstractMapboxMapChildProps {
@@ -58,7 +58,7 @@ export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapbox
    */
   get popup() {
     if (!this.__popup) {
-      this.__popup = new mapboxgl.Popup(this.$options.popupOptions);
+      this.__popup = new (getMapboxGl().Popup)(this.$options.popupOptions);
     }
 
     return this.__popup;

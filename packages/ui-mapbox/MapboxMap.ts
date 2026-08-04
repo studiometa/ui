@@ -1,6 +1,6 @@
 import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
-import mapboxgl from 'mapbox-gl';
 import type { Map, MapOptions } from 'mapbox-gl';
+import { resolveMapboxGl } from './dependencies.js';
 import { MAPBOX_MAP_CONNECTED } from './AbstractMapboxMapChild.js';
 
 const FORWARDED_MAP_EVENTS = [
@@ -99,38 +99,53 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
   __offMapListeners: Array<() => void> = [];
 
   /**
-   * The mapbox Map instance.
+   * The mapbox Map instance, or `undefined` until it has been built.
+   *
+   * The map is built in `mounted()` after `mapbox-gl` resolves (it may be
+   * injected or lazily imported), so this getter returns `undefined` while that
+   * resolution is still pending. Children read it after the map announces itself
+   * through `MAPBOX_MAP_CONNECTED`, which only fires once the instance exists.
    */
   get map() {
-    if (!this.__map) {
-      this.__map = new mapboxgl.Map({
-        accessToken: this.$options.accessToken,
-        zoom: this.$options.zoom,
-        center: this.$options.center,
-        ...this.$options.mapOptions,
-        container: this.$refs.container ?? this.$el,
-      });
-    }
-
     return this.__map;
   }
 
   /**
    * Mounted hook.
+   *
+   * Resolves `mapbox-gl` (injected or lazily imported), builds the map, then
+   * announces it so children can inject themselves.
    */
-  mounted() {
+  async mounted() {
+    const mapboxgl = await resolveMapboxGl();
+
+    // The component may have been destroyed while `mapbox-gl` was resolving: bail
+    // out before building a map that nothing would ever tear down.
+    if (!this.$isMounted) {
+      return;
+    }
+
+    const map = new mapboxgl.Map({
+      accessToken: this.$options.accessToken,
+      zoom: this.$options.zoom,
+      center: this.$options.center,
+      ...this.$options.mapOptions,
+      container: this.$refs.container ?? this.$el,
+    });
+    this.__map = map;
+
     const onLoad = () => {
       this.isLoaded = true;
-      this.$emit('map-load', this.map);
+      this.$emit('map-load', map);
     };
-    this.map.on('load', onLoad);
+    map.on('load', onLoad);
     this.__offMapListeners.push(() => this.__map?.off('load', onLoad));
 
     for (const event of FORWARDED_MAP_EVENTS) {
       const handler = (e: unknown) => {
         this.$emit(`map-${event}`, e);
       };
-      this.map.on(event, handler);
+      map.on(event, handler);
       this.__offMapListeners.push(() => this.__map?.off(event, handler));
     }
 
