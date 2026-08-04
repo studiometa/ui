@@ -27,6 +27,40 @@ export type PackageName = 'ui' | 'js-toolkit';
 const VERSIONS_KEY = 'versions.json';
 const FULL_COMMIT_PATTERN = /^[0-9a-f]{40}$/;
 const CHANNEL_SHORT_LENGTH = 12;
+// A release is a few hundred small objects, each needing a couple of round-trips (put + head, copy
+// + head, delete). Uploading them one at a time dominates the publish wall-clock, so each phase
+// runs with bounded concurrency. R2 handles far more, but this keeps memory and connection use
+// modest while cutting the publish time by roughly this factor.
+const UPLOAD_CONCURRENCY = 24;
+
+/**
+ * Runs `task` over every item with at most `UPLOAD_CONCURRENCY` in flight. It is fail-fast: on the
+ * first rejection it stops starting new tasks, waits for the in-flight ones to settle (so their
+ * side effects — e.g. staged objects left for diagnosis — are complete), then rethrows that first
+ * error. Phases stay ordered because each call is awaited before the next begins.
+ */
+async function forEachWithConcurrency<T>(
+  items: readonly T[],
+  task: (item: T) => Promise<void>,
+): Promise<void> {
+  let index = 0;
+  let firstError: unknown;
+  async function worker(): Promise<void> {
+    while (index < items.length && firstError === undefined) {
+      const item = items[index++];
+      try {
+        await task(item);
+      } catch (error) {
+        firstError ??= error;
+        return;
+      }
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(UPLOAD_CONCURRENCY, items.length) }, () => worker()),
+  );
+  if (firstError !== undefined) throw firstError;
+}
 
 export interface ArtifactFile {
   path: string;
@@ -200,7 +234,7 @@ export async function publish(
   const temporaryPrefix = `tmp/${publicationId}`;
 
   log(`Staging ${artifact.files.length} files for ${identity}.`);
-  for (const file of artifact.files) {
+  await forEachWithConcurrency(artifact.files, async (file) => {
     const temporaryKey = `${temporaryPrefix}/${file.path}`;
     await store.put(temporaryKey, file.body, {
       contentType: contentTypeForKey(file.path),
@@ -213,10 +247,10 @@ export async function publish(
         `Staged upload verification failed for ${file.path}; temporary objects were left for diagnosis.`,
       );
     }
-  }
+  });
 
   log(`Copying ${identity} into its immutable prefix.`);
-  for (const file of artifact.files) {
+  await forEachWithConcurrency(artifact.files, async (file) => {
     const temporaryKey = `${temporaryPrefix}/${file.path}`;
     const finalKey = `${finalPrefix}/${file.path}`;
     await store.copy(temporaryKey, finalKey);
@@ -226,7 +260,7 @@ export async function publish(
         `Final upload verification failed for ${file.path}; temporary objects were left for diagnosis.`,
       );
     }
-  }
+  });
 
   log('Updating versions.json.');
   const currentIndex = parseWorkingVersionsIndex(await store.getText(VERSIONS_KEY));
@@ -248,9 +282,9 @@ export async function publish(
   });
 
   log('Cleaning up temporary objects.');
-  for (const file of artifact.files) {
-    await store.delete(`${temporaryPrefix}/${file.path}`);
-  }
+  await forEachWithConcurrency(artifact.files, (file) =>
+    store.delete(`${temporaryPrefix}/${file.path}`),
+  );
 
   return {
     finalPrefix,
