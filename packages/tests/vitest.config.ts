@@ -12,7 +12,15 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['ui/**/*.ts', 'ui-mapbox/**/*.ts'],
-      exclude: ['**/tests/**/*.ts', '**/ui/**/index.ts', '**/ui-mapbox/**/index.ts'],
+      exclude: [
+        '**/tests/**/*.ts',
+        '**/ui/**/index.ts',
+        '**/ui-mapbox/**/index.ts',
+        '**/ui/catalog.ts',
+        '**/ui/manifest.ts',
+        '**/ui-mapbox/catalog.ts',
+        '**/ui-mapbox/manifest.ts',
+      ],
     },
     // The CDN workspace has its own vitest config and dedicated CI jobs (cdn_unit / cdn_build /
     // cdn_browser); exclude it here so its tests are not also collected by this root run with the
