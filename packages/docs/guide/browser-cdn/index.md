@@ -2,7 +2,7 @@
 
 The @studiometa/ui browser CDN provides a one-script, no-build way to use the library's components in ES2020 module browsers. A single marked script boots a small runtime that discovers components from `data-component` attributes and loads their JavaScript on demand. It suits content sites, prototypes, and any environment where a bundler is not available.
 
-The CDN is a distinct runtime from the bundled package. It is not a drop-in replacement for a JavaScript build: it exposes no programmatic API, cannot be combined with bundled component constructors on the same page, and only ships the JavaScript behavior (no Twig templates or general stylesheets). See [Limitations](#limitations) before adopting it for an application.
+The CDN is a distinct runtime from the bundled package. It is not a drop-in replacement for a JavaScript build: the autoloader runtime exposes no programmatic API, cannot be combined with bundled component constructors on the same page, and only ships the JavaScript behavior (no Twig templates or general stylesheets). For scripted use the same versioned trees also expose plain ESM entry points — individual components and the full barrel are importable by pinned URL, see [Manual imports](#manual-imports). See [Limitations](#limitations) before adopting it for an application.
 
 The intended public host is `https://cdn.studiometa.dev`. The version numbers used in the examples below are illustrative; use a version that the CDN actually serves.
 
@@ -84,6 +84,36 @@ Rules enforced by the CDN for this query:
 - **Maximum of 20 tokens.** More than 20 is rejected with an HTTP 400 and the script will not load.
 - **Known components only.** An unknown or malformed token is rejected with an HTTP 400.
 - **Canonical form.** Tokens are de-duplicated and sorted alphabetically. A non-canonical query (unsorted, duplicated, or with extra parameters) is redirected to the canonical URL. Only `autoload.js` accepts the `components` parameter; any query string on another asset is redirected away.
+
+## Manual imports
+
+The declarative autoloader is the primary way to use the CDN, but every versioned tree is also a set of plain ESM entry points you can import directly. This suits scripted setups that construct components themselves, register a curated subset, or bundle nothing at all while still pinning to the CDN.
+
+The full `@studiometa/ui` surface is available from the barrel, exactly like the npm package's main entry:
+
+```js
+import { Action, Dialog, Modal } from 'https://cdn.studiometa.dev/ui@1.9.0/index.js';
+```
+
+Individual components are importable by a subpath that mirrors the npm subpath exports — `@studiometa/ui/Action` becomes `/ui@1.9.0/Action.js`:
+
+```js
+import { Action } from 'https://cdn.studiometa.dev/ui@1.9.0/Action.js';
+```
+
+The `@studiometa/ui-mapbox` components live in the same ui release tree and follow the same subpath convention (provide `mapbox-gl` yourself, see [Mapbox integration](#mapbox-integration)):
+
+```js
+import { MapboxMap } from 'https://cdn.studiometa.dev/ui@1.9.0/MapboxMap.js';
+```
+
+The `@studiometa/js-toolkit` runtime the components build on ships as its own exact-versioned barrel:
+
+```js
+import { Base, createApp } from 'https://cdn.studiometa.dev/js-toolkit@3.8.0/index.js';
+```
+
+These entry points are the immutable, versioned assets described under [URL structure and caching](#url-structure-and-caching), so pin an exact version (aliases redirect the same way as `autoload.js`). Use the [Registry](#registry) to discover which components, subpath URLs, and versions a deployment serves. Manual imports do not conflict with the autoloader — a page can either import modules itself or rely on the marked script, but the two runtimes still cannot be mixed on one page (see [Limitations](#limitations)).
 
 ## Loading strategies
 
@@ -168,6 +198,17 @@ An alias responds with an HTTP 307 redirect to the fully-resolved, immutable URL
 
 Exact versions and exact channels never change once published; only the aliases move.
 
+#### Bare-root redirects
+
+A bare package root — the package name with no version and no file — redirects (307, same short cache as the aliases above) to that package's most useful entry point:
+
+| Bare root     | Redirects to                     | Use case                       |
+| ------------- | -------------------------------- | ------------------------------ |
+| `/ui`         | `/ui@<latest>/autoload.js`       | Shortest autoloader URL        |
+| `/js-toolkit` | `/js-toolkit@<highest>/index.js` | Shortest js-toolkit barrel URL |
+
+`/ui` follows the `latest` stable tag to its `autoload.js`; `/js-toolkit` follows its highest published release to `index.js` (js-toolkit is exact-version only, so this bare root is its only moving pointer). Both resolve to the immutable target the [Registry](#registry) reports under `current`.
+
 ### Asset types
 
 Each release directory contains:
@@ -181,6 +222,54 @@ The CDN ships no stylesheets: the only components that needed one — the Mapbox
 ### Transport headers
 
 The Worker serves every asset with permissive cross-origin headers so the modules load from any origin: `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: GET, HEAD, OPTIONS`, and `Cross-Origin-Resource-Policy: cross-origin`. `GET`, `HEAD`, and preflight `OPTIONS` are supported. Conditional requests are honored: a matching `If-None-Match` returns `304 Not Modified`.
+
+## Registry
+
+The CDN root is a JSON registry describing everything the deployment serves: which versions and preview channels are published, which references are current, and the absolute URL of every autoloader entry, barrel, and per-component subpath module. It is the machine-readable index behind [Manual imports](#manual-imports) — fetch it to discover valid versions and component URLs instead of hard-coding them.
+
+```
+GET https://cdn.studiometa.dev/
+```
+
+It responds with `200` and `Content-Type: application/json; charset=utf-8`, the same cross-origin headers as every other asset, and the short mutable cache the aliases use (`max-age=300` for browsers, `s-maxage=3600` at the edge). `HEAD` returns the same headers with no body.
+
+```json
+{
+  "packages": {
+    "ui": {
+      "releases": ["1.9.0"],
+      "channels": ["main-<sha>", "pr-<n>-<sha>"],
+      "distTags": { "latest": "1.9.0", "next": "main-<sha>", "main": "main-<sha>" }
+    },
+    "js-toolkit": { "releases": ["3.8.0"] }
+  },
+  "current": { "ui": "1.9.0", "js-toolkit": "3.8.0" },
+  "entries": {
+    "autoload": "https://cdn.studiometa.dev/ui@1.9.0/autoload.js",
+    "index": "https://cdn.studiometa.dev/ui@1.9.0/index.js",
+    "js-toolkit": "https://cdn.studiometa.dev/js-toolkit@3.8.0/index.js"
+  },
+  "components": [
+    {
+      "token": "Action",
+      "package": "@studiometa/ui",
+      "url": "https://cdn.studiometa.dev/ui@1.9.0/Action.js"
+    },
+    {
+      "token": "MapboxMap",
+      "package": "@studiometa/ui-mapbox",
+      "url": "https://cdn.studiometa.dev/ui@1.9.0/MapboxMap.js"
+    }
+  ]
+}
+```
+
+The fields are:
+
+- **`packages`** — the published inventory per package: ui's `releases`, immutable `channels`, and `latest`/`next`/`main` distribution tags, plus js-toolkit's `releases`.
+- **`current`** — the reference each package resolves to right now: `current.ui` is the `latest` stable tag (falling back to the current `main` channel, then the highest stable release, then `null`), and `current.js-toolkit` is the highest published release (or `null`).
+- **`entries`** — absolute URLs for the current ui autoloader (`autoload`) and barrel (`index`), and the current js-toolkit barrel (`js-toolkit`). The ui entries are omitted when no ui surface is currently resolvable.
+- **`components`** — one entry per component in the current ui build, sorted by `token`, each with its owning `package` (`@studiometa/ui` or `@studiometa/ui-mapbox`) and the absolute subpath URL to import it from. Empty when no ui surface is currently resolvable.
 
 ## Mapbox integration
 
@@ -286,8 +375,8 @@ The CDN trades flexibility for a zero-build install. Its constraints are deliber
 - **No multiple versions.** Two CDN versions cannot coexist in one document.
 - **No `data-component` mutation.** Changing the attribute on an element already in the DOM is not observed; only inserted and removed nodes are.
 - **No Shadow DOM.** Components assume ownership of standard light-DOM elements.
-- **No programmatic API.** The runtime exposes no supported extension points or public methods; discovery is entirely declarative.
-- **JavaScript only.** No Twig or server-side templates, no per-instance `data-mount`, and no stylesheets — including no Mapbox CSS.
+- **No autoloader API.** The `data-studiometa-ui` runtime exposes no supported extension points or public methods; its discovery is entirely declarative. For scripted use, import component modules and the barrel directly by pinned URL instead — see [Manual imports](#manual-imports).
+- **No templates or stylesheets.** No Twig or server-side templates, no per-instance `data-mount`, and no stylesheets — including no Mapbox CSS. The CDN ships JavaScript only.
 - **ES2020 module browsers only.**
 - **Mapbox is not provided.** You supply `mapbox-gl` (and its CSS) through an import map — see [Mapbox integration](#mapbox-integration). Import maps require an ES2020 module browser, which the CDN already assumes.
 - **Shopify partial rendering is excluded.** `FetchShopifyPartial` falls back to base `Fetch`.

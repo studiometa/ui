@@ -4,10 +4,12 @@ import {
   errorResponse,
   etagMatches,
   IMMUTABLE_CACHE_CONTROL,
+  MUTABLE_CACHE_CONTROL,
   optionsResponse,
   redirectResponse,
   responseHeaders,
 } from './responses.ts';
+import { buildRegistry } from './registry.ts';
 import type {
   BuildMetadata,
   ExactVersion,
@@ -15,9 +17,17 @@ import type {
   PackageName,
   R2BucketLike,
   R2ObjectBodyLike,
+  VersionsIndex,
   WorkerEnvironment,
 } from './types.ts';
-import { isMutableVersion, parseVersionsIndex, resolveBareRoot, resolveVersion } from './versions.ts';
+import {
+  isMutableVersion,
+  parseVersionsIndex,
+  resolveBareRoot,
+  resolveCurrentJsToolkit,
+  resolveCurrentUiRef,
+  resolveVersion,
+} from './versions.ts';
 import { classifyVersion, emitObservation, ObservationRecorder } from './observability.ts';
 
 const MAX_LINK_HEADER_BYTES = 7_500;
@@ -183,6 +193,63 @@ function objectEtag(object: R2ObjectBodyLike): string | undefined {
   return object.etag.startsWith('"') ? object.etag : `"${object.etag}"`;
 }
 
+async function readVersionsForRegistry(
+  bucket: R2BucketLike,
+  recorder: ObservationRecorder,
+): Promise<VersionsIndex | undefined> {
+  // The registry must stay available even when the index is missing, corrupt, or unreadable, so a
+  // failure here degrades to an empty registry rather than the 502 an asset request would return.
+  try {
+    const indexValue = await readJsonObject(bucket, 'versions.json');
+    recorder.r2('index', indexValue === undefined ? 'miss' : 'hit');
+    return indexValue === undefined ? undefined : parseVersionsIndex(indexValue);
+  } catch {
+    recorder.r2('index', 'miss');
+    return undefined;
+  }
+}
+
+async function handleRegistry(
+  request: Request,
+  environment: WorkerEnvironment,
+  origin: string,
+  recorder: ObservationRecorder,
+): Promise<Response> {
+  recorder.routeKind('registry');
+  const versions = await readVersionsForRegistry(environment.ASSETS, recorder);
+  const currentUiRef = versions ? resolveCurrentUiRef(versions) : null;
+  const currentJsToolkit = versions ? resolveCurrentJsToolkit(versions) : null;
+
+  let currentUiBuild: BuildMetadata | undefined;
+  if (versions && currentUiRef) {
+    const exact = resolveVersion(versions, 'ui', currentUiRef);
+    if (exact) {
+      try {
+        const metadata = await loadRelease(environment.ASSETS, exact, PUBLIC_PACKAGE_NAMES.ui);
+        recorder.r2('release-metadata', metadata ? 'hit' : 'miss');
+        currentUiBuild = metadata?.build;
+      } catch {
+        // An unreadable release manifest drops the entries and components but keeps the registry.
+        recorder.r2('release-metadata', 'miss');
+      }
+    }
+  }
+
+  const registry = buildRegistry({
+    origin,
+    versions,
+    currentUiRef,
+    currentJsToolkit,
+    currentUiBuild,
+  });
+  const headers = responseHeaders({
+    'Cache-Control': MUTABLE_CACHE_CONTROL,
+    'Content-Type': 'application/json; charset=utf-8',
+  });
+  const body = request.method === 'HEAD' ? null : JSON.stringify(registry);
+  return new Response(body, { status: 200, headers });
+}
+
 async function handleRequest(
   request: Request,
   environment: WorkerEnvironment,
@@ -198,6 +265,12 @@ async function handleRequest(
   }
 
   const url = new URL(request.url);
+  // The CDN root is the JSON registry of everything published; it runs before route parsing so a
+  // bare `/` returns the registry instead of being rejected as a malformed asset path.
+  if (url.pathname === '/') {
+    return handleRegistry(request, environment, url.origin, recorder);
+  }
+
   const bareRoot = parseBareRoot(url.pathname);
   // Validate an asset route up front so a malformed path is rejected before any storage access; a
   // bare package root skips validation and resolves against the index below.

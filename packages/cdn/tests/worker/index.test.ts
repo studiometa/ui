@@ -316,6 +316,120 @@ describe('CDN Worker asset responses', () => {
   });
 });
 
+describe('CDN Worker registry', () => {
+  interface Registry {
+    packages: {
+      ui: { releases: string[]; channels: string[]; distTags: Record<string, string> };
+      'js-toolkit': { releases: string[] };
+    };
+    current: { ui: string | null; 'js-toolkit': string | null };
+    entries: Record<string, string>;
+    components: { token: string; package: string; url: string }[];
+  }
+
+  function replaceIndex(contents: string): () => void {
+    const original = fixture.bucket.objects.get('versions.json') as NonNullable<
+      ReturnType<typeof fixture.bucket.objects.get>
+    >;
+    fixture.bucket.put('versions.json', contents);
+    return () => fixture.bucket.objects.set('versions.json', original);
+  }
+
+  it('returns the populated registry as JSON with the standard transport headers', async () => {
+    const response = await request('/');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('application/json; charset=utf-8');
+    expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+    expectCrossOriginHeaders(response);
+
+    const registry = (await response.json()) as Registry;
+    expect(registry.packages.ui.releases).toEqual(fixture.versionsIndex.packages.ui.releases);
+    expect(registry.packages.ui.channels).toEqual(fixture.versionsIndex.packages.ui.channels);
+    expect(registry.packages.ui.distTags).toEqual(fixture.versionsIndex.packages.ui.distTags);
+    expect(registry.packages['js-toolkit'].releases).toEqual([fixture.jsToolkitVersion]);
+
+    expect(registry.current.ui).toBe('2.0.0');
+    expect(registry.current['js-toolkit']).toBe(fixture.jsToolkitVersion);
+
+    expect(registry.entries.autoload).toBe(`${origin}/ui@2.0.0/autoload.js`);
+    expect(registry.entries.index).toBe(`${origin}/ui@2.0.0/index.js`);
+    expect(registry.entries['js-toolkit']).toBe(
+      `${origin}/js-toolkit@${fixture.jsToolkitVersion}/index.js`,
+    );
+
+    const expectedComponents = Object.entries(fixture.build.components)
+      .map(([token, component]) => ({
+        token,
+        package: component.packageName,
+        url: `${origin}/ui@2.0.0/${component.subpath}.js`,
+      }))
+      .sort((left, right) => left.token.localeCompare(right.token));
+    expect(registry.components).toEqual(expectedComponents);
+
+    const action = registry.components.find((component) => component.token === 'Action');
+    expect(action).toEqual({
+      token: 'Action',
+      package: '@studiometa/ui',
+      url: `${origin}/ui@2.0.0/Action.js`,
+    });
+    const mapbox = registry.components.find((component) => component.token === 'MapboxMap');
+    expect(mapbox).toEqual({
+      token: 'MapboxMap',
+      package: '@studiometa/ui-mapbox',
+      url: `${origin}/ui@2.0.0/MapboxMap.js`,
+    });
+  });
+
+  it('answers HEAD with the same headers and no body', async () => {
+    const response = await request('/', { method: 'HEAD' });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('application/json; charset=utf-8');
+    expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+    expectCrossOriginHeaders(response);
+    expect(await response.text()).toBe('');
+  });
+
+  it('returns a well-formed empty registry when nothing is published', async () => {
+    const restore = replaceIndex(
+      JSON.stringify({
+        schemaVersion: 2,
+        packages: {
+          ui: { releases: [], channels: [], distTags: {} },
+          'js-toolkit': { releases: [] },
+        },
+      }),
+    );
+    const registry = (await (await request('/')).json()) as Registry;
+    restore();
+
+    expect(registry.packages.ui).toEqual({ releases: [], channels: [], distTags: {} });
+    expect(registry.packages['js-toolkit']).toEqual({ releases: [] });
+    expect(registry.current).toEqual({ ui: null, 'js-toolkit': null });
+    expect(registry.entries).toEqual({});
+    expect(registry.components).toEqual([]);
+  });
+
+  it('serves a well-formed empty registry rather than a 502 when the index is unreadable', async () => {
+    fixture.bucket.failures.add('versions.json');
+    const response = await request('/');
+    fixture.bucket.failures.delete('versions.json');
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('application/json; charset=utf-8');
+    const registry = (await response.json()) as Registry;
+    expect(registry.current).toEqual({ ui: null, 'js-toolkit': null });
+    expect(registry.components).toEqual([]);
+    expect(registry.entries).toEqual({});
+  });
+
+  it('leaves non-root routes unaffected', async () => {
+    const asset = await request('/ui@1.2.0/autoload.js');
+    expect(asset.status).toBe(200);
+    expect(await asset.text()).toBe(fixture.files['autoload.js']);
+    expect((await request('/ui')).status).toBe(307);
+  });
+});
+
 describe('CDN Worker storage failures', () => {
   it('returns a non-leaking 502 when the index is unavailable or invalid', async () => {
     fixture.bucket.failures.add('versions.json');

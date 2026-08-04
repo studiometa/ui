@@ -53,6 +53,8 @@ export interface BuildGraph {
 
 export interface BuildComponent extends BuildGraph {
   strategy: string;
+  packageName: string;
+  subpath: string;
 }
 
 export interface BuildMetadata {
@@ -89,4 +91,33 @@ export interface CanonicalQuery {
   components: string[];
   search: string;
   canonical: boolean;
+}
+
+export interface RegistryComponent {
+  token: string;
+  package: string;
+  url: string;
+}
+
+export interface RegistryDocument {
+  packages: {
+    ui: {
+      releases: string[];
+      channels: string[];
+      distTags: {
+        latest?: string;
+        next?: string;
+        main?: string;
+      };
+    };
+    'js-toolkit': {
+      releases: string[];
+    };
+  };
+  current: {
+    ui: string | null;
+    'js-toolkit': string | null;
+  };
+  entries: Record<string, string>;
+  components: RegistryComponent[];
 }
