@@ -29,9 +29,14 @@ function syntheticBucket(): MemoryR2 {
   bucket.put(
     'versions.json',
     JSON.stringify({
-      schemaVersion: 2,
+      schemaVersion: 3,
       packages: {
         ui: {
+          releases: ['1.2.0'],
+          channels: ['main-abcdef1'],
+          distTags: { latest: '1.2.0', next: 'main-abcdef1', main: 'main-abcdef1' },
+        },
+        'ui-mapbox': {
           releases: ['1.2.0'],
           channels: ['main-abcdef1'],
           distTags: { latest: '1.2.0', next: 'main-abcdef1', main: 'main-abcdef1' },

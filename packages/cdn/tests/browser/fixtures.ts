@@ -77,7 +77,9 @@ const MAPBOX_GEOCODER_STUB_PATH = '/stub/mapbox-gl-geocoder.js';
 export interface CdnServers {
   artifactOrigin: string;
   build: BuildMetadata;
+  uiMapboxBuild: BuildMetadata;
   exactUrl: (path: string, identifier?: string) => string;
+  uiMapboxUrl: (path: string) => string;
   fixtureUrl: (options: FixturePageOptions) => string;
   requests: RequestLog[];
   reset: () => void;
@@ -188,8 +190,14 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
     'releases/js-toolkit',
     jsToolkitVersion,
   );
+  // ui-mapbox is versioned in lockstep with ui and served from its own absolute /ui-mapbox@<v>/ URL.
+  const uiMapboxOutputDirectory = resolve(outputDirectory, 'releases/ui-mapbox', uiVersion);
+  const uiMapboxBuild = JSON.parse(
+    await readFile(resolve(uiMapboxOutputDirectory, 'build.json'), 'utf8'),
+  ) as BuildMetadata;
   const realUiDirectory = await realpath(uiOutputDirectory);
   const realJsToolkitDirectory = await realpath(jsToolkitOutputDirectory);
+  const realUiMapboxDirectory = await realpath(uiMapboxOutputDirectory);
   const requests: RequestLog[] = [];
   const delays = new Map<string, number>();
   const encodedIdentifier = encodeURIComponent(build.build.identifier);
@@ -243,6 +251,21 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
       const realPath =
         version === jsToolkitVersion
           ? await resolveWithin(jsToolkitOutputDirectory, realJsToolkitDirectory, relativePath)
+          : undefined;
+      if (!realPath) return notFound(response);
+      await send(response, realPath, relativePath, await readFile(realPath));
+      return;
+    }
+
+    // The lockstep ui-mapbox tree at its own absolute URL namespace, mirroring the real Worker. The
+    // composed autoload manifest lazy-imports Mapbox components from `/ui-mapbox@<version>/…`.
+    const uiMapbox = url.pathname.match(/^\/ui-mapbox@([^/]+)\/(.+)$/);
+    if (uiMapbox) {
+      const version = decodeURIComponent(uiMapbox[1]);
+      const relativePath = decodeURIComponent(uiMapbox[2]);
+      const realPath =
+        version === uiVersion
+          ? await resolveWithin(uiMapboxOutputDirectory, realUiMapboxDirectory, relativePath)
           : undefined;
       if (!realPath) return notFound(response);
       await send(response, realPath, relativePath, await readFile(realPath));
@@ -338,10 +361,16 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
   });
   pageOrigin = await listen(pageServer);
 
+  function uiMapboxUrl(path: string) {
+    return `${artifactOrigin}/ui-mapbox@${encodeURIComponent(uiVersion)}/${path}`;
+  }
+
   const fixture: CdnServers = {
     artifactOrigin,
     build,
+    uiMapboxBuild,
     exactUrl,
+    uiMapboxUrl,
     fixtureUrl(options) {
       const url = new URL('/fixture', pageOrigin);
       url.searchParams.set('body', options.body);

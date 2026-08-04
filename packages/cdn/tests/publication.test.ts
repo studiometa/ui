@@ -13,14 +13,17 @@ import type { WorkingVersionsIndex } from '../scripts/lib/versions.ts';
 import { makeArtifact, MemoryObjectStore, seedVersionsIndex } from './store-fixture.ts';
 
 function seed(): WorkingVersionsIndex {
+  // ui-mapbox mirrors ui in lockstep.
+  const uiLike = {
+    releases: ['1.0.0', '2.0.0'],
+    channels: ['main-000000000001', 'main-000000000002'],
+    distTags: { latest: '2.0.0', next: 'main-000000000002', main: 'main-000000000002' },
+  };
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     packages: {
-      ui: {
-        releases: ['1.0.0', '2.0.0'],
-        channels: ['main-000000000001', 'main-000000000002'],
-        distTags: { latest: '2.0.0', next: 'main-000000000002', main: 'main-000000000002' },
-      },
+      ui: structuredClone(uiLike),
+      'ui-mapbox': structuredClone(uiLike),
       'js-toolkit': { releases: ['3.8.0'] },
     },
   };
@@ -59,6 +62,53 @@ describe('CDN publication', () => {
 
     // The resulting index advances latest and stays valid for the Worker.
     expect(result.index.packages.ui.distTags.latest).toBe('2.1.0');
+    expect(() => parseVersionsIndex(result.index)).not.toThrow();
+  });
+
+  it('publishes the ui and ui-mapbox trees in lockstep in one atomic versions.json write', async () => {
+    const store = seededStore();
+    const result = await publish(store, makeArtifact(), releaseTarget, {
+      publicationId: 'lock',
+      lockstepUiMapbox: makeArtifact(),
+    });
+
+    // Both trees' immutable objects are copied into their namespaced prefixes.
+    expect(store.objects.has('releases/ui/2.1.0/build.json')).toBe(true);
+    expect(store.objects.has('releases/ui-mapbox/2.1.0/build.json')).toBe(true);
+    expect(store.objects.has('releases/ui-mapbox/2.1.0/autoload.js')).toBe(true);
+
+    // versions.json is written exactly once and advances both packages' latest tags.
+    expect(
+      store.operations.filter((entry) => entry.op === 'put' && entry.key === 'versions.json'),
+    ).toHaveLength(1);
+    expect(result.index.packages.ui.distTags.latest).toBe('2.1.0');
+    expect(result.index.packages['ui-mapbox'].distTags.latest).toBe('2.1.0');
+    expect(result.index.packages['ui-mapbox'].releases).toContain('2.1.0');
+    expect(() => parseVersionsIndex(result.index)).not.toThrow();
+
+    // The single versions.json write happens only after every final copy (ui and ui-mapbox) lands.
+    const versionsPut = store.indexOfPut('versions.json');
+    const lastCopy = Math.max(
+      ...store.operations
+        .map((entry, index) => (entry.op === 'copy' ? index : -1))
+        .filter((index) => index >= 0),
+    );
+    expect(versionsPut).toBeGreaterThan(lastCopy);
+    expect(store.keysWithPrefix('tmp/')).toHaveLength(0);
+  });
+
+  it('publishes a main channel for both lockstep trees under their namespaced prefixes', async () => {
+    const store = seededStore();
+    const result = await publish(
+      store,
+      makeArtifact({ commit: 'e'.repeat(40) }),
+      { kind: 'channel', commit: 'e'.repeat(40) },
+      { publicationId: 'lockchan', lockstepUiMapbox: makeArtifact({ commit: 'e'.repeat(40) }) },
+    );
+    expect(result.identity).toBe('main-eeeeeeeeeeee');
+    expect(store.objects.has('channels/main-eeeeeeeeeeee/build.json')).toBe(true);
+    expect(store.objects.has('channels/ui-mapbox/main-eeeeeeeeeeee/build.json')).toBe(true);
+    expect(result.index.packages['ui-mapbox'].distTags.main).toBe('main-eeeeeeeeeeee');
     expect(() => parseVersionsIndex(result.index)).not.toThrow();
   });
 
@@ -237,7 +287,9 @@ describe('publishability gates', () => {
 
   it('passes when the gate is recorded as approved (the build default)', () => {
     expect(() =>
-      validatePublishability(makeArtifact({ gateStatus: 'approved' }).build, { requireClean: true }),
+      validatePublishability(makeArtifact({ gateStatus: 'approved' }).build, {
+        requireClean: true,
+      }),
     ).not.toThrow();
   });
 });
@@ -245,18 +297,23 @@ describe('publishability gates', () => {
 describe('CDN rollback', () => {
   function rollbackStore(): MemoryObjectStore {
     const store = seededStore();
-    store.objects.set('releases/ui/1.0.0/build.json', { body: new Uint8Array(), sha384: 'x' });
-    store.objects.set('channels/main-000000000001/build.json', {
-      body: new Uint8Array(),
-      sha384: 'x',
-    });
+    // Both lockstep trees' immutable objects must exist for a rollback to accept the target.
+    for (const key of [
+      'releases/ui/1.0.0/build.json',
+      'releases/ui-mapbox/1.0.0/build.json',
+      'channels/main-000000000001/build.json',
+      'channels/ui-mapbox/main-000000000001/build.json',
+    ]) {
+      store.objects.set(key, { body: new Uint8Array(), sha384: 'x' });
+    }
     return store;
   }
 
-  it('repoints latest at an older indexed release without touching immutable objects', async () => {
+  it('repoints latest at an older indexed release for both lockstep packages without touching immutable objects', async () => {
     const store = rollbackStore();
     const result = await rollback(store, { kind: 'release', version: '1.0.0' });
     expect(result.index.packages.ui.distTags.latest).toBe('1.0.0');
+    expect(result.index.packages['ui-mapbox'].distTags.latest).toBe('1.0.0');
     expect(store.operations.every((entry) => entry.op !== 'copy' && entry.op !== 'delete')).toBe(
       true,
     );
@@ -264,13 +321,15 @@ describe('CDN rollback', () => {
     expect(writes).toEqual([{ op: 'put', key: 'versions.json' }]);
   });
 
-  it('moves next and main together on a channel rollback', async () => {
+  it('moves next and main together for both lockstep packages on a channel rollback', async () => {
     const result = await rollback(rollbackStore(), {
       kind: 'channel',
       channelId: 'main-000000000001',
     });
     expect(result.index.packages.ui.distTags.next).toBe('main-000000000001');
     expect(result.index.packages.ui.distTags.main).toBe('main-000000000001');
+    expect(result.index.packages['ui-mapbox'].distTags.next).toBe('main-000000000001');
+    expect(result.index.packages['ui-mapbox'].distTags.main).toBe('main-000000000001');
   });
 
   it('refuses a rollback to a target that is not indexed', async () => {

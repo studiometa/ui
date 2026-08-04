@@ -347,16 +347,12 @@ test('Mapbox stays lazy until visible, then resolves mapbox-gl from the import m
   // like a real consumer would (here pointing at the fixture's stub instead of a real Mapbox build).
   await page.goto(cdn.fixtureUrl({ body: mapFixtureBody(), mapboxImportMap: true }));
 
-  const startupGraph = new Set([
-    cdn.build.entries.autoload.path,
-    ...cdn.build.entries.autoload.preload,
-  ]);
-  const mapboxOnlyGraph = [
-    cdn.build.components.MapboxMap.entry,
-    ...cdn.build.components.MapboxMap.preload,
-  ]
-    .filter((path) => !startupGraph.has(path))
-    .map((path) => new URL(cdn.exactUrl(path)).pathname);
+  // MapboxMap now lives in its own first-class ui-mapbox tree and lazy-loads from its absolute
+  // /ui-mapbox@<version>/ URL; nothing Mapbox is fetched until the map scrolls into view.
+  const mapboxComponent = cdn.uiMapboxBuild.components.MapboxMap;
+  const mapboxOnlyGraph = [mapboxComponent.entry, ...mapboxComponent.preload].map(
+    (path) => new URL(cdn.uiMapboxUrl(path)).pathname,
+  );
   await page.waitForTimeout(150);
   // The Mapbox component chunk is not fetched until the map scrolls into view.
   expect(requestedPaths(cdn).filter((path) => mapboxOnlyGraph.includes(path))).toEqual([]);
@@ -364,7 +360,7 @@ test('Mapbox stays lazy until visible, then resolves mapbox-gl from the import m
   await page.locator('#map').scrollIntoViewIfNeeded();
   await expect
     .poll(() => requestedPaths(cdn))
-    .toContain(new URL(cdn.exactUrl(cdn.build.components.MapboxMap.entry)).pathname);
+    .toContain(new URL(cdn.uiMapboxUrl(mapboxComponent.entry)).pathname);
   // The component resolved mapbox-gl from the import map (the stub) and mounted its map without any
   // bundled Mapbox chunk, worker or stylesheet.
   await expectMounted(page, '#map', 'MapboxMap');
