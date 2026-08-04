@@ -8,51 +8,57 @@ on:
 jobs:
   export_size:
     runs-on: macos-latest
-    name: export_size (${{ matrix.package }})
-    strategy:
-      # Report every package independently instead of failing the whole matrix
-      # on the first one.
-      fail-fast: false
-      matrix:
-        include:
-          - package: '@studiometa/ui'
-            build_script: npm run build
-            paths: dist
-            # Re-run when the package sources, the shared build tooling, the
-            # lockfile, the root TS config or this workflow change.
-            filter: |
-              pkg:
-                - 'packages/ui/**'
-                - 'scripts/**'
-                - 'package.json'
-                - 'package-lock.json'
-                - 'tsconfig*.json'
-                - '.github/workflows/export-size.yml'
-          - package: '@studiometa/ui-mapbox'
-            build_script: npm run build --workspace=@studiometa/ui-mapbox
-            paths: packages/ui-mapbox/dist
-            filter: |
-              pkg:
-                - 'packages/ui-mapbox/**'
-                - 'package.json'
-                - 'package-lock.json'
-                - 'tsconfig*.json'
-                - '.github/workflows/export-size.yml'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: '0'
-      # Decide whether this package is affected by the pull request. The
-      # export-size step is gated on this rather than the whole job, so an
-      # unaffected package still reports a green check.
+      # Detect which packages the pull request affects. Each package re-runs when
+      # its own sources, the shared build tooling, the lockfile, the root TS
+      # config or this workflow change.
       - uses: dorny/paths-filter@v3
         id: filter
         with:
-          filters: ${{ matrix.filter }}
-      - if: steps.filter.outputs.pkg == 'true'
+          filters: |
+            ui:
+              - 'packages/ui/**'
+              - 'scripts/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig*.json'
+              - '.github/workflows/export-size.yml'
+            ui_mapbox:
+              - 'packages/ui-mapbox/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig*.json'
+              - '.github/workflows/export-size.yml'
+      # Build and measure only the affected packages. The export-size action
+      # renders one comment with a section per path, so a single invocation with
+      # the comma-joined paths avoids the comment clobbering that separate jobs
+      # (which share one comment) would cause.
+      - id: plan
+        run: |
+          build=""
+          paths=""
+          if [ "${{ steps.filter.outputs.ui }}" = "true" ]; then
+            build="npm run build"
+            paths="dist"
+          fi
+          if [ "${{ steps.filter.outputs.ui_mapbox }}" = "true" ]; then
+            [ -n "$build" ] && build="$build && "
+            build="${build}npm run build --workspace=@studiometa/ui-mapbox"
+            [ -n "$paths" ] && paths="$paths,"
+            paths="${paths}packages/ui-mapbox/dist"
+          fi
+          {
+            echo "build=$build"
+            echo "paths=$paths"
+            [ -n "$paths" ] && echo "run=true" || echo "run=false"
+          } >> "$GITHUB_OUTPUT"
+      - if: steps.plan.outputs.run == 'true'
         uses: titouanmathis/export-size-action@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          build_script: ${{ matrix.build_script }}
-          paths: ${{ matrix.paths }}
+          build_script: ${{ steps.plan.outputs.build }}
+          paths: ${{ steps.plan.outputs.paths }}
           node-version: 24
