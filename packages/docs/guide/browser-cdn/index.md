@@ -101,11 +101,17 @@ Individual components are importable by a subpath that mirrors the npm subpath e
 import { Action } from 'https://cdn.studiometa.dev/ui@1.9.0/Action.js';
 ```
 
-The `@studiometa/ui-mapbox` components live in the same ui release tree and follow the same subpath convention (provide `mapbox-gl` yourself, see [Mapbox integration](#mapbox-integration)):
+The `@studiometa/ui-mapbox` components live in their own first-class tree at `/ui-mapbox@<version>/`, versioned in lockstep with `@studiometa/ui` (the two trees always share the same version). They follow the same subpath convention as `@studiometa/ui`, and the whole surface is importable from the ui-mapbox barrel (provide `mapbox-gl` yourself, see [Mapbox integration](#mapbox-integration)):
 
 ```js
-import { MapboxMap } from 'https://cdn.studiometa.dev/ui@1.9.0/MapboxMap.js';
+// A single Mapbox component by its subpath, mirroring the npm subpath export.
+import { MapboxMap } from 'https://cdn.studiometa.dev/ui-mapbox@1.9.0/MapboxMap.js';
+
+// Or the whole @studiometa/ui-mapbox surface from its barrel.
+import { MapboxMap, StoreLocator } from 'https://cdn.studiometa.dev/ui-mapbox@1.9.0/index.js';
 ```
+
+The ui-mapbox tree resolves versions, aliases (`ui-mapbox@1`, `ui-mapbox@latest`), and preview channels (`ui-mapbox@next`/`ui-mapbox@main`) exactly like the ui tree. Because both trees share the single externalized js-toolkit runtime, autoloaded and manually-imported Mapbox components interoperate with the rest of `@studiometa/ui` on one page.
 
 The `@studiometa/js-toolkit` runtime the components build on ships as its own exact-versioned barrel:
 
@@ -177,11 +183,13 @@ If `MutationObserver` is unavailable, the initial scan still runs but dynamicall
 
 ## URL structure and caching
 
-CDN URLs follow a single predictable shape:
+CDN URLs follow a single predictable shape, with one versioned tree per package (`ui`, `ui-mapbox`, and `js-toolkit`):
 
 ```
-https://cdn.studiometa.dev/ui@{version}/{file}
+https://cdn.studiometa.dev/{package}@{version}/{file}
 ```
+
+The `ui` and `ui-mapbox` trees are versioned in lockstep and share the version-resolution rules below; `js-toolkit` is exact-version only.
 
 ### Version resolution
 
@@ -204,10 +212,11 @@ A bare package root — the package name with no version and no file — redirec
 
 | Bare root     | Redirects to                     | Use case                       |
 | ------------- | -------------------------------- | ------------------------------ |
-| `/ui`         | `/ui@<latest>/autoload.js`       | Shortest autoloader URL        |
+| `/ui`         | `/ui@<latest>/index.js`          | Shortest ui barrel URL         |
+| `/ui-mapbox`  | `/ui-mapbox@<latest>/index.js`   | Shortest ui-mapbox barrel URL  |
 | `/js-toolkit` | `/js-toolkit@<highest>/index.js` | Shortest js-toolkit barrel URL |
 
-`/ui` follows the `latest` stable tag to its `autoload.js`; `/js-toolkit` follows its highest published release to `index.js` (js-toolkit is exact-version only, so this bare root is its only moving pointer). Both resolve to the immutable target the [Registry](#registry) reports under `current`.
+`/ui` and `/ui-mapbox` follow their `latest` stable tag to the `index.js` barrel — the natural landing now that the autoloader is just another export of the ui tree (reach it explicitly at `/ui@<latest>/autoload.js`). `/js-toolkit` follows its highest published release to `index.js` (js-toolkit is exact-version only, so this bare root is its only moving pointer). All resolve to the immutable target the [Registry](#registry) reports under `current`.
 
 ### Asset types
 
@@ -241,12 +250,18 @@ It responds with `200` and `Content-Type: application/json; charset=utf-8`, the 
       "channels": ["main-<sha>", "pr-<n>-<sha>"],
       "distTags": { "latest": "1.9.0", "next": "main-<sha>", "main": "main-<sha>" }
     },
+    "ui-mapbox": {
+      "releases": ["1.9.0"],
+      "channels": ["main-<sha>", "pr-<n>-<sha>"],
+      "distTags": { "latest": "1.9.0", "next": "main-<sha>", "main": "main-<sha>" }
+    },
     "js-toolkit": { "releases": ["3.8.0"] }
   },
-  "current": { "ui": "1.9.0", "js-toolkit": "3.8.0" },
+  "current": { "ui": "1.9.0", "ui-mapbox": "1.9.0", "js-toolkit": "3.8.0" },
   "entries": {
     "autoload": "https://cdn.studiometa.dev/ui@1.9.0/autoload.js",
     "index": "https://cdn.studiometa.dev/ui@1.9.0/index.js",
+    "ui-mapbox": "https://cdn.studiometa.dev/ui-mapbox@1.9.0/index.js",
     "js-toolkit": "https://cdn.studiometa.dev/js-toolkit@3.8.0/index.js"
   },
   "components": [
@@ -258,7 +273,7 @@ It responds with `200` and `Content-Type: application/json; charset=utf-8`, the 
     {
       "token": "MapboxMap",
       "package": "@studiometa/ui-mapbox",
-      "url": "https://cdn.studiometa.dev/ui@1.9.0/MapboxMap.js"
+      "url": "https://cdn.studiometa.dev/ui-mapbox@1.9.0/MapboxMap.js"
     }
   ]
 }
@@ -266,14 +281,14 @@ It responds with `200` and `Content-Type: application/json; charset=utf-8`, the 
 
 The fields are:
 
-- **`packages`** — the published inventory per package: ui's `releases`, immutable `channels`, and `latest`/`next`/`main` distribution tags, plus js-toolkit's `releases`.
-- **`current`** — the reference each package resolves to right now: `current.ui` is the `latest` stable tag (falling back to the current `main` channel, then the highest stable release, then `null`), and `current.js-toolkit` is the highest published release (or `null`).
-- **`entries`** — absolute URLs for the current ui autoloader (`autoload`) and barrel (`index`), and the current js-toolkit barrel (`js-toolkit`). The ui entries are omitted when no ui surface is currently resolvable.
-- **`components`** — one entry per component in the current ui build, sorted by `token`, each with its owning `package` (`@studiometa/ui` or `@studiometa/ui-mapbox`) and the absolute subpath URL to import it from. Empty when no ui surface is currently resolvable.
+- **`packages`** — the published inventory per package: for ui and ui-mapbox each, their `releases`, immutable `channels`, and `latest`/`next`/`main` distribution tags (ui and ui-mapbox are versioned in lockstep, so their inventories match), plus js-toolkit's `releases`.
+- **`current`** — the reference each package resolves to right now: `current.ui` and `current.ui-mapbox` are each the `latest` stable tag (falling back to the current `main` channel, then the highest stable release, then `null`), and `current.js-toolkit` is the highest published release (or `null`).
+- **`entries`** — absolute URLs for the current ui autoloader (`autoload`) and barrel (`index`), the current ui-mapbox barrel (`ui-mapbox`), and the current js-toolkit barrel (`js-toolkit`). Each package's entries are omitted when that surface is not currently resolvable.
+- **`components`** — one entry per component across the current ui and ui-mapbox builds, sorted by `token`, each with its owning `package` and the absolute subpath URL to import it from — `@studiometa/ui` components from `/ui@<ref>/…` and `@studiometa/ui-mapbox` components from `/ui-mapbox@<ref>/…`. Empty when neither surface is currently resolvable.
 
 ## Mapbox integration
 
-Mapbox components (`MapboxMap`, `MapboxMarker`, `StoreLocator`, and the rest of the `@studiometa/ui-mapbox` surface described in [Packages and surfaces](/guide/concepts/packages-and-surfaces)) are served by the CDN, but **`mapbox-gl` itself is not**. The CDN neither bundles nor serves Mapbox GL JS or the Mapbox geocoder — you provide them, which keeps the CDN a neutral mirror of `@studiometa/ui` and lets you control the Mapbox version and its Web Worker.
+Mapbox components (`MapboxMap`, `MapboxMarker`, `StoreLocator`, and the rest of the `@studiometa/ui-mapbox` surface described in [Packages and surfaces](/guide/concepts/packages-and-surfaces)) are served by the CDN from their own `/ui-mapbox@<version>/` tree (see [Manual imports](#manual-imports)), but **`mapbox-gl` itself is not**. The CDN neither bundles nor serves Mapbox GL JS or the Mapbox geocoder — you provide them, which keeps the CDN a neutral mirror of `@studiometa/ui-mapbox` and lets you control the Mapbox version and its Web Worker.
 
 ### Provide `mapbox-gl` with an import map
 
