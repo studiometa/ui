@@ -111,6 +111,49 @@ describe('CDN Worker js-toolkit package routing', () => {
   });
 });
 
+describe('CDN Worker bare package roots', () => {
+  it.each(['/ui', '/ui/'])('redirects %s to the latest ui autoload entry', async (path) => {
+    const response = await request(path);
+    expect(response.status).toBe(307);
+    expect(response.headers.get('Location')).toBe(`${origin}/ui@2.0.0/autoload.js`);
+    expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+    expectCrossOriginHeaders(response);
+  });
+
+  it.each(['/js-toolkit', '/js-toolkit/'])(
+    'redirects %s to the highest js-toolkit index entry',
+    async (path) => {
+      const response = await request(path);
+      expect(response.status).toBe(307);
+      expect(response.headers.get('Location')).toBe(
+        `${origin}/js-toolkit@${fixture.jsToolkitVersion}/index.js`,
+      );
+      expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+      expectCrossOriginHeaders(response);
+    },
+  );
+
+  it('returns 404 for bare roots when the package has no eligible release', async () => {
+    const original = fixture.bucket.objects.get('versions.json') as NonNullable<
+      ReturnType<typeof fixture.bucket.objects.get>
+    >;
+    fixture.bucket.put(
+      'versions.json',
+      JSON.stringify({
+        schemaVersion: 2,
+        packages: {
+          ui: { releases: [], channels: [], distTags: {} },
+          'js-toolkit': { releases: [] },
+        },
+      }),
+    );
+    for (const path of ['/ui', '/ui/', '/js-toolkit', '/js-toolkit/']) {
+      expect((await request(path)).status).toBe(404);
+    }
+    fixture.bucket.objects.set('versions.json', original);
+  });
+});
+
 describe('CDN Worker eager component queries', () => {
   it('resolves a mutable version and canonicalizes the query in one hop', async () => {
     const response = await request(
