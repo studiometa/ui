@@ -1,10 +1,10 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import mapboxgl from 'mapbox-gl';
 import type { Marker, MarkerOptions } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
 } from './AbstractMapboxMapChild.js';
+import { getMapboxGl } from './dependencies.js';
 import { MapboxPopup } from './MapboxPopup.js';
 
 export interface MapboxMarkerProps extends AbstractMapboxMapChildProps {
@@ -47,7 +47,7 @@ export class MapboxMarker<T extends BaseProps = BaseProps> extends AbstractMapbo
    */
   get marker() {
     if (!this.__marker) {
-      this.__marker = new mapboxgl.Marker(this.$options.markerOptions);
+      this.__marker = new (getMapboxGl().Marker)(this.$options.markerOptions);
     }
 
     return this.__marker;

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- **Mapbox:** provide `mapbox-gl` (and the optional geocoder) dynamically — add `provideMapboxGl` / `provideMapboxGeocoder` injection and `resolveMapboxGl` / `resolveMapboxGeocoder` resolvers so a host can supply its own instance; `mapbox-gl` is otherwise resolved with a lazy `import()` on first map build instead of a bundled static import ([#575](https://github.com/studiometa/ui/pull/575))
 - **Toaster:** add the `Toaster` and `Toast` components — a headless notifications region built on two `aria-live` regions so toasts are announced without moving focus, each toast a `Timer`-based `Toast` with a pausable auto-dismiss countdown, and stacking animated through the `viewTransition` scheduler ([#572](https://github.com/studiometa/ui/pull/572))
 
 ## [v1.9.0](https://github.com/studiometa/ui/compare/1.8.0..1.9.0) (2026-07-29)

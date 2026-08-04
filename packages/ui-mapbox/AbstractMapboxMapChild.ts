@@ -217,13 +217,21 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    * @param {MapboxMap} mapboxMap
    */
   __bindToMap(mapboxMap: MapboxMap): void {
-    // Resolve the concrete map now — the getter builds it lazily, so it exists
-    // even before load — and subscribe to its `remove` immediately. Binding the
-    // remove handler here rather than after load means a map removed *while its
-    // load is still pending* re-resolves the child onto a replacement instead of
-    // stranding it: the pending `map-load` subscription is flushed and the child
-    // parks on `MAPBOX_MAP_CONNECTED` again.
+    // Resolve the concrete map now and subscribe to its `remove` immediately.
+    // Binding the remove handler here rather than after load means a map removed
+    // *while its load is still pending* re-resolves the child onto a replacement
+    // instead of stranding it: the pending `map-load` subscription is flushed and
+    // the child parks on `MAPBOX_MAP_CONNECTED` again.
     const map = mapboxMap.map;
+
+    // The parent's `MapboxMap` instance may exist while its concrete map is not
+    // built yet: it resolves `mapbox-gl` asynchronously in `mounted()` before
+    // creating the map. Keep waiting on `MAPBOX_MAP_CONNECTED`, which the map
+    // dispatches once its instance exists, and bind then.
+    if (!map) {
+      this.__waitForConnectedMap();
+      return;
+    }
 
     // Drop any stale pending subscription before (re)binding.
     this.__offMapReady?.();

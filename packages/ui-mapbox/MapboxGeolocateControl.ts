@@ -1,10 +1,10 @@
 import { withExtraConfig } from '@studiometa/js-toolkit';
-import mapboxgl from 'mapbox-gl';
 import type { GeolocateControlOptions } from 'mapbox-gl';
 import {
   AbstractMapboxControl,
   type AbstractMapboxControlProps,
 } from './AbstractMapboxControl.js';
+import { getMapboxGl } from './dependencies.js';
 
 export interface MapboxGeolocateControlProps extends AbstractMapboxControlProps {
   $options: AbstractMapboxControlProps['$options'] & Omit<GeolocateControlOptions, 'geolocation'>;
@@ -30,7 +30,7 @@ export class MapboxGeolocateControl extends withExtraConfig(AbstractMapboxContro
    * @protected
    */
   createControl(options: GeolocateControlOptions) {
-    return new mapboxgl.GeolocateControl(options);
+    return new (getMapboxGl().GeolocateControl)(options);
   }
 }
 

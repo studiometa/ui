@@ -45,7 +45,12 @@ vi.mock('@mapbox/mapbox-gl-geocoder', async () => {
   return { default: MockGeocoder };
 });
 
-const { MapboxGeocoder } = await import('@studiometa/ui-mapbox');
+const { MapboxGeocoder, provideMapboxGl } = await import('@studiometa/ui-mapbox');
+
+// This spec stubs `$closest` instead of mounting a real `MapboxMap`, so nothing
+// resolves `mapbox-gl`. Provide the mock namespace the geocoder hands to its
+// control (the gated `MockGeocoder` ignores it, but `getMapboxGl()` must resolve).
+provideMapboxGl({ Map: class {} } as unknown as Parameters<typeof provideMapboxGl>[0]);
 
 function createGeocoder() {
   const mockMap = { removeControl: vi.fn() };

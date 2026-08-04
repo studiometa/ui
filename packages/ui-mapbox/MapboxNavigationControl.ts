@@ -1,10 +1,10 @@
 import { withExtraConfig } from '@studiometa/js-toolkit';
-import mapboxgl from 'mapbox-gl';
 import type { NavigationControlOptions } from 'mapbox-gl';
 import {
   AbstractMapboxControl,
   type AbstractMapboxControlProps,
 } from './AbstractMapboxControl.js';
+import { getMapboxGl } from './dependencies.js';
 
 export interface MapboxNavigationControlProps extends AbstractMapboxControlProps {
   $options: AbstractMapboxControlProps['$options'] & {
@@ -31,7 +31,7 @@ export class MapboxNavigationControl extends withExtraConfig(AbstractMapboxContr
    * @protected
    */
   createControl(options: NavigationControlOptions) {
-    return new mapboxgl.NavigationControl(options);
+    return new (getMapboxGl().NavigationControl)(options);
   }
 }
 

@@ -16,6 +16,23 @@ This page documents thirteen components — a single root component, `MapboxMap`
 - **[Cluster](#cluster)** — `MapboxCluster`, `MapboxClusterItem` (see also the [`StoreLocator`](/reference/items/StoreLocator/) orchestrator)
 - **[AbstractMapboxMapChild](#abstractmapboxmapchild)** — the shared base class
 
+## Providing the `mapbox-gl` dependency
+
+By default the components resolve `mapbox-gl` (and the optional `@mapbox/mapbox-gl-geocoder`) with a lazy `import()` the first time a map is built, so nothing needs configuring — keep `mapbox-gl` installed and it just works, staying out of your main bundle until a map is on the page.
+
+To control which `mapbox-gl` the components use — a pinned version, a self-hosted build (for example a same-origin worker under a strict CSP), or a module served from an import map or a CDN — inject your own instance once, before the components mount:
+
+```js
+import mapboxgl from 'mapbox-gl';
+import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
+import { provideMapboxGl, provideMapboxGeocoder } from '@studiometa/ui-mapbox';
+
+provideMapboxGl(mapboxgl);
+provideMapboxGeocoder(MapboxGeocoder); // optional geocoder peer
+```
+
+Once provided, `@studiometa/ui-mapbox` never imports `mapbox-gl` by specifier — it uses the instance you handed it. `resolveMapboxGl()` and `resolveMapboxGeocoder()` are exported too if you want to trigger and await resolution yourself (for example to preload the module).
+
 ## Reactivity and updates
 
 To move the map, change its data or update a marker after mount, reach for the underlying Mapbox objects directly through the component instances:
