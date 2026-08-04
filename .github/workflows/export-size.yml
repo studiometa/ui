@@ -15,8 +15,9 @@ jobs:
       # Detect which packages the pull request affects. Each package re-runs when
       # its own sources, the build tooling it actually uses, the shared root
       # TypeScript config it extends, or the lockfile change. `scripts/**` builds
-      # only `@studiometa/ui` (into the root `dist`); `@studiometa/ui-mapbox` is
-      # built by `packages/ui-mapbox/scripts/**`, already covered by its own glob.
+      # only `@studiometa/ui` (into the root `dist`); `@studiometa/ui-mapbox` and
+      # `@studiometa/ui-autoload` are built by their own `packages/*/scripts/**`,
+      # already covered by their own globs.
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -30,26 +31,45 @@ jobs:
               - 'packages/ui-mapbox/**'
               - 'tsconfig*.json'
               - 'package-lock.json'
+            ui_autoload:
+              - 'packages/ui-autoload/**'
+              - 'tsconfig*.json'
+              - 'package-lock.json'
       # Build and measure only the affected packages. The export-size action
       # renders one comment with a section per path, so a single invocation with
       # the comma-joined paths avoids the comment clobbering that separate jobs
       # (which share one comment) would cause. The action also builds the base
-      # branch with the same command and runs it without a shell, so each case is
-      # a single command that already exists on `main`; the combined case uses the
-      # `build:export-size` script, where `&&` runs under npm's own shell.
+      # branch with the same command and runs it without a shell, so each single
+      # package case is a command that already exists on `main`. When two or more
+      # packages change we use the `build:export-size` script: `&&` runs under
+      # npm's own shell, and its `if [ -d packages/<pkg> ]` guards skip a package
+      # that does not yet exist on the base branch (e.g. `@studiometa/ui-autoload`
+      # is absent from `main`), so the base-branch build stays green.
       - id: plan
         run: |
           ui='${{ steps.filter.outputs.ui }}'
           mapbox='${{ steps.filter.outputs.ui_mapbox }}'
-          if [ "$ui" = "true" ] && [ "$mapbox" = "true" ]; then
+          autoload='${{ steps.filter.outputs.ui_autoload }}'
+          paths=""
+          add() {
+            if [ -n "$paths" ]; then
+              paths="$paths,$1"
+            else
+              paths="$1"
+            fi
+          }
+          count=0
+          [ "$ui" = "true" ] && count=$((count + 1)) && add "dist"
+          [ "$mapbox" = "true" ] && count=$((count + 1)) && add "packages/ui-mapbox/dist"
+          [ "$autoload" = "true" ] && count=$((count + 1)) && add "packages/ui-autoload/dist"
+          if [ "$count" -ge 2 ]; then
             build="npm run build:export-size"
-            paths="dist,packages/ui-mapbox/dist"
           elif [ "$ui" = "true" ]; then
             build="npm run build"
-            paths="dist"
           elif [ "$mapbox" = "true" ]; then
             build="npm run build --workspace=@studiometa/ui-mapbox"
-            paths="packages/ui-mapbox/dist"
+          elif [ "$autoload" = "true" ]; then
+            build="npm run build --workspace=@studiometa/ui-autoload"
           fi
           {
             echo "build=$build"

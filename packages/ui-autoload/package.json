@@ -16,6 +16,9 @@
     "./*": "./*.ts"
   },
   "scripts": {
+    "build": "npm run build:pkg && npm run build:types",
+    "build:pkg": "node scripts/build.js",
+    "build:types": "tsgo --build tsconfig.build.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
