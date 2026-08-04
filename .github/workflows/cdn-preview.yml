@@ -105,7 +105,7 @@ jobs:
       # Worker exists, this uploads a preview version and comments its URL on every PR.
       - name: Upload a preview version of the CDN Worker
         continue-on-error: true
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CDN_CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CDN_CLOUDFLARE_ACCOUNT_ID }}
