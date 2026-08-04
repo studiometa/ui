@@ -62,32 +62,31 @@ jobs:
           echo "NPM_TAG=$NPM_TAG" >> $GITHUB_ENV
           echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
 
-      - uses: JS-DevTools/npm-publish@v3
-        with:
-          provenance: true
-          package: packages/ui/dist/
-          tag: ${{ env.NPM_TAG }}
-          token: ${{ secrets.NPM_TOKEN }}
+      # Tokenless trusted publishing (npm OIDC): each package is configured as a trusted publisher
+      # on npm, so `npm publish` authenticates through the `id-token: write` permission declared
+      # above — no NPM_TOKEN — and provenance is attested from the same OIDC flow. Mirrors the
+      # working setup in @weareikko/code-review; Node 24's bundled npm (>= 11.5.1) supports it.
+      - name: Publish @studiometa/ui
+        run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
+        working-directory: packages/ui/dist
 
-      - name: Build eslint-plugin-ui
+      - name: Build @studiometa/eslint-plugin-ui
         run: npm run build -w @studiometa/eslint-plugin-ui
+      - name: Publish @studiometa/eslint-plugin-ui
+        run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
+        working-directory: packages/eslint-plugin-ui
 
-      - uses: JS-DevTools/npm-publish@v3
-        with:
-          provenance: true
-          package: packages/eslint-plugin-ui/
-          tag: ${{ env.NPM_TAG }}
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Build ui-mapbox
+      - name: Build @studiometa/ui-mapbox
         run: npm run build -w @studiometa/ui-mapbox
+      - name: Publish @studiometa/ui-mapbox
+        run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
+        working-directory: packages/ui-mapbox/dist
 
-      - uses: JS-DevTools/npm-publish@v3
-        with:
-          provenance: true
-          package: packages/ui-mapbox/dist/
-          tag: ${{ env.NPM_TAG }}
-          token: ${{ secrets.NPM_TOKEN }}
+      - name: Build @studiometa/ui-autoload
+        run: npm run build -w @studiometa/ui-autoload
+      - name: Publish @studiometa/ui-autoload
+        run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
+        working-directory: packages/ui-autoload/dist
 
       - uses: ncipollo/release-action@v1
         with:
