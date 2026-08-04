@@ -39,6 +39,10 @@ const PUBLIC_PACKAGE_NAMES: Record<PackageName, string> = {
 };
 const SAFE_METADATA_PATH = /^(?!\/)(?!.*(?:^|\/)\.\.?(?:\/|$))(?!.*\\)[0-9A-Za-z._@+/-]+$/;
 
+// The npm packages a CDN component may belong to. The registry maps each component's packageName
+// straight into its reported owner, so an unexpected value must be rejected rather than surfaced.
+const COMPONENT_PACKAGE_NAMES = new Set(['@studiometa/ui', '@studiometa/ui-mapbox']);
+
 interface ReleaseMetadata {
   build: BuildMetadata;
   integrity: IntegrityMetadata;
@@ -126,13 +130,14 @@ function parseReleaseMetadata(
         !validGraph(component, files, 'entry') ||
         !isRecord(component) ||
         typeof component.strategy !== 'string' ||
-        // packageName and subpath feed the registry's component/entry URLs, so a readable but
-        // malformed build.json that omits or mistypes them would otherwise surface as
-        // `package: undefined` or a URL ending in `undefined.js` instead of degrading.
+        // packageName and subpath feed the registry's component URLs, so a readable but malformed
+        // build.json must be rejected rather than surfacing a wrong owner (`not-a-package`) or an
+        // unsafe URL (`../other.js`). The package name must be a known component package and the
+        // subpath a safe relative path (SAFE_METADATA_PATH forbids traversal and backslashes).
         typeof component.packageName !== 'string' ||
-        component.packageName.length === 0 ||
+        !COMPONENT_PACKAGE_NAMES.has(component.packageName) ||
         typeof component.subpath !== 'string' ||
-        component.subpath.length === 0,
+        !SAFE_METADATA_PATH.test(component.subpath),
     )
   ) {
     throw new Error('Invalid component graph.');

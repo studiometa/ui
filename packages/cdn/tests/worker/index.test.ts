@@ -422,18 +422,35 @@ describe('CDN Worker registry', () => {
     expect(registry.entries).toEqual({});
   });
 
-  it('drops entries and components when the current build.json is malformed', async () => {
-    // A readable release manifest whose component omits `packageName`/`subpath` must not surface
-    // as `package: undefined` or a `…/undefined.js` URL; the invalid build is rejected while the
-    // package inventory and current refs still resolve from the index.
+  // A readable release manifest whose component metadata is malformed must not surface as
+  // `package: undefined`, a wrong owner, or an unsafe `…/undefined.js` / `…/../other.js` URL; the
+  // invalid build is rejected while the package inventory and current refs still resolve.
+  it.each([
+    [
+      'omits packageName/subpath',
+      (component: Record<string, unknown>) => delete component.packageName,
+    ],
+    [
+      'reports an unsupported package name',
+      (component: Record<string, unknown>) => {
+        component.packageName = 'not-a-package';
+      },
+    ],
+    [
+      'uses a traversal subpath',
+      (component: Record<string, unknown>) => {
+        component.subpath = '../other';
+      },
+    ],
+  ])('drops entries and components when the current build.json %s', async (_label, corrupt) => {
     const key = 'releases/ui/2.0.0/build.json';
     const original = fixture.bucket.objects.get(key) as NonNullable<
       ReturnType<typeof fixture.bucket.objects.get>
     >;
     const malformed = JSON.parse(original.contents) as {
-      components: Record<string, { packageName?: string }>;
+      components: Record<string, Record<string, unknown>>;
     };
-    delete malformed.components.Action.packageName;
+    corrupt(malformed.components.Action);
     fixture.bucket.put(key, JSON.stringify(malformed));
     const registry = (await (await request('/')).json()) as Registry;
     fixture.bucket.objects.set(key, original);
