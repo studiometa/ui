@@ -13,7 +13,10 @@ jobs:
         with:
           fetch-depth: '0'
       # Detect which packages the pull request affects. Each package re-runs when
-      # its own sources, the shared build tooling or the lockfile change.
+      # its own sources, the build tooling it actually uses, the shared root
+      # TypeScript config it extends, or the lockfile change. `scripts/**` builds
+      # only `@studiometa/ui` (into the root `dist`); `@studiometa/ui-mapbox` is
+      # built by `packages/ui-mapbox/scripts/**`, already covered by its own glob.
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -21,9 +24,11 @@ jobs:
             ui:
               - 'packages/ui/**'
               - 'scripts/**'
+              - 'tsconfig*.json'
               - 'package-lock.json'
             ui_mapbox:
               - 'packages/ui-mapbox/**'
+              - 'tsconfig*.json'
               - 'package-lock.json'
       # Build and measure only the affected packages. The export-size action
       # renders one comment with a section per path, so a single invocation with
