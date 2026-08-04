@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { copyFile, readFile, readdir, rm, stat } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { dirname, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -72,7 +72,7 @@ interface BuildMetadata {
   styles: Record<string, { path: string; autoInject: boolean }>;
   licenses: {
     thirdPartyNotices: string;
-    esbuildLegalComments: string;
+    legalComments: string;
   };
   integrations: Record<string, Record<string, unknown>>;
   releaseGates: Record<string, Record<string, unknown>>;
@@ -510,12 +510,12 @@ describe('browser CDN build', () => {
     expect(build.releaseGates).toEqual({});
     expect(build.licenses).toEqual({
       thirdPartyNotices: 'licenses/THIRD_PARTY_LICENSES.txt',
-      esbuildLegalComments: 'eof',
+      legalComments: 'none',
     });
   });
 
   it('ships third-party notices and diagnoses the excluded Shopify preview adapter', async () => {
-    expect(build.licenses.esbuildLegalComments).toBe('eof');
+    expect(build.licenses.legalComments).toBe('none');
     const notices = await readFile(resolve(uiTree, build.licenses.thirdPartyNotices), 'utf8');
     // Mapbox GL and the geocoder are external and not bundled, so they carry no third-party notice.
     expect(notices).not.toContain('mapbox-gl@');
@@ -548,5 +548,91 @@ describe('browser CDN build', () => {
     for (const source of shopifySources) {
       expect(source).not.toContain('import("@shopify/partial-rendering")');
     }
+  });
+
+  it('emits a bundled declaration for every importable entry, recorded and hashed', async () => {
+    // Each ui entry, each component, and both js-toolkit entries carry a sibling `.d.ts`.
+    for (const entry of Object.values(build.entries)) {
+      const declaration = `${entry.path.slice(0, -'.js'.length)}.d.ts`;
+      expect(uiFiles).toContain(declaration);
+      expect(build.outputs[declaration].type).toBe('declaration');
+    }
+    for (const component of Object.values(build.components)) {
+      const declaration = `${component.entry.slice(0, -'.js'.length)}.d.ts`;
+      expect(uiFiles).toContain(declaration);
+      expect(build.outputs[declaration].type).toBe('declaration');
+    }
+    expect(uiFiles).toContain('Action.d.ts');
+    expect(uiFiles).toContain('MapboxMap.d.ts');
+    expect(jsToolkitFiles).toContain('index.d.ts');
+    expect(jsToolkitFiles).toContain('utils/index.d.ts');
+
+    // Every declaration output (entries and shared declaration chunks) is a real, hashed file.
+    for (const [tree, treeFiles] of [
+      [uiTree, uiFiles],
+      [jsToolkitTree, jsToolkitFiles],
+    ] as const) {
+      const buildJson = await readJson<BuildMetadata>(tree, 'build.json');
+      const integrity = await readJson<{ files: Record<string, string> }>(tree, 'integrity.json');
+      const declarations = treeFiles.filter((file) => file.endsWith('.d.ts'));
+      expect(declarations.length).toBeGreaterThan(0);
+      for (const declaration of declarations) {
+        expect(buildJson.outputs[declaration].type).toBe('declaration');
+        expect(integrity.files[declaration]).toBe(
+          `sha384-${await digest(resolve(tree, declaration))}`,
+        );
+      }
+    }
+
+    // Declaration size budgets exist and hold.
+    const budgets = await readJson<{ bytes: Record<string, number> }>(
+      packageDirectory,
+      'size-budgets.json',
+    );
+    for (const key of [
+      'total:declarations',
+      'dts:entry:index',
+      'dts:js-toolkit:entry:index',
+      'dts:js-toolkit:entry:utils',
+    ]) {
+      expect(budgets.bytes[key]).toBeTypeOf('number');
+      expect(build.assertions.sizeBudgets[key]).toBeLessThanOrEqual(budgets.bytes[key]);
+    }
+    const declarationBytes = (
+      await Promise.all(
+        allFiles
+          .filter((file) => file.endsWith('.d.ts'))
+          .map(async (file) => (await stat(resolve(firstOutput, file))).size),
+      )
+    ).reduce((total, bytes) => total + bytes, 0);
+    expect(build.assertions.sizeBudgets['total:declarations']).toBe(declarationBytes);
+  });
+
+  it('imports js-toolkit types externally in the ui declarations instead of inlining them', async () => {
+    // Walk the declaration graph reachable from the ui barrel (index.d.ts -> ./chunks/*.js siblings)
+    // and confirm js-toolkit is referenced by its bare specifier, never inlined from node_modules.
+    const seen = new Set<string>();
+    const queue = ['index.d.ts'];
+    let importsToolkitExternally = false;
+    while (queue.length > 0) {
+      const file = queue.shift() as string;
+      if (seen.has(file) || !uiFiles.includes(file)) continue;
+      seen.add(file);
+      const source = await readFile(resolve(uiTree, file), 'utf8');
+      if (/from\s*["']@studiometa\/js-toolkit["']/.test(source)) importsToolkitExternally = true;
+      expect(source).not.toContain('node_modules/@studiometa/js-toolkit');
+      for (const match of source.matchAll(/from\s*["']([^"']+)["']/g)) {
+        const specifier = match[1];
+        if (!specifier.startsWith('.')) continue;
+        const resolved = posix.join(posix.dirname(file), specifier);
+        queue.push(
+          resolved.endsWith('.js') ? `${resolved.slice(0, -'.js'.length)}.d.ts` : resolved,
+        );
+      }
+    }
+    expect(importsToolkitExternally).toBe(true);
+    // The ui barrel re-exports the components it declares.
+    const barrel = await readFile(resolve(uiTree, 'index.d.ts'), 'utf8');
+    expect(barrel).toMatch(/\bas Action\b/);
   });
 });

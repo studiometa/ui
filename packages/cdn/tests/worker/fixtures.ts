@@ -65,6 +65,7 @@ export interface WorkerFixture {
   files: Record<string, string>;
   versionsIndex: VersionsIndex;
   jsToolkitVersion: string;
+  moduleWithoutDeclaration: string;
   cleanup(): Promise<void>;
 }
 
@@ -114,11 +115,16 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
     `releases/js-toolkit/${jsToolkitVersion}`,
   );
 
+  // A shared JavaScript chunk has no sibling declaration (declaration chunks are hashed
+  // independently), so it exercises the "served `.js` without a sibling `.d.ts`" path.
+  const moduleWithoutDeclaration = build.components.Action.preload[0];
   const uiAssetPaths = [
     'autoload.js',
     'autoload.js.map',
     'index.js',
     'index.js.map',
+    'index.d.ts',
+    moduleWithoutDeclaration,
     'build.json',
     'integrity.json',
     'licenses/THIRD_PARTY_LICENSES.txt',
@@ -184,6 +190,7 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
     files,
     versionsIndex,
     jsToolkitVersion,
+    moduleWithoutDeclaration,
     cleanup: () => rm(outputDirectory, { recursive: true, force: true }),
   };
 }

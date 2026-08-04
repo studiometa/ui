@@ -316,6 +316,41 @@ describe('CDN Worker asset responses', () => {
   });
 });
 
+describe('CDN Worker declarations', () => {
+  it('serves a declaration with the TypeScript MIME and cross-origin headers', async () => {
+    const response = await request('/ui@1.2.0/index.d.ts');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('application/typescript; charset=utf-8');
+    expect(response.headers.get('Cache-Control')).toBe(IMMUTABLE_CACHE_CONTROL);
+    expectCrossOriginHeaders(response);
+    expect(await response.text()).toBe(fixture.files['index.d.ts']);
+  });
+
+  it('advertises the sibling declaration of a module via X-TypeScript-Types and exposes it', async () => {
+    const response = await request('/ui@1.2.0/index.js');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('X-TypeScript-Types')).toBe(`${origin}/ui@1.2.0/index.d.ts`);
+    expect(response.headers.get('Access-Control-Expose-Headers')).toContain('X-TypeScript-Types');
+    expectCrossOriginHeaders(response);
+  });
+
+  it('omits X-TypeScript-Types for a module without a sibling declaration', async () => {
+    const response = await request(`/ui@1.2.0/${fixture.moduleWithoutDeclaration}`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    expect(response.headers.get('X-TypeScript-Types')).toBeNull();
+    expect(response.headers.get('Access-Control-Expose-Headers')).toBeNull();
+  });
+
+  it('keeps the declaration hint consistent on HEAD requests', async () => {
+    const response = await request('/ui@1.2.0/index.js', { method: 'HEAD' });
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('');
+    expect(response.headers.get('X-TypeScript-Types')).toBe(`${origin}/ui@1.2.0/index.d.ts`);
+    expect(response.headers.get('Access-Control-Expose-Headers')).toContain('X-TypeScript-Types');
+  });
+});
+
 describe('CDN Worker registry', () => {
   interface Registry {
     packages: {
