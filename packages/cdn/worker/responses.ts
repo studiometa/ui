@@ -45,6 +45,9 @@ export function redirectResponse(location: string): Response {
 }
 
 export function contentType(assetPath: string): string {
+  // `.d.ts` is checked before `.js` so a declaration is never misreported as JavaScript (it does not
+  // end with `.js`, but the explicit branch keeps the intent clear and order-independent).
+  if (assetPath.endsWith('.d.ts')) return 'application/typescript; charset=utf-8';
   if (assetPath.endsWith('.js')) return 'text/javascript; charset=utf-8';
   if (assetPath.endsWith('.css')) return 'text/css; charset=utf-8';
   if (assetPath.endsWith('.json') || assetPath.endsWith('.map')) {

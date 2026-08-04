@@ -346,6 +346,21 @@ async function handleRequest(
   if (etag) headers.set('ETag', etag);
   if (link) headers.set('Link', link);
 
+  // When a served module has a sibling declaration in the release, advertise it with the same
+  // `X-TypeScript-Types` header esm.sh uses, as a same-origin absolute URL, and expose the header to
+  // cross-origin TypeScript language servers. Set before the 304 branch so a not-modified response
+  // stays consistent with the full response, and it is preserved for HEAD.
+  if (route.assetPath.endsWith('.js')) {
+    const declarationPath = `${route.assetPath.slice(0, -'.js'.length)}.d.ts`;
+    if (metadata.files.has(declarationPath)) {
+      headers.set(
+        'X-TypeScript-Types',
+        `${url.origin}/${route.packageName}@${exact.version}/${declarationPath}`,
+      );
+      headers.set('Access-Control-Expose-Headers', 'X-TypeScript-Types');
+    }
+  }
+
   if (etagMatches(request.headers.get('If-None-Match'), etag)) {
     headers.delete('Content-Type');
     return new Response(null, { status: 304, headers });
