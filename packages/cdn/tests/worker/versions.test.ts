@@ -63,6 +63,27 @@ describe('versions index parsing (schemaVersion 2)', () => {
     });
   });
 
+  it('resolves a per-PR preview channel by its exact id without it being a distribution tag', () => {
+    const index = parseVersionsIndex(
+      uiIndex({
+        releases: ['1.9.0'],
+        // A main channel (tagged next/main) coexists with two per-PR preview channels.
+        channels: ['main-abcdef1', 'pr-42-abcdef123456', 'pr-7-0123456789ab'],
+        distTags: { latest: '1.9.0', next: 'main-abcdef1', main: 'main-abcdef1' },
+      }),
+    );
+    // Preview channels resolve by their exact id to their immutable prefix.
+    expect(resolveVersion(index, 'ui', 'pr-42-abcdef123456')).toEqual({
+      kind: 'channel',
+      version: 'pr-42-abcdef123456',
+      objectPrefix: 'channels/pr-42-abcdef123456',
+    });
+    // They are never named by next/main — those still point at the main channel.
+    expect(resolveVersion(index, 'ui', 'next')).toMatchObject({ version: 'main-abcdef1' });
+    // An unindexed preview channel does not resolve.
+    expect(resolveVersion(index, 'ui', 'pr-42-ffffffffffff')).toBeUndefined();
+  });
+
   it('still rejects a latest tag that does not name a published stable release', () => {
     expect(() =>
       parseVersionsIndex(

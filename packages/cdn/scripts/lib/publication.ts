@@ -10,11 +10,14 @@ import {
 import {
   addJsToolkitRelease,
   addUiChannel,
+  addUiPreviewChannel,
   addUiRelease,
   isChannelId,
+  isPreviewChannelId,
   isStableVersion,
   parseSemver,
   parseWorkingVersionsIndex,
+  removeUiChannel,
   serializeVersionsIndex,
   type WorkingVersionsIndex,
 } from './versions.ts';
@@ -114,7 +117,8 @@ export function validatePublishability(
 
 export type PublishTarget =
   | { kind: 'release'; packageName: PackageName; version: string }
-  | { kind: 'channel'; commit: string };
+  | { kind: 'channel'; commit: string }
+  | { kind: 'preview'; pr: number; commit: string };
 
 export interface PublishOptions {
   now?: number;
@@ -141,7 +145,14 @@ function targetIdentity(target: PublishTarget): { identity: string; finalPrefix:
     };
   }
   if (!FULL_COMMIT_PATTERN.test(target.commit)) {
-    throw new Error('A main channel publication requires a full 40-character commit sha.');
+    throw new Error('A channel publication requires a full 40-character commit sha.');
+  }
+  if (target.kind === 'preview') {
+    if (!Number.isInteger(target.pr) || target.pr < 1) {
+      throw new Error('A preview channel publication requires a positive pull-request number.');
+    }
+    const identity = `pr-${target.pr}-${target.commit.slice(0, CHANNEL_SHORT_LENGTH)}`;
+    return { identity, finalPrefix: `channels/${identity}` };
   }
   const identity = `main-${target.commit.slice(0, CHANNEL_SHORT_LENGTH)}`;
   return { identity, finalPrefix: `channels/${identity}` };
@@ -168,7 +179,10 @@ export async function publish(
   const log = options.log ?? (() => {});
   const { identity, finalPrefix } = targetIdentity(target);
 
-  if (target.kind === 'channel' && artifact.build.build.commit !== target.commit) {
+  if (
+    (target.kind === 'channel' || target.kind === 'preview') &&
+    artifact.build.build.commit !== target.commit
+  ) {
     throw new Error('The build commit does not match the requested channel commit.');
   }
   if (target.kind === 'release' && artifact.build.package.version !== target.version) {
@@ -219,6 +233,8 @@ export async function publish(
   let nextIndex: WorkingVersionsIndex;
   if (target.kind === 'channel') {
     nextIndex = addUiChannel(currentIndex, identity);
+  } else if (target.kind === 'preview') {
+    nextIndex = addUiPreviewChannel(currentIndex, identity);
   } else if (target.packageName === 'ui') {
     nextIndex = addUiRelease(currentIndex, target.version);
   } else {
@@ -307,4 +323,50 @@ export async function rollback(
     metadata: objectMetadata(serialized).metadata,
   });
   return { index };
+}
+
+/**
+ * Prunes every preview channel belonging to a pull request from `versions.json` so the Worker stops
+ * resolving them once the PR is closed. Each push publishes a new immutable `pr-<n>-<sha>` channel,
+ * so a PR may own several; this removes all of them by their `pr-<n>-` prefix. Only preview channels
+ * are ever removed — never the main channel or a stable release. Like rollback, it only rewrites the
+ * index; the immutable channel objects are left in place (they are unreferenced afterwards and can
+ * be garbage-collected out of band). Pruning a PR with no indexed channels is a no-op, so the
+ * cleanup is safe to re-run.
+ */
+export async function pruneUiPreviewChannelsForPr(
+  store: ObjectStore,
+  pr: number,
+  options: { log?: (message: string) => void } = {},
+): Promise<RollbackResult & { removed: string[] }> {
+  const log = options.log ?? (() => {});
+  if (!Number.isInteger(pr) || pr < 1) {
+    throw new Error(`Refusing to prune with a non-positive pull-request number: ${pr}.`);
+  }
+  const existing = await store.getText(VERSIONS_KEY);
+  if (existing === undefined) {
+    throw new Error('No versions.json is published; there is nothing to prune.');
+  }
+  const index = parseWorkingVersionsIndex(existing);
+  const prefix = `pr-${pr}-`;
+  const removed = index.packages.ui.channels.filter(
+    (channel) => channel.startsWith(prefix) && isPreviewChannelId(channel),
+  );
+  if (removed.length === 0) {
+    log(`No preview channels indexed for PR #${pr}; nothing to prune.`);
+    return { index, removed };
+  }
+
+  let nextIndex = index;
+  for (const channelId of removed) {
+    nextIndex = removeUiChannel(nextIndex, channelId);
+  }
+  const serialized = new Uint8Array(Buffer.from(serializeVersionsIndex(nextIndex), 'utf8'));
+  await store.put(VERSIONS_KEY, serialized, {
+    contentType: 'application/json; charset=utf-8',
+    cacheControl: 'public, max-age=300',
+    metadata: objectMetadata(serialized).metadata,
+  });
+  log(`Pruned ${removed.length} preview channel(s) for PR #${pr}: ${removed.join(', ')}.`);
+  return { index: nextIndex, removed };
 }

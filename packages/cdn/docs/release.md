@@ -19,7 +19,7 @@ Before publishing:
 
 - **Clean, committed source.** The build refuses to produce publishable output when any tracked build source is dirty (see [infrastructure, Build and Publish Gates](./infrastructure.md#build-and-publish-gates)). Release builds run from a clean commit so `build.publishable` is `true`. Never publish output produced with `--allow-dirty`.
 - **Release gates resolved.** `build.json` records an empty `releaseGates` object — the CDN no longer bundles or serves Mapbox, so the former public Mapbox-redistribution gate is gone (see [infrastructure, Mapbox](./infrastructure.md#mapbox-external-not-redistributed)). Publishing still refuses a build that reintroduces a blocking, unapproved gate.
-- **Publish guard enabled.** The publish tooling is expected to require `CDN_ENABLED=true` so a build cannot reach the public bucket before the environment and approvals exist.
+- **Credentials present.** The CDN workflows are not gated behind an enable flag; a publish simply fails until the R2 and Cloudflare secrets exist, so configuring those secrets is what turns the CDN on.
 - **Scoped credentials present.** R2 write credentials and the Cloudflare API token described in [infrastructure](./infrastructure.md#required-credentials) are configured in the CI/publish environment, not in source.
 
 ## Build

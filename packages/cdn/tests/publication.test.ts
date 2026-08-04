@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   publish,
+  pruneUiPreviewChannelsForPr,
   rollback,
   validatePublishability,
   type PublishTarget,
@@ -106,6 +107,60 @@ describe('CDN publication', () => {
     expect(result.index.packages.ui.distTags.main).toBe('main-bbbbbbbbbbbb');
     expect(store.objects.has('channels/main-bbbbbbbbbbbb/build.json')).toBe(true);
     expect(() => parseVersionsIndex(result.index)).not.toThrow();
+  });
+
+  it('publishes a per-PR preview channel without moving the next or main tags', async () => {
+    const store = seededStore();
+    const result = await publish(
+      store,
+      makeArtifact({ commit: 'c'.repeat(40) }),
+      { kind: 'preview', pr: 42, commit: 'c'.repeat(40) },
+      { publicationId: 'prev' },
+    );
+    expect(result.identity).toBe('pr-42-cccccccccccc');
+    expect(store.objects.has('channels/pr-42-cccccccccccc/build.json')).toBe(true);
+    expect(result.index.packages.ui.channels).toContain('pr-42-cccccccccccc');
+    // The preview channel is addressable by its id but never becomes a distribution tag: next/main
+    // stay on whatever the seed pointed them at.
+    expect(result.index.packages.ui.distTags.next).toBe('main-000000000002');
+    expect(result.index.packages.ui.distTags.main).toBe('main-000000000002');
+    expect(() => parseVersionsIndex(result.index)).not.toThrow();
+  });
+
+  it('prunes every preview channel for a pull request and leaves other channels intact', async () => {
+    const store = seededStore();
+    await publish(
+      store,
+      makeArtifact({ commit: 'a'.repeat(40) }),
+      { kind: 'preview', pr: 42, commit: 'a'.repeat(40) },
+      { publicationId: 'p1' },
+    );
+    await publish(
+      store,
+      makeArtifact({ commit: 'b'.repeat(40) }),
+      { kind: 'preview', pr: 42, commit: 'b'.repeat(40) },
+      { publicationId: 'p2' },
+    );
+    await publish(
+      store,
+      makeArtifact({ commit: 'd'.repeat(40) }),
+      { kind: 'preview', pr: 7, commit: 'd'.repeat(40) },
+      { publicationId: 'p3' },
+    );
+
+    const result = await pruneUiPreviewChannelsForPr(store, 42);
+    expect([...result.removed].sort()).toEqual(['pr-42-aaaaaaaaaaaa', 'pr-42-bbbbbbbbbbbb']);
+    const channels = result.index.packages.ui.channels;
+    expect(channels).not.toContain('pr-42-aaaaaaaaaaaa');
+    expect(channels).not.toContain('pr-42-bbbbbbbbbbbb');
+    // The other PR's preview and the main channels are untouched.
+    expect(channels).toContain('pr-7-dddddddddddd');
+    expect(channels).toContain('main-000000000002');
+    expect(() => parseVersionsIndex(result.index)).not.toThrow();
+
+    // Re-running the prune is a safe no-op.
+    const again = await pruneUiPreviewChannelsForPr(store, 42);
+    expect(again.removed).toEqual([]);
   });
 
   it('refuses to overwrite an already published immutable prefix', async () => {

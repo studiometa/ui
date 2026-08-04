@@ -1,7 +1,7 @@
 name: cdn-smoke
 
 # Runs the public CDN synthetic checks against the live base URL. These checks need no credentials,
-# only a public base URL. Runs on a schedule and on manual dispatch, gated by CDN_ENABLED.
+# only a public base URL. Runs on a schedule and on manual dispatch.
 
 on:
   schedule:
@@ -15,7 +15,6 @@ on:
 
 jobs:
   cdn_smoke:
-    if: ${{ vars.CDN_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

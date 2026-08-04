@@ -1,6 +1,11 @@
 const SEMVER_PATTERN =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
-const CHANNEL_PATTERN = /^main-[0-9a-f]{7,40}$/;
+// Immutable channels come in two shapes: the rolling `main-<sha>` channel that the next/main
+// distribution tags follow, and per-pull-request `pr-<number>-<sha>` preview channels that are
+// addressable by their exact id but are never a distribution tag.
+const MAIN_CHANNEL_PATTERN = /^main-[0-9a-f]{7,40}$/;
+const PREVIEW_CHANNEL_PATTERN = /^pr-[1-9]\d*-[0-9a-f]{7,40}$/;
+const CHANNEL_PATTERN = /^(?:main|pr-[1-9]\d*)-[0-9a-f]{7,40}$/;
 
 export interface DistributionTags {
   latest?: string;
@@ -58,6 +63,14 @@ export function isStableVersion(value: string): boolean {
 
 export function isChannelId(value: string): boolean {
   return CHANNEL_PATTERN.test(value);
+}
+
+export function isMainChannelId(value: string): boolean {
+  return MAIN_CHANNEL_PATTERN.test(value);
+}
+
+export function isPreviewChannelId(value: string): boolean {
+  return PREVIEW_CHANNEL_PATTERN.test(value);
 }
 
 export function compareStableVersions(left: string, right: string): number {
@@ -188,8 +201,8 @@ export function addUiRelease(index: WorkingVersionsIndex, version: string): Work
  * together, as the Worker requires them to always name the same channel.
  */
 export function addUiChannel(index: WorkingVersionsIndex, channelId: string): WorkingVersionsIndex {
-  if (!isChannelId(channelId)) {
-    throw new Error(`Refusing to index a malformed channel identity: ${channelId}.`);
+  if (!isMainChannelId(channelId)) {
+    throw new Error(`Refusing to index a malformed main channel identity: ${channelId}.`);
   }
   const ui = index.packages.ui;
   const channels = ui.channels.includes(channelId) ? [...ui.channels] : [...ui.channels, channelId];
@@ -203,6 +216,51 @@ export function addUiChannel(index: WorkingVersionsIndex, channelId: string): Wo
         distTags: { ...ui.distTags, next: channelId, main: channelId },
       },
     },
+  };
+}
+
+/**
+ * Records a per-pull-request `pr-<number>-<sha>` preview channel. Unlike the rolling main channel,
+ * a preview channel is addressable only by its exact id and never becomes a distribution tag, so
+ * the `next`/`main` tags (and every stable alias) are left untouched.
+ */
+export function addUiPreviewChannel(
+  index: WorkingVersionsIndex,
+  channelId: string,
+): WorkingVersionsIndex {
+  if (!isPreviewChannelId(channelId)) {
+    throw new Error(`Refusing to index a malformed preview channel identity: ${channelId}.`);
+  }
+  const ui = index.packages.ui;
+  const channels = ui.channels.includes(channelId) ? [...ui.channels] : [...ui.channels, channelId];
+  return {
+    ...index,
+    packages: {
+      ...index.packages,
+      ui: { ...ui, channels: channels.sort() },
+    },
+  };
+}
+
+/**
+ * Removes a channel from the index (used to prune a pull request's preview channel once the PR is
+ * closed). If the channel happened to be the `next`/`main` target, both tags are cleared together
+ * so the Worker's "next and main name the same published channel" invariant is preserved.
+ */
+export function removeUiChannel(
+  index: WorkingVersionsIndex,
+  channelId: string,
+): WorkingVersionsIndex {
+  const ui = index.packages.ui;
+  const channels = ui.channels.filter((channel) => channel !== channelId);
+  const distTags = { ...ui.distTags };
+  if (distTags.next === channelId || distTags.main === channelId) {
+    delete distTags.next;
+    delete distTags.main;
+  }
+  return {
+    ...index,
+    packages: { ...index.packages, ui: { ...ui, channels, distTags } },
   };
 }
 

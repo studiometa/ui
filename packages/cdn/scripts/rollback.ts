@@ -1,16 +1,18 @@
 import { parseArgs } from 'node:util';
 import { createS3ObjectStore, loadObjectStoreConfig } from './lib/object-store.ts';
-import { rollback, type RollbackTarget } from './lib/publication.ts';
+import { pruneUiPreviewChannelsForPr, rollback, type RollbackTarget } from './lib/publication.ts';
 import { loadCloudflarePurgeConfig, purgeMutableAliases } from './lib/cloudflare.ts';
 
 const HELP = `Usage: node scripts/rollback.ts [options]
 
-Repoints a mutable distribution tag at a previously published, indexed target. Immutable
-release and channel objects are never overwritten or deleted.
+Repoints a mutable distribution tag at a previously published, indexed target, or prunes a pull
+request preview channel from the index. Immutable release and channel objects are never overwritten
+or deleted.
 
 Options:
   --stable-latest <version>   Repoint the latest tag at a stable release.
   --channel <main-sha>        Repoint the next and main tags at a published channel.
+  --prune-pr <number>         Remove all of a pull request's preview channels from the index.
   -h, --help                  Show this help.
 
 Environment:
@@ -24,6 +26,7 @@ async function main(): Promise<void> {
     options: {
       'stable-latest': { type: 'string' },
       channel: { type: 'string' },
+      'prune-pr': { type: 'string' },
       help: { type: 'boolean', short: 'h' },
     },
     allowPositionals: false,
@@ -34,9 +37,23 @@ async function main(): Promise<void> {
     return;
   }
 
-  const requested = [values['stable-latest'], values.channel].filter(Boolean);
+  const requested = [values['stable-latest'], values.channel, values['prune-pr']].filter(Boolean);
   if (requested.length !== 1) {
-    throw new Error('Specify exactly one of --stable-latest or --channel.');
+    throw new Error('Specify exactly one of --stable-latest, --channel, or --prune-pr.');
+  }
+
+  // Pruning a PR's preview channels only rewrites the index (no tag move, no alias purge); handle
+  // it up front and return before the tag-rollback path.
+  if (values['prune-pr'] !== undefined) {
+    const pr = Number(values['prune-pr']);
+    if (!Number.isInteger(pr) || pr < 1) {
+      throw new Error(`--prune-pr expects a positive integer, received ${values['prune-pr']}.`);
+    }
+    const store = createS3ObjectStore(loadObjectStoreConfig(process.env));
+    await pruneUiPreviewChannelsForPr(store, pr, {
+      log: (message) => process.stdout.write(`${message}\n`),
+    });
+    return;
   }
 
   let target: RollbackTarget;

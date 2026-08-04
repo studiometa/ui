@@ -3,7 +3,10 @@ import type { ExactVersion, PackageName, VersionsIndex } from './types.ts';
 const SEMVER_PATTERN =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 const ALIAS_PATTERN = /^(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?$/;
-const CHANNEL_PATTERN = /^main-[0-9a-f]{7,40}$/;
+// Immutable channels: the rolling `main-<sha>` channel and per-pull-request `pr-<number>-<sha>`
+// preview channels. Both are resolvable by their exact id when present in the index; only the main
+// channel is ever named by the next/main distribution tags.
+const CHANNEL_PATTERN = /^(?:main|pr-[1-9]\d*)-[0-9a-f]{7,40}$/;
 
 interface ParsedSemver {
   major: bigint;

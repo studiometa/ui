@@ -1,9 +1,10 @@
 name: cdn-main
 
-# Publishes an immutable main-<sha> CDN channel for a successful build of the default branch.
-# It triggers only after the build workflow completes successfully on main, is gated by the
-# CDN_ENABLED repository variable, and shares the cdn-publication concurrency group with the
-# tagged release job so the two never publish at the same time.
+# Publishes an immutable main-<sha> CDN channel for a successful build of the default branch and
+# deploys the Worker. It triggers only after the build workflow completes successfully on main and
+# shares the cdn-publication concurrency group with the tagged release job so the two never publish
+# at the same time. It relies on the CDN secrets being configured; without them the publish step
+# fails.
 
 on:
   workflow_run:
@@ -15,7 +16,7 @@ on:
 
 jobs:
   cdn_main:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && vars.CDN_ENABLED == 'true' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     concurrency:
       group: cdn-publication

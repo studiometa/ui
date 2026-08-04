@@ -35,7 +35,9 @@ Options:
   --output-dir <dir>   Build output directory (default: dist).
   --git-tag <tag>      Publish a stable release; must equal the built package version.
   --channel main       Publish the current build as an immutable main-<sha> channel.
-  --commit <sha>       Full 40-character commit sha for a main channel publication.
+  --pr <number>        Publish the current build as an immutable pr-<number>-<sha> preview channel
+                       (addressable by its exact id; it never moves the next/main tags).
+  --commit <sha>       Full 40-character commit sha for a channel or preview publication.
   -h, --help           Show this help.
 
 Environment:
@@ -74,6 +76,7 @@ async function main(): Promise<void> {
       'output-dir': { type: 'string', default: 'dist' },
       'git-tag': { type: 'string' },
       channel: { type: 'string' },
+      pr: { type: 'string' },
       commit: { type: 'string' },
       help: { type: 'boolean', short: 'h' },
     },
@@ -85,8 +88,8 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (values['git-tag'] && values.channel) {
-    throw new Error('Specify either --git-tag or --channel main, not both.');
+  if ([values['git-tag'], values.channel, values.pr].filter(Boolean).length > 1) {
+    throw new Error('Specify exactly one of --git-tag, --channel main, or --pr <number>.');
   }
 
   const outputDirectory = resolve(packageDirectory, values['output-dir'] ?? 'dist');
@@ -110,9 +113,19 @@ async function main(): Promise<void> {
     const commit = values.commit ?? uiArtifact.build.build.commit;
     uiTarget = { kind: 'channel', commit };
     mutableAliases = ['ui@next/autoload.js', 'ui@main/autoload.js'];
+  } else if (values.pr !== undefined) {
+    const pr = Number(values.pr);
+    if (!Number.isInteger(pr) || pr < 1) {
+      throw new Error(`--pr expects a positive integer, received ${values.pr}.`);
+    }
+    const commit = values.commit ?? uiArtifact.build.build.commit;
+    uiTarget = { kind: 'preview', pr, commit };
+    // A preview channel is addressable only by its exact immutable id and is never aliased, so
+    // there is no mutable redirect to purge.
+    mutableAliases = [];
   } else {
     throw new Error(
-      'Specify --git-tag <tag> for a stable release or --channel main for a channel.',
+      'Specify --git-tag <tag> for a stable release, --channel main for a channel, or --pr <number> for a preview.',
     );
   }
 
@@ -129,7 +142,7 @@ async function main(): Promise<void> {
   process.stdout.write(`Published ${result.identity} to ${result.finalPrefix}.\n`);
 
   const purge = loadCloudflarePurgeConfig(process.env);
-  if (purge) {
+  if (purge && mutableAliases.length > 0) {
     await purgeMutableAliases(purge, mutableAliases);
     process.stdout.write('Purged the mutable alias cache.\n');
   }

@@ -99,10 +99,9 @@ jobs:
 
   # Publishes the browser CDN artifact for a tagged release. It runs only after the npm release
   # succeeds and is fully isolated, so it can never affect npm publication. The CDN artifact is
-  # never itself published to npm. Gated by the CDN_ENABLED repository variable and scoped secrets.
+  # never itself published to npm. It relies on the scoped CDN secrets; without them it fails.
   cdn_release:
     needs: release
-    if: ${{ vars.CDN_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     concurrency:
       group: cdn-publication
