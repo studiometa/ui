@@ -3,5 +3,11 @@
   "compilerOptions": {
     "noEmit": true
   },
-  "include": ["packages/ui/**/*.ts", "packages/ui-mapbox/**/*.ts", "packages/cdn/**/*.ts"]
+  "include": [
+    "packages/ui/**/*.ts",
+    "packages/ui-mapbox/**/*.ts",
+    "packages/ui-autoload/**/*.ts",
+    "packages/cdn/**/*.ts",
+    "scripts/**/*.ts"
+  ]
 }
