@@ -48,6 +48,21 @@ describe('ui-mapbox dependency injection', () => {
     expect(await resolveMapboxGl()).not.toBe(importedMapboxGl);
   });
 
+  it('does not let an in-flight fallback import overwrite a later injection', async () => {
+    const { resolveMapboxGl, provideMapboxGl, getMapboxGl } = await freshDependencies();
+    const injected = { source: 'injected' } as never;
+
+    // Start the fallback import, then inject before it settles.
+    const pending = resolveMapboxGl();
+    provideMapboxGl(injected);
+
+    // The injected instance wins everywhere: the sync accessor, a fresh resolve,
+    // and even the promise captured before the injection.
+    expect(getMapboxGl()).toBe(injected);
+    expect(await resolveMapboxGl()).toBe(injected);
+    expect(await pending).toBe(injected);
+  });
+
   it('lazily imports the geocoder through resolveMapboxGeocoder', async () => {
     const { resolveMapboxGeocoder } = await freshDependencies();
     expect(await resolveMapboxGeocoder()).toBe(importedGeocoder);

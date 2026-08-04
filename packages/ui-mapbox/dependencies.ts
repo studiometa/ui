@@ -35,9 +35,11 @@ export interface MapboxGeocoderConstructor {
 
 let mapboxGlInstance: MapboxGl | undefined;
 let mapboxGlPromise: Promise<MapboxGl> | undefined;
+let mapboxGlProvided = false;
 
 let geocoderConstructor: MapboxGeocoderConstructor | undefined;
 let geocoderPromise: Promise<MapboxGeocoderConstructor> | undefined;
+let geocoderProvided = false;
 
 /**
  * Inject the `mapbox-gl` module the components should use.
@@ -50,6 +52,7 @@ let geocoderPromise: Promise<MapboxGeocoderConstructor> | undefined;
  * @param {MapboxGl} instance The `mapbox-gl` default export namespace.
  */
 export function provideMapboxGl(instance: MapboxGl): void {
+  mapboxGlProvided = true;
   mapboxGlInstance = instance;
   mapboxGlPromise = Promise.resolve(instance);
 }
@@ -62,6 +65,7 @@ export function provideMapboxGl(instance: MapboxGl): void {
  * @param {MapboxGeocoderConstructor} constructor The geocoder control constructor.
  */
 export function provideMapboxGeocoder(constructor: MapboxGeocoderConstructor): void {
+  geocoderProvided = true;
   geocoderConstructor = constructor;
   geocoderPromise = Promise.resolve(constructor);
 }
@@ -79,8 +83,14 @@ export function resolveMapboxGl(): Promise<MapboxGl> {
   if (!mapboxGlPromise) {
     mapboxGlPromise = import('mapbox-gl').then((module) => {
       const instance = ((module as { default?: MapboxGl }).default ?? module) as MapboxGl;
-      mapboxGlInstance = instance;
-      return instance;
+      // A provideMapboxGl() call may have won the race while this import was in
+      // flight: never let the fallback overwrite an injected instance. Returning
+      // the authoritative instance also keeps callers that awaited this promise
+      // before the injection consistent with the provided one.
+      if (!mapboxGlProvided) {
+        mapboxGlInstance = instance;
+      }
+      return mapboxGlInstance as MapboxGl;
     });
   }
 
@@ -101,8 +111,12 @@ export function resolveMapboxGeocoder(): Promise<MapboxGeocoderConstructor> {
       // than the structural `MapboxGeocoderConstructor` kept out of the public
       // type surface, so the two do not directly overlap.
       const constructor = (module as unknown as { default: MapboxGeocoderConstructor }).default;
-      geocoderConstructor = constructor;
-      return constructor;
+      // Same race guard as resolveMapboxGl(): a provideMapboxGeocoder() call that
+      // landed while this import was in flight must not be overwritten.
+      if (!geocoderProvided) {
+        geocoderConstructor = constructor;
+      }
+      return geocoderConstructor as MapboxGeocoderConstructor;
     });
   }
 
