@@ -85,10 +85,11 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
   isLoaded = false;
 
   /**
-   * Map instance.
+   * Map instance, or `undefined` until it is built in `mounted()` and once it is
+   * cleared on teardown.
    * @private
    */
-  __map: Map;
+  __map: Map | undefined;
 
   /**
    * Off handles for every forwarding listener attached to the map, flushed on
@@ -106,7 +107,7 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
    * resolution is still pending. Children read it after the map announces itself
    * through `MAPBOX_MAP_CONNECTED`, which only fires once the instance exists.
    */
-  get map() {
+  get map(): Map | undefined {
     return this.__map;
   }
 
