@@ -91,11 +91,12 @@ describe('component manifest', () => {
       );
     }
 
-    expect(componentManifest.MapboxGeocoder).toMatchObject({
-      group: 'mapbox',
-      styles: ['mapbox-gl', 'mapbox-geocoder'],
-      integrations: ['mapbox-geocoder'],
-    });
+    // Mapbox GL and the geocoder are external (import-map resolved), so the Mapbox components no
+    // longer declare a CDN-served stylesheet nor a bundled integration chunk (both fields are
+    // omitted from the manifest when empty).
+    expect(componentManifest.MapboxGeocoder).toMatchObject({ group: 'mapbox' });
+    expect(componentManifest.MapboxGeocoder.styles).toBeUndefined();
+    expect(componentManifest.MapboxGeocoder.integrations).toBeUndefined();
     expect(componentManifest.FetchShopifyPartial.integrations).toEqual(['shopify']);
   });
 

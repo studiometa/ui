@@ -65,9 +65,7 @@ export interface BuildMetadata {
   entries: Record<string, BuildGraph>;
   components: Record<string, BuildComponent>;
   outputs: Record<string, unknown>;
-  releaseGates?: {
-    publicMapboxRedistributionReview?: unknown;
-  };
+  releaseGates?: Record<string, unknown>;
 }
 
 export interface IntegrityMetadata {

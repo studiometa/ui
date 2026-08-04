@@ -90,8 +90,8 @@ export interface PublishabilityOptions {
 
 /**
  * Enforces the release preconditions: a clean, publishable build whose release gates are resolved.
- * The build records the public Mapbox redistribution review as approved by default; this dormant
- * check still refuses a build that reintroduces a blocking, unapproved gate.
+ * Current builds record no release gate (Mapbox is external and no longer redistributed), so this
+ * remains a dormant safeguard that still refuses any build reintroducing a blocking, unapproved gate.
  */
 export function validatePublishability(
   build: PublishBuildMetadata,

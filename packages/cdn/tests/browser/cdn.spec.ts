@@ -325,65 +325,6 @@ test('public source maps are reachable cross-origin', async ({ page, cdn }) => {
   expectNoBrowserErrors(diagnostics);
 });
 
-test('Mapbox CSS is delivered cross-origin but never auto-injected', async ({ page, cdn }) => {
-  const diagnostics = captureDiagnostics(page);
-  const style = cdn.build.styles['mapbox-gl'];
-  expect(style.autoInject).toBe(false);
-  const styleUrl = cdn.exactUrl(style.path);
-  await page.goto(cdn.fixtureUrl({ body: '', script: 'none' }));
-  expect(await page.locator('link[rel="stylesheet"], style').count()).toBe(0);
-
-  const response = await page.evaluate(async (url) => {
-    const result = await fetch(url);
-    return { contentType: result.headers.get('content-type'), css: await result.text() };
-  }, styleUrl);
-  expect(response.contentType).toBe('text/css; charset=utf-8');
-  expect(response.css).toContain('.mapboxgl-map');
-  expect(await page.locator('link[rel="stylesheet"], style').count()).toBe(0);
-
-  await page.evaluate(async (url) => {
-    await new Promise<void>((resolvePromise, reject) => {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = url;
-      link.addEventListener('load', () => resolvePromise(), { once: true });
-      link.addEventListener('error', () => reject(new Error('The Mapbox stylesheet failed.')), {
-        once: true,
-      });
-      document.head.append(link);
-    });
-  }, styleUrl);
-  await expect(page.locator(`link[href="${styleUrl}"]`)).toHaveCount(1);
-  expectNoBrowserErrors(diagnostics);
-});
-
-async function installWorkerProbe(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    const attempts: Array<{ url: string; started: boolean; error?: string }> = [];
-    (globalThis as Record<string, unknown>).__WORKER_ATTEMPTS__ = attempts;
-    globalThis.Worker = new Proxy(globalThis.Worker, {
-      construct(Target, argumentsList) {
-        const attempt: { url: string; started: boolean; error?: string } = {
-          url: String(argumentsList[0]),
-          started: false,
-        };
-        attempts.push(attempt);
-        try {
-          const worker = Reflect.construct(Target, argumentsList) as Worker;
-          attempt.started = true;
-          worker.addEventListener('error', (event) => {
-            attempt.error = event.message || 'Worker error event';
-          });
-          return worker;
-        } catch (error) {
-          attempt.error = error instanceof Error ? error.message : String(error);
-          throw error;
-        }
-      },
-    });
-  });
-}
-
 function mapFixtureBody(): string {
   return `
     <div style="height: 2200px">Map below the fold</div>
@@ -397,13 +338,14 @@ function mapFixtureBody(): string {
     </div>`;
 }
 
-test('Mapbox stays absent until visible and starts its blob worker when CSP allows it', async ({
+test('Mapbox stays lazy until visible, then resolves mapbox-gl from the import map and mounts', async ({
   page,
   cdn,
 }) => {
   const diagnostics = captureDiagnostics(page);
-  await installWorkerProbe(page);
-  await page.goto(cdn.fixtureUrl({ body: mapFixtureBody(), workerSource: 'blob:' }));
+  // The CDN no longer bundles or serves mapbox-gl; the page provides it through an import map, just
+  // like a real consumer would (here pointing at the fixture's stub instead of a real Mapbox build).
+  await page.goto(cdn.fixtureUrl({ body: mapFixtureBody(), mapboxImportMap: true }));
 
   const startupGraph = new Set([
     cdn.build.entries.autoload.path,
@@ -416,56 +358,15 @@ test('Mapbox stays absent until visible and starts its blob worker when CSP allo
     .filter((path) => !startupGraph.has(path))
     .map((path) => new URL(cdn.exactUrl(path)).pathname);
   await page.waitForTimeout(150);
+  // The Mapbox component chunk is not fetched until the map scrolls into view.
   expect(requestedPaths(cdn).filter((path) => mapboxOnlyGraph.includes(path))).toEqual([]);
 
   await page.locator('#map').scrollIntoViewIfNeeded();
   await expect
     .poll(() => requestedPaths(cdn))
     .toContain(new URL(cdn.exactUrl(cdn.build.components.MapboxMap.entry)).pathname);
+  // The component resolved mapbox-gl from the import map (the stub) and mounted its map without any
+  // bundled Mapbox chunk, worker or stylesheet.
   await expectMounted(page, '#map', 'MapboxMap');
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          (
-            globalThis as unknown as {
-              __WORKER_ATTEMPTS__: Array<{ url: string; started: boolean }>;
-            }
-          ).__WORKER_ATTEMPTS__,
-      ),
-    )
-    .toContainEqual({ url: expect.stringMatching(/^blob:/), started: true });
   expectNoBrowserErrors(diagnostics);
-});
-
-test('Mapbox records the expected blob worker CSP failure when workers are denied', async ({
-  page,
-  cdn,
-}) => {
-  const diagnostics = captureDiagnostics(page);
-  await installWorkerProbe(page);
-  await page.goto(cdn.fixtureUrl({ body: mapFixtureBody(), workerSource: "'none'" }));
-  await page.locator('#map').scrollIntoViewIfNeeded();
-
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          (
-            globalThis as unknown as {
-              __WORKER_ATTEMPTS__: Array<{ url: string; started: boolean; error?: string }>;
-            }
-          ).__WORKER_ATTEMPTS__,
-      ),
-    )
-    .toContainEqual({
-      url: expect.stringMatching(/^blob:/),
-      started: true,
-      error: expect.stringMatching(/Worker error event|Content Security Policy/i),
-    });
-  await expect
-    .poll(() => diagnostics.consoleErrors.join('\n'))
-    .toMatch(/worker-src|worker.*policy/i);
-  expect(diagnostics.requestFailures).toEqual([]);
-  expect(diagnostics.pageErrors).toEqual([]);
 });

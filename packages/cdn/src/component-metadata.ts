@@ -122,26 +122,24 @@ const uiComponents: readonly CuratedComponentMetadata[] = [
   { token: 'ViewTransition', group: 'transition' },
 ];
 
+// Mapbox GL and the optional geocoder are external (import-map resolved) and no longer served by
+// the CDN, so these components declare neither a CDN-served stylesheet nor a bundled integration
+// chunk — consumers load the Mapbox JavaScript and CSS from the source their import map points at.
 const mapboxComponents: readonly CuratedComponentMetadata[] = [
-  { token: 'MapboxCluster', group: 'mapbox', styles: ['mapbox-gl'] },
-  { token: 'MapboxClusterItem', group: 'mapbox', styles: ['mapbox-gl'] },
-  { token: 'MapboxFullscreenControl', group: 'mapbox', styles: ['mapbox-gl'] },
-  {
-    token: 'MapboxGeocoder',
-    group: 'mapbox',
-    styles: ['mapbox-gl', 'mapbox-geocoder'],
-    integrations: ['mapbox-geocoder'],
-  },
-  { token: 'MapboxGeolocateControl', group: 'mapbox', styles: ['mapbox-gl'] },
-  { token: 'MapboxImage', group: 'mapbox', styles: ['mapbox-gl'] },
-  { token: 'MapboxImages', group: 'mapbox', styles: ['mapbox-gl'] },
-  { token: 'MapboxLayer', group: 'mapbox', styles: ['mapbox-gl'] },
-  { token: 'MapboxMap', group: 'mapbox', styles: ['mapbox-gl'] },
-  { token: 'MapboxMarker', group: 'mapbox', styles: ['mapbox-gl'] },
-  { token: 'MapboxNavigationControl', group: 'mapbox', styles: ['mapbox-gl'] },
-  { token: 'MapboxPopup', group: 'mapbox', styles: ['mapbox-gl'] },
-  { token: 'MapboxSource', group: 'mapbox', styles: ['mapbox-gl'] },
-  { token: 'StoreLocator', group: 'mapbox', styles: ['mapbox-gl'] },
+  { token: 'MapboxCluster', group: 'mapbox' },
+  { token: 'MapboxClusterItem', group: 'mapbox' },
+  { token: 'MapboxFullscreenControl', group: 'mapbox' },
+  { token: 'MapboxGeocoder', group: 'mapbox' },
+  { token: 'MapboxGeolocateControl', group: 'mapbox' },
+  { token: 'MapboxImage', group: 'mapbox' },
+  { token: 'MapboxImages', group: 'mapbox' },
+  { token: 'MapboxLayer', group: 'mapbox' },
+  { token: 'MapboxMap', group: 'mapbox' },
+  { token: 'MapboxMarker', group: 'mapbox' },
+  { token: 'MapboxNavigationControl', group: 'mapbox' },
+  { token: 'MapboxPopup', group: 'mapbox' },
+  { token: 'MapboxSource', group: 'mapbox' },
+  { token: 'StoreLocator', group: 'mapbox' },
 ];
 
 export const componentCatalogs: readonly ComponentCatalog[] = [

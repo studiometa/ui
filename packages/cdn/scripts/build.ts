@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import esbuild, { type Metafile, type Plugin } from 'esbuild';
@@ -28,6 +28,12 @@ const jsToolkitVersion: string = jsToolkitMetadata.version;
 const JS_TOOLKIT_BUILD_NAME = '@studiometa/ui-cdn-js-toolkit';
 const jsToolkitIndexUrl = `/js-toolkit@${jsToolkitVersion}/index.js`;
 const jsToolkitUtilsUrl = `/js-toolkit@${jsToolkitVersion}/utils/index.js`;
+
+// Mapbox GL and its optional geocoder are NOT bundled or served by this CDN: they stay bare,
+// external specifiers so the Mapbox components resolve them from the consuming page's import map
+// (or an injected instance via `provideMapboxGl`). This sidesteps redistributing the proprietary
+// Mapbox GL build and lets strict-CSP consumers self-host the same-origin GL worker.
+const mapboxExternalSpecifiers = ['mapbox-gl', '@mapbox/mapbox-gl-geocoder'] as const;
 
 const packageDirectories = {
   '@studiometa/ui': resolve(repositoryDirectory, 'packages/ui'),
@@ -315,14 +321,25 @@ function collectExternalImports(metafile: Metafile): string[] {
 }
 
 /**
- * Asserts the invariant at the heart of the versioned split: the ui tree bundles NO js-toolkit
- * source and imports it only through the single absolute js-toolkit URL(s). Every external import
- * must be one of the two allowed js-toolkit URLs for the built version, and the main index URL —
- * the module that owns the shared component registry — must be present exactly once.
+ * Asserts the ui tree's externalization invariants and returns the external specifiers, split into
+ * the js-toolkit URLs and the Mapbox specifiers:
+ *
+ * - js-toolkit is imported only through its single absolute URL(s), and the main index URL — the
+ *   module that owns the shared component registry — is present, with no js-toolkit source bundled.
+ * - Mapbox GL and the optional geocoder are imported only as their bare specifiers (resolved by the
+ *   consumer's import map) and neither library's source is bundled anywhere in the tree.
+ * - No other external import is allowed.
  */
-function assertUiExternalToolkit(metafile: Metafile): string[] {
+function assertUiExternals(metafile: Metafile): {
+  toolkitUrls: string[];
+  mapboxSpecifiers: string[];
+} {
   const external = collectExternalImports(metafile);
-  const allowed = new Set([jsToolkitIndexUrl, jsToolkitUtilsUrl]);
+  const allowed = new Set<string>([
+    jsToolkitIndexUrl,
+    jsToolkitUtilsUrl,
+    ...mapboxExternalSpecifiers,
+  ]);
   const disallowed = external.filter((url) => !allowed.has(url));
   if (disallowed.length > 0) {
     throw new Error(`The ui tree has unexpected external imports: ${disallowed.join(', ')}`);
@@ -330,15 +347,29 @@ function assertUiExternalToolkit(metafile: Metafile): string[] {
   if (!external.includes(jsToolkitIndexUrl)) {
     throw new Error(`The ui tree does not import the js-toolkit URL ${jsToolkitIndexUrl}.`);
   }
-  const bundledToolkit = Object.keys(metafile.inputs).filter((input) =>
-    toPosix(input).includes('node_modules/@studiometa/js-toolkit/'),
+  for (const specifier of mapboxExternalSpecifiers) {
+    if (!external.includes(specifier)) {
+      throw new Error(`The ui tree does not import Mapbox through the external specifier ${specifier}.`);
+    }
+  }
+  const bundled = Object.keys(metafile.inputs).filter((input) =>
+    [
+      'node_modules/@studiometa/js-toolkit/',
+      'node_modules/mapbox-gl/',
+      'node_modules/@mapbox/mapbox-gl-geocoder/',
+    ].some((needle) => toPosix(input).includes(needle)),
   );
-  if (bundledToolkit.length > 0) {
+  if (bundled.length > 0) {
     throw new Error(
-      `The ui tree bundled js-toolkit source instead of externalizing it: ${bundledToolkit.join(', ')}`,
+      `The ui tree bundled externalized dependency source instead of externalizing it: ${bundled.join(', ')}`,
     );
   }
-  return external;
+  return {
+    toolkitUrls: external.filter((url) => url === jsToolkitIndexUrl || url === jsToolkitUtilsUrl),
+    mapboxSpecifiers: external.filter((url) =>
+      (mapboxExternalSpecifiers as readonly string[]).includes(url),
+    ),
+  };
 }
 
 async function listFiles(directory: string, root = directory): Promise<string[]> {
@@ -420,7 +451,14 @@ async function assertBrowserImports(
     const source = await readFile(resolve(outputDirectory, file), 'utf8');
     for (const match of source.matchAll(dynamicLiteralPattern)) {
       const specifier = match[1];
-      if (!specifier.startsWith('.') && !specifier.startsWith('/') && !URL.canParse(specifier)) {
+      // Bare specifiers are allowed only when they are declared externals resolved by the
+      // consumer's import map (Mapbox GL and the geocoder); anything else must be relative or a URL.
+      if (
+        !allowedExternalUrls.has(specifier) &&
+        !specifier.startsWith('.') &&
+        !specifier.startsWith('/') &&
+        !URL.canParse(specifier)
+      ) {
         throw new Error(`Unresolved bare dynamic import ${specifier} in ${file}.`);
       }
     }
@@ -447,7 +485,6 @@ function measureUiSizeBudgets(
   entryOutputs: Record<string, string>,
   componentOutputBySource: ReadonlyMap<string, string>,
   definitions: readonly ComponentDefinition[],
-  geocoderDynamicOutput: string,
   sizes: Record<string, number>,
 ): Record<string, number> {
   const observed: Record<string, number> = {};
@@ -479,23 +516,8 @@ function measureUiSizeBudgets(
       .flatMap(({ token }) => staticOutputGraph(metafile, componentOutput(token))),
   );
 
-  observed['graph:mapbox-core'] = graphBytes(
-    outputDirectory,
-    sizes,
-    staticOutputGraph(metafile, componentOutput('MapboxMap')),
-  );
-  const geocoderStaticGraph = new Set(
-    staticOutputGraph(metafile, componentOutput('MapboxGeocoder')),
-  );
-  observed['graph:geocoder-incremental'] = graphBytes(
-    outputDirectory,
-    sizes,
-    staticOutputGraph(metafile, geocoderDynamicOutput).filter(
-      (output) => !geocoderStaticGraph.has(output),
-    ),
-  );
-  observed['style:mapbox-gl'] = sizes['styles/mapbox-gl.css'];
-  observed['style:mapbox-geocoder'] = sizes['styles/mapbox-gl-geocoder.css'];
+  // The Mapbox core/geocoder graph and stylesheet budgets are gone: Mapbox GL and the geocoder are
+  // external (import-map resolved) and neither their JavaScript nor their CSS is served here.
   return observed;
 }
 
@@ -609,30 +631,14 @@ const uiResult = await esbuild.build({
     index: 'packages/cdn/src/barrel-ui.ts',
   },
   outdir: uiOutputDirectory,
+  external: [...mapboxExternalSpecifiers],
   plugins: [shopifyFallbackPlugin(), externalizeToolkitPlugin()],
 });
 
-await mkdir(resolve(uiOutputDirectory, 'styles'), { recursive: true });
-await copyFile(
-  resolve(repositoryDirectory, 'node_modules/mapbox-gl/dist/mapbox-gl.css'),
-  resolve(uiOutputDirectory, 'styles/mapbox-gl.css'),
-);
-await copyFile(
-  resolve(
-    repositoryDirectory,
-    'node_modules/@mapbox/mapbox-gl-geocoder/lib/mapbox-gl-geocoder.css',
-  ),
-  resolve(uiOutputDirectory, 'styles/mapbox-gl-geocoder.css'),
-);
+// Mapbox GL and the geocoder are external (import-map resolved) and no longer bundled, so the CDN
+// serves neither their JavaScript, their stylesheets nor their license notices — consumers load
+// those from the same source they point their import map at.
 await writeThirdPartyNotices(uiResult.metafile, uiOutputDirectory);
-await copyFile(
-  resolve(repositoryDirectory, 'node_modules/mapbox-gl/LICENSE.txt'),
-  resolve(uiOutputDirectory, 'licenses/mapbox-gl-LICENSE.txt'),
-);
-await copyFile(
-  resolve(repositoryDirectory, 'node_modules/@mapbox/mapbox-gl-geocoder/LICENSE'),
-  resolve(uiOutputDirectory, 'licenses/mapbox-gl-geocoder-LICENSE'),
-);
 await writeThirdPartyNotices(jsToolkitResult.metafile, jsToolkitOutputDirectory);
 
 const uiEntryNames = ['autoload', 'loader', 'manifest', 'index'];
@@ -648,11 +654,19 @@ for (const [output, metadata] of Object.entries(uiResult.metafile.outputs)) {
   componentOutputBySource.set(resolve(repositoryDirectory, metadata.entryPoint), output);
 }
 
-const mapboxPatterns = [/(?:^|\/)node_modules\/mapbox-gl\//, /(?:^|\/)packages\/ui-mapbox\//];
-const geocoderPatterns = [/(?:^|\/)node_modules\/@mapbox\/mapbox-gl-geocoder\//];
+// The Mapbox component family stays lazy, and the Mapbox libraries are external (import-map
+// resolved), so neither the component source nor the libraries may appear in the startup graph or
+// in any @studiometa/ui component graph. That the library source is bundled nowhere at all is
+// enforced globally by `assertUiExternals`.
+const uiMapboxSourcePattern = /(?:^|\/)packages\/ui-mapbox\//;
+const mapboxLibPatterns = [
+  /(?:^|\/)node_modules\/mapbox-gl\//,
+  /(?:^|\/)node_modules\/@mapbox\/mapbox-gl-geocoder\//,
+];
+const mapboxIsolationPatterns = [uiMapboxSourcePattern, ...mapboxLibPatterns];
 for (const name of uiEntryNames) {
   const inputs = graphInputs(uiResult.metafile, entryOutputs[name]);
-  assertDoesNotContain(inputs, [...mapboxPatterns, ...geocoderPatterns], `${name} startup graph`);
+  assertDoesNotContain(inputs, mapboxIsolationPatterns, `${name} startup graph`);
 }
 const uiDefinitions = definitions.filter(({ packageName }) => packageName === '@studiometa/ui');
 for (const definition of uiDefinitions) {
@@ -660,17 +674,7 @@ for (const definition of uiDefinitions) {
   if (!output) throw new Error(`Missing component output for ${definition.token}.`);
   assertDoesNotContain(
     graphInputs(uiResult.metafile, output),
-    [...mapboxPatterns, ...geocoderPatterns],
-    `${definition.token} graph`,
-  );
-}
-const nonGeocoderDefinitions = definitions.filter(({ token }) => token !== 'MapboxGeocoder');
-for (const definition of nonGeocoderDefinitions) {
-  const output = componentOutputBySource.get(definition.sourcePath);
-  if (!output) throw new Error(`Missing component output for ${definition.token}.`);
-  assertDoesNotContain(
-    graphInputs(uiResult.metafile, output),
-    geocoderPatterns,
+    mapboxIsolationPatterns,
     `${definition.token} graph`,
   );
 }
@@ -683,24 +687,8 @@ assertDoesNotContain(
   'Action graph',
 );
 
-const geocoderDefinition = definitions.find(({ token }) => token === 'MapboxGeocoder');
-const geocoderOutput =
-  geocoderDefinition && componentOutputBySource.get(geocoderDefinition.sourcePath);
-if (!geocoderOutput) throw new Error('Missing MapboxGeocoder component output.');
-const geocoderIntegrationOutputs = dynamicOutputEntries(uiResult.metafile, geocoderOutput).filter(
-  (output) =>
-    graphInputs(uiResult.metafile, output).some((input) =>
-      geocoderPatterns.some((pattern) => pattern.test(toPosix(input))),
-    ),
-);
-if (geocoderIntegrationOutputs.length !== 1) {
-  throw new Error(
-    `Expected exactly one lazy Mapbox geocoder integration graph, found ${geocoderIntegrationOutputs.length}.`,
-  );
-}
-const geocoderDynamicOutput = geocoderIntegrationOutputs[0];
-
-const toolkitExternalUrls = assertUiExternalToolkit(uiResult.metafile);
+const { toolkitUrls: toolkitExternalUrls, mapboxSpecifiers: mapboxExternalSpecifiersFound } =
+  assertUiExternals(uiResult.metafile);
 const toolkitIdentity = `@studiometa/js-toolkit@${jsToolkitVersion}`;
 
 const uiInitialFiles = (await listFiles(uiOutputDirectory)).filter(
@@ -710,7 +698,7 @@ await assertBrowserImports(
   uiResult.metafile,
   uiOutputDirectory,
   uiInitialFiles,
-  new Set(toolkitExternalUrls),
+  new Set([...toolkitExternalUrls, ...mapboxExternalSpecifiersFound]),
 );
 for (const file of uiInitialFiles.filter((path) => path.endsWith('.js'))) {
   if (!uiInitialFiles.includes(`${file}.map`))
@@ -732,7 +720,7 @@ const jsToolkitEntryOutputs = Object.fromEntries(
 for (const name of Object.keys(jsToolkitEntryOutputs)) {
   assertDoesNotContain(
     graphInputs(jsToolkitResult.metafile, jsToolkitEntryOutputs[name]),
-    [...mapboxPatterns, ...geocoderPatterns],
+    mapboxIsolationPatterns,
     `js-toolkit ${name} graph`,
   );
 }
@@ -758,7 +746,6 @@ const observedBudgets: Record<string, number> = {
     entryOutputs,
     componentOutputBySource,
     definitions,
-    geocoderDynamicOutput,
     uiSizes,
   ),
   ...measureJsToolkitSizeBudgets(
@@ -866,7 +853,9 @@ const componentInventory = Object.fromEntries(
   }),
 );
 
-const geocoderIntegrationEntry = publicPath(uiOutputDirectory, geocoderDynamicOutput);
+const mapboxComponents = definitions
+  .filter(({ packageName }) => packageName === '@studiometa/ui-mapbox')
+  .map(({ token }) => token);
 
 const uiBuildMetadata = {
   schemaVersion: 1,
@@ -919,54 +908,28 @@ const uiBuildMetadata = {
   entries: entryMetadataFor(uiResult.metafile, uiOutputDirectory, entryOutputs),
   components: componentInventory,
   outputs: outputMetadataFor(uiInitialFiles, uiSizes),
-  styles: {
-    'mapbox-gl': { path: 'styles/mapbox-gl.css', autoInject: false },
-    'mapbox-geocoder': { path: 'styles/mapbox-gl-geocoder.css', autoInject: false },
-  },
+  // The CDN serves no stylesheets: Mapbox GL and the geocoder — the only components that needed
+  // one — are external, so consumers load their CSS from the source their import map points at.
+  styles: {},
   licenses: {
     thirdPartyNotices: 'licenses/THIRD_PARTY_LICENSES.txt',
     esbuildLegalComments: 'eof',
-    mapboxGl: {
-      path: 'licenses/mapbox-gl-LICENSE.txt',
-      authoritativeBundledNotice: true,
-      note: "Mapbox GL's supplied LICENSE.txt is preserved verbatim and is the authoritative notice for its embedded third-party code; metafile package discovery does not expose those internals.",
-    },
-    mapboxGeocoder: {
-      path: 'licenses/mapbox-gl-geocoder-LICENSE',
-      authoritativeBundledNotice: true,
-    },
   },
-  releaseGates: {
-    publicMapboxRedistributionReview: {
-      required: false,
-      status: 'approved',
-      blocksPublicRelease: false,
-      reason:
-        'Mapbox GL and the geocoder are redistributed from this CDN on the same basis as the public npm CDNs (jsDelivr, unpkg): the required Mapbox account token and map-load billing obligations follow the end user regardless of where the assets are served from. Revisit if Mapbox terms change; a future revision may serve Mapbox dynamically instead of bundling it (see the tracking issue).',
-    },
-  },
+  // The public Mapbox-redistribution review gate is gone: this CDN no longer serves Mapbox GL or
+  // the geocoder (their JavaScript, stylesheets and license notices), so there is nothing to review.
+  releaseGates: {},
   integrations: {
     'mapbox-gl': {
-      status: 'bundled-lazy',
-      components: definitions
-        .filter(({ packageName }) => packageName === '@studiometa/ui-mapbox')
-        .map(({ token }) => token),
-      worker: {
-        mode: 'blob',
-        cspRequirement: 'worker-src blob:',
-        strictCspExternalWorkerShipped: false,
-        browserVerificationRequired: true,
-        note: 'The standard ESM bundle creates its worker from a blob URL. A strict-CSP external-worker build is not shipped, and browser verification is still required before release.',
-      },
+      status: 'external-import-map',
+      importSpecifier: 'mapbox-gl',
+      components: mapboxComponents,
+      note: 'mapbox-gl is not bundled or served by this CDN. The Mapbox components resolve it from the consuming page (an import map entry for "mapbox-gl", or an instance injected through provideMapboxGl). Because the consumer owns the mapbox-gl module, its GL worker is same-origin with the page, so strict-CSP consumers can self-host it without a blob: worker-src exception.',
     },
     'mapbox-geocoder': {
-      status: 'bundled-separately-lazy',
+      status: 'external-import-map',
+      importSpecifier: '@mapbox/mapbox-gl-geocoder',
       components: ['MapboxGeocoder'],
-      entry: geocoderIntegrationEntry,
-      preload: staticOutputGraph(uiResult.metafile, geocoderDynamicOutput)
-        .map((dependency) => publicPath(uiOutputDirectory, dependency))
-        .filter((dependency) => dependency !== geocoderIntegrationEntry)
-        .sort(),
+      note: 'The optional geocoder is not bundled or served by this CDN. MapboxGeocoder resolves it from the consuming page (an import map entry for "@mapbox/mapbox-gl-geocoder", or an instance injected through provideMapboxGeocoder).',
     },
     'shopify-partial-rendering': {
       status: 'excluded-with-runtime-fallback',
@@ -991,16 +954,16 @@ const uiBuildMetadata = {
     jsToolkitIdentities: [toolkitIdentity],
     jsToolkitExternalUrls: toolkitExternalUrls,
     uiTreeBundlesToolkit: false,
-    noBareImports: true,
+    mapboxExternalSpecifiers: mapboxExternalSpecifiersFound,
+    uiTreeBundlesMapbox: false,
+    onlyAllowedBareExternals: true,
     publicSourceMaps: true,
     startupMapboxIsolated: true,
     uiComponentsMapboxIsolated: uiDefinitions.map(({ token }) => token),
-    nonGeocoderComponentsGeocoderIsolated: nonGeocoderDefinitions.map(({ token }) => token),
     unrelatedFamilyIsolated: {
       component: 'Action',
       excludedFamily: 'Accordion',
     },
-    geocoderIntegrationGraphs: 1,
     sizeBudgets: observedBudgets,
   },
 };

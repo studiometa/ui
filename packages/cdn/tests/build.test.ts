@@ -31,13 +31,13 @@ interface BuildMetadata {
     jsToolkitIdentities: string[];
     jsToolkitExternalUrls: string[];
     uiTreeBundlesToolkit: boolean;
-    noBareImports: boolean;
+    mapboxExternalSpecifiers: string[];
+    uiTreeBundlesMapbox: boolean;
+    onlyAllowedBareExternals: boolean;
     publicSourceMaps: boolean;
     startupMapboxIsolated: boolean;
     uiComponentsMapboxIsolated: string[];
-    nonGeocoderComponentsGeocoderIsolated: string[];
     unrelatedFamilyIsolated: { component: string; excludedFamily: string };
-    geocoderIntegrationGraphs: number;
     sizeBudgets: Record<string, number>;
   };
   build: {
@@ -71,8 +71,6 @@ interface BuildMetadata {
   licenses: {
     thirdPartyNotices: string;
     esbuildLegalComments: string;
-    mapboxGl: { path: string; authoritativeBundledNotice: boolean; note: string };
-    mapboxGeocoder: { path: string; authoritativeBundledNotice: boolean };
   };
   integrations: Record<string, Record<string, unknown>>;
   releaseGates: Record<string, Record<string, unknown>>;
@@ -298,34 +296,42 @@ describe('browser CDN build', () => {
       ).toBe(true);
     }
 
-    const { entry, preload } = build.integrations['mapbox-geocoder'] as {
-      entry: string;
-      preload: string[];
-    };
-    expect(build.components.MapboxGeocoder.dynamicImports).toContainEqual({ entry, preload });
+    // Mapbox GL and the geocoder are external (import-map resolved), so no Mapbox component pulls a
+    // bundled Mapbox chunk — MapboxGeocoder and MapboxMap alike have no dynamic imports.
+    expect(build.components.MapboxGeocoder.dynamicImports).toEqual([]);
     expect(build.components.MapboxMap.dynamicImports).toEqual([]);
   });
 
-  it('identifies exactly one geocoder integration from static graph source evidence', async () => {
-    const candidates = await Promise.all(
-      build.components.MapboxGeocoder.dynamicImports.map(async (dynamicImport) => {
-        const sources = await staticGraphSources(uiTree, dynamicImport);
-        return {
-          dynamicImport,
-          containsGeocoderPackage: sources.some((source) =>
-            source.includes('node_modules/@mapbox/mapbox-gl-geocoder/'),
-          ),
-        };
-      }),
+  it('externalizes Mapbox and the geocoder instead of bundling their source', async () => {
+    expect(build.assertions.uiTreeBundlesMapbox).toBe(false);
+    expect(build.assertions.mapboxExternalSpecifiers).toEqual(
+      expect.arrayContaining(['mapbox-gl', '@mapbox/mapbox-gl-geocoder']),
     );
-    const matching = candidates.filter(({ containsGeocoderPackage }) => containsGeocoderPackage);
-    expect(matching).toHaveLength(1);
-    expect(build.assertions.geocoderIntegrationGraphs).toBe(1);
-    expect(build.integrations['mapbox-geocoder']).toMatchObject(matching[0].dynamicImport);
+    expect(build.integrations['mapbox-gl']).toMatchObject({
+      status: 'external-import-map',
+      importSpecifier: 'mapbox-gl',
+    });
+    expect(build.integrations['mapbox-geocoder']).toMatchObject({
+      status: 'external-import-map',
+      importSpecifier: '@mapbox/mapbox-gl-geocoder',
+    });
+    // Neither Mapbox library's source is bundled into any output across the whole release.
+    for (const file of allFiles.filter((path) => path.endsWith('.map'))) {
+      const sourceMap = JSON.parse(await readFile(resolve(firstOutput, file), 'utf8')) as {
+        sources: string[];
+      };
+      expect(
+        sourceMap.sources.some(
+          (source) =>
+            source.includes('node_modules/mapbox-gl/') ||
+            source.includes('node_modules/@mapbox/mapbox-gl-geocoder/'),
+        ),
+      ).toBe(false);
+    }
   });
 
-  it('emits public source maps, stable relative paths, and no unresolved browser imports', async () => {
-    expect(build.assertions.noBareImports).toBe(true);
+  it('emits public source maps, stable relative paths, and only allowed bare externals', async () => {
+    expect(build.assertions.onlyAllowedBareExternals).toBe(true);
     expect(build.assertions.publicSourceMaps).toBe(true);
     for (const file of allFiles.filter((path) => path.endsWith('.js'))) {
       expect(allFiles).toContain(`${file}.map`);
@@ -345,7 +351,7 @@ describe('browser CDN build', () => {
     }
   });
 
-  it('uses one js-toolkit identity and keeps startup, Mapbox, and geocoder graphs isolated', async () => {
+  it('uses one js-toolkit identity and keeps startup and Mapbox graphs isolated', async () => {
     expect(build.assertions.jsToolkitIdentities).toEqual([
       `@studiometa/js-toolkit@${jsToolkitVersion}`,
     ]);
@@ -355,76 +361,39 @@ describe('browser CDN build', () => {
         .filter(([, component]) => component.packageName === '@studiometa/ui')
         .map(([token]) => token),
     );
-    expect(build.assertions.nonGeocoderComponentsGeocoderIsolated).toEqual(
-      Object.keys(build.components).filter((token) => token !== 'MapboxGeocoder'),
-    );
     expect(build.assertions.unrelatedFamilyIsolated).toEqual({
       component: 'Action',
       excludedFamily: 'Accordion',
     });
 
+    // No @studiometa/ui component pulls the Mapbox component family or (now external) libraries.
     const mapboxSources = [
       '/packages/ui-mapbox/',
       '/node_modules/mapbox-gl/',
       '/node_modules/@mapbox/mapbox-gl-geocoder/',
     ];
     const uiMapboxViolations: string[] = [];
-    const nonGeocoderViolations: string[] = [];
     for (const [token, component] of Object.entries(build.components)) {
+      if (component.packageName !== '@studiometa/ui') continue;
       const sources = await staticGraphSources(uiTree, component);
-      if (
-        component.packageName === '@studiometa/ui' &&
-        sources.some((source) => mapboxSources.some((pattern) => source.includes(pattern)))
-      ) {
+      if (sources.some((source) => mapboxSources.some((pattern) => source.includes(pattern)))) {
         uiMapboxViolations.push(token);
-      }
-      if (
-        token !== 'MapboxGeocoder' &&
-        sources.some((source) => source.includes('/node_modules/@mapbox/mapbox-gl-geocoder/'))
-      ) {
-        nonGeocoderViolations.push(token);
       }
     }
     expect(uiMapboxViolations).toEqual([]);
-    expect(nonGeocoderViolations).toEqual([]);
     const actionSources = await staticGraphSources(uiTree, build.components.Action);
     expect(actionSources.some((source) => source.includes('/packages/ui/Accordion/'))).toBe(false);
-
-    const geocoderEntry = (build.integrations['mapbox-geocoder'] as { entry: string }).entry;
-    const startupFiles = Object.values(build.entries).flatMap(({ path, preload }) => [
-      path,
-      ...preload,
-    ]);
-    expect(startupFiles).not.toContain(geocoderEntry);
-    const nonGeocoderDynamicEntries = Object.entries(build.components)
-      .filter(([token]) => token !== 'MapboxGeocoder')
-      .flatMap(([, component]) => component.dynamicImports.map(({ entry }) => entry));
-    expect(nonGeocoderDynamicEntries).not.toContain(geocoderEntry);
   });
 
-  it('copies Mapbox and geocoder CSS separately without auto-injection', async () => {
-    expect(build.styles).toEqual({
-      'mapbox-geocoder': {
-        path: 'styles/mapbox-gl-geocoder.css',
-        autoInject: false,
-      },
-      'mapbox-gl': { path: 'styles/mapbox-gl.css', autoInject: false },
-    });
-    expect(await readFile(resolve(uiTree, build.styles['mapbox-gl'].path), 'utf8')).toBe(
-      await readFile(
-        resolve(repositoryDirectory, 'node_modules/mapbox-gl/dist/mapbox-gl.css'),
-        'utf8',
-      ),
-    );
-    expect(await readFile(resolve(uiTree, build.styles['mapbox-geocoder'].path), 'utf8')).toBe(
-      await readFile(
-        resolve(
-          repositoryDirectory,
-          'node_modules/@mapbox/mapbox-gl-geocoder/lib/mapbox-gl-geocoder.css',
-        ),
-        'utf8',
-      ),
-    );
+  it('serves no Mapbox stylesheets or license notices', async () => {
+    // Externalized Mapbox means the CDN serves no stylesheets at all and no Mapbox license files
+    // (the component chunks named Mapbox* are our own classes and are still served).
+    expect(build.styles).toEqual({});
+    expect(uiFiles.some((file) => file.startsWith('styles/'))).toBe(false);
+    expect(uiFiles.filter((file) => file.startsWith('licenses/'))).toEqual([
+      'licenses/THIRD_PARTY_LICENSES.txt',
+    ]);
+    expect(uiFiles.some((file) => /licenses\/.*mapbox/i.test(file))).toBe(false);
   });
 
   it('records exact output sizes and enforces the checked-in budgets', async () => {
@@ -489,38 +458,26 @@ describe('browser CDN build', () => {
     }
   });
 
-  it('records Mapbox worker constraints, licenses, and the public redistribution gate', async () => {
-    expect(build.integrations['mapbox-gl'].worker).toEqual({
-      mode: 'blob',
-      cspRequirement: 'worker-src blob:',
-      strictCspExternalWorkerShipped: false,
-      browserVerificationRequired: true,
-      note: expect.stringContaining('strict-CSP external-worker build is not shipped'),
+  it('records Mapbox as external import-map integrations and drops the redistribution gate', async () => {
+    // The Mapbox libraries are no longer bundled or served, so there is no bundled-worker note, no
+    // Mapbox license notice and no redistribution review gate to record.
+    expect(build.integrations['mapbox-gl']).not.toHaveProperty('worker');
+    expect(build.integrations['mapbox-gl'].note).toContain('import map');
+    expect(build.integrations['mapbox-gl'].note).toContain('strict-CSP');
+    expect(build.integrations['mapbox-geocoder'].note).toContain('import map');
+    expect(build.releaseGates).toEqual({});
+    expect(build.licenses).toEqual({
+      thirdPartyNotices: 'licenses/THIRD_PARTY_LICENSES.txt',
+      esbuildLegalComments: 'eof',
     });
-    expect(build.releaseGates.publicMapboxRedistributionReview).toMatchObject({
-      required: false,
-      status: 'approved',
-      blocksPublicRelease: false,
-    });
-    expect(build.licenses.mapboxGl.authoritativeBundledNotice).toBe(true);
-    expect(build.licenses.mapboxGl.note).toContain('authoritative notice');
-    expect(build.licenses.mapboxGeocoder.authoritativeBundledNotice).toBe(true);
-    expect(await readFile(resolve(uiTree, build.licenses.mapboxGl.path), 'utf8')).toBe(
-      await readFile(resolve(repositoryDirectory, 'node_modules/mapbox-gl/LICENSE.txt'), 'utf8'),
-    );
-    expect(await readFile(resolve(uiTree, build.licenses.mapboxGeocoder.path), 'utf8')).toBe(
-      await readFile(
-        resolve(repositoryDirectory, 'node_modules/@mapbox/mapbox-gl-geocoder/LICENSE'),
-        'utf8',
-      ),
-    );
   });
 
   it('ships third-party notices and diagnoses the excluded Shopify preview adapter', async () => {
     expect(build.licenses.esbuildLegalComments).toBe('eof');
     const notices = await readFile(resolve(uiTree, build.licenses.thirdPartyNotices), 'utf8');
-    expect(notices).toContain('mapbox-gl@');
-    expect(notices).toContain('@mapbox/mapbox-gl-geocoder@');
+    // Mapbox GL and the geocoder are external and not bundled, so they carry no third-party notice.
+    expect(notices).not.toContain('mapbox-gl@');
+    expect(notices).not.toContain('@mapbox/mapbox-gl-geocoder@');
     // js-toolkit is no longer bundled into the ui tree, so its notice lives in the js-toolkit tree.
     const jsToolkitNotices = await readFile(
       resolve(jsToolkitTree, 'licenses/THIRD_PARTY_LICENSES.txt'),

@@ -96,8 +96,8 @@ async function main(): Promise<void> {
   const uiArtifact = await readArtifact(uiTree.directory);
   const jsToolkitArtifact = await readArtifact(jsToolkitTree.directory);
 
-  // The ui build carries the Mapbox redistribution gate; the js-toolkit build only needs to be
-  // clean and publishable. Both trees come from the same source state.
+  // Both trees come from the same source state and must be clean and publishable. Neither records a
+  // release gate anymore (Mapbox is external), but validatePublishability stays a dormant safeguard.
   validatePublishability(uiArtifact.build, { requireClean: true });
   validatePublishability(jsToolkitArtifact.build, { requireClean: true });
 

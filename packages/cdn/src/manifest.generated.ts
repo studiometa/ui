@@ -750,7 +750,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxCluster",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxCluster").then(({ MapboxCluster }) => MapboxCluster),
   },
   "MapboxClusterItem": {
@@ -760,7 +759,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxClusterItem",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxClusterItem").then(({ MapboxClusterItem }) => MapboxClusterItem),
   },
   "MapboxFullscreenControl": {
@@ -770,7 +768,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxFullscreenControl",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxFullscreenControl").then(({ MapboxFullscreenControl }) => MapboxFullscreenControl),
   },
   "MapboxGeocoder": {
@@ -780,8 +777,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxGeocoder",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl","mapbox-geocoder"],
-    integrations: ["mapbox-geocoder"],
     load: () => import("@studiometa/ui-mapbox/MapboxGeocoder").then(({ MapboxGeocoder }) => MapboxGeocoder),
   },
   "MapboxGeolocateControl": {
@@ -791,7 +786,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxGeolocateControl",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxGeolocateControl").then(({ MapboxGeolocateControl }) => MapboxGeolocateControl),
   },
   "MapboxImage": {
@@ -801,7 +795,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxImage",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxImage").then(({ MapboxImage }) => MapboxImage),
   },
   "MapboxImages": {
@@ -811,7 +804,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxImages",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxImages").then(({ MapboxImages }) => MapboxImages),
   },
   "MapboxLayer": {
@@ -821,7 +813,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxLayer",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxLayer").then(({ MapboxLayer }) => MapboxLayer),
   },
   "MapboxMap": {
@@ -831,7 +822,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxMap",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxMap").then(({ MapboxMap }) => MapboxMap),
   },
   "MapboxMarker": {
@@ -841,7 +831,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxMarker",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxMarker").then(({ MapboxMarker }) => MapboxMarker),
   },
   "MapboxNavigationControl": {
@@ -851,7 +840,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxNavigationControl",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxNavigationControl").then(({ MapboxNavigationControl }) => MapboxNavigationControl),
   },
   "MapboxPopup": {
@@ -861,7 +849,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxPopup",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxPopup").then(({ MapboxPopup }) => MapboxPopup),
   },
   "MapboxSource": {
@@ -871,7 +858,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "MapboxSource",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/MapboxSource").then(({ MapboxSource }) => MapboxSource),
   },
   "StoreLocator": {
@@ -881,7 +867,6 @@ export const componentManifest: Record<string, ComponentManifestEntry> = {
     exportName: "StoreLocator",
     strategy: "visible",
     group: "mapbox",
-    styles: ["mapbox-gl"],
     load: () => import("@studiometa/ui-mapbox/StoreLocator").then(({ StoreLocator }) => StoreLocator),
   },
 };

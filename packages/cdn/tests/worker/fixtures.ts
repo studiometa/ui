@@ -121,7 +121,6 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
     'index.js.map',
     'build.json',
     'integrity.json',
-    'styles/mapbox-gl.css',
     'licenses/THIRD_PARTY_LICENSES.txt',
   ];
   const files = await readTreeFiles(uiTreeDirectory, uiAssetPaths);

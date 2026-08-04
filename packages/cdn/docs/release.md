@@ -1,6 +1,6 @@
 # Release procedure
 
-This document describes how a browser CDN release is published to the private R2 bucket behind `https://cdn.studiometa.dev`. It describes the intended operator workflow at the contract level: the build output and the `versions.json` index that the Worker consumes are implemented in this package, while the publish tooling (`scripts/publish.ts` and the smoke checks it runs) lands with the release track and is not present in this worktree. No release has been performed; the steps below are the procedure to follow once the account, bucket, DNS, and redistribution approval from [infrastructure](./infrastructure.md) are in place.
+This document describes how a browser CDN release is published to the private R2 bucket behind `https://cdn.studiometa.dev`. It describes the intended operator workflow at the contract level: the build output and the `versions.json` index that the Worker consumes are implemented in this package, while the publish tooling (`scripts/publish.ts` and the smoke checks it runs) lands with the release track and is not present in this worktree. No release has been performed; the steps below are the procedure to follow once the account, bucket, and DNS from [infrastructure](./infrastructure.md) are in place.
 
 Read this together with [infrastructure](./infrastructure.md) (bucket layout, `versions.json` schema, credentials, gates) and [rollback](./rollback.md) (how to move a tag back).
 
@@ -18,7 +18,7 @@ The index is the source of truth the Worker reads first. A prefix that exists in
 Before publishing:
 
 - **Clean, committed source.** The build refuses to produce publishable output when any tracked build source is dirty (see [infrastructure, Build and Publish Gates](./infrastructure.md#build-and-publish-gates)). Release builds run from a clean commit so `build.publishable` is `true`. Never publish output produced with `--allow-dirty`.
-- **Release gates resolved.** `build.json` carries `releaseGates.publicMapboxRedistributionReview` recorded as `approved` / `blocksPublicRelease: false` (see [infrastructure, Mapbox Redistribution](./infrastructure.md#mapbox-redistribution)); publishing refuses only a build that reintroduces a blocking, unapproved gate.
+- **Release gates resolved.** `build.json` records an empty `releaseGates` object — the CDN no longer bundles or serves Mapbox, so the former public Mapbox-redistribution gate is gone (see [infrastructure, Mapbox](./infrastructure.md#mapbox-external-not-redistributed)). Publishing still refuses a build that reintroduces a blocking, unapproved gate.
 - **Publish guard enabled.** The publish tooling is expected to require `CDN_ENABLED=true` so a build cannot reach the public bucket before the environment and approvals exist.
 - **Scoped credentials present.** R2 write credentials and the Cloudflare API token described in [infrastructure](./infrastructure.md#required-credentials) are configured in the CI/publish environment, not in source.
 
@@ -30,7 +30,7 @@ Produce the artifact from a clean commit, from the repository root:
 npm run cdn:build
 ```
 
-The build writes `packages/cdn/dist/` containing `autoload.js`, `loader.js`, `manifest.js`, their code-split chunks and source maps, the Mapbox stylesheets, the third-party license notices, and the two metadata files `build.json` and `integrity.json`. `integrity.json` lists a SHA-384 digest for every file in the release (including `build.json`); it is the manifest the Worker validates a prefix against. For a byte-stable, reproducible artifact, set `SOURCE_DATE_EPOCH`; otherwise the build derives its timestamp from the `HEAD` commit.
+The build writes `packages/cdn/dist/` containing `autoload.js`, `loader.js`, `manifest.js`, their code-split chunks and source maps, the third-party license notices, and the two metadata files `build.json` and `integrity.json` (no stylesheets: Mapbox is external and its CSS is not served). `integrity.json` lists a SHA-384 digest for every file in the release (including `build.json`); it is the manifest the Worker validates a prefix against. For a byte-stable, reproducible artifact, set `SOURCE_DATE_EPOCH`; otherwise the build derives its timestamp from the `HEAD` commit.
 
 The exact version comes from the package version in `build.json` (`package.version`); a preview channel name is `main-<commit>` using the build commit.
 

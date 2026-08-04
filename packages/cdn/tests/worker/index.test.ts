@@ -239,7 +239,6 @@ describe('CDN Worker asset responses', () => {
     ['autoload.js', 'text/javascript; charset=utf-8'],
     ['build.json', 'application/json; charset=utf-8'],
     ['autoload.js.map', 'application/json; charset=utf-8'],
-    ['styles/mapbox-gl.css', 'text/css; charset=utf-8'],
     ['licenses/THIRD_PARTY_LICENSES.txt', 'text/plain; charset=utf-8'],
   ])('serves %s with the correct MIME and cross-origin headers', async (asset, mime) => {
     const response = await request(`/ui@1.2.0/${asset}`);

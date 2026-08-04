@@ -36,7 +36,42 @@ interface FixturePageOptions {
   body: string;
   script?: 'alias' | 'exact' | 'none';
   workerSource?: 'blob:' | "'none'";
+  // When set, the fixture page declares an import map so the externalized Mapbox specifiers resolve
+  // to the stub modules this server hosts (mirroring a consumer that points "mapbox-gl" at their
+  // own build). Maps each bare specifier to the artifact-origin stub path.
+  mapboxImportMap?: boolean;
 }
+
+// A minimal stand-in for the external `mapbox-gl` module the CDN no longer bundles. It exposes just
+// enough for the Mapbox components to resolve and mount without a Mapbox token or network access.
+const MAPBOX_GL_STUB = `
+class StubMap {
+  constructor() { this.__handlers = {}; }
+  on(type, callback) {
+    (this.__handlers[type] ||= []).push(callback);
+    if (type === 'load') setTimeout(() => callback({ target: this }), 0);
+    return this;
+  }
+  off() { return this; }
+  remove() {}
+  setStyle() {}
+  addControl() {}
+  removeControl() {}
+}
+const noop = class {};
+export default {
+  Map: StubMap,
+  Marker: noop,
+  Popup: noop,
+  LngLat: noop,
+  NavigationControl: noop,
+  GeolocateControl: noop,
+  FullscreenControl: noop,
+};
+`;
+const MAPBOX_GEOCODER_STUB = 'export default class StubGeocoder { addTo() {} onRemove() {} on() {} };';
+const MAPBOX_GL_STUB_PATH = '/stub/mapbox-gl.js';
+const MAPBOX_GEOCODER_STUB_PATH = '/stub/mapbox-gl-geocoder.js';
 
 export interface CdnServers {
   artifactOrigin: string;
@@ -180,6 +215,13 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
     const entry = startLog(request, url.pathname, requests);
     finishLog(response, entry);
 
+    if (url.pathname === MAPBOX_GL_STUB_PATH || url.pathname === MAPBOX_GEOCODER_STUB_PATH) {
+      addArtifactHeaders(response, MIME_TYPES['.js']);
+      response.statusCode = 200;
+      response.end(url.pathname === MAPBOX_GL_STUB_PATH ? MAPBOX_GL_STUB : MAPBOX_GEOCODER_STUB);
+      return;
+    }
+
     if (url.pathname === '/alias/main/autoload.js') {
       response.statusCode = 307;
       response.setHeader('Location', `/cdn/${encodedIdentifier}/${build.entries.autoload.path}`);
@@ -265,10 +307,20 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
       script === 'none'
         ? ''
         : `<script type="module" src="${escapeAttribute(scriptUrl)}" data-studiometa-ui></script>`;
+    // The import map must precede any module script so the externalized Mapbox specifiers resolve.
+    const importMapMarkup =
+      url.searchParams.get('mapboxImportMap') === '1'
+        ? `<script type="importmap">${JSON.stringify({
+            imports: {
+              'mapbox-gl': `${artifactOrigin}${MAPBOX_GL_STUB_PATH}`,
+              '@mapbox/mapbox-gl-geocoder': `${artifactOrigin}${MAPBOX_GEOCODER_STUB_PATH}`,
+            },
+          })}</script>`
+        : '';
     response.statusCode = 200;
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
     response.end(
-      `<!doctype html><html><head><meta charset="utf-8"><title>CDN browser fixture</title></head><body>${body}${scriptMarkup}</body></html>`,
+      `<!doctype html><html><head><meta charset="utf-8"><title>CDN browser fixture</title>${importMapMarkup}</head><body>${body}${scriptMarkup}</body></html>`,
     );
   });
   pageOrigin = await listen(pageServer);
@@ -283,6 +335,9 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
       url.searchParams.set('script', options.script ?? 'exact');
       if (options.workerSource) {
         url.searchParams.set('workerSource', options.workerSource);
+      }
+      if (options.mapboxImportMap) {
+        url.searchParams.set('mapboxImportMap', '1');
       }
       return url.href;
     },

@@ -38,13 +38,8 @@ releases/
 │       │   ├── Action-[hash].js
 │       │   ├── Accordion-[hash].js
 │       │   └── ...
-│       ├── styles/                    # External stylesheets (not auto-injected)
-│       │   ├── mapbox-gl.css
-│       │   └── mapbox-gl-geocoder.css
 │       ├── licenses/                  # Bundled third-party notices
-│       │   ├── THIRD_PARTY_LICENSES.txt
-│       │   ├── mapbox-gl-LICENSE.txt
-│       │   └── mapbox-gl-geocoder-LICENSE
+│       │   └── THIRD_PARTY_LICENSES.txt
 │       ├── build.json                 # Build metadata (schemaVersion 1; records the js-toolkit version)
 │       └── integrity.json             # SHA-384 digests (schemaVersion 1)
 └── js-toolkit/
@@ -166,17 +161,18 @@ Because aliases redirect to immutable URLs, the only cache entries that need to 
 
 No deployment has been performed. This document describes the intended topology and the contract the Worker and build system implement, not a provisioned environment. The Cloudflare account, the R2 bucket, and the DNS records for `cdn.studiometa.dev` are all still to be established; treat the identifiers below as the intended configuration to create, not as confirmed live resources.
 
-### Mapbox Redistribution
+### Mapbox (external, not redistributed)
 
-**Status**: `approved` (does not block release)
+The CDN does **not** bundle or serve Mapbox GL JS or the Mapbox geocoder — neither their JavaScript, their stylesheets nor their license notices. The Mapbox components import `mapbox-gl` and `@mapbox/mapbox-gl-geocoder` as bare specifiers, which the consuming page resolves through an import map (or an injected instance via `provideMapboxGl`). See the consumer-facing [Mapbox integration](https://ui.studiometa.dev/guide/browser-cdn/#mapbox-integration) guide.
 
-The CDN bundles Mapbox GL JS and the Mapbox geocoder. These are redistributed on the same basis as the public npm CDNs (jsDelivr, unpkg) that already mirror `mapbox-gl` from npm: Mapbox GL v2+ is licensed under the Mapbox TOS for use with a Mapbox account, and the required account token and map-load billing obligations follow the end user regardless of where the assets are served from. Serving the bundle does not change those obligations, so the build records `releaseGates.publicMapboxRedistributionReview` as `approved` and it does not block publishing.
+Two consequences follow:
 
-Revisit this if Mapbox's terms change. A cleaner future option is to stop bundling Mapbox entirely and provide `mapbox-gl` dynamically to the Mapbox components (externalized like `@studiometa/js-toolkit`), which also sidesteps the strict-CSP same-origin worker limitation below — tracked as a follow-up issue.
+- **No redistribution question.** Because the CDN never serves the proprietary Mapbox GL build, there is nothing to redistribute and no redistribution-review release gate. The earlier `releaseGates.publicMapboxRedistributionReview` gate was dropped as moot.
+- **Strict CSP is a consumer choice.** The consumer owns the `mapbox-gl` module, so its GL Web Worker is same-origin with their page (or wherever they host `mapbox-gl`). A strict CSP that forbids `blob:` workers is fully supported by self-hosting `mapbox-gl`; the CDN no longer dictates the worker's origin.
 
 ### Build and Publish Gates
 
-The build script (`packages/cdn/scripts/build.ts`) does not read a `CDN_ENABLED` flag. Its guard is the working tree itself: it refuses a release-style build when any tracked build source is modified, unless `--allow-dirty` is passed, in which case the output is explicitly marked non-publishable. The build records `build.publishable` and `identifiers.immutable.publishable` (both `true` only for a clean commit) and writes a `releaseGates.publicMapboxRedistributionReview` gate with status `approved` and `blocksPublicRelease: false` (see [Mapbox Redistribution](#mapbox-redistribution)). The publish tooling still refuses a build that reintroduces a blocking, unapproved gate.
+The build script (`packages/cdn/scripts/build.ts`) does not read a `CDN_ENABLED` flag. Its guard is the working tree itself: it refuses a release-style build when any tracked build source is modified, unless `--allow-dirty` is passed, in which case the output is explicitly marked non-publishable. The build records `build.publishable` and `identifiers.immutable.publishable` (both `true` only for a clean commit) and writes an empty `releaseGates` object. The publish tooling still refuses a build that reintroduces a blocking, unapproved gate, but the build no longer records any such gate.
 
 `CDN_ENABLED=true` is a separate publish-time guard for the release tooling (the publish/rollback scripts described in [Release procedure](./release.md) and [Rollback procedure](./rollback.md)), so that a build cannot be pushed to the public bucket before the account, bucket, and DNS are in place. That guard lives in the release track rather than in the build script in this package.
 

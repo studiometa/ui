@@ -174,8 +174,9 @@ Each release directory contains:
 
 - **JavaScript modules** — `autoload.js` plus code-split component chunks (ES2020, ESM).
 - **Source maps** — a `.map` file next to every `.js` file.
-- **Stylesheets** — Mapbox CSS, served but not auto-injected (see below).
 - **Metadata** — `build.json` and `integrity.json` describing the build and its SHA-384 digests.
+
+The CDN ships no stylesheets: the only components that needed one — the Mapbox family — resolve `mapbox-gl` (and its CSS) from your own source (see [Mapbox integration](#mapbox-integration)).
 
 ### Transport headers
 
@@ -183,16 +184,36 @@ The Worker serves every asset with permissive cross-origin headers so the module
 
 ## Mapbox integration
 
-Mapbox components (`MapboxMap`, `MapboxMarker`, `StoreLocator`, and the rest of the `@studiometa/ui-mapbox` surface described in [Packages and surfaces](/guide/concepts/packages-and-surfaces)) are bundled into the CDN and loaded lazily. They carry extra requirements.
+Mapbox components (`MapboxMap`, `MapboxMarker`, `StoreLocator`, and the rest of the `@studiometa/ui-mapbox` surface described in [Packages and surfaces](/guide/concepts/packages-and-surfaces)) are served by the CDN, but **`mapbox-gl` itself is not**. The CDN neither bundles nor serves Mapbox GL JS or the Mapbox geocoder — you provide them, which keeps the CDN a neutral mirror of `@studiometa/ui` and lets you control the Mapbox version and its Web Worker.
+
+### Provide `mapbox-gl` with an import map
+
+The Mapbox components import `mapbox-gl` (and, for `MapboxGeocoder`, `@mapbox/mapbox-gl-geocoder`) as bare module specifiers. Declare an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) — before the CDN script — that points those specifiers at a source of your choosing (a pinned ESM CDN such as [esm.sh](https://esm.sh), or a copy you host yourself):
+
+```html
+<script type="importmap">
+  {
+    "imports": {
+      "mapbox-gl": "https://esm.sh/mapbox-gl@3",
+      "@mapbox/mapbox-gl-geocoder": "https://esm.sh/@mapbox/mapbox-gl-geocoder@5"
+    }
+  }
+</script>
+<script type="module" src="https://cdn.studiometa.dev/ui@1/autoload.js" data-studiometa-ui></script>
+```
+
+Only add the geocoder entry if you use `MapboxGeocoder`.
 
 ### Stylesheets
 
-Mapbox CSS is **not** auto-injected. Link it yourself, and only add the geocoder stylesheet if you use `MapboxGeocoder`:
+Load the Mapbox stylesheet yourself from the same source, and the geocoder stylesheet only when you use `MapboxGeocoder`:
 
 ```html
-<link rel="stylesheet" href="https://cdn.studiometa.dev/ui@1/styles/mapbox-gl.css" />
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css" />
 <!-- Only when using MapboxGeocoder -->
-<link rel="stylesheet" href="https://cdn.studiometa.dev/ui@1/styles/mapbox-gl-geocoder.css" />
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@mapbox/mapbox-gl-geocoder@5/lib/mapbox-gl-geocoder.css" />
 ```
 
 ### Access token and options
@@ -209,21 +230,17 @@ Mapbox components need a valid access token and are configured through their js-
 
 ### Lazy loading
 
-Mapbox components default to the `visible` strategy, so the heavy map code only loads when a map approaches the viewport rather than on initial page load. `MapboxGeocoder` loads its geocoder dependency as a separate dynamic import, so core map components stay free of the geocoder's weight.
+Mapbox components default to the `visible` strategy, so the map code only loads when a map approaches the viewport rather than on initial page load. `mapbox-gl` is fetched (from your import-map source) the first time a map mounts, and `MapboxGeocoder` resolves its geocoder the same way, so core map components stay free of the geocoder's weight.
 
 ### Content Security Policy
 
-The standard Mapbox GL bundle creates its Web Worker from a `blob:` URL. A page with a Content Security Policy must therefore allow blob workers:
+Because you own the `mapbox-gl` module, its GL Web Worker is same-origin with your page (or wherever you host `mapbox-gl`), so a strict Content Security Policy is fully supported — self-host `mapbox-gl` and its worker needs no `blob:` exception. If instead you load `mapbox-gl` from an ESM CDN that creates its worker from a `blob:` URL, allow it explicitly:
 
 ```
 Content-Security-Policy: worker-src blob:;
 ```
 
-No strict-CSP build (one that avoids `blob:` workers by loading an external worker script) is shipped on the CDN. Supporting a strict CSP that forbids `blob:` workers would require serving the Mapbox worker from the consumer's own origin, which a future release could enable via a consumer same-origin deployment. Until then, pages that cannot allow `worker-src blob:` cannot run the CDN's Mapbox components.
-
-### Redistribution gate
-
-The CDN bundles Mapbox GL JS and the Mapbox geocoder. Their build metadata carries a release gate marking public redistribution of those libraries as requiring explicit review before the CDN serves them publicly. This is an operational gate recorded in the build, not a legal determination, and it is handled as part of the CDN's internal release process.
+Either way the choice is yours: the CDN no longer dictates the Mapbox worker's origin.
 
 ## Shopify integration
 
@@ -270,9 +287,9 @@ The CDN trades flexibility for a zero-build install. Its constraints are deliber
 - **No `data-component` mutation.** Changing the attribute on an element already in the DOM is not observed; only inserted and removed nodes are.
 - **No Shadow DOM.** Components assume ownership of standard light-DOM elements.
 - **No programmatic API.** The runtime exposes no supported extension points or public methods; discovery is entirely declarative.
-- **JavaScript only.** No Twig or server-side templates, no per-instance `data-mount`, and no general stylesheets — only the Mapbox CSS files are provided.
+- **JavaScript only.** No Twig or server-side templates, no per-instance `data-mount`, and no stylesheets — including no Mapbox CSS.
 - **ES2020 module browsers only.**
-- **Mapbox needs `worker-src blob:`.** Strict CSPs that forbid blob workers are not supported.
+- **Mapbox is not provided.** You supply `mapbox-gl` (and its CSS) through an import map — see [Mapbox integration](#mapbox-integration). Import maps require an ES2020 module browser, which the CDN already assumes.
 - **Shopify partial rendering is excluded.** `FetchShopifyPartial` falls back to base `Fetch`.
 
 ## Migrating from a bundled install
@@ -282,9 +299,8 @@ The markup contract is shared with the bundled runtime, so most templates carry 
 1. Remove the npm imports and `registerComponent`/`registerComponents` calls.
 2. Add the single marked CDN script.
 3. Confirm your `data-component` tokens match the component names.
-4. Link the Mapbox stylesheets manually if you use map components.
-5. Allow `worker-src blob:` in your CSP if you use Mapbox.
-6. Tune loading with `data-load` (and `?components=` for critical components) as needed.
+4. If you use map components, add an import map for `mapbox-gl` (and the geocoder) and link the Mapbox stylesheet yourself — see [Mapbox integration](#mapbox-integration).
+5. Tune loading with `data-load` (and `?components=` for critical components) as needed.
 
 The CDN and a bundled build cannot be mixed on one page, so migrate a page fully rather than partially. For a build-based setup instead, see [Installation](/guide/installation/).
 
