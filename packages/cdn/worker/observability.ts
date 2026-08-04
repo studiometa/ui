@@ -1,6 +1,6 @@
 import type { ExactVersion } from './types.ts';
 
-export type RouteKind = 'asset' | 'preflight' | 'method-not-allowed';
+export type RouteKind = 'asset' | 'registry' | 'preflight' | 'method-not-allowed';
 export type VersionKind = 'exact-release' | 'exact-channel' | 'dist-tag' | 'major-alias' | 'none';
 export type R2Operation = 'index' | 'release-metadata' | 'asset';
 export type R2Result = 'hit' | 'miss';

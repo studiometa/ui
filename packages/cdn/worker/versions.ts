@@ -177,6 +177,36 @@ export function resolveBareRoot(
   return highest ? exactRelease('js-toolkit', highest) : undefined;
 }
 
+/**
+ * Returns the highest published stable (non-prerelease) release from a release inventory, or
+ * `undefined` when the inventory has no stable release yet.
+ */
+export function highestStableRelease(releases: readonly string[]): string | undefined {
+  const stable = releases.filter((release) => {
+    const version = parseSemver(release);
+    return version !== undefined && version.prerelease === undefined;
+  });
+  return [...stable].sort(compareStableVersions).at(-1);
+}
+
+/**
+ * Resolves the reference the registry reports as the current ui surface: the `latest` stable tag,
+ * then the `main` preview channel, then the highest stable release, and finally `null` when the
+ * index carries no eligible reference. The result is a ref usable in a `/ui@<ref>/` URL.
+ */
+export function resolveCurrentUiRef(index: VersionsIndex): string | null {
+  const ui = index.packages.ui;
+  return ui.distTags.latest ?? ui.distTags.main ?? highestStableRelease(ui.releases) ?? null;
+}
+
+/**
+ * Resolves the js-toolkit version the registry reports as current: its highest published release,
+ * mirroring the bare-root redirect, or `null` when nothing is published yet.
+ */
+export function resolveCurrentJsToolkit(index: VersionsIndex): string | null {
+  return resolveBareRoot(index, 'js-toolkit')?.version ?? null;
+}
+
 export function isMutableVersion(requested: string, resolved: ExactVersion): boolean {
   return requested !== resolved.version;
 }

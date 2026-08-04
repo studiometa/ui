@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- **Browser CDN:** add an official browser CDN (`cdn.studiometa.dev`) — one `<script type="module">` with declarative `data-component` autoloading, immutable versioned releases, per-component subpath imports (`/ui@<version>/Action.js`) mirroring the npm subpaths, a JSON registry at the root, and per-PR previews; `mapbox-gl` is consumer-provided via an import map ([#573](https://github.com/studiometa/ui/pull/573), [#578](https://github.com/studiometa/ui/pull/578))
 - **Mapbox:** provide `mapbox-gl` (and the optional geocoder) dynamically — add `provideMapboxGl` / `provideMapboxGeocoder` injection and `resolveMapboxGl` / `resolveMapboxGeocoder` resolvers so a host can supply its own instance; `mapbox-gl` is otherwise resolved with a lazy `import()` on first map build instead of a bundled static import ([#575](https://github.com/studiometa/ui/pull/575))
 - **Toaster:** add the `Toaster` and `Toast` components — a headless notifications region built on two `aria-live` regions so toasts are announced without moving focus, each toast a `Timer`-based `Toast` with a pausable auto-dismiss countdown, and stacking animated through the `viewTransition` scheduler ([#572](https://github.com/studiometa/ui/pull/572))
 

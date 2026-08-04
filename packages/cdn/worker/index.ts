@@ -4,10 +4,12 @@ import {
   errorResponse,
   etagMatches,
   IMMUTABLE_CACHE_CONTROL,
+  MUTABLE_CACHE_CONTROL,
   optionsResponse,
   redirectResponse,
   responseHeaders,
 } from './responses.ts';
+import { buildRegistry } from './registry.ts';
 import type {
   BuildMetadata,
   ExactVersion,
@@ -15,9 +17,17 @@ import type {
   PackageName,
   R2BucketLike,
   R2ObjectBodyLike,
+  VersionsIndex,
   WorkerEnvironment,
 } from './types.ts';
-import { isMutableVersion, parseVersionsIndex, resolveBareRoot, resolveVersion } from './versions.ts';
+import {
+  isMutableVersion,
+  parseVersionsIndex,
+  resolveBareRoot,
+  resolveCurrentJsToolkit,
+  resolveCurrentUiRef,
+  resolveVersion,
+} from './versions.ts';
 import { classifyVersion, emitObservation, ObservationRecorder } from './observability.ts';
 
 const MAX_LINK_HEADER_BYTES = 7_500;
@@ -28,6 +38,10 @@ const PUBLIC_PACKAGE_NAMES: Record<PackageName, string> = {
   'js-toolkit': '@studiometa/ui-cdn-js-toolkit',
 };
 const SAFE_METADATA_PATH = /^(?!\/)(?!.*(?:^|\/)\.\.?(?:\/|$))(?!.*\\)[0-9A-Za-z._@+/-]+$/;
+
+// The npm packages a CDN component may belong to. The registry maps each component's packageName
+// straight into its reported owner, so an unexpected value must be rejected rather than surfaced.
+const COMPONENT_PACKAGE_NAMES = new Set(['@studiometa/ui', '@studiometa/ui-mapbox']);
 
 interface ReleaseMetadata {
   build: BuildMetadata;
@@ -115,7 +129,15 @@ function parseReleaseMetadata(
       (component) =>
         !validGraph(component, files, 'entry') ||
         !isRecord(component) ||
-        typeof component.strategy !== 'string',
+        typeof component.strategy !== 'string' ||
+        // packageName and subpath feed the registry's component URLs, so a readable but malformed
+        // build.json must be rejected rather than surfacing a wrong owner (`not-a-package`) or an
+        // unsafe URL (`../other.js`). The package name must be a known component package and the
+        // subpath a safe relative path (SAFE_METADATA_PATH forbids traversal and backslashes).
+        typeof component.packageName !== 'string' ||
+        !COMPONENT_PACKAGE_NAMES.has(component.packageName) ||
+        typeof component.subpath !== 'string' ||
+        !SAFE_METADATA_PATH.test(component.subpath),
     )
   ) {
     throw new Error('Invalid component graph.');
@@ -183,6 +205,63 @@ function objectEtag(object: R2ObjectBodyLike): string | undefined {
   return object.etag.startsWith('"') ? object.etag : `"${object.etag}"`;
 }
 
+async function readVersionsForRegistry(
+  bucket: R2BucketLike,
+  recorder: ObservationRecorder,
+): Promise<VersionsIndex | undefined> {
+  // The registry must stay available even when the index is missing, corrupt, or unreadable, so a
+  // failure here degrades to an empty registry rather than the 502 an asset request would return.
+  try {
+    const indexValue = await readJsonObject(bucket, 'versions.json');
+    recorder.r2('index', indexValue === undefined ? 'miss' : 'hit');
+    return indexValue === undefined ? undefined : parseVersionsIndex(indexValue);
+  } catch {
+    recorder.r2('index', 'miss');
+    return undefined;
+  }
+}
+
+async function handleRegistry(
+  request: Request,
+  environment: WorkerEnvironment,
+  origin: string,
+  recorder: ObservationRecorder,
+): Promise<Response> {
+  recorder.routeKind('registry');
+  const versions = await readVersionsForRegistry(environment.ASSETS, recorder);
+  const currentUiRef = versions ? resolveCurrentUiRef(versions) : null;
+  const currentJsToolkit = versions ? resolveCurrentJsToolkit(versions) : null;
+
+  let currentUiBuild: BuildMetadata | undefined;
+  if (versions && currentUiRef) {
+    const exact = resolveVersion(versions, 'ui', currentUiRef);
+    if (exact) {
+      try {
+        const metadata = await loadRelease(environment.ASSETS, exact, PUBLIC_PACKAGE_NAMES.ui);
+        recorder.r2('release-metadata', metadata ? 'hit' : 'miss');
+        currentUiBuild = metadata?.build;
+      } catch {
+        // An unreadable release manifest drops the entries and components but keeps the registry.
+        recorder.r2('release-metadata', 'miss');
+      }
+    }
+  }
+
+  const registry = buildRegistry({
+    origin,
+    versions,
+    currentUiRef,
+    currentJsToolkit,
+    currentUiBuild,
+  });
+  const headers = responseHeaders({
+    'Cache-Control': MUTABLE_CACHE_CONTROL,
+    'Content-Type': 'application/json; charset=utf-8',
+  });
+  const body = request.method === 'HEAD' ? null : JSON.stringify(registry);
+  return new Response(body, { status: 200, headers });
+}
+
 async function handleRequest(
   request: Request,
   environment: WorkerEnvironment,
@@ -198,6 +277,12 @@ async function handleRequest(
   }
 
   const url = new URL(request.url);
+  // The CDN root is the JSON registry of everything published; it runs before route parsing so a
+  // bare `/` returns the registry instead of being rejected as a malformed asset path.
+  if (url.pathname === '/') {
+    return handleRegistry(request, environment, url.origin, recorder);
+  }
+
   const bareRoot = parseBareRoot(url.pathname);
   // Validate an asset route up front so a malformed path is rejected before any storage access; a
   // bare package root skips validation and resolves against the index below.
