@@ -213,7 +213,9 @@ function targetIdentity(target: PublishTarget): { identity: string; finalPrefix:
  *    releases/channels and advancing distribution tags per policy;
  * 4. temporary objects are deleted on success and deliberately left in place on failure.
  *
- * An already-populated final prefix is never overwritten.
+ * An already-populated immutable prefix is never overwritten: for a channel or preview that is a
+ * hard error, but a release re-publish is idempotent — the existing tree is left in place and only
+ * the `versions.json` dist-tags are advanced, so re-running a release publish moves its tag.
  */
 /**
  * Stages every file of an artifact to a temporary prefix (verifying each read-back), then
@@ -315,13 +317,23 @@ export async function publish(
     }
   }
 
-  if ((await store.head(`${finalPrefix}/build.json`)) !== undefined) {
-    throw new Error(`${identity} is already published and immutable; refusing to overwrite it.`);
-  }
-  if (lockstepPrefix && (await store.head(`${lockstepPrefix}/build.json`)) !== undefined) {
-    throw new Error(
-      `${identity} (ui-mapbox) is already published and immutable; refusing to overwrite it.`,
-    );
+  // Immutable prefixes are written once. A release re-publish is idempotent for the dist-tags: the
+  // immutable tree is left untouched (re-uploading it is skipped) but the index is still rewritten
+  // below so re-running a publish for an already-published release moves its distribution tag. A
+  // channel or preview is commit-addressed and re-publishing one is a mistake, so it still hard-fails.
+  const finalAlreadyPublished = (await store.head(`${finalPrefix}/build.json`)) !== undefined;
+  const lockstepAlreadyPublished =
+    lockstepPrefix !== undefined &&
+    (await store.head(`${lockstepPrefix}/build.json`)) !== undefined;
+  if (target.kind !== 'release') {
+    if (finalAlreadyPublished) {
+      throw new Error(`${identity} is already published and immutable; refusing to overwrite it.`);
+    }
+    if (lockstepAlreadyPublished) {
+      throw new Error(
+        `${identity} (ui-mapbox) is already published and immutable; refusing to overwrite it.`,
+      );
+    }
   }
 
   const now = options.now ?? Date.now();
@@ -329,16 +341,24 @@ export async function publish(
   const temporaryPrefix = `tmp/${publicationId}`;
   const lockstepTemporaryPrefix = `tmp/${publicationId}-ui-mapbox`;
 
-  await stageAndCopyArtifact(store, artifact, finalPrefix, temporaryPrefix, identity, log);
+  if (finalAlreadyPublished) {
+    log(`${identity} is already published; skipping its upload and only advancing dist-tags.`);
+  } else {
+    await stageAndCopyArtifact(store, artifact, finalPrefix, temporaryPrefix, identity, log);
+  }
   if (lockstep && lockstepPrefix) {
-    await stageAndCopyArtifact(
-      store,
-      lockstep,
-      lockstepPrefix,
-      lockstepTemporaryPrefix,
-      `${identity} (ui-mapbox)`,
-      log,
-    );
+    if (lockstepAlreadyPublished) {
+      log(`${identity} (ui-mapbox) is already published; skipping its upload.`);
+    } else {
+      await stageAndCopyArtifact(
+        store,
+        lockstep,
+        lockstepPrefix,
+        lockstepTemporaryPrefix,
+        `${identity} (ui-mapbox)`,
+        log,
+      );
+    }
   }
 
   log('Updating versions.json.');
@@ -364,10 +384,12 @@ export async function publish(
   });
 
   log('Cleaning up temporary objects.');
-  await forEachWithConcurrency(artifact.files, (file) =>
-    store.delete(`${temporaryPrefix}/${file.path}`),
-  );
-  if (lockstep) {
+  if (!finalAlreadyPublished) {
+    await forEachWithConcurrency(artifact.files, (file) =>
+      store.delete(`${temporaryPrefix}/${file.path}`),
+    );
+  }
+  if (lockstep && !lockstepAlreadyPublished) {
     await forEachWithConcurrency(lockstep.files, (file) =>
       store.delete(`${lockstepTemporaryPrefix}/${file.path}`),
     );

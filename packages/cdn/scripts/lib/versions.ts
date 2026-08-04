@@ -7,6 +7,17 @@ const MAIN_CHANNEL_PATTERN = /^main-[0-9a-f]{7,40}$/;
 const PREVIEW_CHANNEL_PATTERN = /^pr-[1-9]\d*-[0-9a-f]{7,40}$/;
 const CHANNEL_PATTERN = /^(?:main|pr-[1-9]\d*)-[0-9a-f]{7,40}$/;
 
+/**
+ * The mutable distribution tags for a ui-like package, mirroring npm's model:
+ * - `latest` — the latest stable (non-prerelease) release.
+ * - `next` — the latest prerelease release (npm parity), decoupled from `main`. It tracks the
+ *   highest published prerelease and never moves backward to an older one. Managed by releases.
+ * - `main` — the rolling `main-<sha>` main channel, advanced on every main-branch publish.
+ *
+ * `next` and `main` are independent: `next` names a prerelease release once one is published, while
+ * `main` always names the newest main channel. Before any prerelease exists, a legacy `next` may
+ * still name the main channel (the tolerant Worker keeps accepting that shape).
+ */
 export interface DistributionTags {
   latest?: string;
   next?: string;
@@ -213,8 +224,15 @@ function withUiLikePackage(
 }
 
 /**
- * Records a stable release for a ui-like package. The `latest` distribution tag is advanced only for
- * non-prerelease versions; prereleases are indexed but never become `latest`.
+ * Records a release for a ui-like package and advances the release-managed distribution tags:
+ * - a stable (non-prerelease) version advances `latest` (npm's latest stable);
+ * - a prerelease version advances `next` (npm's latest prerelease), but only forward: `next` moves
+ *   to it when there is no current `next`, when the current `next` is a channel id rather than a
+ *   published release, or when the version sorts at/after the current `next` target. This keeps
+ *   `next` tracking the highest published prerelease and never regresses it to an older one.
+ *
+ * `main` (the rolling main channel) is never touched here — releases and the main channel are
+ * decoupled.
  */
 export function addRelease(
   index: WorkingVersionsIndex,
@@ -229,14 +247,24 @@ export function addRelease(
       ? [...pkg.releases]
       : [...pkg.releases, version];
     const distTags = { ...pkg.distTags };
-    if (isStableVersion(version)) distTags.latest = version;
+    if (isStableVersion(version)) {
+      distTags.latest = version;
+    } else if (
+      distTags.next === undefined ||
+      isChannelId(distTags.next) ||
+      compareStableVersions(version, distTags.next) >= 0
+    ) {
+      distTags.next = version;
+    }
     return { ...pkg, releases: releases.sort(compareStableVersions), distTags };
   });
 }
 
 /**
- * Records an immutable main channel for a ui-like package and advances its `next` and `main`
- * distribution tags together, as the Worker requires them to always name the same channel.
+ * Records an immutable main channel for a ui-like package and advances only its `main` distribution
+ * tag to the channel. `next` is no longer advanced here — it tracks the latest published prerelease
+ * release (managed by {@link addRelease}) and is left untouched so a channel publish never clobbers
+ * a prerelease `next`.
  */
 export function addChannel(
   index: WorkingVersionsIndex,
@@ -253,7 +281,7 @@ export function addChannel(
     return {
       ...pkg,
       channels: channels.sort(),
-      distTags: { ...pkg.distTags, next: channelId, main: channelId },
+      distTags: { ...pkg.distTags, main: channelId },
     };
   });
 }
@@ -281,8 +309,9 @@ export function addPreviewChannel(
 
 /**
  * Removes a channel from a ui-like package's index (used to prune a pull request's preview channel
- * once the PR is closed). If the channel happened to be the `next`/`main` target, both tags are
- * cleared together so the Worker's "next and main name the same published channel" invariant holds.
+ * once the PR is closed). Only `main` is a channel tag now, so if the pruned channel happened to be
+ * the `main` target it is cleared; `next` is left alone because it names a prerelease release rather
+ * than a channel. (Preview-channel pruning never set `main`, so this branch is mostly defensive.)
  */
 export function removeChannel(
   index: WorkingVersionsIndex,
@@ -292,8 +321,7 @@ export function removeChannel(
   return withUiLikePackage(index, packageName, (pkg) => {
     const channels = pkg.channels.filter((channel) => channel !== channelId);
     const distTags = { ...pkg.distTags };
-    if (distTags.next === channelId || distTags.main === channelId) {
-      delete distTags.next;
+    if (distTags.main === channelId) {
       delete distTags.main;
     }
     return { ...pkg, channels, distTags };
@@ -305,7 +333,7 @@ export function addUiRelease(index: WorkingVersionsIndex, version: string): Work
   return addRelease(index, 'ui', version);
 }
 
-/** Records an immutable `ui` main channel, advancing its `next`/`main` tags together. */
+/** Records an immutable `ui` main channel, advancing only its `main` tag. */
 export function addUiChannel(index: WorkingVersionsIndex, channelId: string): WorkingVersionsIndex {
   return addChannel(index, 'ui', channelId);
 }
@@ -318,7 +346,7 @@ export function addUiPreviewChannel(
   return addPreviewChannel(index, 'ui', channelId);
 }
 
-/** Removes a `ui` channel from the index, clearing `next`/`main` together if they named it. */
+/** Removes a `ui` channel from the index, clearing `main` if it named the pruned channel. */
 export function removeUiChannel(
   index: WorkingVersionsIndex,
   channelId: string,
