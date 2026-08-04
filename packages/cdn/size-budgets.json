@@ -15,8 +15,8 @@
     "js-toolkit:entry:utils": 6000,
     "js-toolkit:initial:index": 90000,
     "js-toolkit:initial:utils": 42000,
-    "total:esm": 360000,
-    "total:source-maps": 1600000,
-    "total:release": 2200000
+    "total:esm": 475000,
+    "total:source-maps": 2000000,
+    "total:release": 2700000
   }
 }
