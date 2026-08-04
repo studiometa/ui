@@ -6,11 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.10.0-beta.0](https://github.com/studiometa/ui/compare/1.9.0..1.10.0-beta.0) (2026-08-04)
+
 ### Added
 
-- **Browser CDN:** add an official browser CDN (`cdn.studiometa.dev`) — one `<script type="module">` with declarative `data-component` autoloading, immutable versioned releases, per-component subpath imports (`/ui@<version>/Action.js`) mirroring the npm subpaths, a JSON registry at the root, and per-PR previews; `mapbox-gl` is consumer-provided via an import map ([#573](https://github.com/studiometa/ui/pull/573), [#578](https://github.com/studiometa/ui/pull/578))
+- **Browser CDN:** add an official browser CDN (`cdn.studiometa.dev`) — one `<script type="module">` with declarative `data-component` autoloading, immutable versioned releases, per-component subpath imports (`/ui@<version>/Action.js`) mirroring the npm subpaths, a JSON registry at the root, and per-PR previews; `mapbox-gl` is consumer-provided via an import map ([#573](https://github.com/studiometa/ui/pull/573), [#578](https://github.com/studiometa/ui/pull/578), [#579](https://github.com/studiometa/ui/pull/579))
+- **@studiometa/ui-autoload:** add a generic, side-effect-free declarative autoloader package; `@studiometa/ui` and `@studiometa/ui-mapbox` each expose a `./manifest` (token → lazy `import()`) that the autoloader composes, and the CDN builds on it instead of a bespoke loader ([#580](https://github.com/studiometa/ui/pull/580))
+- **Browser CDN:** ship a TypeScript declaration (`.d.ts`) for every entry with an `X-TypeScript-Types` response header, so consumers importing from the CDN keep editor autocomplete ([#581](https://github.com/studiometa/ui/pull/581))
+- **Browser CDN:** serve `@studiometa/ui-mapbox` from its own `/ui-mapbox@<version>/` tree (barrel plus per-component subpaths), mirroring `ui` and `js-toolkit` ([#583](https://github.com/studiometa/ui/pull/583))
 - **Mapbox:** provide `mapbox-gl` (and the optional geocoder) dynamically — add `provideMapboxGl` / `provideMapboxGeocoder` injection and `resolveMapboxGl` / `resolveMapboxGeocoder` resolvers so a host can supply its own instance; `mapbox-gl` is otherwise resolved with a lazy `import()` on first map build instead of a bundled static import ([#575](https://github.com/studiometa/ui/pull/575))
 - **Toaster:** add the `Toaster` and `Toast` components — a headless notifications region built on two `aria-live` regions so toasts are announced without moving focus, each toast a `Timer`-based `Toast` with a pausable auto-dismiss countdown, and stacking animated through the `viewTransition` scheduler ([#572](https://github.com/studiometa/ui/pull/572))
+
+### Changed
+
+- **Playground:** load `@studiometa/js-toolkit`, `@studiometa/ui` and `@studiometa/ui-mapbox` from the browser CDN instead of esm.sh and locally bundled sources ([#584](https://github.com/studiometa/ui/pull/584))
+- **Build:** migrate every library build from esbuild to tsdown, and build `@studiometa/ui` into `packages/ui/dist` for parity with the other packages ([#585](https://github.com/studiometa/ui/pull/585))
+- **Release:** publish the npm packages with tokenless trusted publishing (OIDC provenance, no token) and publish the new `@studiometa/ui-autoload` package ([#586](https://github.com/studiometa/ui/pull/586))
 
 ## [v1.9.0](https://github.com/studiometa/ui/compare/1.8.0..1.9.0) (2026-07-29)
 
