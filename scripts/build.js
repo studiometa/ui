@@ -1,5 +1,3 @@
-import { build } from './shared.js';
+import { buildLibrary } from './shared.js';
 
-build({
-  format: 'esm',
-});
+await buildLibrary();

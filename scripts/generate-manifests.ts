@@ -1,19 +1,33 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { componentCatalogs } from '../src/component-metadata.ts';
-import type { ComponentCatalog, CuratedComponentMetadata } from '../src/component-metadata.ts';
+import { format, resolveConfig } from 'prettier';
+import { catalog as uiCatalog } from '../packages/ui/catalog.ts';
+import { catalog as mapboxCatalog } from '../packages/ui-mapbox/catalog.ts';
+import type { ComponentCatalog, CuratedComponentMetadata } from '../packages/ui-autoload/types.ts';
 
 const scriptsDirectory = dirname(fileURLToPath(import.meta.url));
-const packageDirectory = resolve(scriptsDirectory, '..');
-const repositoryDirectory = resolve(packageDirectory, '../..');
-const generatedManifestPath = resolve(packageDirectory, 'src/manifest.generated.ts');
+const repositoryDirectory = resolve(scriptsDirectory, '..');
 const checkOnly = process.argv.includes('--check');
 
-const packageDirectories = {
-  '@studiometa/ui': resolve(repositoryDirectory, 'packages/ui'),
-  '@studiometa/ui-mapbox': resolve(repositoryDirectory, 'packages/ui-mapbox'),
-} as const;
+interface PackageTarget {
+  catalog: ComponentCatalog;
+  directory: string;
+  manifestPath: string;
+}
+
+const targets: readonly PackageTarget[] = [
+  {
+    catalog: uiCatalog,
+    directory: resolve(repositoryDirectory, 'packages/ui'),
+    manifestPath: resolve(repositoryDirectory, 'packages/ui/manifest.ts'),
+  },
+  {
+    catalog: mapboxCatalog,
+    directory: resolve(repositoryDirectory, 'packages/ui-mapbox'),
+    manifestPath: resolve(repositoryDirectory, 'packages/ui-mapbox/manifest.ts'),
+  },
+];
 
 async function collectExportedClasses(entryPath: string, visited = new Set<string>()) {
   if (visited.has(entryPath)) return new Set<string>();
@@ -50,16 +64,33 @@ function assertUnique(values: readonly string[], label: string) {
   }
 }
 
-async function validateCatalog(catalog: ComponentCatalog) {
-  const packageDirectoryPath = packageDirectories[catalog.packageName];
-  const packageJson = JSON.parse(
-    await readFile(resolve(packageDirectoryPath, 'package.json'), 'utf8'),
-  );
-  const publicClasses = await collectExportedClasses(resolve(packageDirectoryPath, 'index.ts'));
+function exportTarget(packageJson: { exports: Record<string, string> }, subpath: string): string {
+  const explicit = packageJson.exports[`./${subpath}`];
+  if (explicit) return explicit;
+  const wildcard = packageJson.exports['./*'];
+  if (!wildcard) {
+    throw new Error(`No export found for subpath ./${subpath}`);
+  }
+  return wildcard.replace('*', subpath);
+}
+
+async function validateCatalog(target: PackageTarget) {
+  const { catalog } = target;
+  const packageJson = JSON.parse(await readFile(resolve(target.directory, 'package.json'), 'utf8'));
+  const publicClasses = await collectExportedClasses(resolve(target.directory, 'index.ts'));
   const tokens = catalog.components.map(({ token }) => token);
 
   assertUnique(tokens, `${catalog.packageName} component tokens`);
   assertUnique(catalog.abstractExports, `${catalog.packageName} abstract exports`);
+
+  const knownTokens = new Set(tokens);
+  for (const { token, children = [] } of catalog.components) {
+    for (const child of children) {
+      if (!knownTokens.has(child)) {
+        throw new Error(`Unknown recursive child ${child} referenced by ${token}`);
+      }
+    }
+  }
 
   for (const component of catalog.components) {
     const subpath = component.subpath ?? component.token;
@@ -93,53 +124,48 @@ function serializeArrayProperty(name: string, values: readonly string[] | undefi
   return values ? `\n    ${name}: ${JSON.stringify(values)},` : '';
 }
 
-function serializeComponent(catalog: ComponentCatalog, component: CuratedComponentMetadata) {
+function serializeComponent(
+  catalog: ComponentCatalog,
+  component: CuratedComponentMetadata,
+  packageJson: { exports: Record<string, string> },
+) {
   const { packageName, strategy } = catalog;
   const { token, group, children, styles, integrations } = component;
   const subpath = component.subpath ?? token;
   const exportName = component.exportName ?? token;
-  const importPath = `${packageName}/${subpath}`;
+  const importPath = exportTarget(packageJson, subpath).replace(/\.ts$/, '.js');
 
   return `  ${JSON.stringify(token)}: {\n    token: ${JSON.stringify(token)},\n    packageName: ${JSON.stringify(packageName)},\n    subpath: ${JSON.stringify(subpath)},\n    exportName: ${JSON.stringify(exportName)},\n    strategy: ${JSON.stringify(strategy)},\n    group: ${JSON.stringify(group)},${serializeArrayProperty('children', children)}${serializeArrayProperty('styles', styles)}${serializeArrayProperty('integrations', integrations)}\n    load: () => import(${JSON.stringify(importPath)}).then(({ ${exportName} }) => ${exportName}),\n  },`;
 }
 
-function generateManifest() {
-  const entries = componentCatalogs.flatMap((catalog) =>
-    [...catalog.components]
-      .sort((a, b) => a.token.localeCompare(b.token))
-      .map((component) => serializeComponent(catalog, component)),
-  );
+async function generateManifest(target: PackageTarget): Promise<string> {
+  const packageJson = JSON.parse(await readFile(resolve(target.directory, 'package.json'), 'utf8'));
+  const entries = [...target.catalog.components]
+    .sort((a, b) => a.token.localeCompare(b.token))
+    .map((component) => serializeComponent(target.catalog, component, packageJson));
 
-  return `// This file is generated by scripts/generate-manifest.ts. Do not edit.\nimport type { ComponentManifestEntry } from './manifest.js';\n\nexport const componentManifest: Record<string, ComponentManifestEntry> = {\n${entries.join('\n')}\n};\n`;
+  const source = `// This file is generated by scripts/generate-manifests.ts. Do not edit.\nimport type { ComponentManifest } from '@studiometa/ui-autoload';\n\nexport const manifest: ComponentManifest = {\n${entries.join('\n')}\n};\n`;
+  const prettierConfig = await resolveConfig(target.manifestPath);
+  return format(source, { ...prettierConfig, parser: 'typescript', filepath: target.manifestPath });
 }
 
-for (const catalog of componentCatalogs) await validateCatalog(catalog);
-assertUnique(
-  componentCatalogs.flatMap(({ components }) => components.map(({ token }) => token)),
-  'global component tokens',
-);
-
-const knownTokens = new Set(
-  componentCatalogs.flatMap(({ components }) => components.map(({ token }) => token)),
-);
-for (const { components } of componentCatalogs) {
-  for (const { token, children = [] } of components) {
-    for (const child of children) {
-      if (!knownTokens.has(child)) {
-        throw new Error(`Unknown recursive child ${child} referenced by ${token}`);
-      }
+let stale = false;
+for (const target of targets) {
+  await validateCatalog(target);
+  const generated = await generateManifest(target);
+  if (checkOnly) {
+    const current = await readFile(target.manifestPath, 'utf8').catch(() => '');
+    if (current !== generated) {
+      stale = true;
+      console.error(
+        `The generated manifest for ${target.catalog.packageName} is stale. Run npm run manifest:generate.`,
+      );
     }
+  } else {
+    await writeFile(target.manifestPath, generated);
   }
 }
 
-const generatedManifest = generateManifest();
-if (checkOnly) {
-  const currentManifest = await readFile(generatedManifestPath, 'utf8').catch(() => '');
-  if (currentManifest !== generatedManifest) {
-    throw new Error(
-      'The generated component manifest is stale. Run npm run cdn:manifest:generate.',
-    );
-  }
-} else {
-  await writeFile(generatedManifestPath, generatedManifest);
+if (stale) {
+  throw new Error('One or more component manifests are stale. Run npm run manifest:generate.');
 }

@@ -61,13 +61,22 @@ The Worker resolves an incoming version to an exact prefix, then reads `build.js
 
 ### Version Index
 
-`versions.json` uses `schemaVersion: 2` and is namespaced per package. `ui` lists its published stable releases, published preview channels, and mutable distribution tags; `js-toolkit` is exact-version only and carries just a release inventory:
+`versions.json` uses `schemaVersion: 2` and is namespaced per package. `ui` lists its published stable releases, published preview channels, and mutable distribution tags; `ui-mapbox` is an additive, optional package versioned in lockstep with `ui` and carrying the same shape; `js-toolkit` is exact-version only and carries just a release inventory:
 
 ```json
 {
   "schemaVersion": 2,
   "packages": {
     "ui": {
+      "releases": ["1.8.0", "1.9.0"],
+      "channels": ["main-abcd123"],
+      "distTags": {
+        "latest": "1.9.0",
+        "next": "main-abcd123",
+        "main": "main-abcd123"
+      }
+    },
+    "ui-mapbox": {
       "releases": ["1.8.0", "1.9.0"],
       "channels": ["main-abcd123"],
       "distTags": {
@@ -83,7 +92,9 @@ The Worker resolves an incoming version to an exact prefix, then reads `build.js
 }
 ```
 
-The Worker enforces several invariants when parsing the index. For `ui`: `releases` entries must be valid, unique semantic versions; `channels` entries must match `main-<commit>` and be unique; `latest` must name a published stable release with no pre-release identifier; and `next` and `main` must name the same published channel. A `ui@latest` alias resolves to `packages.ui.distTags.latest`; `ui@next` and `ui@main` both resolve to `packages.ui.distTags.next` (equivalently `.main`); a bare major (`ui@1`) or major.minor (`ui@1.9`) alias resolves to the highest matching stable release; and a versionless `/ui/...` resolves to `latest`. For `js-toolkit`: only an exact semantic version present in `packages["js-toolkit"].releases` resolves — there are no channels, distribution tags, aliases, or versionless default, so `/js-toolkit/...`, `/js-toolkit@latest/...`, and `/js-toolkit@3/...` all `404`.
+`ui-mapbox` is **additive and optional**: the schema number stays `2`, so the `ui-mapbox` key is written alongside `ui` without ever bumping `schemaVersion`. An index that predates the ui-mapbox tree simply omits the key; the release tooling migrates it in place by adding the key (still `schemaVersion: 2`) on the next publish, and the Worker defaults a missing `ui-mapbox` to an empty package so every `/ui-mapbox` route cleanly `404`s until it is populated. Keeping the schema at `2` means an older deployed Worker that predates the ui-mapbox tree still parses the index — it validates `ui` and `js-toolkit` and ignores the extra `ui-mapbox` key.
+
+The Worker enforces several invariants when parsing the index. For `ui` (and, when present, `ui-mapbox`, validated identically): `releases` entries must be valid, unique semantic versions; `channels` entries must match `main-<commit>` and be unique; `latest` must name a published stable release with no pre-release identifier; and `next` and `main` must name the same published channel. A `ui@latest` alias resolves to `packages.ui.distTags.latest`; `ui@next` and `ui@main` both resolve to `packages.ui.distTags.next` (equivalently `.main`); a bare major (`ui@1`) or major.minor (`ui@1.9`) alias resolves to the highest matching stable release; and a versionless `/ui/...` resolves to `latest`. For `js-toolkit`: only an exact semantic version present in `packages["js-toolkit"].releases` resolves — there are no channels, distribution tags, aliases, or versionless default, so `/js-toolkit/...`, `/js-toolkit@latest/...`, and `/js-toolkit@3/...` all `404`.
 
 ### Versioning Strategy
 

@@ -11,13 +11,13 @@
   "types": "index.d.ts",
   "exports": {
     ".": "./index.ts",
+    "./manifest": "./manifest.ts",
+    "./manifest.js": "./manifest.ts",
     "./*.js": "./*.ts",
     "./*": "./*.ts"
   },
   "scripts": {
-    "build": "npm run build:pkg && npm run build:types",
-    "build:pkg": "node scripts/build.js",
-    "build:types": "tsgo --build tsconfig.build.json"
+    "build": "node scripts/build.js"
   },
   "repository": {
     "type": "git",
@@ -40,17 +40,23 @@
   "peerDependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.0.0",
     "@studiometa/js-toolkit": "^3.8.0",
+    "@studiometa/ui-autoload": "^1.9.0",
     "mapbox-gl": "^3.0.0"
   },
   "peerDependenciesMeta": {
     "@mapbox/mapbox-gl-geocoder": {
+      "optional": true
+    },
+    "@studiometa/ui-autoload": {
       "optional": true
     }
   },
   "devDependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",
     "@studiometa/js-toolkit": "^3.8.0",
+    "@studiometa/ui-autoload": "file:../ui-autoload",
     "@types/mapbox__mapbox-gl-geocoder": "^5.0.0",
-    "mapbox-gl": "^3.13.0"
+    "mapbox-gl": "^3.13.0",
+    "tsdown": "0.21.5"
   }
 }

@@ -42,9 +42,7 @@ for (const duplicate of duplicates(conceptCatalog.map((concept) => concept.path)
 const conceptFiles = readdirSync(conceptsRoot)
   .filter((file) => file.endsWith('.md'))
   .toSorted();
-const catalogConceptFiles = conceptCatalog
-  .map((concept) => `${concept.slug}.md`)
-  .toSorted();
+const catalogConceptFiles = conceptCatalog.map((concept) => `${concept.slug}.md`).toSorted();
 
 for (const file of conceptFiles) {
   report(catalogConceptFiles.includes(file), `Unregistered concept page: ${file}`);
@@ -56,16 +54,17 @@ for (const concept of conceptCatalog) {
   report(Boolean(concept.title.trim()), `Missing title for concept ${concept.slug}`);
   report(Boolean(concept.summary.trim()), `Missing summary for concept ${concept.slug}`);
   const expectedPath =
-    concept.slug === 'index'
-      ? '/guide/concepts/'
-      : `/guide/concepts/${concept.slug}`;
+    concept.slug === 'index' ? '/guide/concepts/' : `/guide/concepts/${concept.slug}`;
   report(concept.path === expectedPath, `Non-canonical path for concept ${concept.slug}`);
 }
 
 const conceptsOverview = readFileSync(resolve(conceptsRoot, 'index.md'), 'utf8');
 const usageGuide = readFileSync(resolve(docsRoot, 'guide/usage/index.md'), 'utf8');
 report(/^### The Data family$/m.test(conceptsOverview), 'Missing legacy #the-data-family anchor');
-report(/^## Registering components$/m.test(usageGuide), 'Missing legacy #registering-components anchor');
+report(
+  /^## Registering components$/m.test(usageGuide),
+  'Missing legacy #registering-components anchor',
+);
 
 const itemDirectories = readdirSync(itemsRoot, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
@@ -133,7 +132,15 @@ const uiPackage = JSON.parse(
 ) as { exports: Record<string, string> };
 const explicitUiSubpaths = Object.keys(uiPackage.exports)
   .filter((key) => key.startsWith('./'))
-  .filter((key) => !key.includes('*') && key !== './package.json' && !key.endsWith('.js'))
+  // `./manifest` is a generated autoloader component manifest, not a documented reference item,
+  // so it is excluded from the subpath documentation check (like `./package.json`).
+  .filter(
+    (key) =>
+      !key.includes('*') &&
+      key !== './package.json' &&
+      key !== './manifest' &&
+      !key.endsWith('.js'),
+  )
   .map((key) => key.slice(2));
 
 for (const subpath of explicitUiSubpaths) {
@@ -220,12 +227,19 @@ for (const file of markdownFiles) {
   );
 
   if (!file.includes('/migration-guides/')) {
-    report(!/(?:atoms|molecules|organisms)\//.test(content), `Atomic-design path remains in ${file}`);
+    report(
+      !/(?:atoms|molecules|organisms)\//.test(content),
+      `Atomic-design path remains in ${file}`,
+    );
     report(
       !/\{%\s*(?:include|embed)\s+['"]@ui-pkg\//.test(content),
       `Package-only namespace used for a normal include in ${file}`,
     );
-    for (const phrase of ['JavaScript and Vue parts', 'Using Vue components', 'Twig or Vue project']) {
+    for (const phrase of [
+      'JavaScript and Vue parts',
+      'Using Vue components',
+      'Twig or Vue project',
+    ]) {
       report(!content.includes(phrase), `Legacy phrase "${phrase}" remains in ${file}`);
     }
   }

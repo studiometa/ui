@@ -1,0 +1,45 @@
+{
+  "name": "@studiometa/ui-autoload",
+  "version": "1.9.0",
+  "description": "Generic, side-effect-free declarative autoloader for @studiometa/ui component manifests",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "index.ts",
+  "types": "index.d.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./package.json": "./package.json",
+    "./*.js": "./*.ts",
+    "./*": "./*.ts"
+  },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/studiometa/ui.git"
+  },
+  "keywords": [
+    "ui",
+    "autoload",
+    "loader",
+    "js-toolkit"
+  ],
+  "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/studiometa/ui/issues"
+  },
+  "homepage": "https://github.com/studiometa/ui#readme",
+  "peerDependencies": {
+    "@studiometa/js-toolkit": "^3.8.0"
+  },
+  "devDependencies": {
+    "@studiometa/js-toolkit": "^3.8.0",
+    "tsdown": "0.21.5"
+  }
+}

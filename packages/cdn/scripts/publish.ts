@@ -95,24 +95,39 @@ async function main(): Promise<void> {
   const outputDirectory = resolve(packageDirectory, values['output-dir'] ?? 'dist');
 
   const uiTree = await singleTreeDirectory(resolve(outputDirectory, 'releases/ui'));
+  const uiMapboxTree = await singleTreeDirectory(resolve(outputDirectory, 'releases/ui-mapbox'));
   const jsToolkitTree = await singleTreeDirectory(resolve(outputDirectory, 'releases/js-toolkit'));
   const uiArtifact = await readArtifact(uiTree.directory);
+  const uiMapboxArtifact = await readArtifact(uiMapboxTree.directory);
   const jsToolkitArtifact = await readArtifact(jsToolkitTree.directory);
 
-  // Both trees come from the same source state and must be clean and publishable. Neither records a
+  // ui-mapbox is versioned in lockstep with ui: both trees must carry the same version.
+  if (uiMapboxTree.version !== uiTree.version) {
+    throw new Error(
+      `The ui-mapbox tree version ${uiMapboxTree.version} must equal the ui tree version ${uiTree.version}.`,
+    );
+  }
+
+  // All trees come from the same source state and must be clean and publishable. None records a
   // release gate anymore (Mapbox is external), but validatePublishability stays a dormant safeguard.
   validatePublishability(uiArtifact.build, { requireClean: true });
+  validatePublishability(uiMapboxArtifact.build, { requireClean: true });
   validatePublishability(jsToolkitArtifact.build, { requireClean: true });
 
   let uiTarget: PublishTarget;
   let mutableAliases: string[];
   if (values['git-tag']) {
     uiTarget = { kind: 'release', packageName: 'ui', version: values['git-tag'] };
-    mutableAliases = ['ui@latest/autoload.js'];
+    mutableAliases = ['ui@latest/autoload.js', 'ui@latest/index.js', 'ui-mapbox@latest/index.js'];
   } else if (values.channel === 'main') {
     const commit = values.commit ?? uiArtifact.build.build.commit;
     uiTarget = { kind: 'channel', commit };
-    mutableAliases = ['ui@next/autoload.js', 'ui@main/autoload.js'];
+    mutableAliases = [
+      'ui@next/autoload.js',
+      'ui@main/autoload.js',
+      'ui-mapbox@next/index.js',
+      'ui-mapbox@main/index.js',
+    ];
   } else if (values.pr !== undefined) {
     const pr = Number(values.pr);
     if (!Number.isInteger(pr) || pr < 1) {
@@ -138,8 +153,14 @@ async function main(): Promise<void> {
   // not already present. It must exist before the ui tree that imports it becomes visible.
   await ensureJsToolkitPublished(store, jsToolkitArtifact, jsToolkitTree.version, log);
 
-  const result = await publish(store, uiArtifact, uiTarget, { log });
-  process.stdout.write(`Published ${result.identity} to ${result.finalPrefix}.\n`);
+  // The ui and ui-mapbox trees are published together in one atomic versions.json write: the
+  // lockstep ui-mapbox artifact is staged, verified and copied into its own tree before the index
+  // records both packages at the same identity.
+  const result = await publish(store, uiArtifact, uiTarget, {
+    log,
+    lockstepUiMapbox: uiMapboxArtifact,
+  });
+  process.stdout.write(`Published ${result.identity} to ${result.finalPrefix} (ui + ui-mapbox).\n`);
 
   // The cache purge is a best-effort optimization that only shortens how long the mutable alias
   // redirects may serve a stale target (their TTL is minutes). The immutable assets and versions.json

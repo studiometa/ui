@@ -23,17 +23,23 @@ export interface JsToolkitPackageIndex {
   releases: string[];
 }
 
+export type UiLikePackageName = 'ui' | 'ui-mapbox';
+
 /**
  * Working representation of the schemaVersion 2 `versions.json`. Releases are namespaced per
- * package: `ui` keeps releases, immutable channels and distribution tags; `js-toolkit` is
- * exact-version only and carries just a release inventory. It intentionally allows partial `ui`
- * distribution tags so the tooling can bootstrap the index before a stable release and a main
- * channel exist. Once fully populated it satisfies the strict schema the Worker validates on read.
+ * package: `ui` and `ui-mapbox` each keep releases, immutable channels and distribution tags (and
+ * are versioned in lockstep); `js-toolkit` is exact-version only and carries just a release
+ * inventory. `ui-mapbox` is an additive, optional package: an index predating the ui-mapbox tree
+ * simply omits it, and it is bootstrapped empty and populated in place under the same
+ * schemaVersion 2. It intentionally allows partial distribution tags so the tooling can bootstrap
+ * the index before a stable release and a main channel exist. Once fully populated it satisfies the
+ * strict schema the Worker validates on read.
  */
 export interface WorkingVersionsIndex {
   schemaVersion: 2;
   packages: {
     ui: UiPackageIndex;
+    'ui-mapbox': UiPackageIndex;
     'js-toolkit': JsToolkitPackageIndex;
   };
 }
@@ -97,6 +103,7 @@ function emptyIndex(): WorkingVersionsIndex {
     schemaVersion: 2,
     packages: {
       ui: { releases: [], channels: [], distTags: {} },
+      'ui-mapbox': { releases: [], channels: [], distTags: {} },
       'js-toolkit': { releases: [] },
     },
   };
@@ -108,9 +115,29 @@ function stringArray(value: unknown): string[] {
     : [];
 }
 
+function parseUiLikePackage(value: unknown): UiPackageIndex {
+  const record = isRecord(value) ? value : {};
+  const distTags: DistributionTags = {};
+  if (isRecord(record.distTags)) {
+    for (const tag of ['latest', 'next', 'main'] as const) {
+      const candidate = record.distTags[tag];
+      if (typeof candidate === 'string') distTags[tag] = candidate;
+    }
+  }
+  return {
+    releases: stringArray(record.releases),
+    channels: stringArray(record.channels),
+    distTags,
+  };
+}
+
 /**
  * Parses an existing schemaVersion 2 `versions.json` payload leniently, returning an empty index
  * when the object is absent so a first publication can bootstrap it. Known entries are preserved.
+ * A live schema-2 index that predates the ui-mapbox tree (and therefore omits the `ui-mapbox` key)
+ * is accepted and migrated in place: the missing package is initialized empty so this publication
+ * can add its release/channel while the index stays schemaVersion 2. A valid schema-2 index is
+ * never refused.
  */
 export function parseWorkingVersionsIndex(text: string | undefined): WorkingVersionsIndex {
   if (text === undefined) return emptyIndex();
@@ -125,23 +152,12 @@ export function parseWorkingVersionsIndex(text: string | undefined): WorkingVers
       'The existing versions.json has an unsupported schema; refusing to overwrite it.',
     );
   }
-  const ui = isRecord(value.packages.ui) ? value.packages.ui : {};
   const jsToolkit = isRecord(value.packages['js-toolkit']) ? value.packages['js-toolkit'] : {};
-  const distTags: DistributionTags = {};
-  if (isRecord(ui.distTags)) {
-    for (const tag of ['latest', 'next', 'main'] as const) {
-      const candidate = ui.distTags[tag];
-      if (typeof candidate === 'string') distTags[tag] = candidate;
-    }
-  }
   return {
     schemaVersion: 2,
     packages: {
-      ui: {
-        releases: stringArray(ui.releases),
-        channels: stringArray(ui.channels),
-        distTags,
-      },
+      ui: parseUiLikePackage(value.packages.ui),
+      'ui-mapbox': parseUiLikePackage(value.packages['ui-mapbox']),
       'js-toolkit': {
         releases: stringArray(jsToolkit.releases),
       },
@@ -149,24 +165,31 @@ export function parseWorkingVersionsIndex(text: string | undefined): WorkingVers
   };
 }
 
+// Serializes a ui-like package deterministically: releases sorted by semver, channels sorted
+// lexically and distribution tags emitted in a stable key order.
+function serializeUiLikePackage(pkg: UiPackageIndex): UiPackageIndex {
+  const distTags: DistributionTags = {};
+  if (pkg.distTags.latest !== undefined) distTags.latest = pkg.distTags.latest;
+  if (pkg.distTags.next !== undefined) distTags.next = pkg.distTags.next;
+  if (pkg.distTags.main !== undefined) distTags.main = pkg.distTags.main;
+  return {
+    releases: [...new Set(pkg.releases)].sort(compareStableVersions),
+    channels: [...new Set(pkg.channels)].sort(),
+    distTags,
+  };
+}
+
 /**
- * Serializes the index deterministically: releases sorted by semver, channels sorted lexically and
- * distribution tags emitted in a stable key order. This keeps published payloads reproducible.
+ * Serializes the index deterministically so published payloads are reproducible: each ui-like
+ * package's releases are sorted by semver, channels lexically, and distribution tags in a stable
+ * key order, and js-toolkit's releases are sorted by semver.
  */
 export function serializeVersionsIndex(index: WorkingVersionsIndex): string {
-  const ui = index.packages.ui;
-  const distTags: DistributionTags = {};
-  if (ui.distTags.latest !== undefined) distTags.latest = ui.distTags.latest;
-  if (ui.distTags.next !== undefined) distTags.next = ui.distTags.next;
-  if (ui.distTags.main !== undefined) distTags.main = ui.distTags.main;
   const payload = {
     schemaVersion: 2,
     packages: {
-      ui: {
-        releases: [...new Set(ui.releases)].sort(compareStableVersions),
-        channels: [...new Set(ui.channels)].sort(),
-        distTags,
-      },
+      ui: serializeUiLikePackage(index.packages.ui),
+      'ui-mapbox': serializeUiLikePackage(index.packages['ui-mapbox']),
       'js-toolkit': {
         releases: [...new Set(index.packages['js-toolkit'].releases)].sort(compareStableVersions),
       },
@@ -175,93 +198,132 @@ export function serializeVersionsIndex(index: WorkingVersionsIndex): string {
   return `${JSON.stringify(payload, null, 2)}\n`;
 }
 
+function withUiLikePackage(
+  index: WorkingVersionsIndex,
+  packageName: UiLikePackageName,
+  update: (pkg: UiPackageIndex) => UiPackageIndex,
+): WorkingVersionsIndex {
+  return {
+    ...index,
+    packages: {
+      ...index.packages,
+      [packageName]: update(index.packages[packageName]),
+    },
+  };
+}
+
 /**
- * Records a stable ui release. The `latest` distribution tag is advanced only for non-prerelease
- * versions; prereleases are indexed but never become `latest`.
+ * Records a stable release for a ui-like package. The `latest` distribution tag is advanced only for
+ * non-prerelease versions; prereleases are indexed but never become `latest`.
  */
-export function addUiRelease(index: WorkingVersionsIndex, version: string): WorkingVersionsIndex {
+export function addRelease(
+  index: WorkingVersionsIndex,
+  packageName: UiLikePackageName,
+  version: string,
+): WorkingVersionsIndex {
   if (parseSemver(version) === undefined) {
     throw new Error(`Refusing to index a non-semver release: ${version}.`);
   }
-  const ui = index.packages.ui;
-  const releases = ui.releases.includes(version) ? [...ui.releases] : [...ui.releases, version];
-  const distTags = { ...ui.distTags };
-  if (isStableVersion(version)) distTags.latest = version;
-  return {
-    ...index,
-    packages: {
-      ...index.packages,
-      ui: { ...ui, releases: releases.sort(compareStableVersions), distTags },
-    },
-  };
+  return withUiLikePackage(index, packageName, (pkg) => {
+    const releases = pkg.releases.includes(version)
+      ? [...pkg.releases]
+      : [...pkg.releases, version];
+    const distTags = { ...pkg.distTags };
+    if (isStableVersion(version)) distTags.latest = version;
+    return { ...pkg, releases: releases.sort(compareStableVersions), distTags };
+  });
 }
 
 /**
- * Records an immutable ui main channel and advances the `next` and `main` distribution tags
- * together, as the Worker requires them to always name the same channel.
+ * Records an immutable main channel for a ui-like package and advances its `next` and `main`
+ * distribution tags together, as the Worker requires them to always name the same channel.
  */
-export function addUiChannel(index: WorkingVersionsIndex, channelId: string): WorkingVersionsIndex {
+export function addChannel(
+  index: WorkingVersionsIndex,
+  packageName: UiLikePackageName,
+  channelId: string,
+): WorkingVersionsIndex {
   if (!isMainChannelId(channelId)) {
     throw new Error(`Refusing to index a malformed main channel identity: ${channelId}.`);
   }
-  const ui = index.packages.ui;
-  const channels = ui.channels.includes(channelId) ? [...ui.channels] : [...ui.channels, channelId];
-  return {
-    ...index,
-    packages: {
-      ...index.packages,
-      ui: {
-        ...ui,
-        channels: channels.sort(),
-        distTags: { ...ui.distTags, next: channelId, main: channelId },
-      },
-    },
-  };
+  return withUiLikePackage(index, packageName, (pkg) => {
+    const channels = pkg.channels.includes(channelId)
+      ? [...pkg.channels]
+      : [...pkg.channels, channelId];
+    return {
+      ...pkg,
+      channels: channels.sort(),
+      distTags: { ...pkg.distTags, next: channelId, main: channelId },
+    };
+  });
 }
 
 /**
- * Records a per-pull-request `pr-<number>-<sha>` preview channel. Unlike the rolling main channel,
- * a preview channel is addressable only by its exact id and never becomes a distribution tag, so
- * the `next`/`main` tags (and every stable alias) are left untouched.
+ * Records a per-pull-request `pr-<number>-<sha>` preview channel for a ui-like package. Unlike the
+ * rolling main channel, a preview channel is addressable only by its exact id and never becomes a
+ * distribution tag, so the `next`/`main` tags (and every stable alias) are left untouched.
  */
-export function addUiPreviewChannel(
+export function addPreviewChannel(
   index: WorkingVersionsIndex,
+  packageName: UiLikePackageName,
   channelId: string,
 ): WorkingVersionsIndex {
   if (!isPreviewChannelId(channelId)) {
     throw new Error(`Refusing to index a malformed preview channel identity: ${channelId}.`);
   }
-  const ui = index.packages.ui;
-  const channels = ui.channels.includes(channelId) ? [...ui.channels] : [...ui.channels, channelId];
-  return {
-    ...index,
-    packages: {
-      ...index.packages,
-      ui: { ...ui, channels: channels.sort() },
-    },
-  };
+  return withUiLikePackage(index, packageName, (pkg) => {
+    const channels = pkg.channels.includes(channelId)
+      ? [...pkg.channels]
+      : [...pkg.channels, channelId];
+    return { ...pkg, channels: channels.sort() };
+  });
 }
 
 /**
- * Removes a channel from the index (used to prune a pull request's preview channel once the PR is
- * closed). If the channel happened to be the `next`/`main` target, both tags are cleared together
- * so the Worker's "next and main name the same published channel" invariant is preserved.
+ * Removes a channel from a ui-like package's index (used to prune a pull request's preview channel
+ * once the PR is closed). If the channel happened to be the `next`/`main` target, both tags are
+ * cleared together so the Worker's "next and main name the same published channel" invariant holds.
  */
+export function removeChannel(
+  index: WorkingVersionsIndex,
+  packageName: UiLikePackageName,
+  channelId: string,
+): WorkingVersionsIndex {
+  return withUiLikePackage(index, packageName, (pkg) => {
+    const channels = pkg.channels.filter((channel) => channel !== channelId);
+    const distTags = { ...pkg.distTags };
+    if (distTags.next === channelId || distTags.main === channelId) {
+      delete distTags.next;
+      delete distTags.main;
+    }
+    return { ...pkg, channels, distTags };
+  });
+}
+
+/** Records a stable `ui` release, advancing its `latest` tag for a non-prerelease version. */
+export function addUiRelease(index: WorkingVersionsIndex, version: string): WorkingVersionsIndex {
+  return addRelease(index, 'ui', version);
+}
+
+/** Records an immutable `ui` main channel, advancing its `next`/`main` tags together. */
+export function addUiChannel(index: WorkingVersionsIndex, channelId: string): WorkingVersionsIndex {
+  return addChannel(index, 'ui', channelId);
+}
+
+/** Records a per-pull-request `ui` preview channel without moving any distribution tag. */
+export function addUiPreviewChannel(
+  index: WorkingVersionsIndex,
+  channelId: string,
+): WorkingVersionsIndex {
+  return addPreviewChannel(index, 'ui', channelId);
+}
+
+/** Removes a `ui` channel from the index, clearing `next`/`main` together if they named it. */
 export function removeUiChannel(
   index: WorkingVersionsIndex,
   channelId: string,
 ): WorkingVersionsIndex {
-  const ui = index.packages.ui;
-  const channels = ui.channels.filter((channel) => channel !== channelId);
-  const distTags = { ...ui.distTags };
-  if (distTags.next === channelId || distTags.main === channelId) {
-    delete distTags.next;
-    delete distTags.main;
-  }
-  return {
-    ...index,
-    packages: { ...index.packages, ui: { ...ui, channels, distTags } },
-  };
+  return removeChannel(index, 'ui', channelId);
 }
 
 /**

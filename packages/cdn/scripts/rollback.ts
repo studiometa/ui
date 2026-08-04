@@ -60,10 +60,15 @@ async function main(): Promise<void> {
   let mutableAliases: string[];
   if (values['stable-latest']) {
     target = { kind: 'release', version: values['stable-latest'] };
-    mutableAliases = ['ui@latest/autoload.js'];
+    mutableAliases = ['ui@latest/autoload.js', 'ui@latest/index.js', 'ui-mapbox@latest/index.js'];
   } else {
     target = { kind: 'channel', channelId: values.channel as string };
-    mutableAliases = ['ui@next/autoload.js', 'ui@main/autoload.js'];
+    mutableAliases = [
+      'ui@next/autoload.js',
+      'ui@main/autoload.js',
+      'ui-mapbox@next/index.js',
+      'ui-mapbox@main/index.js',
+    ];
   }
 
   const store = createS3ObjectStore(loadObjectStoreConfig(process.env));

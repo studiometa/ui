@@ -9,7 +9,7 @@ function resolve(path) {
 
 const root = resolve('../');
 const uiRoot = resolve('../packages/ui/');
-const distRoot = resolve('../dist/');
+const distRoot = resolve('../packages/ui/dist/');
 
 /**
  * List the component directories exposing a public `index.ts` entrypoint.

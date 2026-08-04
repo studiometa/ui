@@ -1,17 +1,17 @@
-import { execFileSync } from 'node:child_process';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { Base, type BaseConstructor } from '@studiometa/js-toolkit';
+import { catalog as uiCatalog } from '@studiometa/ui/catalog';
+import { catalog as mapboxCatalog } from '@studiometa/ui-mapbox/catalog';
 import * as uiExports from '@studiometa/ui';
 import * as mapboxExports from '@studiometa/ui-mapbox';
 import { describe, expect, it } from 'vitest';
-import { componentCatalogs } from '../src/component-metadata.js';
 import { componentManifest } from '../src/manifest.js';
 
-const packageExports = {
+const componentCatalogs = [uiCatalog, mapboxCatalog] as const;
+
+const packageExports: Record<string, Record<string, unknown>> = {
   '@studiometa/ui': uiExports,
   '@studiometa/ui-mapbox': mapboxExports,
-} as const;
+};
 
 const excludedNames = [
   'AbstractCarouselChild',
@@ -38,7 +38,7 @@ function isBaseConstructor(value: unknown): value is BaseConstructor {
   return typeof value === 'function' && value.prototype instanceof Base;
 }
 
-describe('component manifest', () => {
+describe('composed CDN component manifest', () => {
   it('represents every concrete public Base constructor exactly once', () => {
     for (const catalog of componentCatalogs) {
       const publicConstructors = Object.entries(packageExports[catalog.packageName])
@@ -137,13 +137,5 @@ describe('component manifest', () => {
       const instance = new Constructor(document.createElement('div'));
       expect(entry.children ?? []).toEqual(Object.keys(instance.$config.components ?? {}));
     }
-  });
-
-  it('keeps the generated file fresh', () => {
-    // Resolve relative to this test file, not process.cwd(), so the check is correct regardless
-    // of which working directory the runner uses.
-    const packageDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-    const generatorPath = resolve(packageDirectory, 'scripts/generate-manifest.ts');
-    expect(() => execFileSync(process.execPath, [generatorPath, '--check'])).not.toThrow();
   });
 });

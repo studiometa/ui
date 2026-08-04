@@ -1,7 +1,11 @@
+import {
+  autoload,
+  type ComponentLoader,
+  type ComponentManifest,
+  type LoaderDependencies,
+} from '@studiometa/ui-autoload';
 import packageMetadata from '../package.json' with { type: 'json' };
-import { ComponentLoader, type LoaderDependencies } from './loader.js';
 import { componentManifest } from './manifest.js';
-import type { ComponentManifestEntry } from './manifest.js';
 
 const SCRIPT_SELECTOR = 'script[data-studiometa-ui]';
 const RUNTIME_KEY = Symbol.for('@studiometa/ui-cdn/runtime');
@@ -17,7 +21,7 @@ export interface AutoloadOptions {
   document?: Document;
   globalObject?: object;
   version?: string;
-  manifest?: Record<string, ComponentManifestEntry>;
+  manifest?: ComponentManifest;
   loaderDependencies?: Partial<LoaderDependencies>;
   console?: Pick<Console, 'warn'>;
 }
@@ -89,11 +93,15 @@ export function startAutoload(options: AutoloadOptions = {}): CdnRuntime | undef
     return undefined;
   }
 
-  const loader = new ComponentLoader({
-    manifest,
+  const markedScript = scripts[0];
+  const { loader } = autoload({
+    manifests: [manifest],
+    root: documentObject,
+    eager: markedScript ? getEagerComponents(markedScript, logger) : [],
     dependencies: {
       document: documentObject,
       console: options.loaderDependencies?.console ?? console,
+      diagnosticPrefix: DIAGNOSTIC_PREFIX,
       ...options.loaderDependencies,
     },
   });
@@ -103,10 +111,6 @@ export function startAutoload(options: AutoloadOptions = {}): CdnRuntime | undef
     loader,
   };
   runtimeHost[RUNTIME_KEY] = runtime;
-  const markedScript = scripts[0];
-  loader.start({
-    eagerComponents: markedScript ? getEagerComponents(markedScript, logger) : [],
-  });
   return runtime;
 }
 

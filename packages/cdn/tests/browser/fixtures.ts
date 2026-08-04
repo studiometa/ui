@@ -69,14 +69,17 @@ export default {
   FullscreenControl: noop,
 };
 `;
-const MAPBOX_GEOCODER_STUB = 'export default class StubGeocoder { addTo() {} onRemove() {} on() {} };';
+const MAPBOX_GEOCODER_STUB =
+  'export default class StubGeocoder { addTo() {} onRemove() {} on() {} };';
 const MAPBOX_GL_STUB_PATH = '/stub/mapbox-gl.js';
 const MAPBOX_GEOCODER_STUB_PATH = '/stub/mapbox-gl-geocoder.js';
 
 export interface CdnServers {
   artifactOrigin: string;
   build: BuildMetadata;
+  uiMapboxBuild: BuildMetadata;
   exactUrl: (path: string, identifier?: string) => string;
+  uiMapboxUrl: (path: string) => string;
   fixtureUrl: (options: FixturePageOptions) => string;
   requests: RequestLog[];
   reset: () => void;
@@ -182,9 +185,19 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
     await readFile(resolve(uiOutputDirectory, 'build.json'), 'utf8'),
   ) as BuildMetadata;
   const jsToolkitVersion = build.dependencies['@studiometa/js-toolkit'];
-  const jsToolkitOutputDirectory = resolve(outputDirectory, 'releases/js-toolkit', jsToolkitVersion);
+  const jsToolkitOutputDirectory = resolve(
+    outputDirectory,
+    'releases/js-toolkit',
+    jsToolkitVersion,
+  );
+  // ui-mapbox is versioned in lockstep with ui and served from its own absolute /ui-mapbox@<v>/ URL.
+  const uiMapboxOutputDirectory = resolve(outputDirectory, 'releases/ui-mapbox', uiVersion);
+  const uiMapboxBuild = JSON.parse(
+    await readFile(resolve(uiMapboxOutputDirectory, 'build.json'), 'utf8'),
+  ) as BuildMetadata;
   const realUiDirectory = await realpath(uiOutputDirectory);
   const realJsToolkitDirectory = await realpath(jsToolkitOutputDirectory);
+  const realUiMapboxDirectory = await realpath(uiMapboxOutputDirectory);
   const requests: RequestLog[] = [];
   const delays = new Map<string, number>();
   const encodedIdentifier = encodeURIComponent(build.build.identifier);
@@ -244,6 +257,21 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
       return;
     }
 
+    // The lockstep ui-mapbox tree at its own absolute URL namespace, mirroring the real Worker. The
+    // composed autoload manifest lazy-imports Mapbox components from `/ui-mapbox@<version>/…`.
+    const uiMapbox = url.pathname.match(/^\/ui-mapbox@([^/]+)\/(.+)$/);
+    if (uiMapbox) {
+      const version = decodeURIComponent(uiMapbox[1]);
+      const relativePath = decodeURIComponent(uiMapbox[2]);
+      const realPath =
+        version === uiVersion
+          ? await resolveWithin(uiMapboxOutputDirectory, realUiMapboxDirectory, relativePath)
+          : undefined;
+      if (!realPath) return notFound(response);
+      await send(response, realPath, relativePath, await readFile(realPath));
+      return;
+    }
+
     const match = url.pathname.match(/^\/cdn\/([^/]+)\/(.+)$/);
     if (!match) return notFound(response);
 
@@ -255,14 +283,22 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
     let contents = await readFile(realPath);
     if (relativePath === build.entries.autoload.path && identifier !== build.build.identifier) {
       const source = contents.toString('utf8');
-      const versionMarker = `version:"${build.package.version}"`;
-      if (!source.includes(versionMarker)) {
+      // Serve a genuinely conflicting runtime version for a mismatched identifier by rewriting the
+      // package version the autoload module embeds. The bundler inlines it as a single quoted
+      // literal — esbuild placed it inline in the runtime object (version:"x") while tsdown/rolldown
+      // hoists it into a `x`-quoted variable referenced as version:<id> — so target the standalone
+      // version literal itself, preserving whichever quote (", ' or `) the bundler chose. The single
+      // match is asserted so an unexpected output shape fails loudly instead of silently no-op'ing.
+      const escaped = build.package.version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const versionLiteral = new RegExp(`(["'\`])${escaped}\\1`, 'g');
+      const matches = source.match(versionLiteral);
+      if (!matches || matches.length !== 1) {
         response.statusCode = 500;
         addArtifactHeaders(response, MIME_TYPES['.txt']);
         response.end('The versioned autoload fixture transform is stale.');
         return;
       }
-      contents = Buffer.from(source.replace(versionMarker, `version:"${identifier}"`));
+      contents = Buffer.from(source.replace(versionLiteral, `$1${identifier}$1`));
     }
 
     await send(response, realPath, relativePath, contents);
@@ -325,10 +361,16 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
   });
   pageOrigin = await listen(pageServer);
 
+  function uiMapboxUrl(path: string) {
+    return `${artifactOrigin}/ui-mapbox@${encodeURIComponent(uiVersion)}/${path}`;
+  }
+
   const fixture: CdnServers = {
     artifactOrigin,
     build,
+    uiMapboxBuild,
     exactUrl,
+    uiMapboxUrl,
     fixtureUrl(options) {
       const url = new URL('/fixture', pageOrigin);
       url.searchParams.set('body', options.body);

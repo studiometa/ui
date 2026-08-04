@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { copyFile, readFile, readdir, rm, stat } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { dirname, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -22,6 +22,8 @@ const jsToolkitVersion = JSON.parse(
   ),
 ).version as string;
 const uiTreePrefix = `releases/ui/${uiVersion}`;
+// ui-mapbox is versioned in lockstep with ui, so its tree lives at the same version.
+const uiMapboxTreePrefix = `releases/ui-mapbox/${uiVersion}`;
 const jsToolkitTreePrefix = `releases/js-toolkit/${jsToolkitVersion}`;
 
 interface BuildMetadata {
@@ -72,7 +74,7 @@ interface BuildMetadata {
   styles: Record<string, { path: string; autoInject: boolean }>;
   licenses: {
     thirdPartyNotices: string;
-    esbuildLegalComments: string;
+    legalComments: string;
   };
   integrations: Record<string, Record<string, unknown>>;
   releaseGates: Record<string, Record<string, unknown>>;
@@ -115,16 +117,19 @@ async function staticGraphSources(
 }
 
 let build: BuildMetadata;
+let uiMapboxBuild: BuildMetadata;
 let jsToolkitBuild: {
   package: { name: string; version: string };
   entries: Record<string, { path: string }>;
 };
-// The whole dist tree (spanning both packages) used for reproducibility.
+// The whole dist tree (spanning all three packages) used for reproducibility.
 let allFiles: string[];
 // The ui tree relative to its own release prefix, used for ui-relative build.json assertions.
 let uiFiles: string[];
+let uiMapboxFiles: string[];
 let jsToolkitFiles: string[];
 let uiTree: string;
+let uiMapboxTree: string;
 let jsToolkitTree: string;
 
 beforeAll(async () => {
@@ -138,11 +143,14 @@ beforeAll(async () => {
     );
   }
   uiTree = resolve(firstOutput, uiTreePrefix);
+  uiMapboxTree = resolve(firstOutput, uiMapboxTreePrefix);
   jsToolkitTree = resolve(firstOutput, jsToolkitTreePrefix);
   build = await readJson(uiTree, 'build.json');
+  uiMapboxBuild = await readJson(uiMapboxTree, 'build.json');
   jsToolkitBuild = await readJson(jsToolkitTree, 'build.json');
   allFiles = await listFiles(firstOutput);
   uiFiles = await listFiles(uiTree);
+  uiMapboxFiles = await listFiles(uiMapboxTree);
   jsToolkitFiles = await listFiles(jsToolkitTree);
 }, 60_000);
 
@@ -151,14 +159,80 @@ afterAll(async () => {
 });
 
 describe('browser CDN build', () => {
-  it('emits both a ui tree and a versioned js-toolkit tree', () => {
+  it('emits a ui tree, a lockstep ui-mapbox tree, and a versioned js-toolkit tree', () => {
     expect(allFiles.some((file) => file.startsWith(`${uiTreePrefix}/`))).toBe(true);
+    expect(allFiles.some((file) => file.startsWith(`${uiMapboxTreePrefix}/`))).toBe(true);
     expect(allFiles.some((file) => file.startsWith(`${jsToolkitTreePrefix}/`))).toBe(true);
     expect(build.package.name).toBe('@studiometa/ui-cdn');
     expect(build.package.version).toBe(uiVersion);
     expect(build.dependencies['@studiometa/js-toolkit']).toBe(jsToolkitVersion);
+    // The ui-mapbox tree reports the ui-cdn-mapbox build name and the same lockstep ui version.
+    expect(uiMapboxBuild.package.name).toBe('@studiometa/ui-cdn-mapbox');
+    expect(uiMapboxBuild.package.version).toBe(uiVersion);
     expect(jsToolkitBuild.package.name).toBe('@studiometa/ui-cdn-js-toolkit');
     expect(jsToolkitBuild.package.version).toBe(jsToolkitVersion);
+  });
+
+  it('gives the ui-mapbox tree its own barrel and per-component entries and keeps them out of the ui tree', async () => {
+    // The ui-mapbox tree carries the barrel plus a stable `<subpath>.js`/`.d.ts` per Mapbox component.
+    expect(uiMapboxFiles).toContain('index.js');
+    expect(uiMapboxFiles).toContain('index.d.ts');
+    for (const [token, component] of Object.entries(uiMapboxBuild.components)) {
+      expect(component.packageName).toBe('@studiometa/ui-mapbox');
+      expect(component.entry).toBe(`${component.subpath}.js`);
+      expect(uiMapboxFiles).toContain(`${component.subpath}.js`);
+      expect(uiMapboxFiles).toContain(`${component.subpath}.js.map`);
+      expect(uiMapboxFiles).toContain(`${component.subpath}.d.ts`);
+      // Mapbox GL is external, so no Mapbox component pulls a bundled dynamic chunk.
+      expect(component.dynamicImports).toEqual([]);
+      // The Mapbox component is served only from the ui-mapbox tree, never the ui tree.
+      expect(uiFiles).not.toContain(`${component.subpath}.js`);
+      expect(token).toMatch(/^[A-Za-z]/);
+    }
+    expect(uiMapboxFiles).toContain('MapboxMap.js');
+    expect(uiMapboxFiles).toContain('MapboxMap.d.ts');
+    expect(uiFiles).not.toContain('MapboxMap.js');
+    expect(uiFiles).not.toContain('MapboxMap.d.ts');
+
+    // The ui build.json owns only @studiometa/ui components now; no Mapbox token leaks into it.
+    for (const component of Object.values(build.components)) {
+      expect(component.packageName).toBe('@studiometa/ui');
+    }
+    expect(build.components.MapboxMap).toBeUndefined();
+
+    // The ui-mapbox tree externalizes js-toolkit (never bundles it) and imports mapbox-gl as an
+    // external bare specifier — no Mapbox library source is bundled into the tree.
+    let importsToolkitUrl = false;
+    for (const file of uiMapboxFiles.filter((path) => path.endsWith('.js'))) {
+      const contents = await readFile(resolve(uiMapboxTree, file), 'utf8');
+      expect(contents.includes('node_modules/@studiometa/js-toolkit')).toBe(false);
+      if (contents.includes(`/js-toolkit@${jsToolkitVersion}/index.js`)) importsToolkitUrl = true;
+    }
+    expect(importsToolkitUrl).toBe(true);
+    for (const file of uiMapboxFiles.filter((path) => path.endsWith('.map'))) {
+      const sourceMap = JSON.parse(await readFile(resolve(uiMapboxTree, file), 'utf8')) as {
+        sources: string[];
+      };
+      expect(
+        sourceMap.sources.some(
+          (source) =>
+            source.includes('node_modules/mapbox-gl/') ||
+            source.includes('node_modules/@mapbox/mapbox-gl-geocoder/'),
+        ),
+      ).toBe(false);
+    }
+  });
+
+  it('lazy-loads Mapbox components from the ui-mapbox tree in the composed autoload manifest', async () => {
+    // The composed autoload's bundled ui-mapbox manifest must resolve each Mapbox component to its
+    // absolute ui-mapbox tree URL rather than a chunk-relative path or a ui-tree chunk.
+    const manifestChunk = uiFiles.find((file) => /^chunks\/manifest-.*\.js$/.test(file));
+    expect(manifestChunk).toBeDefined();
+    const source = await readFile(resolve(uiTree, manifestChunk as string), 'utf8');
+    expect(source).toContain(`/ui-mapbox@${uiVersion}/MapboxMap.js`);
+    expect(source).toContain(`/ui-mapbox@${uiVersion}/StoreLocator.js`);
+    // The rewritten URL is a genuine absolute origin-relative path, not a `../` chunk-relative one.
+    expect(source).not.toContain(`../ui-mapbox@${uiVersion}/`);
   });
 
   it('serves the js-toolkit index and utils entries from the js-toolkit tree', () => {
@@ -281,7 +355,7 @@ describe('browser CDN build', () => {
 
   it('publishes complete entry, component, preload, and dynamic integration mappings', () => {
     expect(Object.keys(build.entries).sort()).toEqual(['autoload', 'index', 'loader', 'manifest']);
-    expect(Object.keys(build.components).length).toBeGreaterThan(80);
+    expect(Object.keys(build.components).length).toBeGreaterThan(70);
     for (const entry of Object.values(build.entries)) {
       expect(uiFiles).toContain(entry.path);
       expect(uiFiles).toContain(entry.sourceMap);
@@ -299,9 +373,10 @@ describe('browser CDN build', () => {
     }
 
     // Mapbox GL and the geocoder are external (import-map resolved), so no Mapbox component pulls a
-    // bundled Mapbox chunk — MapboxGeocoder and MapboxMap alike have no dynamic imports.
-    expect(build.components.MapboxGeocoder.dynamicImports).toEqual([]);
-    expect(build.components.MapboxMap.dynamicImports).toEqual([]);
+    // bundled Mapbox chunk — MapboxGeocoder and MapboxMap alike (now in the ui-mapbox tree) have no
+    // dynamic imports.
+    expect(uiMapboxBuild.components.MapboxGeocoder.dynamicImports).toEqual([]);
+    expect(uiMapboxBuild.components.MapboxMap.dynamicImports).toEqual([]);
   });
 
   it('emits a stable, non-hashed <subpath>.js entry at the ui tree root for every component', async () => {
@@ -320,23 +395,24 @@ describe('browser CDN build', () => {
       seen.add(component.entry);
     }
 
-    // A @studiometa/ui and a @studiometa/ui-mapbox sample are each served and re-export the
-    // component, so `import { X } from "/ui@<ref>/X.js"` mirrors the npm subpath export.
-    for (const [subpath, exportName] of [
-      ['Action', 'Action'],
-      ['MapboxMap', 'MapboxMap'],
+    // A @studiometa/ui sample (`/ui@<ref>/Action.js`) and a @studiometa/ui-mapbox sample
+    // (`/ui-mapbox@<ref>/MapboxMap.js`) are each served from their own tree and re-export the
+    // component, mirroring the npm subpath export. Both resolve js-toolkit through the single
+    // external URL somewhere in the entry's static graph, never by bundling js-toolkit source.
+    for (const [tree, treeFiles, buildJson, subpath, exportName] of [
+      [uiTree, uiFiles, build, 'Action', 'Action'],
+      [uiMapboxTree, uiMapboxFiles, uiMapboxBuild, 'MapboxMap', 'MapboxMap'],
     ] as const) {
-      const component = Object.values(build.components).find((entry) => entry.subpath === subpath);
+      const component = Object.values(buildJson.components).find(
+        (entry) => entry.subpath === subpath,
+      );
       expect(component).toBeDefined();
-      expect(uiFiles).toContain(`${subpath}.js`);
-      const source = await readFile(resolve(uiTree, `${subpath}.js`), 'utf8');
+      expect(treeFiles).toContain(`${subpath}.js`);
+      const source = await readFile(resolve(tree, `${subpath}.js`), 'utf8');
       expect(source).toMatch(new RegExp(`\\bas ${exportName}\\b`));
-      // js-toolkit is resolved through the single external URL somewhere in the entry's static
-      // graph (the entry or a shared chunk it imports, depending on code-splitting), never by
-      // bundling js-toolkit source.
       const graph = [`${subpath}.js`, ...component!.preload];
       const graphSources = await Promise.all(
-        graph.map((file) => readFile(resolve(uiTree, file), 'utf8')),
+        graph.map((file) => readFile(resolve(tree, file), 'utf8')),
       );
       expect(
         graphSources.some((text) => text.includes(`/js-toolkit@${jsToolkitVersion}/index.js`)),
@@ -482,6 +558,7 @@ describe('browser CDN build', () => {
   it('hashes every public output except integrity.json in each tree', async () => {
     for (const [tree, treeFiles] of [
       [uiTree, uiFiles],
+      [uiMapboxTree, uiMapboxFiles],
       [jsToolkitTree, jsToolkitFiles],
     ] as const) {
       const integrity = await readJson<{
@@ -510,12 +587,12 @@ describe('browser CDN build', () => {
     expect(build.releaseGates).toEqual({});
     expect(build.licenses).toEqual({
       thirdPartyNotices: 'licenses/THIRD_PARTY_LICENSES.txt',
-      esbuildLegalComments: 'eof',
+      legalComments: 'none',
     });
   });
 
   it('ships third-party notices and diagnoses the excluded Shopify preview adapter', async () => {
-    expect(build.licenses.esbuildLegalComments).toBe('eof');
+    expect(build.licenses.legalComments).toBe('none');
     const notices = await readFile(resolve(uiTree, build.licenses.thirdPartyNotices), 'utf8');
     // Mapbox GL and the geocoder are external and not bundled, so they carry no third-party notice.
     expect(notices).not.toContain('mapbox-gl@');
@@ -548,5 +625,94 @@ describe('browser CDN build', () => {
     for (const source of shopifySources) {
       expect(source).not.toContain('import("@shopify/partial-rendering")');
     }
+  });
+
+  it('emits a bundled declaration for every importable entry, recorded and hashed', async () => {
+    // Each ui entry, each component, and both js-toolkit entries carry a sibling `.d.ts`.
+    for (const entry of Object.values(build.entries)) {
+      const declaration = `${entry.path.slice(0, -'.js'.length)}.d.ts`;
+      expect(uiFiles).toContain(declaration);
+      expect(build.outputs[declaration].type).toBe('declaration');
+    }
+    for (const component of Object.values(build.components)) {
+      const declaration = `${component.entry.slice(0, -'.js'.length)}.d.ts`;
+      expect(uiFiles).toContain(declaration);
+      expect(build.outputs[declaration].type).toBe('declaration');
+    }
+    expect(uiFiles).toContain('Action.d.ts');
+    // The Mapbox declaration lives in the ui-mapbox tree now, not the ui tree.
+    expect(uiMapboxFiles).toContain('MapboxMap.d.ts');
+    expect(uiFiles).not.toContain('MapboxMap.d.ts');
+    expect(jsToolkitFiles).toContain('index.d.ts');
+    expect(jsToolkitFiles).toContain('utils/index.d.ts');
+
+    // Every declaration output (entries and shared declaration chunks) is a real, hashed file.
+    for (const [tree, treeFiles] of [
+      [uiTree, uiFiles],
+      [uiMapboxTree, uiMapboxFiles],
+      [jsToolkitTree, jsToolkitFiles],
+    ] as const) {
+      const buildJson = await readJson<BuildMetadata>(tree, 'build.json');
+      const integrity = await readJson<{ files: Record<string, string> }>(tree, 'integrity.json');
+      const declarations = treeFiles.filter((file) => file.endsWith('.d.ts'));
+      expect(declarations.length).toBeGreaterThan(0);
+      for (const declaration of declarations) {
+        expect(buildJson.outputs[declaration].type).toBe('declaration');
+        expect(integrity.files[declaration]).toBe(
+          `sha384-${await digest(resolve(tree, declaration))}`,
+        );
+      }
+    }
+
+    // Declaration size budgets exist and hold.
+    const budgets = await readJson<{ bytes: Record<string, number> }>(
+      packageDirectory,
+      'size-budgets.json',
+    );
+    for (const key of [
+      'total:declarations',
+      'dts:entry:index',
+      'dts:js-toolkit:entry:index',
+      'dts:js-toolkit:entry:utils',
+    ]) {
+      expect(budgets.bytes[key]).toBeTypeOf('number');
+      expect(build.assertions.sizeBudgets[key]).toBeLessThanOrEqual(budgets.bytes[key]);
+    }
+    const declarationBytes = (
+      await Promise.all(
+        allFiles
+          .filter((file) => file.endsWith('.d.ts'))
+          .map(async (file) => (await stat(resolve(firstOutput, file))).size),
+      )
+    ).reduce((total, bytes) => total + bytes, 0);
+    expect(build.assertions.sizeBudgets['total:declarations']).toBe(declarationBytes);
+  });
+
+  it('imports js-toolkit types externally in the ui declarations instead of inlining them', async () => {
+    // Walk the declaration graph reachable from the ui barrel (index.d.ts -> ./chunks/*.js siblings)
+    // and confirm js-toolkit is referenced by its bare specifier, never inlined from node_modules.
+    const seen = new Set<string>();
+    const queue = ['index.d.ts'];
+    let importsToolkitExternally = false;
+    while (queue.length > 0) {
+      const file = queue.shift() as string;
+      if (seen.has(file) || !uiFiles.includes(file)) continue;
+      seen.add(file);
+      const source = await readFile(resolve(uiTree, file), 'utf8');
+      if (/from\s*["']@studiometa\/js-toolkit["']/.test(source)) importsToolkitExternally = true;
+      expect(source).not.toContain('node_modules/@studiometa/js-toolkit');
+      for (const match of source.matchAll(/from\s*["']([^"']+)["']/g)) {
+        const specifier = match[1];
+        if (!specifier.startsWith('.')) continue;
+        const resolved = posix.join(posix.dirname(file), specifier);
+        queue.push(
+          resolved.endsWith('.js') ? `${resolved.slice(0, -'.js'.length)}.d.ts` : resolved,
+        );
+      }
+    }
+    expect(importsToolkitExternally).toBe(true);
+    // The ui barrel re-exports the components it declares.
+    const barrel = await readFile(resolve(uiTree, 'index.d.ts'), 'utf8');
+    expect(barrel).toMatch(/\bas Action\b/);
   });
 });

@@ -1,6 +1,8 @@
 import { resolve } from 'node:path';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
 
+const CDN_BASE_URL = 'https://cdn.studiometa.dev';
+
 export default defineWebpackConfig({
   presets: [
     playground({
@@ -26,21 +28,25 @@ export default defineWebpackConfig({
         'compute-scroll-into-view',
         'deepmerge',
         'morphdom',
+        // Consumer-provided peers that the ui-mapbox CDN tree externalizes, so
+        // they still need to be resolved for the script editor.
         { specifier: 'mapbox-gl', esmSh: { bundle: true } },
         { specifier: '@mapbox/mapbox-gl-geocoder', esmSh: { bundle: true } },
-        { specifier: '@studiometa/js-toolkit', esmSh: { bundle: false } },
-        { specifier: '@studiometa/js-toolkit/utils', esmSh: { bundle: false } },
-        {
-          specifier: '@studiometa/ui',
-          source: '../ui/**/*.ts',
-          entry: '../ui/index.ts',
-        },
-        {
-          specifier: '@studiometa/ui-mapbox',
-          source: '../ui-mapbox/**/*.ts',
-          entry: '../ui-mapbox/index.ts',
-        },
       ],
+      // Point js-toolkit, ui and ui-mapbox at the live studiometa CDN instead of
+      // esm.sh / local tsdown source-bundles. The CDN serves `.d.ts` + an
+      // `X-TypeScript-Types` header, so the editor keeps TypeScript autocomplete.
+      // js-toolkit MUST match the exact `/js-toolkit@3.8.0/index.js` URL the ui
+      // build bakes in as an absolute CDN import, so both share a single runtime.
+      importMap: {
+        '@studiometa/js-toolkit': `${CDN_BASE_URL}/js-toolkit@3.8.0/index.js`,
+        '@studiometa/js-toolkit/utils': `${CDN_BASE_URL}/js-toolkit@3.8.0/utils/index.js`,
+        // `@main` 307-redirects to the current immutable `main-<sha>` channel.
+        // Switch to `@latest` (or a pinned version) once a stable release tag is
+        // cut — `@latest` currently 404s because no stable CDN release exists yet.
+        '@studiometa/ui': `${CDN_BASE_URL}/ui@main/index.js`,
+        '@studiometa/ui-mapbox': `${CDN_BASE_URL}/ui-mapbox@main/index.js`,
+      },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
   Hello world

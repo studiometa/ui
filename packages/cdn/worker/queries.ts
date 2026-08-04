@@ -1,6 +1,6 @@
 import type { CanonicalQuery, PackageName, ParsedRoute } from './types.ts';
 
-const PACKAGE_NAMES: ReadonlySet<PackageName> = new Set(['ui', 'js-toolkit']);
+const PACKAGE_NAMES: ReadonlySet<PackageName> = new Set(['ui', 'ui-mapbox', 'js-toolkit']);
 
 const VERSION_TOKEN_PATTERN = /^[0-9A-Za-z.+-]+$/;
 const ASSET_SEGMENT_PATTERN = /^[0-9A-Za-z._@+-]+$/;

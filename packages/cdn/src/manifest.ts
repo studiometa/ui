@@ -1,17 +1,21 @@
-import type { BaseConstructor } from '@studiometa/js-toolkit';
-import type { ComponentLoadStrategy, ComponentPackageName } from './component-metadata.js';
+import { composeManifests } from '@studiometa/ui-autoload';
+import { manifest as uiManifest } from '@studiometa/ui/manifest';
+import { manifest as mapboxManifest } from '@studiometa/ui-mapbox/manifest';
 
-export interface ComponentManifestEntry {
-  token: string;
-  packageName: ComponentPackageName;
-  subpath: string;
-  exportName: string;
-  strategy: ComponentLoadStrategy;
-  group: string;
-  children?: readonly string[];
-  styles?: readonly string[];
-  integrations?: readonly string[];
-  load: () => Promise<BaseConstructor>;
-}
+export type {
+  ComponentManifest,
+  ComponentManifestEntry,
+  ComponentLoadStrategy,
+} from '@studiometa/ui-autoload';
 
-export { componentManifest } from './manifest.generated.js';
+/**
+ * The ordered manifests the CDN autoloads: `@studiometa/ui` first, then `@studiometa/ui-mapbox`.
+ * Every package owns and generates its own manifest; the CDN only composes them.
+ */
+export const componentManifests = [uiManifest, mapboxManifest] as const;
+
+/**
+ * The single composed manifest served by the CDN. Later manifests win on token collision, but the
+ * two packages share no tokens so composition is a plain merge here.
+ */
+export const componentManifest = composeManifests(componentManifests);

@@ -111,14 +111,72 @@ describe('CDN Worker js-toolkit package routing', () => {
   });
 });
 
+describe('CDN Worker ui-mapbox package routing', () => {
+  it('serves the ui-mapbox barrel and per-component modules from the ui-mapbox tree', async () => {
+    const barrel = await request('/ui-mapbox@1.2.0/index.js');
+    const component = await request('/ui-mapbox@1.2.0/MapboxMap.js');
+
+    expect(barrel.status).toBe(200);
+    expect(barrel.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    expect(barrel.headers.get('Cache-Control')).toBe(IMMUTABLE_CACHE_CONTROL);
+    expect(await barrel.text()).toBe(fixture.uiMapboxFiles['index.js']);
+    expectCrossOriginHeaders(barrel);
+
+    expect(component.status).toBe(200);
+    expect(await component.text()).toBe(fixture.uiMapboxFiles['MapboxMap.js']);
+  });
+
+  it('resolves ui-mapbox aliases and channels exactly like ui', async () => {
+    const alias = await request('/ui-mapbox@1/MapboxMap.js');
+    expect(alias.status).toBe(307);
+    expect(alias.headers.get('Location')).toBe(`${origin}/ui-mapbox@1.10.0/MapboxMap.js`);
+
+    const latest = await request('/ui-mapbox@latest/index.js');
+    expect(latest.status).toBe(307);
+    expect(latest.headers.get('Location')).toBe(`${origin}/ui-mapbox@2.0.0/index.js`);
+
+    const channel = await request('/ui-mapbox@main-abcdef1/MapboxMap.js');
+    expect(channel.status).toBe(200);
+    expect(await channel.text()).toBe(fixture.uiMapboxFiles['MapboxMap.js']);
+
+    const next = await request('/ui-mapbox@next/index.js');
+    expect(next.status).toBe(307);
+    expect(next.headers.get('Location')).toBe(`${origin}/ui-mapbox@main-fedcba9/index.js`);
+  });
+
+  it('advertises the ui-mapbox declaration via X-TypeScript-Types', async () => {
+    const declaration = await request('/ui-mapbox@1.2.0/MapboxMap.d.ts');
+    expect(declaration.status).toBe(200);
+    expect(declaration.headers.get('Content-Type')).toBe('application/typescript; charset=utf-8');
+    expect(await declaration.text()).toBe(fixture.uiMapboxFiles['MapboxMap.d.ts']);
+
+    const module = await request('/ui-mapbox@1.2.0/MapboxMap.js');
+    expect(module.headers.get('X-TypeScript-Types')).toBe(
+      `${origin}/ui-mapbox@1.2.0/MapboxMap.d.ts`,
+    );
+    expect(module.headers.get('Access-Control-Expose-Headers')).toContain('X-TypeScript-Types');
+  });
+});
+
 describe('CDN Worker bare package roots', () => {
-  it.each(['/ui', '/ui/'])('redirects %s to the latest ui autoload entry', async (path) => {
+  it.each(['/ui', '/ui/'])('redirects %s to the latest ui barrel entry', async (path) => {
     const response = await request(path);
     expect(response.status).toBe(307);
-    expect(response.headers.get('Location')).toBe(`${origin}/ui@2.0.0/autoload.js`);
+    expect(response.headers.get('Location')).toBe(`${origin}/ui@2.0.0/index.js`);
     expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
     expectCrossOriginHeaders(response);
   });
+
+  it.each(['/ui-mapbox', '/ui-mapbox/'])(
+    'redirects %s to the latest ui-mapbox barrel entry',
+    async (path) => {
+      const response = await request(path);
+      expect(response.status).toBe(307);
+      expect(response.headers.get('Location')).toBe(`${origin}/ui-mapbox@2.0.0/index.js`);
+      expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+      expectCrossOriginHeaders(response);
+    },
+  );
 
   it.each(['/js-toolkit', '/js-toolkit/'])(
     'redirects %s to the highest js-toolkit index entry',
@@ -143,11 +201,19 @@ describe('CDN Worker bare package roots', () => {
         schemaVersion: 2,
         packages: {
           ui: { releases: [], channels: [], distTags: {} },
+          'ui-mapbox': { releases: [], channels: [], distTags: {} },
           'js-toolkit': { releases: [] },
         },
       }),
     );
-    for (const path of ['/ui', '/ui/', '/js-toolkit', '/js-toolkit/']) {
+    for (const path of [
+      '/ui',
+      '/ui/',
+      '/ui-mapbox',
+      '/ui-mapbox/',
+      '/js-toolkit',
+      '/js-toolkit/',
+    ]) {
       expect((await request(path)).status).toBe(404);
     }
     fixture.bucket.objects.set('versions.json', original);
@@ -316,13 +382,49 @@ describe('CDN Worker asset responses', () => {
   });
 });
 
+describe('CDN Worker declarations', () => {
+  it('serves a declaration with the TypeScript MIME and cross-origin headers', async () => {
+    const response = await request('/ui@1.2.0/index.d.ts');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('application/typescript; charset=utf-8');
+    expect(response.headers.get('Cache-Control')).toBe(IMMUTABLE_CACHE_CONTROL);
+    expectCrossOriginHeaders(response);
+    expect(await response.text()).toBe(fixture.files['index.d.ts']);
+  });
+
+  it('advertises the sibling declaration of a module via X-TypeScript-Types and exposes it', async () => {
+    const response = await request('/ui@1.2.0/index.js');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('X-TypeScript-Types')).toBe(`${origin}/ui@1.2.0/index.d.ts`);
+    expect(response.headers.get('Access-Control-Expose-Headers')).toContain('X-TypeScript-Types');
+    expectCrossOriginHeaders(response);
+  });
+
+  it('omits X-TypeScript-Types for a module without a sibling declaration', async () => {
+    const response = await request(`/ui@1.2.0/${fixture.moduleWithoutDeclaration}`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    expect(response.headers.get('X-TypeScript-Types')).toBeNull();
+    expect(response.headers.get('Access-Control-Expose-Headers')).toBeNull();
+  });
+
+  it('keeps the declaration hint consistent on HEAD requests', async () => {
+    const response = await request('/ui@1.2.0/index.js', { method: 'HEAD' });
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('');
+    expect(response.headers.get('X-TypeScript-Types')).toBe(`${origin}/ui@1.2.0/index.d.ts`);
+    expect(response.headers.get('Access-Control-Expose-Headers')).toContain('X-TypeScript-Types');
+  });
+});
+
 describe('CDN Worker registry', () => {
   interface Registry {
     packages: {
       ui: { releases: string[]; channels: string[]; distTags: Record<string, string> };
+      'ui-mapbox': { releases: string[]; channels: string[]; distTags: Record<string, string> };
       'js-toolkit': { releases: string[] };
     };
-    current: { ui: string | null; 'js-toolkit': string | null };
+    current: { ui: string | null; 'ui-mapbox': string | null; 'js-toolkit': string | null };
     entries: Record<string, string>;
     components: { token: string; package: string; url: string }[];
   }
@@ -346,24 +448,36 @@ describe('CDN Worker registry', () => {
     expect(registry.packages.ui.releases).toEqual(fixture.versionsIndex.packages.ui.releases);
     expect(registry.packages.ui.channels).toEqual(fixture.versionsIndex.packages.ui.channels);
     expect(registry.packages.ui.distTags).toEqual(fixture.versionsIndex.packages.ui.distTags);
+    expect(registry.packages['ui-mapbox']).toEqual({
+      releases: fixture.versionsIndex.packages['ui-mapbox'].releases,
+      channels: fixture.versionsIndex.packages['ui-mapbox'].channels,
+      distTags: fixture.versionsIndex.packages['ui-mapbox'].distTags,
+    });
     expect(registry.packages['js-toolkit'].releases).toEqual([fixture.jsToolkitVersion]);
 
     expect(registry.current.ui).toBe('2.0.0');
+    expect(registry.current['ui-mapbox']).toBe('2.0.0');
     expect(registry.current['js-toolkit']).toBe(fixture.jsToolkitVersion);
 
     expect(registry.entries.autoload).toBe(`${origin}/ui@2.0.0/autoload.js`);
     expect(registry.entries.index).toBe(`${origin}/ui@2.0.0/index.js`);
+    expect(registry.entries['ui-mapbox']).toBe(`${origin}/ui-mapbox@2.0.0/index.js`);
     expect(registry.entries['js-toolkit']).toBe(
       `${origin}/js-toolkit@${fixture.jsToolkitVersion}/index.js`,
     );
 
-    const expectedComponents = Object.entries(fixture.build.components)
-      .map(([token, component]) => ({
+    const expectedComponents = [
+      ...Object.entries(fixture.build.components).map(([token, component]) => ({
         token,
         package: component.packageName,
         url: `${origin}/ui@2.0.0/${component.subpath}.js`,
-      }))
-      .sort((left, right) => left.token.localeCompare(right.token));
+      })),
+      ...Object.entries(fixture.uiMapboxBuild.components).map(([token, component]) => ({
+        token,
+        package: component.packageName,
+        url: `${origin}/ui-mapbox@2.0.0/${component.subpath}.js`,
+      })),
+    ].sort((left, right) => left.token.localeCompare(right.token));
     expect(registry.components).toEqual(expectedComponents);
 
     const action = registry.components.find((component) => component.token === 'Action');
@@ -376,7 +490,7 @@ describe('CDN Worker registry', () => {
     expect(mapbox).toEqual({
       token: 'MapboxMap',
       package: '@studiometa/ui-mapbox',
-      url: `${origin}/ui@2.0.0/MapboxMap.js`,
+      url: `${origin}/ui-mapbox@2.0.0/MapboxMap.js`,
     });
   });
 
@@ -395,6 +509,7 @@ describe('CDN Worker registry', () => {
         schemaVersion: 2,
         packages: {
           ui: { releases: [], channels: [], distTags: {} },
+          'ui-mapbox': { releases: [], channels: [], distTags: {} },
           'js-toolkit': { releases: [] },
         },
       }),
@@ -403,8 +518,9 @@ describe('CDN Worker registry', () => {
     restore();
 
     expect(registry.packages.ui).toEqual({ releases: [], channels: [], distTags: {} });
+    expect(registry.packages['ui-mapbox']).toEqual({ releases: [], channels: [], distTags: {} });
     expect(registry.packages['js-toolkit']).toEqual({ releases: [] });
-    expect(registry.current).toEqual({ ui: null, 'js-toolkit': null });
+    expect(registry.current).toEqual({ ui: null, 'ui-mapbox': null, 'js-toolkit': null });
     expect(registry.entries).toEqual({});
     expect(registry.components).toEqual([]);
   });
@@ -417,7 +533,7 @@ describe('CDN Worker registry', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('Content-Type')).toBe('application/json; charset=utf-8');
     const registry = (await response.json()) as Registry;
-    expect(registry.current).toEqual({ ui: null, 'js-toolkit': null });
+    expect(registry.current).toEqual({ ui: null, 'ui-mapbox': null, 'js-toolkit': null });
     expect(registry.components).toEqual([]);
     expect(registry.entries).toEqual({});
   });
@@ -457,10 +573,20 @@ describe('CDN Worker registry', () => {
 
     expect(registry.current.ui).toBe('2.0.0');
     expect(registry.packages.ui.releases).toEqual(fixture.versionsIndex.packages.ui.releases);
+    // The unreadable ui build drops ui's components and entries, but the intact ui-mapbox tree still
+    // contributes its components and barrel entry alongside js-toolkit.
     expect(registry.entries).toEqual({
+      'ui-mapbox': `${origin}/ui-mapbox@2.0.0/index.js`,
       'js-toolkit': `${origin}/js-toolkit@${fixture.jsToolkitVersion}/index.js`,
     });
-    expect(registry.components).toEqual([]);
+    const expectedMapboxComponents = Object.entries(fixture.uiMapboxBuild.components)
+      .map(([token, component]) => ({
+        token,
+        package: component.packageName,
+        url: `${origin}/ui-mapbox@2.0.0/${component.subpath}.js`,
+      }))
+      .sort((left, right) => left.token.localeCompare(right.token));
+    expect(registry.components).toEqual(expectedMapboxComponents);
   });
 
   it('leaves non-root routes unaffected', async () => {

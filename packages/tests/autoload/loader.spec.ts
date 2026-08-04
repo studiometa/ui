@@ -5,15 +5,16 @@ import {
   type BaseConfig,
   type BaseConstructor,
 } from '@studiometa/js-toolkit';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ComponentLoadStrategy } from '../src/component-metadata.js';
 import {
   ComponentLoader,
   IDLE_TIMEOUT,
   VISIBLE_ROOT_MARGIN,
+  type ComponentLoadStrategy,
+  type ComponentManifest,
+  type ComponentManifestEntry,
   type LoaderDependencies,
-} from '../src/loader.js';
-import type { ComponentManifestEntry } from '../src/manifest.js';
+} from '@studiometa/ui-autoload';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 class TestComponent extends Base {}
 
@@ -36,10 +37,7 @@ function manifestEntry(token: string, options: ManifestOptions = {}): ComponentM
   };
 }
 
-function createLoader(
-  manifest: Record<string, ComponentManifestEntry>,
-  dependencies: Partial<LoaderDependencies> = {},
-) {
+function createLoader(manifest: ComponentManifest, dependencies: Partial<LoaderDependencies> = {}) {
   const register = vi.fn(async () => []);
   const logger = { warn: vi.fn(), error: vi.fn() };
   const loader = new ComponentLoader({
@@ -171,7 +169,7 @@ describe('ComponentLoader discovery', () => {
     expect(addedLoad).toHaveBeenCalledOnce();
     expect(register).toHaveBeenCalledTimes(3);
     expect(logger.warn).toHaveBeenCalledWith(
-      '[@studiometa/ui-cdn] An unknown component token was ignored.',
+      '[@studiometa/ui-autoload] An unknown component token was ignored.',
     );
   });
 
@@ -283,10 +281,10 @@ describe('ComponentLoader strategies', () => {
     expect(visibleLoad).toHaveBeenCalledOnce();
     expect(idleLoad).not.toHaveBeenCalled();
     expect(logger.warn).toHaveBeenCalledWith(
-      '[@studiometa/ui-cdn] IntersectionObserver is unavailable; loading component "Visible" eagerly.',
+      '[@studiometa/ui-autoload] IntersectionObserver is unavailable; loading component "Visible" eagerly.',
     );
     expect(logger.warn).toHaveBeenCalledWith(
-      '[@studiometa/ui-cdn] requestIdleCallback is unavailable; using a timeout for component "Idle".',
+      '[@studiometa/ui-autoload] requestIdleCallback is unavailable; using a timeout for component "Idle".',
     );
 
     await vi.advanceTimersByTimeAsync(IDLE_TIMEOUT);
@@ -317,10 +315,10 @@ describe('ComponentLoader strategies', () => {
     expect(fallbackLoad).toHaveBeenCalledOnce();
     expect(globalFallbackLoad).toHaveBeenCalledOnce();
     expect(logger.warn).toHaveBeenCalledWith(
-      '[@studiometa/ui-cdn] Component "Fallback" has an invalid data-load value; using its default.',
+      '[@studiometa/ui-autoload] Component "Fallback" has an invalid data-load value; using its default.',
     );
     expect(logger.warn).toHaveBeenCalledWith(
-      '[@studiometa/ui-cdn] Component "GlobalFallback" has an invalid manifest strategy; loading eagerly.',
+      '[@studiometa/ui-autoload] Component "GlobalFallback" has an invalid manifest strategy; loading eagerly.',
     );
 
     document.querySelector('[data-component="Visible"]')?.dispatchEvent(new Event('pointerdown'));

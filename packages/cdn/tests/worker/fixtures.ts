@@ -61,10 +61,14 @@ export class MemoryR2 implements R2BucketLike {
 export interface WorkerFixture {
   bucket: MemoryR2;
   build: BuildMetadata;
+  uiMapboxBuild: BuildMetadata;
   integrity: IntegrityMetadata;
   files: Record<string, string>;
+  uiMapboxFiles: Record<string, string>;
   versionsIndex: VersionsIndex;
+  uiVersion: string;
   jsToolkitVersion: string;
+  moduleWithoutDeclaration: string;
   cleanup(): Promise<void>;
 }
 
@@ -113,17 +117,40 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
     outputDirectory,
     `releases/js-toolkit/${jsToolkitVersion}`,
   );
+  // ui-mapbox is versioned in lockstep with ui, so its tree lives at the same version.
+  const uiMapboxTreeDirectory = resolve(outputDirectory, `releases/ui-mapbox/${uiPackageVersion}`);
+  const uiMapboxBuild = JSON.parse(
+    await readFile(resolve(uiMapboxTreeDirectory, 'build.json'), 'utf8'),
+  ) as BuildMetadata;
 
+  // A shared JavaScript chunk has no sibling declaration (declaration chunks are hashed
+  // independently), so it exercises the "served `.js` without a sibling `.d.ts`" path.
+  const moduleWithoutDeclaration = build.components.Action.preload[0];
   const uiAssetPaths = [
     'autoload.js',
     'autoload.js.map',
     'index.js',
     'index.js.map',
+    'index.d.ts',
+    moduleWithoutDeclaration,
     'build.json',
     'integrity.json',
     'licenses/THIRD_PARTY_LICENSES.txt',
   ];
   const files = await readTreeFiles(uiTreeDirectory, uiAssetPaths);
+
+  const uiMapboxAssetPaths = [
+    'index.js',
+    'index.js.map',
+    'index.d.ts',
+    'MapboxMap.js',
+    'MapboxMap.js.map',
+    'MapboxMap.d.ts',
+    'build.json',
+    'integrity.json',
+    'licenses/THIRD_PARTY_LICENSES.txt',
+  ];
+  const uiMapboxFiles = await readTreeFiles(uiMapboxTreeDirectory, uiMapboxAssetPaths);
 
   const jsToolkitAssetPaths = [
     'index.js',
@@ -135,14 +162,17 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
   ];
   const jsToolkitFiles = await readTreeFiles(jsToolkitTreeDirectory, jsToolkitAssetPaths);
 
+  // ui and ui-mapbox share the same lockstep release and channel inventories.
+  const uiLikePackageIndex = {
+    releases: uiReleases,
+    channels: uiChannels,
+    distTags: { latest: '2.0.0', next: 'main-fedcba9', main: 'main-fedcba9' },
+  };
   const versionsIndex: VersionsIndex = {
     schemaVersion: 2,
     packages: {
-      ui: {
-        releases: uiReleases,
-        channels: uiChannels,
-        distTags: { latest: '2.0.0', next: 'main-fedcba9', main: 'main-fedcba9' },
-      },
+      ui: uiLikePackageIndex,
+      'ui-mapbox': uiLikePackageIndex,
       'js-toolkit': { releases: [jsToolkitVersion] },
     },
   };
@@ -150,27 +180,39 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
   const bucket = new MemoryR2();
   bucket.put('versions.json', JSON.stringify(versionsIndex), 'versions');
 
-  for (const version of uiReleases) {
-    const prefix = `releases/ui/${version}`;
-    bucket.put(`${prefix}/build.json`, JSON.stringify(releaseBuild(build, version)));
-    bucket.put(`${prefix}/integrity.json`, files['integrity.json']);
-    // 4.0.0 is indexed but intentionally incomplete: only its metadata is seeded, so asset
-    // requests against it must 404.
-    if (version === '4.0.0') continue;
-    for (const path of uiAssetPaths) {
-      if (path === 'build.json' || path === 'integrity.json') continue;
-      bucket.put(`${prefix}/${path}`, files[path], `${version}-${path}`);
+  // Seeds a ui-like package's release and channel objects under its namespaced prefixes. ui channels
+  // keep the flat `channels/<id>` layout; every other package is namespaced as `channels/<pkg>/<id>`.
+  function seedUiLikePackage(
+    packageName: 'ui' | 'ui-mapbox',
+    treeBuild: BuildMetadata,
+    treeFiles: Record<string, string>,
+    assetPaths: readonly string[],
+  ): void {
+    const channelPrefix = packageName === 'ui' ? 'channels' : `channels/${packageName}`;
+    for (const version of uiReleases) {
+      const prefix = `releases/${packageName}/${version}`;
+      bucket.put(`${prefix}/build.json`, JSON.stringify(releaseBuild(treeBuild, version)));
+      bucket.put(`${prefix}/integrity.json`, treeFiles['integrity.json']);
+      // 4.0.0 is indexed but intentionally incomplete: only its metadata is seeded, so asset
+      // requests against it must 404.
+      if (version === '4.0.0') continue;
+      for (const path of assetPaths) {
+        if (path === 'build.json' || path === 'integrity.json') continue;
+        bucket.put(`${prefix}/${path}`, treeFiles[path], `${version}-${path}`);
+      }
+    }
+    for (const channel of uiChannels) {
+      const prefix = `${channelPrefix}/${channel}`;
+      bucket.put(`${prefix}/build.json`, treeFiles['build.json']);
+      bucket.put(`${prefix}/integrity.json`, treeFiles['integrity.json']);
+      for (const path of assetPaths) {
+        if (path === 'build.json' || path === 'integrity.json') continue;
+        bucket.put(`${prefix}/${path}`, treeFiles[path], `${channel}-${path}`);
+      }
     }
   }
-  for (const channel of uiChannels) {
-    const prefix = `channels/${channel}`;
-    bucket.put(`${prefix}/build.json`, files['build.json']);
-    bucket.put(`${prefix}/integrity.json`, files['integrity.json']);
-    for (const path of uiAssetPaths) {
-      if (path === 'build.json' || path === 'integrity.json') continue;
-      bucket.put(`${prefix}/${path}`, files[path], `${channel}-${path}`);
-    }
-  }
+  seedUiLikePackage('ui', build, files, uiAssetPaths);
+  seedUiLikePackage('ui-mapbox', uiMapboxBuild, uiMapboxFiles, uiMapboxAssetPaths);
 
   const jsToolkitPrefix = `releases/js-toolkit/${jsToolkitVersion}`;
   for (const path of jsToolkitAssetPaths) {
@@ -180,10 +222,14 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
   return {
     bucket,
     build,
+    uiMapboxBuild,
     integrity,
     files,
+    uiMapboxFiles,
     versionsIndex,
+    uiVersion: uiPackageVersion,
     jsToolkitVersion,
+    moduleWithoutDeclaration,
     cleanup: () => rm(outputDirectory, { recursive: true, force: true }),
   };
 }

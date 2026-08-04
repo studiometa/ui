@@ -1,4 +1,4 @@
-import type { ExactVersion, PackageName, VersionsIndex } from './types.ts';
+import type { ExactVersion, PackageName, UiPackageIndex, VersionsIndex } from './types.ts';
 
 const SEMVER_PATTERN =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
@@ -79,13 +79,29 @@ function validateJsToolkitPackage(value: unknown): void {
   }
 }
 
+const EMPTY_UI_PACKAGE: UiPackageIndex = { releases: [], channels: [], distTags: {} };
+
 export function parseVersionsIndex(value: unknown): VersionsIndex {
+  // The index stays schemaVersion 2 so the currently-deployed Worker keeps parsing it. `ui-mapbox`
+  // is an additive, optional package: an index predating the ui-mapbox tree omits it, so it is not
+  // required for a valid schema-2 index.
   if (!isRecord(value) || value.schemaVersion !== 2) {
     throw new Error('Unsupported versions index.');
   }
   if (!isRecord(value.packages)) throw new Error('Invalid packages index.');
   validateUiPackage(value.packages.ui);
   validateJsToolkitPackage(value.packages['js-toolkit']);
+  // ui-mapbox shares the full ui semantics and is validated identically when present. When absent
+  // (an old index that predates the ui-mapbox tree) it defaults to an empty package so the index
+  // still parses and every `/ui-mapbox` route cleanly 404s until the package is populated.
+  const uiMapbox = value.packages['ui-mapbox'];
+  if (uiMapbox === undefined) {
+    return {
+      ...(value as Record<string, unknown>),
+      packages: { ...value.packages, 'ui-mapbox': { ...EMPTY_UI_PACKAGE } },
+    } as unknown as VersionsIndex;
+  }
+  validateUiPackage(uiMapbox);
   return value as unknown as VersionsIndex;
 }
 
@@ -104,17 +120,66 @@ function exactRelease(packageName: PackageName, version: string): ExactVersion {
   return { kind: 'release', version, objectPrefix: `releases/${packageName}/${version}` };
 }
 
-function exactChannel(version: string): ExactVersion {
-  return { kind: 'channel', version, objectPrefix: `channels/${version}` };
+// Immutable channels are namespaced per package under `channels/`. The `ui` channels keep the
+// original flat `channels/<id>` layout; every other channel-carrying package (currently `ui-mapbox`)
+// is namespaced as `channels/<package>/<id>` so its snapshots never collide with ui's.
+function exactChannel(packageName: PackageName, version: string): ExactVersion {
+  const objectPrefix =
+    packageName === 'ui' ? `channels/${version}` : `channels/${packageName}/${version}`;
+  return { kind: 'channel', version, objectPrefix };
 }
 
 /**
- * Resolves a requested version for a package. The `ui` package keeps the full semantics — exact
- * semver, immutable `main-<sha>` channels, the `latest`/`next`/`main` distribution tags, major and
- * minor aliases, and (via a `latest` request) the versionless default. The `js-toolkit` package is
- * exact-version only: it resolves solely to an exact semver present in its release inventory, so
- * every alias, channel, and distribution tag (including `latest` and the versionless default) is a
- * 404.
+ * Resolves a requested version for a ui-like package (`ui` or `ui-mapbox`): exact semver, immutable
+ * `main-<sha>` channels, the `latest`/`next`/`main` distribution tags, major and minor aliases, and
+ * (via a `latest` request) the versionless default.
+ */
+function resolveUiLikeVersion(
+  index: VersionsIndex,
+  packageName: 'ui' | 'ui-mapbox',
+  requested: string,
+): ExactVersion | undefined {
+  const pkg = index.packages[packageName];
+  const parsed = parseSemver(requested);
+  if (parsed) {
+    return pkg.releases.includes(requested) ? exactRelease(packageName, requested) : undefined;
+  }
+  if (CHANNEL_PATTERN.test(requested)) {
+    return pkg.channels.includes(requested) ? exactChannel(packageName, requested) : undefined;
+  }
+  if (requested === 'latest') {
+    return pkg.distTags.latest ? exactRelease(packageName, pkg.distTags.latest) : undefined;
+  }
+  if (requested === 'next' || requested === 'main') {
+    const channel = pkg.distTags[requested];
+    return channel ? exactChannel(packageName, channel) : undefined;
+  }
+
+  const alias = ALIAS_PATTERN.exec(requested);
+  if (!alias) return undefined;
+  const major = BigInt(alias[1]);
+  const minor = alias[2] === undefined ? undefined : BigInt(alias[2]);
+  const matches = pkg.releases.filter((release) => {
+    const version = parseSemver(release);
+    return (
+      version !== undefined &&
+      version.prerelease === undefined &&
+      version.major === major &&
+      (minor === undefined || version.minor === minor)
+    );
+  });
+  matches.sort(compareStableVersions);
+  const resolved = matches.at(-1);
+  return resolved ? exactRelease(packageName, resolved) : undefined;
+}
+
+/**
+ * Resolves a requested version for a package. The `ui` and `ui-mapbox` packages keep the full
+ * semantics — exact semver, immutable `main-<sha>` channels, the `latest`/`next`/`main` distribution
+ * tags, major and minor aliases, and (via a `latest` request) the versionless default. The
+ * `js-toolkit` package is exact-version only: it resolves solely to an exact semver present in its
+ * release inventory, so every alias, channel, and distribution tag (including `latest` and the
+ * versionless default) is a 404.
  */
 export function resolveVersion(
   index: VersionsIndex,
@@ -127,39 +192,7 @@ export function resolveVersion(
       ? exactRelease('js-toolkit', requested)
       : undefined;
   }
-
-  const ui = index.packages.ui;
-  const parsed = parseSemver(requested);
-  if (parsed) {
-    return ui.releases.includes(requested) ? exactRelease('ui', requested) : undefined;
-  }
-  if (CHANNEL_PATTERN.test(requested)) {
-    return ui.channels.includes(requested) ? exactChannel(requested) : undefined;
-  }
-  if (requested === 'latest') {
-    return ui.distTags.latest ? exactRelease('ui', ui.distTags.latest) : undefined;
-  }
-  if (requested === 'next' || requested === 'main') {
-    const channel = ui.distTags[requested];
-    return channel ? exactChannel(channel) : undefined;
-  }
-
-  const alias = ALIAS_PATTERN.exec(requested);
-  if (!alias) return undefined;
-  const major = BigInt(alias[1]);
-  const minor = alias[2] === undefined ? undefined : BigInt(alias[2]);
-  const matches = ui.releases.filter((release) => {
-    const version = parseSemver(release);
-    return (
-      version !== undefined &&
-      version.prerelease === undefined &&
-      version.major === major &&
-      (minor === undefined || version.minor === minor)
-    );
-  });
-  matches.sort(compareStableVersions);
-  const resolved = matches.at(-1);
-  return resolved ? exactRelease('ui', resolved) : undefined;
+  return resolveUiLikeVersion(index, packageName, requested);
 }
 
 /**
@@ -172,7 +205,9 @@ export function resolveBareRoot(
   index: VersionsIndex,
   packageName: PackageName,
 ): ExactVersion | undefined {
-  if (packageName === 'ui') return resolveVersion(index, 'ui', 'latest');
+  if (packageName === 'ui' || packageName === 'ui-mapbox') {
+    return resolveVersion(index, packageName, 'latest');
+  }
   const highest = [...index.packages['js-toolkit'].releases].sort(compareStableVersions).at(-1);
   return highest ? exactRelease('js-toolkit', highest) : undefined;
 }
@@ -197,6 +232,22 @@ export function highestStableRelease(releases: readonly string[]): string | unde
 export function resolveCurrentUiRef(index: VersionsIndex): string | null {
   const ui = index.packages.ui;
   return ui.distTags.latest ?? ui.distTags.main ?? highestStableRelease(ui.releases) ?? null;
+}
+
+/**
+ * Resolves the reference the registry reports as the current ui-mapbox surface, using the same
+ * fallback ladder as {@link resolveCurrentUiRef}. It is versioned in lockstep with ui, so in a
+ * consistent index this equals `resolveCurrentUiRef`, but it is resolved independently so a partial
+ * index still degrades gracefully.
+ */
+export function resolveCurrentUiMapboxRef(index: VersionsIndex): string | null {
+  const uiMapbox = index.packages['ui-mapbox'];
+  return (
+    uiMapbox.distTags.latest ??
+    uiMapbox.distTags.main ??
+    highestStableRelease(uiMapbox.releases) ??
+    null
+  );
 }
 
 /**

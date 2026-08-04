@@ -7,10 +7,14 @@ export interface RegistryInput {
   versions?: VersionsIndex;
   /** The reference reported as the current ui surface, resolved from the index. */
   currentUiRef: string | null;
+  /** The reference reported as the current ui-mapbox surface, resolved from the index. */
+  currentUiMapboxRef: string | null;
   /** The version reported as the current js-toolkit surface, resolved from the index. */
   currentJsToolkit: string | null;
   /** The current ui ref's build metadata, or `undefined` when it is absent or unreadable. */
   currentUiBuild?: BuildMetadata;
+  /** The current ui-mapbox ref's build metadata, or `undefined` when it is absent or unreadable. */
+  currentUiMapboxBuild?: BuildMetadata;
 }
 
 /**
@@ -20,28 +24,50 @@ export interface RegistryInput {
  * missing rather than throwing.
  */
 export function buildRegistry(input: RegistryInput): RegistryDocument {
-  const { origin, versions, currentUiRef, currentJsToolkit, currentUiBuild } = input;
+  const {
+    origin,
+    versions,
+    currentUiRef,
+    currentUiMapboxRef,
+    currentJsToolkit,
+    currentUiBuild,
+    currentUiMapboxBuild,
+  } = input;
   const ui = versions?.packages.ui;
+  const uiMapbox = versions?.packages['ui-mapbox'];
   const jsToolkit = versions?.packages['js-toolkit'];
 
-  // Component subpath entries live at the ui tree root, so both ui and ui-mapbox components import
-  // from a `/ui@<ref>/<subpath>.js` URL; only the owning package name distinguishes them.
+  // Each package's components import from their own versioned tree: `@studiometa/ui` from
+  // `/ui@<ref>/<subpath>.js` and `@studiometa/ui-mapbox` from `/ui-mapbox@<ref>/<subpath>.js`.
   const hasUiSurface = currentUiRef !== null && currentUiBuild !== undefined;
-  const components: RegistryComponent[] =
+  const hasUiMapboxSurface = currentUiMapboxRef !== null && currentUiMapboxBuild !== undefined;
+  const uiComponents: RegistryComponent[] =
     hasUiSurface && currentUiBuild
-      ? Object.entries(currentUiBuild.components)
-          .map(([token, component]) => ({
-            token,
-            package: component.packageName,
-            url: `${origin}/ui@${currentUiRef}/${component.subpath}.js`,
-          }))
-          .sort((left, right) => left.token.localeCompare(right.token))
+      ? Object.entries(currentUiBuild.components).map(([token, component]) => ({
+          token,
+          package: component.packageName,
+          url: `${origin}/ui@${currentUiRef}/${component.subpath}.js`,
+        }))
       : [];
+  const uiMapboxComponents: RegistryComponent[] =
+    hasUiMapboxSurface && currentUiMapboxBuild
+      ? Object.entries(currentUiMapboxBuild.components).map(([token, component]) => ({
+          token,
+          package: component.packageName,
+          url: `${origin}/ui-mapbox@${currentUiMapboxRef}/${component.subpath}.js`,
+        }))
+      : [];
+  const components = [...uiComponents, ...uiMapboxComponents].sort((left, right) =>
+    left.token.localeCompare(right.token),
+  );
 
   const entries: Record<string, string> = {};
   if (hasUiSurface) {
     entries.autoload = `${origin}/ui@${currentUiRef}/autoload.js`;
     entries.index = `${origin}/ui@${currentUiRef}/index.js`;
+  }
+  if (hasUiMapboxSurface) {
+    entries['ui-mapbox'] = `${origin}/ui-mapbox@${currentUiMapboxRef}/index.js`;
   }
   if (currentJsToolkit !== null) {
     entries['js-toolkit'] = `${origin}/js-toolkit@${currentJsToolkit}/index.js`;
@@ -54,12 +80,18 @@ export function buildRegistry(input: RegistryInput): RegistryDocument {
         channels: ui ? [...ui.channels] : [],
         distTags: ui ? { ...ui.distTags } : {},
       },
+      'ui-mapbox': {
+        releases: uiMapbox ? [...uiMapbox.releases] : [],
+        channels: uiMapbox ? [...uiMapbox.channels] : [],
+        distTags: uiMapbox ? { ...uiMapbox.distTags } : {},
+      },
       'js-toolkit': {
         releases: jsToolkit ? [...jsToolkit.releases] : [],
       },
     },
     current: {
       ui: currentUiRef,
+      'ui-mapbox': currentUiMapboxRef,
       'js-toolkit': currentJsToolkit,
     },
     entries,

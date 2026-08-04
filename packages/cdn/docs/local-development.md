@@ -19,11 +19,11 @@ Set `SOURCE_DATE_EPOCH` for a reproducible, byte-stable build; otherwise the tim
 
 ## Manifest
 
-The generated component manifest (`src/manifest.generated.ts`) is derived from `src/component-metadata.ts`. Regenerate it after changing the component catalog, and check it in CI:
+Each component package owns its own catalog (`packages/ui/catalog.ts`, `packages/ui-mapbox/catalog.ts`) and its generated manifest (`packages/ui/manifest.ts`, `packages/ui-mapbox/manifest.ts`). The CDN composes those manifests in `src/manifest.ts` and no longer keeps a bespoke catalog. Regenerate the manifests from the repository root after changing a catalog, and check them in CI:
 
 ```bash
-npm run cdn:manifest:generate   # rewrite the generated manifest
-npm run cdn:manifest:check      # fail if the manifest is out of date
+npm run manifest:generate   # rewrite every package manifest
+npm run manifest:check      # fail if any manifest is out of date
 ```
 
 ## Unit tests (Vitest)

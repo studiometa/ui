@@ -25,6 +25,7 @@ import {
   parseVersionsIndex,
   resolveBareRoot,
   resolveCurrentJsToolkit,
+  resolveCurrentUiMapboxRef,
   resolveCurrentUiRef,
   resolveVersion,
 } from './versions.ts';
@@ -35,6 +36,7 @@ const MAX_LINK_HEADER_BYTES = 7_500;
 // validated against the package it claims to belong to.
 const PUBLIC_PACKAGE_NAMES: Record<PackageName, string> = {
   ui: '@studiometa/ui-cdn',
+  'ui-mapbox': '@studiometa/ui-cdn-mapbox',
   'js-toolkit': '@studiometa/ui-cdn-js-toolkit',
 };
 const SAFE_METADATA_PATH = /^(?!\/)(?!.*(?:^|\/)\.\.?(?:\/|$))(?!.*\\)[0-9A-Za-z._@+/-]+$/;
@@ -230,29 +232,42 @@ async function handleRegistry(
   recorder.routeKind('registry');
   const versions = await readVersionsForRegistry(environment.ASSETS, recorder);
   const currentUiRef = versions ? resolveCurrentUiRef(versions) : null;
+  const currentUiMapboxRef = versions ? resolveCurrentUiMapboxRef(versions) : null;
   const currentJsToolkit = versions ? resolveCurrentJsToolkit(versions) : null;
 
-  let currentUiBuild: BuildMetadata | undefined;
-  if (versions && currentUiRef) {
-    const exact = resolveVersion(versions, 'ui', currentUiRef);
-    if (exact) {
-      try {
-        const metadata = await loadRelease(environment.ASSETS, exact, PUBLIC_PACKAGE_NAMES.ui);
-        recorder.r2('release-metadata', metadata ? 'hit' : 'miss');
-        currentUiBuild = metadata?.build;
-      } catch {
-        // An unreadable release manifest drops the entries and components but keeps the registry.
-        recorder.r2('release-metadata', 'miss');
-      }
+  async function loadCurrentBuild(
+    packageName: 'ui' | 'ui-mapbox',
+    ref: string | null,
+  ): Promise<BuildMetadata | undefined> {
+    if (!versions || !ref) return undefined;
+    const exact = resolveVersion(versions, packageName, ref);
+    if (!exact) return undefined;
+    try {
+      const metadata = await loadRelease(
+        environment.ASSETS,
+        exact,
+        PUBLIC_PACKAGE_NAMES[packageName],
+      );
+      recorder.r2('release-metadata', metadata ? 'hit' : 'miss');
+      return metadata?.build;
+    } catch {
+      // An unreadable release manifest drops that package's components but keeps the registry.
+      recorder.r2('release-metadata', 'miss');
+      return undefined;
     }
   }
+
+  const currentUiBuild = await loadCurrentBuild('ui', currentUiRef);
+  const currentUiMapboxBuild = await loadCurrentBuild('ui-mapbox', currentUiMapboxRef);
 
   const registry = buildRegistry({
     origin,
     versions,
     currentUiRef,
+    currentUiMapboxRef,
     currentJsToolkit,
     currentUiBuild,
+    currentUiMapboxBuild,
   });
   const headers = responseHeaders({
     'Cache-Control': MUTABLE_CACHE_CONTROL,
@@ -297,14 +312,14 @@ async function handleRequest(
   const versions = parseVersionsIndex(indexValue);
 
   if (route === undefined) {
-    // A bare package root redirects to its latest usable asset: `/ui` to the `latest` stable
-    // autoload entry, and the tagless `/js-toolkit` to the highest published bare index entry.
-    // Both classify as a dist-tag hop — a moving pointer resolved to an exact version.
+    // A bare package root redirects to its latest usable asset: the `index.js` barrel is now the
+    // natural landing for every package — `/ui` and `/ui-mapbox` to their `latest` stable barrel,
+    // and the tagless `/js-toolkit` to its highest published barrel. Each classifies as a dist-tag
+    // hop — a moving pointer resolved to an exact version.
     const resolved = resolveBareRoot(versions, bareRoot as PackageName);
     recorder.versionKind(classifyVersion(resolved ? 'latest' : undefined, resolved));
     if (!resolved) return errorResponse(404);
-    const entry = bareRoot === 'ui' ? 'autoload.js' : 'index.js';
-    return redirectResponse(`${url.origin}/${bareRoot}@${resolved.version}/${entry}`);
+    return redirectResponse(`${url.origin}/${bareRoot}@${resolved.version}/index.js`);
   }
 
   const exact = resolveVersion(versions, route.packageName, route.requestedVersion);
@@ -345,6 +360,21 @@ async function handleRequest(
   });
   if (etag) headers.set('ETag', etag);
   if (link) headers.set('Link', link);
+
+  // When a served module has a sibling declaration in the release, advertise it with the same
+  // `X-TypeScript-Types` header esm.sh uses, as a same-origin absolute URL, and expose the header to
+  // cross-origin TypeScript language servers. Set before the 304 branch so a not-modified response
+  // stays consistent with the full response, and it is preserved for HEAD.
+  if (route.assetPath.endsWith('.js')) {
+    const declarationPath = `${route.assetPath.slice(0, -'.js'.length)}.d.ts`;
+    if (metadata.files.has(declarationPath)) {
+      headers.set(
+        'X-TypeScript-Types',
+        `${url.origin}/${route.packageName}@${exact.version}/${declarationPath}`,
+      );
+      headers.set('Access-Control-Expose-Headers', 'X-TypeScript-Types');
+    }
+  }
 
   if (etagMatches(request.headers.get('If-None-Match'), etag)) {
     headers.delete('Content-Type');
