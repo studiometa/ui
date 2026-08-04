@@ -141,10 +141,20 @@ async function main(): Promise<void> {
   const result = await publish(store, uiArtifact, uiTarget, { log });
   process.stdout.write(`Published ${result.identity} to ${result.finalPrefix}.\n`);
 
+  // The cache purge is a best-effort optimization that only shortens how long the mutable alias
+  // redirects may serve a stale target (their TTL is minutes). The immutable assets and versions.json
+  // are already published, so a purge failure — a missing permission, a transient error — must never
+  // fail an otherwise-successful publication.
   const purge = loadCloudflarePurgeConfig(process.env);
   if (purge && mutableAliases.length > 0) {
-    await purgeMutableAliases(purge, mutableAliases);
-    process.stdout.write('Purged the mutable alias cache.\n');
+    try {
+      await purgeMutableAliases(purge, mutableAliases);
+      process.stdout.write('Purged the mutable alias cache.\n');
+    } catch (error) {
+      process.stderr.write(
+        `Warning: mutable alias cache purge failed (non-fatal): ${error instanceof Error ? error.message : error}\n`,
+      );
+    }
   }
 }
 
