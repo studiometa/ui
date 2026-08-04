@@ -26,15 +26,17 @@ export interface JsToolkitPackageIndex {
 export type UiLikePackageName = 'ui' | 'ui-mapbox';
 
 /**
- * Working representation of the schemaVersion 3 `versions.json`. Releases are namespaced per
+ * Working representation of the schemaVersion 2 `versions.json`. Releases are namespaced per
  * package: `ui` and `ui-mapbox` each keep releases, immutable channels and distribution tags (and
  * are versioned in lockstep); `js-toolkit` is exact-version only and carries just a release
- * inventory. It intentionally allows partial distribution tags so the tooling can bootstrap the
- * index before a stable release and a main channel exist. Once fully populated it satisfies the
+ * inventory. `ui-mapbox` is an additive, optional package: an index predating the ui-mapbox tree
+ * simply omits it, and it is bootstrapped empty and populated in place under the same
+ * schemaVersion 2. It intentionally allows partial distribution tags so the tooling can bootstrap
+ * the index before a stable release and a main channel exist. Once fully populated it satisfies the
  * strict schema the Worker validates on read.
  */
 export interface WorkingVersionsIndex {
-  schemaVersion: 3;
+  schemaVersion: 2;
   packages: {
     ui: UiPackageIndex;
     'ui-mapbox': UiPackageIndex;
@@ -98,7 +100,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function emptyIndex(): WorkingVersionsIndex {
   return {
-    schemaVersion: 3,
+    schemaVersion: 2,
     packages: {
       ui: { releases: [], channels: [], distTags: {} },
       'ui-mapbox': { releases: [], channels: [], distTags: {} },
@@ -130,8 +132,12 @@ function parseUiLikePackage(value: unknown): UiPackageIndex {
 }
 
 /**
- * Parses an existing schemaVersion 3 `versions.json` payload leniently, returning an empty index
+ * Parses an existing schemaVersion 2 `versions.json` payload leniently, returning an empty index
  * when the object is absent so a first publication can bootstrap it. Known entries are preserved.
+ * A live schema-2 index that predates the ui-mapbox tree (and therefore omits the `ui-mapbox` key)
+ * is accepted and migrated in place: the missing package is initialized empty so this publication
+ * can add its release/channel while the index stays schemaVersion 2. A valid schema-2 index is
+ * never refused.
  */
 export function parseWorkingVersionsIndex(text: string | undefined): WorkingVersionsIndex {
   if (text === undefined) return emptyIndex();
@@ -141,14 +147,14 @@ export function parseWorkingVersionsIndex(text: string | undefined): WorkingVers
   } catch {
     throw new Error('The existing versions.json is not valid JSON; refusing to overwrite it.');
   }
-  if (!isRecord(value) || value.schemaVersion !== 3 || !isRecord(value.packages)) {
+  if (!isRecord(value) || value.schemaVersion !== 2 || !isRecord(value.packages)) {
     throw new Error(
       'The existing versions.json has an unsupported schema; refusing to overwrite it.',
     );
   }
   const jsToolkit = isRecord(value.packages['js-toolkit']) ? value.packages['js-toolkit'] : {};
   return {
-    schemaVersion: 3,
+    schemaVersion: 2,
     packages: {
       ui: parseUiLikePackage(value.packages.ui),
       'ui-mapbox': parseUiLikePackage(value.packages['ui-mapbox']),
@@ -180,7 +186,7 @@ function serializeUiLikePackage(pkg: UiPackageIndex): UiPackageIndex {
  */
 export function serializeVersionsIndex(index: WorkingVersionsIndex): string {
   const payload = {
-    schemaVersion: 3,
+    schemaVersion: 2,
     packages: {
       ui: serializeUiLikePackage(index.packages.ui),
       'ui-mapbox': serializeUiLikePackage(index.packages['ui-mapbox']),

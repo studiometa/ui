@@ -1,4 +1,4 @@
-import type { ExactVersion, PackageName, VersionsIndex } from './types.ts';
+import type { ExactVersion, PackageName, UiPackageIndex, VersionsIndex } from './types.ts';
 
 const SEMVER_PATTERN =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
@@ -79,16 +79,29 @@ function validateJsToolkitPackage(value: unknown): void {
   }
 }
 
+const EMPTY_UI_PACKAGE: UiPackageIndex = { releases: [], channels: [], distTags: {} };
+
 export function parseVersionsIndex(value: unknown): VersionsIndex {
-  if (!isRecord(value) || value.schemaVersion !== 3) {
+  // The index stays schemaVersion 2 so the currently-deployed Worker keeps parsing it. `ui-mapbox`
+  // is an additive, optional package: an index predating the ui-mapbox tree omits it, so it is not
+  // required for a valid schema-2 index.
+  if (!isRecord(value) || value.schemaVersion !== 2) {
     throw new Error('Unsupported versions index.');
   }
   if (!isRecord(value.packages)) throw new Error('Invalid packages index.');
   validateUiPackage(value.packages.ui);
-  // ui-mapbox shares the full ui semantics and is validated identically; it is versioned in
-  // lockstep with ui but each package keeps its own independent inventory in the index.
-  validateUiPackage(value.packages['ui-mapbox']);
   validateJsToolkitPackage(value.packages['js-toolkit']);
+  // ui-mapbox shares the full ui semantics and is validated identically when present. When absent
+  // (an old index that predates the ui-mapbox tree) it defaults to an empty package so the index
+  // still parses and every `/ui-mapbox` route cleanly 404s until the package is populated.
+  const uiMapbox = value.packages['ui-mapbox'];
+  if (uiMapbox === undefined) {
+    return {
+      ...(value as Record<string, unknown>),
+      packages: { ...value.packages, 'ui-mapbox': { ...EMPTY_UI_PACKAGE } },
+    } as unknown as VersionsIndex;
+  }
+  validateUiPackage(uiMapbox);
   return value as unknown as VersionsIndex;
 }
 

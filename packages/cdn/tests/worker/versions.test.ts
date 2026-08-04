@@ -6,12 +6,12 @@ import { parseVersionsIndex, resolveBareRoot, resolveVersion } from '../../worke
 function uiIndex(ui: { releases: string[]; channels: string[]; distTags: Record<string, string> }) {
   // ui-mapbox is validated identically to ui and versioned in lockstep, so it mirrors ui here.
   return {
-    schemaVersion: 3,
+    schemaVersion: 2,
     packages: { ui, 'ui-mapbox': ui, 'js-toolkit': { releases: [] as string[] } },
   };
 }
 
-describe('versions index parsing (schemaVersion 3)', () => {
+describe('versions index parsing (schemaVersion 2)', () => {
   it('accepts a stable-only ui index with no channels and no next/main tags', () => {
     // This is exactly what publish.ts writes for a first stable release before any main channel
     // exists. The Worker must serve it rather than treating the missing next/main tags as invalid.
@@ -93,14 +93,33 @@ describe('versions index parsing (schemaVersion 3)', () => {
     ).toThrow(/latest tag/);
   });
 
-  it('rejects an index that is not schemaVersion 3 or is missing the packages map', () => {
-    expect(() => parseVersionsIndex({ schemaVersion: 2 })).toThrow(/Unsupported versions index/);
-    expect(() => parseVersionsIndex({ schemaVersion: 3 })).toThrow(/packages index/);
+  it('rejects an index that is not schemaVersion 2 or is missing the packages map', () => {
+    expect(() => parseVersionsIndex({ schemaVersion: 3 })).toThrow(/Unsupported versions index/);
+    expect(() => parseVersionsIndex({ schemaVersion: 2 })).toThrow(/packages index/);
+  });
+
+  it('parses a schema-2 index that predates the ui-mapbox tree and 404s every ui-mapbox route', () => {
+    // The currently-live index has no `ui-mapbox` key. It must still parse, and ui-mapbox routes
+    // must resolve to nothing (a clean 404) until the package is populated by a publish.
+    const index = parseVersionsIndex({
+      schemaVersion: 2,
+      packages: {
+        ui: { releases: ['1.9.0'], channels: [], distTags: { latest: '1.9.0' } },
+        'js-toolkit': { releases: ['3.8.0'] },
+      },
+    });
+    // ui and js-toolkit keep resolving exactly as before.
+    expect(resolveVersion(index, 'ui', 'latest')).toMatchObject({ version: '1.9.0' });
+    expect(resolveVersion(index, 'js-toolkit', '3.8.0')).toMatchObject({ version: '3.8.0' });
+    // ui-mapbox defaults to an empty package: every route 404s.
+    expect(resolveVersion(index, 'ui-mapbox', 'latest')).toBeUndefined();
+    expect(resolveVersion(index, 'ui-mapbox', '1.0.0')).toBeUndefined();
+    expect(resolveBareRoot(index, 'ui-mapbox')).toBeUndefined();
   });
 
   it('resolves ui-mapbox with the full ui semantics from its own namespaced trees', () => {
     const index = parseVersionsIndex({
-      schemaVersion: 3,
+      schemaVersion: 2,
       packages: {
         ui: {
           releases: ['1.9.0'],
@@ -136,7 +155,7 @@ describe('versions index parsing (schemaVersion 3)', () => {
 
 describe('js-toolkit version resolution', () => {
   const index = parseVersionsIndex({
-    schemaVersion: 3,
+    schemaVersion: 2,
     packages: {
       ui: { releases: ['1.9.0'], channels: [], distTags: { latest: '1.9.0' } },
       'ui-mapbox': { releases: ['1.9.0'], channels: [], distTags: { latest: '1.9.0' } },
@@ -164,7 +183,7 @@ describe('js-toolkit version resolution', () => {
 
 describe('bare package root resolution', () => {
   const index = parseVersionsIndex({
-    schemaVersion: 3,
+    schemaVersion: 2,
     packages: {
       ui: { releases: ['1.9.0', '2.0.0'], channels: [], distTags: { latest: '2.0.0' } },
       'ui-mapbox': { releases: ['1.9.0', '2.0.0'], channels: [], distTags: { latest: '2.0.0' } },

@@ -29,7 +29,7 @@ function syntheticBucket(): MemoryR2 {
   bucket.put(
     'versions.json',
     JSON.stringify({
-      schemaVersion: 3,
+      schemaVersion: 2,
       packages: {
         ui: {
           releases: ['1.2.0'],

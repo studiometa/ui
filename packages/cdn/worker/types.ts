@@ -38,11 +38,13 @@ export interface JsToolkitPackageIndex {
 }
 
 export interface VersionsIndex {
-  schemaVersion: 3;
+  schemaVersion: 2;
   packages: {
     ui: UiPackageIndex;
-    // `ui-mapbox` is versioned in lockstep with `ui` and carries the same full ui semantics
-    // (releases, immutable channels and distribution tags).
+    // `ui-mapbox` is an additive, optional package under schema 2, versioned in lockstep with `ui`
+    // and carrying the same full ui semantics (releases, immutable channels and distribution tags).
+    // An index predating the ui-mapbox tree omits it; the Worker defaults it to an empty package on
+    // read, so this key is always populated on the parsed index.
     'ui-mapbox': UiPackageIndex;
     'js-toolkit': JsToolkitPackageIndex;
   };

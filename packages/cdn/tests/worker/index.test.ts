@@ -198,7 +198,7 @@ describe('CDN Worker bare package roots', () => {
     fixture.bucket.put(
       'versions.json',
       JSON.stringify({
-        schemaVersion: 3,
+        schemaVersion: 2,
         packages: {
           ui: { releases: [], channels: [], distTags: {} },
           'ui-mapbox': { releases: [], channels: [], distTags: {} },
@@ -506,7 +506,7 @@ describe('CDN Worker registry', () => {
   it('returns a well-formed empty registry when nothing is published', async () => {
     const restore = replaceIndex(
       JSON.stringify({
-        schemaVersion: 3,
+        schemaVersion: 2,
         packages: {
           ui: { releases: [], channels: [], distTags: {} },
           'ui-mapbox': { releases: [], channels: [], distTags: {} },

@@ -20,7 +20,7 @@ function seed(): WorkingVersionsIndex {
     distTags: { latest: '2.0.0', next: 'main-000000000002', main: 'main-000000000002' },
   };
   return {
-    schemaVersion: 3,
+    schemaVersion: 2,
     packages: {
       ui: structuredClone(uiLike),
       'ui-mapbox': structuredClone(uiLike),
@@ -95,6 +95,43 @@ describe('CDN publication', () => {
     );
     expect(versionsPut).toBeGreaterThan(lastCopy);
     expect(store.keysWithPrefix('tmp/')).toHaveLength(0);
+  });
+
+  it('migrates a live schema-2 index that has no ui-mapbox key in place and stays schema 2', async () => {
+    // This is the exact shape the currently-deployed release tooling wrote: schemaVersion 2 with
+    // only `ui` and `js-toolkit`. A publish from this branch must accept it, add `ui-mapbox`, and
+    // never bump the schema number.
+    const store = new MemoryObjectStore();
+    const liveIndex = {
+      schemaVersion: 2,
+      packages: {
+        ui: {
+          releases: ['1.0.0', '2.0.0'],
+          channels: ['main-000000000002'],
+          distTags: { latest: '2.0.0', next: 'main-000000000002', main: 'main-000000000002' },
+        },
+        'js-toolkit': { releases: ['3.8.0'] },
+      },
+    };
+    const body = new Uint8Array(Buffer.from(JSON.stringify(liveIndex), 'utf8'));
+    store.objects.set('versions.json', { body, sha384: '' });
+
+    const result = await publish(store, makeArtifact(), releaseTarget, {
+      publicationId: 'migrate',
+      lockstepUiMapbox: makeArtifact(),
+    });
+
+    // The migrated index gains ui-mapbox with the new release while staying schemaVersion 2.
+    expect(result.index.schemaVersion).toBe(2);
+    expect(result.index.packages['ui-mapbox'].releases).toEqual(['2.1.0']);
+    expect(result.index.packages['ui-mapbox'].distTags.latest).toBe('2.1.0');
+    expect(result.index.packages.ui.releases).toContain('2.1.0');
+
+    // The persisted payload is a valid schema-2 index the (new) Worker accepts.
+    const persisted = JSON.parse((await store.getText('versions.json')) as string);
+    expect(persisted.schemaVersion).toBe(2);
+    expect(persisted.packages['ui-mapbox']).toBeDefined();
+    expect(() => parseVersionsIndex(persisted)).not.toThrow();
   });
 
   it('publishes a main channel for both lockstep trees under their namespaced prefixes', async () => {

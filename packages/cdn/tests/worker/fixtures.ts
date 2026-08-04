@@ -169,7 +169,7 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
     distTags: { latest: '2.0.0', next: 'main-fedcba9', main: 'main-fedcba9' },
   };
   const versionsIndex: VersionsIndex = {
-    schemaVersion: 3,
+    schemaVersion: 2,
     packages: {
       ui: uiLikePackageIndex,
       'ui-mapbox': uiLikePackageIndex,
