@@ -16,9 +16,7 @@
     "./*": "./*.ts"
   },
   "scripts": {
-    "build": "npm run build:pkg && npm run build:types",
-    "build:pkg": "node scripts/build.js",
-    "build:types": "tsgo --build tsconfig.build.json",
+    "build": "node scripts/build.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -41,6 +39,7 @@
     "@studiometa/js-toolkit": "^3.8.0"
   },
   "devDependencies": {
-    "@studiometa/js-toolkit": "^3.8.0"
+    "@studiometa/js-toolkit": "^3.8.0",
+    "tsdown": "0.21.5"
   }
 }

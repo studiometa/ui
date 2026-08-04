@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build as tsdownBuild } from 'tsdown';
@@ -33,8 +34,12 @@ const jsToolkitMetadata = JSON.parse(
     'utf8',
   ),
 );
+// Resolve tsdown from wherever npm installed it: it is a dependency of several
+// workspace packages, so it may be hoisted to the repository root or kept under
+// packages/cdn depending on the install layout.
+const requireFromScript = createRequire(import.meta.url);
 const tsdownMetadata = JSON.parse(
-  await readFile(resolve(packageDirectory, 'node_modules/tsdown/package.json'), 'utf8'),
+  await readFile(requireFromScript.resolve('tsdown/package.json'), 'utf8'),
 );
 const rolldownMetadata = JSON.parse(
   await readFile(resolve(repositoryDirectory, 'node_modules/rolldown/package.json'), 'utf8'),
