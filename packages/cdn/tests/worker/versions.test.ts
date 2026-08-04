@@ -2,6 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { parseVersionsIndex, resolveBareRoot, resolveVersion } from '../../worker/versions.ts';
+import { addChannel, addRelease, type WorkingVersionsIndex } from '../../scripts/lib/versions.ts';
 
 function uiIndex(ui: { releases: string[]; channels: string[]; distTags: Record<string, string> }) {
   // ui-mapbox is validated identically to ui and versioned in lockstep, so it mirrors ui here.
@@ -301,5 +302,89 @@ describe('bare package root resolution', () => {
     const empty = parseVersionsIndex(uiIndex({ releases: [], channels: [], distTags: {} }));
     expect(resolveBareRoot(empty, 'ui')).toBeUndefined();
     expect(resolveBareRoot(empty, 'js-toolkit')).toBeUndefined();
+  });
+});
+
+describe('distribution tag mutators (scripts/lib/versions)', () => {
+  // Builds a working index whose ui and ui-mapbox packages share the given shape (they are versioned
+  // in lockstep). Only `ui` is inspected in these unit tests.
+  function workingIndex(ui: {
+    releases: string[];
+    channels: string[];
+    distTags: Record<string, string>;
+  }): WorkingVersionsIndex {
+    return {
+      schemaVersion: 2,
+      packages: {
+        ui: structuredClone(ui),
+        'ui-mapbox': structuredClone(ui),
+        'js-toolkit': { releases: [] },
+      },
+    };
+  }
+
+  it('addChannel advances only main and never touches next', () => {
+    // next names a published prerelease release; a channel publish must leave it untouched.
+    const before = workingIndex({
+      releases: ['1.0.0', '2.0.0-beta.1'],
+      channels: [],
+      distTags: { latest: '1.0.0', next: '2.0.0-beta.1' },
+    });
+    const after = addChannel(before, 'ui', 'main-abcdef1234ab');
+    expect(after.packages.ui.distTags.main).toBe('main-abcdef1234ab');
+    expect(after.packages.ui.distTags.next).toBe('2.0.0-beta.1');
+    expect(after.packages.ui.channels).toContain('main-abcdef1234ab');
+  });
+
+  it('addRelease advances latest for a stable version and leaves next alone', () => {
+    const after = addRelease(
+      workingIndex({
+        releases: ['1.0.0'],
+        channels: ['main-abcdef1234ab'],
+        distTags: { latest: '1.0.0', next: 'main-abcdef1234ab' },
+      }),
+      'ui',
+      '2.0.0',
+    );
+    expect(after.packages.ui.distTags.latest).toBe('2.0.0');
+    expect(after.packages.ui.distTags.next).toBe('main-abcdef1234ab');
+  });
+
+  it('addRelease advances next to a prerelease when next is unset or names a channel', () => {
+    // Unset next.
+    const fresh = addRelease(
+      workingIndex({ releases: ['1.0.0'], channels: [], distTags: { latest: '1.0.0' } }),
+      'ui',
+      '2.0.0-beta.0',
+    );
+    expect(fresh.packages.ui.distTags.next).toBe('2.0.0-beta.0');
+
+    // next currently names a channel (the legacy coupled shape): the prerelease takes it over, and
+    // latest is untouched by a prerelease.
+    const fromChannel = addRelease(
+      workingIndex({
+        releases: ['1.0.0'],
+        channels: ['main-abcdef1234ab'],
+        distTags: { latest: '1.0.0', next: 'main-abcdef1234ab' },
+      }),
+      'ui',
+      '2.0.0-beta.0',
+    );
+    expect(fromChannel.packages.ui.distTags.next).toBe('2.0.0-beta.0');
+    expect(fromChannel.packages.ui.distTags.latest).toBe('1.0.0');
+  });
+
+  it('addRelease only moves next forward to a higher prerelease, never backward', () => {
+    const start = workingIndex({
+      releases: ['1.0.0', '2.0.0-beta.1'],
+      channels: [],
+      distTags: { latest: '1.0.0', next: '2.0.0-beta.1' },
+    });
+    // A newer prerelease advances next.
+    expect(addRelease(start, 'ui', '2.0.0-beta.2').packages.ui.distTags.next).toBe('2.0.0-beta.2');
+    // An older prerelease does not move next backward, but is still indexed.
+    const backward = addRelease(start, 'ui', '2.0.0-beta.0');
+    expect(backward.packages.ui.distTags.next).toBe('2.0.0-beta.1');
+    expect(backward.packages.ui.releases).toContain('2.0.0-beta.0');
   });
 });

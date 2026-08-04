@@ -149,7 +149,7 @@ describe('CDN publication', () => {
     expect(() => parseVersionsIndex(result.index)).not.toThrow();
   });
 
-  it('advances latest for a stable tag but never for a prerelease', async () => {
+  it('advances latest for a stable tag, and next (not latest) for a prerelease', async () => {
     const stable = await publish(seededStore(), makeArtifact(), releaseTarget, {
       publicationId: 'p',
     });
@@ -161,7 +161,10 @@ describe('CDN publication', () => {
       { kind: 'release', packageName: 'ui', version: '2.2.0-beta.1' },
       { publicationId: 'p' },
     );
+    // A prerelease never moves latest, but does advance next (npm parity). The seed's next named a
+    // channel, so the prerelease takes it over.
     expect(prerelease.index.packages.ui.distTags.latest).toBe('2.0.0');
+    expect(prerelease.index.packages.ui.distTags.next).toBe('2.2.0-beta.1');
     expect(prerelease.index.packages.ui.releases).toContain('2.2.0-beta.1');
   });
 
@@ -181,7 +184,7 @@ describe('CDN publication', () => {
     expect(() => parseVersionsIndex(result.index)).not.toThrow();
   });
 
-  it('publishes a main channel and moves next and main together', async () => {
+  it('publishes a main channel and advances only main, leaving next untouched', async () => {
     const store = seededStore();
     const result = await publish(
       store,
@@ -190,10 +193,37 @@ describe('CDN publication', () => {
       { publicationId: 'chan' },
     );
     expect(result.identity).toBe('main-bbbbbbbbbbbb');
-    expect(result.index.packages.ui.distTags.next).toBe('main-bbbbbbbbbbbb');
     expect(result.index.packages.ui.distTags.main).toBe('main-bbbbbbbbbbbb');
+    // next is release-managed now: a channel publish never advances it. It stays on the seed's next.
+    expect(result.index.packages.ui.distTags.next).toBe('main-000000000002');
     expect(store.objects.has('channels/main-bbbbbbbbbbbb/build.json')).toBe(true);
     expect(() => parseVersionsIndex(result.index)).not.toThrow();
+  });
+
+  it('keeps main (channel) and next (prerelease) decoupled across a channel then a prerelease publish', async () => {
+    const store = seededStore();
+    const channel = await publish(
+      store,
+      makeArtifact({ commit: 'b'.repeat(40) }),
+      { kind: 'channel', commit: 'b'.repeat(40) },
+      { publicationId: 'chan', lockstepUiMapbox: makeArtifact({ commit: 'b'.repeat(40) }) },
+    );
+    // The channel advances main only; next is left on whatever the seed pointed it at.
+    expect(channel.index.packages.ui.distTags.main).toBe('main-bbbbbbbbbbbb');
+    expect(channel.index.packages.ui.distTags.next).toBe('main-000000000002');
+
+    const prerelease = await publish(
+      store,
+      makeArtifact({ version: '2.2.0-beta.1' }),
+      { kind: 'release', packageName: 'ui', version: '2.2.0-beta.1' },
+      { publicationId: 'pre', lockstepUiMapbox: makeArtifact({ version: '2.2.0-beta.1' }) },
+    );
+    // The prerelease advances next but never main; the two stay decoupled for both lockstep packages.
+    expect(prerelease.index.packages.ui.distTags.main).toBe('main-bbbbbbbbbbbb');
+    expect(prerelease.index.packages.ui.distTags.next).toBe('2.2.0-beta.1');
+    expect(prerelease.index.packages['ui-mapbox'].distTags.main).toBe('main-bbbbbbbbbbbb');
+    expect(prerelease.index.packages['ui-mapbox'].distTags.next).toBe('2.2.0-beta.1');
+    expect(() => parseVersionsIndex(prerelease.index)).not.toThrow();
   });
 
   it('publishes a per-PR preview channel without moving the next or main tags', async () => {
@@ -250,15 +280,49 @@ describe('CDN publication', () => {
     expect(again.removed).toEqual([]);
   });
 
-  it('refuses to overwrite an already published immutable prefix', async () => {
+  it('refuses to overwrite an already published immutable channel', async () => {
+    // A channel is commit-addressed and immutable; re-publishing it is a mistake and still hard-fails.
     const store = seededStore();
-    store.objects.set('releases/ui/2.1.0/build.json', {
+    store.objects.set('channels/main-bbbbbbbbbbbb/build.json', {
       body: new Uint8Array(),
       sha384: 'sha384-existing',
     });
-    await expect(publish(store, makeArtifact(), releaseTarget)).rejects.toThrow(
-      /already published/,
+    await expect(
+      publish(store, makeArtifact({ commit: 'b'.repeat(40) }), {
+        kind: 'channel',
+        commit: 'b'.repeat(40),
+      }),
+    ).rejects.toThrow(/already published/);
+  });
+
+  it('re-publishing an existing release skips the upload but still advances its dist-tag', async () => {
+    // The idempotent re-tag path: after 2.2.0-beta.0 was published, re-running its publish (e.g. to
+    // fix up next semantics after this deploy) must not re-upload the immutable tree, but must still
+    // rewrite versions.json so next moves to the prerelease.
+    const store = seededStore();
+    for (const key of [
+      'releases/ui/2.2.0-beta.0/build.json',
+      'releases/ui-mapbox/2.2.0-beta.0/build.json',
+    ]) {
+      store.objects.set(key, { body: new Uint8Array(), sha384: 'x' });
+    }
+    const opsBefore = store.operations.length;
+    const result = await publish(
+      store,
+      makeArtifact({ version: '2.2.0-beta.0' }),
+      { kind: 'release', packageName: 'ui', version: '2.2.0-beta.0' },
+      { publicationId: 'retag', lockstepUiMapbox: makeArtifact({ version: '2.2.0-beta.0' }) },
     );
+    // No immutable object was re-uploaded: neither tree was staged or copied.
+    const newOps = store.operations.slice(opsBefore);
+    expect(newOps.some((entry) => entry.op === 'copy')).toBe(false);
+    expect(newOps.some((entry) => entry.op === 'put' && entry.key.startsWith('tmp/'))).toBe(false);
+    // versions.json was still rewritten and next advanced to the prerelease for both packages.
+    expect(newOps.some((entry) => entry.op === 'put' && entry.key === 'versions.json')).toBe(true);
+    expect(result.index.packages.ui.distTags.next).toBe('2.2.0-beta.0');
+    expect(result.index.packages['ui-mapbox'].distTags.next).toBe('2.2.0-beta.0');
+    expect(result.index.packages.ui.releases).toContain('2.2.0-beta.0');
+    expect(() => parseVersionsIndex(result.index)).not.toThrow();
   });
 
   it('fails an interrupted upload and leaves temporary objects for diagnosis', async () => {

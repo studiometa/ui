@@ -13,6 +13,16 @@ A release is two things published in order:
 
 The index is the source of truth the Worker reads first. A prefix that exists in the bucket but is absent from `versions.json` is invisible to the Worker; a tag in `versions.json` that names a missing prefix would fail validation. The two must stay consistent, and the index must be updated last.
 
+### Distribution tags
+
+The three ui distribution tags mirror npm and are advanced independently:
+
+- **`latest` = latest stable release.** A stable (non-prerelease) release publish advances it.
+- **`next` = latest prerelease release (npm parity).** A prerelease publish advances it, tracking the _highest_ published prerelease — it only ever moves forward, never back to an older prerelease. It is decoupled from `main`.
+- **`main` = rolling main channel.** A main-branch channel publish advances it to the new `main-<commit>` channel and touches nothing else; it never moves `next`.
+
+Each ui tag is advanced identically on the lockstep `ui-mapbox` package. Re-running a release publish for an already-published version is idempotent: the immutable tree is left untouched and only these tags (and `versions.json`) are advanced.
+
 ## Preconditions
 
 Before publishing:
@@ -40,8 +50,8 @@ The publish step must preserve the append-only, index-last contract:
 
 1. **Upload to a temporary location.** Stage the built files under a non-served temporary key so a partially uploaded release is never reachable through the index.
 2. **Verify the upload.** Re-check every file against `integrity.json` (SHA-384) after upload. Confirm the file inventory matches `build.json` outputs. The upload is only considered good if every digest matches.
-3. **Copy into the final immutable prefixes.** Move the verified files to `releases/ui/<version>/` (or `channels/main-<commit>/`) and, when the exact js-toolkit version is not yet present, to `releases/js-toolkit/<jtVersion>/`. These prefixes are immutable: each is written once and never overwritten. If a prefix for that exact version already exists, stop — re-publishing an existing version is not allowed (js-toolkit simply keeps its existing artifact). Publish js-toolkit before the ui tree that imports it becomes visible.
-4. **Update `versions.json` atomically.** Write a new `schemaVersion: 2` index that adds the ui version to `packages.ui.releases` (or `packages.ui.channels`), the lockstep ui-mapbox version to `packages["ui-mapbox"].releases` (or `.channels`), and the js-toolkit version to `packages["js-toolkit"].releases`, and, if this ui release should become current, sets the relevant distribution tag on both ui and ui-mapbox. `versions.json` is the only mutable object touched by a release, and it is written as a single object so the Worker never observes a half-updated index. Preserve the schema invariants: `latest` must name a published stable release with no pre-release identifier, and `next` must equal `main` and name a published channel.
+3. **Copy into the final immutable prefixes.** Move the verified files to `releases/ui/<version>/` (or `channels/main-<commit>/`) and, when the exact js-toolkit version is not yet present, to `releases/js-toolkit/<jtVersion>/`. These prefixes are immutable: each is written once and never overwritten. A channel or preview whose prefix already exists is an error — stop. A **release** whose prefix already exists is instead idempotent: skip the copy, leave the immutable tree untouched, and continue to the index update so a re-run only re-advances the distribution tags (js-toolkit likewise keeps its existing artifact). Publish js-toolkit before the ui tree that imports it becomes visible.
+4. **Update `versions.json` atomically.** Write a new `schemaVersion: 2` index that adds the ui version to `packages.ui.releases` (or `packages.ui.channels`), the lockstep ui-mapbox version to `packages["ui-mapbox"].releases` (or `.channels`), and the js-toolkit version to `packages["js-toolkit"].releases`, and advances the appropriate distribution tag on both ui and ui-mapbox: a stable release moves `latest`, a prerelease moves `next` (to the highest prerelease), and a main channel moves `main`. `versions.json` is the only mutable object touched by a release, and it is written as a single object so the Worker never observes a half-updated index. Preserve the schema invariants: `latest` must name a published stable release with no pre-release identifier; `main` must name a published channel; and `next` must name either a published prerelease release (npm parity) or, in the legacy shape, a published channel.
 
 Uploading the immutable prefix before touching the index guarantees that every version the index references is already fully present and verified.
 

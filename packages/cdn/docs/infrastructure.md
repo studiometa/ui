@@ -100,6 +100,7 @@ The Worker enforces several invariants when parsing the index. For `ui` (and, wh
 
 - **Immutable objects**: Each exact version or channel is written to a new prefix and never overwritten.
 - **Version index**: `versions.json` maps semantic aliases and distribution tags to exact prefixes.
+- **Distribution tags (npm parity)**: `latest` names the latest stable release, `next` names the latest prerelease release (advanced only forward, to the highest prerelease), and `main` names the rolling `main-<commit>` main channel. The three are advanced independently — a stable release moves `latest`, a prerelease moves `next`, and a main-branch publish moves `main` — so `next` and `main` are decoupled. The tolerant Worker still also accepts the legacy coupled shape where `next` names the main channel.
 - **Append-only**: Old versions remain available; releasing only adds prefixes and updates the index.
 - **Reproducible identity**: The build identifier embeds the source-tree digest for reproducibility (see `build.json`).
 
