@@ -1,0 +1,29 @@
+{
+  "name": "studiometa-ui-cdn",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-03-01",
+  // Production traffic is served from the custom route (cdn.studiometa.dev), not a workers.dev
+  // subdomain. Per-version preview URLs stay enabled so the `cdn-preview` workflow can upload a
+  // preview of the Worker for a pull request without touching production (requires a workers.dev
+  // subdomain on the account).
+  "workers_dev": false,
+  "preview_urls": true,
+  "r2_buckets": [
+    {
+      "binding": "ASSETS",
+      "bucket_name": "studiometa-ui-cdn-assets",
+    },
+  ],
+  // Optional observability. The Worker runs without these; enable them to collect privacy-preserving
+  // request telemetry (never raw URLs or query values). Uncomment once the dataset is provisioned.
+  // "analytics_engine_datasets": [
+  //   {
+  //     "binding": "ANALYTICS",
+  //     "dataset": "studiometa_ui_cdn_requests",
+  //   },
+  // ],
+  // "vars": {
+  //   // Fraction (0..1) of requests that also emit a sampled structured console log line.
+  //   "OBSERVABILITY_SAMPLE_RATE": "0.01",
+  // },
+}

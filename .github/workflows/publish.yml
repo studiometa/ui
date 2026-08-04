@@ -96,3 +96,32 @@ jobs:
           body: Please refer to [CHANGELOG.md](https://github.com/studiometa/ui/blob/${{ github.ref_name }}/CHANGELOG.md) for details.
           draft: false
           prerelease: ${{ env.IS_PRERELEASE }}
+
+  # Publishes the browser CDN artifact for a tagged release. It runs only after the npm release
+  # succeeds and is fully isolated, so it can never affect npm publication. The CDN artifact is
+  # never itself published to npm. It relies on the scoped CDN secrets; without them it fails.
+  cdn_release:
+    needs: release
+    runs-on: ubuntu-latest
+    concurrency:
+      group: cdn-publication
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm install --no-audit --no-fund
+      - name: Build the browser CDN distribution
+        run: npm run cdn:build
+      - name: Publish the CDN stable release
+        run: node packages/cdn/scripts/publish.ts --git-tag "${GITHUB_REF_NAME}"
+        env:
+          CDN_S3_ENDPOINT: ${{ secrets.CDN_S3_ENDPOINT }}
+          CDN_S3_BUCKET: ${{ secrets.CDN_S3_BUCKET }}
+          CDN_S3_ACCESS_KEY_ID: ${{ secrets.CDN_S3_ACCESS_KEY_ID }}
+          CDN_S3_SECRET_ACCESS_KEY: ${{ secrets.CDN_S3_SECRET_ACCESS_KEY }}
+          CDN_CLOUDFLARE_API_TOKEN: ${{ secrets.CDN_CLOUDFLARE_API_TOKEN }}
+          CDN_CLOUDFLARE_ZONE_ID: ${{ secrets.CDN_CLOUDFLARE_ZONE_ID }}
+          CDN_PUBLIC_BASE_URL: ${{ vars.CDN_PUBLIC_BASE_URL }}

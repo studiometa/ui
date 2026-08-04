@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "bytes": {
+    "entry:autoload": 2800,
+    "entry:loader": 250,
+    "entry:manifest": 165,
+    "entry:index": 15000,
+    "initial:autoload": 40000,
+    "initial:loader": 12000,
+    "initial:manifest": 28000,
+    "initial:index": 180000,
+    "graph:component:Action": 8000,
+    "graph:family:Accordion": 10000,
+    "js-toolkit:entry:index": 55000,
+    "js-toolkit:entry:utils": 6000,
+    "js-toolkit:initial:index": 90000,
+    "js-toolkit:initial:utils": 42000,
+    "total:esm": 360000,
+    "total:source-maps": 1600000,
+    "total:release": 2200000
+  }
+}

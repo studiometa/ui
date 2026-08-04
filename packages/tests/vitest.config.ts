@@ -14,6 +14,9 @@ export default defineConfig({
       include: ['ui/**/*.ts', 'ui-mapbox/**/*.ts'],
       exclude: ['**/tests/**/*.ts', '**/ui/**/index.ts', '**/ui-mapbox/**/index.ts'],
     },
-    exclude: ['**/.symfony/vendor/**', '**/api/vendor/**'],
+    // The CDN workspace has its own vitest config and dedicated CI jobs (cdn_unit / cdn_build /
+    // cdn_browser); exclude it here so its tests are not also collected by this root run with the
+    // wrong config and working directory.
+    exclude: ['**/.symfony/vendor/**', '**/api/vendor/**', '**/cdn/**'],
   },
 });
