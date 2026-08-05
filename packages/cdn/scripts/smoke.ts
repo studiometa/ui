@@ -224,6 +224,42 @@ async function checkUiAutoloadArtifact(config: SmokeConfig, version: string): Pr
         'ui-autoload ui.js does not reference the baked cross-tree /ui@<version>/manifest.js URL.',
       );
     }
+    if (asset === 'ui-mapbox.js') {
+      assert(
+        body.includes(`/ui-mapbox@${version}/manifest.js`),
+        'ui-autoload ui-mapbox.js does not reference the baked cross-tree /ui-mapbox@<version>/manifest.js URL.',
+      );
+    }
+  }
+
+  // Serving the side-effect entries is not enough: each `import { manifest } from '…/manifest.js'`
+  // binding must actually resolve. A broken cross-tree link (the manifest module serving but NOT
+  // exporting `manifest`, or 404'ing outright) would leave the ui-autoload runtime importing
+  // `undefined` — the exact class of bug this check exists to catch. Assert both per-package manifest
+  // modules serve AND expose a `manifest` export binding.
+  for (const tree of ['ui', 'ui-mapbox'] as const) {
+    const manifestUrl = packageEndpoint(config, tree, version, 'manifest.js');
+    const response = await fetchWithTimeout(manifestUrl, config, {
+      headers: { Origin: 'https://example.com' },
+    });
+    assert(
+      response.status === 200,
+      `${tree} manifest.js returned HTTP ${response.status} (the ui-autoload ${tree}.js entry imports it).`,
+    );
+    assert(
+      (response.headers.get('Content-Type') ?? '').includes('javascript'),
+      `${tree} manifest.js has a non-JavaScript content type: ${response.headers.get('Content-Type')}.`,
+    );
+    const body = await response.text();
+    // The facade re-exports its package manifest, so the emitted module surfaces `manifest` as a bare
+    // `export const manifest`, a re-export (`export { … as manifest }` / `export{manifest}`), or a
+    // `manifest as` alias in an aggregated export list. Any of these proves the binding exists.
+    assert(
+      /(?:export\s*(?:const|let|var|function|class)\s+manifest\b|(?:^|[\s{,])manifest\s+as\b|\bas\s+manifest\b|[{,]\s*manifest\s*[},])/.test(
+        body,
+      ),
+      `${tree} manifest.js does not export a \`manifest\` binding; the ui-autoload ${tree}.js cross-tree import would resolve to undefined.`,
+    );
   }
 }
 
@@ -293,16 +329,38 @@ async function checkBrowserExecution(config: SmokeConfig, version: string): Prom
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
-    // Evaluate both the legacy `ui@<v>/autoload.js` surface and the new ui-autoload side-effect entry
-    // `ui-autoload@<v>/ui.js` (which statically imports the baked cross-tree `/ui@<v>/manifest.js`).
+    // Evaluate the legacy `ui@<v>/autoload.js` surface and BOTH ui-autoload side-effect entries
+    // (`ui.js`, `ui-mapbox.js`), each of which statically imports its package's baked cross-tree
+    // `/…@<v>/manifest.js` — so a broken binding or a 404 manifest rejects the dynamic import here.
     const moduleUrls = [
       endpoint(config, version, 'autoload.js'),
       packageEndpoint(config, 'ui-autoload', version, 'ui.js'),
+      packageEndpoint(config, 'ui-autoload', version, 'ui-mapbox.js'),
     ];
-    const evaluated = await page.evaluate(async (urls) => {
-      for (const url of urls) await import(url);
-      return typeof window.document !== 'undefined';
-    }, moduleUrls);
+    // Independently import each per-package manifest module and confirm its `manifest` export links to
+    // a non-empty object — catching a manifest that serves but omits the `manifest` binding.
+    const manifestUrls = [
+      packageEndpoint(config, 'ui', version, 'manifest.js'),
+      packageEndpoint(config, 'ui-mapbox', version, 'manifest.js'),
+    ];
+    const evaluated = await page.evaluate(
+      async ({ modules, manifests }) => {
+        for (const url of modules) await import(url);
+        for (const url of manifests) {
+          const mod = (await import(url)) as { manifest?: unknown };
+          const manifest = mod.manifest;
+          if (
+            !manifest ||
+            typeof manifest !== 'object' ||
+            Object.keys(manifest as object).length === 0
+          ) {
+            throw new Error(`Manifest module ${url} does not export a non-empty \`manifest\` object.`);
+          }
+        }
+        return typeof window.document !== 'undefined';
+      },
+      { modules: moduleUrls, manifests: manifestUrls },
+    );
     assert(evaluated, 'The autoload modules did not evaluate in the browser.');
     return { name: 'Browser execution', status: 'passed' };
   } finally {

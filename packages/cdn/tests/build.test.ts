@@ -225,14 +225,42 @@ describe('browser CDN build', () => {
 
   it('lazy-loads Mapbox components from the ui-mapbox tree in the composed autoload manifest', async () => {
     // The composed autoload's bundled ui-mapbox manifest must resolve each Mapbox component to its
-    // absolute ui-mapbox tree URL rather than a chunk-relative path or a ui-tree chunk.
+    // absolute ui-mapbox tree URL rather than a chunk-relative path or a ui-tree chunk. The composed
+    // manifest lives in the `autoload` entry's static graph (its own file plus its preload chunks) —
+    // NOT in the `/ui@<v>/manifest.js` entry, which now serves the ui PACKAGE manifest (ui components
+    // only) so the ui-autoload runtime can compose the per-package manifests itself.
+    const autoloadGraph = [build.entries.autoload.path, ...build.entries.autoload.preload];
+    let combined = '';
+    for (const file of autoloadGraph) {
+      combined += await readFile(resolve(uiTree, file), 'utf8');
+    }
+    expect(combined).toContain(`/ui-mapbox@${uiVersion}/MapboxMap.js`);
+    expect(combined).toContain(`/ui-mapbox@${uiVersion}/StoreLocator.js`);
+    // The rewritten URL is a genuine absolute origin-relative path, not a `../` chunk-relative one.
+    expect(combined).not.toContain(`../ui-mapbox@${uiVersion}/`);
+
+    // Conversely, the `/ui@<v>/manifest.js` entry serves the ui PACKAGE manifest: it exports
+    // `manifest`, references no Mapbox tree URL, and its lazy component loaders use flat
+    // `../<Component>.js` chunk paths.
     const manifestChunk = uiFiles.find((file) => /^chunks\/manifest-.*\.js$/.test(file));
     expect(manifestChunk).toBeDefined();
-    const source = await readFile(resolve(uiTree, manifestChunk as string), 'utf8');
-    expect(source).toContain(`/ui-mapbox@${uiVersion}/MapboxMap.js`);
-    expect(source).toContain(`/ui-mapbox@${uiVersion}/StoreLocator.js`);
-    // The rewritten URL is a genuine absolute origin-relative path, not a `../` chunk-relative one.
-    expect(source).not.toContain(`../ui-mapbox@${uiVersion}/`);
+    const manifestEntry = await readFile(resolve(uiTree, 'manifest.js'), 'utf8');
+    expect(manifestEntry).toMatch(/\bas manifest\b/);
+    const manifestSource = await readFile(resolve(uiTree, manifestChunk as string), 'utf8');
+    expect(manifestSource).not.toContain(`/ui-mapbox@${uiVersion}/`);
+    expect(manifestSource).toContain('import(`../Accordion.js`)');
+  });
+
+  it('serves the ui-mapbox package manifest exporting `manifest` with flat component paths', async () => {
+    // The `/ui-mapbox@<v>/manifest.js` entry serves the @studiometa/ui-mapbox PACKAGE manifest so the
+    // ui-autoload runtime's `ui-mapbox.js` side-effect entry resolves its `import { manifest }` binding.
+    expect(uiMapboxFiles).toContain('manifest.js');
+    expect(uiMapboxBuild.entries.manifest.path).toBe('manifest.js');
+    const manifestSource = await readFile(resolve(uiMapboxTree, 'manifest.js'), 'utf8');
+    expect(manifestSource).toMatch(/\bas manifest\b/);
+    // Mapbox components lazy-load from flat sibling chunks in the same tree, never a nested source path.
+    expect(manifestSource).toContain('import(`./MapboxMap.js`)');
+    expect(manifestSource).not.toMatch(/import\(`\.\/[^`]+\/[^`]+\.js`\)/);
   });
 
   it('serves the js-toolkit index and utils entries from the js-toolkit tree', () => {

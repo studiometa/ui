@@ -976,7 +976,11 @@ uiMapboxExternalUrls.sort();
 const uiEntryPoints = {
   autoload: resolve(repositoryDirectory, 'packages/cdn/src/autoload.ts'),
   loader: resolve(repositoryDirectory, 'packages/cdn/src/loader.ts'),
-  manifest: resolve(repositoryDirectory, 'packages/cdn/src/manifest.ts'),
+  // The `/ui@<v>/manifest.js` entry serves the @studiometa/ui PACKAGE manifest (ui components only,
+  // exporting `manifest`), not the composed `src/manifest.ts`. The ui-autoload runtime composes the
+  // per-package manifests at runtime. The old bespoke `autoload` entry keeps bundling the composed
+  // `src/manifest.ts` internally and is unaffected by this repointing.
+  manifest: resolve(repositoryDirectory, 'packages/cdn/src/manifest-ui.ts'),
   index: resolve(repositoryDirectory, 'packages/cdn/src/barrel-ui.ts'),
   ...componentEntryPoints,
 };
@@ -1008,13 +1012,17 @@ const uiMetafile = metafileFromChunks(chunksOf(uiResults));
 // one runtime instance and one component registry), and mapbox-gl and the geocoder stay external
 // bare specifiers resolved by the consumer's import map. @studiometa/ui-mapbox has no
 // @studiometa/ui dependency, so nothing ui-related is bundled or externalized here.
-const reservedUiMapboxEntryNames = new Set(['index']);
+const reservedUiMapboxEntryNames = new Set(['manifest', 'index']);
 const uiMapboxComponentEntryPoints = componentEntryPointsFor(
   mapboxDefinitions,
   reservedUiMapboxEntryNames,
   'ui-mapbox',
 );
 const uiMapboxEntryPoints = {
+  // The `/ui-mapbox@<v>/manifest.js` entry serves the @studiometa/ui-mapbox PACKAGE manifest (Mapbox
+  // components only, exporting `manifest`). Bundled alongside the Mapbox component entries, rolldown
+  // rewrites its lazy `import('./<Component>.js')` loaders to the flat `../<Component>.js` chunks.
+  manifest: resolve(repositoryDirectory, 'packages/cdn/src/manifest-ui-mapbox.ts'),
   index: resolve(repositoryDirectory, 'packages/cdn/src/barrel-ui-mapbox.ts'),
   ...uiMapboxComponentEntryPoints,
 };
@@ -1177,9 +1185,11 @@ for (const [output, metadata] of Object.entries(uiMapboxMetafile.outputs)) {
   if (!metadata.entryPoint) continue;
   uiMapboxComponentOutputBySource.set(resolve(repositoryDirectory, metadata.entryPoint), output);
 }
-const uiMapboxEntryOutputs = { index: 'index.js' };
-if (!uiMapboxMetafile.outputs['index.js']) {
-  throw new Error('Missing ui-mapbox entry output index.js.');
+const uiMapboxEntryOutputs = { manifest: 'manifest.js', index: 'index.js' };
+for (const [name, file] of Object.entries(uiMapboxEntryOutputs)) {
+  if (!uiMapboxMetafile.outputs[file]) {
+    throw new Error(`Missing ui-mapbox entry output ${file} for ${name}.`);
+  }
 }
 
 // The ui-autoload tree externalizes js-toolkit and both component manifests; nothing else may be an
