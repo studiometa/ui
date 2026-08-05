@@ -530,11 +530,15 @@ function assertUiAutoloadExternals(
   const allowed = new Set(allowedUrls);
   const disallowed = external.filter((url) => !allowed.has(url));
   if (disallowed.length > 0) {
-    throw new Error(`The ui-autoload tree has unexpected external imports: ${disallowed.join(', ')}`);
+    throw new Error(
+      `The ui-autoload tree has unexpected external imports: ${disallowed.join(', ')}`,
+    );
   }
   const missing = requiredUrls.filter((url) => !external.includes(url));
   if (missing.length > 0) {
-    throw new Error(`The ui-autoload tree is missing expected external import(s): ${missing.join(', ')}`);
+    throw new Error(
+      `The ui-autoload tree is missing expected external import(s): ${missing.join(', ')}`,
+    );
   }
   const bundled = Object.keys(metafile.inputs).filter((input) =>
     ['node_modules/@studiometa/js-toolkit/', 'packages/ui/', 'packages/ui-mapbox/'].some((needle) =>
@@ -619,22 +623,22 @@ async function synthesizeFacadeSourceMaps(treeDirectory: string): Promise<void> 
   }
 }
 
-// Rewrites every RELATIVE `.js` import/export specifier in a tree's emitted `.d.ts` files to be
-// extensionless (`./chunks/Action-<hash>.js` -> `./chunks/Action-<hash>`), touching only `.d.ts`
-// output and never the runtime `.js` chunks.
+// Rewrites every RELATIVE `.js` import/export specifier in a tree's emitted `.d.ts` files to a
+// `.d.ts` specifier (`./chunks/Action-<hash>.js` -> `./chunks/Action-<hash>.d.ts`), touching only
+// `.d.ts` output and never the runtime `.js` chunks.
 //
 // rolldown-plugin-dts hard-codes a `.d.ts` -> `.js` suffix rewrite on the internal declaration
 // references it emits (its `patchImportExport` calls `filename_dts_to(source, 'js')`) and exposes no
 // option to change it, so the sibling a declaration re-exports through is written as `…/X.js` even
-// though only `…/X.d.ts` exists on the CDN. modern-monaco's TS LSP resolver appends the containing
-// file's `.d.ts` ONLY for an EXTENSIONLESS specifier; for a `.js` specifier it does nothing and has
-// no `.js` -> `.d.ts` rewrite, so it fetches the non-existent `…/X.js` (a 404 on the CDN, which
-// serves declarations only as `.d.ts`) and the re-exported types collapse to `any`. Making the
-// specifier extensionless resolves in modern-monaco (it appends `.d.ts`) and stays valid for stock
-// `tsc`/bundler declaration resolution (node resolution appends `.d.ts`). Only relative specifiers
-// (`./`, `../`) are rewritten; bare externals (`@studiometa/js-toolkit`, `mapbox-gl`) and absolute
-// cross-tree URLs are left verbatim.
-async function extensionlessDeclarationSpecifiers(treeDirectory: string): Promise<void> {
+// though only `…/X.d.ts` exists on the CDN. modern-monaco's TS LSP resolver has no `.js` -> `.d.ts`
+// rewrite, so it fetches the non-existent `…/X.js` (a 404 on the CDN, which serves declarations only
+// as `.d.ts`) and the re-exported types collapse to `any`. esm.sh — modern-monaco's reference type
+// source — re-exports through explicit `…/X.d.ts` specifiers, so we do the same: rewrite each
+// relative `.js` specifier in a declaration to `.d.ts`. That fetches the real declaration directly
+// (the specifier already carries an extension, so the resolver does not guess). Only relative
+// specifiers (`./`, `../`) are rewritten; bare externals (`@studiometa/js-toolkit`, `mapbox-gl`) and
+// absolute cross-tree URLs are left verbatim, and the runtime `.js` chunks keep their `.js` imports.
+async function rewriteDeclarationChunkSpecifiers(treeDirectory: string): Promise<void> {
   // A quoted, relative specifier ending in `.js` that follows `from` or `import(` — the only two
   // forms rolldown-plugin-dts emits internal chunk references through in a `.d.ts`.
   const relativeJsSpecifier = /(\bfrom\s*|\bimport\s*\(\s*)(["'])(\.\.?\/[^"']*)\.js\2/g;
@@ -642,7 +646,7 @@ async function extensionlessDeclarationSpecifiers(treeDirectory: string): Promis
     if (!file.endsWith('.d.ts')) continue;
     const absolute = resolve(treeDirectory, file);
     const source = await readFile(absolute, 'utf8');
-    const rewritten = source.replace(relativeJsSpecifier, '$1$2$3$2');
+    const rewritten = source.replace(relativeJsSpecifier, '$1$2$3.d.ts$2');
     if (rewritten !== source) await writeFile(absolute, rewritten);
   }
 }
@@ -1107,13 +1111,13 @@ await synthesizeFacadeSourceMaps(uiAutoloadOutputDirectory);
 
 // The declaration passes above emit chunk/sibling re-exports with a `.js` extension that resolves
 // to nothing on the CDN (declarations are served only as `.d.ts`); rewrite those relative
-// specifiers to be extensionless in every tree's `.d.ts` so a cross-origin TypeScript LSP
+// specifiers to `.d.ts` in every tree's `.d.ts` so a cross-origin TypeScript LSP
 // (modern-monaco's playground editor) resolves the real declarations instead of collapsing them to
 // `any`. This runs before any size/integrity measurement so the emitted bytes are the final ones.
-await extensionlessDeclarationSpecifiers(jsToolkitOutputDirectory);
-await extensionlessDeclarationSpecifiers(uiOutputDirectory);
-await extensionlessDeclarationSpecifiers(uiMapboxOutputDirectory);
-await extensionlessDeclarationSpecifiers(uiAutoloadOutputDirectory);
+await rewriteDeclarationChunkSpecifiers(jsToolkitOutputDirectory);
+await rewriteDeclarationChunkSpecifiers(uiOutputDirectory);
+await rewriteDeclarationChunkSpecifiers(uiMapboxOutputDirectory);
+await rewriteDeclarationChunkSpecifiers(uiAutoloadOutputDirectory);
 
 // Mapbox GL and the geocoder are external (import-map resolved) and no longer bundled, so the CDN
 // serves neither their JavaScript, their stylesheets nor their license notices — consumers load
@@ -1375,7 +1379,10 @@ function entryMetadataFor(
   outputDirectory: string,
   entries: Record<string, string>,
   externalPreloadByName: Record<string, readonly string[]> = {},
-): Record<string, { path: string; sourceMap: string; preload: string[]; externalPreload?: string[] }> {
+): Record<
+  string,
+  { path: string; sourceMap: string; preload: string[]; externalPreload?: string[] }
+> {
   return Object.fromEntries(
     Object.entries(entries).map(([name, output]) => {
       const path = publicPath(outputDirectory, output);
@@ -1553,7 +1560,7 @@ const uiBuildMetadata = {
   },
   declarations: {
     semantics:
-      'Every importable entry emits a bundled `.d.ts` alongside its `.js`, sharing hashed declaration chunks under `chunks/`. Relative declaration specifiers are emitted extensionless (`./chunks/X`, not `./chunks/X.js`) so a cross-origin TypeScript LSP resolves the sibling `.d.ts` on the CDN. The ui declarations import `@studiometa/js-toolkit` externally so they resolve against the js-toolkit declarations tree instead of inlining its types.',
+      'Every importable entry emits a bundled `.d.ts` alongside its `.js`, sharing hashed declaration chunks under `chunks/`. Relative declaration specifiers carry a `.d.ts` extension (`./chunks/X.d.ts`, not `./chunks/X.js`) so a cross-origin TypeScript LSP resolves the declaration on the CDN. The ui declarations import `@studiometa/js-toolkit` externally so they resolve against the js-toolkit declarations tree instead of inlining its types.',
   },
   assertions: {
     jsToolkitIdentities: [toolkitIdentity],
