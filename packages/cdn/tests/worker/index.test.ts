@@ -201,6 +201,150 @@ describe('CDN Worker ui-mapbox package routing', () => {
   });
 });
 
+describe('CDN Worker ui-autoload package routing', () => {
+  // ui-autoload is the fourth CDN package: a ui-like tree versioned in lockstep with ui, carrying
+  // releases, immutable channels and the latest/next/main tags. It resolves and serves exactly like
+  // ui and ui-mapbox from its own namespaced trees. (The fixture synthesizes this tree by cloning
+  // ui-mapbox; the real tree is published in a later PR.)
+  it('serves the ui-autoload barrel and per-component modules from the ui-autoload tree', async () => {
+    const barrel = await request('/ui-autoload@1.2.0/index.js');
+    const component = await request('/ui-autoload@1.2.0/MapboxMap.js');
+
+    expect(barrel.status).toBe(200);
+    expect(barrel.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    expect(barrel.headers.get('Cache-Control')).toBe(IMMUTABLE_CACHE_CONTROL);
+    expect(await barrel.text()).toBe(fixture.uiAutoloadFiles['index.js']);
+    expectCrossOriginHeaders(barrel);
+
+    expect(component.status).toBe(200);
+    expect(await component.text()).toBe(fixture.uiAutoloadFiles['MapboxMap.js']);
+  });
+
+  it('resolves ui-autoload exact versions, aliases, tags and channels exactly like ui', async () => {
+    const alias = await request('/ui-autoload@1/MapboxMap.js');
+    expect(alias.status).toBe(307);
+    expect(alias.headers.get('Location')).toBe(`${origin}/ui-autoload@1.10.0/MapboxMap.js`);
+
+    const latest = await request('/ui-autoload@latest/index.js');
+    expect(latest.status).toBe(307);
+    expect(latest.headers.get('Location')).toBe(`${origin}/ui-autoload@2.0.0/index.js`);
+
+    const channel = await request('/ui-autoload@main-abcdef1/MapboxMap.js');
+    expect(channel.status).toBe(200);
+    expect(await channel.text()).toBe(fixture.uiAutoloadFiles['MapboxMap.js']);
+
+    const next = await request('/ui-autoload@next/index.js');
+    expect(next.status).toBe(307);
+    expect(next.headers.get('Location')).toBe(`${origin}/ui-autoload@main-fedcba9/index.js`);
+
+    const main = await request('/ui-autoload@main/index.js');
+    expect(main.status).toBe(307);
+    expect(main.headers.get('Location')).toBe(`${origin}/ui-autoload@main-fedcba9/index.js`);
+  });
+
+  it('resolves versionless, bare-root and ref-carrying ui-autoload requests', async () => {
+    const versionless = await request('/ui-autoload/MapboxMap');
+    expect(versionless.status).toBe(307);
+    expect(versionless.headers.get('Location')).toBe(`${origin}/ui-autoload@2.0.0/MapboxMap.js`);
+
+    for (const path of ['/ui-autoload', '/ui-autoload/']) {
+      const root = await request(path);
+      expect(root.status).toBe(307);
+      expect(root.headers.get('Location')).toBe(`${origin}/ui-autoload@2.0.0/index.js`);
+    }
+
+    const ref = await request('/ui-autoload@main');
+    expect(ref.status).toBe(307);
+    expect(ref.headers.get('Location')).toBe(`${origin}/ui-autoload@main-fedcba9/index.js`);
+  });
+
+  it('advertises the ui-autoload declaration via X-TypeScript-Types', async () => {
+    const module = await request('/ui-autoload@1.2.0/MapboxMap.js');
+    expect(module.headers.get('X-TypeScript-Types')).toBe(
+      `${origin}/ui-autoload@1.2.0/MapboxMap.d.ts`,
+    );
+    expect(module.headers.get('Access-Control-Expose-Headers')).toContain('X-TypeScript-Types');
+  });
+});
+
+describe('CDN Worker ui-autoload two-phase rollout (index without the ui-autoload key)', () => {
+  // The crucial backward-compat guarantee: the currently-live index has no `ui-autoload` key. This
+  // Worker deploys BEFORE the ui-autoload tree is published, so an index that omits the key must
+  // still parse, keep serving the other packages, resolve every `/ui-autoload` route to a clean 404
+  // (never a 400 route-parse rejection or a 502), and empty ui-autoload gracefully in the registry.
+  const legacyIndex = JSON.stringify({
+    schemaVersion: 2,
+    packages: {
+      ui: {
+        releases: ['1.2.0', '2.0.0'],
+        channels: ['main-fedcba9'],
+        distTags: { latest: '2.0.0', next: 'main-fedcba9', main: 'main-fedcba9' },
+      },
+      'ui-mapbox': {
+        releases: ['1.2.0', '2.0.0'],
+        channels: ['main-fedcba9'],
+        distTags: { latest: '2.0.0', next: 'main-fedcba9', main: 'main-fedcba9' },
+      },
+      'js-toolkit': { releases: [] },
+    },
+  });
+
+  function withLegacyIndex(): () => void {
+    const original = fixture.bucket.objects.get('versions.json') as NonNullable<
+      ReturnType<typeof fixture.bucket.objects.get>
+    >;
+    fixture.bucket.put('versions.json', legacyIndex);
+    return () => fixture.bucket.objects.set('versions.json', original);
+  }
+
+  it('keeps serving the other packages while every ui-autoload route 404s', async () => {
+    const restore = withLegacyIndex();
+    try {
+      // The missing key does not affect the other packages.
+      expect((await request('/ui@2.0.0/index.js')).status).toBe(200);
+      expect((await request('/ui-mapbox@2.0.0/index.js')).status).toBe(200);
+      // Every ui-autoload shape resolves to a clean 404 (route parsing accepts it, resolution finds
+      // nothing), rather than a 400 rejection or a 502 from a failed parse.
+      for (const path of [
+        '/ui-autoload@2.0.0/index.js',
+        '/ui-autoload@latest/index.js',
+        '/ui-autoload@next/index.js',
+        '/ui-autoload@main/index.js',
+        '/ui-autoload@1/index.js',
+        '/ui-autoload/index.js',
+        '/ui-autoload/MapboxMap',
+        '/ui-autoload',
+        '/ui-autoload/',
+      ]) {
+        expect((await request(path)).status).toBe(404);
+      }
+    } finally {
+      restore();
+    }
+  });
+
+  it('empties ui-autoload in the registry while listing the other packages', async () => {
+    const restore = withLegacyIndex();
+    try {
+      const registry = (await (await request('/')).json()) as {
+        packages: Record<string, { releases: string[]; channels: string[]; distTags: unknown }>;
+        current: Record<string, string | null>;
+      };
+      expect(registry.packages['ui-autoload']).toEqual({
+        releases: [],
+        channels: [],
+        distTags: {},
+      });
+      expect(registry.current['ui-autoload']).toBeNull();
+      // The other packages still resolve their current surface from the same index.
+      expect(registry.current.ui).toBe('2.0.0');
+      expect(registry.current['ui-mapbox']).toBe('2.0.0');
+    } finally {
+      restore();
+    }
+  });
+});
+
 describe('CDN Worker extensionless subpath resolution', () => {
   it('maps a versionless extensionless ui component to its .js output in one hop', async () => {
     const response = await request('/ui/Action');
@@ -641,9 +785,15 @@ describe('CDN Worker registry', () => {
     packages: {
       ui: { releases: string[]; channels: string[]; distTags: Record<string, string> };
       'ui-mapbox': { releases: string[]; channels: string[]; distTags: Record<string, string> };
+      'ui-autoload': { releases: string[]; channels: string[]; distTags: Record<string, string> };
       'js-toolkit': { releases: string[] };
     };
-    current: { ui: string | null; 'ui-mapbox': string | null; 'js-toolkit': string | null };
+    current: {
+      ui: string | null;
+      'ui-mapbox': string | null;
+      'ui-autoload': string | null;
+      'js-toolkit': string | null;
+    };
     entries: Record<string, string>;
     components: { token: string; package: string; url: string }[];
   }
@@ -673,10 +823,17 @@ describe('CDN Worker registry', () => {
       distTags: fixture.versionsIndex.packages['ui-mapbox'].distTags,
     });
     expect(registry.packages['js-toolkit'].releases).toEqual([fixture.jsToolkitVersion]);
+    expect(registry.packages['ui-autoload']).toEqual({
+      releases: fixture.versionsIndex.packages['ui-autoload'].releases,
+      channels: fixture.versionsIndex.packages['ui-autoload'].channels,
+      distTags: fixture.versionsIndex.packages['ui-autoload'].distTags,
+    });
 
     expect(registry.current.ui).toBe('2.0.0');
     expect(registry.current['ui-mapbox']).toBe('2.0.0');
     expect(registry.current['js-toolkit']).toBe(fixture.jsToolkitVersion);
+    // ui-autoload is versioned in lockstep with ui, so its current ref matches ui's latest.
+    expect(registry.current['ui-autoload']).toBe('2.0.0');
 
     expect(registry.entries.autoload).toBe(`${origin}/ui@2.0.0/autoload.js`);
     expect(registry.entries.index).toBe(`${origin}/ui@2.0.0/index.js`);
@@ -738,8 +895,14 @@ describe('CDN Worker registry', () => {
 
     expect(registry.packages.ui).toEqual({ releases: [], channels: [], distTags: {} });
     expect(registry.packages['ui-mapbox']).toEqual({ releases: [], channels: [], distTags: {} });
+    expect(registry.packages['ui-autoload']).toEqual({ releases: [], channels: [], distTags: {} });
     expect(registry.packages['js-toolkit']).toEqual({ releases: [] });
-    expect(registry.current).toEqual({ ui: null, 'ui-mapbox': null, 'js-toolkit': null });
+    expect(registry.current).toEqual({
+      ui: null,
+      'ui-mapbox': null,
+      'ui-autoload': null,
+      'js-toolkit': null,
+    });
     expect(registry.entries).toEqual({});
     expect(registry.components).toEqual([]);
   });
@@ -752,7 +915,12 @@ describe('CDN Worker registry', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('Content-Type')).toBe('application/json; charset=utf-8');
     const registry = (await response.json()) as Registry;
-    expect(registry.current).toEqual({ ui: null, 'ui-mapbox': null, 'js-toolkit': null });
+    expect(registry.current).toEqual({
+      ui: null,
+      'ui-mapbox': null,
+      'ui-autoload': null,
+      'js-toolkit': null,
+    });
     expect(registry.components).toEqual([]);
     expect(registry.entries).toEqual({});
   });

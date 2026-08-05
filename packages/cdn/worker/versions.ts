@@ -92,28 +92,36 @@ function validateJsToolkitPackage(value: unknown): void {
 
 const EMPTY_UI_PACKAGE: UiPackageIndex = { releases: [], channels: [], distTags: {} };
 
+// The additive, optional ui-like packages under schema 2. Each shares the full ui semantics and is
+// validated identically when present; when absent (an old index that predates the tree) it defaults
+// to an empty package so the index still parses and every route for it cleanly 404s until the
+// package is populated by a later publish. This is the two-phase rollout contract: a live index that
+// omits one of these keys stays valid, so the Worker can deploy before the tree is published.
+const OPTIONAL_UI_PACKAGE_NAMES = ['ui-mapbox', 'ui-autoload'] as const;
+
 export function parseVersionsIndex(value: unknown): VersionsIndex {
   // The index stays schemaVersion 2 so the currently-deployed Worker keeps parsing it. `ui-mapbox`
-  // is an additive, optional package: an index predating the ui-mapbox tree omits it, so it is not
-  // required for a valid schema-2 index.
+  // and `ui-autoload` are additive, optional packages: an index predating either tree omits it, so
+  // neither is required for a valid schema-2 index.
   if (!isRecord(value) || value.schemaVersion !== 2) {
     throw new Error('Unsupported versions index.');
   }
   if (!isRecord(value.packages)) throw new Error('Invalid packages index.');
   validateUiPackage(value.packages.ui);
   validateJsToolkitPackage(value.packages['js-toolkit']);
-  // ui-mapbox shares the full ui semantics and is validated identically when present. When absent
-  // (an old index that predates the ui-mapbox tree) it defaults to an empty package so the index
-  // still parses and every `/ui-mapbox` route cleanly 404s until the package is populated.
-  const uiMapbox = value.packages['ui-mapbox'];
-  if (uiMapbox === undefined) {
-    return {
-      ...(value as Record<string, unknown>),
-      packages: { ...value.packages, 'ui-mapbox': { ...EMPTY_UI_PACKAGE } },
-    } as unknown as VersionsIndex;
+  const packages: Record<string, unknown> = { ...value.packages };
+  for (const name of OPTIONAL_UI_PACKAGE_NAMES) {
+    const pkg = value.packages[name];
+    if (pkg === undefined) {
+      packages[name] = { ...EMPTY_UI_PACKAGE };
+    } else {
+      validateUiPackage(pkg);
+    }
   }
-  validateUiPackage(uiMapbox);
-  return value as unknown as VersionsIndex;
+  return {
+    ...(value as Record<string, unknown>),
+    packages,
+  } as unknown as VersionsIndex;
 }
 
 function compareStableVersions(left: string, right: string): number {
@@ -132,8 +140,8 @@ function exactRelease(packageName: PackageName, version: string): ExactVersion {
 }
 
 // Immutable channels are namespaced per package under `channels/`. The `ui` channels keep the
-// original flat `channels/<id>` layout; every other channel-carrying package (currently `ui-mapbox`)
-// is namespaced as `channels/<package>/<id>` so its snapshots never collide with ui's.
+// original flat `channels/<id>` layout; every other channel-carrying package (`ui-mapbox`,
+// `ui-autoload`) is namespaced as `channels/<package>/<id>` so its snapshots never collide with ui's.
 function exactChannel(packageName: PackageName, version: string): ExactVersion {
   const objectPrefix =
     packageName === 'ui' ? `channels/${version}` : `channels/${packageName}/${version}`;
@@ -141,13 +149,13 @@ function exactChannel(packageName: PackageName, version: string): ExactVersion {
 }
 
 /**
- * Resolves a requested version for a ui-like package (`ui` or `ui-mapbox`): exact semver, immutable
- * `main-<sha>` channels, the `latest`/`next`/`main` distribution tags, major and minor aliases, and
- * (via a `latest` request) the versionless default.
+ * Resolves a requested version for a ui-like package (`ui`, `ui-mapbox` or `ui-autoload`): exact
+ * semver, immutable `main-<sha>` channels, the `latest`/`next`/`main` distribution tags, major and
+ * minor aliases, and (via a `latest` request) the versionless default.
  */
 function resolveUiLikeVersion(
   index: VersionsIndex,
-  packageName: 'ui' | 'ui-mapbox',
+  packageName: 'ui' | 'ui-mapbox' | 'ui-autoload',
   requested: string,
 ): ExactVersion | undefined {
   const pkg = index.packages[packageName];
@@ -196,10 +204,10 @@ function resolveUiLikeVersion(
 }
 
 /**
- * Resolves a requested version for a package. The `ui` and `ui-mapbox` packages keep the full
- * semantics — exact semver, immutable `main-<sha>` channels, the `latest`/`next`/`main` distribution
- * tags, major and minor aliases, and (via a `latest` request) the versionless default. The
- * `js-toolkit` package is exact-version only: it resolves solely to an exact semver present in its
+ * Resolves a requested version for a package. The `ui`, `ui-mapbox` and `ui-autoload` packages keep
+ * the full semantics — exact semver, immutable `main-<sha>` channels, the `latest`/`next`/`main`
+ * distribution tags, major and minor aliases, and (via a `latest` request) the versionless default.
+ * The `js-toolkit` package is exact-version only: it resolves solely to an exact semver present in its
  * release inventory, so every alias, channel, and distribution tag (including `latest` and the
  * versionless default) is a 404.
  */
@@ -227,7 +235,7 @@ export function resolveBareRoot(
   index: VersionsIndex,
   packageName: PackageName,
 ): ExactVersion | undefined {
-  if (packageName === 'ui' || packageName === 'ui-mapbox') {
+  if (packageName === 'ui' || packageName === 'ui-mapbox' || packageName === 'ui-autoload') {
     return resolveVersion(index, packageName, 'latest');
   }
   const highest = [...index.packages['js-toolkit'].releases].sort(compareStableVersions).at(-1);
@@ -268,6 +276,23 @@ export function resolveCurrentUiMapboxRef(index: VersionsIndex): string | null {
     uiMapbox.distTags.latest ??
     uiMapbox.distTags.main ??
     highestStableRelease(uiMapbox.releases) ??
+    null
+  );
+}
+
+/**
+ * Resolves the reference the registry reports as the current ui-autoload surface, using the same
+ * fallback ladder as {@link resolveCurrentUiRef}. It is versioned in lockstep with ui, so in a
+ * consistent index this equals `resolveCurrentUiRef`, but it is resolved independently so a partial
+ * index (one that omits the ui-autoload key entirely, as the currently-live index does) still
+ * degrades gracefully to `null`.
+ */
+export function resolveCurrentUiAutoloadRef(index: VersionsIndex): string | null {
+  const uiAutoload = index.packages['ui-autoload'];
+  return (
+    uiAutoload.distTags.latest ??
+    uiAutoload.distTags.main ??
+    highestStableRelease(uiAutoload.releases) ??
     null
   );
 }

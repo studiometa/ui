@@ -21,7 +21,7 @@ export interface WorkerEnvironment {
   OBSERVABILITY_SAMPLE_RATE?: string;
 }
 
-export type PackageName = 'ui' | 'ui-mapbox' | 'js-toolkit';
+export type PackageName = 'ui' | 'ui-mapbox' | 'ui-autoload' | 'js-toolkit';
 
 export interface UiPackageIndex {
   releases: string[];
@@ -41,11 +41,12 @@ export interface VersionsIndex {
   schemaVersion: 2;
   packages: {
     ui: UiPackageIndex;
-    // `ui-mapbox` is an additive, optional package under schema 2, versioned in lockstep with `ui`
-    // and carrying the same full ui semantics (releases, immutable channels and distribution tags).
-    // An index predating the ui-mapbox tree omits it; the Worker defaults it to an empty package on
-    // read, so this key is always populated on the parsed index.
+    // `ui-mapbox` and `ui-autoload` are additive, optional packages under schema 2, versioned in
+    // lockstep with `ui` and carrying the same full ui semantics (releases, immutable channels and
+    // distribution tags). An index predating either tree omits it; the Worker defaults it to an
+    // empty package on read, so both keys are always populated on the parsed index.
     'ui-mapbox': UiPackageIndex;
+    'ui-autoload': UiPackageIndex;
     'js-toolkit': JsToolkitPackageIndex;
   };
 }
@@ -133,6 +134,7 @@ export interface RegistryDocument {
   packages: {
     ui: RegistryUiPackage;
     'ui-mapbox': RegistryUiPackage;
+    'ui-autoload': RegistryUiPackage;
     'js-toolkit': {
       releases: string[];
     };
@@ -140,6 +142,7 @@ export interface RegistryDocument {
   current: {
     ui: string | null;
     'ui-mapbox': string | null;
+    'ui-autoload': string | null;
     'js-toolkit': string | null;
   };
   entries: Record<string, string>;
