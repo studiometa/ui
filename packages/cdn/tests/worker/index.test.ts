@@ -243,23 +243,38 @@ describe('CDN Worker extensionless subpath resolution', () => {
     expect(served.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
   });
 
-  it('maps an exact-versioned extensionless request to its .js output', async () => {
+  it('serves an exact-versioned extensionless request directly as its .js output', async () => {
     const response = await request('/ui@1.2.0/Action');
-    expect(response.status).toBe(307);
-    expect(response.headers.get('Location')).toBe(`${origin}/ui@1.2.0/Action.js`);
-
-    const served = await fetch(new Request(response.headers.get('Location') as string), {
-      ASSETS: fixture.bucket,
-    });
-    expect(served.status).toBe(200);
-    expect(served.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    // An immutable ref (exact semver) resolves its extensionless subpath to `Action.js` and serves it
+    // directly — no redirect — so a cross-origin TS language server reads the types header inline.
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    expect(response.headers.get('Cache-Control')).toBe(IMMUTABLE_CACHE_CONTROL);
+    expect(await response.text()).toBe(fixture.files['Action.js']);
+    expect(response.headers.get('X-TypeScript-Types')).toBe(`${origin}/ui@1.2.0/Action.d.ts`);
+    expect(response.headers.get('Access-Control-Expose-Headers')).toContain('X-TypeScript-Types');
+    expectCrossOriginHeaders(response);
   });
 
-  it('maps an exact-versioned extensionless js-toolkit subpath to /index.js', async () => {
+  it('serves an exact-versioned extensionless js-toolkit subpath directly as /index.js', async () => {
     const response = await request(`/js-toolkit@${fixture.jsToolkitVersion}/utils`);
-    expect(response.status).toBe(307);
-    expect(response.headers.get('Location')).toBe(
-      `${origin}/js-toolkit@${fixture.jsToolkitVersion}/utils/index.js`,
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    expect(response.headers.get('Cache-Control')).toBe(IMMUTABLE_CACHE_CONTROL);
+    expect(response.headers.get('X-TypeScript-Types')).toBe(
+      `${origin}/js-toolkit@${fixture.jsToolkitVersion}/utils/index.d.ts`,
+    );
+    expect(response.headers.get('Access-Control-Expose-Headers')).toContain('X-TypeScript-Types');
+  });
+
+  it('serves an immutable channel extensionless subpath directly as its .js output', async () => {
+    const response = await request('/ui@main-abcdef1/Action');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    expect(response.headers.get('Cache-Control')).toBe(IMMUTABLE_CACHE_CONTROL);
+    expect(await response.text()).toBe(fixture.files['Action.js']);
+    expect(response.headers.get('X-TypeScript-Types')).toBe(
+      `${origin}/ui@main-abcdef1/Action.d.ts`,
     );
   });
 

@@ -376,14 +376,20 @@ async function handleRequest(
 
   const query = canonicalizeQuery(url, assetPath, new Set(Object.keys(metadata.build.components)));
   recorder.componentCount(query.components.length);
-  // Redirect to the canonical location when the version is mutable (versionless or a moving tag), the
-  // extensionless path was mapped to a concrete output, or the query is not yet canonical. A single
-  // hop covers all three at once (e.g. `/ui/Action` -> `/ui@<latest>/Action.js`).
-  if (
-    isMutableVersion(route.requestedVersion, exact) ||
-    assetPath !== route.assetPath ||
-    !query.canonical
-  ) {
+  // Redirect to canonicalize a request; otherwise serve it directly. A mutable ref (versionless, or a
+  // moving tag like `latest`/`next`/`main`) always redirects to its resolved exact location, and a
+  // non-canonical query always redirects to canonicalize it — a single hop covers both at once (e.g.
+  // `/ui/Action` -> `/ui@<latest>/Action.js`). An immutable ref (an exact semver, or an immutable
+  // `main-<sha>`/`next-<sha>` channel — anything `isMutableVersion` rules out) is served directly:
+  // its extensionless subpath (`Action`, `utils`) streams the resolved `.js`/`index.js` output as an
+  // accepted alias of the canonical `.js` URL, without a redirect. This is safe because such a ref has
+  // `requested === resolved.version`, so its bytes are immutable by construction (the store marks
+  // `releases/*` and `channels/*` `immutable` and never overwrites them); a new version or ref publish
+  // only ever mints new immutable paths and re-points the mutable tags, which still redirect. Serving
+  // the extensionless alias directly also lets a cross-origin TypeScript language server read the
+  // `X-TypeScript-Types` header off the response without following a 307 (modern-monaco's LSP stops at
+  // redirects). `.js` (canonical) URLs are unchanged.
+  if (isMutableVersion(route.requestedVersion, exact) || !query.canonical) {
     return redirectResponse(
       canonicalLocation(url, route.packageName, exact.version, assetPath, query.search),
     );
