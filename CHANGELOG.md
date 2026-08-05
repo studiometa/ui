@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.10.0-beta.2](https://github.com/studiometa/ui/compare/1.10.0-beta.1..1.10.0-beta.2) (2026-08-05)
+
+### Added
+
+- **@studiometa/ui-autoload:** add per-package side-effect entries — `import '@studiometa/ui-autoload/ui'` and `import '@studiometa/ui-autoload/ui-mapbox'` register a package's manifest and start the autoloader, coalescing into a single loader when both are imported; the same entries work bundled from npm or loaded from the CDN. Expose the pure `autoload({ manifests, root?, eager? })` and `composeManifests()` API for custom composition ([#598](https://github.com/studiometa/ui/pull/598))
+- **@studiometa/ui-autoload:** declare eager components with a `<meta name="studiometa-ui:eager" content="Accordion, Action, Modal">` element (comma-separated tokens, concatenated across metas, trimmed and de-duplicated) instead of a query string ([#598](https://github.com/studiometa/ui/pull/598))
+- **Browser CDN:** publish `@studiometa/ui-autoload` as its own versioned tree (`/ui-autoload@<version>/ui`, `/ui-autoload@<version>/ui-mapbox`), versioned in lockstep with `ui` and `ui-mapbox`, and expose each package's manifest at `/ui@<version>/manifest.js` and `/ui-mapbox@<version>/manifest.js` ([#599](https://github.com/studiometa/ui/pull/599), [#600](https://github.com/studiometa/ui/pull/600), [#601](https://github.com/studiometa/ui/pull/601))
+
+### Removed
+
+- **Browser CDN:** remove the bespoke `/ui@<version>/autoload.js` entry and its `?components=` query in favour of the `@studiometa/ui-autoload` tree and the `<meta name="studiometa-ui:eager">` declaration. This is a breaking change to a days-old beta surface: replace the marked `<script … data-studiometa-ui>` with `import 'https://cdn.studiometa.dev/ui-autoload@<version>/ui'` ([#598](https://github.com/studiometa/ui/pull/598))
+
 ## [v1.10.0-beta.1](https://github.com/studiometa/ui/compare/1.10.0-beta.0..1.10.0-beta.1) (2026-08-05)
 
 ### Changed
