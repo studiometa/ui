@@ -880,12 +880,12 @@ const uiAutoloadTreePrefix = `releases/ui-autoload/${uiVersion}`;
 const uiAutoloadOutputDirectory = resolve(outputDirectory, uiAutoloadTreePrefix);
 const UI_AUTOLOAD_BUILD_NAME = '@studiometa/ui-cdn-autoload';
 // The composed autoload reuses each package's manifest from that package's own versioned tree rather
-// than re-bundling it. The absolute origin pins these cross-tree imports to the canonical CDN
-// regardless of where the ui-autoload bundle itself is loaded from; the version is the lockstep
-// `uiVersion`, mirroring the `/ui-mapbox@<uiVersion>/…` URLs `externalizeUiMapboxPlugin` bakes.
-const CDN_ORIGIN = 'https://cdn.studiometa.dev';
-const uiManifestCdnUrl = `${CDN_ORIGIN}/ui@${uiVersion}/manifest.js`;
-const uiMapboxManifestCdnUrl = `${CDN_ORIGIN}/ui-mapbox@${uiVersion}/manifest.js`;
+// than re-bundling it. These are baked as origin-relative absolute paths (leading `/`, no host),
+// exactly like the js-toolkit URL and the `/ui-mapbox@<uiVersion>/…` cross-tree imports
+// `externalizeUiMapboxPlugin` bakes — so every channel (releases and PR previews alike) resolves the
+// manifest same-origin and stays host-portable. The version is the lockstep `uiVersion`.
+const uiManifestCdnUrl = `/ui@${uiVersion}/manifest.js`;
+const uiMapboxManifestCdnUrl = `/ui-mapbox@${uiVersion}/manifest.js`;
 
 const currentSourceState = await sourceState();
 if (!currentSourceState.clean && !allowDirty) {

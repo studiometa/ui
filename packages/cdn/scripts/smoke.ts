@@ -217,7 +217,7 @@ async function checkUiAutoloadArtifact(config: SmokeConfig, version: string): Pr
     );
     const body = await response.text();
     // The `ui.js` side-effect entry reuses the ui tree's manifest cross-tree rather than bundling it,
-    // so its baked absolute URL must reference `/ui@<version>/manifest.js`.
+    // so its baked origin-relative URL must reference `/ui@<version>/manifest.js`.
     if (asset === 'ui.js') {
       assert(
         body.includes(`/ui@${version}/manifest.js`),
