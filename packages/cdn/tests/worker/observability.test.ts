@@ -48,27 +48,27 @@ function syntheticBucket(): MemoryR2 {
   const build = {
     schemaVersion: 1,
     package: { name: '@studiometa/ui-cdn', version: '1.2.0' },
-    entries: { autoload: { path: 'autoload.js', preload: [] } },
+    entries: { index: { path: 'index.js', preload: [] } },
     components: {
       Action: {
-        entry: 'autoload.js',
+        entry: 'index.js',
         preload: [],
         strategy: 'eager',
         packageName: '@studiometa/ui',
         subpath: 'Action',
       },
     },
-    outputs: { 'autoload.js': { bytes: 1, type: 'module' } },
+    outputs: { 'index.js': { bytes: 1, type: 'module' } },
   };
   const integrity = {
     schemaVersion: 1,
     algorithm: 'sha384',
     excludes: ['integrity.json'],
-    files: { 'autoload.js': 'sha384-AAAA', 'build.json': 'sha384-AAAA' },
+    files: { 'index.js': 'sha384-AAAA', 'build.json': 'sha384-AAAA' },
   };
   bucket.put('releases/ui/1.2.0/build.json', JSON.stringify(build));
   bucket.put('releases/ui/1.2.0/integrity.json', JSON.stringify(integrity));
-  bucket.put('releases/ui/1.2.0/autoload.js', 'export const cdn = 1;');
+  bucket.put('releases/ui/1.2.0/index.js', 'export const cdn = 1;');
   return bucket;
 }
 
@@ -112,13 +112,12 @@ describe('emitObservation', () => {
     const logs = vi.spyOn(console, 'log').mockImplementation(() => {});
     const recorder = new ObservationRecorder();
     recorder.versionKind('exact-release');
-    recorder.componentCount(3);
     recorder.r2('asset', 'hit');
 
     const sampled = new MockDataset();
     emitObservation({ ANALYTICS: sampled, OBSERVABILITY_SAMPLE_RATE: '1' }, recorder, 200);
     expect(sampled.events).toHaveLength(1);
-    expect(sampled.events[0].doubles).toEqual([200, 3]);
+    expect(sampled.events[0].doubles).toEqual([200]);
     expect(sampled.events[0].blobs).toContain('exact-release');
     expect(logs).toHaveBeenCalledTimes(1);
 
@@ -147,19 +146,14 @@ describe('emitObservation', () => {
 
 describe('Worker request observability', () => {
   it('records a served exact release', async () => {
-    const { response, event } = await observe(syntheticBucket(), '/ui@1.2.0/autoload.js');
+    const { response, event } = await observe(syntheticBucket(), '/ui@1.2.0/index.js');
     expect(response.status).toBe(200);
     expect(event?.blobs).toEqual(['asset', 'exact-release', 'ok', 'asset', 'hit']);
-    expect(event?.doubles).toEqual([200, 0]);
-  });
-
-  it('records the eager component count for a canonical request', async () => {
-    const { event } = await observe(syntheticBucket(), '/ui@1.2.0/autoload.js?components=Action');
-    expect(event?.doubles?.[1]).toBe(1);
+    expect(event?.doubles).toEqual([200]);
   });
 
   it('records a dist-tag redirect', async () => {
-    const { response, event } = await observe(syntheticBucket(), '/ui@latest/autoload.js');
+    const { response, event } = await observe(syntheticBucket(), '/ui@latest/index.js');
     expect(response.status).toBe(307);
     expect(event?.blobs?.[1]).toBe('dist-tag');
     expect(event?.blobs?.[2]).toBe('redirect');
@@ -172,13 +166,13 @@ describe('Worker request observability', () => {
   });
 
   it('records a storage-unavailable error when the index is missing', async () => {
-    const { response, event } = await observe(new MemoryR2(), '/ui@1.2.0/autoload.js');
+    const { response, event } = await observe(new MemoryR2(), '/ui@1.2.0/index.js');
     expect(response.status).toBe(502);
     expect(event?.blobs).toEqual(['asset', 'none', 'storage-unavailable', 'index', 'miss']);
   });
 
   it('records a preflight request', async () => {
-    const { response, event } = await observe(syntheticBucket(), '/ui@1.2.0/autoload.js', {
+    const { response, event } = await observe(syntheticBucket(), '/ui@1.2.0/index.js', {
       method: 'OPTIONS',
     });
     expect(response.status).toBe(204);

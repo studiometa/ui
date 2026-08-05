@@ -16,7 +16,6 @@ export interface RequestObservation {
   status: number;
   routeKind: RouteKind;
   versionKind: VersionKind;
-  componentCount: number;
   r2Operation?: R2Operation;
   r2Result?: R2Result;
   errorCode: ErrorCode;
@@ -73,8 +72,6 @@ export class ObservationRecorder {
   /** @private */
   __versionKind: VersionKind = 'none';
   /** @private */
-  __componentCount = 0;
-  /** @private */
   __r2Operation?: R2Operation;
   /** @private */
   __r2Result?: R2Result;
@@ -89,11 +86,6 @@ export class ObservationRecorder {
     this.__versionKind = kind;
   }
 
-  /** Records the count of canonical, validated eager components. */
-  componentCount(count: number): void {
-    this.__componentCount = count;
-  }
-
   /** Records the most recent R2 access and whether the object was present. */
   r2(operation: R2Operation, result: R2Result): void {
     this.__r2Operation = operation;
@@ -106,7 +98,6 @@ export class ObservationRecorder {
       status,
       routeKind: this.__routeKind,
       versionKind: this.__versionKind,
-      componentCount: this.__componentCount,
       r2Operation: this.__r2Operation,
       r2Result: this.__r2Result,
       errorCode: errorCodeForStatus(status),
@@ -142,7 +133,7 @@ export function emitObservation(
         observation.r2Operation ?? 'none',
         observation.r2Result ?? 'none',
       ],
-      doubles: [observation.status, observation.componentCount],
+      doubles: [observation.status],
       indexes: [observation.errorCode],
     });
     if (sampled) {
@@ -152,7 +143,6 @@ export function emitObservation(
           status: observation.status,
           routeKind: observation.routeKind,
           versionKind: observation.versionKind,
-          componentCount: observation.componentCount,
           r2Operation: observation.r2Operation ?? 'none',
           r2Result: observation.r2Result ?? 'none',
           errorCode: observation.errorCode,

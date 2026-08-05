@@ -67,7 +67,6 @@ export function buildRegistry(input: RegistryInput): RegistryDocument {
 
   const entries: Record<string, string> = {};
   if (hasUiSurface) {
-    entries.autoload = `${origin}/ui@${currentUiRef}/autoload.js`;
     entries.index = `${origin}/ui@${currentUiRef}/index.js`;
   }
   if (hasUiMapboxSurface) {

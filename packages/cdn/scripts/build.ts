@@ -288,8 +288,8 @@ function shopifyFallbackPlugin(): Plugin {
 /**
  * Rewrites every `@studiometa/js-toolkit` (and `/utils`) import in the ui tree to the absolute,
  * origin-relative URL of the separately built, versioned js-toolkit artifact and marks it external.
- * This keeps js-toolkit out of the ui bundle so autoload, every component chunk, the ui barrel, and
- * a manual `import '/js-toolkit@<version>/index.js'` all resolve to one browser module URL — one
+ * This keeps js-toolkit out of the ui bundle so the manifest, every component chunk, the ui barrel,
+ * and a manual `import '/js-toolkit@<version>/index.js'` all resolve to one browser module URL — one
  * runtime instance and one component registry.
  */
 function externalizeToolkitPlugin(): Plugin {
@@ -308,14 +308,13 @@ function externalizeToolkitPlugin(): Plugin {
 }
 
 /**
- * Rewrites every dynamic `import('./<Component>.js')` of a @studiometa/ui-mapbox component module in
- * the ui tree — the calls the composed autoload's bundled `@studiometa/ui-mapbox/manifest` issues —
- * to the absolute, origin-relative URL of that component in the separately built ui-mapbox tree, and
- * marks it external. This keeps every ui-mapbox component source out of the ui tree entirely: the
- * composed manifest still discovers every Mapbox token up front, but each Mapbox component now
- * lazy-loads from `/ui-mapbox@<version>/<Component>.js` instead of from a chunk emitted into the ui
- * tree. It mirrors `externalizeToolkitPlugin`, resolving relative specifiers against their importer
- * so the ui-mapbox package's own `./<Component>.js` manifest imports are matched by absolute path.
+ * Rewrites every dynamic `import('./<Component>.js')` of a @studiometa/ui-mapbox component module
+ * that appears in the ui tree to the absolute, origin-relative URL of that component in the
+ * separately built ui-mapbox tree, and marks it external. This is a tree-isolation guard: any ui-tree
+ * code that references a Mapbox component module lazy-loads it from `/ui-mapbox@<version>/<Component>.js`
+ * rather than bundling a copy, keeping the two package trees disjoint. It mirrors
+ * `externalizeToolkitPlugin`, resolving relative specifiers against their importer so the ui-mapbox
+ * package's own `./<Component>.js` manifest imports are matched by absolute path.
  */
 function externalizeUiMapboxPlugin(urlByModule: ReadonlyMap<string, string>): Plugin {
   return {
@@ -334,7 +333,7 @@ function externalizeUiMapboxPlugin(urlByModule: ReadonlyMap<string, string>): Pl
  * `@studiometa/ui-mapbox/manifest` specifiers to baked, absolute CDN URLs and marks them external,
  * mirroring `externalizeToolkitPlugin`. Neither component manifest is bundled into the ui-autoload
  * tree: each side-effect entry imports the SAME versioned manifest module already served from its own
- * tree, so the composed autoload reuses one manifest — and the lazily-loaded component chunks it
+ * tree, so the ui-autoload runtime reuses one manifest — and the lazily-loaded component chunks it
  * references — per package rather than re-bundling any component source. The baked version is the
  * lockstep `uiVersion`, the same version `externalizeUiMapboxPlugin` bakes into the ui tree, so the
  * manifest URLs pin consistently with the rest of the build.
@@ -811,10 +810,10 @@ function sharedBundleOptions(outputDirectory: string) {
     config: false,
     logLevel: 'silent' as const,
     define: { __DEV__: 'false' },
-    // Keep origin-relative external URLs (js-toolkit's `/js-toolkit@<v>/…` and the composed
-    // manifest's `/ui-mapbox@<v>/…` dynamic imports) verbatim. Rolldown otherwise rewrites an
-    // absolute external into a chunk-relative `../../…` path, which a browser cannot resolve back to
-    // the intended versioned CDN URL — breaking the composed autoload's cross-tree lazy imports.
+    // Keep origin-relative external URLs (js-toolkit's `/js-toolkit@<v>/…` and any `/ui-mapbox@<v>/…`
+    // cross-tree dynamic imports) verbatim. Rolldown otherwise rewrites an absolute external into a
+    // chunk-relative `../../…` path, which a browser cannot resolve back to the intended versioned
+    // CDN URL — breaking every cross-tree lazy import.
     inputOptions: { makeAbsoluteExternalsRelative: false as const },
     outputOptions: {
       entryFileNames: '[name].js',
@@ -879,8 +878,8 @@ const uiMapboxComponentUrl = (subpath: string): string => `/ui-mapbox@${uiVersio
 const uiAutoloadTreePrefix = `releases/ui-autoload/${uiVersion}`;
 const uiAutoloadOutputDirectory = resolve(outputDirectory, uiAutoloadTreePrefix);
 const UI_AUTOLOAD_BUILD_NAME = '@studiometa/ui-cdn-autoload';
-// The composed autoload reuses each package's manifest from that package's own versioned tree rather
-// than re-bundling it. These are baked as origin-relative absolute paths (leading `/`, no host),
+// The ui-autoload runtime reuses each package's manifest from that package's own versioned tree
+// rather than re-bundling it. These are baked as origin-relative absolute paths (leading `/`, no host),
 // exactly like the js-toolkit URL and the `/ui-mapbox@<uiVersion>/…` cross-tree imports
 // `externalizeUiMapboxPlugin` bakes — so every channel (releases and PR previews alike) resolves the
 // manifest same-origin and stays host-portable. The version is the lockstep `uiVersion`.
@@ -958,12 +957,13 @@ function componentEntryPointsFor(
   return entryPoints;
 }
 
-const reservedUiEntryNames = new Set(['autoload', 'loader', 'manifest', 'index']);
+const reservedUiEntryNames = new Set(['manifest', 'index']);
 const componentEntryPoints = componentEntryPointsFor(uiDefinitions, reservedUiEntryNames, 'ui');
 
-// The composed autoload's bundled `@studiometa/ui-mapbox/manifest` lazy-imports each Mapbox
-// component by its `./<Component>.js` module; map each of those source modules to the ui-mapbox tree
-// URL so the ui build externalizes them there instead of bundling them into the ui tree.
+// Should any ui-tree entry reference a `@studiometa/ui-mapbox` component module (each Mapbox
+// component is addressable by its `./<Component>.js` module), map that source module to the
+// ui-mapbox tree URL so the ui build externalizes it there instead of bundling it into the ui tree,
+// keeping the two package trees isolated.
 const uiMapboxUrlByModule = new Map<string, string>();
 const uiMapboxExternalUrls: string[] = [];
 for (const definition of mapboxDefinitions) {
@@ -974,20 +974,17 @@ for (const definition of mapboxDefinitions) {
 uiMapboxExternalUrls.sort();
 
 const uiEntryPoints = {
-  autoload: resolve(repositoryDirectory, 'packages/cdn/src/autoload.ts'),
-  loader: resolve(repositoryDirectory, 'packages/cdn/src/loader.ts'),
   // The `/ui@<v>/manifest.js` entry serves the @studiometa/ui PACKAGE manifest (ui components only,
-  // exporting `manifest`), not the composed `src/manifest.ts`. The ui-autoload runtime composes the
-  // per-package manifests at runtime. The old bespoke `autoload` entry keeps bundling the composed
-  // `src/manifest.ts` internally and is unaffected by this repointing.
+  // exporting `manifest`). The ui-autoload tree composes the per-package manifests at runtime; the
+  // CDN no longer ships a bespoke composed manifest nor an autoload wrapper of its own.
   manifest: resolve(repositoryDirectory, 'packages/cdn/src/manifest-ui.ts'),
   index: resolve(repositoryDirectory, 'packages/cdn/src/barrel-ui.ts'),
   ...componentEntryPoints,
 };
 
 // Pass B — the @studiometa/ui tree. js-toolkit is rewritten to its external, versioned URL and the
-// ui barrel is emitted as index.js. Autoload, loader, manifest, every stable component entry and
-// the barrel now import the single external js-toolkit URL and carry no js-toolkit source. The
+// ui barrel is emitted as index.js. The manifest entry, every stable component entry and the barrel
+// now import the single external js-toolkit URL and carry no js-toolkit source. The
 // declarations pass keeps js-toolkit external as a bare specifier so the ui `.d.ts` files resolve
 // against the js-toolkit declarations tree rather than inlining its types.
 const uiResults = await tsdownBuild({
@@ -1088,7 +1085,7 @@ await writeThirdPartyNotices(uiMapboxMetafile, uiMapboxOutputDirectory);
 await writeThirdPartyNotices(uiAutoloadMetafile, uiAutoloadOutputDirectory);
 await writeThirdPartyNotices(jsToolkitMetafile, jsToolkitOutputDirectory);
 
-const uiEntryNames = ['autoload', 'loader', 'manifest', 'index'];
+const uiEntryNames = ['manifest', 'index'];
 const entryOutputs = Object.fromEntries(
   uiEntryNames.map((name) => {
     const key = `${name}.js`;
@@ -1107,8 +1104,8 @@ for (const [output, metadata] of Object.entries(uiMetafile.outputs)) {
 // in any @studiometa/ui component graph. That the library source is bundled nowhere at all is
 // enforced globally by `assertUiExternals`. The `@studiometa/ui-mapbox/manifest` metadata module is
 // intentionally exempt: it is a plain map of lazy `() => import()` thunks (no component nor library
-// source of its own) and the composed manifest statically imports it so the loader can discover
-// every token up front while still loading each Mapbox component on demand.
+// source of its own), served as the ui-mapbox tree's own `manifest.js` entry so the ui-autoload
+// runtime can discover every Mapbox token up front while still loading each component on demand.
 const uiMapboxSourcePattern = /(?:^|\/)packages\/ui-mapbox\/(?!manifest\.ts(?:$|[?#]))/;
 const mapboxLibPatterns = [
   /(?:^|\/)node_modules\/mapbox-gl\//,

@@ -38,7 +38,6 @@ import {
 } from './versions.ts';
 import { classifyVersion, emitObservation, ObservationRecorder } from './observability.ts';
 
-const MAX_LINK_HEADER_BYTES = 7_500;
 // Each versioned package tree carries its own build identity so a release prefix can only be
 // validated against the package it claims to belong to.
 const PUBLIC_PACKAGE_NAMES: Record<PackageName, string> = {
@@ -198,32 +197,6 @@ function canonicalLocation(
   return `${url.origin}/${packageName}@${exactVersion}/${assetPath}${search}`;
 }
 
-function preloadHeader(
-  packageName: PackageName,
-  exactVersion: string,
-  components: readonly string[],
-  metadata: ReleaseMetadata,
-): string | undefined {
-  const requested = components.map((token) => metadata.build.components[token]);
-  const paths = new Set<string>();
-  for (const component of requested) paths.add(component.entry);
-  for (const component of requested) {
-    for (const path of component.preload) paths.add(path);
-  }
-
-  const links: string[] = [];
-  let length = 0;
-  for (const path of paths) {
-    if (!metadata.files.has(path)) continue;
-    const link = `</${packageName}@${exactVersion}/${path}>; rel=modulepreload`;
-    const nextLength = length + (links.length > 0 ? 2 : 0) + link.length;
-    if (nextLength > MAX_LINK_HEADER_BYTES) break;
-    links.push(link);
-    length = nextLength;
-  }
-  return links.length > 0 ? links.join(', ') : undefined;
-}
-
 function objectEtag(object: R2ObjectBodyLike): string | undefined {
   if (object.httpEtag) return object.httpEtag;
   if (!object.etag) return undefined;
@@ -378,8 +351,7 @@ async function handleRequest(
   const assetPath = resolveAsset(route.assetPath, metadata.files);
   if (!assetPath) return errorResponse(404);
 
-  const query = canonicalizeQuery(url, assetPath, new Set(Object.keys(metadata.build.components)));
-  recorder.componentCount(query.components.length);
+  const query = canonicalizeQuery(url);
   // Redirect to canonicalize a request; otherwise serve it directly. A mutable ref (versionless, or a
   // moving tag like `latest`/`next`/`main`) always redirects to its resolved exact location, and a
   // non-canonical query always redirects to canonicalize it — a single hop covers both at once (e.g.
@@ -406,13 +378,11 @@ async function handleRequest(
   }
   recorder.r2('asset', 'hit');
   const etag = objectEtag(object);
-  const link = preloadHeader(route.packageName, exact.version, query.components, metadata);
   const headers = responseHeaders({
     'Cache-Control': IMMUTABLE_CACHE_CONTROL,
     'Content-Type': contentType(assetPath),
   });
   if (etag) headers.set('ETag', etag);
-  if (link) headers.set('Link', link);
 
   // When a served module has a sibling declaration in the release, advertise it with the same
   // `X-TypeScript-Types` header esm.sh uses, as a same-origin absolute URL, and expose the header to

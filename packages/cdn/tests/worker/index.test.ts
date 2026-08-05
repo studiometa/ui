@@ -28,18 +28,18 @@ afterAll(async () => {
 
 describe('CDN Worker version routing', () => {
   it('serves published exact releases and immutable channels', async () => {
-    const release = await request('/ui@1.2.0/autoload.js');
-    const shortChannel = await request('/ui@main-abcdef1/autoload.js');
+    const release = await request('/ui@1.2.0/index.js');
+    const shortChannel = await request('/ui@main-abcdef1/index.js');
     const fullChannel = await request(
-      '/ui@main-0123456789abcdef0123456789abcdef01234567/autoload.js',
+      '/ui@main-0123456789abcdef0123456789abcdef01234567/index.js',
     );
 
     expect(release.status).toBe(200);
     expect(shortChannel.status).toBe(200);
     expect(fullChannel.status).toBe(200);
-    expect(await release.text()).toBe(fixture.files['autoload.js']);
-    expect(await shortChannel.text()).toBe(fixture.files['autoload.js']);
-    expect(await fullChannel.text()).toBe(fixture.files['autoload.js']);
+    expect(await release.text()).toBe(fixture.files['index.js']);
+    expect(await shortChannel.text()).toBe(fixture.files['index.js']);
+    expect(await fullChannel.text()).toBe(fixture.files['index.js']);
   });
 
   it.each([
@@ -49,9 +49,9 @@ describe('CDN Worker version routing', () => {
     ['next', 'main-fedcba9'],
     ['main', 'main-fedcba9'],
   ])('redirects %s to the configured exact version %s', async (requested, exact) => {
-    const response = await request(`/ui@${requested}/autoload.js`);
+    const response = await request(`/ui@${requested}/index.js`);
     expect(response.status).toBe(307);
-    expect(response.headers.get('Location')).toBe(`${origin}/ui@${exact}/autoload.js`);
+    expect(response.headers.get('Location')).toBe(`${origin}/ui@${exact}/index.js`);
     expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
     expectCrossOriginHeaders(response);
   });
@@ -75,39 +75,39 @@ describe('CDN Worker version routing', () => {
     };
     fixture.bucket.put('versions.json', JSON.stringify(decoupled), 'versions-decoupled');
     try {
-      const next = await request('/ui@next/autoload.js');
+      const next = await request('/ui@next/index.js');
       expect(next.status).toBe(307);
-      expect(next.headers.get('Location')).toBe(`${origin}/ui@2.0.0-beta.1/autoload.js`);
+      expect(next.headers.get('Location')).toBe(`${origin}/ui@2.0.0-beta.1/index.js`);
       expect(next.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
 
-      const main = await request('/ui@main/autoload.js');
+      const main = await request('/ui@main/index.js');
       expect(main.status).toBe(307);
-      expect(main.headers.get('Location')).toBe(`${origin}/ui@main-fedcba9/autoload.js`);
+      expect(main.headers.get('Location')).toBe(`${origin}/ui@main-fedcba9/index.js`);
     } finally {
       fixture.bucket.put('versions.json', JSON.stringify(fixture.versionsIndex), 'versions');
     }
   });
 
   it('resolves a versionless ui package to the latest stable release', async () => {
-    const response = await request('/ui/autoload.js');
+    const response = await request('/ui/index.js');
     expect(response.status).toBe(307);
-    expect(response.headers.get('Location')).toBe(`${origin}/ui@2.0.0/autoload.js`);
+    expect(response.headers.get('Location')).toBe(`${origin}/ui@2.0.0/index.js`);
     expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
     expectCrossOriginHeaders(response);
   });
 
   it('serves published prereleases exactly but excludes them from aliases', async () => {
-    expect((await request('/ui@3/autoload.js')).status).toBe(404);
-    expect((await request('/ui@2.0.0-beta.1/autoload.js')).status).toBe(200);
-    expect((await request('/ui@2/autoload.js')).headers.get('Location')).toBe(
-      `${origin}/ui@2.0.0/autoload.js`,
+    expect((await request('/ui@3/index.js')).status).toBe(404);
+    expect((await request('/ui@2.0.0-beta.1/index.js')).status).toBe(200);
+    expect((await request('/ui@2/index.js')).headers.get('Location')).toBe(
+      `${origin}/ui@2.0.0/index.js`,
     );
   });
 
   it('returns 404 for unpublished and incomplete releases', async () => {
-    expect((await request('/ui@9.9.9/autoload.js')).status).toBe(404);
-    expect((await request('/ui@main-1234567/autoload.js')).status).toBe(404);
-    expect((await request('/ui@4.0.0/autoload.js')).status).toBe(404);
+    expect((await request('/ui@9.9.9/index.js')).status).toBe(404);
+    expect((await request('/ui@main-1234567/index.js')).status).toBe(404);
+    expect((await request('/ui@4.0.0/index.js')).status).toBe(404);
     expect((await request('/ui@1.0.0/not-published.js')).status).toBe(404);
   });
 
@@ -583,87 +583,6 @@ describe('CDN Worker package roots with a ref', () => {
   });
 });
 
-describe('CDN Worker eager component queries', () => {
-  it('resolves a mutable version and canonicalizes the query in one hop', async () => {
-    const response = await request(
-      '/ui@1/autoload.js?unused=true&components=Modal,Action&components=Action',
-    );
-    expect(response.status).toBe(307);
-    expect(response.headers.get('Location')).toBe(
-      `${origin}/ui@1.10.0/autoload.js?components=Action,Modal`,
-    );
-
-    const exact = await fetch(new Request(response.headers.get('Location') as string), {
-      ASSETS: fixture.bucket,
-    });
-    expect(exact.status).toBe(200);
-  });
-
-  it('sorts and deduplicates component values and strips unsupported parameters', async () => {
-    const response = await request(
-      '/ui@1.2.0/autoload.js?z=1&components=Modal&components=Action,Modal',
-    );
-    expect(response.status).toBe(307);
-    expect(response.headers.get('Location')).toBe(
-      `${origin}/ui@1.2.0/autoload.js?components=Action,Modal`,
-    );
-
-    const unsupported = await request('/ui@1.2.0/autoload.js?debug=true');
-    expect(unsupported.headers.get('Location')).toBe(`${origin}/ui@1.2.0/autoload.js`);
-    const otherAsset = await request('/ui@1.2.0/build.json?components=Action');
-    expect(otherAsset.headers.get('Location')).toBe(`${origin}/ui@1.2.0/build.json`);
-  });
-
-  it('rejects empty, malformed, unknown, and excessive component lists', async () => {
-    expect((await request('/ui@1.2.0/autoload.js?components=')).status).toBe(400);
-    expect((await request('/ui@1.2.0/autoload.js?components=Action%20')).status).toBe(400);
-    expect((await request('/ui@1.2.0/autoload.js?components=UnknownThing')).status).toBe(400);
-
-    const tooMany = Object.keys(fixture.build.components).slice(0, 21).join(',');
-    expect((await request(`/ui@1.2.0/autoload.js?components=${tooMany}`)).status).toBe(400);
-  });
-
-  it('adds bounded, deduplicated exact-version module preload links', async () => {
-    const response = await request('/ui@1.2.0/autoload.js?components=Action,Modal');
-    const link = response.headers.get('Link') as string;
-    const links = link.split(', ');
-
-    expect(response.status).toBe(200);
-    expect(link.length).toBeLessThanOrEqual(7_500);
-    expect(new Set(links).size).toBe(links.length);
-    expect(link).toContain(
-      `</ui@1.2.0/${fixture.build.components.Action.entry}>; rel=modulepreload`,
-    );
-    expect(link).toContain(
-      `</ui@1.2.0/${fixture.build.components.Modal.entry}>; rel=modulepreload`,
-    );
-    expect(link).toContain(
-      `</ui@1.2.0/${fixture.build.components.Action.preload[0]}>; rel=modulepreload`,
-    );
-    expect(link).not.toContain('releases/');
-
-    const twentyTokens = Object.keys(fixture.build.components).slice(0, 20).sort();
-    const bounded = await request(`/ui@1.2.0/autoload.js?components=${twentyTokens.join(',')}`);
-    const boundedLink = bounded.headers.get('Link') as string;
-    expect(bounded.status).toBe(200);
-    expect(boundedLink.length).toBeLessThanOrEqual(7_500);
-    for (const token of twentyTokens) {
-      expect(boundedLink).toContain(
-        `</ui@1.2.0/${fixture.build.components[token].entry}>; rel=modulepreload`,
-      );
-    }
-  });
-
-  it('keeps the canonical component query as cache identity while serving a static body', async () => {
-    const action = await request('/ui@1.2.0/autoload.js?components=Action');
-    const modal = await request('/ui@1.2.0/autoload.js?components=Modal');
-
-    expect(action.headers.get('Link')).not.toBe(modal.headers.get('Link'));
-    expect(await action.text()).toBe(await modal.text());
-    expect(action.headers.get('Cache-Control')).toBe(IMMUTABLE_CACHE_CONTROL);
-  });
-});
-
 describe('CDN Worker request validation', () => {
   it.each([
     '/ui@1.2.0/chunks//file.js',
@@ -671,20 +590,20 @@ describe('CDN Worker request validation', () => {
     '/ui@1.2.0/chunks/%5Cfile.js',
     '/ui@1.2.0/chunks/%252e%252e/file.js',
     '/ui@1.2.0/chunks/%ZZ/file.js',
-    '/ui@/autoload.js',
+    '/ui@/index.js',
     '/ui@1.2.0/chunks/',
   ])('rejects malformed or traversal path %s', async (path) => {
     expect((await request(path)).status).toBe(400);
   });
 
   it('rejects unsupported package prefixes without exposing storage keys', async () => {
-    const response = await request('/other@1.2.0/autoload.js');
+    const response = await request('/other@1.2.0/index.js');
     expect(response.status).toBe(404);
     expect(await response.text()).not.toContain('releases/');
   });
 
   it('supports only GET, HEAD, and OPTIONS', async () => {
-    const response = await request('/ui@1.2.0/autoload.js', { method: 'POST' });
+    const response = await request('/ui@1.2.0/index.js', { method: 'POST' });
     expect(response.status).toBe(405);
     expect(response.headers.get('Allow')).toBe('GET, HEAD, OPTIONS');
     expectCrossOriginHeaders(response);
@@ -692,7 +611,7 @@ describe('CDN Worker request validation', () => {
 
   it('answers module CORS preflight without accessing R2', async () => {
     fixture.bucket.requests.length = 0;
-    const response = await request('/ui@1.2.0/autoload.js', {
+    const response = await request('/ui@1.2.0/index.js', {
       method: 'OPTIONS',
       headers: {
         Origin: 'https://app.example.test',
@@ -708,9 +627,9 @@ describe('CDN Worker request validation', () => {
 
 describe('CDN Worker asset responses', () => {
   it.each([
-    ['autoload.js', 'text/javascript; charset=utf-8'],
+    ['index.js', 'text/javascript; charset=utf-8'],
     ['build.json', 'application/json; charset=utf-8'],
-    ['autoload.js.map', 'application/json; charset=utf-8'],
+    ['index.js.map', 'application/json; charset=utf-8'],
     ['licenses/THIRD_PARTY_LICENSES.txt', 'text/plain; charset=utf-8'],
   ])('serves %s with the correct MIME and cross-origin headers', async (asset, mime) => {
     const response = await request(`/ui@1.2.0/${asset}`);
@@ -721,11 +640,11 @@ describe('CDN Worker asset responses', () => {
   });
 
   it('preserves R2 ETags and implements If-None-Match', async () => {
-    const first = await request('/ui@1.2.0/autoload.js');
+    const first = await request('/ui@1.2.0/index.js');
     const etag = first.headers.get('ETag') as string;
-    expect(etag).toBe('"1.2.0-autoload.js"');
+    expect(etag).toBe('"1.2.0-index.js"');
 
-    const response = await request('/ui@1.2.0/autoload.js', {
+    const response = await request('/ui@1.2.0/index.js', {
       headers: { 'If-None-Match': `W/${etag}` },
     });
     expect(response.status).toBe(304);
@@ -735,13 +654,12 @@ describe('CDN Worker asset responses', () => {
   });
 
   it('handles HEAD with the same asset headers and no body', async () => {
-    const response = await request('/ui@1.2.0/autoload.js?components=Action', {
+    const response = await request('/ui@1.2.0/index.js', {
       method: 'HEAD',
     });
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('');
-    expect(response.headers.get('ETag')).toBe('"1.2.0-autoload.js"');
-    expect(response.headers.get('Link')).toContain('rel=modulepreload');
+    expect(response.headers.get('ETag')).toBe('"1.2.0-index.js"');
   });
 });
 
@@ -835,7 +753,6 @@ describe('CDN Worker registry', () => {
     // ui-autoload is versioned in lockstep with ui, so its current ref matches ui's latest.
     expect(registry.current['ui-autoload']).toBe('2.0.0');
 
-    expect(registry.entries.autoload).toBe(`${origin}/ui@2.0.0/autoload.js`);
     expect(registry.entries.index).toBe(`${origin}/ui@2.0.0/index.js`);
     expect(registry.entries['ui-mapbox']).toBe(`${origin}/ui-mapbox@2.0.0/index.js`);
     expect(registry.entries['js-toolkit']).toBe(
@@ -977,9 +894,9 @@ describe('CDN Worker registry', () => {
   });
 
   it('leaves non-root routes unaffected', async () => {
-    const asset = await request('/ui@1.2.0/autoload.js');
+    const asset = await request('/ui@1.2.0/index.js');
     expect(asset.status).toBe(200);
-    expect(await asset.text()).toBe(fixture.files['autoload.js']);
+    expect(await asset.text()).toBe(fixture.files['index.js']);
     expect((await request('/ui')).status).toBe(307);
   });
 });
@@ -987,7 +904,7 @@ describe('CDN Worker registry', () => {
 describe('CDN Worker storage failures', () => {
   it('returns a non-leaking 502 when the index is unavailable or invalid', async () => {
     fixture.bucket.failures.add('versions.json');
-    const failed = await request('/ui@1.2.0/autoload.js');
+    const failed = await request('/ui@1.2.0/index.js');
     fixture.bucket.failures.delete('versions.json');
     expect(failed.status).toBe(502);
     expect(await failed.text()).not.toContain('versions.json');
@@ -997,7 +914,7 @@ describe('CDN Worker storage failures', () => {
       ReturnType<typeof fixture.bucket.objects.get>
     >;
     fixture.bucket.put('versions.json', '{"schemaVersion":1}');
-    expect((await request('/ui@1.2.0/autoload.js')).status).toBe(502);
+    expect((await request('/ui@1.2.0/index.js')).status).toBe(502);
 
     // A next tag naming neither a published channel nor a known release is invalid: the index fails
     // to parse and the Worker returns a non-leaking 502. (A next that diverges from main but still
@@ -1009,18 +926,18 @@ describe('CDN Worker storage failures', () => {
     );
     invalidNextTag.packages.ui.distTags.next = '9.9.9';
     fixture.bucket.put('versions.json', JSON.stringify(invalidNextTag));
-    expect((await request('/ui@main/autoload.js')).status).toBe(502);
+    expect((await request('/ui@main/index.js')).status).toBe(502);
     fixture.bucket.objects.set('versions.json', original);
   });
 
   it('distinguishes missing assets from R2 metadata and asset failures', async () => {
     fixture.bucket.failures.add('releases/ui/1.2.0/build.json');
-    expect((await request('/ui@1.2.0/autoload.js')).status).toBe(502);
+    expect((await request('/ui@1.2.0/index.js')).status).toBe(502);
     fixture.bucket.failures.delete('releases/ui/1.2.0/build.json');
 
-    fixture.bucket.failures.add('releases/ui/1.2.0/autoload.js');
-    expect((await request('/ui@1.2.0/autoload.js')).status).toBe(502);
-    fixture.bucket.failures.delete('releases/ui/1.2.0/autoload.js');
+    fixture.bucket.failures.add('releases/ui/1.2.0/index.js');
+    expect((await request('/ui@1.2.0/index.js')).status).toBe(502);
+    fixture.bucket.failures.delete('releases/ui/1.2.0/index.js');
 
     fixture.bucket.put('releases/ui/1.2.0/unknown.js', 'uploaded but not published');
     expect((await request('/ui@1.2.0/unknown.js')).status).toBe(404);
