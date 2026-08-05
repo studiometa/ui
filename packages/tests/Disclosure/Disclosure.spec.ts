@@ -403,7 +403,11 @@ describe('The DisclosureGroup component', () => {
     expect(disclosure.group).toBe(first);
 
     secondElement.append(child.element);
-    await wait();
+    // The disclosure normally reconnects through its own `MutationObserver`, but
+    // happy-dom keeps that observer's callback behind a `WeakRef` and can garbage
+    // collect it before it fires, which made a bare `wait()` here flaky. Drive the
+    // component's `updated` lifecycle to reconnect deterministically instead.
+    await disclosure.$update();
 
     expect(disclosure.group).toBe(second);
     expect(first.items).toEqual([]);
