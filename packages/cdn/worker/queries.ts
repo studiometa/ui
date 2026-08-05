@@ -1,4 +1,4 @@
-import type { CanonicalQuery, PackageName, ParsedRoute } from './types.ts';
+import type { CanonicalQuery, PackageName, PackageRoot, ParsedRoute } from './types.ts';
 
 const PACKAGE_NAMES: ReadonlySet<PackageName> = new Set(['ui', 'ui-mapbox', 'js-toolkit']);
 
@@ -66,14 +66,24 @@ export function parseRoute(pathname: string): ParsedRoute {
   };
 }
 
-// A bare package root is the package name alone, with no version and no asset segment: `/ui`,
-// `/ui/`, `/js-toolkit`, `/js-toolkit/`. It redirects to a usable latest asset (resolved by the
-// caller). Anything with a version (`/ui@1.2.0`) or an asset (`/ui/autoload.js`) falls through to
-// `parseRoute`, so this recognizes only the bare name.
-export function parseBareRoot(pathname: string): PackageName | undefined {
-  const name = (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname).slice(1);
-  if (name === '' || name.includes('/')) return undefined;
-  return PACKAGE_NAMES.has(name as PackageName) ? (name as PackageName) : undefined;
+// A package root is a single path segment naming a package, with an optional `@<ref>` and no asset
+// segment: the bare `/ui`, `/ui/`, `/js-toolkit`, and the ref-carrying `/ui@next`, `/ui@1.2.0/`,
+// `/ui@main`. The caller redirects it to the resolved exact version's `index.js` barrel — the bare
+// form via the package default (`resolveBareRoot`), a ref via the full `/ui@<ref>/` semantics
+// (`resolveVersion`). Anything with an asset segment (`/ui/autoload.js`, `/ui@next/Action`) has more
+// than one segment and falls through to `parseRoute`. The ref, when present, is validated with the
+// same token pattern asset routes use; a malformed ref (or a `%`/`\` in it) yields `undefined` so
+// `parseRoute` rejects it consistently.
+export function parsePackageRoot(pathname: string): PackageRoot | undefined {
+  const segment = (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname).slice(1);
+  if (segment === '' || segment.includes('/')) return undefined;
+  const separator = segment.indexOf('@');
+  const packageName = separator === -1 ? segment : segment.slice(0, separator);
+  if (!PACKAGE_NAMES.has(packageName as PackageName)) return undefined;
+  if (separator === -1) return { packageName: packageName as PackageName };
+  const ref = segment.slice(separator + 1);
+  if (!ref || !VERSION_TOKEN_PATTERN.test(ref)) return undefined;
+  return { packageName: packageName as PackageName, ref };
 }
 
 export function canonicalizeQuery(

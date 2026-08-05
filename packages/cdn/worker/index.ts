@@ -1,4 +1,9 @@
-import { canonicalizeQuery, parseBareRoot, parseRoute, RequestValidationError } from './queries.ts';
+import {
+  canonicalizeQuery,
+  parsePackageRoot,
+  parseRoute,
+  RequestValidationError,
+} from './queries.ts';
 import {
   contentType,
   errorResponse,
@@ -15,6 +20,7 @@ import type {
   ExactVersion,
   IntegrityMetadata,
   PackageName,
+  PackageRoot,
   R2BucketLike,
   R2ObjectBodyLike,
   VersionsIndex,
@@ -313,10 +319,10 @@ async function handleRequest(
     return handleRegistry(request, environment, url.origin, recorder);
   }
 
-  const bareRoot = parseBareRoot(url.pathname);
+  const packageRoot = parsePackageRoot(url.pathname);
   // Validate an asset route up front so a malformed path is rejected before any storage access; a
-  // bare package root skips validation and resolves against the index below.
-  const route = bareRoot === undefined ? parseRoute(url.pathname) : undefined;
+  // package root (bare or ref-carrying) skips validation and resolves against the index below.
+  const route = packageRoot === undefined ? parseRoute(url.pathname) : undefined;
 
   const indexValue = await readJsonObject(environment.ASSETS, 'versions.json');
   if (indexValue === undefined) {
@@ -327,14 +333,24 @@ async function handleRequest(
   const versions = parseVersionsIndex(indexValue);
 
   if (route === undefined) {
-    // A bare package root redirects to its latest usable asset: the `index.js` barrel is now the
-    // natural landing for every package — `/ui` and `/ui-mapbox` to their `latest` stable barrel,
-    // and the tagless `/js-toolkit` to its highest published barrel. Each classifies as a dist-tag
-    // hop — a moving pointer resolved to an exact version.
-    const resolved = resolveBareRoot(versions, bareRoot as PackageName);
-    recorder.versionKind(classifyVersion(resolved ? 'latest' : undefined, resolved));
-    if (!resolved) return errorResponse(404);
-    return redirectResponse(`${url.origin}/${bareRoot}@${resolved.version}/index.js`);
+    // A package root redirects to its `index.js` barrel — the natural landing for every package.
+    const { packageName, ref } = packageRoot as PackageRoot;
+    if (ref === undefined) {
+      // The bare form (`/ui`, `/ui-mapbox`, `/js-toolkit`) follows the package default: `ui` and
+      // `ui-mapbox` their `latest` stable barrel, the tagless `js-toolkit` its highest published
+      // barrel. It classifies as a dist-tag hop — a moving pointer resolved to an exact version.
+      const resolved = resolveBareRoot(versions, packageName);
+      recorder.versionKind(classifyVersion(resolved ? 'latest' : undefined, resolved));
+      if (!resolved) return errorResponse(404);
+      return redirectResponse(`${url.origin}/${packageName}@${resolved.version}/index.js`);
+    }
+    // A ref-carrying root (`/ui@next`, `/ui@1.2.0`, `/ui@main`) resolves exactly like an asset
+    // request's ref — `latest`/`next`/`main`, an exact release or channel, or a major/minor alias —
+    // and 404s when the ref names nothing (e.g. `/js-toolkit@main`, which has no channels).
+    const exact = resolveVersion(versions, packageName, ref);
+    recorder.versionKind(classifyVersion(ref, exact));
+    if (!exact) return errorResponse(404);
+    return redirectResponse(`${url.origin}/${packageName}@${exact.version}/index.js`);
   }
 
   // A versionless request resolves its version the same way a bare package root does, so every
