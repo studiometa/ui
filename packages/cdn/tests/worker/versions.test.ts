@@ -370,8 +370,8 @@ describe('bare package root resolution', () => {
 });
 
 describe('distribution tag mutators (scripts/lib/versions)', () => {
-  // Builds a working index whose ui and ui-mapbox packages share the given shape (they are versioned
-  // in lockstep). Only `ui` is inspected in these unit tests.
+  // Builds a working index whose ui, ui-mapbox and ui-autoload packages share the given shape (they
+  // are versioned in lockstep). Only `ui` is inspected in these unit tests.
   function workingIndex(ui: {
     releases: string[];
     channels: string[];
@@ -382,6 +382,7 @@ describe('distribution tag mutators (scripts/lib/versions)', () => {
       packages: {
         ui: structuredClone(ui),
         'ui-mapbox': structuredClone(ui),
+        'ui-autoload': structuredClone(ui),
         'js-toolkit': { releases: [] },
       },
     };

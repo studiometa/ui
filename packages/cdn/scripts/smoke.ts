@@ -188,6 +188,45 @@ async function checkJsToolkitArtifact(
   }
 }
 
+async function checkUiAutoloadArtifact(config: SmokeConfig, version: string): Promise<void> {
+  // The ui-autoload tree is versioned in lockstep with ui, so it resolves at the same version. Its
+  // pure `index.js` barrel and the two side-effect entries (`ui.js`, `ui-mapbox.js`) must each serve
+  // as an immutable, permissively-CORS'd JavaScript module.
+  for (const asset of ['index.js', 'ui.js', 'ui-mapbox.js']) {
+    const response = await fetchWithTimeout(
+      packageEndpoint(config, 'ui-autoload', version, asset),
+      config,
+      { headers: { Origin: 'https://example.com' } },
+    );
+    assert(response.status === 200, `ui-autoload ${asset} returned HTTP ${response.status}.`);
+    assert(
+      (response.headers.get('Content-Type') ?? '').includes('javascript'),
+      `ui-autoload ${asset} has a non-JavaScript content type: ${response.headers.get('Content-Type')}.`,
+    );
+    assert(
+      (response.headers.get('Cache-Control') ?? '').includes('immutable'),
+      `ui-autoload ${asset} is not immutably cacheable.`,
+    );
+    assert(
+      response.headers.get('Access-Control-Allow-Origin') === '*',
+      `ui-autoload ${asset} is missing a permissive CORS header.`,
+    );
+    assert(
+      response.headers.get('Cross-Origin-Resource-Policy') === 'cross-origin',
+      `ui-autoload ${asset} is missing a cross-origin resource policy.`,
+    );
+    const body = await response.text();
+    // The `ui.js` side-effect entry reuses the ui tree's manifest cross-tree rather than bundling it,
+    // so its baked origin-relative URL must reference `/ui@<version>/manifest.js`.
+    if (asset === 'ui.js') {
+      assert(
+        body.includes(`/ui@${version}/manifest.js`),
+        'ui-autoload ui.js does not reference the baked cross-tree /ui@<version>/manifest.js URL.',
+      );
+    }
+  }
+}
+
 async function checkSharedToolkitUrl(
   config: SmokeConfig,
   version: string,
@@ -254,12 +293,17 @@ async function checkBrowserExecution(config: SmokeConfig, version: string): Prom
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
-    const moduleUrl = endpoint(config, version, 'autoload.js');
-    const evaluated = await page.evaluate(async (url) => {
-      await import(url);
+    // Evaluate both the legacy `ui@<v>/autoload.js` surface and the new ui-autoload side-effect entry
+    // `ui-autoload@<v>/ui.js` (which statically imports the baked cross-tree `/ui@<v>/manifest.js`).
+    const moduleUrls = [
+      endpoint(config, version, 'autoload.js'),
+      packageEndpoint(config, 'ui-autoload', version, 'ui.js'),
+    ];
+    const evaluated = await page.evaluate(async (urls) => {
+      for (const url of urls) await import(url);
       return typeof window.document !== 'undefined';
-    }, moduleUrl);
-    assert(evaluated, 'The autoload module did not evaluate in the browser.');
+    }, moduleUrls);
+    assert(evaluated, 'The autoload modules did not evaluate in the browser.');
     return { name: 'Browser execution', status: 'passed' };
   } finally {
     await browser.close();
@@ -342,6 +386,9 @@ async function main(): Promise<void> {
       detail: 'The ui build.json does not record its @studiometa/js-toolkit dependency version.',
     });
   }
+  results.push(
+    await run(() => checkUiAutoloadArtifact(config, version), 'ui-autoload artifact'),
+  );
   if (config.browser) {
     results.push(await checkBrowserExecution(config, version));
   }

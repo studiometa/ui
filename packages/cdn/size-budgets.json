@@ -18,9 +18,9 @@
     "dts:entry:index": 13000,
     "dts:js-toolkit:entry:index": 150000,
     "dts:js-toolkit:entry:utils": 65000,
-    "total:esm": 360000,
-    "total:source-maps": 1600000,
-    "total:declarations": 520000,
-    "total:release": 2200000
+    "total:esm": 380000,
+    "total:source-maps": 1680000,
+    "total:declarations": 560000,
+    "total:release": 2360000
   }
 }

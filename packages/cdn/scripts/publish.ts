@@ -96,15 +96,23 @@ async function main(): Promise<void> {
 
   const uiTree = await singleTreeDirectory(resolve(outputDirectory, 'releases/ui'));
   const uiMapboxTree = await singleTreeDirectory(resolve(outputDirectory, 'releases/ui-mapbox'));
+  const uiAutoloadTree = await singleTreeDirectory(resolve(outputDirectory, 'releases/ui-autoload'));
   const jsToolkitTree = await singleTreeDirectory(resolve(outputDirectory, 'releases/js-toolkit'));
   const uiArtifact = await readArtifact(uiTree.directory);
   const uiMapboxArtifact = await readArtifact(uiMapboxTree.directory);
+  const uiAutoloadArtifact = await readArtifact(uiAutoloadTree.directory);
   const jsToolkitArtifact = await readArtifact(jsToolkitTree.directory);
 
-  // ui-mapbox is versioned in lockstep with ui: both trees must carry the same version.
+  // ui-mapbox and ui-autoload are versioned in lockstep with ui: every tree must carry the same
+  // version.
   if (uiMapboxTree.version !== uiTree.version) {
     throw new Error(
       `The ui-mapbox tree version ${uiMapboxTree.version} must equal the ui tree version ${uiTree.version}.`,
+    );
+  }
+  if (uiAutoloadTree.version !== uiTree.version) {
+    throw new Error(
+      `The ui-autoload tree version ${uiAutoloadTree.version} must equal the ui tree version ${uiTree.version}.`,
     );
   }
 
@@ -112,13 +120,21 @@ async function main(): Promise<void> {
   // release gate anymore (Mapbox is external), but validatePublishability stays a dormant safeguard.
   validatePublishability(uiArtifact.build, { requireClean: true });
   validatePublishability(uiMapboxArtifact.build, { requireClean: true });
+  validatePublishability(uiAutoloadArtifact.build, { requireClean: true });
   validatePublishability(jsToolkitArtifact.build, { requireClean: true });
 
   let uiTarget: PublishTarget;
   let mutableAliases: string[];
   if (values['git-tag']) {
     uiTarget = { kind: 'release', packageName: 'ui', version: values['git-tag'] };
-    mutableAliases = ['ui@latest/autoload.js', 'ui@latest/index.js', 'ui-mapbox@latest/index.js'];
+    mutableAliases = [
+      'ui@latest/autoload.js',
+      'ui@latest/index.js',
+      'ui-mapbox@latest/index.js',
+      'ui-autoload@latest/index.js',
+      'ui-autoload@latest/ui.js',
+      'ui-autoload@latest/ui-mapbox.js',
+    ];
   } else if (values.channel === 'main') {
     const commit = values.commit ?? uiArtifact.build.build.commit;
     uiTarget = { kind: 'channel', commit };
@@ -127,6 +143,12 @@ async function main(): Promise<void> {
       'ui@main/autoload.js',
       'ui-mapbox@next/index.js',
       'ui-mapbox@main/index.js',
+      'ui-autoload@next/index.js',
+      'ui-autoload@next/ui.js',
+      'ui-autoload@next/ui-mapbox.js',
+      'ui-autoload@main/index.js',
+      'ui-autoload@main/ui.js',
+      'ui-autoload@main/ui-mapbox.js',
     ];
   } else if (values.pr !== undefined) {
     const pr = Number(values.pr);
@@ -153,14 +175,17 @@ async function main(): Promise<void> {
   // not already present. It must exist before the ui tree that imports it becomes visible.
   await ensureJsToolkitPublished(store, jsToolkitArtifact, jsToolkitTree.version, log);
 
-  // The ui and ui-mapbox trees are published together in one atomic versions.json write: the
-  // lockstep ui-mapbox artifact is staged, verified and copied into its own tree before the index
-  // records both packages at the same identity.
+  // The ui, ui-mapbox and ui-autoload trees are published together in one atomic versions.json
+  // write: the lockstep artifacts are staged, verified and copied into their own trees before the
+  // index records every package at the same identity.
   const result = await publish(store, uiArtifact, uiTarget, {
     log,
     lockstepUiMapbox: uiMapboxArtifact,
+    lockstepUiAutoload: uiAutoloadArtifact,
   });
-  process.stdout.write(`Published ${result.identity} to ${result.finalPrefix} (ui + ui-mapbox).\n`);
+  process.stdout.write(
+    `Published ${result.identity} to ${result.finalPrefix} (ui + ui-mapbox + ui-autoload).\n`,
+  );
 
   // The cache purge is a best-effort optimization that only shortens how long the mutable alias
   // redirects may serve a stale target (their TTL is minutes). The immutable assets and versions.json

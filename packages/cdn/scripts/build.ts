@@ -329,6 +329,27 @@ function externalizeUiMapboxPlugin(urlByModule: ReadonlyMap<string, string>): Pl
   };
 }
 
+/**
+ * Rewrites the ui-autoload tree's cross-package `@studiometa/ui/manifest` and
+ * `@studiometa/ui-mapbox/manifest` specifiers to baked, absolute CDN URLs and marks them external,
+ * mirroring `externalizeToolkitPlugin`. Neither component manifest is bundled into the ui-autoload
+ * tree: each side-effect entry imports the SAME versioned manifest module already served from its own
+ * tree, so the composed autoload reuses one manifest — and the lazily-loaded component chunks it
+ * references — per package rather than re-bundling any component source. The baked version is the
+ * lockstep `uiVersion`, the same version `externalizeUiMapboxPlugin` bakes into the ui tree, so the
+ * manifest URLs pin consistently with the rest of the build.
+ */
+function externalizeUiAutoloadManifestsPlugin(mapping: Record<string, string>): Plugin {
+  return {
+    name: 'cdn-externalize-ui-autoload-manifests',
+    resolveId(id: string) {
+      const url = mapping[id];
+      if (!url) return undefined;
+      return { id: url, external: true };
+    },
+  };
+}
+
 // Rolldown reports every module id it bundles as an absolute path; keep only real, in-repository
 // source files (dropping rolldown's virtual/runtime modules) and normalise them to the same
 // repository-relative POSIX keys esbuild's metafile inputs used.
@@ -493,6 +514,39 @@ function assertUiExternals(
   return {
     toolkitUrls: external.filter((url) => url === jsToolkitIndexUrl || url === jsToolkitUtilsUrl),
   };
+}
+
+/**
+ * Asserts the ui-autoload tree's externalization invariants: js-toolkit and both component manifests
+ * are its only external imports, every required URL is present (so the externalization actually
+ * fired), and no js-toolkit, ui or ui-mapbox source is bundled into the tree — only the generic
+ * autoloader engine (from `packages/ui-autoload`) is.
+ */
+function assertUiAutoloadExternals(
+  metafile: Metafile,
+  requiredUrls: readonly string[],
+  allowedUrls: readonly string[],
+): void {
+  const external = collectExternalImports(metafile);
+  const allowed = new Set(allowedUrls);
+  const disallowed = external.filter((url) => !allowed.has(url));
+  if (disallowed.length > 0) {
+    throw new Error(`The ui-autoload tree has unexpected external imports: ${disallowed.join(', ')}`);
+  }
+  const missing = requiredUrls.filter((url) => !external.includes(url));
+  if (missing.length > 0) {
+    throw new Error(`The ui-autoload tree is missing expected external import(s): ${missing.join(', ')}`);
+  }
+  const bundled = Object.keys(metafile.inputs).filter((input) =>
+    ['node_modules/@studiometa/js-toolkit/', 'packages/ui/', 'packages/ui-mapbox/'].some((needle) =>
+      toPosix(input).includes(needle),
+    ),
+  );
+  if (bundled.length > 0) {
+    throw new Error(
+      `The ui-autoload tree bundled a cross-package dependency instead of externalizing it: ${bundled.join(', ')}`,
+    );
+  }
 }
 
 // Rolldown keeps a bare *dynamic* external as a runtime `import('<specifier>')` in the emitted code
@@ -820,6 +874,18 @@ const uiMapboxOutputDirectory = resolve(outputDirectory, uiMapboxTreePrefix);
 const jsToolkitOutputDirectory = resolve(outputDirectory, jsToolkitTreePrefix);
 const UI_MAPBOX_BUILD_NAME = '@studiometa/ui-cdn-mapbox';
 const uiMapboxComponentUrl = (subpath: string): string => `/ui-mapbox@${uiVersion}/${subpath}.js`;
+// The ui-autoload tree is also versioned in lockstep with ui, so it reuses `uiVersion` for both its
+// own prefix and the cross-tree manifest URLs it bakes.
+const uiAutoloadTreePrefix = `releases/ui-autoload/${uiVersion}`;
+const uiAutoloadOutputDirectory = resolve(outputDirectory, uiAutoloadTreePrefix);
+const UI_AUTOLOAD_BUILD_NAME = '@studiometa/ui-cdn-autoload';
+// The composed autoload reuses each package's manifest from that package's own versioned tree rather
+// than re-bundling it. These are baked as origin-relative absolute paths (leading `/`, no host),
+// exactly like the js-toolkit URL and the `/ui-mapbox@<uiVersion>/…` cross-tree imports
+// `externalizeUiMapboxPlugin` bakes — so every channel (releases and PR previews alike) resolves the
+// manifest same-origin and stays host-portable. The version is the lockstep `uiVersion`.
+const uiManifestCdnUrl = `/ui@${uiVersion}/manifest.js`;
+const uiMapboxManifestCdnUrl = `/ui-mapbox@${uiVersion}/manifest.js`;
 
 const currentSourceState = await sourceState();
 if (!currentSourceState.clean && !allowDirty) {
@@ -835,6 +901,7 @@ const mapboxDefinitions = definitions.filter(
 await rm(outputDirectory, { recursive: true, force: true });
 await mkdir(uiOutputDirectory, { recursive: true });
 await mkdir(uiMapboxOutputDirectory, { recursive: true });
+await mkdir(uiAutoloadOutputDirectory, { recursive: true });
 await mkdir(jsToolkitOutputDirectory, { recursive: true });
 
 const buildTime = reproducibleBuildTime();
@@ -963,17 +1030,54 @@ await tsdownBuild({
 });
 const uiMapboxMetafile = metafileFromChunks(chunksOf(uiMapboxResults));
 
+// Pass D — the @studiometa/ui-autoload tree, versioned in lockstep with ui. It bundles the generic
+// autoloader engine (loader, autoload, runtime, types) and emits three stable entries: the pure
+// `index.js` barrel plus the two side-effect entries `ui.js` and `ui-mapbox.js`. js-toolkit is
+// rewritten to the same external, versioned URL every other tree uses (so all trees share one runtime
+// instance and one component registry), and the `@studiometa/ui` and `@studiometa/ui-mapbox` component
+// manifests are externalized to their own trees' `/…/manifest.js` URLs — no component source, and no
+// manifest, is re-bundled here. The engine and `runtime.ts` are bundled INTO the tree.
+const uiAutoloadEntryPoints = {
+  index: resolve(repositoryDirectory, 'packages/ui-autoload/index.ts'),
+  ui: resolve(repositoryDirectory, 'packages/ui-autoload/ui.ts'),
+  'ui-mapbox': resolve(repositoryDirectory, 'packages/ui-autoload/ui-mapbox.ts'),
+};
+const uiAutoloadManifestMapping: Record<string, string> = {
+  '@studiometa/ui/manifest': uiManifestCdnUrl,
+  '@studiometa/ui-mapbox/manifest': uiMapboxManifestCdnUrl,
+};
+const uiAutoloadResults = await tsdownBuild({
+  ...sharedBundleOptions(uiAutoloadOutputDirectory),
+  entry: uiAutoloadEntryPoints,
+  plugins: [
+    externalizeToolkitPlugin(),
+    externalizeUiAutoloadManifestsPlugin(uiAutoloadManifestMapping),
+  ],
+});
+await tsdownBuild({
+  ...sharedDeclarationOptions(uiAutoloadOutputDirectory, [
+    '@studiometa/js-toolkit',
+    '@studiometa/js-toolkit/utils',
+    '@studiometa/ui/manifest',
+    '@studiometa/ui-mapbox/manifest',
+  ]),
+  entry: uiAutoloadEntryPoints,
+});
+const uiAutoloadMetafile = metafileFromChunks(chunksOf(uiAutoloadResults));
+
 // Re-export facade entries carry no source map from rolldown; synthesize the empty maps so the
-// public source-map invariant holds across both trees.
+// public source-map invariant holds across every tree.
 await synthesizeFacadeSourceMaps(jsToolkitOutputDirectory);
 await synthesizeFacadeSourceMaps(uiOutputDirectory);
 await synthesizeFacadeSourceMaps(uiMapboxOutputDirectory);
+await synthesizeFacadeSourceMaps(uiAutoloadOutputDirectory);
 
 // Mapbox GL and the geocoder are external (import-map resolved) and no longer bundled, so the CDN
 // serves neither their JavaScript, their stylesheets nor their license notices — consumers load
 // those from the same source they point their import map at.
 await writeThirdPartyNotices(uiMetafile, uiOutputDirectory);
 await writeThirdPartyNotices(uiMapboxMetafile, uiMapboxOutputDirectory);
+await writeThirdPartyNotices(uiAutoloadMetafile, uiAutoloadOutputDirectory);
 await writeThirdPartyNotices(jsToolkitMetafile, jsToolkitOutputDirectory);
 
 const uiEntryNames = ['autoload', 'loader', 'manifest', 'index'];
@@ -1076,6 +1180,38 @@ for (const [output, metadata] of Object.entries(uiMapboxMetafile.outputs)) {
 const uiMapboxEntryOutputs = { index: 'index.js' };
 if (!uiMapboxMetafile.outputs['index.js']) {
   throw new Error('Missing ui-mapbox entry output index.js.');
+}
+
+// The ui-autoload tree externalizes js-toolkit and both component manifests; nothing else may be an
+// external import, both manifests and the js-toolkit URL must be present, and no js-toolkit/ui/
+// ui-mapbox source may be bundled into it.
+const uiAutoloadRequiredUrls = [jsToolkitIndexUrl, uiManifestCdnUrl, uiMapboxManifestCdnUrl];
+const uiAutoloadAllowedUrls = [
+  jsToolkitIndexUrl,
+  jsToolkitUtilsUrl,
+  uiManifestCdnUrl,
+  uiMapboxManifestCdnUrl,
+];
+assertUiAutoloadExternals(uiAutoloadMetafile, uiAutoloadRequiredUrls, uiAutoloadAllowedUrls);
+const uiAutoloadInitialFiles = (await listFiles(uiAutoloadOutputDirectory)).filter(
+  (file) => !file.endsWith('.json'),
+);
+await assertBrowserImports(
+  uiAutoloadMetafile,
+  uiAutoloadOutputDirectory,
+  uiAutoloadInitialFiles,
+  new Set(uiAutoloadAllowedUrls),
+);
+for (const file of uiAutoloadInitialFiles.filter((path) => path.endsWith('.js'))) {
+  if (!uiAutoloadInitialFiles.includes(`${file}.map`))
+    throw new Error(`Missing public sourcemap for ${file}.`);
+}
+const uiAutoloadSizes = await fileSizes(uiAutoloadOutputDirectory, uiAutoloadInitialFiles);
+const uiAutoloadEntryOutputs = { index: 'index.js', ui: 'ui.js', 'ui-mapbox': 'ui-mapbox.js' };
+for (const [name, file] of Object.entries(uiAutoloadEntryOutputs)) {
+  if (!uiAutoloadMetafile.outputs[file]) {
+    throw new Error(`Missing ui-autoload entry output ${file} for ${name}.`);
+  }
 }
 
 const jsToolkitEntryOutputs = Object.fromEntries(
@@ -1479,12 +1615,76 @@ const uiMapboxBuildMetadata = {
   },
 };
 
-// The js-toolkit and ui-mapbox trees are each self-contained (they record no total:release), so
-// their metadata is stable and written once. Each integrity manifest hashes every file in its tree
-// including its own build.json.
+const uiAutoloadBuildMetadata = {
+  schemaVersion: 1,
+  format: {
+    name: 'studiometa-browser-cdn-autoload',
+    version: 1,
+    module: 'esm',
+    target: 'es2020',
+    splitting: true,
+    sourcemaps: true,
+    declarations: true,
+    bundler: bundlerLabel,
+  },
+  // The ui-autoload tree is versioned in lockstep with ui, so it reports the ui version.
+  package: { name: UI_AUTOLOAD_BUILD_NAME, version: uiVersion },
+  dependencies: { '@studiometa/js-toolkit': jsToolkitVersion },
+  build: {
+    commit,
+    identifier: `${UI_AUTOLOAD_BUILD_NAME}@${uiVersion}+${commit}`,
+    clean: currentSourceState.clean,
+    publishable: currentSourceState.clean,
+    createdAt: buildTime.iso,
+    sourceDateEpoch: buildTime.epoch,
+    timeSource: buildTime.source,
+  },
+  entries: entryMetadataFor(uiAutoloadMetafile, uiAutoloadOutputDirectory, uiAutoloadEntryOutputs),
+  // The ui-autoload tree serves the generic engine and side-effect entries only; it declares no
+  // components of its own (each component still lives in its package's own tree).
+  components: {},
+  outputs: outputMetadataFor(uiAutoloadInitialFiles, uiAutoloadSizes),
+  licenses: {
+    thirdPartyNotices: 'licenses/THIRD_PARTY_LICENSES.txt',
+    legalComments: 'none',
+  },
+  integrations: {
+    'js-toolkit': {
+      status: 'external-versioned-artifact',
+      version: jsToolkitVersion,
+      urls: [jsToolkitIndexUrl],
+      release: jsToolkitTreePrefix,
+      note: 'js-toolkit is built as its own versioned artifact and imported by an absolute, origin-relative URL so the ui-autoload engine shares one runtime instance with the ui and ui-mapbox trees.',
+    },
+    'ui-manifest': {
+      status: 'external-cross-tree',
+      url: uiManifestCdnUrl,
+      note: 'The @studiometa/ui component manifest is reused from the ui tree (`/ui@<version>/manifest.js`) rather than re-bundled, so the side-effect `ui.js` entry loads exactly one manifest and its lazily-loaded component chunks from that tree.',
+    },
+    'ui-mapbox-manifest': {
+      status: 'external-cross-tree',
+      url: uiMapboxManifestCdnUrl,
+      note: 'The @studiometa/ui-mapbox component manifest is reused from the ui-mapbox tree (`/ui-mapbox@<version>/manifest.js`) rather than re-bundled.',
+    },
+  },
+  assertions: {
+    jsToolkitIdentities: [toolkitIdentity],
+    jsToolkitExternalUrls: [jsToolkitIndexUrl],
+    treeBundlesToolkit: false,
+    manifestExternalUrls: [uiManifestCdnUrl, uiMapboxManifestCdnUrl],
+    treeBundlesManifests: false,
+    onlyAllowedBareExternals: true,
+    publicSourceMaps: true,
+  },
+};
+
+// The js-toolkit, ui-mapbox and ui-autoload trees are each self-contained (they record no
+// total:release), so their metadata is stable and written once. Each integrity manifest hashes every
+// file in its tree including its own build.json.
 for (const [treeDirectory, treeFiles, metadata] of [
   [jsToolkitOutputDirectory, jsToolkitInitialFiles, jsToolkitBuildMetadata] as const,
   [uiMapboxOutputDirectory, uiMapboxInitialFiles, uiMapboxBuildMetadata] as const,
+  [uiAutoloadOutputDirectory, uiAutoloadInitialFiles, uiAutoloadBuildMetadata] as const,
 ]) {
   await writeJson(resolve(treeDirectory, 'build.json'), metadata);
   const integrityFiles = [...treeFiles, 'build.json'].sort();
@@ -1538,5 +1738,5 @@ enforceSizeBudgets(observedBudgets);
 
 const totalPublicFiles = (await listFiles(outputDirectory)).length;
 console.log(
-  `Built ${definitions.length} components and ${totalPublicFiles} public files across ${uiTreePrefix}, ${uiMapboxTreePrefix} and ${jsToolkitTreePrefix}.`,
+  `Built ${definitions.length} components and ${totalPublicFiles} public files across ${uiTreePrefix}, ${uiMapboxTreePrefix}, ${uiAutoloadTreePrefix} and ${jsToolkitTreePrefix}.`,
 );

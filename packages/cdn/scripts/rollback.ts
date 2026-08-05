@@ -60,7 +60,14 @@ async function main(): Promise<void> {
   let mutableAliases: string[];
   if (values['stable-latest']) {
     target = { kind: 'release', version: values['stable-latest'] };
-    mutableAliases = ['ui@latest/autoload.js', 'ui@latest/index.js', 'ui-mapbox@latest/index.js'];
+    mutableAliases = [
+      'ui@latest/autoload.js',
+      'ui@latest/index.js',
+      'ui-mapbox@latest/index.js',
+      'ui-autoload@latest/index.js',
+      'ui-autoload@latest/ui.js',
+      'ui-autoload@latest/ui-mapbox.js',
+    ];
   } else {
     target = { kind: 'channel', channelId: values.channel as string };
     mutableAliases = [
@@ -68,6 +75,12 @@ async function main(): Promise<void> {
       'ui@main/autoload.js',
       'ui-mapbox@next/index.js',
       'ui-mapbox@main/index.js',
+      'ui-autoload@next/index.js',
+      'ui-autoload@next/ui.js',
+      'ui-autoload@next/ui-mapbox.js',
+      'ui-autoload@main/index.js',
+      'ui-autoload@main/ui.js',
+      'ui-autoload@main/ui-mapbox.js',
     ];
   }
 
