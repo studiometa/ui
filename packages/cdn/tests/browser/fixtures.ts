@@ -20,7 +20,6 @@ interface BuildMetadata {
       dynamicImports: Array<{ entry: string; preload: string[] }>;
     }
   >;
-  styles: Record<string, { path: string; autoInject: boolean }>;
 }
 
 export interface RequestLog {
@@ -34,7 +33,16 @@ export interface RequestLog {
 
 interface FixturePageOptions {
   body: string;
-  script?: 'alias' | 'exact' | 'none';
+  // Tokens declared eager through `<meta name="studiometa-ui:eager" content="A, B">`. This is the
+  // ui-autoload replacement for the retired eager-components query: listed tokens mount eagerly
+  // regardless of their manifest strategy. Omitted or empty → no meta element is emitted.
+  eager?: string[];
+  // When true, the page also loads the `ui-mapbox.js` side-effect entry so Mapbox components
+  // autoload. `ui.js` is always loaded (unless `bootstrap` is disabled).
+  mapbox?: boolean;
+  // When false, no ui-autoload side-effect entry is injected at all — used by the source-map test,
+  // which only needs the trees reachable, not bootstrapped.
+  bootstrap?: boolean;
   workerSource?: 'blob:' | "'none'";
   // When set, the fixture page declares an import map so the externalized Mapbox specifiers resolve
   // to the stub modules this server hosts (mirroring a consumer that points "mapbox-gl" at their
@@ -76,10 +84,16 @@ const MAPBOX_GEOCODER_STUB_PATH = '/stub/mapbox-gl-geocoder.js';
 
 export interface CdnServers {
   artifactOrigin: string;
+  // The `@studiometa/ui` component tree, served under `/ui@<version>/…`.
   build: BuildMetadata;
+  // The lockstep `@studiometa/ui-mapbox` tree, served under `/ui-mapbox@<version>/…`.
   uiMapboxBuild: BuildMetadata;
-  exactUrl: (path: string, identifier?: string) => string;
+  // The lockstep `@studiometa/ui-autoload` tree (the autoloader engine and side-effect entries),
+  // served under `/ui-autoload@<version>/…`.
+  uiAutoloadBuild: BuildMetadata;
+  uiUrl: (path: string) => string;
   uiMapboxUrl: (path: string) => string;
+  uiAutoloadUrl: (path: string) => string;
   fixtureUrl: (options: FixturePageOptions) => string;
   requests: RequestLog[];
   reset: () => void;
@@ -171,10 +185,12 @@ async function resolveWithin(
 }
 
 async function createServers(): Promise<{ fixture: CdnServers; close: () => Promise<void> }> {
-  // The distribution is namespaced per package: releases/ui/<version>/ and
-  // releases/js-toolkit/<version>/. The ui bundle imports js-toolkit through the absolute
-  // /js-toolkit@<version>/ URL, so this server mirrors that namespace on a single origin — every
-  // consumer resolves the one js-toolkit URL, exactly like the real Worker.
+  // The distribution is namespaced per package and served on one origin, mirroring the real Worker:
+  // the ui tree at releases/ui/<version>/, its lockstep siblings ui-mapbox and ui-autoload at
+  // releases/ui-mapbox/<version>/ and releases/ui-autoload/<version>/, and js-toolkit at
+  // releases/js-toolkit/<version>/. Every cross-tree import the bundles bake is origin-relative
+  // (`/ui@<v>/manifest.js`, `/js-toolkit@<v>/index.js`, …), so hosting each tree at its real
+  // deployment URL on a single origin lets those baked URLs resolve exactly as in production.
   const uiVersion = (
     JSON.parse(await readFile(resolve(packageDirectory, 'package.json'), 'utf8')) as {
       version: string;
@@ -195,12 +211,19 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
   const uiMapboxBuild = JSON.parse(
     await readFile(resolve(uiMapboxOutputDirectory, 'build.json'), 'utf8'),
   ) as BuildMetadata;
+  // ui-autoload is likewise versioned in lockstep with ui and served from /ui-autoload@<v>/. Its
+  // `ui.js` / `ui-mapbox.js` side-effect entries bake the origin-relative `/ui@<v>/manifest.js` and
+  // `/ui-mapbox@<v>/manifest.js` URLs and drive the autoloader on import.
+  const uiAutoloadOutputDirectory = resolve(outputDirectory, 'releases/ui-autoload', uiVersion);
+  const uiAutoloadBuild = JSON.parse(
+    await readFile(resolve(uiAutoloadOutputDirectory, 'build.json'), 'utf8'),
+  ) as BuildMetadata;
   const realUiDirectory = await realpath(uiOutputDirectory);
   const realJsToolkitDirectory = await realpath(jsToolkitOutputDirectory);
   const realUiMapboxDirectory = await realpath(uiMapboxOutputDirectory);
+  const realUiAutoloadDirectory = await realpath(uiAutoloadOutputDirectory);
   const requests: RequestLog[] = [];
   const delays = new Map<string, number>();
-  const encodedIdentifier = encodeURIComponent(build.build.identifier);
   let artifactOrigin = '';
   let pageOrigin = '';
 
@@ -223,6 +246,25 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
     response.end(contents);
   };
 
+  // Each versioned tree is served from its own real directory. The requested version must match the
+  // tree's version (ui, ui-mapbox and ui-autoload all move in lockstep with `uiVersion`); anything
+  // else is a 404, exactly like the real Worker rejecting an unknown release.
+  const serveTree = async (
+    response: ServerResponse,
+    version: string,
+    expectedVersion: string,
+    baseDirectory: string,
+    realBaseDirectory: string,
+    relativePath: string,
+  ): Promise<void> => {
+    const realPath =
+      version === expectedVersion
+        ? await resolveWithin(baseDirectory, realBaseDirectory, relativePath)
+        : undefined;
+    if (!realPath) return notFound(response);
+    await send(response, realPath, relativePath, await readFile(realPath));
+  };
+
   const artifactServer = createServer(async (request, response) => {
     const url = new URL(request.url ?? '/', artifactOrigin);
     const entry = startLog(request, url.pathname, requests);
@@ -235,78 +277,80 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
       return;
     }
 
-    if (url.pathname === '/alias/main/autoload.js') {
-      response.statusCode = 307;
-      response.setHeader('Location', `/cdn/${encodedIdentifier}/${build.entries.autoload.path}`);
-      addArtifactHeaders(response, MIME_TYPES['.js']);
-      response.end();
-      return;
-    }
-
-    // The externalized, versioned js-toolkit artifact at its own absolute URL namespace.
+    // The externalized, versioned js-toolkit artifact at its own absolute URL namespace — the one
+    // shared instance every tree imports.
     const toolkit = url.pathname.match(/^\/js-toolkit@([^/]+)\/(.+)$/);
     if (toolkit) {
-      const version = decodeURIComponent(toolkit[1]);
-      const relativePath = decodeURIComponent(toolkit[2]);
-      const realPath =
-        version === jsToolkitVersion
-          ? await resolveWithin(jsToolkitOutputDirectory, realJsToolkitDirectory, relativePath)
-          : undefined;
-      if (!realPath) return notFound(response);
-      await send(response, realPath, relativePath, await readFile(realPath));
+      await serveTree(
+        response,
+        decodeURIComponent(toolkit[1]),
+        jsToolkitVersion,
+        jsToolkitOutputDirectory,
+        realJsToolkitDirectory,
+        decodeURIComponent(toolkit[2]),
+      );
       return;
     }
 
-    // The lockstep ui-mapbox tree at its own absolute URL namespace, mirroring the real Worker. The
-    // composed autoload manifest lazy-imports Mapbox components from `/ui-mapbox@<version>/…`.
+    // The ui component tree. The ui-autoload `ui.js` entry bakes `/ui@<v>/manifest.js`, whose lazy
+    // loaders resolve sibling `/ui@<v>/<Component>.js` chunks from here.
+    const ui = url.pathname.match(/^\/ui@([^/]+)\/(.+)$/);
+    if (ui) {
+      await serveTree(
+        response,
+        decodeURIComponent(ui[1]),
+        uiVersion,
+        uiOutputDirectory,
+        realUiDirectory,
+        decodeURIComponent(ui[2]),
+      );
+      return;
+    }
+
+    // The lockstep ui-mapbox tree. The ui-autoload `ui-mapbox.js` entry bakes
+    // `/ui-mapbox@<v>/manifest.js`, whose lazy loaders resolve Mapbox component chunks from here.
     const uiMapbox = url.pathname.match(/^\/ui-mapbox@([^/]+)\/(.+)$/);
     if (uiMapbox) {
-      const version = decodeURIComponent(uiMapbox[1]);
-      const relativePath = decodeURIComponent(uiMapbox[2]);
-      const realPath =
-        version === uiVersion
-          ? await resolveWithin(uiMapboxOutputDirectory, realUiMapboxDirectory, relativePath)
-          : undefined;
-      if (!realPath) return notFound(response);
-      await send(response, realPath, relativePath, await readFile(realPath));
+      await serveTree(
+        response,
+        decodeURIComponent(uiMapbox[1]),
+        uiVersion,
+        uiMapboxOutputDirectory,
+        realUiMapboxDirectory,
+        decodeURIComponent(uiMapbox[2]),
+      );
       return;
     }
 
-    const match = url.pathname.match(/^\/cdn\/([^/]+)\/(.+)$/);
-    if (!match) return notFound(response);
-
-    const identifier = decodeURIComponent(match[1]);
-    const relativePath = decodeURIComponent(match[2]);
-    const realPath = await resolveWithin(uiOutputDirectory, realUiDirectory, relativePath);
-    if (!realPath) return notFound(response);
-
-    let contents = await readFile(realPath);
-    if (relativePath === build.entries.autoload.path && identifier !== build.build.identifier) {
-      const source = contents.toString('utf8');
-      // Serve a genuinely conflicting runtime version for a mismatched identifier by rewriting the
-      // package version the autoload module embeds. The bundler inlines it as a single quoted
-      // literal — esbuild placed it inline in the runtime object (version:"x") while tsdown/rolldown
-      // hoists it into a `x`-quoted variable referenced as version:<id> — so target the standalone
-      // version literal itself, preserving whichever quote (", ' or `) the bundler chose. The single
-      // match is asserted so an unexpected output shape fails loudly instead of silently no-op'ing.
-      const escaped = build.package.version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const versionLiteral = new RegExp(`(["'\`])${escaped}\\1`, 'g');
-      const matches = source.match(versionLiteral);
-      if (!matches || matches.length !== 1) {
-        response.statusCode = 500;
-        addArtifactHeaders(response, MIME_TYPES['.txt']);
-        response.end('The versioned autoload fixture transform is stale.');
-        return;
-      }
-      contents = Buffer.from(source.replace(versionLiteral, `$1${identifier}$1`));
+    // The ui-autoload tree — the generic autoloader engine plus the `index.js`, `ui.js` and
+    // `ui-mapbox.js` entries the fixture page bootstraps from.
+    const uiAutoload = url.pathname.match(/^\/ui-autoload@([^/]+)\/(.+)$/);
+    if (uiAutoload) {
+      await serveTree(
+        response,
+        decodeURIComponent(uiAutoload[1]),
+        uiVersion,
+        uiAutoloadOutputDirectory,
+        realUiAutoloadDirectory,
+        decodeURIComponent(uiAutoload[2]),
+      );
+      return;
     }
 
-    await send(response, realPath, relativePath, contents);
+    notFound(response);
   });
   artifactOrigin = await listen(artifactServer);
 
-  function exactUrl(path: string, identifier = build.build.identifier) {
-    return `${artifactOrigin}/cdn/${encodeURIComponent(identifier)}/${path}`;
+  function uiUrl(path: string) {
+    return `${artifactOrigin}/ui@${encodeURIComponent(uiVersion)}/${path}`;
+  }
+
+  function uiMapboxUrl(path: string) {
+    return `${artifactOrigin}/ui-mapbox@${encodeURIComponent(uiVersion)}/${path}`;
+  }
+
+  function uiAutoloadUrl(path: string) {
+    return `${artifactOrigin}/ui-autoload@${encodeURIComponent(uiVersion)}/${path}`;
   }
 
   const pageServer = createServer((request, response) => {
@@ -318,7 +362,6 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
     }
 
     const body = url.searchParams.get('body') ?? '';
-    const script = url.searchParams.get('script') ?? 'exact';
     const workerSource = url.searchParams.get('workerSource');
     if (workerSource) {
       response.setHeader(
@@ -335,14 +378,6 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
       );
     }
 
-    const scriptUrl =
-      script === 'alias'
-        ? `${artifactOrigin}/alias/main/autoload.js`
-        : exactUrl(build.entries.autoload.path);
-    const scriptMarkup =
-      script === 'none'
-        ? ''
-        : `<script type="module" src="${escapeAttribute(scriptUrl)}" data-studiometa-ui></script>`;
     // The import map must precede any module script so the externalized Mapbox specifiers resolve.
     const importMapMarkup =
       url.searchParams.get('mapboxImportMap') === '1'
@@ -353,28 +388,56 @@ async function createServers(): Promise<{ fixture: CdnServers; close: () => Prom
             },
           })}</script>`
         : '';
+
+    // Eager tokens are declared through a `<meta>` element in the head — the ui-autoload replacement
+    // for the retired eager-components query. It must be present before the side-effect entries run.
+    const eagerTokens = url.searchParams.get('eager') ?? '';
+    const eagerMarkup = eagerTokens
+      ? `<meta name="studiometa-ui:eager" content="${escapeAttribute(eagerTokens)}">`
+      : '';
+
+    // Bootstrapping the page is a side effect of importing the ui-autoload entries: `ui.js` registers
+    // the ui manifest and starts the autoloader, and `ui-mapbox.js` adds the Mapbox manifest to the
+    // same coalesced start. There is no marked script and no runtime query — `import` is the contract.
+    const bootstrap = url.searchParams.get('bootstrap') !== '0';
+    const withMapbox = url.searchParams.get('mapbox') === '1';
+    const bootstrapScripts = bootstrap
+      ? [
+          `<script type="module" src="${escapeAttribute(uiAutoloadUrl(uiAutoloadBuild.entries.ui.path))}"></script>`,
+          withMapbox
+            ? `<script type="module" src="${escapeAttribute(uiAutoloadUrl(uiAutoloadBuild.entries['ui-mapbox'].path))}"></script>`
+            : '',
+        ].join('')
+      : '';
+
     response.statusCode = 200;
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
     response.end(
-      `<!doctype html><html><head><meta charset="utf-8"><title>CDN browser fixture</title>${importMapMarkup}</head><body>${body}${scriptMarkup}</body></html>`,
+      `<!doctype html><html><head><meta charset="utf-8"><title>CDN browser fixture</title>${eagerMarkup}${importMapMarkup}</head><body>${body}${bootstrapScripts}</body></html>`,
     );
   });
   pageOrigin = await listen(pageServer);
-
-  function uiMapboxUrl(path: string) {
-    return `${artifactOrigin}/ui-mapbox@${encodeURIComponent(uiVersion)}/${path}`;
-  }
 
   const fixture: CdnServers = {
     artifactOrigin,
     build,
     uiMapboxBuild,
-    exactUrl,
+    uiAutoloadBuild,
+    uiUrl,
     uiMapboxUrl,
+    uiAutoloadUrl,
     fixtureUrl(options) {
       const url = new URL('/fixture', pageOrigin);
       url.searchParams.set('body', options.body);
-      url.searchParams.set('script', options.script ?? 'exact');
+      if (options.eager && options.eager.length > 0) {
+        url.searchParams.set('eager', options.eager.join(', '));
+      }
+      if (options.mapbox) {
+        url.searchParams.set('mapbox', '1');
+      }
+      if (options.bootstrap === false) {
+        url.searchParams.set('bootstrap', '0');
+      }
       if (options.workerSource) {
         url.searchParams.set('workerSource', options.workerSource);
       }

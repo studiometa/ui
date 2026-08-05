@@ -101,8 +101,8 @@ export function makeArtifact(overrides: ArtifactOverrides = {}): Artifact {
     },
   };
   const files = [
-    artifactFile('autoload.js', 'export const cdn = 1;\n//# sourceMappingURL=autoload.js.map\n'),
-    artifactFile('autoload.js.map', '{"version":3,"sources":[],"mappings":""}'),
+    artifactFile('index.js', 'export const cdn = 1;\n//# sourceMappingURL=index.js.map\n'),
+    artifactFile('index.js.map', '{"version":3,"sources":[],"mappings":""}'),
     artifactFile('build.json', JSON.stringify(build)),
     artifactFile('integrity.json', '{"schemaVersion":1,"algorithm":"sha384","files":{}}'),
   ];

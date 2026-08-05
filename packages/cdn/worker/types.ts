@@ -109,7 +109,6 @@ export interface PackageRoot {
 }
 
 export interface CanonicalQuery {
-  components: string[];
   search: string;
   canonical: boolean;
 }

@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import {
   captureDiagnostics,
   expectMounted,
@@ -7,67 +7,26 @@ import {
   type CdnServers,
 } from './fixtures.js';
 
-const RUNTIME_KEY = '@studiometa/ui-cdn/runtime';
+// The shared cross-copy autoloader runtime key. Every ui-autoload side-effect entry — even from
+// duplicated copies of the package — coordinates through a single object stored under this symbol.
+const RUNTIME_KEY = '@studiometa/ui-autoload/runtime';
 
 function requestedPaths(cdn: CdnServers): string[] {
   return cdn.requests.map(({ pathname }) => pathname);
-}
-
-async function runtimeIsStable(page: Page, callback: () => Promise<void>): Promise<void> {
-  const before = await page.evaluate((key) => {
-    const runtime = (globalThis as Record<PropertyKey, unknown>)[Symbol.for(key)];
-    (globalThis as Record<string, unknown>).__CDN_RUNTIME_BEFORE__ = runtime;
-    return {
-      instances: ((globalThis as Record<string, unknown>).__JS_TOOLKIT_INSTANCES__ as Set<unknown>)
-        .size,
-      registry: (
-        (globalThis as Record<string, unknown>).__JS_TOOLKIT_REGISTRY__ as Map<unknown, unknown>
-      ).size,
-    };
-  }, RUNTIME_KEY);
-
-  await callback();
-
-  expect(
-    await page.evaluate((key) => {
-      const scope = globalThis as Record<PropertyKey, unknown>;
-      return {
-        sameRuntime: scope[Symbol.for(key)] === scope.__CDN_RUNTIME_BEFORE__,
-        instances: (scope.__JS_TOOLKIT_INSTANCES__ as Set<unknown>).size,
-        registry: (scope.__JS_TOOLKIT_REGISTRY__ as Map<unknown, unknown>).size,
-      };
-    }, RUNTIME_KEY),
-  ).toEqual({ sameRuntime: true, ...before });
-}
-
-async function addMarkedScript(page: Page, src: string): Promise<void> {
-  await page.evaluate(async (source) => {
-    await new Promise<void>((resolvePromise, reject) => {
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.src = source;
-      script.dataset.studiometaUi = '';
-      script.addEventListener('load', () => resolvePromise(), { once: true });
-      script.addEventListener('error', () => reject(new Error(`Failed to load ${source}`)), {
-        once: true,
-      });
-      document.head.append(script);
-    });
-  }, src);
 }
 
 test.beforeEach(async ({ cdn }) => {
   cdn.reset();
 });
 
-test('cross-origin marked module mounts Action without authored registration', async ({
-  page,
-  cdn,
-}) => {
+test('cross-origin autoload mounts Action without authored registration', async ({ page, cdn }) => {
   const diagnostics = captureDiagnostics(page);
+  // The page bootstraps purely by importing the ui-autoload `ui.js` side-effect entry and declaring
+  // `Action` eager through the `<meta>` — no `createApp`, no `registerComponent`, no query string.
   await page.goto(
     cdn.fixtureUrl({
       body: '<button id="action" data-component="Action" data-on:click="$el.textContent = \'Mounted\'">Run</button>',
+      eager: ['Action'],
     }),
   );
 
@@ -76,11 +35,13 @@ test('cross-origin marked module mounts Action without authored registration', a
   await expect(page.locator('#action')).toHaveText('Mounted');
 
   expect(new URL(page.url()).origin).not.toBe(cdn.artifactOrigin);
+  // The bootstrap came from the ui-autoload tree and the component chunk from the ui tree, both
+  // cross-origin relative to the page.
   expect(requestedPaths(cdn)).toContain(
-    new URL(cdn.exactUrl(cdn.build.entries.autoload.path)).pathname,
+    new URL(cdn.uiAutoloadUrl(cdn.uiAutoloadBuild.entries.ui.path)).pathname,
   );
   expect(requestedPaths(cdn)).toContain(
-    new URL(cdn.exactUrl(cdn.build.components.Action.entry)).pathname,
+    new URL(cdn.uiUrl(cdn.build.components.Action.entry)).pathname,
   );
   expectNoBrowserErrors(diagnostics);
 });
@@ -105,7 +66,7 @@ test('compound parent and children share one js-toolkit constructor identity', a
   await expectMounted(page, '#accordion', 'Accordion');
   await expectMounted(page, '#item', 'AccordionItem');
   expect(
-    await page.evaluate(() => {
+    await page.evaluate((runtimeKey) => {
       const parent = (
         document.querySelector('#accordion') as Element & { __base__: Map<string, unknown> }
       ).__base__.get('Accordion') as {
@@ -131,12 +92,10 @@ test('compound parent and children share one js-toolkit constructor identity', a
         registeredChildMatches: registry.get('AccordionItem') === child.constructor,
         sharedBase: parentBase === childBase,
         runtimeCount: Number(
-          Boolean(
-            (globalThis as Record<PropertyKey, unknown>)[Symbol.for('@studiometa/ui-cdn/runtime')],
-          ),
+          Boolean((globalThis as Record<PropertyKey, unknown>)[Symbol.for(runtimeKey)]),
         ),
       };
-    }),
+    }, RUNTIME_KEY),
   ).toEqual({
     configuredChildMatches: true,
     registeredChildMatches: true,
@@ -200,6 +159,8 @@ for (const [intent, token] of [
   }) => {
     const diagnostics = captureDiagnostics(page);
     const component = cdn.build.components[token];
+    // `data-load="interaction"` overrides the component's eager manifest strategy, so its chunk is
+    // not fetched until an interaction intent fires.
     cdn.setDelay(component.entry, 250);
     await page.goto(
       cdn.fixtureUrl({
@@ -207,7 +168,7 @@ for (const [intent, token] of [
       }),
     );
 
-    const entryPath = new URL(cdn.exactUrl(component.entry)).pathname;
+    const entryPath = new URL(cdn.uiUrl(component.entry)).pathname;
     await page.waitForTimeout(100);
     expect(requestedPaths(cdn)).not.toContain(entryPath);
     await page.locator('#lazy').evaluate((element) => {
@@ -233,79 +194,15 @@ for (const [intent, token] of [
   });
 }
 
-test('alias redirects to an exact autoload base used by relative chunks', async ({ page, cdn }) => {
-  const diagnostics = captureDiagnostics(page);
-  await page.goto(
-    cdn.fixtureUrl({
-      body: '<div id="target" data-component="Target"></div>',
-      script: 'alias',
-    }),
-  );
-  await expectMounted(page, '#target', 'Target');
-
-  const alias = cdn.requests.find(({ pathname }) => pathname === '/alias/main/autoload.js');
-  const exactAutoloadPath = new URL(cdn.exactUrl(cdn.build.entries.autoload.path)).pathname;
-  const exactComponentPath = new URL(cdn.exactUrl(cdn.build.components.Target.entry)).pathname;
-  expect(alias?.status).toBe(307);
-  expect(requestedPaths(cdn)).toContain(exactAutoloadPath);
-  expect(requestedPaths(cdn)).toContain(exactComponentPath);
-  expect(exactComponentPath).toContain(
-    `/cdn/${encodeURIComponent(cdn.build.build.identifier).replaceAll('%2F', '/')}/`,
-  );
-  expectNoBrowserErrors(diagnostics);
-});
-
-test('duplicate and conflicting versions keep the first runtime and diagnose both', async ({
-  page,
-  cdn,
-}) => {
-  const diagnostics = captureDiagnostics(page);
-  const warnings: string[] = [];
-  page.on('console', (message) => {
-    if (message.type() === 'warning') warnings.push(message.text());
-  });
-  await page.goto(cdn.fixtureUrl({ body: '<div id="target" data-component="Target"></div>' }));
-  await expectMounted(page, '#target', 'Target');
-
-  await runtimeIsStable(page, async () => {
-    await page.locator('script[data-studiometa-ui]').evaluate((script) => {
-      script.removeAttribute('data-studiometa-ui');
-    });
-    await addMarkedScript(page, `${cdn.exactUrl(cdn.build.entries.autoload.path)}?duplicate=1`);
-  });
-  await expect
-    .poll(() => warnings)
-    .toContain(
-      `[@studiometa/ui-cdn] Version ${cdn.build.package.version} is already active; the repeated script was ignored.`,
-    );
-
-  await runtimeIsStable(page, async () => {
-    await page.locator('script[data-studiometa-ui]').evaluate((script) => {
-      script.removeAttribute('data-studiometa-ui');
-    });
-    await addMarkedScript(page, cdn.exactUrl(cdn.build.entries.autoload.path, '0.0.0'));
-  });
-  await expect
-    .poll(() => warnings)
-    .toContain(
-      '[@studiometa/ui-cdn] A conflicting CDN runtime version is already active; loading stopped.',
-    );
-  expectNoBrowserErrors(diagnostics);
-});
-
 test('public source maps are reachable cross-origin', async ({ page, cdn }) => {
   const diagnostics = captureDiagnostics(page);
-  await page.goto(cdn.fixtureUrl({ body: '', script: 'none' }));
-  // js-toolkit is externalized, so a component's entry chunk can be a thin re-export shim whose
-  // map carries no original sources — the implementation (and its sources) lives in the shared
-  // preload chunks. Assert every map in the component's graph plus the autoload entry map is
-  // reachable and valid JSON, and that the graph as a whole is source-mapped (total sources > 0).
-  const action = cdn.build.components.Action;
-  const maps = [
-    cdn.build.entries.autoload.sourceMap,
-    `${action.entry}.map`,
-    ...action.preload.map((chunk) => `${chunk}.map`),
-  ];
+  await page.goto(cdn.fixtureUrl({ body: '', bootstrap: false }));
+  // js-toolkit is externalized, so a facade entry can be a thin re-export whose map carries no
+  // original sources — the implementation (and its sources) lives in the shared preload chunks.
+  // Assert the ui-autoload `ui.js` entry map plus every map in its static graph is reachable and
+  // valid JSON, and that the graph as a whole is source-mapped (total sources > 0).
+  const uiEntry = cdn.uiAutoloadBuild.entries.ui;
+  const maps = [uiEntry.sourceMap, ...uiEntry.preload.map((chunk) => `${chunk}.map`)];
 
   let totalSources = 0;
   for (const path of maps) {
@@ -317,7 +214,7 @@ test('public source maps are reachable cross-origin', async ({ page, cdn }) => {
         ok: response.ok,
         sources: map.sources.length,
       };
-    }, cdn.exactUrl(path));
+    }, cdn.uiAutoloadUrl(path));
     expect(result).toMatchObject({ contentType: 'application/json; charset=utf-8', ok: true });
     totalSources += result.sources;
   }
@@ -345,9 +242,11 @@ test('Mapbox stays lazy until visible, then resolves mapbox-gl from the import m
   const diagnostics = captureDiagnostics(page);
   // The CDN no longer bundles or serves mapbox-gl; the page provides it through an import map, just
   // like a real consumer would (here pointing at the fixture's stub instead of a real Mapbox build).
-  await page.goto(cdn.fixtureUrl({ body: mapFixtureBody(), mapboxImportMap: true }));
+  // Bootstrapping also imports the ui-autoload `ui-mapbox.js` entry, which adds the Mapbox manifest
+  // to the same coalesced autoloader start alongside the ui manifest.
+  await page.goto(cdn.fixtureUrl({ body: mapFixtureBody(), mapbox: true, mapboxImportMap: true }));
 
-  // MapboxMap now lives in its own first-class ui-mapbox tree and lazy-loads from its absolute
+  // MapboxMap lives in its own first-class ui-mapbox tree and lazy-loads from its absolute
   // /ui-mapbox@<version>/ URL; nothing Mapbox is fetched until the map scrolls into view.
   const mapboxComponent = cdn.uiMapboxBuild.components.MapboxMap;
   const mapboxOnlyGraph = [mapboxComponent.entry, ...mapboxComponent.preload].map(

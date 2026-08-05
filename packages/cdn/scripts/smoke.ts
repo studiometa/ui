@@ -57,7 +57,7 @@ function versionFromLocation(location: string | null): string {
 async function resolveLatest(
   config: SmokeConfig,
 ): Promise<{ version: string; redirect: Response }> {
-  const redirect = await fetchWithTimeout(endpoint(config, 'latest', 'autoload.js'), config, {
+  const redirect = await fetchWithTimeout(endpoint(config, 'latest', 'index.js'), config, {
     redirect: 'manual',
   });
   if (redirect.status !== 307) {
@@ -85,45 +85,6 @@ async function loadBuild(config: SmokeConfig, version: string): Promise<BuildJso
 
 function assert(condition: boolean, message: string): void {
   if (!condition) throw new Error(message);
-}
-
-async function checkExactAutoload(config: SmokeConfig, version: string): Promise<void> {
-  const response = await fetchWithTimeout(endpoint(config, version, 'autoload.js'), config, {
-    headers: { Origin: 'https://example.com' },
-  });
-  assert(response.status === 200, `Exact autoload returned HTTP ${response.status}.`);
-  assert(
-    (response.headers.get('Content-Type') ?? '').includes('javascript'),
-    `Exact autoload has a non-JavaScript content type: ${response.headers.get('Content-Type')}.`,
-  );
-  assert(
-    (response.headers.get('Cache-Control') ?? '').includes('immutable'),
-    'Exact autoload is not immutably cacheable.',
-  );
-  assert(
-    response.headers.get('Access-Control-Allow-Origin') === '*',
-    'Exact autoload is missing a permissive CORS header.',
-  );
-  assert(
-    response.headers.get('Cross-Origin-Resource-Policy') === 'cross-origin',
-    'Exact autoload is missing a cross-origin resource policy.',
-  );
-  await response.text();
-}
-
-async function checkEagerPreload(
-  config: SmokeConfig,
-  version: string,
-  component: string,
-): Promise<void> {
-  const response = await fetchWithTimeout(
-    endpoint(config, version, 'autoload.js', `?components=${component}`),
-    config,
-  );
-  assert(response.status === 200, `Eager autoload returned HTTP ${response.status}.`);
-  const link = response.headers.get('Link') ?? '';
-  assert(link.includes('rel=modulepreload'), 'The eager response is missing modulepreload hints.');
-  await response.text();
 }
 
 async function checkDynamicChunk(
@@ -272,51 +233,15 @@ async function checkSharedToolkitUrl(
   const expectedUrl = `/js-toolkit@${jsToolkitVersion}/index.js`;
   // The single external js-toolkit URL is imported from the entry's static graph — usually a shared
   // chunk rather than the entry file itself. Scan the ui barrel's entry plus its preload graph (and
-  // fall back to autoload.js) and confirm at least one served ui module references the shared URL.
+  // fall back to index.js) and confirm at least one served ui module references the shared URL.
   const indexEntry = build.entries?.index;
-  const graph = indexEntry ? [indexEntry.path, ...indexEntry.preload] : ['autoload.js'];
+  const graph = indexEntry ? [indexEntry.path, ...indexEntry.preload] : ['index.js'];
   for (const asset of graph) {
     const response = await fetchWithTimeout(endpoint(config, version, asset), config);
     assert(response.status === 200, `ui ${asset} returned HTTP ${response.status}.`);
     if ((await response.text()).includes(expectedUrl)) return;
   }
   throw new Error(`No served ui module references the shared js-toolkit URL ${expectedUrl}.`);
-}
-
-async function checkSourceMap(config: SmokeConfig, version: string): Promise<void> {
-  const response = await fetchWithTimeout(endpoint(config, version, 'autoload.js'), config);
-  const body = await response.text();
-  const match = /\/\/# sourceMappingURL=(\S+)/.exec(body);
-  if (!match) throw new Error('autoload.js does not reference a source map.');
-  const map = await fetchWithTimeout(endpoint(config, version, match[1]), config);
-  assert(map.status === 200, `The source map returned HTTP ${map.status}.`);
-  const parsed = (await map.json()) as { version?: number };
-  assert(parsed.version === 3, `Unexpected source map version: ${parsed.version}.`);
-}
-
-async function checkNextAlias(config: SmokeConfig): Promise<CheckResult> {
-  const name = 'Next alias redirect';
-  try {
-    const response = await fetchWithTimeout(endpoint(config, 'next', 'autoload.js'), config, {
-      redirect: 'manual',
-    });
-    // The `next` channel only exists once a main channel has been published. A stable-only
-    // deployment legitimately has no `next` alias, so treat a 404 as skipped, not failed.
-    if (response.status === 404) {
-      return { name, status: 'skipped', detail: 'No main channel is published.' };
-    }
-    if (response.status !== 307) {
-      return { name, status: 'failed', detail: `The next alias returned HTTP ${response.status}.` };
-    }
-    versionFromLocation(response.headers.get('Location'));
-    return { name, status: 'passed' };
-  } catch (error) {
-    return {
-      name,
-      status: 'failed',
-      detail: error instanceof Error ? error.message : String(error),
-    };
-  }
 }
 
 async function checkBrowserExecution(config: SmokeConfig, version: string): Promise<CheckResult> {
@@ -329,11 +254,10 @@ async function checkBrowserExecution(config: SmokeConfig, version: string): Prom
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
-    // Evaluate the legacy `ui@<v>/autoload.js` surface and BOTH ui-autoload side-effect entries
-    // (`ui.js`, `ui-mapbox.js`), each of which statically imports its package's baked cross-tree
-    // `/…@<v>/manifest.js` — so a broken binding or a 404 manifest rejects the dynamic import here.
+    // Evaluate BOTH ui-autoload side-effect entries (`ui.js`, `ui-mapbox.js`), each of which
+    // statically imports its package's baked cross-tree `/…@<v>/manifest.js` — so a broken binding
+    // or a 404 manifest rejects the dynamic import here.
     const moduleUrls = [
-      endpoint(config, version, 'autoload.js'),
       packageEndpoint(config, 'ui-autoload', version, 'ui.js'),
       packageEndpoint(config, 'ui-autoload', version, 'ui-mapbox.js'),
     ];
@@ -413,20 +337,11 @@ async function main(): Promise<void> {
   process.stdout.write(`Running CDN smoke checks against ${config.baseUrl}.\n`);
   const { version } = await resolveLatest(config);
   const build = await loadBuild(config, version);
-  const eagerComponent = Object.keys(build.components).sort()[0];
   const jsToolkitVersion = build.dependencies?.['@studiometa/js-toolkit'];
 
   const results: CheckResult[] = [];
   results.push({ name: 'Latest alias redirect', status: 'passed' });
-  results.push(await run(() => checkExactAutoload(config, version), 'Exact autoload'));
-  results.push(await checkNextAlias(config));
-  if (eagerComponent) {
-    results.push(
-      await run(() => checkEagerPreload(config, version, eagerComponent), 'Eager preload'),
-    );
-  }
   results.push(await run(() => checkDynamicChunk(config, version, build), 'Dynamic chunk'));
-  results.push(await run(() => checkSourceMap(config, version), 'Source map'));
   if (jsToolkitVersion) {
     results.push(
       await run(() => checkJsToolkitArtifact(config, jsToolkitVersion), 'js-toolkit artifact'),

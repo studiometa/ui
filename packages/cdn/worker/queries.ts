@@ -9,7 +9,6 @@ const PACKAGE_NAMES: ReadonlySet<PackageName> = new Set([
 
 const VERSION_TOKEN_PATTERN = /^[0-9A-Za-z.+-]+$/;
 const ASSET_SEGMENT_PATTERN = /^[0-9A-Za-z._@+-]+$/;
-const COMPONENT_PATTERN = /^[A-Za-z][A-Za-z0-9]*$/;
 
 export class RequestValidationError extends Error {
   constructor(
@@ -75,7 +74,7 @@ export function parseRoute(pathname: string): ParsedRoute {
 // segment: the bare `/ui`, `/ui/`, `/js-toolkit`, and the ref-carrying `/ui@next`, `/ui@1.2.0/`,
 // `/ui@main`. The caller redirects it to the resolved exact version's `index.js` barrel — the bare
 // form via the package default (`resolveBareRoot`), a ref via the full `/ui@<ref>/` semantics
-// (`resolveVersion`). Anything with an asset segment (`/ui/autoload.js`, `/ui@next/Action`) has more
+// (`resolveVersion`). Anything with an asset segment (`/ui/index.js`, `/ui@next/Action`) has more
 // than one segment and falls through to `parseRoute`. The ref, when present, is validated with the
 // same token pattern asset routes use; a malformed ref (or a `%`/`\` in it) yields `undefined` so
 // `parseRoute` rejects it consistently.
@@ -91,30 +90,9 @@ export function parsePackageRoot(pathname: string): PackageRoot | undefined {
   return { packageName: packageName as PackageName, ref };
 }
 
-export function canonicalizeQuery(
-  url: URL,
-  assetPath: string,
-  availableComponents: ReadonlySet<string>,
-): CanonicalQuery {
-  if (assetPath !== 'autoload.js') {
-    return { components: [], search: '', canonical: url.search === '' };
-  }
-
-  const requested: string[] = [];
-  for (const value of url.searchParams.getAll('components')) {
-    for (const component of value.split(',')) {
-      if (!COMPONENT_PATTERN.test(component) || !availableComponents.has(component)) {
-        throw new RequestValidationError(
-          'The components query contains an unknown or malformed component.',
-        );
-      }
-      requested.push(component);
-    }
-  }
-  const components = [...new Set(requested)].sort((left, right) => left.localeCompare(right));
-  if (components.length > 20) {
-    throw new RequestValidationError('At most 20 eager components may be requested.');
-  }
-  const search = components.length > 0 ? `?components=${components.join(',')}` : '';
-  return { components, search, canonical: url.search === search };
+// Every asset is served from a query-less canonical URL: any query string (e.g. `?debug=true`) is
+// non-canonical and redirects to the bare path. Autoloading is delegated to the client-side
+// `@studiometa/ui-autoload` tree, so the Worker no longer parses any `?components=` eager query.
+export function canonicalizeQuery(url: URL): CanonicalQuery {
+  return { search: '', canonical: url.search === '' };
 }

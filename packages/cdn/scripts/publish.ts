@@ -128,7 +128,6 @@ async function main(): Promise<void> {
   if (values['git-tag']) {
     uiTarget = { kind: 'release', packageName: 'ui', version: values['git-tag'] };
     mutableAliases = [
-      'ui@latest/autoload.js',
       'ui@latest/index.js',
       'ui-mapbox@latest/index.js',
       'ui-autoload@latest/index.js',
@@ -139,8 +138,6 @@ async function main(): Promise<void> {
     const commit = values.commit ?? uiArtifact.build.build.commit;
     uiTarget = { kind: 'channel', commit };
     mutableAliases = [
-      'ui@next/autoload.js',
-      'ui@main/autoload.js',
       'ui-mapbox@next/index.js',
       'ui-mapbox@main/index.js',
       'ui-autoload@next/index.js',

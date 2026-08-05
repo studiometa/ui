@@ -44,7 +44,7 @@ describe('CDN publication', () => {
     const result = await publish(store, makeArtifact(), releaseTarget, { publicationId: 'pub1' });
 
     expect(result.finalPrefix).toBe('releases/ui/2.1.0');
-    expect(store.objects.has('releases/ui/2.1.0/autoload.js')).toBe(true);
+    expect(store.objects.has('releases/ui/2.1.0/index.js')).toBe(true);
     expect(store.objects.has('releases/ui/2.1.0/build.json')).toBe(true);
 
     // versions.json is written only after every final copy is verified.
@@ -76,7 +76,7 @@ describe('CDN publication', () => {
     // Both trees' immutable objects are copied into their namespaced prefixes.
     expect(store.objects.has('releases/ui/2.1.0/build.json')).toBe(true);
     expect(store.objects.has('releases/ui-mapbox/2.1.0/build.json')).toBe(true);
-    expect(store.objects.has('releases/ui-mapbox/2.1.0/autoload.js')).toBe(true);
+    expect(store.objects.has('releases/ui-mapbox/2.1.0/index.js')).toBe(true);
 
     // versions.json is written exactly once and advances both packages' latest tags.
     expect(
@@ -110,7 +110,7 @@ describe('CDN publication', () => {
     expect(store.objects.has('releases/ui/2.1.0/build.json')).toBe(true);
     expect(store.objects.has('releases/ui-mapbox/2.1.0/build.json')).toBe(true);
     expect(store.objects.has('releases/ui-autoload/2.1.0/build.json')).toBe(true);
-    expect(store.objects.has('releases/ui-autoload/2.1.0/autoload.js')).toBe(true);
+    expect(store.objects.has('releases/ui-autoload/2.1.0/index.js')).toBe(true);
 
     // versions.json is written exactly once and advances every package's latest tag.
     expect(
@@ -372,7 +372,7 @@ describe('CDN publication', () => {
 
   it('fails an interrupted upload and leaves temporary objects for diagnosis', async () => {
     const store = seededStore();
-    store.putFailures.add('tmp/pub1/autoload.js.map');
+    store.putFailures.add('tmp/pub1/index.js.map');
     await expect(
       publish(store, makeArtifact(), releaseTarget, { publicationId: 'pub1' }),
     ).rejects.toThrow(/Injected upload failure/);
@@ -384,17 +384,17 @@ describe('CDN publication', () => {
 
   it('rejects a staged upload whose read-back digest does not match', async () => {
     const store = seededStore();
-    store.corruptKeys.add('tmp/pub1/autoload.js');
+    store.corruptKeys.add('tmp/pub1/index.js');
     await expect(
       publish(store, makeArtifact(), releaseTarget, { publicationId: 'pub1' }),
     ).rejects.toThrow(/verification failed/);
-    expect(store.objects.has('releases/ui/2.1.0/autoload.js')).toBe(false);
+    expect(store.objects.has('releases/ui/2.1.0/index.js')).toBe(false);
     expect(store.keysWithPrefix('tmp/pub1/').length).toBeGreaterThan(0);
   });
 
   it('rejects a corrupted final copy', async () => {
     const store = seededStore();
-    store.corruptKeys.add('releases/ui/2.1.0/autoload.js');
+    store.corruptKeys.add('releases/ui/2.1.0/index.js');
     await expect(
       publish(store, makeArtifact(), releaseTarget, { publicationId: 'pub1' }),
     ).rejects.toThrow(/Final upload verification failed/);

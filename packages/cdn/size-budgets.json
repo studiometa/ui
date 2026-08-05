@@ -1,12 +1,8 @@
 {
   "schemaVersion": 1,
   "bytes": {
-    "entry:autoload": 6500,
-    "entry:loader": 350,
-    "entry:manifest": 300,
+    "entry:manifest": 23000,
     "entry:index": 15000,
-    "initial:autoload": 40000,
-    "initial:loader": 12000,
     "initial:manifest": 32000,
     "initial:index": 180000,
     "graph:component:Action": 8000,

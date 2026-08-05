@@ -129,8 +129,6 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
   // independently), so it exercises the "served `.js` without a sibling `.d.ts`" path.
   const moduleWithoutDeclaration = build.components.Action.preload[0];
   const uiAssetPaths = [
-    'autoload.js',
-    'autoload.js.map',
     'index.js',
     'index.js.map',
     'index.d.ts',

@@ -223,32 +223,20 @@ describe('browser CDN build', () => {
     }
   });
 
-  it('lazy-loads Mapbox components from the ui-mapbox tree in the composed autoload manifest', async () => {
-    // The composed autoload's bundled ui-mapbox manifest must resolve each Mapbox component to its
-    // absolute ui-mapbox tree URL rather than a chunk-relative path or a ui-tree chunk. The composed
-    // manifest lives in the `autoload` entry's static graph (its own file plus its preload chunks) —
-    // NOT in the `/ui@<v>/manifest.js` entry, which now serves the ui PACKAGE manifest (ui components
-    // only) so the ui-autoload runtime can compose the per-package manifests itself.
-    const autoloadGraph = [build.entries.autoload.path, ...build.entries.autoload.preload];
-    let combined = '';
-    for (const file of autoloadGraph) {
-      combined += await readFile(resolve(uiTree, file), 'utf8');
-    }
-    expect(combined).toContain(`/ui-mapbox@${uiVersion}/MapboxMap.js`);
-    expect(combined).toContain(`/ui-mapbox@${uiVersion}/StoreLocator.js`);
-    // The rewritten URL is a genuine absolute origin-relative path, not a `../` chunk-relative one.
-    expect(combined).not.toContain(`../ui-mapbox@${uiVersion}/`);
-
-    // Conversely, the `/ui@<v>/manifest.js` entry serves the ui PACKAGE manifest: it exports
-    // `manifest`, references no Mapbox tree URL, and its lazy component loaders use flat
-    // `../<Component>.js` chunk paths.
-    const manifestChunk = uiFiles.find((file) => /^chunks\/manifest-.*\.js$/.test(file));
-    expect(manifestChunk).toBeDefined();
-    const manifestEntry = await readFile(resolve(uiTree, 'manifest.js'), 'utf8');
-    expect(manifestEntry).toMatch(/\bas manifest\b/);
-    const manifestSource = await readFile(resolve(uiTree, manifestChunk as string), 'utf8');
+  it('serves the ui package manifest exporting `manifest` with flat component paths and no Mapbox URL', async () => {
+    // The `/ui@<v>/manifest.js` entry serves the ui PACKAGE manifest (ui components only) so the
+    // ui-autoload runtime can compose the per-package manifests itself. With the old bespoke autoload
+    // gone the manifest has a single importer, so it is emitted self-contained into the `manifest.js`
+    // entry (no shared chunk): it exports `manifest`, references no Mapbox tree URL, and its lazy
+    // component loaders use flat sibling `./<Component>.js` paths.
+    expect(uiFiles).toContain('manifest.js');
+    expect(build.entries.manifest.path).toBe('manifest.js');
+    const manifestSource = await readFile(resolve(uiTree, 'manifest.js'), 'utf8');
+    expect(manifestSource).toMatch(/\bas manifest\b/);
     expect(manifestSource).not.toContain(`/ui-mapbox@${uiVersion}/`);
-    expect(manifestSource).toContain('import(`../Accordion.js`)');
+    expect(manifestSource).toContain('import(`./Accordion.js`)');
+    // Components lazy-load from flat sibling chunks in the same tree, never a nested source path.
+    expect(manifestSource).not.toMatch(/import\(`\.\/[^`]+\/[^`]+\.js`\)/);
   });
 
   it('serves the ui-mapbox package manifest exporting `manifest` with flat component paths', async () => {
@@ -382,7 +370,7 @@ describe('browser CDN build', () => {
   });
 
   it('publishes complete entry, component, preload, and dynamic integration mappings', () => {
-    expect(Object.keys(build.entries).sort()).toEqual(['autoload', 'index', 'loader', 'manifest']);
+    expect(Object.keys(build.entries).sort()).toEqual(['index', 'manifest']);
     expect(Object.keys(build.components).length).toBeGreaterThan(70);
     for (const entry of Object.values(build.entries)) {
       expect(uiFiles).toContain(entry.path);
@@ -408,7 +396,7 @@ describe('browser CDN build', () => {
   });
 
   it('emits a stable, non-hashed <subpath>.js entry at the ui tree root for every component', async () => {
-    const reserved = new Set(['autoload.js', 'loader.js', 'manifest.js', 'index.js']);
+    const reserved = new Set(['manifest.js', 'index.js']);
     const seen = new Set<string>();
     for (const component of Object.values(build.components)) {
       // The entry is the stable subpath file at the tree root, not a hashed shared chunk.
