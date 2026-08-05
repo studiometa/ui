@@ -47,14 +47,26 @@ export default defineWebpackConfig({
       // `X-TypeScript-Types` header, so the editor keeps TypeScript autocomplete.
       // js-toolkit MUST match the exact `/js-toolkit@3.8.0/index.js` URL the ui
       // build bakes in as an absolute CDN import, so both share a single runtime.
+      //
+      // Each package also gets a trailing-slash prefix entry (`@studiometa/ui/` etc.) so subpath
+      // imports (`@studiometa/ui/Action`, `@studiometa/js-toolkit/utils`) resolve on the CDN too.
+      // At runtime these work: `/ui@<v>/Action` 307-redirects to `Action.js` and the browser
+      // follows it. Their editor TYPE hints do NOT work yet: the LSP fetch stops at the 307 and
+      // never reads `X-TypeScript-Types` (the same modern-monaco bug the pin above works around —
+      // https://github.com/esm-dev/modern-monaco/pull/64). The bare `@studiometa/ui` and the
+      // explicit `@studiometa/js-toolkit/utils` entries point at non-redirecting `*.js` URLs, so a
+      // more-specific import-map match keeps their types; only globbed subpaths degrade to `any`.
       importMap: {
         '@studiometa/js-toolkit': `${CDN_BASE_URL}/js-toolkit@3.8.0/index.js`,
+        '@studiometa/js-toolkit/': `${CDN_BASE_URL}/js-toolkit@3.8.0/`,
         '@studiometa/js-toolkit/utils': `${CDN_BASE_URL}/js-toolkit@3.8.0/utils/index.js`,
         // Pinned to the exact repo version (non-redirecting) so modern-monaco's LSP resolves
         // their `.d.ts`; it tracks releases as the version bumps land, and that version must be
         // published to the CDN (it is, via the release `cdn_release` job).
         '@studiometa/ui': `${CDN_BASE_URL}/ui@${UI_VERSION}/index.js`,
+        '@studiometa/ui/': `${CDN_BASE_URL}/ui@${UI_VERSION}/`,
         '@studiometa/ui-mapbox': `${CDN_BASE_URL}/ui-mapbox@${UI_VERSION}/index.js`,
+        '@studiometa/ui-mapbox/': `${CDN_BASE_URL}/ui-mapbox@${UI_VERSION}/`,
       },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
