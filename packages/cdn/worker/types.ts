@@ -89,6 +89,11 @@ export type ExactVersion =
 export interface ParsedRoute {
   packageName: PackageName;
   requestedVersion: string;
+  // True when the package segment carried no `@version` (e.g. `/ui/Action`). A versionless request
+  // resolves its version the same way a bare package root does — via `resolveBareRoot` — so it works
+  // for every package including the tagless `js-toolkit`, then redirects to the resolved exact
+  // version. `requestedVersion` stays `latest` so the request always canonicalizes to a redirect.
+  versionless: boolean;
   assetPath: string;
 }
 

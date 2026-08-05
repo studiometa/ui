@@ -132,6 +132,9 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
     'index.js',
     'index.js.map',
     'index.d.ts',
+    // The per-component `Action.js` entry backs the extensionless subpath tests (`/ui/Action` and
+    // `/ui@<version>/Action` both map to `Action.js`).
+    'Action.js',
     moduleWithoutDeclaration,
     'build.json',
     'integrity.json',

@@ -165,6 +165,21 @@ async function loadRelease(
   return parseReleaseMetadata(build, integrity, exact, expectedPackageName);
 }
 
+// Maps a requested asset path to the served output it names, driven purely by the release's
+// `build.json` outputs (carried in `metadata.files`). An exact output is served as-is; otherwise an
+// extensionless request is resolved to `<path>.js` (e.g. `Action` -> `Action.js`) or, failing that,
+// `<path>/index.js` (e.g. `utils` -> `utils/index.js`). This is generic: it works for `ui`,
+// `ui-mapbox`, `js-toolkit`, and any future package without code change. Returns `undefined` (a 404)
+// when none of the three candidates is a served output.
+function resolveAsset(assetPath: string, files: ReadonlySet<string>): string | undefined {
+  if (files.has(assetPath)) return assetPath;
+  const withJs = `${assetPath}.js`;
+  if (files.has(withJs)) return withJs;
+  const withIndex = `${assetPath}/index.js`;
+  if (files.has(withIndex)) return withIndex;
+  return undefined;
+}
+
 function canonicalLocation(
   url: URL,
   packageName: PackageName,
@@ -322,7 +337,12 @@ async function handleRequest(
     return redirectResponse(`${url.origin}/${bareRoot}@${resolved.version}/index.js`);
   }
 
-  const exact = resolveVersion(versions, route.packageName, route.requestedVersion);
+  // A versionless request resolves its version the same way a bare package root does, so every
+  // package — including the tagless `js-toolkit`, which has no `latest` tag — lands on a usable exact
+  // version. An explicit `@latest`/`@<version>`/`@<channel>` keeps the full resolution semantics.
+  const exact = route.versionless
+    ? resolveBareRoot(versions, route.packageName)
+    : resolveVersion(versions, route.packageName, route.requestedVersion);
   recorder.versionKind(classifyVersion(route.requestedVersion, exact));
   if (!exact) return errorResponse(404);
 
@@ -332,21 +352,28 @@ async function handleRequest(
     PUBLIC_PACKAGE_NAMES[route.packageName],
   );
   recorder.r2('release-metadata', metadata ? 'hit' : 'miss');
-  if (!metadata || !metadata.files.has(route.assetPath)) return errorResponse(404);
+  if (!metadata) return errorResponse(404);
+  // Map the requested path to a served output, resolving an extensionless subpath (`Action`,
+  // `utils`) to its `.js` or `/index.js` output. A path that names no output is a 404.
+  const assetPath = resolveAsset(route.assetPath, metadata.files);
+  if (!assetPath) return errorResponse(404);
 
-  const query = canonicalizeQuery(
-    url,
-    route.assetPath,
-    new Set(Object.keys(metadata.build.components)),
-  );
+  const query = canonicalizeQuery(url, assetPath, new Set(Object.keys(metadata.build.components)));
   recorder.componentCount(query.components.length);
-  if (isMutableVersion(route.requestedVersion, exact) || !query.canonical) {
+  // Redirect to the canonical location when the version is mutable (versionless or a moving tag), the
+  // extensionless path was mapped to a concrete output, or the query is not yet canonical. A single
+  // hop covers all three at once (e.g. `/ui/Action` -> `/ui@<latest>/Action.js`).
+  if (
+    isMutableVersion(route.requestedVersion, exact) ||
+    assetPath !== route.assetPath ||
+    !query.canonical
+  ) {
     return redirectResponse(
-      canonicalLocation(url, route.packageName, exact.version, route.assetPath, query.search),
+      canonicalLocation(url, route.packageName, exact.version, assetPath, query.search),
     );
   }
 
-  const object = await environment.ASSETS.get(`${exact.objectPrefix}/${route.assetPath}`);
+  const object = await environment.ASSETS.get(`${exact.objectPrefix}/${assetPath}`);
   if (!object) {
     recorder.r2('asset', 'miss');
     return errorResponse(404);
@@ -356,7 +383,7 @@ async function handleRequest(
   const link = preloadHeader(route.packageName, exact.version, query.components, metadata);
   const headers = responseHeaders({
     'Cache-Control': IMMUTABLE_CACHE_CONTROL,
-    'Content-Type': contentType(route.assetPath),
+    'Content-Type': contentType(assetPath),
   });
   if (etag) headers.set('ETag', etag);
   if (link) headers.set('Link', link);
@@ -365,8 +392,8 @@ async function handleRequest(
   // `X-TypeScript-Types` header esm.sh uses, as a same-origin absolute URL, and expose the header to
   // cross-origin TypeScript language servers. Set before the 304 branch so a not-modified response
   // stays consistent with the full response, and it is preserved for HEAD.
-  if (route.assetPath.endsWith('.js')) {
-    const declarationPath = `${route.assetPath.slice(0, -'.js'.length)}.d.ts`;
+  if (assetPath.endsWith('.js')) {
+    const declarationPath = `${assetPath.slice(0, -'.js'.length)}.d.ts`;
     if (metadata.files.has(declarationPath)) {
       headers.set(
         'X-TypeScript-Types',

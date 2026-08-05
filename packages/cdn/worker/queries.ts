@@ -40,10 +40,13 @@ export function parseRoute(pathname: string): ParsedRoute {
     throw new RequestValidationError('Unknown CDN package.', 404);
   }
 
-  // A versionless package segment (e.g. /ui/autoload.js) resolves to `latest`, which redirects to
-  // the exact version like the /ui@latest/ alias. For js-toolkit `latest` never resolves, so a
-  // versionless js-toolkit request is a 404 — js-toolkit is exact-version only.
-  const requestedVersion = separator === -1 ? 'latest' : packageSegment.slice(separator + 1);
+  // A versionless package segment (e.g. `/ui/Action`, `/js-toolkit/utils`) has no `@version`; the
+  // caller resolves it the same way a bare package root does (via `resolveBareRoot`) so it works for
+  // every package — `ui`/`ui-mapbox` follow their `latest` tag and the tagless `js-toolkit` its
+  // highest release — then redirects to the resolved exact version. `requestedVersion` stays `latest`
+  // so the request always classifies as mutable and canonicalizes to that redirect.
+  const versionless = separator === -1;
+  const requestedVersion = versionless ? 'latest' : packageSegment.slice(separator + 1);
   if (!requestedVersion || !VERSION_TOKEN_PATTERN.test(requestedVersion)) {
     throw new RequestValidationError('The CDN version is malformed.');
   }
@@ -58,6 +61,7 @@ export function parseRoute(pathname: string): ParsedRoute {
   return {
     packageName: packageName as PackageName,
     requestedVersion,
+    versionless,
     assetPath: assetSegments.join('/'),
   };
 }

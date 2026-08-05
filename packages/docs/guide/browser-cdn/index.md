@@ -101,6 +101,18 @@ Individual components are importable by a subpath that mirrors the npm subpath e
 import { Action } from 'https://cdn.studiometa.dev/ui@1.9.0/Action.js';
 ```
 
+Both the `.js` extension and the version are optional on a subpath, and the two shortenings combine. A request that omits the extension is resolved against the release's own output inventory and redirected (307) to the canonical asset — `/ui@1.9.0/Action` to `/ui@1.9.0/Action.js`, and a directory-style subpath such as `/js-toolkit@3.8.0/utils` to its `/utils/index.js` barrel. A request that omits the version resolves it the same way a [bare root](#bare-root-redirects) does — `ui`/`ui-mapbox` follow their `latest` tag, `js-toolkit` its highest release — so `/ui/Action` lands on `/ui@<latest>/Action.js` in a single hop. Pin an exact, extensioned URL in production to skip the redirect; the shortened forms are conveniences for authoring and quick experiments:
+
+```js
+// Extensionless: redirects to /ui@1.9.0/Action.js
+import { Action } from 'https://cdn.studiometa.dev/ui@1.9.0/Action';
+
+// Versionless + extensionless: redirects to /ui@<latest>/Action.js
+import { Action } from 'https://cdn.studiometa.dev/ui/Action';
+```
+
+This resolution is generic and driven by each release's published output map, so it works identically for every package — `ui`, `ui-mapbox`, `js-toolkit`, and any future one — with no per-package special-casing. A subpath that matches no output (directly, as `<path>.js`, or as `<path>/index.js`) is a `404`.
+
 The `@studiometa/ui-mapbox` components live in their own first-class tree at `/ui-mapbox@<version>/`, versioned in lockstep with `@studiometa/ui` (the two trees always share the same version). They follow the same subpath convention as `@studiometa/ui`, and the whole surface is importable from the ui-mapbox barrel (provide `mapbox-gl` yourself, see [Mapbox integration](#mapbox-integration)):
 
 ```js
@@ -113,10 +125,17 @@ import { MapboxMap, StoreLocator } from 'https://cdn.studiometa.dev/ui-mapbox@1.
 
 The ui-mapbox tree resolves versions, aliases (`ui-mapbox@1`, `ui-mapbox@latest`), and preview channels (`ui-mapbox@next`/`ui-mapbox@main`) exactly like the ui tree. Because both trees share the single externalized js-toolkit runtime, autoloaded and manually-imported Mapbox components interoperate with the rest of `@studiometa/ui` on one page.
 
-The `@studiometa/js-toolkit` runtime the components build on ships as its own exact-versioned barrel:
+The `@studiometa/js-toolkit` runtime the components build on ships as its own barrel, and its subpaths follow the same versionless and extensionless shortenings (a versionless js-toolkit request resolves to its highest published release, since js-toolkit carries no `latest` tag):
 
 ```js
+// Exact-versioned barrel.
 import { Base, createApp } from 'https://cdn.studiometa.dev/js-toolkit@3.8.0/index.js';
+
+// Directory-style subpath: redirects to /js-toolkit@3.8.0/utils/index.js
+import { isObject } from 'https://cdn.studiometa.dev/js-toolkit@3.8.0/utils';
+
+// Versionless: redirects to /js-toolkit@<highest>/utils/index.js
+import { isObject } from 'https://cdn.studiometa.dev/js-toolkit/utils';
 ```
 
 These entry points are the immutable, versioned assets described under [URL structure and caching](#url-structure-and-caching), so pin an exact version (aliases redirect the same way as `autoload.js`). Use the [Registry](#registry) to discover which components, subpath URLs, and versions a deployment serves. Manual imports do not conflict with the autoloader — a page can either import modules itself or rely on the marked script, but the two runtimes still cannot be mixed on one page (see [Limitations](#limitations)).
@@ -217,6 +236,20 @@ A bare package root — the package name with no version and no file — redirec
 | `/js-toolkit` | `/js-toolkit@<highest>/index.js` | Shortest js-toolkit barrel URL |
 
 `/ui` and `/ui-mapbox` follow their `latest` stable tag to the `index.js` barrel — the natural landing now that the autoloader is just another export of the ui tree (reach it explicitly at `/ui@<latest>/autoload.js`). `/js-toolkit` follows its highest published release to `index.js` (js-toolkit is exact-version only, so this bare root is its only moving pointer). All resolve to the immutable target the [Registry](#registry) reports under `current`.
+
+#### Versionless and extensionless subpaths
+
+A subpath may drop the version, the `.js` extension, or both — the Worker resolves each independently and redirects (307, same short cache) to the canonical immutable asset:
+
+| Request                   | Redirects to                           | Resolution                                      |
+| ------------------------- | -------------------------------------- | ----------------------------------------------- |
+| `/ui@1.9.0/Action`        | `/ui@1.9.0/Action.js`                  | Extensionless output lookup (`<path>.js`)       |
+| `/js-toolkit@3.8.0/utils` | `/js-toolkit@3.8.0/utils/index.js`     | Extensionless output lookup (`<path>/index.js`) |
+| `/ui/Action`              | `/ui@<latest>/Action.js`               | Versionless (bare-root ladder) + extensionless  |
+| `/ui-mapbox/MapboxMap`    | `/ui-mapbox@<latest>/MapboxMap.js`     | Versionless + extensionless                     |
+| `/js-toolkit/utils`       | `/js-toolkit@<highest>/utils/index.js` | Versionless + extensionless                     |
+
+A versionless subpath resolves its version exactly like the bare root of the same package (`ui`/`ui-mapbox` by `latest`, `js-toolkit` by highest release). The extensionless step is driven by the release's own published output map: the requested path is served as-is when it names an output, otherwise `<path>.js` is tried, then `<path>/index.js`, otherwise the request is a `404`. Both steps are generic across every package and any future one — there is no per-package or per-component list. Pin an exact, extensioned URL in production to avoid the redirect hop; the exact-version, extensioned `.js` and `.map` assets are unaffected and served directly.
 
 ### Asset types
 

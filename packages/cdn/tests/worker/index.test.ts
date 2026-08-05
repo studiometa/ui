@@ -133,13 +133,24 @@ describe('CDN Worker js-toolkit package routing', () => {
     expect(utils.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
   });
 
-  it('resolves js-toolkit by exact semver only, never by alias or the versionless default', async () => {
+  it('resolves js-toolkit by exact semver only, never by an explicit alias, channel, or tag', async () => {
     const major = fixture.jsToolkitVersion.split('.')[0];
-    expect((await request('/js-toolkit/index.js')).status).toBe(404);
     expect((await request('/js-toolkit@latest/index.js')).status).toBe(404);
     expect((await request(`/js-toolkit@${major}/index.js`)).status).toBe(404);
     expect((await request('/js-toolkit@main-abcdef1/index.js')).status).toBe(404);
     expect((await request('/js-toolkit@9.9.9/index.js')).status).toBe(404);
+  });
+
+  it('resolves a versionless js-toolkit request to its highest release, not a latest tag', async () => {
+    // js-toolkit has no `latest` tag, so a versionless request must resolve via the bare-root ladder
+    // (highest published release) rather than the `latest` an explicit `/js-toolkit@latest/` uses.
+    const response = await request('/js-toolkit/index.js');
+    expect(response.status).toBe(307);
+    expect(response.headers.get('Location')).toBe(
+      `${origin}/js-toolkit@${fixture.jsToolkitVersion}/index.js`,
+    );
+    expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+    expectCrossOriginHeaders(response);
   });
 });
 
@@ -187,6 +198,81 @@ describe('CDN Worker ui-mapbox package routing', () => {
       `${origin}/ui-mapbox@1.2.0/MapboxMap.d.ts`,
     );
     expect(module.headers.get('Access-Control-Expose-Headers')).toContain('X-TypeScript-Types');
+  });
+});
+
+describe('CDN Worker extensionless subpath resolution', () => {
+  it('maps a versionless extensionless ui component to its .js output in one hop', async () => {
+    const response = await request('/ui/Action');
+    expect(response.status).toBe(307);
+    expect(response.headers.get('Location')).toBe(`${origin}/ui@2.0.0/Action.js`);
+    expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+    expectCrossOriginHeaders(response);
+
+    const served = await fetch(new Request(response.headers.get('Location') as string), {
+      ASSETS: fixture.bucket,
+    });
+    expect(served.status).toBe(200);
+    expect(served.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    expect(await served.text()).toBe(fixture.files['Action.js']);
+  });
+
+  it('maps a versionless extensionless ui-mapbox component to its .js output', async () => {
+    const response = await request('/ui-mapbox/MapboxMap');
+    expect(response.status).toBe(307);
+    expect(response.headers.get('Location')).toBe(`${origin}/ui-mapbox@2.0.0/MapboxMap.js`);
+
+    const served = await fetch(new Request(response.headers.get('Location') as string), {
+      ASSETS: fixture.bucket,
+    });
+    expect(served.status).toBe(200);
+    expect(await served.text()).toBe(fixture.uiMapboxFiles['MapboxMap.js']);
+  });
+
+  it('maps a versionless extensionless js-toolkit subpath to its /index.js output', async () => {
+    const response = await request('/js-toolkit/utils');
+    expect(response.status).toBe(307);
+    expect(response.headers.get('Location')).toBe(
+      `${origin}/js-toolkit@${fixture.jsToolkitVersion}/utils/index.js`,
+    );
+
+    const served = await fetch(new Request(response.headers.get('Location') as string), {
+      ASSETS: fixture.bucket,
+    });
+    expect(served.status).toBe(200);
+    expect(served.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+  });
+
+  it('maps an exact-versioned extensionless request to its .js output', async () => {
+    const response = await request('/ui@1.2.0/Action');
+    expect(response.status).toBe(307);
+    expect(response.headers.get('Location')).toBe(`${origin}/ui@1.2.0/Action.js`);
+
+    const served = await fetch(new Request(response.headers.get('Location') as string), {
+      ASSETS: fixture.bucket,
+    });
+    expect(served.status).toBe(200);
+    expect(served.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+  });
+
+  it('maps an exact-versioned extensionless js-toolkit subpath to /index.js', async () => {
+    const response = await request(`/js-toolkit@${fixture.jsToolkitVersion}/utils`);
+    expect(response.status).toBe(307);
+    expect(response.headers.get('Location')).toBe(
+      `${origin}/js-toolkit@${fixture.jsToolkitVersion}/utils/index.js`,
+    );
+  });
+
+  it('serves an exact request that already names a concrete output without an extra hop', async () => {
+    const response = await request('/ui@1.2.0/Action.js');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+  });
+
+  it('404s an extensionless subpath that maps to no served output', async () => {
+    expect((await request('/ui/DoesNotExist')).status).toBe(404);
+    expect((await request('/ui@1.2.0/DoesNotExist')).status).toBe(404);
+    expect((await request(`/js-toolkit@${fixture.jsToolkitVersion}/missing`)).status).toBe(404);
   });
 });
 
