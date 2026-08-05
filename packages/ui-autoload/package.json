@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-autoload",
-  "version": "1.10.0-beta.1",
+  "version": "1.10.0-beta.2",
   "description": "Generic, side-effect-free declarative autoloader for @studiometa/ui component manifests",
   "publishConfig": {
     "access": "public"
