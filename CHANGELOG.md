@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.10.0-beta.1](https://github.com/studiometa/ui/compare/1.10.0-beta.0..1.10.0-beta.1) (2026-08-05)
+
+### Changed
+
+- **Browser CDN:** align the `next` distribution tag with the latest prerelease (npm parity), decoupled from the rolling `main` channel — `latest` names the latest stable release, `next` the latest prerelease, and `main` the rolling `main-<sha>` channel ([#588](https://github.com/studiometa/ui/pull/588), [#589](https://github.com/studiometa/ui/pull/589))
+
 ## [v1.10.0-beta.0](https://github.com/studiometa/ui/compare/1.9.0..1.10.0-beta.0) (2026-08-04)
 
 ### Added
