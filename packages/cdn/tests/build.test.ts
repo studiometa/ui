@@ -755,8 +755,9 @@ describe('browser CDN build', () => {
   });
 
   it('imports js-toolkit types externally in the ui declarations instead of inlining them', async () => {
-    // Walk the declaration graph reachable from the ui barrel (index.d.ts -> ./chunks/*.js siblings)
-    // and confirm js-toolkit is referenced by its bare specifier, never inlined from node_modules.
+    // Walk the declaration graph reachable from the ui barrel (index.d.ts -> ./chunks/* siblings,
+    // emitted extensionless) and confirm js-toolkit is referenced by its bare specifier, never
+    // inlined from node_modules.
     const seen = new Set<string>();
     const queue = ['index.d.ts'];
     let importsToolkitExternally = false;
@@ -770,15 +771,59 @@ describe('browser CDN build', () => {
       for (const match of source.matchAll(/from\s*["']([^"']+)["']/g)) {
         const specifier = match[1];
         if (!specifier.startsWith('.')) continue;
+        // Relative specifiers are emitted extensionless; the sibling declaration is `<specifier>.d.ts`.
         const resolved = posix.join(posix.dirname(file), specifier);
-        queue.push(
-          resolved.endsWith('.js') ? `${resolved.slice(0, -'.js'.length)}.d.ts` : resolved,
-        );
+        queue.push(`${resolved}.d.ts`);
       }
     }
     expect(importsToolkitExternally).toBe(true);
     // The ui barrel re-exports the components it declares.
     const barrel = await readFile(resolve(uiTree, 'index.d.ts'), 'utf8');
     expect(barrel).toMatch(/\bas Action\b/);
+  });
+
+  it('emits extensionless relative specifiers in every tree\'s declarations while runtime chunks keep .js', async () => {
+    // A relative import/export specifier as it appears in a declaration or module: `from "…"` or a
+    // dynamic `import("…")`.
+    const relativeSpecifiers = (source: string): string[] =>
+      [...source.matchAll(/(?:\bfrom\s*|\bimport\s*\(\s*)(["'])(\.\.?\/[^"']*)\1/g)].map(
+        (match) => match[2],
+      );
+
+    for (const [tree, treeFiles] of [
+      [uiTree, uiFiles],
+      [uiMapboxTree, uiMapboxFiles],
+      [uiAutoloadTree, uiAutoloadFiles],
+      [jsToolkitTree, jsToolkitFiles],
+    ] as const) {
+      const declarations = treeFiles.filter((file) => file.endsWith('.d.ts'));
+      expect(declarations.length).toBeGreaterThan(0);
+      let sawRelativeDeclarationSpecifier = false;
+      for (const declaration of declarations) {
+        const source = await readFile(resolve(tree, declaration), 'utf8');
+        for (const specifier of relativeSpecifiers(source)) {
+          sawRelativeDeclarationSpecifier = true;
+          // No relative declaration specifier keeps a `.js` (or `.d.ts`) extension …
+          expect(specifier.endsWith('.js')).toBe(false);
+          expect(specifier.endsWith('.d.ts')).toBe(false);
+          // … and the extensionless target has a real sibling `.d.ts` in the same tree.
+          const resolved = posix.join(posix.dirname(declaration), specifier);
+          expect(treeFiles).toContain(`${resolved}.d.ts`);
+        }
+      }
+      // Every tree has at least one shared declaration chunk referenced through a relative specifier.
+      expect(sawRelativeDeclarationSpecifier).toBe(true);
+
+      // The runtime `.js` chunks are untouched: they still import their chunks with a `.js` extension.
+      let sawRelativeModuleSpecifier = false;
+      for (const module of treeFiles.filter((file) => file.endsWith('.js'))) {
+        const source = await readFile(resolve(tree, module), 'utf8');
+        for (const specifier of relativeSpecifiers(source)) {
+          sawRelativeModuleSpecifier = true;
+          expect(specifier.endsWith('.js')).toBe(true);
+        }
+      }
+      expect(sawRelativeModuleSpecifier).toBe(true);
+    }
   });
 });
