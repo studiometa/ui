@@ -1,17 +1,19 @@
 # Browser CDN
 
-The @studiometa/ui browser CDN provides a one-script, no-build way to use the library's components in ES2020 module browsers. A single marked script boots a small runtime that discovers components from `data-component` attributes and loads their JavaScript on demand. It suits content sites, prototypes, and any environment where a bundler is not available.
+The @studiometa/ui browser CDN provides a no-build way to use the library's components in ES2020 module browsers. A short module script imports the [`@studiometa/ui-autoload`](#autoloading-with-studiometa-ui-autoload) runtime, which discovers components from `data-component` attributes and loads their JavaScript on demand. It suits content sites, prototypes, and any environment where a bundler is not available.
 
-The CDN is a distinct runtime from the bundled package. It is not a drop-in replacement for a JavaScript build: the autoloader runtime exposes no programmatic API, cannot be combined with bundled component constructors on the same page, and only ships the JavaScript behavior (no Twig templates or general stylesheets). For scripted use the same versioned trees also expose plain ESM entry points — individual components and the full barrel are importable by pinned URL, see [Manual imports](#manual-imports). See [Limitations](#limitations) before adopting it for an application.
+The autoloader is a single package — `@studiometa/ui-autoload` — that behaves identically whether you install it from npm and bundle it or load it from the CDN. On the CDN it is served from its own versioned tree and activated by importing a side-effect entry; there is nothing to register by hand. The CDN ships the JavaScript behavior only (no Twig templates or general stylesheets). For scripted use the same versioned trees also expose plain ESM entry points — individual components and the full barrel are importable by pinned URL, see [Manual imports](#manual-imports). See [Limitations](#limitations) before adopting it for an application.
 
-The intended public host is `https://cdn.studiometa.dev`. The version numbers used in the examples below are illustrative; use a version that the CDN actually serves.
+The intended public host is `https://cdn.studiometa.dev`. The version numbers used in the examples below are illustrative; use a version that the CDN actually serves. Until the stable `1.10.0` release ships, prefer the `@next` alias or an exact version (`@<version>`) over a bare, versionless URL — see [Version resolution](#version-resolution).
 
 ## Quick start
 
-Add a single marked script. The `data-studiometa-ui` attribute identifies it as the CDN runtime entry:
+Add a module script that imports the `@studiometa/ui-autoload/ui` entry. Importing it is the whole contract: it registers the `@studiometa/ui` component manifest with the autoload runtime and starts discovery.
 
 ```html
-<script type="module" src="https://cdn.studiometa.dev/ui@1/autoload.js" data-studiometa-ui></script>
+<script type="module">
+  import 'https://cdn.studiometa.dev/ui-autoload@next/ui';
+</script>
 
 <!-- Components mount automatically from their data-component attribute -->
 <button
@@ -24,6 +26,69 @@ Add a single marked script. The `data-studiometa-ui` attribute identifies it as 
 
 The runtime scans the document for `data-component` tokens, imports the matching component modules from the CDN, and registers them with the [js-toolkit](https://js-toolkit.studiometa.dev) runtime that the library uses. No manual registration or bundling step is involved. The declarative contract (`data-component`, `data-ref`, `data-option-*`) is the same one described in [Declarative runtime](/guide/concepts/declarative-runtime).
 
+## Autoloading with @studiometa/ui-autoload
+
+`@studiometa/ui-autoload` is the single autoloading surface for the whole library. Each component package publishes its own manifest (a map of `data-component` tokens to lazy `import()` loaders), and the autoloader composes the manifests you activate into one lookup table. You activate a package's manifest by importing its side-effect entry; for advanced setups, a small [programmatic API](#programmatic-api) exposes the same machinery.
+
+### From the CDN
+
+Import one side-effect entry per package you use. Each import registers that package's manifest with the shared runtime:
+
+```html
+<script type="module">
+  import 'https://cdn.studiometa.dev/ui-autoload@next/ui';          // auto-load @studiometa/ui components
+  import 'https://cdn.studiometa.dev/ui-autoload@next/ui-mapbox';   // auto-load @studiometa/ui-mapbox components
+</script>
+```
+
+Importing both entries at the top of a module registers both manifests before the runtime starts, so the two coalesce into a single loader over the composed set — never two loaders both scanning the DOM. Importing only `./ui` loads just the `@studiometa/ui` components; add `./ui-mapbox` only when you use the Mapbox family (and provide `mapbox-gl` yourself, see [Mapbox integration](#mapbox-integration)).
+
+The `ui-autoload` tree is versioned in lockstep with `ui` and `ui-mapbox` — the three always share the same version — so pin all your imports to the same reference.
+
+### From an npm install
+
+The exact same entries resolve from `node_modules` when you install the package and let your bundler resolve them:
+
+```js
+import '@studiometa/ui-autoload/ui';
+import '@studiometa/ui-autoload/ui-mapbox';
+```
+
+The activation-on-import semantics are identical; your bundler resolves each package's manifest from `node_modules` and the composed runtime behaves exactly as it does on the CDN. This is the recommended path when a build step is available.
+
+### Eager components
+
+By default each component follows the load strategy declared in its manifest (see [Loading strategies](#loading-strategies)). To force specific components to load and mount eagerly regardless of that strategy — for above-the-fold components that must be available without waiting — declare them with a `<meta>` element:
+
+```html
+<meta name="studiometa-ui:eager" content="Accordion, Action, Modal" />
+```
+
+The `content` is a comma-separated list of component tokens. Multiple `studiometa-ui:eager` metas concatenate, whitespace around each token is trimmed, and duplicate and empty tokens are dropped. An eager token that matches no known component is ignored with a console warning.
+
+### Programmatic API
+
+Importing the package root (`@studiometa/ui-autoload`) has no side effects — it only exposes the machinery, and nothing touches the DOM until you call `autoload()`. This is the seam for custom composition: registering a curated subset of packages, layering your own manifest, or scoping discovery to a `root` element.
+
+```js
+import { autoload, composeManifests } from '@studiometa/ui-autoload';
+import { manifest as uiManifest } from '@studiometa/ui/manifest';
+import { manifest as mapboxManifest } from '@studiometa/ui-mapbox/manifest';
+
+const handle = autoload({
+  manifests: [uiManifest, mapboxManifest],
+  root: document.querySelector('#app') ?? document, // optional, defaults to `document`
+  eager: ['Action', 'Modal'], // optional, force-load these tokens eagerly
+});
+
+// Later, to stop discovery and release every scheduled trigger:
+handle.stop();
+```
+
+`autoload({ manifests, root?, eager? })` composes the given manifests, starts discovery, and returns a handle exposing the underlying `loader`, the composed `manifest`, and a `stop()` method. When two manifests declare the same token, the entry from the manifest that appears later in the array wins. `composeManifests(...)` performs that same merge on its own if you need the composed table without starting a loader.
+
+Each package exports its own manifest as a named `manifest` export — `@studiometa/ui/manifest` and `@studiometa/ui-mapbox/manifest` — served on the CDN at `/ui@<version>/manifest.js` and `/ui-mapbox@<version>/manifest.js`. The side-effect entries above are thin wrappers that import their package's manifest and register it; the programmatic API lets you compose them yourself.
+
 ## Installation patterns
 
 ### Exact version (immutable)
@@ -31,10 +96,9 @@ The runtime scans the document for `data-component` tokens, imports the matching
 Pin an exact version for the longest-lived caching. Exact-version URLs are immutable and cached for one year:
 
 ```html
-<script
-  type="module"
-  src="https://cdn.studiometa.dev/ui@1.9.0/autoload.js"
-  data-studiometa-ui></script>
+<script type="module">
+  import 'https://cdn.studiometa.dev/ui-autoload@1.10.0-beta.1/ui';
+</script>
 ```
 
 ### Version aliases (mutable)
@@ -42,48 +106,22 @@ Pin an exact version for the longest-lived caching. Exact-version URLs are immut
 Alias URLs resolve to the current matching exact version and redirect to it. They are convenient but carry a short cache lifetime, so prefer an exact version in production:
 
 ```html
-<!-- Latest 1.x release -->
-<script type="module" src="https://cdn.studiometa.dev/ui@1/autoload.js" data-studiometa-ui></script>
+<script type="module">
+  // Latest prerelease (current preview channel)
+  import 'https://cdn.studiometa.dev/ui-autoload@next/ui';
 
-<!-- Latest 1.9.x patch -->
-<script
-  type="module"
-  src="https://cdn.studiometa.dev/ui@1.9/autoload.js"
-  data-studiometa-ui></script>
+  // Latest 1.x release
+  import 'https://cdn.studiometa.dev/ui-autoload@1/ui';
 
-<!-- Latest stable release -->
-<script
-  type="module"
-  src="https://cdn.studiometa.dev/ui@latest/autoload.js"
-  data-studiometa-ui></script>
+  // Latest 1.10.x patch
+  import 'https://cdn.studiometa.dev/ui-autoload@1.10/ui';
 
-<!-- Current preview channel (next and main are equivalent aliases) -->
-<script
-  type="module"
-  src="https://cdn.studiometa.dev/ui@next/autoload.js"
-  data-studiometa-ui></script>
-<script
-  type="module"
-  src="https://cdn.studiometa.dev/ui@main/autoload.js"
-  data-studiometa-ui></script>
+  // Latest stable release
+  import 'https://cdn.studiometa.dev/ui-autoload@latest/ui';
+</script>
 ```
 
-### Eager component preloading
-
-Append `?components=` to the `autoload.js` URL to force specific components to load immediately, regardless of their default strategy. This is useful for above-the-fold components that must be available without waiting:
-
-```html
-<script
-  type="module"
-  src="https://cdn.studiometa.dev/ui@1/autoload.js?components=Action,Dialog,Menu"
-  data-studiometa-ui></script>
-```
-
-Rules enforced by the CDN for this query:
-
-- **Maximum of 20 tokens.** More than 20 is rejected with an HTTP 400 and the script will not load.
-- **Known components only.** An unknown or malformed token is rejected with an HTTP 400.
-- **Canonical form.** Tokens are de-duplicated and sorted alphabetically. A non-canonical query (unsorted, duplicated, or with extra parameters) is redirected to the canonical URL. Only `autoload.js` accepts the `components` parameter; any query string on another asset is redirected away.
+A bare, versionless URL (`/ui-autoload/ui`) follows the `latest` stable tag and therefore only resolves once a stable release exists. During the current prerelease line, use `@next` or an exact version instead.
 
 ## Manual imports
 
@@ -101,7 +139,7 @@ Individual components are importable by a subpath that mirrors the npm subpath e
 import { Action } from 'https://cdn.studiometa.dev/ui@1.9.0/Action.js';
 ```
 
-Both the `.js` extension and the version are optional on a subpath, and the two shortenings combine. A request that omits the extension is resolved against the release's own output inventory and redirected (307) to the canonical asset — `/ui@1.9.0/Action` to `/ui@1.9.0/Action.js`, and a directory-style subpath such as `/js-toolkit@3.8.0/utils` to its `/utils/index.js` barrel. A request that omits the version resolves it the same way a [bare root](#bare-root-redirects) does — `ui`/`ui-mapbox` follow their `latest` tag, `js-toolkit` its highest release — so `/ui/Action` lands on `/ui@<latest>/Action.js` in a single hop. Pin an exact, extensioned URL in production to skip the redirect; the shortened forms are conveniences for authoring and quick experiments:
+Both the `.js` extension and the version are optional on a subpath, and the two shortenings combine. A request that omits the extension is resolved against the release's own output inventory and redirected (307) to the canonical asset — `/ui@1.9.0/Action` to `/ui@1.9.0/Action.js`, and a directory-style subpath such as `/js-toolkit@3.8.0/utils` to its `/utils/index.js` barrel. A request that omits the version resolves it the same way a [bare root](#bare-root-redirects) does — `ui`/`ui-mapbox`/`ui-autoload` follow their `latest` tag, `js-toolkit` its highest release — so `/ui/Action` lands on `/ui@<latest>/Action.js` in a single hop. Pin an exact, extensioned URL in production to skip the redirect; the shortened forms are conveniences for authoring and quick experiments:
 
 ```js
 // Extensionless: redirects to /ui@1.9.0/Action.js
@@ -111,9 +149,11 @@ import { Action } from 'https://cdn.studiometa.dev/ui@1.9.0/Action';
 import { Action } from 'https://cdn.studiometa.dev/ui/Action';
 ```
 
-This resolution is generic and driven by each release's published output map, so it works identically for every package — `ui`, `ui-mapbox`, `js-toolkit`, and any future one — with no per-package special-casing. A subpath that matches no output (directly, as `<path>.js`, or as `<path>/index.js`) is a `404`.
+This resolution is generic and driven by each release's published output map, so it works identically for every package — `ui`, `ui-mapbox`, `ui-autoload`, `js-toolkit`, and any future one — with no per-package special-casing. A subpath that matches no output (directly, as `<path>.js`, or as `<path>/index.js`) is a `404`.
 
-The `@studiometa/ui-mapbox` components live in their own first-class tree at `/ui-mapbox@<version>/`, versioned in lockstep with `@studiometa/ui` (the two trees always share the same version). They follow the same subpath convention as `@studiometa/ui`, and the whole surface is importable from the ui-mapbox barrel (provide `mapbox-gl` yourself, see [Mapbox integration](#mapbox-integration)):
+Each component package also exposes its autoload manifest as a plain module — `/ui@<version>/manifest.js` and `/ui-mapbox@<version>/manifest.js`, each exporting a named `manifest`. These are what the `ui-autoload` side-effect entries import; you only need them directly for the [programmatic API](#programmatic-api).
+
+The `@studiometa/ui-mapbox` components live in their own first-class tree at `/ui-mapbox@<version>/`, versioned in lockstep with `@studiometa/ui` (the trees always share the same version). They follow the same subpath convention as `@studiometa/ui`, and the whole surface is importable from the ui-mapbox barrel (provide `mapbox-gl` yourself, see [Mapbox integration](#mapbox-integration)):
 
 ```js
 // A single Mapbox component by its subpath, mirroring the npm subpath export.
@@ -138,11 +178,11 @@ import { isObject } from 'https://cdn.studiometa.dev/js-toolkit@3.8.0/utils';
 import { isObject } from 'https://cdn.studiometa.dev/js-toolkit/utils';
 ```
 
-These entry points are the immutable, versioned assets described under [URL structure and caching](#url-structure-and-caching), so pin an exact version (aliases redirect the same way as `autoload.js`). Use the [Registry](#registry) to discover which components, subpath URLs, and versions a deployment serves. Manual imports do not conflict with the autoloader — a page can either import modules itself or rely on the marked script, but the two runtimes still cannot be mixed on one page (see [Limitations](#limitations)).
+These entry points are the immutable, versioned assets described under [URL structure and caching](#url-structure-and-caching), so pin an exact version (aliases redirect the same way as the autoloader entries). Use the [Registry](#registry) to discover which components, subpath URLs, and versions a deployment serves. Manual imports do not conflict with the autoloader — a page can either import modules itself or rely on the side-effect entry — as long as everything on the page resolves to a single js-toolkit runtime (see [Limitations](#limitations)).
 
 ## Loading strategies
 
-Every component has a default loading strategy defined in the CDN manifest. Override it per element with `data-load`. The four strategies are:
+Every component has a default loading strategy defined in its package manifest. Override it per element with `data-load`. The four strategies are:
 
 ### Eager
 
@@ -182,7 +222,7 @@ Loads on the first `pointerover`, `pointerdown`, or `focusin` on the element:
 
 When more than one source specifies a strategy, the runtime resolves it in this order:
 
-1. **Eager preload** — a component named in the script's `?components=` query always loads eagerly, overriding everything below.
+1. **Eager declaration** — a component listed in a [`<meta name="studiometa-ui:eager">`](#eager-components) always loads eagerly, overriding everything below.
 2. **`data-load` attribute** — a valid per-element value wins over the manifest default. An invalid value logs a warning and falls back to the manifest default.
 3. **Manifest default** — the component's built-in strategy.
 
@@ -202,13 +242,13 @@ If `MutationObserver` is unavailable, the initial scan still runs but dynamicall
 
 ## URL structure and caching
 
-CDN URLs follow a single predictable shape, with one versioned tree per package (`ui`, `ui-mapbox`, and `js-toolkit`):
+CDN URLs follow a single predictable shape, with one versioned tree per package (`ui`, `ui-mapbox`, `ui-autoload`, and `js-toolkit`):
 
 ```
 https://cdn.studiometa.dev/{package}@{version}/{file}
 ```
 
-The `ui` and `ui-mapbox` trees are versioned in lockstep and share the version-resolution rules below; `js-toolkit` is exact-version only.
+The `ui`, `ui-mapbox` and `ui-autoload` trees are versioned in lockstep and share the version-resolution rules below; `js-toolkit` is exact-version only.
 
 ### Version resolution
 
@@ -229,13 +269,14 @@ Exact versions and exact channels never change once published; only the aliases 
 
 A bare package root — the package name with no version and no file — redirects (307, same short cache as the aliases above) to that package's most useful entry point:
 
-| Bare root     | Redirects to                     | Use case                       |
-| ------------- | -------------------------------- | ------------------------------ |
-| `/ui`         | `/ui@<latest>/index.js`          | Shortest ui barrel URL         |
-| `/ui-mapbox`  | `/ui-mapbox@<latest>/index.js`   | Shortest ui-mapbox barrel URL  |
-| `/js-toolkit` | `/js-toolkit@<highest>/index.js` | Shortest js-toolkit barrel URL |
+| Bare root      | Redirects to                     | Use case                       |
+| -------------- | -------------------------------- | ------------------------------ |
+| `/ui`          | `/ui@<latest>/index.js`          | Shortest ui barrel URL         |
+| `/ui-mapbox`   | `/ui-mapbox@<latest>/index.js`   | Shortest ui-mapbox barrel URL  |
+| `/ui-autoload` | `/ui-autoload@<latest>/index.js` | Shortest ui-autoload barrel URL |
+| `/js-toolkit`  | `/js-toolkit@<highest>/index.js` | Shortest js-toolkit barrel URL |
 
-`/ui` and `/ui-mapbox` follow their `latest` stable tag to the `index.js` barrel — the natural landing now that the autoloader is just another export of the ui tree (reach it explicitly at `/ui@<latest>/autoload.js`). `/js-toolkit` follows its highest published release to `index.js` (js-toolkit is exact-version only, so this bare root is its only moving pointer). All resolve to the immutable target the [Registry](#registry) reports under `current`.
+`/ui`, `/ui-mapbox` and `/ui-autoload` follow their `latest` stable tag to the `index.js` barrel; the side-effect autoload entries live at explicit subpaths (`/ui-autoload@<latest>/ui` and `/ui-autoload@<latest>/ui-mapbox`). `/js-toolkit` follows its highest published release to `index.js` (js-toolkit is exact-version only, so this bare root is its only moving pointer). All resolve to the immutable target the [Registry](#registry) reports under `current`.
 
 A package root may also carry a ref but no file — `/ui@<ref>` (with an optional trailing slash) — and redirects (307, same short cache) to that ref's `index.js` barrel. The ref resolves with the full version-resolution rules above, exactly as a `/ui@<ref>/…` asset request does, so the barrel is reachable by every supported ref shape:
 
@@ -261,13 +302,13 @@ A subpath may drop the version, the `.js` extension, or both — the Worker reso
 | `/ui-mapbox/MapboxMap`    | `/ui-mapbox@<latest>/MapboxMap.js`     | Versionless + extensionless                     |
 | `/js-toolkit/utils`       | `/js-toolkit@<highest>/utils/index.js` | Versionless + extensionless                     |
 
-A versionless subpath resolves its version exactly like the bare root of the same package (`ui`/`ui-mapbox` by `latest`, `js-toolkit` by highest release). The extensionless step is driven by the release's own published output map: the requested path is served as-is when it names an output, otherwise `<path>.js` is tried, then `<path>/index.js`, otherwise the request is a `404`. Both steps are generic across every package and any future one — there is no per-package or per-component list. Pin an exact, extensioned URL in production to avoid the redirect hop; the exact-version, extensioned `.js` and `.map` assets are unaffected and served directly.
+A versionless subpath resolves its version exactly like the bare root of the same package (`ui`/`ui-mapbox`/`ui-autoload` by `latest`, `js-toolkit` by highest release). The extensionless step is driven by the release's own published output map: the requested path is served as-is when it names an output, otherwise `<path>.js` is tried, then `<path>/index.js`, otherwise the request is a `404`. This is how `/ui-autoload@<version>/ui` and `/ui-autoload@<version>/ui-mapbox` resolve to their `.js` entries. Both steps are generic across every package and any future one — there is no per-package or per-component list. Pin an exact, extensioned URL in production to avoid the redirect hop; the exact-version, extensioned `.js` and `.map` assets are unaffected and served directly.
 
 ### Asset types
 
 Each release directory contains:
 
-- **JavaScript modules** — `autoload.js` plus code-split component chunks (ES2020, ESM).
+- **JavaScript modules** — ES2020 ESM entry points and code-split component chunks. The `ui-autoload` tree ships the `ui` and `ui-mapbox` side-effect entries and the shared runtime; the `ui` and `ui-mapbox` trees ship their components plus a `manifest.js`.
 - **Source maps** — a `.map` file next to every `.js` file.
 - **Metadata** — `build.json` and `integrity.json` describing the build and its SHA-384 digests.
 
@@ -279,7 +320,7 @@ The Worker serves every asset with permissive cross-origin headers so the module
 
 ## Registry
 
-The CDN root is a JSON registry describing everything the deployment serves: which versions and preview channels are published, which references are current, and the absolute URL of every autoloader entry, barrel, and per-component subpath module. It is the machine-readable index behind [Manual imports](#manual-imports) — fetch it to discover valid versions and component URLs instead of hard-coding them.
+The CDN root is a JSON registry describing everything the deployment serves: which versions and preview channels are published, which references are current, and the absolute URL of every barrel and per-component subpath module. It is the machine-readable index behind [Manual imports](#manual-imports) — fetch it to discover valid versions and component URLs instead of hard-coding them.
 
 ```
 GET https://cdn.studiometa.dev/
@@ -300,11 +341,20 @@ It responds with `200` and `Content-Type: application/json; charset=utf-8`, the 
       "channels": ["main-<sha>", "pr-<n>-<sha>"],
       "distTags": { "latest": "1.9.0", "next": "main-<sha>", "main": "main-<sha>" }
     },
+    "ui-autoload": {
+      "releases": ["1.9.0"],
+      "channels": ["main-<sha>", "pr-<n>-<sha>"],
+      "distTags": { "latest": "1.9.0", "next": "main-<sha>", "main": "main-<sha>" }
+    },
     "js-toolkit": { "releases": ["3.8.0"] }
   },
-  "current": { "ui": "1.9.0", "ui-mapbox": "1.9.0", "js-toolkit": "3.8.0" },
+  "current": {
+    "ui": "1.9.0",
+    "ui-mapbox": "1.9.0",
+    "ui-autoload": "1.9.0",
+    "js-toolkit": "3.8.0"
+  },
   "entries": {
-    "autoload": "https://cdn.studiometa.dev/ui@1.9.0/autoload.js",
     "index": "https://cdn.studiometa.dev/ui@1.9.0/index.js",
     "ui-mapbox": "https://cdn.studiometa.dev/ui-mapbox@1.9.0/index.js",
     "js-toolkit": "https://cdn.studiometa.dev/js-toolkit@3.8.0/index.js"
@@ -326,9 +376,9 @@ It responds with `200` and `Content-Type: application/json; charset=utf-8`, the 
 
 The fields are:
 
-- **`packages`** — the published inventory per package: for ui and ui-mapbox each, their `releases`, immutable `channels`, and `latest`/`next`/`main` distribution tags (ui and ui-mapbox are versioned in lockstep, so their inventories match), plus js-toolkit's `releases`.
-- **`current`** — the reference each package resolves to right now: `current.ui` and `current.ui-mapbox` are each the `latest` stable tag (falling back to the current `main` channel, then the highest stable release, then `null`), and `current.js-toolkit` is the highest published release (or `null`).
-- **`entries`** — absolute URLs for the current ui autoloader (`autoload`) and barrel (`index`), the current ui-mapbox barrel (`ui-mapbox`), and the current js-toolkit barrel (`js-toolkit`). Each package's entries are omitted when that surface is not currently resolvable.
+- **`packages`** — the published inventory per package: for ui, ui-mapbox and ui-autoload each, their `releases`, immutable `channels`, and `latest`/`next`/`main` distribution tags (the three are versioned in lockstep, so their inventories match), plus js-toolkit's `releases`.
+- **`current`** — the reference each package resolves to right now: `current.ui`, `current.ui-mapbox` and `current.ui-autoload` are each the `latest` stable tag (falling back to the current `main` channel, then the highest stable release, then `null`), and `current.js-toolkit` is the highest published release (or `null`).
+- **`entries`** — absolute URLs for the current barrels (the ui barrel as `index`, plus `ui-mapbox` and `js-toolkit`). Each package's entry is omitted when that surface is not currently resolvable. The autoload side-effect entries are reachable at `/ui-autoload@<ref>/ui` and `/ui-autoload@<ref>/ui-mapbox`, and each package's manifest at `/ui@<ref>/manifest.js` and `/ui-mapbox@<ref>/manifest.js`.
 - **`components`** — one entry per component across the current ui and ui-mapbox builds, sorted by `token`, each with its owning `package` and the absolute subpath URL to import it from — `@studiometa/ui` components from `/ui@<ref>/…` and `@studiometa/ui-mapbox` components from `/ui-mapbox@<ref>/…`. Empty when neither surface is currently resolvable.
 
 ## Mapbox integration
@@ -337,7 +387,7 @@ Mapbox components (`MapboxMap`, `MapboxMarker`, `StoreLocator`, and the rest of 
 
 ### Provide `mapbox-gl` with an import map
 
-The Mapbox components import `mapbox-gl` (and, for `MapboxGeocoder`, `@mapbox/mapbox-gl-geocoder`) as bare module specifiers. Declare an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) — before the CDN script — that points those specifiers at a source of your choosing (a pinned ESM CDN such as [esm.sh](https://esm.sh), or a copy you host yourself):
+The Mapbox components import `mapbox-gl` (and, for `MapboxGeocoder`, `@mapbox/mapbox-gl-geocoder`) as bare module specifiers. Declare an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) — before the autoload script — that points those specifiers at a source of your choosing (a pinned ESM CDN such as [esm.sh](https://esm.sh), or a copy you host yourself):
 
 ```html
 <script type="importmap">
@@ -348,7 +398,10 @@ The Mapbox components import `mapbox-gl` (and, for `MapboxGeocoder`, `@mapbox/ma
     }
   }
 </script>
-<script type="module" src="https://cdn.studiometa.dev/ui@1/autoload.js" data-studiometa-ui></script>
+<script type="module">
+  import 'https://cdn.studiometa.dev/ui-autoload@next/ui';
+  import 'https://cdn.studiometa.dev/ui-autoload@next/ui-mapbox';
+</script>
 ```
 
 Only add the geocoder entry if you use `MapboxGeocoder`.
@@ -401,7 +454,7 @@ The one exception is `FetchShopifyPartial`. Its optional `@shopify/partial-rende
 
 ### Console messages
 
-The runtime logs warnings under the `[@studiometa/ui-cdn]` prefix for recoverable conditions, including: no marked script found, more than one marked script (loading stops), a conflicting runtime already active, an unknown component token, an unknown eager component, and an invalid `data-load` value.
+The runtime logs warnings under the `[@studiometa/ui-autoload]` prefix for recoverable conditions, including: a conflicting runtime version already active (the later version is ignored), an unknown component token, an unknown eager component, an invalid `data-load` value, an invalid manifest strategy, and an unavailable browser API (`MutationObserver`, `IntersectionObserver`, or `requestIdleCallback`).
 
 ### Error events
 
@@ -416,7 +469,7 @@ document.addEventListener('studiometa-ui:error', (event) => {
 
 ### HTTP errors
 
-Bad requests surface as plain-text HTTP responses from the Worker: `400` for a malformed request or an invalid `?components=` query, `404` for an unknown package, an unresolved version, or a missing asset, `405` for an unsupported method, and `502` if the version index cannot be read.
+Bad requests surface as plain-text HTTP responses from the Worker: `400` for a malformed request, `404` for an unknown package, an unresolved version, or a missing asset, `405` for an unsupported method, and `502` if the version index cannot be read.
 
 ### Source maps
 
@@ -430,12 +483,10 @@ The CDN targets ES2020 module browsers — roughly Chrome 63+, Firefox 67+, Safa
 
 The CDN trades flexibility for a zero-build install. Its constraints are deliberate:
 
-- **One runtime, one script.** Exactly one `data-studiometa-ui` script is allowed per page. A second marked script, or a second CDN version, stops loading.
-- **No mixed usage.** You cannot combine CDN-loaded components with bundled component constructors from an npm build on the same page.
-- **No multiple versions.** Two CDN versions cannot coexist in one document.
+- **One runtime version per page.** Importing the side-effect entries several times (or across bundle copies) is safe — they coordinate through a single shared runtime and coalesce into one loader. But two different `@studiometa/ui-autoload` versions cannot coexist: the second activation warns and no-ops.
+- **A single js-toolkit runtime.** Every autoloaded and manually-imported component on a page must resolve to one js-toolkit runtime. Mixing CDN-loaded components with a separate npm build that bundles its own js-toolkit copy on the same page is unsupported.
 - **No `data-component` mutation.** Changing the attribute on an element already in the DOM is not observed; only inserted and removed nodes are.
 - **No Shadow DOM.** Components assume ownership of standard light-DOM elements.
-- **No autoloader API.** The `data-studiometa-ui` runtime exposes no supported extension points or public methods; its discovery is entirely declarative. For scripted use, import component modules and the barrel directly by pinned URL instead — see [Manual imports](#manual-imports).
 - **No templates or stylesheets.** No Twig or server-side templates, no per-instance `data-mount`, and no stylesheets — including no Mapbox CSS. The CDN ships JavaScript only.
 - **ES2020 module browsers only.**
 - **Mapbox is not provided.** You supply `mapbox-gl` (and its CSS) through an import map — see [Mapbox integration](#mapbox-integration). Import maps require an ES2020 module browser, which the CDN already assumes.
@@ -446,12 +497,12 @@ The CDN trades flexibility for a zero-build install. Its constraints are deliber
 The markup contract is shared with the bundled runtime, so most templates carry over. To move a page to the CDN:
 
 1. Remove the npm imports and `registerComponent`/`registerComponents` calls.
-2. Add the single marked CDN script.
+2. Add a module script that imports the `@studiometa/ui-autoload/ui` entry (and `/ui-mapbox` if you use map components).
 3. Confirm your `data-component` tokens match the component names.
 4. If you use map components, add an import map for `mapbox-gl` (and the geocoder) and link the Mapbox stylesheet yourself — see [Mapbox integration](#mapbox-integration).
-5. Tune loading with `data-load` (and `?components=` for critical components) as needed.
+5. Tune loading with `data-load` (and a [`<meta name="studiometa-ui:eager">`](#eager-components) for critical components) as needed.
 
-The CDN and a bundled build cannot be mixed on one page, so migrate a page fully rather than partially. For a build-based setup instead, see [Installation](/guide/installation/).
+Because a page must resolve to a single js-toolkit runtime, migrate a page fully rather than mixing a CDN install with a separate bundled build that ships its own js-toolkit. For a build-based setup instead, see [Installation](/guide/installation/) — the same `@studiometa/ui-autoload` entries work there.
 
 ## Next steps
 
