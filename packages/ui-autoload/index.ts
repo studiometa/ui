@@ -20,3 +20,9 @@ export {
   type AutoloadOptions,
   type AutoloadHandle,
 } from './autoload.js';
+export {
+  registerManifest,
+  readEagerTokens,
+  type AutoloadRuntime,
+  type RegisterManifestOptions,
+} from './runtime.js';

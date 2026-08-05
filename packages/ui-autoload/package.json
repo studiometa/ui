@@ -6,12 +6,21 @@
     "access": "public"
   },
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./ui.ts",
+    "./ui.js",
+    "./ui-mapbox.ts",
+    "./ui-mapbox.js"
+  ],
   "main": "index.ts",
   "types": "index.d.ts",
   "exports": {
     ".": "./index.ts",
     "./package.json": "./package.json",
+    "./ui": "./ui.ts",
+    "./ui.js": "./ui.ts",
+    "./ui-mapbox": "./ui-mapbox.ts",
+    "./ui-mapbox.js": "./ui-mapbox.ts",
     "./*.js": "./*.ts",
     "./*": "./*.ts"
   },
