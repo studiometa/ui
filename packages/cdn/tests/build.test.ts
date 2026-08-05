@@ -22,8 +22,9 @@ const jsToolkitVersion = JSON.parse(
   ),
 ).version as string;
 const uiTreePrefix = `releases/ui/${uiVersion}`;
-// ui-mapbox is versioned in lockstep with ui, so its tree lives at the same version.
+// ui-mapbox and ui-autoload are versioned in lockstep with ui, so their trees live at the same version.
 const uiMapboxTreePrefix = `releases/ui-mapbox/${uiVersion}`;
+const uiAutoloadTreePrefix = `releases/ui-autoload/${uiVersion}`;
 const jsToolkitTreePrefix = `releases/js-toolkit/${jsToolkitVersion}`;
 
 interface BuildMetadata {
@@ -56,7 +57,10 @@ interface BuildMetadata {
       pathspecs: string[];
     };
   };
-  entries: Record<string, { path: string; sourceMap: string; preload: string[] }>;
+  entries: Record<
+    string,
+    { path: string; sourceMap: string; preload: string[]; externalPreload?: string[] }
+  >;
   components: Record<
     string,
     {
@@ -118,6 +122,7 @@ async function staticGraphSources(
 
 let build: BuildMetadata;
 let uiMapboxBuild: BuildMetadata;
+let uiAutoloadBuild: BuildMetadata;
 let jsToolkitBuild: {
   package: { name: string; version: string };
   entries: Record<string, { path: string }>;
@@ -127,9 +132,11 @@ let allFiles: string[];
 // The ui tree relative to its own release prefix, used for ui-relative build.json assertions.
 let uiFiles: string[];
 let uiMapboxFiles: string[];
+let uiAutoloadFiles: string[];
 let jsToolkitFiles: string[];
 let uiTree: string;
 let uiMapboxTree: string;
+let uiAutoloadTree: string;
 let jsToolkitTree: string;
 
 beforeAll(async () => {
@@ -144,13 +151,16 @@ beforeAll(async () => {
   }
   uiTree = resolve(firstOutput, uiTreePrefix);
   uiMapboxTree = resolve(firstOutput, uiMapboxTreePrefix);
+  uiAutoloadTree = resolve(firstOutput, uiAutoloadTreePrefix);
   jsToolkitTree = resolve(firstOutput, jsToolkitTreePrefix);
   build = await readJson(uiTree, 'build.json');
   uiMapboxBuild = await readJson(uiMapboxTree, 'build.json');
+  uiAutoloadBuild = await readJson(uiAutoloadTree, 'build.json');
   jsToolkitBuild = await readJson(jsToolkitTree, 'build.json');
   allFiles = await listFiles(firstOutput);
   uiFiles = await listFiles(uiTree);
   uiMapboxFiles = await listFiles(uiMapboxTree);
+  uiAutoloadFiles = await listFiles(uiAutoloadTree);
   jsToolkitFiles = await listFiles(jsToolkitTree);
 }, 60_000);
 
@@ -249,6 +259,46 @@ describe('browser CDN build', () => {
     // Mapbox components lazy-load from flat sibling chunks in the same tree, never a nested source path.
     expect(manifestSource).toContain('import(`./MapboxMap.js`)');
     expect(manifestSource).not.toMatch(/import\(`\.\/[^`]+\/[^`]+\.js`\)/);
+  });
+
+  it('advertises the cross-tree manifest URLs as externalPreload on the ui-autoload side-effect entries', () => {
+    // The ui-autoload tree emits three stable entries: the pure `index` barrel and the `ui` /
+    // `ui-mapbox` side-effect entries. Each entry statically imports the shared autoload runtime, so
+    // its tree-relative `preload` graph is exactly that one runtime chunk — never a component chunk,
+    // since every component is a lazy `import()` absent from the static graph.
+    expect(Object.keys(uiAutoloadBuild.entries).sort()).toEqual(['index', 'ui', 'ui-mapbox']);
+    for (const entry of Object.values(uiAutoloadBuild.entries)) {
+      expect(uiAutoloadFiles).toContain(entry.path);
+      expect(entry.preload.length).toBe(1);
+      expect(entry.preload[0]).toMatch(/^chunks\/runtime-[^/]+\.js$/);
+      expect(uiAutoloadFiles).toContain(entry.preload[0]);
+    }
+
+    // The manifest each side-effect entry imports is an EXTERNALIZED cross-tree module (a baked
+    // absolute `/…@<v>/manifest.js` path), so the bundler never lists it in the tree-relative
+    // `preload` graph. It is carried separately in `externalPreload`, pinned to the lockstep ui
+    // version, so the Worker can advertise it for modulepreload.
+    expect(uiAutoloadBuild.entries.ui.externalPreload).toEqual([`/ui@${uiVersion}/manifest.js`]);
+    expect(uiAutoloadBuild.entries['ui-mapbox'].externalPreload).toEqual([
+      `/ui-mapbox@${uiVersion}/manifest.js`,
+    ]);
+    // The pure barrel imports no manifest, so it carries no externalPreload at all.
+    expect(uiAutoloadBuild.entries.index.externalPreload).toBeUndefined();
+
+    // An externalPreload URL points at ANOTHER tree, so it must never appear in that entry's own
+    // tree-relative preload graph, and it is not a served file of the ui-autoload tree.
+    for (const url of [`/ui@${uiVersion}/manifest.js`, `/ui-mapbox@${uiVersion}/manifest.js`]) {
+      expect(url.startsWith('/')).toBe(true);
+      expect(uiAutoloadFiles).not.toContain(url.replace(/^\//, ''));
+    }
+
+    // The ui and ui-mapbox trees themselves keep the plain tree-relative preload shape (no
+    // externalPreload leaks into a tree whose entries have no cross-tree bootstrap dependency).
+    for (const buildJson of [build, uiMapboxBuild]) {
+      for (const entry of Object.values(buildJson.entries)) {
+        expect(entry.externalPreload).toBeUndefined();
+      }
+    }
   });
 
   it('serves the js-toolkit index and utils entries from the js-toolkit tree', () => {

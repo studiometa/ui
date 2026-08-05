@@ -55,6 +55,11 @@ export interface BuildGraph {
   path?: string;
   entry?: string;
   preload: string[];
+  // Optional already-resolved, origin-relative bootstrap URLs an entry pulls from ANOTHER tree
+  // (externalized cross-tree imports the bundler baked as absolute `/…@<v>/…` paths, so they never
+  // appear on the tree-relative `preload` graph). Emitted verbatim in the `Link: rel=modulepreload`
+  // header; only entries carry it (never components).
+  externalPreload?: string[];
 }
 
 export interface BuildComponent extends BuildGraph {

@@ -204,11 +204,11 @@ describe('CDN Worker ui-mapbox package routing', () => {
 describe('CDN Worker ui-autoload package routing', () => {
   // ui-autoload is the fourth CDN package: a ui-like tree versioned in lockstep with ui, carrying
   // releases, immutable channels and the latest/next/main tags. It resolves and serves exactly like
-  // ui and ui-mapbox from its own namespaced trees. (The fixture synthesizes this tree by cloning
-  // ui-mapbox; the real tree is published in a later PR.)
-  it('serves the ui-autoload barrel and per-component modules from the ui-autoload tree', async () => {
+  // ui and ui-mapbox from its own namespaced trees. The fixture reads the real build output, whose
+  // stable entries are the pure `index` barrel and the `ui` / `ui-mapbox` side-effect entries.
+  it('serves the ui-autoload barrel and side-effect entries from the ui-autoload tree', async () => {
     const barrel = await request('/ui-autoload@1.2.0/index.js');
-    const component = await request('/ui-autoload@1.2.0/MapboxMap.js');
+    const sideEffect = await request('/ui-autoload@1.2.0/ui.js');
 
     expect(barrel.status).toBe(200);
     expect(barrel.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
@@ -216,22 +216,22 @@ describe('CDN Worker ui-autoload package routing', () => {
     expect(await barrel.text()).toBe(fixture.uiAutoloadFiles['index.js']);
     expectCrossOriginHeaders(barrel);
 
-    expect(component.status).toBe(200);
-    expect(await component.text()).toBe(fixture.uiAutoloadFiles['MapboxMap.js']);
+    expect(sideEffect.status).toBe(200);
+    expect(await sideEffect.text()).toBe(fixture.uiAutoloadFiles['ui.js']);
   });
 
   it('resolves ui-autoload exact versions, aliases, tags and channels exactly like ui', async () => {
-    const alias = await request('/ui-autoload@1/MapboxMap.js');
+    const alias = await request('/ui-autoload@1/ui.js');
     expect(alias.status).toBe(307);
-    expect(alias.headers.get('Location')).toBe(`${origin}/ui-autoload@1.10.0/MapboxMap.js`);
+    expect(alias.headers.get('Location')).toBe(`${origin}/ui-autoload@1.10.0/ui.js`);
 
     const latest = await request('/ui-autoload@latest/index.js');
     expect(latest.status).toBe(307);
     expect(latest.headers.get('Location')).toBe(`${origin}/ui-autoload@2.0.0/index.js`);
 
-    const channel = await request('/ui-autoload@main-abcdef1/MapboxMap.js');
+    const channel = await request('/ui-autoload@main-abcdef1/ui.js');
     expect(channel.status).toBe(200);
-    expect(await channel.text()).toBe(fixture.uiAutoloadFiles['MapboxMap.js']);
+    expect(await channel.text()).toBe(fixture.uiAutoloadFiles['ui.js']);
 
     const next = await request('/ui-autoload@next/index.js');
     expect(next.status).toBe(307);
@@ -243,9 +243,9 @@ describe('CDN Worker ui-autoload package routing', () => {
   });
 
   it('resolves versionless, bare-root and ref-carrying ui-autoload requests', async () => {
-    const versionless = await request('/ui-autoload/MapboxMap');
+    const versionless = await request('/ui-autoload/ui');
     expect(versionless.status).toBe(307);
-    expect(versionless.headers.get('Location')).toBe(`${origin}/ui-autoload@2.0.0/MapboxMap.js`);
+    expect(versionless.headers.get('Location')).toBe(`${origin}/ui-autoload@2.0.0/ui.js`);
 
     for (const path of ['/ui-autoload', '/ui-autoload/']) {
       const root = await request(path);
@@ -259,11 +259,100 @@ describe('CDN Worker ui-autoload package routing', () => {
   });
 
   it('advertises the ui-autoload declaration via X-TypeScript-Types', async () => {
-    const module = await request('/ui-autoload@1.2.0/MapboxMap.js');
-    expect(module.headers.get('X-TypeScript-Types')).toBe(
-      `${origin}/ui-autoload@1.2.0/MapboxMap.d.ts`,
-    );
+    const module = await request('/ui-autoload@1.2.0/ui.js');
+    expect(module.headers.get('X-TypeScript-Types')).toBe(`${origin}/ui-autoload@1.2.0/ui.d.ts`);
     expect(module.headers.get('Access-Control-Expose-Headers')).toContain('X-TypeScript-Types');
+  });
+});
+
+describe('CDN Worker modulepreload Link header', () => {
+  // A served ENTRY advertises its STATIC, bootstrap-only dependencies via `Link: rel=modulepreload`:
+  // its tree-relative `preload` outputs prefixed with the served `/<pkg>@<version>/` root, plus any
+  // already-resolved cross-tree `externalPreload` URLs verbatim. The critical safety property, locked
+  // in below, is that a component chunk is NEVER preloaded — components are lazy `import()`s absent
+  // from every entry's static graph, so reading only `preload`/`externalPreload` can never surface one.
+  const runtimeChunk = /<\/ui-autoload@1\.2\.0\/chunks\/runtime-[^>]+\.js>; rel=modulepreload/;
+
+  function linkTargets(link: string): string[] {
+    return link.split(', ').map((part) => {
+      const match = /^<([^>]+)>; rel=modulepreload$/.exec(part);
+      if (!match) throw new Error(`Malformed Link entry: ${part}`);
+      return match[1];
+    });
+  }
+
+  it('warms the autoload runtime chunk AND the cross-tree ui manifest for ui.js, never a component', async () => {
+    const response = await request('/ui-autoload@1.2.0/ui.js');
+    expect(response.status).toBe(200);
+    const link = response.headers.get('Link');
+    expect(link).toBeTruthy();
+
+    // The always-needed bootstrap: the shared autoload runtime chunk (tree-relative, prefixed) ...
+    expect(link).toMatch(runtimeChunk);
+    // ... and the externalized cross-tree ui manifest, emitted verbatim at its baked ui version.
+    expect(link).toContain(`</ui@${fixture.uiVersion}/manifest.js>; rel=modulepreload`);
+
+    // Every preloaded target is either the runtime chunk or the manifest — no component chunk, ever.
+    const targets = linkTargets(link as string);
+    for (const target of targets) {
+      const isManifest = target === `/ui@${fixture.uiVersion}/manifest.js`;
+      const isRuntime = /^\/ui-autoload@1\.2\.0\/chunks\/runtime-[^/]+\.js$/.test(target);
+      expect(isManifest || isRuntime).toBe(true);
+    }
+    // Explicit negative guard against known component subpaths from the ui and ui-mapbox catalogs.
+    for (const token of ['Accordion', 'Action', 'AccordionItem', 'MapboxMap']) {
+      expect(link).not.toContain(`/${token}.js`);
+    }
+    // The header stays within the reused byte bound.
+    expect(new TextEncoder().encode(link as string).length).toBeLessThanOrEqual(7_500);
+  });
+
+  it('warms the ui-mapbox manifest for the ui-mapbox side-effect entry', async () => {
+    const response = await request('/ui-autoload@1.2.0/ui-mapbox.js');
+    expect(response.status).toBe(200);
+    const link = response.headers.get('Link');
+    expect(link).toMatch(runtimeChunk);
+    expect(link).toContain(`</ui-mapbox@${fixture.uiVersion}/manifest.js>; rel=modulepreload`);
+    // Only the runtime chunk and this package's manifest — no component chunk.
+    for (const target of linkTargets(link as string)) {
+      const isManifest = target === `/ui-mapbox@${fixture.uiVersion}/manifest.js`;
+      const isRuntime = /^\/ui-autoload@1\.2\.0\/chunks\/runtime-[^/]+\.js$/.test(target);
+      expect(isManifest || isRuntime).toBe(true);
+    }
+  });
+
+  it('preloads only the runtime chunk for the pure index barrel, with no manifest', async () => {
+    const response = await request('/ui-autoload@1.2.0/index.js');
+    const link = response.headers.get('Link');
+    expect(link).toMatch(runtimeChunk);
+    // The pure barrel imports no manifest, so none is advertised.
+    expect(link).not.toContain('/manifest.js');
+    expect(linkTargets(link as string)).toEqual([
+      linkTargets(link as string).find((target) =>
+        /^\/ui-autoload@1\.2\.0\/chunks\/runtime-[^/]+\.js$/.test(target),
+      ),
+    ]);
+  });
+
+  it('preserves the Link header on a 304 and for a HEAD request', async () => {
+    const first = await request('/ui-autoload@1.2.0/ui.js');
+    const etag = first.headers.get('ETag');
+    expect(etag).toBeTruthy();
+    const notModified = await request('/ui-autoload@1.2.0/ui.js', {
+      headers: { 'If-None-Match': etag as string },
+    });
+    expect(notModified.status).toBe(304);
+    expect(notModified.headers.get('Link')).toBe(first.headers.get('Link'));
+
+    const head = await request('/ui-autoload@1.2.0/ui.js', { method: 'HEAD' });
+    expect(head.headers.get('Link')).toBe(first.headers.get('Link'));
+  });
+
+  it('emits no Link header for a served output that is not an entry', async () => {
+    // A component chunk is a served output but not an entry, so it carries no modulepreload header.
+    const response = await request('/ui@1.2.0/Action.js');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Link')).toBeNull();
   });
 });
 

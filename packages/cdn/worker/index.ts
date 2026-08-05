@@ -16,6 +16,7 @@ import {
 } from './responses.ts';
 import { buildRegistry } from './registry.ts';
 import type {
+  BuildGraph,
   BuildMetadata,
   ExactVersion,
   IntegrityMetadata,
@@ -47,6 +48,13 @@ const PUBLIC_PACKAGE_NAMES: Record<PackageName, string> = {
   'js-toolkit': '@studiometa/ui-cdn-js-toolkit',
 };
 const SAFE_METADATA_PATH = /^(?!\/)(?!.*(?:^|\/)\.\.?(?:\/|$))(?!.*\\)[0-9A-Za-z._@+/-]+$/;
+// A cross-tree bootstrap preload URL is origin-relative (leading `/`, no host) and points into
+// ANOTHER package tree (`/ui@<v>/manifest.js`), so unlike SAFE_METADATA_PATH it must start with `/`.
+// It still forbids `..` traversal and backslashes, keeping it safe to echo into a `Link` header.
+const SAFE_EXTERNAL_PRELOAD_URL = /^\/(?!.*(?:^|\/)\.\.?(?:\/|$))(?!.*\\)[0-9A-Za-z._@+/-]+$/;
+// The old component-preload header capped its byte length here; the static bootstrap header reuses
+// the same bound so a large entry graph (e.g. the ui barrel) can never emit an unbounded header.
+const MAX_LINK_HEADER_BYTES = 7_500;
 
 // The npm packages a CDN component may belong to. The registry maps each component's packageName
 // straight into its reported owner, so an unexpected value must be rejected rather than surfaced.
@@ -77,9 +85,26 @@ function validGraph(
     return false;
   }
   const paths = [value[entryKey], ...value.preload];
-  return paths.every(
-    (path) => typeof path === 'string' && SAFE_METADATA_PATH.test(path) && files.has(path),
-  );
+  if (
+    !paths.every(
+      (path) => typeof path === 'string' && SAFE_METADATA_PATH.test(path) && files.has(path),
+    )
+  ) {
+    return false;
+  }
+  // `externalPreload` (entries only) lists cross-tree bootstrap URLs served from ANOTHER tree, so it
+  // is validated for shape alone — never against this tree's file inventory, which does not hold them.
+  if (value.externalPreload !== undefined) {
+    if (!Array.isArray(value.externalPreload)) return false;
+    if (
+      !value.externalPreload.every(
+        (url) => typeof url === 'string' && SAFE_EXTERNAL_PRELOAD_URL.test(url),
+      )
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function parseReleaseMetadata(
@@ -195,6 +220,35 @@ function canonicalLocation(
   search: string,
 ): string {
   return `${url.origin}/${packageName}@${exactVersion}/${assetPath}${search}`;
+}
+
+// Builds the static, bootstrap-only `Link: …; rel=modulepreload` header for a served ENTRY: its
+// tree-relative `preload` outputs resolved to `/<packageName>@<exactVersion>/<path>`, then its
+// already-resolved cross-tree `externalPreload` URLs verbatim. This preloads only the always-needed
+// bootstrap graph the entry statically imports (for the ui-autoload side-effect entries: the
+// autoload runtime chunk plus the cross-tree manifest); component chunks are lazy `import()`s absent
+// from the static graph, so they are never listed. It is driven purely by `preload`/`externalPreload`
+// — there is no component lookup and nothing query-driven. The byte bound keeps a large entry graph
+// (the ui barrel statically re-exports every component) from emitting an unbounded header.
+function preloadHeader(
+  packageName: PackageName,
+  exactVersion: string,
+  graph: BuildGraph,
+): string | undefined {
+  const links: string[] = [];
+  let length = 0;
+  const targets = [
+    ...graph.preload.map((path) => `/${packageName}@${exactVersion}/${path}`),
+    ...(graph.externalPreload ?? []),
+  ];
+  for (const target of targets) {
+    const link = `<${target}>; rel=modulepreload`;
+    const nextLength = length + (links.length > 0 ? 2 : 0) + link.length;
+    if (nextLength > MAX_LINK_HEADER_BYTES) break;
+    links.push(link);
+    length = nextLength;
+  }
+  return links.length > 0 ? links.join(', ') : undefined;
 }
 
 function objectEtag(object: R2ObjectBodyLike): string | undefined {
@@ -397,6 +451,20 @@ async function handleRequest(
       );
       headers.set('Access-Control-Expose-Headers', 'X-TypeScript-Types');
     }
+  }
+
+  // When the served output is an entry, advertise its static bootstrap graph (and any cross-tree
+  // `externalPreload` URLs) with a `Link: rel=modulepreload` header so the browser can warm those
+  // always-needed dependencies in parallel. It is keyed off `build.entries` only — a served output
+  // that is not an entry (a component chunk, a shared chunk, a `.d.ts`/`.map`) carries no header, and
+  // no component chunk is ever preloaded because components are lazy imports absent from the graph.
+  // Set before the 304 branch so a not-modified response stays consistent, and preserved for HEAD.
+  const entryGraph = Object.values<BuildGraph>(metadata.build.entries).find(
+    (entry) => entry.path === assetPath,
+  );
+  if (entryGraph) {
+    const link = preloadHeader(route.packageName, exact.version, entryGraph);
+    if (link) headers.set('Link', link);
   }
 
   if (etagMatches(request.headers.get('If-None-Match'), etag)) {
