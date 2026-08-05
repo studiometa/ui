@@ -34,23 +34,24 @@ export interface JsToolkitPackageIndex {
   releases: string[];
 }
 
-export type UiLikePackageName = 'ui' | 'ui-mapbox';
+export type UiLikePackageName = 'ui' | 'ui-mapbox' | 'ui-autoload';
 
 /**
  * Working representation of the schemaVersion 2 `versions.json`. Releases are namespaced per
- * package: `ui` and `ui-mapbox` each keep releases, immutable channels and distribution tags (and
- * are versioned in lockstep); `js-toolkit` is exact-version only and carries just a release
- * inventory. `ui-mapbox` is an additive, optional package: an index predating the ui-mapbox tree
- * simply omits it, and it is bootstrapped empty and populated in place under the same
- * schemaVersion 2. It intentionally allows partial distribution tags so the tooling can bootstrap
- * the index before a stable release and a main channel exist. Once fully populated it satisfies the
- * strict schema the Worker validates on read.
+ * package: `ui`, `ui-mapbox` and `ui-autoload` each keep releases, immutable channels and
+ * distribution tags (and are versioned in lockstep with ui); `js-toolkit` is exact-version only and
+ * carries just a release inventory. `ui-mapbox` and `ui-autoload` are additive, optional packages: an
+ * index predating either tree simply omits it, and it is bootstrapped empty and populated in place
+ * under the same schemaVersion 2. They intentionally allow partial distribution tags so the tooling
+ * can bootstrap the index before a stable release and a main channel exist. Once fully populated they
+ * satisfy the strict schema the Worker validates on read.
  */
 export interface WorkingVersionsIndex {
   schemaVersion: 2;
   packages: {
     ui: UiPackageIndex;
     'ui-mapbox': UiPackageIndex;
+    'ui-autoload': UiPackageIndex;
     'js-toolkit': JsToolkitPackageIndex;
   };
 }
@@ -115,6 +116,7 @@ function emptyIndex(): WorkingVersionsIndex {
     packages: {
       ui: { releases: [], channels: [], distTags: {} },
       'ui-mapbox': { releases: [], channels: [], distTags: {} },
+      'ui-autoload': { releases: [], channels: [], distTags: {} },
       'js-toolkit': { releases: [] },
     },
   };
@@ -145,10 +147,10 @@ function parseUiLikePackage(value: unknown): UiPackageIndex {
 /**
  * Parses an existing schemaVersion 2 `versions.json` payload leniently, returning an empty index
  * when the object is absent so a first publication can bootstrap it. Known entries are preserved.
- * A live schema-2 index that predates the ui-mapbox tree (and therefore omits the `ui-mapbox` key)
- * is accepted and migrated in place: the missing package is initialized empty so this publication
- * can add its release/channel while the index stays schemaVersion 2. A valid schema-2 index is
- * never refused.
+ * A live schema-2 index that predates the ui-mapbox or ui-autoload tree (and therefore omits that
+ * key) is accepted and migrated in place: the missing package is initialized empty so this
+ * publication can add its release/channel while the index stays schemaVersion 2. A valid schema-2
+ * index is never refused.
  */
 export function parseWorkingVersionsIndex(text: string | undefined): WorkingVersionsIndex {
   if (text === undefined) return emptyIndex();
@@ -169,6 +171,7 @@ export function parseWorkingVersionsIndex(text: string | undefined): WorkingVers
     packages: {
       ui: parseUiLikePackage(value.packages.ui),
       'ui-mapbox': parseUiLikePackage(value.packages['ui-mapbox']),
+      'ui-autoload': parseUiLikePackage(value.packages['ui-autoload']),
       'js-toolkit': {
         releases: stringArray(jsToolkit.releases),
       },
@@ -201,6 +204,7 @@ export function serializeVersionsIndex(index: WorkingVersionsIndex): string {
     packages: {
       ui: serializeUiLikePackage(index.packages.ui),
       'ui-mapbox': serializeUiLikePackage(index.packages['ui-mapbox']),
+      'ui-autoload': serializeUiLikePackage(index.packages['ui-autoload']),
       'js-toolkit': {
         releases: [...new Set(index.packages['js-toolkit'].releases)].sort(compareStableVersions),
       },

@@ -13,7 +13,7 @@ import type { WorkingVersionsIndex } from '../scripts/lib/versions.ts';
 import { makeArtifact, MemoryObjectStore, seedVersionsIndex } from './store-fixture.ts';
 
 function seed(): WorkingVersionsIndex {
-  // ui-mapbox mirrors ui in lockstep.
+  // ui-mapbox and ui-autoload mirror ui in lockstep.
   const uiLike = {
     releases: ['1.0.0', '2.0.0'],
     channels: ['main-000000000001', 'main-000000000002'],
@@ -24,6 +24,7 @@ function seed(): WorkingVersionsIndex {
     packages: {
       ui: structuredClone(uiLike),
       'ui-mapbox': structuredClone(uiLike),
+      'ui-autoload': structuredClone(uiLike),
       'js-toolkit': { releases: ['3.8.0'] },
     },
   };
@@ -97,6 +98,39 @@ describe('CDN publication', () => {
     expect(store.keysWithPrefix('tmp/')).toHaveLength(0);
   });
 
+  it('publishes the ui, ui-mapbox and ui-autoload trees in lockstep in one atomic versions.json write', async () => {
+    const store = seededStore();
+    const result = await publish(store, makeArtifact(), releaseTarget, {
+      publicationId: 'lock3',
+      lockstepUiMapbox: makeArtifact(),
+      lockstepUiAutoload: makeArtifact(),
+    });
+
+    // All three trees' immutable objects are copied into their namespaced prefixes.
+    expect(store.objects.has('releases/ui/2.1.0/build.json')).toBe(true);
+    expect(store.objects.has('releases/ui-mapbox/2.1.0/build.json')).toBe(true);
+    expect(store.objects.has('releases/ui-autoload/2.1.0/build.json')).toBe(true);
+    expect(store.objects.has('releases/ui-autoload/2.1.0/autoload.js')).toBe(true);
+
+    // versions.json is written exactly once and advances every package's latest tag.
+    expect(
+      store.operations.filter((entry) => entry.op === 'put' && entry.key === 'versions.json'),
+    ).toHaveLength(1);
+    expect(result.index.packages['ui-autoload'].distTags.latest).toBe('2.1.0');
+    expect(result.index.packages['ui-autoload'].releases).toContain('2.1.0');
+
+    // The single versions.json write happens only after every final copy across all trees lands.
+    const versionsPut = store.indexOfPut('versions.json');
+    const lastCopy = Math.max(
+      ...store.operations
+        .map((entry, index) => (entry.op === 'copy' ? index : -1))
+        .filter((index) => index >= 0),
+    );
+    expect(versionsPut).toBeGreaterThan(lastCopy);
+    expect(store.keysWithPrefix('tmp/')).toHaveLength(0);
+    expect(() => parseVersionsIndex(result.index)).not.toThrow();
+  });
+
   it('migrates a live schema-2 index that has no ui-mapbox key in place and stays schema 2', async () => {
     // This is the exact shape the currently-deployed release tooling wrote: schemaVersion 2 with
     // only `ui` and `js-toolkit`. A publish from this branch must accept it, add `ui-mapbox`, and
@@ -134,18 +168,24 @@ describe('CDN publication', () => {
     expect(() => parseVersionsIndex(persisted)).not.toThrow();
   });
 
-  it('publishes a main channel for both lockstep trees under their namespaced prefixes', async () => {
+  it('publishes a main channel for every lockstep tree under their namespaced prefixes', async () => {
     const store = seededStore();
     const result = await publish(
       store,
       makeArtifact({ commit: 'e'.repeat(40) }),
       { kind: 'channel', commit: 'e'.repeat(40) },
-      { publicationId: 'lockchan', lockstepUiMapbox: makeArtifact({ commit: 'e'.repeat(40) }) },
+      {
+        publicationId: 'lockchan',
+        lockstepUiMapbox: makeArtifact({ commit: 'e'.repeat(40) }),
+        lockstepUiAutoload: makeArtifact({ commit: 'e'.repeat(40) }),
+      },
     );
     expect(result.identity).toBe('main-eeeeeeeeeeee');
     expect(store.objects.has('channels/main-eeeeeeeeeeee/build.json')).toBe(true);
     expect(store.objects.has('channels/ui-mapbox/main-eeeeeeeeeeee/build.json')).toBe(true);
+    expect(store.objects.has('channels/ui-autoload/main-eeeeeeeeeeee/build.json')).toBe(true);
     expect(result.index.packages['ui-mapbox'].distTags.main).toBe('main-eeeeeeeeeeee');
+    expect(result.index.packages['ui-autoload'].distTags.main).toBe('main-eeeeeeeeeeee');
     expect(() => parseVersionsIndex(result.index)).not.toThrow();
   });
 
@@ -250,19 +290,19 @@ describe('CDN publication', () => {
       store,
       makeArtifact({ commit: 'a'.repeat(40) }),
       { kind: 'preview', pr: 42, commit: 'a'.repeat(40) },
-      { publicationId: 'p1' },
+      { publicationId: 'p1', lockstepUiAutoload: makeArtifact({ commit: 'a'.repeat(40) }) },
     );
     await publish(
       store,
       makeArtifact({ commit: 'b'.repeat(40) }),
       { kind: 'preview', pr: 42, commit: 'b'.repeat(40) },
-      { publicationId: 'p2' },
+      { publicationId: 'p2', lockstepUiAutoload: makeArtifact({ commit: 'b'.repeat(40) }) },
     );
     await publish(
       store,
       makeArtifact({ commit: 'd'.repeat(40) }),
       { kind: 'preview', pr: 7, commit: 'd'.repeat(40) },
-      { publicationId: 'p3' },
+      { publicationId: 'p3', lockstepUiAutoload: makeArtifact({ commit: 'd'.repeat(40) }) },
     );
 
     const result = await pruneUiPreviewChannelsForPr(store, 42);
@@ -270,6 +310,11 @@ describe('CDN publication', () => {
     const channels = result.index.packages.ui.channels;
     expect(channels).not.toContain('pr-42-aaaaaaaaaaaa');
     expect(channels).not.toContain('pr-42-bbbbbbbbbbbb');
+    // The lockstep ui-autoload preview channels for the pruned PR are removed too.
+    const autoloadChannels = result.index.packages['ui-autoload'].channels;
+    expect(autoloadChannels).not.toContain('pr-42-aaaaaaaaaaaa');
+    expect(autoloadChannels).not.toContain('pr-42-bbbbbbbbbbbb');
+    expect(autoloadChannels).toContain('pr-7-dddddddddddd');
     // The other PR's preview and the main channels are untouched.
     expect(channels).toContain('pr-7-dddddddddddd');
     expect(channels).toContain('main-000000000002');
@@ -398,23 +443,26 @@ describe('publishability gates', () => {
 describe('CDN rollback', () => {
   function rollbackStore(): MemoryObjectStore {
     const store = seededStore();
-    // Both lockstep trees' immutable objects must exist for a rollback to accept the target.
+    // Every lockstep tree's immutable objects must exist for a rollback to accept the target.
     for (const key of [
       'releases/ui/1.0.0/build.json',
       'releases/ui-mapbox/1.0.0/build.json',
+      'releases/ui-autoload/1.0.0/build.json',
       'channels/main-000000000001/build.json',
       'channels/ui-mapbox/main-000000000001/build.json',
+      'channels/ui-autoload/main-000000000001/build.json',
     ]) {
       store.objects.set(key, { body: new Uint8Array(), sha384: 'x' });
     }
     return store;
   }
 
-  it('repoints latest at an older indexed release for both lockstep packages without touching immutable objects', async () => {
+  it('repoints latest at an older indexed release for every lockstep package without touching immutable objects', async () => {
     const store = rollbackStore();
     const result = await rollback(store, { kind: 'release', version: '1.0.0' });
     expect(result.index.packages.ui.distTags.latest).toBe('1.0.0');
     expect(result.index.packages['ui-mapbox'].distTags.latest).toBe('1.0.0');
+    expect(result.index.packages['ui-autoload'].distTags.latest).toBe('1.0.0');
     expect(store.operations.every((entry) => entry.op !== 'copy' && entry.op !== 'delete')).toBe(
       true,
     );
@@ -422,7 +470,7 @@ describe('CDN rollback', () => {
     expect(writes).toEqual([{ op: 'put', key: 'versions.json' }]);
   });
 
-  it('moves next and main together for both lockstep packages on a channel rollback', async () => {
+  it('moves next and main together for every lockstep package on a channel rollback', async () => {
     const result = await rollback(rollbackStore(), {
       kind: 'channel',
       channelId: 'main-000000000001',
@@ -431,6 +479,8 @@ describe('CDN rollback', () => {
     expect(result.index.packages.ui.distTags.main).toBe('main-000000000001');
     expect(result.index.packages['ui-mapbox'].distTags.next).toBe('main-000000000001');
     expect(result.index.packages['ui-mapbox'].distTags.main).toBe('main-000000000001');
+    expect(result.index.packages['ui-autoload'].distTags.next).toBe('main-000000000001');
+    expect(result.index.packages['ui-autoload'].distTags.main).toBe('main-000000000001');
   });
 
   it('refuses a rollback to a target that is not indexed', async () => {

@@ -169,6 +169,13 @@ export interface PublishOptions {
    * channel, or preview channel at the same identity). Omitted for js-toolkit publications.
    */
   lockstepUiMapbox?: Artifact;
+  /**
+   * The lockstep @studiometa/ui-autoload artifact published alongside a ui publication, handled
+   * identically to {@link PublishOptions.lockstepUiMapbox}: staged, verified and copied into the
+   * ui-autoload tree before the single versions.json write, and advanced to the same identity by
+   * that same index write. Omitted for js-toolkit publications.
+   */
+  lockstepUiAutoload?: Artifact;
 }
 
 export interface PublishResult {
@@ -261,23 +268,31 @@ async function stageAndCopyArtifact(
   });
 }
 
-// The ui-mapbox tree is published in lockstep with ui at the same identity. Its releases are
-// namespaced under `releases/ui-mapbox/<version>` and its channels under `channels/ui-mapbox/<id>`
-// so they never collide with the ui tree's `releases/ui/<version>` and flat `channels/<id>`.
-function lockstepUiMapboxPrefix(target: PublishTarget, identity: string): string {
+// The additive lockstep trees (`ui-mapbox`, `ui-autoload`) are published in lockstep with ui at the
+// same identity. Their releases are namespaced under `releases/<package>/<version>` and their
+// channels under `channels/<package>/<id>` so they never collide with the ui tree's
+// `releases/ui/<version>` and flat `channels/<id>`.
+type LockstepPackageName = 'ui-mapbox' | 'ui-autoload';
+
+function lockstepPrefix(
+  packageName: LockstepPackageName,
+  target: PublishTarget,
+  identity: string,
+): string {
   return target.kind === 'release'
-    ? `releases/ui-mapbox/${target.version}`
-    : `channels/ui-mapbox/${identity}`;
+    ? `releases/${packageName}/${target.version}`
+    : `channels/${packageName}/${identity}`;
 }
 
-function advanceUiMapboxLockstep(
+function advanceLockstep(
   index: WorkingVersionsIndex,
+  packageName: LockstepPackageName,
   target: PublishTarget,
   identity: string,
 ): WorkingVersionsIndex {
-  if (target.kind === 'channel') return addChannel(index, 'ui-mapbox', identity);
-  if (target.kind === 'preview') return addPreviewChannel(index, 'ui-mapbox', identity);
-  return addRelease(index, 'ui-mapbox', target.version);
+  if (target.kind === 'channel') return addChannel(index, packageName, identity);
+  if (target.kind === 'preview') return addPreviewChannel(index, packageName, identity);
+  return addRelease(index, packageName, target.version);
 }
 
 export async function publish(
@@ -301,18 +316,27 @@ export async function publish(
     );
   }
 
-  const lockstep = options.lockstepUiMapbox;
-  const lockstepPrefix = lockstep ? lockstepUiMapboxPrefix(target, identity) : undefined;
-  if (lockstep) {
+  // The additive lockstep trees are staged, copied and indexed alongside ui in the same atomic
+  // versions.json write, in a stable order (ui-mapbox then ui-autoload). Each shares ui's identity.
+  const lockstepArtifacts: Array<{ packageName: LockstepPackageName; artifact: Artifact }> = [];
+  if (options.lockstepUiMapbox) {
+    lockstepArtifacts.push({ packageName: 'ui-mapbox', artifact: options.lockstepUiMapbox });
+  }
+  if (options.lockstepUiAutoload) {
+    lockstepArtifacts.push({ packageName: 'ui-autoload', artifact: options.lockstepUiAutoload });
+  }
+  for (const { packageName, artifact: lockstepArtifact } of lockstepArtifacts) {
     if (
       (target.kind === 'channel' || target.kind === 'preview') &&
-      lockstep.build.build.commit !== target.commit
+      lockstepArtifact.build.build.commit !== target.commit
     ) {
-      throw new Error('The ui-mapbox build commit does not match the requested channel commit.');
-    }
-    if (target.kind === 'release' && lockstep.build.package.version !== target.version) {
       throw new Error(
-        `The ui-mapbox build version ${lockstep.build.package.version} does not match the release tag ${target.version}.`,
+        `The ${packageName} build commit does not match the requested channel commit.`,
+      );
+    }
+    if (target.kind === 'release' && lockstepArtifact.build.package.version !== target.version) {
+      throw new Error(
+        `The ${packageName} build version ${lockstepArtifact.build.package.version} does not match the release tag ${target.version}.`,
       );
     }
   }
@@ -322,40 +346,50 @@ export async function publish(
   // below so re-running a publish for an already-published release moves its distribution tag. A
   // channel or preview is commit-addressed and re-publishing one is a mistake, so it still hard-fails.
   const finalAlreadyPublished = (await store.head(`${finalPrefix}/build.json`)) !== undefined;
-  const lockstepAlreadyPublished =
-    lockstepPrefix !== undefined &&
-    (await store.head(`${lockstepPrefix}/build.json`)) !== undefined;
+  const preparedLockstep = await Promise.all(
+    lockstepArtifacts.map(async ({ packageName, artifact: lockstepArtifact }) => {
+      const prefix = lockstepPrefix(packageName, target, identity);
+      return {
+        packageName,
+        artifact: lockstepArtifact,
+        finalPrefix: prefix,
+        alreadyPublished: (await store.head(`${prefix}/build.json`)) !== undefined,
+      };
+    }),
+  );
   if (target.kind !== 'release') {
     if (finalAlreadyPublished) {
       throw new Error(`${identity} is already published and immutable; refusing to overwrite it.`);
     }
-    if (lockstepAlreadyPublished) {
-      throw new Error(
-        `${identity} (ui-mapbox) is already published and immutable; refusing to overwrite it.`,
-      );
+    for (const tree of preparedLockstep) {
+      if (tree.alreadyPublished) {
+        throw new Error(
+          `${identity} (${tree.packageName}) is already published and immutable; refusing to overwrite it.`,
+        );
+      }
     }
   }
 
   const now = options.now ?? Date.now();
   const publicationId = options.publicationId ?? `${identity}-${now}`;
   const temporaryPrefix = `tmp/${publicationId}`;
-  const lockstepTemporaryPrefix = `tmp/${publicationId}-ui-mapbox`;
 
   if (finalAlreadyPublished) {
     log(`${identity} is already published; skipping its upload and only advancing dist-tags.`);
   } else {
     await stageAndCopyArtifact(store, artifact, finalPrefix, temporaryPrefix, identity, log);
   }
-  if (lockstep && lockstepPrefix) {
-    if (lockstepAlreadyPublished) {
-      log(`${identity} (ui-mapbox) is already published; skipping its upload.`);
+  for (const tree of preparedLockstep) {
+    const treeTemporaryPrefix = `tmp/${publicationId}-${tree.packageName}`;
+    if (tree.alreadyPublished) {
+      log(`${identity} (${tree.packageName}) is already published; skipping its upload.`);
     } else {
       await stageAndCopyArtifact(
         store,
-        lockstep,
-        lockstepPrefix,
-        lockstepTemporaryPrefix,
-        `${identity} (ui-mapbox)`,
+        tree.artifact,
+        tree.finalPrefix,
+        treeTemporaryPrefix,
+        `${identity} (${tree.packageName})`,
         log,
       );
     }
@@ -373,8 +407,8 @@ export async function publish(
   } else {
     nextIndex = addJsToolkitRelease(currentIndex, target.version);
   }
-  if (lockstep) {
-    nextIndex = advanceUiMapboxLockstep(nextIndex, target, identity);
+  for (const tree of preparedLockstep) {
+    nextIndex = advanceLockstep(nextIndex, tree.packageName, target, identity);
   }
   const serialized = new Uint8Array(Buffer.from(serializeVersionsIndex(nextIndex), 'utf8'));
   await store.put(VERSIONS_KEY, serialized, {
@@ -389,10 +423,13 @@ export async function publish(
       store.delete(`${temporaryPrefix}/${file.path}`),
     );
   }
-  if (lockstep && !lockstepAlreadyPublished) {
-    await forEachWithConcurrency(lockstep.files, (file) =>
-      store.delete(`${lockstepTemporaryPrefix}/${file.path}`),
-    );
+  for (const tree of preparedLockstep) {
+    if (!tree.alreadyPublished) {
+      const treeTemporaryPrefix = `tmp/${publicationId}-${tree.packageName}`;
+      await forEachWithConcurrency(tree.artifact.files, (file) =>
+        store.delete(`${treeTemporaryPrefix}/${file.path}`),
+      );
+    }
   }
 
   return {
@@ -401,7 +438,9 @@ export async function publish(
     publicationId,
     uploadedFiles: [
       ...artifact.files.map((file) => file.path),
-      ...(lockstep ? lockstep.files.map((file) => `ui-mapbox/${file.path}`) : []),
+      ...preparedLockstep.flatMap((tree) =>
+        tree.artifact.files.map((file) => `${tree.packageName}/${file.path}`),
+      ),
     ],
     index: nextIndex,
   };
@@ -433,9 +472,10 @@ export async function rollback(
   const index = parseWorkingVersionsIndex(existing);
   const ui = index.packages.ui;
   const uiMapbox = index.packages['ui-mapbox'];
+  const uiAutoload = index.packages['ui-autoload'];
 
-  // ui-mapbox is versioned in lockstep with ui, so a rollback moves both packages' tags together to
-  // the same identity and requires both trees' immutable objects to be present.
+  // ui-mapbox and ui-autoload are versioned in lockstep with ui, so a rollback moves every package's
+  // tags together to the same identity and requires all three trees' immutable objects to be present.
   if (target.kind === 'release') {
     if (!isStableVersion(target.version)) {
       throw new Error('The latest tag can only point at a stable, non-prerelease release.');
@@ -443,6 +483,7 @@ export async function rollback(
     for (const [packageName, pkg] of [
       ['ui', ui],
       ['ui-mapbox', uiMapbox],
+      ['ui-autoload', uiAutoload],
     ] as const) {
       if (!pkg.releases.includes(target.version)) {
         throw new Error(
@@ -459,6 +500,7 @@ export async function rollback(
     }
     ui.distTags.latest = target.version;
     uiMapbox.distTags.latest = target.version;
+    uiAutoload.distTags.latest = target.version;
     log(`Rolling the latest tag back to ${target.version}.`);
   } else {
     if (!isChannelId(target.channelId)) {
@@ -467,6 +509,7 @@ export async function rollback(
     for (const [packageName, pkg, prefix] of [
       ['ui', ui, `channels/${target.channelId}`],
       ['ui-mapbox', uiMapbox, `channels/ui-mapbox/${target.channelId}`],
+      ['ui-autoload', uiAutoload, `channels/ui-autoload/${target.channelId}`],
     ] as const) {
       if (!pkg.channels.includes(target.channelId)) {
         throw new Error(
@@ -483,6 +526,8 @@ export async function rollback(
     ui.distTags.main = target.channelId;
     uiMapbox.distTags.next = target.channelId;
     uiMapbox.distTags.main = target.channelId;
+    uiAutoload.distTags.next = target.channelId;
+    uiAutoload.distTags.main = target.channelId;
     log(`Rolling the next and main tags back to ${target.channelId}.`);
   }
 
@@ -519,13 +564,15 @@ export async function pruneUiPreviewChannelsForPr(
   }
   const index = parseWorkingVersionsIndex(existing);
   const prefix = `pr-${pr}-`;
-  // ui and ui-mapbox share the same lockstep preview channel identities; prune both packages' copies
-  // of every `pr-<pr>-<sha>` channel. The reported set is the union of ids removed from either.
+  // ui, ui-mapbox and ui-autoload share the same lockstep preview channel identities; prune every
+  // package's copy of each `pr-<pr>-<sha>` channel. The reported set is the union of ids removed.
   const removed = [
     ...new Set(
-      [...index.packages.ui.channels, ...index.packages['ui-mapbox'].channels].filter(
-        (channel) => channel.startsWith(prefix) && isPreviewChannelId(channel),
-      ),
+      [
+        ...index.packages.ui.channels,
+        ...index.packages['ui-mapbox'].channels,
+        ...index.packages['ui-autoload'].channels,
+      ].filter((channel) => channel.startsWith(prefix) && isPreviewChannelId(channel)),
     ),
   ].sort();
   if (removed.length === 0) {
@@ -537,6 +584,7 @@ export async function pruneUiPreviewChannelsForPr(
   for (const channelId of removed) {
     nextIndex = removeUiChannel(nextIndex, channelId);
     nextIndex = removeChannel(nextIndex, 'ui-mapbox', channelId);
+    nextIndex = removeChannel(nextIndex, 'ui-autoload', channelId);
   }
   const serialized = new Uint8Array(Buffer.from(serializeVersionsIndex(nextIndex), 'utf8'));
   await store.put(VERSIONS_KEY, serialized, {
