@@ -7,6 +7,9 @@ const CDN_BASE_URL = 'https://cdn.studiometa.dev';
 // `main-<sha>` channel, and modern-monaco's TypeScript LSP cannot resolve `.d.ts` through a
 // redirect (its `resolveModuleNameLiterals` skips the `x-typescript-types` header on a redirected
 // response), so an exact, non-redirecting URL is required for editor autocomplete to work.
+// Upstream fix: https://github.com/esm-dev/modern-monaco/pull/64 (issue #63). Once it is merged
+// and released — and the modern-monaco version the playground loads is bumped past it — revert
+// `@studiometa/ui`/`ui-mapbox` below to the rolling `@main` alias.
 const UI_VERSION = process.env.npm_package_version;
 
 export default defineWebpackConfig({
