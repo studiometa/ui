@@ -31,6 +31,7 @@ import {
   parseVersionsIndex,
   resolveBareRoot,
   resolveCurrentJsToolkit,
+  resolveCurrentUiAutoloadRef,
   resolveCurrentUiMapboxRef,
   resolveCurrentUiRef,
   resolveVersion,
@@ -43,6 +44,7 @@ const MAX_LINK_HEADER_BYTES = 7_500;
 const PUBLIC_PACKAGE_NAMES: Record<PackageName, string> = {
   ui: '@studiometa/ui-cdn',
   'ui-mapbox': '@studiometa/ui-cdn-mapbox',
+  'ui-autoload': '@studiometa/ui-cdn-autoload',
   'js-toolkit': '@studiometa/ui-cdn-js-toolkit',
 };
 const SAFE_METADATA_PATH = /^(?!\/)(?!.*(?:^|\/)\.\.?(?:\/|$))(?!.*\\)[0-9A-Za-z._@+/-]+$/;
@@ -254,6 +256,7 @@ async function handleRegistry(
   const versions = await readVersionsForRegistry(environment.ASSETS, recorder);
   const currentUiRef = versions ? resolveCurrentUiRef(versions) : null;
   const currentUiMapboxRef = versions ? resolveCurrentUiMapboxRef(versions) : null;
+  const currentUiAutoloadRef = versions ? resolveCurrentUiAutoloadRef(versions) : null;
   const currentJsToolkit = versions ? resolveCurrentJsToolkit(versions) : null;
 
   async function loadCurrentBuild(
@@ -286,6 +289,7 @@ async function handleRegistry(
     versions,
     currentUiRef,
     currentUiMapboxRef,
+    currentUiAutoloadRef,
     currentJsToolkit,
     currentUiBuild,
     currentUiMapboxBuild,

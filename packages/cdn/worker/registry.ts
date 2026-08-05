@@ -9,6 +9,8 @@ export interface RegistryInput {
   currentUiRef: string | null;
   /** The reference reported as the current ui-mapbox surface, resolved from the index. */
   currentUiMapboxRef: string | null;
+  /** The reference reported as the current ui-autoload surface, resolved from the index. */
+  currentUiAutoloadRef: string | null;
   /** The version reported as the current js-toolkit surface, resolved from the index. */
   currentJsToolkit: string | null;
   /** The current ui ref's build metadata, or `undefined` when it is absent or unreadable. */
@@ -29,12 +31,14 @@ export function buildRegistry(input: RegistryInput): RegistryDocument {
     versions,
     currentUiRef,
     currentUiMapboxRef,
+    currentUiAutoloadRef,
     currentJsToolkit,
     currentUiBuild,
     currentUiMapboxBuild,
   } = input;
   const ui = versions?.packages.ui;
   const uiMapbox = versions?.packages['ui-mapbox'];
+  const uiAutoload = versions?.packages['ui-autoload'];
   const jsToolkit = versions?.packages['js-toolkit'];
 
   // Each package's components import from their own versioned tree: `@studiometa/ui` from
@@ -85,6 +89,11 @@ export function buildRegistry(input: RegistryInput): RegistryDocument {
         channels: uiMapbox ? [...uiMapbox.channels] : [],
         distTags: uiMapbox ? { ...uiMapbox.distTags } : {},
       },
+      'ui-autoload': {
+        releases: uiAutoload ? [...uiAutoload.releases] : [],
+        channels: uiAutoload ? [...uiAutoload.channels] : [],
+        distTags: uiAutoload ? { ...uiAutoload.distTags } : {},
+      },
       'js-toolkit': {
         releases: jsToolkit ? [...jsToolkit.releases] : [],
       },
@@ -92,6 +101,7 @@ export function buildRegistry(input: RegistryInput): RegistryDocument {
     current: {
       ui: currentUiRef,
       'ui-mapbox': currentUiMapboxRef,
+      'ui-autoload': currentUiAutoloadRef,
       'js-toolkit': currentJsToolkit,
     },
     entries,

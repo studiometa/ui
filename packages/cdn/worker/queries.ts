@@ -1,6 +1,11 @@
 import type { CanonicalQuery, PackageName, PackageRoot, ParsedRoute } from './types.ts';
 
-const PACKAGE_NAMES: ReadonlySet<PackageName> = new Set(['ui', 'ui-mapbox', 'js-toolkit']);
+const PACKAGE_NAMES: ReadonlySet<PackageName> = new Set([
+  'ui',
+  'ui-mapbox',
+  'ui-autoload',
+  'js-toolkit',
+]);
 
 const VERSION_TOKEN_PATTERN = /^[0-9A-Za-z.+-]+$/;
 const ASSET_SEGMENT_PATTERN = /^[0-9A-Za-z._@+-]+$/;
@@ -42,7 +47,7 @@ export function parseRoute(pathname: string): ParsedRoute {
 
   // A versionless package segment (e.g. `/ui/Action`, `/js-toolkit/utils`) has no `@version`; the
   // caller resolves it the same way a bare package root does (via `resolveBareRoot`) so it works for
-  // every package — `ui`/`ui-mapbox` follow their `latest` tag and the tagless `js-toolkit` its
+  // every package — `ui`/`ui-mapbox`/`ui-autoload` follow their `latest` tag and the tagless `js-toolkit` its
   // highest release — then redirects to the resolved exact version. `requestedVersion` stays `latest`
   // so the request always classifies as mutable and canonicalizes to that redirect.
   const versionless = separator === -1;

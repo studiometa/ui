@@ -233,6 +233,70 @@ describe('versions index parsing (schemaVersion 2)', () => {
       objectPrefix: 'channels/ui-mapbox/main-abcdef1',
     });
   });
+
+  it('parses a schema-2 index that predates the ui-autoload tree and 404s every ui-autoload route', () => {
+    // The currently-live index has no `ui-autoload` key. It must still parse, ui/ui-mapbox/js-toolkit
+    // must keep resolving, and every ui-autoload route must resolve to nothing (a clean 404) until a
+    // publish populates the tree. This is the deploy-first half of the two-phase rollout at the
+    // resolution layer: the Worker tolerates the live index verbatim.
+    const index = parseVersionsIndex({
+      schemaVersion: 2,
+      packages: {
+        ui: { releases: ['1.9.0'], channels: [], distTags: { latest: '1.9.0' } },
+        'ui-mapbox': { releases: ['1.9.0'], channels: [], distTags: { latest: '1.9.0' } },
+        'js-toolkit': { releases: ['3.8.0'] },
+      },
+    });
+    // The other packages keep resolving exactly as before.
+    expect(resolveVersion(index, 'ui', 'latest')).toMatchObject({ version: '1.9.0' });
+    expect(resolveVersion(index, 'ui-mapbox', 'latest')).toMatchObject({ version: '1.9.0' });
+    expect(resolveVersion(index, 'js-toolkit', '3.8.0')).toMatchObject({ version: '3.8.0' });
+    // ui-autoload defaults to an empty package: every route 404s.
+    expect(resolveVersion(index, 'ui-autoload', 'latest')).toBeUndefined();
+    expect(resolveVersion(index, 'ui-autoload', '1.0.0')).toBeUndefined();
+    expect(resolveVersion(index, 'ui-autoload', 'main')).toBeUndefined();
+    expect(resolveBareRoot(index, 'ui-autoload')).toBeUndefined();
+  });
+
+  it('resolves ui-autoload with the full ui semantics from its own namespaced trees', () => {
+    const index = parseVersionsIndex({
+      schemaVersion: 2,
+      packages: {
+        ui: {
+          releases: ['1.9.0'],
+          channels: ['main-abcdef1'],
+          distTags: { latest: '1.9.0', next: 'main-abcdef1', main: 'main-abcdef1' },
+        },
+        'ui-mapbox': { releases: ['1.9.0'], channels: [], distTags: { latest: '1.9.0' } },
+        'ui-autoload': {
+          releases: ['1.9.0', '2.0.0'],
+          channels: ['main-abcdef1'],
+          distTags: { latest: '2.0.0', next: 'main-abcdef1', main: 'main-abcdef1' },
+        },
+        'js-toolkit': { releases: [] },
+      },
+    });
+    expect(resolveVersion(index, 'ui-autoload', '2.0.0')).toEqual({
+      kind: 'release',
+      version: '2.0.0',
+      objectPrefix: 'releases/ui-autoload/2.0.0',
+    });
+    expect(resolveVersion(index, 'ui-autoload', 'latest')).toMatchObject({ version: '2.0.0' });
+    expect(resolveVersion(index, 'ui-autoload', '1')).toMatchObject({ version: '1.9.0' });
+    // ui-autoload channels are namespaced under channels/ui-autoload/ so they never collide with ui's.
+    expect(resolveVersion(index, 'ui-autoload', 'main-abcdef1')).toEqual({
+      kind: 'channel',
+      version: 'main-abcdef1',
+      objectPrefix: 'channels/ui-autoload/main-abcdef1',
+    });
+    expect(resolveVersion(index, 'ui-autoload', 'next')).toMatchObject({
+      objectPrefix: 'channels/ui-autoload/main-abcdef1',
+    });
+    expect(resolveBareRoot(index, 'ui-autoload')).toMatchObject({
+      version: '2.0.0',
+      objectPrefix: 'releases/ui-autoload/2.0.0',
+    });
+  });
 });
 
 describe('js-toolkit version resolution', () => {

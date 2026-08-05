@@ -62,9 +62,11 @@ export interface WorkerFixture {
   bucket: MemoryR2;
   build: BuildMetadata;
   uiMapboxBuild: BuildMetadata;
+  uiAutoloadBuild: BuildMetadata;
   integrity: IntegrityMetadata;
   files: Record<string, string>;
   uiMapboxFiles: Record<string, string>;
+  uiAutoloadFiles: Record<string, string>;
   versionsIndex: VersionsIndex;
   uiVersion: string;
   jsToolkitVersion: string;
@@ -155,6 +157,20 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
   ];
   const uiMapboxFiles = await readTreeFiles(uiMapboxTreeDirectory, uiMapboxAssetPaths);
 
+  // The `ui-autoload` tree is not produced by the build script yet (it is published in a later PR),
+  // so this fixture synthesizes one structurally identical to ui-mapbox: a ui-like tree with its own
+  // namespaced release/channel prefixes and its own CDN build identity. Cloning the ui-mapbox tree is
+  // enough to exercise the Worker's read path — routing, resolution and registry listing — for the
+  // fourth package. The clone rewrites the build name to the ui-autoload CDN build so the Worker's
+  // `PUBLIC_PACKAGE_NAMES['ui-autoload']` expectation is met on both release and channel manifests.
+  const uiAutoloadBuild = structuredClone(uiMapboxBuild);
+  uiAutoloadBuild.package.name = '@studiometa/ui-cdn-autoload';
+  const uiAutoloadAssetPaths = uiMapboxAssetPaths;
+  const uiAutoloadFiles: Record<string, string> = {
+    ...uiMapboxFiles,
+    'build.json': JSON.stringify(uiAutoloadBuild),
+  };
+
   const jsToolkitAssetPaths = [
     'index.js',
     'index.js.map',
@@ -176,6 +192,7 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
     packages: {
       ui: uiLikePackageIndex,
       'ui-mapbox': uiLikePackageIndex,
+      'ui-autoload': uiLikePackageIndex,
       'js-toolkit': { releases: [jsToolkitVersion] },
     },
   };
@@ -186,7 +203,7 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
   // Seeds a ui-like package's release and channel objects under its namespaced prefixes. ui channels
   // keep the flat `channels/<id>` layout; every other package is namespaced as `channels/<pkg>/<id>`.
   function seedUiLikePackage(
-    packageName: 'ui' | 'ui-mapbox',
+    packageName: 'ui' | 'ui-mapbox' | 'ui-autoload',
     treeBuild: BuildMetadata,
     treeFiles: Record<string, string>,
     assetPaths: readonly string[],
@@ -216,6 +233,7 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
   }
   seedUiLikePackage('ui', build, files, uiAssetPaths);
   seedUiLikePackage('ui-mapbox', uiMapboxBuild, uiMapboxFiles, uiMapboxAssetPaths);
+  seedUiLikePackage('ui-autoload', uiAutoloadBuild, uiAutoloadFiles, uiAutoloadAssetPaths);
 
   const jsToolkitPrefix = `releases/js-toolkit/${jsToolkitVersion}`;
   for (const path of jsToolkitAssetPaths) {
@@ -226,9 +244,11 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
     bucket,
     build,
     uiMapboxBuild,
+    uiAutoloadBuild,
     integrity,
     files,
     uiMapboxFiles,
+    uiAutoloadFiles,
     versionsIndex,
     uiVersion: uiPackageVersion,
     jsToolkitVersion,
