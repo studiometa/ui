@@ -1,16 +1,39 @@
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
 
-const CDN_BASE_URL = 'https://cdn.studiometa.dev';
-// The exact published version of this repo (e.g. `1.10.0-beta.1`). ui/ui-mapbox are pinned to it
-// on the CDN rather than the mutable `@main` alias: `@main` 307-redirects to the immutable
-// `main-<sha>` channel, and modern-monaco's TypeScript LSP cannot resolve `.d.ts` through a
-// redirect (its `resolveModuleNameLiterals` skips the `x-typescript-types` header on a redirected
-// response), so an exact, non-redirecting URL is required for editor autocomplete to work.
-// Upstream fix: https://github.com/esm-dev/modern-monaco/pull/64 (issue #63). Once it is merged
-// and released — and the modern-monaco version the playground loads is bumped past it — revert
-// `@studiometa/ui`/`ui-mapbox` below to the rolling `@main` alias.
-const UI_VERSION = process.env.npm_package_version;
+/**
+ * Build playground dependency configs for a workspace package from its `package.json` `exports`
+ * map, so its barrel and subpaths bundle from LOCAL source (tsdown) instead of being hardcoded.
+ * This is what lets the `@studiometa/ui-autoload` side-effect entries (`./ui`, `./ui-mapbox`) and the
+ * per-package `manifest` modules they pull resolve from the working tree while developing new components.
+ *
+ * `relDir` is relative to this config (e.g. `'../ui'`). `include`, when given, restricts the SUBpaths
+ * to that list (the barrel `.` is always emitted). It exists for `@studiometa/ui`, whose ~190
+ * component subpaths are NOT needed here — the manifest lazy-loads them as relative chunks of its own
+ * bundle — and each would otherwise be a separate tsdown build. Generic all-subpath bundling in one
+ * multi-entry build belongs upstream in @studiometa/playground; this per-package loop is the starter.
+ */
+function packageDeps(specifier, relDir, { include } = {}) {
+  const { exports = {} } = JSON.parse(readFileSync(resolve(`${relDir}/package.json`), 'utf8'));
+  const source = `${relDir}/**/*.ts`;
+  const seen = new Set();
+  const deps = [];
+  for (const [key, target] of Object.entries(exports)) {
+    if (key === './package.json' || key.includes('*') || typeof target !== 'string') continue;
+    if (key.endsWith('.js') && key !== '.') continue; // skip the `.js` alias of a subpath
+    const subpath = key === '.' ? '' : key.slice(1); // '.' → barrel, './manifest' → '/manifest'
+    if (include && key !== '.' && !include.includes(subpath)) continue;
+    if (seen.has(subpath)) continue;
+    seen.add(subpath);
+    deps.push({
+      specifier: `${specifier}${subpath}`,
+      source,
+      entry: `${relDir}/${target.replace(/^\.\//, '')}`,
+    });
+  }
+  return deps;
+}
 
 export default defineWebpackConfig({
   presets: [
@@ -32,42 +55,38 @@ export default defineWebpackConfig({
       loaders: {
         html: resolve('./lib/twig-loader.js'),
       },
+      // The workspace packages (ui, ui-mapbox, ui-autoload) are bundled from LOCAL source with
+      // tsdown so the playground reflects the current working tree — essential for developing and
+      // testing new components/features before they are published. This also emits same-origin
+      // `.d.ts` (+ `_headers` with `X-TypeScript-Types`), so the editor gets full types without the
+      // cross-origin/redirect limitations of loading declarations from a remote CDN.
+      //
+      // js-toolkit is an external (non-workspace) dependency resolved from esm.sh with its default
+      // bundling: sub-modules are inlined, so esm.sh never splits its barrels — which structurally
+      // avoids the `export *`-from-externalized-module name-drop bug (also fixed at source in
+      // js-toolkit 3.8.1). The singleton holds because js-toolkit's mutable state (the component
+      // registry behind `createApp`) lives in its main entry (one resolved URL), and `/utils` is
+      // stateless. The remaining entries are ui/ui-mapbox runtime peers the script editor needs.
       dependencies: [
         '@motionone/easing',
         'compute-scroll-into-view',
         'deepmerge',
         'morphdom',
-        // Consumer-provided peers that the ui-mapbox CDN tree externalizes, so
-        // they still need to be resolved for the script editor.
         { specifier: 'mapbox-gl', esmSh: { bundle: true } },
         { specifier: '@mapbox/mapbox-gl-geocoder', esmSh: { bundle: true } },
+        '@studiometa/js-toolkit',
+        '@studiometa/js-toolkit/utils',
+        // Workspace packages bundled from local source, derived from each package's `exports` map.
+        // ui / ui-mapbox contribute their barrel + `./manifest`; ui-autoload its barrel + the
+        // `./ui`/`./ui-mapbox` side-effect entries — the subpaths the autoload lazy-import chain
+        // needs. The manifests code-split (their `load: () => import(...)` calls), which requires
+        // `@studiometa/playground` >= 0.3.11 (its `PlaygroundDependenciesPlugin` preserves per-chunk
+        // filenames instead of flattening them to `index.js`). ui's ~190 component subpaths are NOT
+        // listed: the manifest bundle lazy-loads them as its own chunks, so no separate entry is needed.
+        ...packageDeps('@studiometa/ui', '../ui', { include: ['/manifest'] }),
+        ...packageDeps('@studiometa/ui-mapbox', '../ui-mapbox', { include: ['/manifest'] }),
+        ...packageDeps('@studiometa/ui-autoload', '../ui-autoload', { include: ['/ui', '/ui-mapbox'] }),
       ],
-      // Point js-toolkit, ui and ui-mapbox at the live studiometa CDN instead of
-      // esm.sh / local tsdown source-bundles. The CDN serves `.d.ts` + an
-      // `X-TypeScript-Types` header, so the editor keeps TypeScript autocomplete.
-      // js-toolkit MUST match the exact `/js-toolkit@3.8.0/index.js` URL the ui
-      // build bakes in as an absolute CDN import, so both share a single runtime.
-      //
-      // Each package also gets a trailing-slash prefix entry (`@studiometa/ui/` etc.) so subpath
-      // imports (`@studiometa/ui/Action`, `@studiometa/js-toolkit/utils`) resolve on the CDN too.
-      // At runtime these work: `/ui@<v>/Action` 307-redirects to `Action.js` and the browser
-      // follows it. Their editor TYPE hints do NOT work yet: the LSP fetch stops at the 307 and
-      // never reads `X-TypeScript-Types` (the same modern-monaco bug the pin above works around —
-      // https://github.com/esm-dev/modern-monaco/pull/64). The bare `@studiometa/ui` and the
-      // explicit `@studiometa/js-toolkit/utils` entries point at non-redirecting `*.js` URLs, so a
-      // more-specific import-map match keeps their types; only globbed subpaths degrade to `any`.
-      importMap: {
-        '@studiometa/js-toolkit': `${CDN_BASE_URL}/js-toolkit@3.8.0/index.js`,
-        '@studiometa/js-toolkit/': `${CDN_BASE_URL}/js-toolkit@3.8.0/`,
-        '@studiometa/js-toolkit/utils': `${CDN_BASE_URL}/js-toolkit@3.8.0/utils/index.js`,
-        // Pinned to the exact repo version (non-redirecting) so modern-monaco's LSP resolves
-        // their `.d.ts`; it tracks releases as the version bumps land, and that version must be
-        // published to the CDN (it is, via the release `cdn_release` job).
-        '@studiometa/ui': `${CDN_BASE_URL}/ui@${UI_VERSION}/index.js`,
-        '@studiometa/ui/': `${CDN_BASE_URL}/ui@${UI_VERSION}/`,
-        '@studiometa/ui-mapbox': `${CDN_BASE_URL}/ui-mapbox@${UI_VERSION}/index.js`,
-        '@studiometa/ui-mapbox/': `${CDN_BASE_URL}/ui-mapbox@${UI_VERSION}/`,
-      },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
   Hello world
