@@ -2,6 +2,12 @@ import { resolve } from 'node:path';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
 
 const CDN_BASE_URL = 'https://cdn.studiometa.dev';
+// The exact published version of this repo (e.g. `1.10.0-beta.1`). ui/ui-mapbox are pinned to it
+// on the CDN rather than the mutable `@main` alias: `@main` 307-redirects to the immutable
+// `main-<sha>` channel, and modern-monaco's TypeScript LSP cannot resolve `.d.ts` through a
+// redirect (its `resolveModuleNameLiterals` skips the `x-typescript-types` header on a redirected
+// response), so an exact, non-redirecting URL is required for editor autocomplete to work.
+const UI_VERSION = process.env.npm_package_version;
 
 export default defineWebpackConfig({
   presets: [
@@ -41,11 +47,11 @@ export default defineWebpackConfig({
       importMap: {
         '@studiometa/js-toolkit': `${CDN_BASE_URL}/js-toolkit@3.8.0/index.js`,
         '@studiometa/js-toolkit/utils': `${CDN_BASE_URL}/js-toolkit@3.8.0/utils/index.js`,
-        // `@main` 307-redirects to the current immutable `main-<sha>` channel.
-        // Switch to `@latest` (or a pinned version) once a stable release tag is
-        // cut — `@latest` currently 404s because no stable CDN release exists yet.
-        '@studiometa/ui': `${CDN_BASE_URL}/ui@main/index.js`,
-        '@studiometa/ui-mapbox': `${CDN_BASE_URL}/ui-mapbox@main/index.js`,
+        // Pinned to the exact repo version (non-redirecting) so modern-monaco's LSP resolves
+        // their `.d.ts`; it tracks releases as the version bumps land, and that version must be
+        // published to the CDN (it is, via the release `cdn_release` job).
+        '@studiometa/ui': `${CDN_BASE_URL}/ui@${UI_VERSION}/index.js`,
+        '@studiometa/ui-mapbox': `${CDN_BASE_URL}/ui-mapbox@${UI_VERSION}/index.js`,
       },
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
