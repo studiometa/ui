@@ -45,7 +45,17 @@
   },
   "homepage": "https://github.com/studiometa/ui#readme",
   "peerDependencies": {
-    "@studiometa/js-toolkit": "^3.8.0"
+    "@studiometa/js-toolkit": "^3.8.0",
+    "@studiometa/ui": "1.10.0-beta.2",
+    "@studiometa/ui-mapbox": "1.10.0-beta.2"
+  },
+  "peerDependenciesMeta": {
+    "@studiometa/ui": {
+      "optional": true
+    },
+    "@studiometa/ui-mapbox": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@studiometa/js-toolkit": "^3.8.0",

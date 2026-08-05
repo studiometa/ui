@@ -36,7 +36,7 @@
     "play:watch": "npm run watch -w @studiometa/ui-playground",
     "play:build": "npm run build -w @studiometa/ui-playground",
     "cdn:test:watch": "npm run test:watch -w @studiometa/ui-cdn",
-    "postversion": "npm version --workspaces $npm_package_version && node scripts/update-composer-version.js",
+    "postversion": "npm version --workspaces $npm_package_version && node scripts/update-composer-version.js && node scripts/sync-lockstep-peers.js",
     "postinstall": "patch-package"
   },
   "devDependencies": {
