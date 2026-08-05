@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.10.0-beta.3](https://github.com/studiometa/ui/compare/1.10.0-beta.2..1.10.0-beta.3) (2026-08-05)
+
+### Fixed
+
+- **Browser CDN:** declaration files now re-export through `.d.ts` chunk specifiers (e.g. `./chunks/Action-<hash>.d.ts`) instead of `.js`, matching esm.sh, so a cross-origin TypeScript language server — such as the playground editor (modern-monaco) — resolves real types and JSDoc from the CDN instead of falling back to `any` ([#608](https://github.com/studiometa/ui/pull/608))
+
+### Added
+
+- **Browser CDN:** serve a static `Link: rel=modulepreload` header advertising each entry's bootstrap dependencies (the autoload runtime chunk and the package manifest) so they load in parallel; component chunks stay lazy and are never preloaded ([#606](https://github.com/studiometa/ui/pull/606))
+
+### Changed
+
+- **@studiometa/ui-autoload:** declare `@studiometa/ui` and `@studiometa/ui-mapbox` as exact-version, optional peer dependencies, kept in lockstep on every release, so consumers (and esm.sh) resolve the matching component manifest version ([#607](https://github.com/studiometa/ui/pull/607))
+
 ## [v1.10.0-beta.2](https://github.com/studiometa/ui/compare/1.10.0-beta.1..1.10.0-beta.2) (2026-08-05)
 
 ### Added
