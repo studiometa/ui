@@ -97,6 +97,16 @@ export interface ParsedRoute {
   assetPath: string;
 }
 
+export interface PackageRoot {
+  packageName: PackageName;
+  // The optional ref a package-root request carries: `undefined` for the bare form (`/ui`, `/ui/`),
+  // or the `@<ref>` token for `/ui@next`, `/ui@1.2.0`, `/ui@main` (with optional trailing slash and
+  // no asset segment). A bare root follows the package default (`resolveBareRoot`); a ref resolves
+  // with the full `/ui@<ref>/` semantics (`resolveVersion`). Either redirects to that exact
+  // version's `index.js` barrel.
+  ref?: string;
+}
+
 export interface CanonicalQuery {
   components: string[];
   search: string;

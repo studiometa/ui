@@ -338,6 +338,92 @@ describe('CDN Worker bare package roots', () => {
   });
 });
 
+describe('CDN Worker package roots with a ref', () => {
+  it.each([
+    ['/ui@2.0.0', '2.0.0'],
+    ['/ui@2.0.0-beta.1', '2.0.0-beta.1'],
+    ['/ui@latest', '2.0.0'],
+    ['/ui@1', '1.10.0'],
+    ['/ui@next', 'main-fedcba9'],
+    ['/ui@main', 'main-fedcba9'],
+  ])('redirects a ref-carrying ui root %s to its barrel', async (path, exact) => {
+    const response = await request(path);
+    expect(response.status).toBe(307);
+    expect(response.headers.get('Location')).toBe(`${origin}/ui@${exact}/index.js`);
+    expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+    expectCrossOriginHeaders(response);
+  });
+
+  it.each([
+    ['/ui@2.0.0/', '2.0.0'],
+    ['/ui@next/', 'main-fedcba9'],
+  ])('redirects a trailing-slash ref-carrying root %s to its barrel', async (path, exact) => {
+    const response = await request(path);
+    expect(response.status).toBe(307);
+    expect(response.headers.get('Location')).toBe(`${origin}/ui@${exact}/index.js`);
+    expect(response.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+  });
+
+  it('resolves the ref-carrying redirect target to a served barrel', async () => {
+    const response = await request('/ui@next');
+    const served = await fetch(new Request(response.headers.get('Location') as string), {
+      ASSETS: fixture.bucket,
+    });
+    expect(served.status).toBe(200);
+    expect(served.headers.get('Content-Type')).toBe('text/javascript; charset=utf-8');
+    expect(await served.text()).toBe(fixture.files['index.js']);
+  });
+
+  it('resolves a ref-carrying ui-mapbox root exactly like ui', async () => {
+    const latest = await request('/ui-mapbox@latest');
+    expect(latest.status).toBe(307);
+    expect(latest.headers.get('Location')).toBe(`${origin}/ui-mapbox@2.0.0/index.js`);
+
+    const channel = await request('/ui-mapbox@main');
+    expect(channel.status).toBe(307);
+    expect(channel.headers.get('Location')).toBe(`${origin}/ui-mapbox@main-fedcba9/index.js`);
+  });
+
+  it('resolves a ref-carrying js-toolkit root by exact semver only', async () => {
+    const exact = await request(`/js-toolkit@${fixture.jsToolkitVersion}`);
+    expect(exact.status).toBe(307);
+    expect(exact.headers.get('Location')).toBe(
+      `${origin}/js-toolkit@${fixture.jsToolkitVersion}/index.js`,
+    );
+    expect(exact.headers.get('Cache-Control')).toBe(MUTABLE_CACHE_CONTROL);
+  });
+
+  it('404s a ref that resolves to nothing', async () => {
+    // js-toolkit has no channels or dist-tags, and 9.9.9 is unpublished for ui.
+    expect((await request('/js-toolkit@main')).status).toBe(404);
+    expect((await request('/js-toolkit@latest')).status).toBe(404);
+    expect((await request('/ui@9.9.9')).status).toBe(404);
+    expect((await request('/ui-mapbox@9.9.9')).status).toBe(404);
+  });
+
+  it('404s an explicit @latest root when latest is unset', async () => {
+    const original = fixture.bucket.objects.get('versions.json') as NonNullable<
+      ReturnType<typeof fixture.bucket.objects.get>
+    >;
+    fixture.bucket.put(
+      'versions.json',
+      JSON.stringify({
+        schemaVersion: 2,
+        packages: {
+          ui: { releases: ['1.0.0'], channels: [], distTags: {} },
+          'ui-mapbox': { releases: [], channels: [], distTags: {} },
+          'js-toolkit': { releases: [] },
+        },
+      }),
+    );
+    // With no `latest` tag, both the explicit `@latest` ref and the bare `/ui` root (which also
+    // follows `latest`) 404, since ui has no latest tag to resolve.
+    expect((await request('/ui@latest')).status).toBe(404);
+    expect((await request('/ui')).status).toBe(404);
+    fixture.bucket.objects.set('versions.json', original);
+  });
+});
+
 describe('CDN Worker eager component queries', () => {
   it('resolves a mutable version and canonicalizes the query in one hop', async () => {
     const response = await request(
@@ -427,7 +513,7 @@ describe('CDN Worker request validation', () => {
     '/ui@1.2.0/chunks/%252e%252e/file.js',
     '/ui@1.2.0/chunks/%ZZ/file.js',
     '/ui@/autoload.js',
-    '/ui@1.2.0/',
+    '/ui@1.2.0/chunks/',
   ])('rejects malformed or traversal path %s', async (path) => {
     expect((await request(path)).status).toBe(400);
   });

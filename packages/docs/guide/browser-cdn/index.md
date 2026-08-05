@@ -237,6 +237,18 @@ A bare package root — the package name with no version and no file — redirec
 
 `/ui` and `/ui-mapbox` follow their `latest` stable tag to the `index.js` barrel — the natural landing now that the autoloader is just another export of the ui tree (reach it explicitly at `/ui@<latest>/autoload.js`). `/js-toolkit` follows its highest published release to `index.js` (js-toolkit is exact-version only, so this bare root is its only moving pointer). All resolve to the immutable target the [Registry](#registry) reports under `current`.
 
+A package root may also carry a ref but no file — `/ui@<ref>` (with an optional trailing slash) — and redirects (307, same short cache) to that ref's `index.js` barrel. The ref resolves with the full version-resolution rules above, exactly as a `/ui@<ref>/…` asset request does, so the barrel is reachable by every supported ref shape:
+
+| Package root with ref | Redirects to                 | Resolution                        |
+| --------------------- | ---------------------------- | --------------------------------- |
+| `/ui@1.9.0`           | `/ui@1.9.0/index.js`         | Exact release                     |
+| `/ui@1`               | `/ui@<latest 1.x>/index.js`  | Major alias                       |
+| `/ui@latest`          | `/ui@<latest>/index.js`      | `latest` dist-tag                 |
+| `/ui@next`            | `/ui@<next>/index.js`        | `next` preview channel or release |
+| `/ui@main`            | `/ui@main-<commit>/index.js` | `main` preview channel            |
+
+A ref that resolves to nothing is a `404` — the same outcome as the matching asset request (for example `/js-toolkit@main`, since js-toolkit has no channels, or an unpublished `/ui@9.9.9`).
+
 #### Versionless and extensionless subpaths
 
 A subpath may drop the version, the `.js` extension, or both — the Worker resolves each independently and redirects (307, same short cache) to the canonical immutable asset:
