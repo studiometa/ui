@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-cdn",
-  "version": "1.10.0-beta.2",
+  "version": "1.10.0-beta.3",
   "description": "Private browser CDN build for @studiometa/ui",
   "private": true,
   "type": "module",
