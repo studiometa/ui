@@ -184,6 +184,28 @@ async function checkUiAutoloadArtifact(config: SmokeConfig, version: string): Pr
         body.includes(`/ui@${version}/manifest.js`),
         'ui-autoload ui.js does not reference the baked cross-tree /ui@<version>/manifest.js URL.',
       );
+      // The bootstrap-only modulepreload header must warm the always-needed dependencies — the shared
+      // autoload runtime chunk and the cross-tree ui manifest — while NEVER preloading a component
+      // chunk (components stay lazy). This locks the header's safety property against the live edge.
+      const link = response.headers.get('Link') ?? '';
+      assert(
+        link.includes('rel=modulepreload'),
+        'ui-autoload ui.js is missing a modulepreload Link header.',
+      );
+      assert(
+        link.includes(`/ui@${version}/manifest.js`),
+        'ui-autoload ui.js Link header omits the cross-tree /ui@<version>/manifest.js URL.',
+      );
+      assert(
+        new RegExp(`/ui-autoload@${version}/chunks/runtime-[^,>]+\\.js`).test(link),
+        'ui-autoload ui.js Link header omits the autoload runtime chunk.',
+      );
+      for (const token of ['Accordion', 'Action', 'MapboxMap']) {
+        assert(
+          !link.includes(`/${token}.js`),
+          `ui-autoload ui.js Link header unexpectedly preloads a component chunk (${token}.js).`,
+        );
+      }
     }
     if (asset === 'ui-mapbox.js') {
       assert(

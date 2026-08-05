@@ -1326,14 +1326,22 @@ function outputMetadataFor(
   );
 }
 
+// `externalPreloadByName` advertises already-resolved, origin-relative bootstrap URLs an entry pulls
+// from ANOTHER tree — dependencies the bundler externalized (baked as absolute `/…@<v>/…` paths) and
+// therefore never lists on the static output graph. They are kept in a SEPARATE `externalPreload`
+// field, distinct from the tree-relative `preload` graph, so the Worker prefixes `preload` with the
+// served `/<pkg>@<v>/` root while emitting `externalPreload` verbatim. The field is emitted only when
+// a non-empty list is supplied for an entry, so trees without cross-tree bootstrap deps are unchanged.
 function entryMetadataFor(
   metafile: Metafile,
   outputDirectory: string,
   entries: Record<string, string>,
-): Record<string, { path: string; sourceMap: string; preload: string[] }> {
+  externalPreloadByName: Record<string, readonly string[]> = {},
+): Record<string, { path: string; sourceMap: string; preload: string[]; externalPreload?: string[] }> {
   return Object.fromEntries(
     Object.entries(entries).map(([name, output]) => {
       const path = publicPath(outputDirectory, output);
+      const externalPreload = [...(externalPreloadByName[name] ?? [])].sort();
       return [
         name,
         {
@@ -1343,6 +1351,7 @@ function entryMetadataFor(
             .map((dependency) => publicPath(outputDirectory, dependency))
             .filter((dependency) => dependency !== path)
             .sort(),
+          ...(externalPreload.length > 0 ? { externalPreload } : {}),
         },
       ];
     }),
@@ -1646,7 +1655,15 @@ const uiAutoloadBuildMetadata = {
     sourceDateEpoch: buildTime.epoch,
     timeSource: buildTime.source,
   },
-  entries: entryMetadataFor(uiAutoloadMetafile, uiAutoloadOutputDirectory, uiAutoloadEntryOutputs),
+  // The two side-effect entries each statically import their package's manifest, but that manifest is
+  // an EXTERNALIZED cross-tree import (baked absolute `/…@<v>/manifest.js`), so it never appears on the
+  // bundler's static output graph and thus not in `preload`. Advertise it as `externalPreload` — the
+  // biggest always-needed bootstrap dep — so the Worker can warm it in parallel with the runtime chunk.
+  // The pure `index` barrel imports no manifest and carries none.
+  entries: entryMetadataFor(uiAutoloadMetafile, uiAutoloadOutputDirectory, uiAutoloadEntryOutputs, {
+    ui: [uiManifestCdnUrl],
+    'ui-mapbox': [uiMapboxManifestCdnUrl],
+  }),
   // The ui-autoload tree serves the generic engine and side-effect entries only; it declares no
   // components of its own (each component still lives in its package's own tree).
   components: {},

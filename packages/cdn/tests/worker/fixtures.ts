@@ -155,19 +155,27 @@ export async function createWorkerFixture(): Promise<WorkerFixture> {
   ];
   const uiMapboxFiles = await readTreeFiles(uiMapboxTreeDirectory, uiMapboxAssetPaths);
 
-  // The `ui-autoload` tree is not produced by the build script yet (it is published in a later PR),
-  // so this fixture synthesizes one structurally identical to ui-mapbox: a ui-like tree with its own
-  // namespaced release/channel prefixes and its own CDN build identity. Cloning the ui-mapbox tree is
-  // enough to exercise the Worker's read path — routing, resolution and registry listing — for the
-  // fourth package. The clone rewrites the build name to the ui-autoload CDN build so the Worker's
-  // `PUBLIC_PACKAGE_NAMES['ui-autoload']` expectation is met on both release and channel manifests.
-  const uiAutoloadBuild = structuredClone(uiMapboxBuild);
-  uiAutoloadBuild.package.name = '@studiometa/ui-cdn-autoload';
-  const uiAutoloadAssetPaths = uiMapboxAssetPaths;
-  const uiAutoloadFiles: Record<string, string> = {
-    ...uiMapboxFiles,
-    'build.json': JSON.stringify(uiAutoloadBuild),
-  };
+  // The `ui-autoload` tree is a real build output (the generic autoloader engine plus the pure
+  // `index` barrel and the `ui` / `ui-mapbox` side-effect entries), versioned in lockstep with ui.
+  // Read it straight from the build so the Worker's read path — routing, resolution, and the static
+  // modulepreload `Link` header — is exercised against the real entry graph: each side-effect entry
+  // preloads the shared autoload runtime chunk plus its cross-tree `externalPreload` manifest URL,
+  // and no component chunk (components are lazy imports absent from the static graph).
+  const uiAutoloadTreeDirectory = resolve(
+    outputDirectory,
+    `releases/ui-autoload/${uiPackageVersion}`,
+  );
+  const uiAutoloadBuild = JSON.parse(
+    await readFile(resolve(uiAutoloadTreeDirectory, 'build.json'), 'utf8'),
+  ) as BuildMetadata;
+  // build.json `outputs` inventories every served file except build.json / integrity.json themselves
+  // (which is exactly the set the integrity manifest — and the Worker — expect to be seeded).
+  const uiAutoloadAssetPaths = [
+    ...Object.keys(uiAutoloadBuild.outputs),
+    'build.json',
+    'integrity.json',
+  ].sort();
+  const uiAutoloadFiles = await readTreeFiles(uiAutoloadTreeDirectory, uiAutoloadAssetPaths);
 
   const jsToolkitAssetPaths = [
     'index.js',
