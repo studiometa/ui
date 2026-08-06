@@ -1,4 +1,4 @@
-import type { ComponentCatalog, CuratedComponentMetadata } from '@studiometa/ui-autoload';
+import type { ComponentCatalog, CuratedComponentMetadata } from '../../scripts/manifest-types.js';
 
 // Mapbox GL and the optional geocoder are external (import-map resolved) and no longer served by
 // the CDN, so these components declare neither a CDN-served stylesheet nor a bundled integration
