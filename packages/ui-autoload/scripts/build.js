@@ -30,7 +30,8 @@ async function build() {
   // separate passes: a single mixed pass would let the JavaScript source maps
   // leak `//# sourceMappingURL` comments into the declarations (the dts plugin
   // forces the dts output map from the shared `sourcemap` option, then deletes
-  // the map, leaving a dangling reference). This mirrors `packages/cdn`.
+  // the map, leaving a dangling reference). This mirrors the `@studiometa/ui`
+  // build (see `scripts/shared.js`).
   const shared = {
     entry: entryPoints,
     outDir,

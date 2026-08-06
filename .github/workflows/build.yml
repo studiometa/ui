@@ -30,6 +30,8 @@ jobs:
           restore-keys: ${{ runner.os }}-node-
       - name: Install modules
         run: npm install --no-audit --no-fund
+      - name: Verify the component manifests are in sync
+        run: npm run manifest:check
       - name: Build the package
         run: npm run build
 
@@ -58,31 +60,3 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Build the package
         run: npm run docs:build
-
-  cdn_build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'npm'
-      - name: Get npm cache directory
-        id: npm-cache-dir
-        shell: bash
-        run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
-      - uses: actions/cache@v4
-        id: npm-cache
-        with:
-          path: |
-            ${{ steps.npm-cache-dir.outputs.dir }}
-            **/node_modules
-            .eslintcache
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: ${{ runner.os }}-node-
-      - name: Install modules
-        run: npm install --no-audit --no-fund
-      - name: Verify the component manifests are in sync
-        run: npm run manifest:check
-      - name: Build the browser CDN distribution
-        run: npm run cdn:build

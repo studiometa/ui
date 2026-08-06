@@ -95,7 +95,7 @@ export async function synthesizeFacadeSourceMaps(directory) {
  * JavaScript source maps leak `//# sourceMappingURL` comments into the
  * declarations (rolldown-plugin-dts forces the dts output map from the shared
  * JavaScript `sourcemap` option, then deletes the map, leaving a dangling
- * reference). Keeping the passes separate mirrors `packages/cdn/scripts/build.ts`.
+ * reference). Keeping the passes separate avoids that.
  *
  * @param   {import('tsdown').Options} opts
  * @returns {Promise<Awaited<ReturnType<typeof tsdownBuild>>>}

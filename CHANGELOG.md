@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **@studiometa/ui, @studiometa/ui-mapbox:** replace every `export *` barrel re-export with explicit named `export { ... }` (values and `type`-only specifiers) so the public surface is statically analyzable. This lets bundlers and esm.sh keep every export name and tree-shake reliably, matching the same change made in `@studiometa/js-toolkit` 3.8.1. The exported API is unchanged — a type-checker snapshot of each barrel's full surface guards against regressions ([#611](https://github.com/studiometa/ui/pull/611))
 
+### Removed
+
+- **Browser CDN:** drop the bespoke browser CDN (the private `@studiometa/ui-cdn` Cloudflare Worker + R2 package, its `cdn:*` scripts, and the `cdn-*` CI workflows) along with the `guide/browser-cdn/` documentation. Load `@studiometa/ui-autoload` from an ESM CDN such as [esm.sh](https://esm.sh) instead — `import 'https://esm.sh/@studiometa/ui-autoload@next/ui'` — which serves the package as native ES modules and resolves its peer dependencies. See the new [Autoloading guide](https://ui.studiometa.dev/guide/autoloading/)
+
 ## [v1.10.0-beta.3](https://github.com/studiometa/ui/compare/1.10.0-beta.2..1.10.0-beta.3) (2026-08-05)
 
 ### Fixed

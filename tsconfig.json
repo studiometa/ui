@@ -22,7 +22,6 @@
     "packages/ui-mapbox/**/*.ts",
     "packages/ui-autoload/**/*.ts",
     "packages/tests/**/*.ts",
-    "packages/cdn/**/*.ts",
     "scripts/**/*.ts"
   ]
 }

@@ -116,7 +116,7 @@ function getGuideSidebar() {
           })),
         },
         { text: 'Installation', link: '/guide/installation/' },
-        { text: 'Browser CDN', link: '/guide/browser-cdn/' },
+        { text: 'Autoloading', link: '/guide/autoloading/' },
         { text: 'Usage', link: '/guide/usage/' },
         { text: 'Contributing', link: '/guide/contributing/' },
         { text: 'ESLint Plugin', link: '/guide/eslint-plugin/' },
