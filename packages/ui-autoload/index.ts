@@ -22,7 +22,15 @@ export {
 } from './autoload.js';
 export {
   registerManifest,
+  registerManifests,
   readEagerTokens,
   type AutoloadRuntime,
   type RegisterManifestOptions,
 } from './runtime.js';
+export {
+  defineManifest,
+  type ModuleRecord,
+  type ComponentOverride,
+  type DefineManifestOptions,
+} from './define-manifest.js';
+export { fromMetaGlob, fromWebpackContext, type WebpackContextLike } from './modules.js';

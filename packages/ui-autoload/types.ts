@@ -19,16 +19,28 @@ export type ComponentLoadStrategy = 'eager' | 'visible' | 'idle' | 'interaction'
 export interface ComponentManifestEntry {
   /** The `data-component` token that identifies this component in the DOM. */
   token: string;
-  /** The npm package the component is exported from (informational; the loader stays agnostic). */
-  packageName: string;
-  /** The package subpath the component is exported from (informational). */
-  subpath: string;
-  /** The named export resolved by {@link ComponentManifestEntry.load} (informational). */
-  exportName: string;
+  /**
+   * The npm package the component is exported from. Optional informational metadata: the loader
+   * never reads it, so hand-authored or helper-built manifests may omit it.
+   */
+  packageName?: string;
+  /**
+   * The package subpath the component is exported from. Optional informational metadata never read
+   * by the loader.
+   */
+  subpath?: string;
+  /**
+   * The named export resolved by {@link ComponentManifestEntry.load}. Optional informational
+   * metadata never read by the loader.
+   */
+  exportName?: string;
   /** The default load strategy for this component, overridable per element with `data-load`. */
   strategy: ComponentLoadStrategy;
-  /** A grouping key shared by every component of the same family (informational). */
-  group: string;
+  /**
+   * A grouping key shared by every component of the same family. Optional informational metadata
+   * never read by the loader.
+   */
+  group?: string;
   /** The tokens of the constructor's configured child components, for recursive registration. */
   children?: readonly string[];
   /** Stylesheet paths associated with this component (informational). */
