@@ -1,3 +1,3 @@
-export * from './Figure.js';
-export * from './FigureTwicpics.js';
-export * from './FigureShopify.js';
+export { Figure, type FigureProps } from './Figure.js';
+export { FigureTwicpics, type FigureTwicpicsProps } from './FigureTwicpics.js';
+export { FigureShopify, type FigureShopifyProps } from './FigureShopify.js';

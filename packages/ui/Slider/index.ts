@@ -1,8 +1,8 @@
-export * from './AbstractSliderChild.js';
-export * from './Slider.js';
-export * from './SliderBtn.js';
-export * from './SliderCount.js';
-export * from './SliderDrag.js';
-export * from './SliderItem.js';
-export * from './SliderProgress.js';
-export * from './SliderDots.js';
+export { AbstractSliderChild, type AbstractSliderChildProps } from './AbstractSliderChild.js';
+export { Slider, type SliderModes, type SliderProps, type SliderStore } from './Slider.js';
+export { SliderBtn, type SliderBtnProps } from './SliderBtn.js';
+export { SliderCount, type SliderCountProps } from './SliderCount.js';
+export { SliderDrag, type SliderDragProps } from './SliderDrag.js';
+export { SliderItem, type SliderItemProps } from './SliderItem.js';
+export { SliderProgress, type SliderProgressProps } from './SliderProgress.js';
+export { SliderDots, type SliderDotsProps } from './SliderDots.js';

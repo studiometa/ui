@@ -1,3 +1,11 @@
-export * from './Fetch.js';
-export * from './FetchShopifyPartial.js';
-export * from './FetchShopifySection.js';
+export { Fetch, type FetchConstructor, type FetchProps } from './Fetch.js';
+export {
+  FetchShopifyPartial,
+  type FetchShopifyPartialConstructor,
+  type FetchShopifyPartialProps,
+} from './FetchShopifyPartial.js';
+export {
+  FetchShopifySection,
+  type FetchShopifySectionConstructor,
+  type FetchShopifySectionProps,
+} from './FetchShopifySection.js';

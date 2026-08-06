@@ -1,2 +1,2 @@
-export * from './Toast.js';
-export * from './Toaster.js';
+export { Toast, type ToastProps } from './Toast.js';
+export { Toaster, type ToasterProps, type ToasterShowOptions } from './Toaster.js';

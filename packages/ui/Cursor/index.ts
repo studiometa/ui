@@ -1,1 +1,1 @@
-export * from './Cursor.js';
+export { Cursor, type CursorProps } from './Cursor.js';

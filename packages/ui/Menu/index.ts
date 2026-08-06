@@ -1,3 +1,3 @@
-export * from './Menu.js';
-export * from './MenuBtn.js';
-export * from './MenuList.js';
+export { Menu, type MenuProps } from './Menu.js';
+export { MenuBtn } from './MenuBtn.js';
+export { MenuList, type MenuListProps } from './MenuList.js';

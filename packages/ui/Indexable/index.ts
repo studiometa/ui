@@ -1,1 +1,1 @@
-export * from './Indexable.js';
+export { Indexable } from './Indexable.js';

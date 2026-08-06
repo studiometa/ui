@@ -1,1 +1,1 @@
-export * from './ScrollReveal.js';
+export { ScrollReveal, type ScrollRevealProps } from './ScrollReveal.js';
