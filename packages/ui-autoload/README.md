@@ -17,8 +17,8 @@ npm install @studiometa/ui-autoload
 Import one entry per component package you use. Importing an entry registers that package's manifest with the shared runtime and starts discovery — the import is the whole contract, there is nothing to call:
 
 ```js
-import '@studiometa/ui-autoload/ui';          // auto-load @studiometa/ui components
-import '@studiometa/ui-autoload/ui-mapbox';   // auto-load @studiometa/ui-mapbox components
+import '@studiometa/ui-autoload/ui'; // auto-load @studiometa/ui components
+import '@studiometa/ui-autoload/ui-mapbox'; // auto-load @studiometa/ui-mapbox components
 ```
 
 Importing both entries at the top of a module registers both manifests before the runtime starts, so they coalesce into a single loader over the composed set — never two loaders both scanning the DOM.
@@ -101,13 +101,17 @@ const manifest = defineManifest({
 registerManifests(uiManifest, manifest);
 ```
 
-The token is derived from the filename — `MyWidget.ts` becomes the `MyWidget` token, and a file named `index.ts` takes its parent directory name (`Foo/index.ts` becomes `Foo`). Override any derived token — its strategy, group, resolved export name, or the token itself — through the `components` map, keyed by the derived token:
+The token is derived from the filename — `MyComponent.ts` becomes the `MyComponent` token, and a file named `index.ts` takes its parent directory name (`Foo/index.ts` becomes `Foo`). Override any derived token — its strategy, group, resolved export name, or the token itself — through the `components` map, keyed by the derived token:
 
 ```js
 defineManifest({
   modules: fromMetaGlob(import.meta.glob('./components/*/*.ts')),
   components: {
-    MyWidget: { strategy: 'idle', exportName: 'Widget', children: ['MyWidgetItem'] },
+    MyComponent: {
+      strategy: 'idle',
+      exportName: 'SpecialComponent',
+      children: ['MyComponentItem'],
+    },
   },
 });
 ```

@@ -76,7 +76,7 @@ import { manifest as mapboxManifest } from '@studiometa/ui-mapbox/manifest';
 
 const custom = defineManifest({
   packageName: '@my/app',
-  modules: fromMetaGlob(import.meta.glob('./widgets/*/*.ts')),
+  modules: fromMetaGlob(import.meta.glob('./components/*/*.ts')),
 });
 
 registerManifests(uiManifest, mapboxManifest, custom);
@@ -99,10 +99,10 @@ const manifest = defineManifest({
   packageName: '@my/app',
   strategy: 'visible',
   modules: fromWebpackContext(
-    import.meta.webpackContext('./widgets', { recursive: true, regExp: /\.ts$/, mode: 'lazy' }),
+    import.meta.webpackContext('./components', { recursive: true, regExp: /\.ts$/, mode: 'lazy' }),
   ),
   components: {
-    MyWidget: { strategy: 'idle', children: ['MyWidgetItem'] },
+    MyComponent: { strategy: 'idle', children: ['MyComponentItem'] },
   },
 });
 ```
@@ -120,7 +120,7 @@ Normalizes the record returned by Vite's `import.meta.glob('./x/*.ts')` into a [
 ```js
 import { fromMetaGlob } from '@studiometa/ui-autoload';
 
-const modules = fromMetaGlob(import.meta.glob('./widgets/*/*.ts'));
+const modules = fromMetaGlob(import.meta.glob('./components/*/*.ts'));
 ```
 
 ## fromWebpackContext
@@ -135,7 +135,7 @@ Normalizes a webpack context — the value returned by `import.meta.webpackConte
 import { fromWebpackContext } from '@studiometa/ui-autoload';
 
 const modules = fromWebpackContext(
-  import.meta.webpackContext('./widgets', { recursive: true, regExp: /\.ts$/, mode: 'lazy' }),
+  import.meta.webpackContext('./components', { recursive: true, regExp: /\.ts$/, mode: 'lazy' }),
 );
 ```
 

@@ -16,7 +16,7 @@ import { defineManifest, fromMetaGlob } from '@studiometa/ui-autoload';
 const manifest = defineManifest({
   packageName: '@my/app',
   strategy: 'visible',
-  modules: fromMetaGlob(import.meta.glob('./widgets/*/*.ts')),
+  modules: fromMetaGlob(import.meta.glob('./components/*/*.ts')),
 });
 ```
 

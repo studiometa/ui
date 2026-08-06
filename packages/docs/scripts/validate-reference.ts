@@ -225,8 +225,12 @@ collectMarkdown(docsRoot);
 
 for (const file of markdownFiles) {
   const content = readFileSync(file, 'utf8');
+  // Ban legacy absolute `/components/…` doc-route links (the old site's component
+  // pages), but allow `/reference/components/` and relative code paths like
+  // `import.meta.glob('./components/*.ts')` — a leading `.` marks a filesystem glob,
+  // never a legacy route.
   report(
-    !/(?<!\/reference)\/components\//.test(content),
+    !/(?<!\/reference)(?<!\.)\/components\//.test(content),
     `Legacy /components/ link remains in ${file}`,
   );
 

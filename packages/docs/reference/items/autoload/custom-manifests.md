@@ -26,8 +26,8 @@ const manifest = defineManifest({
   packageName: '@my/app',
   strategy: 'visible',
   modules: {
-    './widgets/MyWidget.ts': () => import('./widgets/MyWidget.ts'),
-    './widgets/MyMenu.ts': () => import('./widgets/MyMenu.ts'),
+    './components/MyComponent.ts': () => import('./components/MyComponent.ts'),
+    './components/MyMenu.ts': () => import('./components/MyMenu.ts'),
   },
 });
 ```
@@ -36,21 +36,21 @@ Writing the `modules` record by hand quickly becomes tedious, so in practice you
 
 ### Token derivation
 
-The `data-component` token is derived from each module key: the basename without its extension, or the parent directory name when the basename is `index`. So `./widgets/MyWidget.ts` becomes the `MyWidget` token, and `./widgets/Foo/index.ts` becomes `Foo`. Name your files after the token you want in the markup and there is nothing else to configure.
+The `data-component` token is derived from each module key: the basename without its extension, or the parent directory name when the basename is `index`. So `./components/MyComponent.ts` becomes the `MyComponent` token, and `./components/Foo/index.ts` becomes `Foo`. Name your files after the token you want in the markup and there is nothing else to configure.
 
 ### Export resolution
 
-The generated `load()` resolves the named export matching the token, falling back to the module's `default` export. Both of these resolve to the same `MyWidget` token:
+The generated `load()` resolves the named export matching the token, falling back to the module's `default` export. Both of these resolve to the same `MyComponent` token:
 
 ```js
-// MyWidget.ts — named export matching the token
-export class MyWidget extends Base {
-  static config = { name: 'MyWidget' };
+// MyComponent.ts — named export matching the token
+export class MyComponent extends Base {
+  static config = { name: 'MyComponent' };
 }
 
-// MyWidget.ts — default export, resolved as a fallback
-export default class MyWidget extends Base {
-  static config = { name: 'MyWidget' };
+// MyComponent.ts — default export, resolved as a fallback
+export default class MyComponent extends Base {
+  static config = { name: 'MyComponent' };
 }
 ```
 
@@ -63,14 +63,14 @@ The optional `components` map tweaks individual entries, keyed by the **derived*
 ```js
 const manifest = defineManifest({
   strategy: 'eager',
-  modules: fromMetaGlob(import.meta.glob('./widgets/*/*.ts')),
+  modules: fromMetaGlob(import.meta.glob('./components/*/*.ts')),
   components: {
     // Load this one lazily and pull in a child it configures.
     Gallery: { strategy: 'idle', children: ['GalleryItem'] },
-    // The file is Widget.ts but the exported class is `SpecialWidget`.
-    Widget: { exportName: 'SpecialWidget' },
+    // The file is Card.ts but the exported class is `SpecialCard`.
+    Card: { exportName: 'SpecialCard' },
     // Rename the token exposed in the markup.
-    Legacy: { token: 'LegacyWidget' },
+    Legacy: { token: 'LegacyComponent' },
   },
 });
 ```
@@ -85,7 +85,7 @@ The `strategy`, `group` and `exportName` overrides replace the option-level or d
 
 ### Duplicate tokens
 
-When two module keys derive the same token — for example `./a/Widget.ts` and `./b/Widget.ts` — a warning is logged under the `[@studiometa/ui-autoload]` prefix and the later key wins. Keep component filenames unique across the folders you glob, or disambiguate with a `token` override.
+When two module keys derive the same token — for example `./a/Card.ts` and `./b/Card.ts` — a warning is logged under the `[@studiometa/ui-autoload]` prefix and the later key wins. Keep component filenames unique across the folders you glob, or disambiguate with a `token` override.
 
 ## Feeding a bundler glob
 
@@ -101,7 +101,7 @@ import { defineManifest, fromMetaGlob } from '@studiometa/ui-autoload';
 const manifest = defineManifest({
   packageName: '@my/app',
   strategy: 'visible',
-  modules: fromMetaGlob(import.meta.glob('./widgets/*/*.ts')),
+  modules: fromMetaGlob(import.meta.glob('./components/*/*.ts')),
 });
 ```
 
@@ -116,12 +116,12 @@ const manifest = defineManifest({
   packageName: '@my/app',
   strategy: 'visible',
   modules: fromWebpackContext(
-    import.meta.webpackContext('./widgets', { recursive: true, regExp: /\.ts$/, mode: 'lazy' }),
+    import.meta.webpackContext('./components', { recursive: true, regExp: /\.ts$/, mode: 'lazy' }),
   ),
 });
 ```
 
-A broad glob is cheap: `defineManifest` only wraps each match in a lazy importer, and an entry's module is fetched solely when a matching token actually appears in the DOM and its strategy fires. Matching a whole `widgets` directory does not eagerly load anything.
+A broad glob is cheap: `defineManifest` only wraps each match in a lazy importer, and an entry's module is fetched solely when a matching token actually appears in the DOM and its strategy fires. Matching a whole `components` directory does not eagerly load anything.
 
 ## Registering alongside the packaged manifests
 
@@ -136,14 +136,14 @@ const manifest = defineManifest({
   packageName: '@my/app',
   strategy: 'visible',
   modules: fromWebpackContext(
-    import.meta.webpackContext('./widgets', { recursive: true, regExp: /\.ts$/, mode: 'lazy' }),
+    import.meta.webpackContext('./components', { recursive: true, regExp: /\.ts$/, mode: 'lazy' }),
   ),
 });
 
 registerManifests(uiManifest, mapboxManifest, manifest);
 ```
 
-That single call registers all three manifests before the runtime's coalesced start flushes, so exactly one loader scans the DOM over the composed set. Your `./widgets/MyWidget.ts` now mounts wherever `data-component="MyWidget"` appears, right next to the packaged `@studiometa/ui` and `@studiometa/ui-mapbox` components.
+That single call registers all three manifests before the runtime's coalesced start flushes, so exactly one loader scans the DOM over the composed set. Your `./components/MyComponent.ts` now mounts wherever `data-component="MyComponent"` appears, right next to the packaged `@studiometa/ui` and `@studiometa/ui-mapbox` components.
 
 ## Constraints and gotchas
 

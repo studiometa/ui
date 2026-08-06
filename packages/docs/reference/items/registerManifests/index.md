@@ -17,7 +17,7 @@ import { manifest as mapboxManifest } from '@studiometa/ui-mapbox/manifest';
 
 const custom = defineManifest({
   packageName: '@my/app',
-  modules: fromMetaGlob(import.meta.glob('./widgets/*/*.ts')),
+  modules: fromMetaGlob(import.meta.glob('./components/*/*.ts')),
 });
 
 registerManifests(uiManifest, mapboxManifest, custom);
