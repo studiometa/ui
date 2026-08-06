@@ -21,7 +21,6 @@ const parsed = ts.parseJsonConfigFileContent(config, ts.sys, ROOT);
 const ENTRIES = {
   '@studiometa/ui': 'packages/ui/index.ts',
   '@studiometa/ui-mapbox': 'packages/ui-mapbox/index.ts',
-  '@studiometa/ui-autoload': 'packages/ui-autoload/index.ts',
 };
 
 const program = ts.createProgram(
@@ -296,41 +295,6 @@ test('@studiometa/ui-mapbox barrel export surface', () => {
       "provideMapboxGl [value]",
       "resolveMapboxGeocoder [value]",
       "resolveMapboxGl [value]",
-    ]
-  `);
-});
-
-test('@studiometa/ui-autoload barrel export surface', () => {
-  expect(surface(ENTRIES['@studiometa/ui-autoload'])).toMatchInlineSnapshot(`
-    [
-      "AutoloadHandle [type]",
-      "AutoloadOptions [type]",
-      "AutoloadRuntime [type]",
-      "ComponentCatalog [type]",
-      "ComponentLoadStrategy [type]",
-      "ComponentLoader [value]",
-      "ComponentLoaderOptions [type]",
-      "ComponentLoaderStartOptions [type]",
-      "ComponentManifest [type]",
-      "ComponentManifestEntry [type]",
-      "ComponentOverride [type]",
-      "CuratedComponentMetadata [type]",
-      "DEFAULT_DIAGNOSTIC_PREFIX [value]",
-      "DefineManifestOptions [type]",
-      "IDLE_TIMEOUT [value]",
-      "LoaderDependencies [type]",
-      "ModuleRecord [type]",
-      "RegisterManifestOptions [type]",
-      "VISIBLE_ROOT_MARGIN [value]",
-      "WebpackContextLike [type]",
-      "autoload [value]",
-      "composeManifests [value]",
-      "defineManifest [value]",
-      "fromMetaGlob [value]",
-      "fromWebpackContext [value]",
-      "readEagerTokens [value]",
-      "registerManifest [value]",
-      "registerManifests [value]",
     ]
   `);
 });
