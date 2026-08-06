@@ -1,39 +1,5 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
-
-/**
- * Build playground dependency configs for a workspace package from its `package.json` `exports`
- * map, so its barrel and subpaths bundle from LOCAL source (tsdown) instead of being hardcoded.
- * This is what lets the `@studiometa/ui-autoload` side-effect entries (`./ui`, `./ui-mapbox`) and the
- * per-package `manifest` modules they pull resolve from the working tree while developing new components.
- *
- * `relDir` is relative to this config (e.g. `'../ui'`). `include`, when given, restricts the SUBpaths
- * to that list (the barrel `.` is always emitted). It exists for `@studiometa/ui`, whose ~190
- * component subpaths are NOT needed here — the manifest lazy-loads them as relative chunks of its own
- * bundle — and each would otherwise be a separate tsdown build. Generic all-subpath bundling in one
- * multi-entry build belongs upstream in @studiometa/playground; this per-package loop is the starter.
- */
-function packageDeps(specifier, relDir, { include } = {}) {
-  const { exports = {} } = JSON.parse(readFileSync(resolve(`${relDir}/package.json`), 'utf8'));
-  const source = `${relDir}/**/*.ts`;
-  const seen = new Set();
-  const deps = [];
-  for (const [key, target] of Object.entries(exports)) {
-    if (key === './package.json' || key.includes('*') || typeof target !== 'string') continue;
-    if (key.endsWith('.js') && key !== '.') continue; // skip the `.js` alias of a subpath
-    const subpath = key === '.' ? '' : key.slice(1); // '.' → barrel, './manifest' → '/manifest'
-    if (include && key !== '.' && !include.includes(subpath)) continue;
-    if (seen.has(subpath)) continue;
-    seen.add(subpath);
-    deps.push({
-      specifier: `${specifier}${subpath}`,
-      source,
-      entry: `${relDir}/${target.replace(/^\.\//, '')}`,
-    });
-  }
-  return deps;
-}
 
 export default defineWebpackConfig({
   presets: [
@@ -76,16 +42,17 @@ export default defineWebpackConfig({
         { specifier: '@mapbox/mapbox-gl-geocoder', esmSh: { bundle: true } },
         '@studiometa/js-toolkit',
         '@studiometa/js-toolkit/utils',
-        // Workspace packages bundled from local source, derived from each package's `exports` map.
-        // ui / ui-mapbox contribute their barrel + `./manifest`; ui-autoload its barrel + the
-        // `./ui`/`./ui-mapbox` side-effect entries — the subpaths the autoload lazy-import chain
-        // needs. The manifests code-split (their `load: () => import(...)` calls), which requires
-        // `@studiometa/playground` >= 0.3.11 (its `PlaygroundDependenciesPlugin` preserves per-chunk
-        // filenames instead of flattening them to `index.js`). ui's ~190 component subpaths are NOT
-        // listed: the manifest bundle lazy-loads them as its own chunks, so no separate entry is needed.
-        ...packageDeps('@studiometa/ui', '../ui', { include: ['/manifest'] }),
-        ...packageDeps('@studiometa/ui-mapbox', '../ui-mapbox', { include: ['/manifest'] }),
-        ...packageDeps('@studiometa/ui-autoload', '../ui-autoload', { include: ['/ui', '/ui-mapbox'] }),
+        // Workspace packages bundled from local source so the playground reflects the working tree.
+        // `subpaths: true` reads each package's `package.json` `exports` map and builds every subpath
+        // as an entry of ONE code-split tsdown build (@studiometa/playground >= 0.3.12): modules shared
+        // between entries — component classes referenced by both the barrel and the `./manifest` lazy
+        // imports, or by a direct `@studiometa/ui/<Component>` import — are emitted once as a shared
+        // chunk and referenced by every entry, so there is a single runtime instance (no singleton /
+        // identity hazard). ui exposes its barrel + `./manifest` + every component subpath;
+        // ui-autoload exposes its barrel + the `./ui`/`./ui-mapbox` side-effect entries.
+        { specifier: '@studiometa/ui', source: '../ui/**/*.ts', subpaths: true },
+        { specifier: '@studiometa/ui-mapbox', source: '../ui-mapbox/**/*.ts', subpaths: true },
+        { specifier: '@studiometa/ui-autoload', source: '../ui-autoload/**/*.ts', subpaths: true },
       ],
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
