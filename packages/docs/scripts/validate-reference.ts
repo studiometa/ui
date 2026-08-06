@@ -178,6 +178,10 @@ const publicEntryPoints = [
     path: resolve(repositoryRoot, 'packages/ui-mapbox/index.ts'),
     package: 'npm:@studiometa/ui-mapbox',
   },
+  {
+    path: resolve(repositoryRoot, 'packages/ui-autoload/index.ts'),
+    package: 'npm:@studiometa/ui-autoload',
+  },
 ] as const;
 const program = ts.createProgram(
   publicEntryPoints.map((entry) => entry.path),

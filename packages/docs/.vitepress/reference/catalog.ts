@@ -12,6 +12,7 @@ import { publicContractSymbols } from './public-contracts.ts';
 const uiPackage = 'npm:@studiometa/ui' as const;
 const twigPackage = 'composer:studiometa/ui' as const;
 const mapboxPackage = 'npm:@studiometa/ui-mapbox' as const;
+const autoloadPackage = 'npm:@studiometa/ui-autoload' as const;
 
 export const kindLabels: Record<ReferenceKind, string> = {
   component: 'Components',
@@ -79,6 +80,20 @@ function mapboxSymbol(
     kind,
     package: mapboxPackage,
     importPath: '@studiometa/ui-mapbox',
+    href,
+  };
+}
+
+function autoloadSymbol(
+  name: string,
+  href: string,
+  kind: ReferenceSymbolKind = 'helper',
+): ReferenceSymbol {
+  return {
+    name,
+    kind,
+    package: autoloadPackage,
+    importPath: '@studiometa/ui-autoload',
     href,
   };
 }
@@ -1428,6 +1443,38 @@ export const referenceCatalog = [
     ],
     aliases: ['scheduler'],
     related: ['view-transition'],
+  },
+  {
+    id: 'autoload',
+    title: 'autoload',
+    summary:
+      'Compose component manifests and drive the declarative autoloader programmatically.',
+    kind: 'helper',
+    path: '/reference/items/autoload/',
+    family: 'loading',
+    primaryTask: 'loading',
+    tags: ['autoload', 'manifest', 'loader', 'declarative', 'cdn'],
+    surfaces: ['js'],
+    packages: [autoloadPackage],
+    status: 'stable',
+    symbols: [
+      autoloadSymbol('autoload', '/reference/items/autoload/js-api#autoload'),
+      autoloadSymbol('composeManifests', '/reference/items/autoload/js-api#composemanifests'),
+      autoloadSymbol('registerManifest', '/reference/items/autoload/js-api#registermanifest'),
+      autoloadSymbol('readEagerTokens', '/reference/items/autoload/js-api#readeagertokens'),
+      autoloadSymbol('ComponentLoader', '/reference/items/autoload/js-api#componentloader'),
+      autoloadSymbol(
+        'DEFAULT_DIAGNOSTIC_PREFIX',
+        '/reference/items/autoload/js-api#constants',
+        'constant',
+      ),
+      autoloadSymbol(
+        'VISIBLE_ROOT_MARGIN',
+        '/reference/items/autoload/js-api#constants',
+        'constant',
+      ),
+      autoloadSymbol('IDLE_TIMEOUT', '/reference/items/autoload/js-api#constants', 'constant'),
+    ],
   },
 ] satisfies ReferenceCatalogEntry[];
 

@@ -1,6 +1,6 @@
 # @studiometa/ui-autoload
 
-Generic, side-effect-free declarative autoloader for [`@studiometa/ui`](https://ui.studiometa.dev) component manifests. It discovers components from `data-component` attributes and loads each component's JavaScript on demand, and behaves identically whether you install it from npm and bundle it or load it from the [browser CDN](https://ui.studiometa.dev/guide/browser-cdn/).
+Generic, side-effect-free declarative autoloader for [`@studiometa/ui`](https://ui.studiometa.dev) component manifests. It discovers components from `data-component` attributes and loads each component's JavaScript on demand, and behaves identically whether you install it from npm and bundle it or load it from an ESM CDN such as [esm.sh](https://esm.sh). See the [Autoloading guide](https://ui.studiometa.dev/guide/autoloading/).
 
 ## Installation
 
@@ -23,12 +23,12 @@ import '@studiometa/ui-autoload/ui-mapbox';   // auto-load @studiometa/ui-mapbox
 
 Importing both entries at the top of a module registers both manifests before the runtime starts, so they coalesce into a single loader over the composed set — never two loaders both scanning the DOM.
 
-The same entries resolve from the CDN, where the package is served from its own versioned tree:
+The same entries resolve from an ESM CDN, which serves the package as native ES modules and resolves its peer dependencies for you:
 
 ```html
 <script type="module">
-  import 'https://cdn.studiometa.dev/ui-autoload@next/ui';
-  import 'https://cdn.studiometa.dev/ui-autoload@next/ui-mapbox';
+  import 'https://esm.sh/@studiometa/ui-autoload@next/ui';
+  import 'https://esm.sh/@studiometa/ui-autoload@next/ui-mapbox';
 </script>
 ```
 
@@ -62,11 +62,11 @@ handle.stop(); // stop discovery and release every scheduled trigger
 
 `autoload({ manifests, root?, eager? })` composes the manifests, starts discovery, and returns a handle exposing the underlying `loader`, the composed `manifest`, and a `stop()` method. When two manifests declare the same token, the manifest that appears later in the array wins. `composeManifests(...)` performs that same merge without starting a loader.
 
-Each component package exports its manifest as a named `manifest` export — `@studiometa/ui/manifest` and `@studiometa/ui-mapbox/manifest` (served on the CDN at `/ui@<version>/manifest.js` and `/ui-mapbox@<version>/manifest.js`). The side-effect entries above are thin wrappers that import a package's manifest and register it.
+Each component package exports its manifest as a named `manifest` export — `@studiometa/ui/manifest` and `@studiometa/ui-mapbox/manifest`. The side-effect entries above are thin wrappers that import a package's manifest and register it.
 
 ## Documentation
 
-See the [Browser CDN guide](https://ui.studiometa.dev/guide/browser-cdn/) for loading strategies, component discovery, diagnostics, and limitations.
+See the [Autoloading guide](https://ui.studiometa.dev/guide/autoloading/) for loading strategies, component discovery, diagnostics, and limitations.
 
 ## License
 
