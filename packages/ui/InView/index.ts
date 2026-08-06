@@ -1,2 +1,2 @@
-export * from './InView.js';
-export * from './InViewOnce.js';
+export { InView } from './InView.js';
+export { InViewOnce } from './InViewOnce.js';

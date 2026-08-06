@@ -1,1 +1,1 @@
-export * from './Dialog.js';
+export { Dialog, type DialogProps } from './Dialog.js';

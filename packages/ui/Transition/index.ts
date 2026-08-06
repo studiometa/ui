@@ -1,1 +1,1 @@
-export * from './Transition.js';
+export { Transition, type TransitionConstructor } from './Transition.js';

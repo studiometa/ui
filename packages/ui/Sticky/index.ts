@@ -1,1 +1,1 @@
-export * from './Sticky.js';
+export { Sticky, type StickyProps } from './Sticky.js';

@@ -1,1 +1,1 @@
-export * from './CircularMarquee.js';
+export { CircularMarquee, type CircularMarqueeProps } from './CircularMarquee.js';

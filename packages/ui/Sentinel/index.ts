@@ -1,1 +1,1 @@
-export * from './Sentinel.js';
+export { Sentinel } from './Sentinel.js';

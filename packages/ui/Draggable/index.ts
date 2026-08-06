@@ -1,1 +1,1 @@
-export * from './Draggable.js';
+export { Draggable, type DraggableProps } from './Draggable.js';

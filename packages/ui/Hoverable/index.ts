@@ -1,1 +1,1 @@
-export * from './Hoverable.js';
+export { Hoverable, type HoverableProps } from './Hoverable.js';

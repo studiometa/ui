@@ -1,1 +1,1 @@
-export * from './AnchorScrollTo.js';
+export { AnchorScrollTo, type AnchorScrollToProps } from './AnchorScrollTo.js';
