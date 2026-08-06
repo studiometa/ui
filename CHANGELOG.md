@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.10.0-beta.4](https://github.com/studiometa/ui/compare/1.10.0-beta.3..1.10.0-beta.4) (2026-08-06)
+
+### Added
+
+- **@studiometa/ui-autoload:** add helpers to build and register a custom component manifest, so an application can autoload its own js-toolkit components alongside the packaged ones. `defineManifest({ modules, … })` turns a record of lazy importers into a manifest (it derives each `data-component` token from the module path and resolves the matching export), `fromMetaGlob()` and `fromWebpackContext()` adapt a Vite `import.meta.glob` or a webpack `import.meta.webpackContext` into that record, and `registerManifests(…)` registers several manifests at once with the shared runtime (the last manifest wins on token collisions). The informational `packageName`, `subpath`, `exportName` and `group` fields of a manifest entry are now optional ([#614](https://github.com/studiometa/ui/pull/614))
+
 ### Changed
 
 - **@studiometa/ui, @studiometa/ui-mapbox:** replace every `export *` barrel re-export with explicit named `export { ... }` (values and `type`-only specifiers) so the public surface is statically analyzable. This lets bundlers and esm.sh keep every export name and tree-shake reliably, matching the same change made in `@studiometa/js-toolkit` 3.8.1. The exported API is unchanged — a type-checker snapshot of each barrel's full surface guards against regressions ([#611](https://github.com/studiometa/ui/pull/611))
