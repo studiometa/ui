@@ -40,8 +40,7 @@ export default defineWebpackConfig({
         'morphdom',
         { specifier: 'mapbox-gl', esmSh: { bundle: true } },
         { specifier: '@mapbox/mapbox-gl-geocoder', esmSh: { bundle: true } },
-        '@studiometa/js-toolkit',
-        '@studiometa/js-toolkit/utils',
+        { specifier: '@studiometa/js-toolkit', subpaths: true },
         // Workspace packages bundled from local source so the playground reflects the working tree.
         // `subpaths: true` reads each package's `package.json` `exports` map and builds every subpath
         // as an entry of ONE code-split tsdown build (@studiometa/playground >= 0.3.12): modules shared
