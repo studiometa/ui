@@ -192,3 +192,24 @@ export function registerManifest(
   scheduleStart(runtime, resolved);
   return runtime;
 }
+
+/**
+ * Register several manifests with the shared runtime in order, then let the single coalesced start
+ * flush over the composed set.
+ *
+ * This is the convenience wrapper an app uses to layer its own components on top of the packaged
+ * ones: `registerManifests(uiManifest, mapboxManifest, custom)`. Because {@link registerManifest}
+ * pushes each manifest onto the shared runtime in call order and the loader composes them
+ * later-wins, the LAST manifest wins on token collisions — so a custom manifest passed last can
+ * override any packaged component that shares a token.
+ *
+ * Returns the shared runtime from the final registration, or `undefined` when a conflicting version
+ * already owns the runtime (or when no manifest was passed).
+ */
+export function registerManifests(...manifests: ComponentManifest[]): AutoloadRuntime | undefined {
+  let runtime: AutoloadRuntime | undefined;
+  for (const manifest of manifests) {
+    runtime = registerManifest(manifest);
+  }
+  return runtime;
+}

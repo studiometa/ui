@@ -2,6 +2,7 @@ import { Base, getInstances } from '@studiometa/js-toolkit';
 import {
   readEagerTokens,
   registerManifest,
+  registerManifests,
   type AutoloadRuntime,
   type ComponentManifest,
   type ComponentManifestEntry,
@@ -269,5 +270,48 @@ describe('registerManifest', () => {
     });
     await settle();
     expect(register).toHaveBeenCalledWith(First, 'First');
+  });
+});
+
+describe('registerManifests', () => {
+  it('registers every manifest in order into the shared runtime', async () => {
+    document.body.innerHTML = `
+      <div data-component="First"></div>
+      <div data-component="Second"></div>
+    `;
+    const firstLoad = vi.fn(async () => First);
+    const secondLoad = vi.fn(async () => Second);
+
+    registerManifests(
+      { First: entry('First', { load: firstLoad }) },
+      { Second: entry('Second', { load: secondLoad }) },
+    );
+    await settleToolkit();
+
+    expect(firstLoad).toHaveBeenCalledOnce();
+    expect(secondLoad).toHaveBeenCalledOnce();
+    expect([...getInstances(First)]).toHaveLength(1);
+    expect([...getInstances(Second)]).toHaveLength(1);
+  });
+
+  it('lets the last manifest win on a token collision', async () => {
+    document.body.innerHTML = '<div data-component="Shared"></div>';
+    const baseLoad = vi.fn(async () => First);
+    const overrideLoad = vi.fn(async () => Second);
+
+    registerManifests(
+      { Shared: entry('Shared', { load: baseLoad }) },
+      { Shared: entry('Shared', { load: overrideLoad }) },
+    );
+    await settleToolkit();
+
+    expect(baseLoad).not.toHaveBeenCalled();
+    expect(overrideLoad).toHaveBeenCalledOnce();
+    expect([...getInstances(Second)]).toHaveLength(1);
+    expect([...getInstances(First)]).toHaveLength(0);
+  });
+
+  it('returns undefined when no manifest is passed', () => {
+    expect(registerManifests()).toBeUndefined();
   });
 });
