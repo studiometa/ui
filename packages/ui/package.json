@@ -6,11 +6,16 @@
     "access": "public"
   },
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./autoload.ts",
+    "./autoload.js"
+  ],
   "main": "index.ts",
   "types": "index.d.ts",
   "exports": {
     ".": "./index.ts",
+    "./autoload": "./autoload.ts",
+    "./autoload.js": "./autoload.ts",
     "./Accordion": "./Accordion/Accordion.ts",
     "./Accordion.js": "./Accordion/Accordion.ts",
     "./AccordionItem": "./Accordion/AccordionItem.ts",

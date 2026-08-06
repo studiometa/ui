@@ -6,11 +6,16 @@
     "access": "public"
   },
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./autoload.ts",
+    "./autoload.js"
+  ],
   "main": "index.ts",
   "types": "index.d.ts",
   "exports": {
     ".": "./index.ts",
+    "./autoload": "./autoload.ts",
+    "./autoload.js": "./autoload.ts",
     "./manifest": "./manifest.ts",
     "./manifest.js": "./manifest.ts",
     "./*.js": "./*.ts",

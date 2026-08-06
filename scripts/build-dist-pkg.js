@@ -77,6 +77,11 @@ function listReexportedFiles(dir) {
 function buildExports(componentDirs) {
   const exportsMap = {
     '.': { types: './index.d.ts', import: './index.js' },
+    // The `./autoload` side-effect entry registers the package manifest with the js-toolkit
+    // autoload runtime. It is an explicit public entry (a top-level module, not a component
+    // directory), so it gets its own key rather than relying on the greedy `./*` wildcard.
+    './autoload': { types: './autoload.d.ts', import: './autoload.js' },
+    './autoload.js': { types: './autoload.d.ts', import: './autoload.js' },
   };
 
   // For each directory, emit one flat top-level subpath per module its
