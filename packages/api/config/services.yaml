@@ -4,56 +4,54 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    # Directory holding the built VitePress documentation (llms.txt + per-page
-    # Markdown). On the deployed site the docs dist is the web root and this app
-    # is symlinked into it at `/api`, so the dist lives one level up from here.
-    app.docs_dist_dir: '%env(default:app.docs_dist_dir.default:DOCS_DIST_DIR)%'
-    app.docs_dist_dir.default: '%kernel.project_dir%/../docs/.vitepress/dist'
-    # Base URL of the playground the generated links point to.
-    app.playground_base_url: '%env(default:app.playground_base_url.default:PLAYGROUND_BASE_URL)%'
-    app.playground_base_url.default: 'https://ui.studiometa.dev/play'
+  # Directory holding the built VitePress documentation (llms.txt + per-page
+  # Markdown). On the deployed site the docs dist is the web root and this app
+  # is symlinked into it at `/api`, so the dist lives one level up from here.
+  app.docs_dist_dir: '%env(default:app.docs_dist_dir.default:DOCS_DIST_DIR)%'
+  app.docs_dist_dir.default: '%kernel.project_dir%/../docs/.vitepress/dist'
+  # Base URL of the playground the generated links point to.
+  app.playground_base_url: '%env(default:app.playground_base_url.default:PLAYGROUND_BASE_URL)%'
+  app.playground_base_url.default: 'https://ui.studiometa.dev/play'
 
 services:
-    # default configuration for services in *this* file
-    _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+  # default configuration for services in *this* file
+  _defaults:
+    autowire: true # Automatically injects dependencies in your services.
+    autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
-    # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
-    App\:
-        resource: '../src/'
-        exclude:
-            - '../src/DependencyInjection/'
-            - '../src/Entity/'
-            - '../src/Kernel.php'
-            - '../src/Tests/'
+  # makes classes in src/ available to be used as services
+  # this creates a service per class whose id is the fully-qualified class name
+  App\:
+    resource: '../src/'
+    exclude:
+      - '../src/DependencyInjection/'
+      - '../src/Entity/'
+      - '../src/Kernel.php'
+      - '../src/Tests/'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
-    studiometa.ui_extension:
-        class: Studiometa\Ui\Extension
-        public: false
-        arguments:
-            - '@twig.loader'
-            - '%kernel.project_dir%/../ui/'
-            - '%kernel.project_dir%/../ui/svg'
-        tags:
-            - { name: twig.extension }
+  # add more service definitions when explicit configuration is needed
+  # please note that last definitions always *replace* previous ones
+  studiometa.ui_extension:
+    class: Studiometa\Ui\Extension
+    public: false
+    arguments:
+      - '@twig.loader'
+      - '%kernel.project_dir%/../ui/'
+      - '%kernel.project_dir%/../ui/svg'
+    tags:
+      - { name: twig.extension }
 
-    studiometa.twig_string_loader:
-        class: Twig\Extension\StringLoaderExtension
-        public: true
-        tags:
-            - { name: twig.extension }
+  studiometa.twig_string_loader:
+    class: Twig\Extension\StringLoaderExtension
+    public: true
+    tags:
+      - { name: twig.extension }
 
-    # MCP services with scalar arguments that cannot be autowired.
-    App\Mcp\DocsRepository:
-        arguments:
-            $docsDistDir: '%app.docs_dist_dir%'
+  # MCP services with scalar arguments that cannot be autowired.
+  App\Mcp\DocsRepository:
+    arguments:
+      $docsDistDir: '%app.docs_dist_dir%'
 
-    App\Mcp\PlaygroundUrlBuilder:
-        arguments:
-            $baseUrl: '%app.playground_base_url%'
-
-
+  App\Mcp\PlaygroundUrlBuilder:
+    arguments:
+      $baseUrl: '%app.playground_base_url%'

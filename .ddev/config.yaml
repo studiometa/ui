@@ -1,25 +1,25 @@
 name: ui
 type: php
 docroot: packages/docs/.vitepress/dist/
-php_version: "8.3"
+php_version: '8.3'
 webserver_type: nginx-fpm
 xdebug_enabled: false
 additional_hostnames: []
 additional_fqdns: []
 database:
-    type: mariadb
-    version: "10.11"
+  type: mariadb
+  version: '10.11'
 bind_all_interfaces: true
 hooks:
-    post-start:
-        - composer: install -d packages/api/
-        - exec: mkdir -p packages/docs/.vitepress/dist && ln -sfn ../../../api/public packages/docs/.vitepress/dist/api
+  post-start:
+    - composer: install -d packages/api/
+    - exec: mkdir -p packages/docs/.vitepress/dist && ln -sfn ../../../api/public packages/docs/.vitepress/dist/api
 omit_containers: [db]
 use_dns_when_possible: true
-composer_version: "2"
+composer_version: '2'
 web_environment:
-    - PLAYGROUND_BASE_URL=https://ui.ddev.site/play
-nodejs_version: "24"
+  - PLAYGROUND_BASE_URL=https://ui.ddev.site/play
+nodejs_version: '24'
 corepack_enable: false
 
 # Key features of DDEV's config.yaml:

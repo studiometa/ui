@@ -1,18 +1,18 @@
 mcp:
-    app: '@studiometa/ui'
-    version: '1.0.0'
-    description: 'Discover the @studiometa/ui Reference and generate playgrounds.'
-    instructions: |
-        This server exposes the @studiometa/ui architecture and every documented component, primitive, decorator and helper so you can understand the public API and build playgrounds.
-        Call `list_concepts` and `get_concept` for package, runtime, composition and customization guidance. Call `list_reference_items`, then `get_reference_item` and `get_reference_item_examples`, for a specific public item. Use `build_playground_url` to turn Twig/HTML, JavaScript and CSS into a shareable, live playground link. The older component-named tools remain available as aliases.
-    client_transports:
-        http: true
-    http:
-        path: '/mcp'
-        # Served behind the `api.` host; allow the public documentation host to
-        # reach it. Adjust when the deployment host changes.
-        allowed_hosts:
-            - 'api.ui.studiometa.dev'
-            - 'ui.studiometa.dev'
-            - 'ui.ddev.site'
-            - 'localhost'
+  app: '@studiometa/ui'
+  version: '1.0.0'
+  description: 'Discover the @studiometa/ui Reference and generate playgrounds.'
+  instructions: |
+    This server exposes the @studiometa/ui architecture and every documented component, primitive, decorator and helper so you can understand the public API and build playgrounds.
+    Call `list_concepts` and `get_concept` for package, runtime, composition and customization guidance. Call `list_reference_items`, then `get_reference_item` and `get_reference_item_examples`, for a specific public item. Use `build_playground_url` to turn Twig/HTML, JavaScript and CSS into a shareable, live playground link. The older component-named tools remain available as aliases.
+  client_transports:
+    http: true
+  http:
+    path: '/mcp'
+    # Served behind the `api.` host; allow the public documentation host to
+    # reach it. Adjust when the deployment host changes.
+    allowed_hosts:
+      - 'api.ui.studiometa.dev'
+      - 'ui.studiometa.dev'
+      - 'ui.ddev.site'
+      - 'localhost'
