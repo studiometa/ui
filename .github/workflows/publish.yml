@@ -82,12 +82,6 @@ jobs:
         run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
         working-directory: packages/ui-mapbox/dist
 
-      - name: Build @studiometa/ui-autoload
-        run: npm run build -w @studiometa/ui-autoload
-      - name: Publish @studiometa/ui-autoload
-        run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
-        working-directory: packages/ui-autoload/dist
-
       - uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref }}

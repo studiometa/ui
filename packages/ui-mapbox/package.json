@@ -45,21 +45,16 @@
   "peerDependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.0.0",
     "@studiometa/js-toolkit": "^3.9.0-beta.0",
-    "@studiometa/ui-autoload": "^1.9.0",
     "mapbox-gl": "^3.0.0"
   },
   "peerDependenciesMeta": {
     "@mapbox/mapbox-gl-geocoder": {
-      "optional": true
-    },
-    "@studiometa/ui-autoload": {
       "optional": true
     }
   },
   "devDependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",
     "@studiometa/js-toolkit": "^3.9.0-beta.0",
-    "@studiometa/ui-autoload": "file:../ui-autoload",
     "@types/mapbox__mapbox-gl-geocoder": "^5.0.0",
     "mapbox-gl": "^3.13.0",
     "tsdown": "0.21.5"

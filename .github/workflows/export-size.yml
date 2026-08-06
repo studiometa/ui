@@ -15,9 +15,9 @@ jobs:
       # Detect which packages the pull request affects. Each package re-runs when
       # its own sources, the build tooling it actually uses, the shared root
       # TypeScript config it extends, or the lockfile change. `scripts/**` builds
-      # only `@studiometa/ui` (into `packages/ui/dist`); `@studiometa/ui-mapbox` and
-      # `@studiometa/ui-autoload` are built by their own `packages/*/scripts/**`,
-      # already covered by their own globs.
+      # only `@studiometa/ui` (into `packages/ui/dist`); `@studiometa/ui-mapbox` is
+      # built by its own `packages/ui-mapbox/scripts/**`, already covered by its
+      # own glob.
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -31,10 +31,6 @@ jobs:
               - 'packages/ui-mapbox/**'
               - 'tsconfig*.json'
               - 'package-lock.json'
-            ui_autoload:
-              - 'packages/ui-autoload/**'
-              - 'tsconfig*.json'
-              - 'package-lock.json'
       # Build and measure only the affected packages. The export-size action
       # renders one comment with a section per path, so a single invocation with
       # the comma-joined paths avoids the comment clobbering that separate jobs
@@ -43,13 +39,12 @@ jobs:
       # package case is a command that already exists on `main`. When two or more
       # packages change we use the `build:export-size` script: `&&` runs under
       # npm's own shell, and its `if [ -d packages/<pkg> ]` guards skip a package
-      # that does not yet exist on the base branch (e.g. `@studiometa/ui-autoload`
-      # is absent from `main`), so the base-branch build stays green.
+      # that does not yet exist on the base branch, so the base-branch build stays
+      # green.
       - id: plan
         run: |
           ui='${{ steps.filter.outputs.ui }}'
           mapbox='${{ steps.filter.outputs.ui_mapbox }}'
-          autoload='${{ steps.filter.outputs.ui_autoload }}'
           paths=""
           add() {
             if [ -n "$paths" ]; then
@@ -61,15 +56,12 @@ jobs:
           count=0
           [ "$ui" = "true" ] && count=$((count + 1)) && add "packages/ui/dist"
           [ "$mapbox" = "true" ] && count=$((count + 1)) && add "packages/ui-mapbox/dist"
-          [ "$autoload" = "true" ] && count=$((count + 1)) && add "packages/ui-autoload/dist"
           if [ "$count" -ge 2 ]; then
             build="npm run build:export-size"
           elif [ "$ui" = "true" ]; then
             build="npm run build"
           elif [ "$mapbox" = "true" ]; then
             build="npm run build --workspace=@studiometa/ui-mapbox"
-          elif [ "$autoload" = "true" ]; then
-            build="npm run build --workspace=@studiometa/ui-autoload"
           fi
           {
             echo "build=$build"

@@ -21,7 +21,7 @@ export default defineWebpackConfig({
       loaders: {
         html: resolve('./lib/twig-loader.js'),
       },
-      // The workspace packages (ui, ui-mapbox, ui-autoload) are bundled from LOCAL source with
+      // The workspace packages (ui, ui-mapbox) are bundled from LOCAL source with
       // tsdown so the playground reflects the current working tree — essential for developing and
       // testing new components/features before they are published. This also emits same-origin
       // `.d.ts` (+ `_headers` with `X-TypeScript-Types`), so the editor gets full types without the
@@ -47,11 +47,10 @@ export default defineWebpackConfig({
         // between entries — component classes referenced by both the barrel and the `./manifest` lazy
         // imports, or by a direct `@studiometa/ui/<Component>` import — are emitted once as a shared
         // chunk and referenced by every entry, so there is a single runtime instance (no singleton /
-        // identity hazard). ui exposes its barrel + `./manifest` + every component subpath;
-        // ui-autoload exposes its barrel + the `./ui`/`./ui-mapbox` side-effect entries.
+        // identity hazard). ui exposes its barrel + `./manifest` + `./autoload` + every component
+        // subpath; ui-mapbox likewise exposes its barrel + `./manifest` + `./autoload`.
         { specifier: '@studiometa/ui', source: '../ui/**/*.ts', subpaths: true },
         { specifier: '@studiometa/ui-mapbox', source: '../ui-mapbox/**/*.ts', subpaths: true },
-        { specifier: '@studiometa/ui-autoload', source: '../ui-autoload/**/*.ts', subpaths: true },
       ],
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}

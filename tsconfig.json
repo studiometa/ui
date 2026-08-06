@@ -21,7 +21,6 @@
   "include": [
     "packages/ui/**/*.ts",
     "packages/ui-mapbox/**/*.ts",
-    "packages/ui-autoload/**/*.ts",
     "packages/tests/**/*.ts",
     "scripts/**/*.ts"
   ]
