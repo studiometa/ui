@@ -15,7 +15,8 @@
     "paths": {
       "#private/*": ["./packages/ui/*"],
       "#test-utils": ["./packages/tests/__utils__/index.ts"]
-    }
+    },
+    "types": ["node"]
   },
   "include": [
     "packages/ui/**/*.ts",
