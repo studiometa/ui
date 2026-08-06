@@ -6,11 +6,16 @@
     "access": "public"
   },
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./autoload.ts",
+    "./autoload.js"
+  ],
   "main": "index.ts",
   "types": "index.d.ts",
   "exports": {
     ".": "./index.ts",
+    "./autoload": "./autoload.ts",
+    "./autoload.js": "./autoload.ts",
     "./Accordion": "./Accordion/Accordion.ts",
     "./Accordion.js": "./Accordion/Accordion.ts",
     "./AccordionItem": "./Accordion/AccordionItem.ts",
@@ -232,19 +237,14 @@
     "morphdom": "^2.7.8"
   },
   "devDependencies": {
-    "@studiometa/js-toolkit": "^3.8.0",
-    "@studiometa/ui-autoload": "file:../ui-autoload"
+    "@studiometa/js-toolkit": "^3.9.0-beta.0"
   },
   "peerDependencies": {
     "@shopify/partial-rendering": "*",
-    "@studiometa/js-toolkit": "^3.8.0",
-    "@studiometa/ui-autoload": "^1.9.0"
+    "@studiometa/js-toolkit": "^3.9.0-beta.0"
   },
   "peerDependenciesMeta": {
     "@shopify/partial-rendering": {
-      "optional": true
-    },
-    "@studiometa/ui-autoload": {
       "optional": true
     }
   }

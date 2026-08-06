@@ -1,18 +1,18 @@
 # Autoloading
 
-`@studiometa/ui-autoload` is the declarative autoloader for the library. You import one side-effect entry. The runtime then finds components from their `data-component` attribute and loads each component's JavaScript when it is needed.
+`@studiometa/ui` ships a declarative autoloader entry. You import one side-effect module. The [`@studiometa/js-toolkit`](https://js-toolkit.studiometa.dev) autoload runtime then finds components from their `data-component` attribute and loads each component's JavaScript when it is needed.
 
-The autoloader works the same way with a bundler and from a CDN. The same markup runs in a bundled application, a content site, a prototype, or a CMS template. The package ships JavaScript only — no Twig templates and no stylesheets. Read [Limitations](#limitations) before you use it in an application.
+The autoloader works the same way with a bundler and from a CDN. The same markup runs in a bundled application, a content site, a prototype, or a CMS template. The `@studiometa/ui/autoload` entry ships JavaScript only — no Twig templates and no stylesheets. Read [Limitations](#limitations) before you use it in an application.
 
-For a no-build setup, load the package from an ESM CDN such as [esm.sh](https://esm.sh). esm.sh serves any npm package as native ES modules and resolves the `@studiometa/js-toolkit` and `@studiometa/ui` peer dependencies. The examples below use esm.sh.
+For a no-build setup, load the entry from an ESM CDN such as [esm.sh](https://esm.sh). esm.sh serves any npm package as native ES modules and resolves the `@studiometa/js-toolkit` peer dependency. The examples below use esm.sh.
 
 ## Quick start
 
-Add a module script. Import the `@studiometa/ui-autoload/ui` entry. The import registers the `@studiometa/ui` manifest and starts discovery. There is nothing more to call.
+Add a module script. Import the `@studiometa/ui/autoload` entry. The import registers the `@studiometa/ui` manifest and starts discovery. There is nothing more to call.
 
 ```html
 <script type="module">
-  import 'https://esm.sh/@studiometa/ui-autoload@next/ui';
+  import 'https://esm.sh/@studiometa/ui@next/autoload';
 </script>
 
 <button
@@ -33,21 +33,21 @@ Import one side-effect entry for each component package you use. Each import reg
 
 ```html
 <script type="module">
-  import 'https://esm.sh/@studiometa/ui-autoload@next/ui'; // @studiometa/ui components
-  import 'https://esm.sh/@studiometa/ui-autoload@next/ui-mapbox'; // @studiometa/ui-mapbox components
+  import 'https://esm.sh/@studiometa/ui@next/autoload'; // @studiometa/ui components
+  import 'https://esm.sh/@studiometa/ui-mapbox@next/autoload'; // @studiometa/ui-mapbox components
 </script>
 ```
 
-The same entries resolve from `node_modules` when you install the package and let your bundler resolve them:
+The same entries resolve from `node_modules` when you install the packages and let your bundler resolve them:
 
 ```js
-import '@studiometa/ui-autoload/ui';
-import '@studiometa/ui-autoload/ui-mapbox';
+import '@studiometa/ui/autoload';
+import '@studiometa/ui-mapbox/autoload';
 ```
 
-Import both entries at the top of one module. The two manifests register before the runtime starts, so they join into one loader over the composed set. Import `./ui-mapbox` only when you use the Mapbox family — see [Mapbox integration](#mapbox-integration).
+Import both entries at the top of one module. The two manifests register before the runtime starts, so they join into one loader over the composed set. Import `@studiometa/ui-mapbox/autoload` only when you use the Mapbox family — see [Mapbox integration](#mapbox-integration).
 
-Every component on the page must resolve to one `@studiometa/js-toolkit` runtime. The three packages share the same version, and `ui-autoload` pins its matching `ui` and `ui-mapbox` peers, so one pin on the autoload entry resolves the whole set.
+Every component on the page must resolve to one `@studiometa/js-toolkit` runtime. `@studiometa/ui` and `@studiometa/ui-mapbox` share the same `@studiometa/js-toolkit` peer, so one pin on that peer resolves the whole set.
 
 ### Version pinning
 
@@ -55,9 +55,9 @@ A version reference follows the package's npm tags and semver ranges:
 
 ```html
 <script type="module">
-  import 'https://esm.sh/@studiometa/ui-autoload@next/ui'; // current prerelease
-  import 'https://esm.sh/@studiometa/ui-autoload@1.10.0-beta.3/ui'; // exact version
-  import 'https://esm.sh/@studiometa/ui-autoload@^1/ui'; // semver range
+  import 'https://esm.sh/@studiometa/ui@next/autoload'; // current prerelease
+  import 'https://esm.sh/@studiometa/ui@1.10.0-beta.5/autoload'; // exact version
+  import 'https://esm.sh/@studiometa/ui@^1/autoload'; // semver range
 </script>
 ```
 
@@ -91,7 +91,7 @@ The runtime resolves the strategy in this order:
 Make a component load and mount at once, whatever its strategy, with a `<meta>` element:
 
 ```html
-<meta name="studiometa-ui:eager" content="Accordion, Action, Modal" />
+<meta name="js-toolkit:eager" content="Accordion, Action, Modal" />
 ```
 
 The `content` is a comma-separated list of tokens. Several metas concatenate. The runtime trims whitespace and drops empty and duplicate tokens. It ignores an unknown token and logs a warning.
@@ -112,25 +112,25 @@ When `MutationObserver` is not available, the initial scan still runs, but the r
 
 ## Programmatic API
 
-The package root (`@studiometa/ui-autoload`) has no side effects. Nothing touches the DOM until you call `autoload()`. Use it to compose a subset of packages, to scope discovery to a `root` element, or to build your own entry.
+The autoload runtime and its helpers live in `@studiometa/js-toolkit`. The `@studiometa/ui/autoload` entry is only the side-effect wrapper that registers the `@studiometa/ui` manifest; the programmatic API — `autoload`, `registerManifests`, `defineManifest`, and the glob adapters — is imported directly from `@studiometa/js-toolkit`. Use it to compose a subset of packages, to scope discovery to a `root` element, or to build your own entry.
 
 ```js
-import { autoload } from '@studiometa/ui-autoload';
+import { autoload } from '@studiometa/js-toolkit';
 import { manifest as uiManifest } from '@studiometa/ui/manifest';
 
 const handle = autoload({ manifests: [uiManifest], eager: ['Action'] });
 handle.stop(); // stop discovery
 ```
 
-To autoload your own js-toolkit components, build a manifest from your component files with [`defineManifest`](/reference/items/defineManifest/) and register it with [`registerManifests`](/reference/items/registerManifests/). See [Custom manifests](/reference/items/autoload/custom-manifests). The [autoload JS API](/reference/items/autoload/js-api) lists every export.
+To autoload your own js-toolkit components, build a manifest from your component files with `defineManifest` and register it with `registerManifests`, both from `@studiometa/js-toolkit`. See the [js-toolkit autoload guide](https://js-toolkit.studiometa.dev) and the [autoload API reference](https://js-toolkit.studiometa.dev/api/autoload) for every export.
 
 ## Manual imports
 
 You can also import components directly from the CDN, without the autoloader. This suits a script that builds components itself.
 
 ```js
-import { Action, Modal } from 'https://esm.sh/@studiometa/ui@1.10.0-beta.3'; // the whole surface
-import { Action } from 'https://esm.sh/@studiometa/ui@1.10.0-beta.3/Action'; // one component
+import { Action, Modal } from 'https://esm.sh/@studiometa/ui@1.10.0-beta.5'; // the whole surface
+import { Action } from 'https://esm.sh/@studiometa/ui@1.10.0-beta.5/Action'; // one component
 ```
 
 Manual imports and the autoloader do not conflict, while every import on the page resolves to one js-toolkit runtime. Pin the same version everywhere.
@@ -151,8 +151,8 @@ Declare an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Elemen
   }
 </script>
 <script type="module">
-  import 'https://esm.sh/@studiometa/ui-autoload@next/ui';
-  import 'https://esm.sh/@studiometa/ui-autoload@next/ui-mapbox';
+  import 'https://esm.sh/@studiometa/ui@next/autoload';
+  import 'https://esm.sh/@studiometa/ui-mapbox@next/autoload';
 </script>
 ```
 
@@ -166,12 +166,12 @@ Most Shopify components autoload as they do in a bundled build. `FetchShopifyPar
 
 ## Diagnostics
 
-The runtime logs warnings under the `[@studiometa/ui-autoload]` prefix for recoverable conditions: a conflicting runtime version, an unknown token, an unknown eager component, an invalid `data-load` value, an invalid manifest strategy, or an unavailable browser API.
+The runtime logs warnings under the `[@studiometa/js-toolkit/autoload]` prefix for recoverable conditions: a conflicting runtime version, an unknown token, an unknown eager component, an invalid `data-load` value, an invalid manifest strategy, or an unavailable browser API.
 
-When a component fails to import or register, the runtime logs an error and dispatches a bubbling `studiometa-ui:error` `CustomEvent` on the document element. Its `detail` carries the `token`, the `stage` (`import` or `registration`), and the `error`:
+When a component fails to import or register, the runtime logs an error and dispatches a bubbling `js-toolkit:error` `CustomEvent` on the document element. Its `detail` carries the `token`, the `stage` (`import` or `registration`), and the `error`:
 
 ```js
-document.addEventListener('studiometa-ui:error', (event) => {
+document.addEventListener('js-toolkit:error', (event) => {
   const { token, stage, error } = event.detail;
   console.error(`Component ${token} failed at ${stage}:`, error);
 });
@@ -183,7 +183,7 @@ esm.sh serves a source map with every asset, so developer tools show the origina
 
 A no-build install trades flexibility for a zero-build setup. Its constraints are deliberate:
 
-- **One runtime version per page.** Several imports of the entries are safe; they share one runtime. Two different `@studiometa/ui-autoload` versions cannot coexist — the second activation warns and does nothing. Pin one version.
+- **One runtime version per page.** Several imports of the entries are safe; they share one runtime. Two different `@studiometa/js-toolkit` autoload runtimes cannot coexist — the second activation warns and does nothing. Pin one version.
 - **One js-toolkit runtime.** Every component on the page must resolve to one `@studiometa/js-toolkit` runtime. Do not mix CDN components with a separate npm build that bundles its own copy.
 - **No `data-component` mutation.** The runtime observes inserted and removed nodes only.
 - **No Shadow DOM.** Components own standard light-DOM elements.
@@ -194,6 +194,6 @@ A no-build install trades flexibility for a zero-build setup. Its constraints ar
 
 ## Next steps
 
-- [Custom manifests](/reference/items/autoload/custom-manifests) — autoload your own components.
-- [autoload JS API](/reference/items/autoload/js-api) — every export.
+- [js-toolkit autoload guide](https://js-toolkit.studiometa.dev) — autoload your own components.
+- [autoload API reference](https://js-toolkit.studiometa.dev/api/autoload) — every export.
 - [Declarative runtime](/guide/concepts/declarative-runtime) — the `data-component` / `data-option-*` contract.

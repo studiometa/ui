@@ -132,13 +132,15 @@ const uiPackage = JSON.parse(
 ) as { exports: Record<string, string> };
 const explicitUiSubpaths = Object.keys(uiPackage.exports)
   .filter((key) => key.startsWith('./'))
-  // `./manifest` is a generated autoloader component manifest, not a documented reference item,
-  // so it is excluded from the subpath documentation check (like `./package.json`).
+  // `./manifest` is a generated autoloader component manifest and `./autoload` is a side-effect
+  // entry that registers it — neither is a documented reference item, so both are excluded from the
+  // subpath documentation check (like `./package.json`).
   .filter(
     (key) =>
       !key.includes('*') &&
       key !== './package.json' &&
       key !== './manifest' &&
+      key !== './autoload' &&
       !key.endsWith('.js'),
   )
   .map((key) => key.slice(2));
@@ -177,10 +179,6 @@ const publicEntryPoints = [
   {
     path: resolve(repositoryRoot, 'packages/ui-mapbox/index.ts'),
     package: 'npm:@studiometa/ui-mapbox',
-  },
-  {
-    path: resolve(repositoryRoot, 'packages/ui-autoload/index.ts'),
-    package: 'npm:@studiometa/ui-autoload',
   },
 ] as const;
 const program = ts.createProgram(

@@ -16,7 +16,7 @@
     "build:twig": "rsync -avh --exclude='/dist' --include='*/' --include='**/*.twig' --exclude='*' --prune-empty-dirs packages/ui/ packages/ui/dist/",
     "build:pkg": "node scripts/build.js",
     "build:sizes": "node scripts/sizes.js",
-    "build:export-size": "npm run build && (if [ -d packages/ui-mapbox ]; then npm run build --workspace=@studiometa/ui-mapbox; fi) && (if [ -d packages/ui-autoload ]; then npm run build --workspace=@studiometa/ui-autoload; fi)",
+    "build:export-size": "npm run build && (if [ -d packages/ui-mapbox ]; then npm run build --workspace=@studiometa/ui-mapbox; fi)",
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
     "lint:static": "oxlint --tsconfig ./tsconfig.json --type-aware",
     "lint:types": "tsgo --build tsconfig.lint.json",
@@ -26,7 +26,7 @@
     "play:dev": "npm run dev -w @studiometa/ui-playground",
     "play:watch": "npm run watch -w @studiometa/ui-playground",
     "play:build": "npm run build -w @studiometa/ui-playground",
-    "postversion": "npm version --workspaces $npm_package_version && node scripts/update-composer-version.js && node scripts/sync-lockstep-peers.js",
+    "postversion": "npm version --workspaces $npm_package_version && node scripts/update-composer-version.js",
     "postinstall": "patch-package"
   },
   "devDependencies": {
@@ -41,7 +41,8 @@
     "tsdown": "0.21.5"
   },
   "overrides": {
-    "@typescript/vfs": "1.6.4"
+    "@typescript/vfs": "1.6.4",
+    "@studiometa/js-toolkit": "3.9.0-beta.0"
   },
   "dependencies": {
     "patch-package": "8.0.1"

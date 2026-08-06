@@ -12,7 +12,6 @@ import { publicContractSymbols } from './public-contracts.ts';
 const uiPackage = 'npm:@studiometa/ui' as const;
 const twigPackage = 'composer:studiometa/ui' as const;
 const mapboxPackage = 'npm:@studiometa/ui-mapbox' as const;
-const autoloadPackage = 'npm:@studiometa/ui-autoload' as const;
 
 export const kindLabels: Record<ReferenceKind, string> = {
   component: 'Components',
@@ -80,20 +79,6 @@ function mapboxSymbol(
     kind,
     package: mapboxPackage,
     importPath: '@studiometa/ui-mapbox',
-    href,
-  };
-}
-
-function autoloadSymbol(
-  name: string,
-  href: string,
-  kind: ReferenceSymbolKind = 'helper',
-): ReferenceSymbol {
-  return {
-    name,
-    kind,
-    package: autoloadPackage,
-    importPath: '@studiometa/ui-autoload',
     href,
   };
 }
@@ -1443,75 +1428,6 @@ export const referenceCatalog = [
     ],
     aliases: ['scheduler'],
     related: ['view-transition'],
-  },
-  {
-    id: 'autoload',
-    title: 'autoload',
-    summary:
-      'Compose component manifests, build your own, and drive the declarative autoloader programmatically.',
-    kind: 'helper',
-    path: '/reference/items/autoload/',
-    family: 'loading',
-    primaryTask: 'loading',
-    tags: ['autoload', 'manifest', 'loader', 'declarative', 'cdn', 'webpack', 'vite', 'custom'],
-    surfaces: ['js'],
-    packages: [autoloadPackage],
-    status: 'stable',
-    symbols: [
-      autoloadSymbol('autoload', '/reference/items/autoload/js-api#autoload'),
-      autoloadSymbol('composeManifests', '/reference/items/autoload/js-api#composemanifests'),
-      autoloadSymbol('registerManifest', '/reference/items/autoload/js-api#registermanifest'),
-      autoloadSymbol('readEagerTokens', '/reference/items/autoload/js-api#readeagertokens'),
-      autoloadSymbol('ComponentLoader', '/reference/items/autoload/js-api#componentloader'),
-      autoloadSymbol(
-        'DEFAULT_DIAGNOSTIC_PREFIX',
-        '/reference/items/autoload/js-api#constants',
-        'constant',
-      ),
-      autoloadSymbol(
-        'VISIBLE_ROOT_MARGIN',
-        '/reference/items/autoload/js-api#constants',
-        'constant',
-      ),
-      autoloadSymbol('IDLE_TIMEOUT', '/reference/items/autoload/js-api#constants', 'constant'),
-    ],
-    related: ['define-manifest', 'register-manifests'],
-  },
-  {
-    id: 'define-manifest',
-    title: 'defineManifest',
-    summary:
-      'Build an autoload manifest from your own component files, with Vite and webpack glob adapters.',
-    kind: 'helper',
-    path: '/reference/items/defineManifest/',
-    family: 'loading',
-    primaryTask: 'loading',
-    tags: ['autoload', 'manifest', 'custom', 'vite', 'webpack', 'glob'],
-    surfaces: ['js'],
-    packages: [autoloadPackage],
-    status: 'stable',
-    symbols: [
-      autoloadSymbol('defineManifest', '/reference/items/defineManifest/'),
-      autoloadSymbol('fromMetaGlob', '/reference/items/defineManifest/'),
-      autoloadSymbol('fromWebpackContext', '/reference/items/defineManifest/'),
-    ],
-    related: ['autoload', 'register-manifests'],
-  },
-  {
-    id: 'register-manifests',
-    title: 'registerManifests',
-    summary:
-      'Register several component manifests with the shared runtime in one call; the last manifest wins.',
-    kind: 'helper',
-    path: '/reference/items/registerManifests/',
-    family: 'loading',
-    primaryTask: 'loading',
-    tags: ['autoload', 'manifest', 'register', 'runtime'],
-    surfaces: ['js'],
-    packages: [autoloadPackage],
-    status: 'stable',
-    symbols: [autoloadSymbol('registerManifests', '/reference/items/registerManifests/')],
-    related: ['autoload', 'define-manifest'],
   },
 ] satisfies ReferenceCatalogEntry[];
 

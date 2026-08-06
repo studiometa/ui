@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.10.0-beta.5](https://github.com/studiometa/ui/compare/1.10.0-beta.4..1.10.0-beta.5) (2026-08-06)
+
+### Changed
+
+- **@studiometa/ui, @studiometa/ui-mapbox:** the declarative autoload engine moved to `@studiometa/js-toolkit`, now a `>= 3.9.0-beta.0` peer dependency. Each package ships its own side-effect entry — `import '@studiometa/ui/autoload'` and `import '@studiometa/ui-mapbox/autoload'` — that registers the package manifest with the js-toolkit autoload runtime, replacing the removed `@studiometa/ui-autoload/{ui,ui-mapbox}` entries. The eager `<meta>` name is now `js-toolkit:eager` and the failure event is now `js-toolkit:error`. The programmatic API (`autoload`, `registerManifests`, `defineManifest`, `fromMetaGlob`, `fromWebpackContext`) is imported from `@studiometa/js-toolkit` ([#617](https://github.com/studiometa/ui/pull/617))
+
+### Removed
+
+- **@studiometa/ui-autoload:** remove the package. Its engine now lives in `@studiometa/js-toolkit` (`>= 3.9.0-beta.0`) and its per-package side-effect entries were replaced by `@studiometa/ui/autoload` and `@studiometa/ui-mapbox/autoload` ([#617](https://github.com/studiometa/ui/pull/617))
+
 ## [v1.10.0-beta.4](https://github.com/studiometa/ui/compare/1.10.0-beta.3..1.10.0-beta.4) (2026-08-06)
 
 ### Added

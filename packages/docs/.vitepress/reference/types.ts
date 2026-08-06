@@ -13,7 +13,6 @@ export const referencePackages = [
   'npm:@studiometa/ui',
   'composer:studiometa/ui',
   'npm:@studiometa/ui-mapbox',
-  'npm:@studiometa/ui-autoload',
 ] as const;
 export const referenceStatuses = ['stable', 'preview', 'deprecated'] as const;
 
