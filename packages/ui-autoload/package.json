@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-autoload",
-  "version": "1.10.0-beta.3",
+  "version": "1.10.0-beta.4",
   "description": "Generic, side-effect-free declarative autoloader for @studiometa/ui component manifests",
   "publishConfig": {
     "access": "public"
@@ -46,8 +46,8 @@
   "homepage": "https://github.com/studiometa/ui#readme",
   "peerDependencies": {
     "@studiometa/js-toolkit": "^3.8.0",
-    "@studiometa/ui": "1.10.0-beta.3",
-    "@studiometa/ui-mapbox": "1.10.0-beta.3"
+    "@studiometa/ui": "1.10.0-beta.4",
+    "@studiometa/ui-mapbox": "1.10.0-beta.4"
   },
   "peerDependenciesMeta": {
     "@studiometa/ui": {
