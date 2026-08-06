@@ -5,7 +5,7 @@ outline: deep
 
 # JS API
 
-Every export of `@studiometa/ui-autoload`. The high-level functions — [`autoload`](#autoload), [`composeManifests`](#composemanifests) and [`registerManifest`](#registermanifest) — cover almost every use case; [`ComponentLoader`](#componentloader) is the low-level engine they build on, exposed for full control. See the [Autoloading guide](/guide/autoloading/) for the declarative, no-call setup.
+Every export of `@studiometa/ui-autoload`. The high-level functions — [`autoload`](#autoload), [`composeManifests`](#composemanifests), [`registerManifest`](#registermanifest) and [`registerManifests`](#registermanifests) — cover almost every use case; [`defineManifest`](#definemanifest) with the [`fromMetaGlob`](#frommetaglob) / [`fromWebpackContext`](#fromwebpackcontext) adapters builds a manifest from your own component files; and [`ComponentLoader`](#componentloader) is the low-level engine they build on, exposed for full control. See the [Autoloading guide](/guide/autoloading/) for the declarative, no-call setup, and [Custom manifests](./custom-manifests) for the worked custom-component workflow.
 
 Each component package exports its manifest as a named `manifest` export — `@studiometa/ui/manifest` and `@studiometa/ui-mapbox/manifest` — which is what you pass to these functions.
 
@@ -61,6 +61,84 @@ It is safe to call from several entries and several bundle copies at once:
 
 Returns the shared [`AutoloadRuntime`](#autoloadruntime), or `undefined` when a conflicting version already owns it. See [`RegisterManifestOptions`](#registermanifestoptions) for the injectable seams.
 
+## registerManifests
+
+```ts
+function registerManifests(...manifests: ComponentManifest[]): AutoloadRuntime | undefined;
+```
+
+Registers several manifests with the shared runtime in one call, then lets the single coalesced start flush over the composed set. It is the variadic convenience wrapper an application uses to layer its own components on top of the packaged ones.
+
+```js
+import { registerManifests, defineManifest, fromMetaGlob } from '@studiometa/ui-autoload';
+import { manifest as uiManifest } from '@studiometa/ui/manifest';
+import { manifest as mapboxManifest } from '@studiometa/ui-mapbox/manifest';
+
+const custom = defineManifest({
+  packageName: '@my/app',
+  modules: fromMetaGlob(import.meta.glob('./widgets/*/*.ts')),
+});
+
+registerManifests(uiManifest, mapboxManifest, custom);
+```
+
+Each manifest is registered in call order and, because the runtime composes them later-wins, the **last** manifest wins on token collisions — so a custom manifest passed last overrides any packaged component that shares a token. Returns the shared [`AutoloadRuntime`](#autoloadruntime) from the final registration, or `undefined` when a conflicting version already owns the runtime (or when no manifest was passed). See [Custom manifests](./custom-manifests) for the full workflow.
+
+## defineManifest
+
+```ts
+function defineManifest(options: DefineManifestOptions): ComponentManifest;
+```
+
+Builds a [`ComponentManifest`](#types) from a record of lazy importers — the pure counterpart of the generated per-package manifests, for autoloading your own js-toolkit components. It is pure: it never touches the DOM and never registers anything, so pass its result to [`registerManifests`](#registermanifests) or [`autoload`](#autoload) to start discovery.
+
+```js
+import { defineManifest, fromWebpackContext } from '@studiometa/ui-autoload';
+
+const manifest = defineManifest({
+  packageName: '@my/app',
+  strategy: 'visible',
+  modules: fromWebpackContext(
+    import.meta.webpackContext('./widgets', { recursive: true, regExp: /\.ts$/, mode: 'lazy' }),
+  ),
+  components: {
+    MyWidget: { strategy: 'idle', children: ['MyWidgetItem'] },
+  },
+});
+```
+
+For each `[key, importer]` in `options.modules` it derives a `token` from the module key — the basename without its extension, or the parent directory name when the basename is `index` (so `./a/b/Foo/index.ts` yields `Foo`) — resolves the named export matching the token (falling back to the module's `default` export), and applies the option-level and per-token defaults. When two module keys derive the same token a warning is logged under the `[@studiometa/ui-autoload]` prefix and the later key wins. See [`DefineManifestOptions`](#types) and [`ComponentOverride`](#types), and the worked examples in [Custom manifests](./custom-manifests).
+
+## fromMetaGlob
+
+```ts
+function fromMetaGlob(glob: Record<string, unknown>): ModuleRecord;
+```
+
+Normalizes the record returned by Vite's `import.meta.glob('./x/*.ts')` into a [`ModuleRecord`](#types) for [`defineManifest`](#definemanifest). The lazy form of `import.meta.glob` already returns `Record<string, () => Promise<Module>>`, so this is an identity pass with a guard: it throws when any value is not a function, which means an eager glob (`import.meta.glob('...', { eager: true })`) was passed — an unsupported shape, because eager globs resolve the modules synchronously and defeat on-demand loading.
+
+```js
+import { fromMetaGlob } from '@studiometa/ui-autoload';
+
+const modules = fromMetaGlob(import.meta.glob('./widgets/*/*.ts'));
+```
+
+## fromWebpackContext
+
+```ts
+function fromWebpackContext(context: WebpackContextLike): ModuleRecord;
+```
+
+Normalizes a webpack context — the value returned by `import.meta.webpackContext(dir, { recursive, regExp, mode })` — into a [`ModuleRecord`](#types) for [`defineManifest`](#definemanifest). A webpack context is a callable with a `keys()` method rather than a record of importers, so this wraps each key in `() => Promise.resolve(context(key))`; `Promise.resolve` tolerates both a synchronous module (`mode: 'sync'`) and a promise (`mode: 'lazy'`). Pass `mode: 'lazy'` for real code-splitting and on-demand loading — the other modes bundle every match eagerly.
+
+```js
+import { fromWebpackContext } from '@studiometa/ui-autoload';
+
+const modules = fromWebpackContext(
+  import.meta.webpackContext('./widgets', { recursive: true, regExp: /\.ts$/, mode: 'lazy' }),
+);
+```
+
 ## readEagerTokens
 
 ```ts
@@ -107,8 +185,12 @@ The loader's built-in tuning values, exported so a custom loader or diagnostics 
 The exported types, all importable from `@studiometa/ui-autoload`.
 
 - **`ComponentLoadStrategy`** — `'eager' | 'visible' | 'idle' | 'interaction'`: when a component's constructor is imported and registered.
-- **`ComponentManifestEntry`** — everything the loader needs to discover a `data-component` token and load its constructor on demand (`token`, `packageName`, `subpath`, `exportName`, `strategy`, `group`, optional `children`/`styles`/`integrations`, and the `load()` importer).
+- **`ComponentManifestEntry`** — everything the loader needs to discover a `data-component` token and load its constructor on demand. Only `token`, `strategy` and the `load()` importer are required; `packageName`, `subpath`, `exportName` and `group` are optional informational metadata never read by the loader, and `children`/`styles`/`integrations` are optional too.
 - **`ComponentManifest`** — a `Record<string, ComponentManifestEntry>` mapping tokens to their entries.
+- **`ModuleRecord`** — `Record<string, () => Promise<Record<string, unknown>>>`: a map of module keys to lazy importers, the shape [`fromMetaGlob`](#frommetaglob) and [`fromWebpackContext`](#fromwebpackcontext) produce and [`defineManifest`](#definemanifest) consumes.
+- **`DefineManifestOptions`** — the options accepted by [`defineManifest`](#definemanifest): `modules` (required), optional `packageName`, `strategy` (defaults to `'eager'`), `group`, and a `components` map of per-token overrides.
+- **`ComponentOverride`** — a per-token override applied on top of the values [`defineManifest`](#definemanifest) derives from a module key: optional `token`, `strategy`, `group`, `exportName`, `children`, `styles` and `integrations`.
+- **`WebpackContextLike`** — the structural shape of a webpack context accepted by [`fromWebpackContext`](#fromwebpackcontext): a callable `(id: string) => unknown` that also exposes `keys(): string[]`.
 - **`CuratedComponentMetadata`** — the authoring metadata for one component, consumed by the manifest generator.
 - **`ComponentCatalog`** — the authoring catalog for a component package: its components, their shared default strategy, and the abstract exports excluded from the manifest.
 - **`AutoloadOptions`** — the options accepted by [`autoload`](#autoload): `manifests` (required), optional `root`, `eager` and `dependencies`.

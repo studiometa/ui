@@ -6,7 +6,7 @@ badges: [JS]
 
 The `@studiometa/ui-autoload` package exposes the programmatic API behind the declarative autoloader. Importing the package root (`@studiometa/ui-autoload`) has no side effects — nothing touches the DOM until you call `autoload()`. Use it for custom composition: a curated subset of packages, your own manifest layered on top, or discovery scoped to a `root` element.
 
-For the declarative, no-call setup — the per-package side-effect entries, eager `<meta>`, loading strategies and component discovery — see the [Autoloading guide](/guide/autoloading/). This page documents the exported functions, the `ComponentLoader` class, the constants, and the types.
+For the declarative, no-call setup — the per-package side-effect entries, eager `<meta>`, loading strategies and component discovery — see the [Autoloading guide](/guide/autoloading/). To autoload your own js-toolkit components from a folder, see [Custom manifests](./custom-manifests). This page documents the exported functions, the `ComponentLoader` class, the constants, and the types.
 
 ## Usage
 

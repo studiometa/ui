@@ -111,6 +111,8 @@ handle.stop();
 
 Each package exports its own manifest as a named `manifest` export — `@studiometa/ui/manifest` and `@studiometa/ui-mapbox/manifest`. The side-effect entries above are thin wrappers that import their package's manifest and register it; the programmatic API lets you compose them yourself. The individual functions and classes are documented under [Helpers and utilities](/reference/helpers/).
 
+To autoload your own js-toolkit components alongside the packaged ones, build a manifest from your component files with `defineManifest()` and register it with `registerManifests()` — see [Custom manifests](/reference/items/autoload/custom-manifests) for the full webpack and Vite workflow.
+
 ## Manual imports
 
 The declarative autoloader is the primary way to use the library without a build step, but every package is also a set of plain ESM entry points you can import directly from the CDN. This suits scripted setups that construct components themselves, register a curated subset, or bundle nothing at all.
