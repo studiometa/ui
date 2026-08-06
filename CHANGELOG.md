@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- **@studiometa/ui, @studiometa/ui-mapbox:** replace every `export *` barrel re-export with explicit named `export { ... }` (values and `type`-only specifiers) so the public surface is statically analyzable. This lets bundlers and esm.sh keep every export name and tree-shake reliably, matching the same change made in `@studiometa/js-toolkit` 3.8.1. The exported API is unchanged — a type-checker snapshot of each barrel's full surface guards against regressions ([#PR](https://github.com/studiometa/ui/pull/PR))
+- **@studiometa/ui, @studiometa/ui-mapbox:** replace every `export *` barrel re-export with explicit named `export { ... }` (values and `type`-only specifiers) so the public surface is statically analyzable. This lets bundlers and esm.sh keep every export name and tree-shake reliably, matching the same change made in `@studiometa/js-toolkit` 3.8.1. The exported API is unchanged — a type-checker snapshot of each barrel's full surface guards against regressions ([#611](https://github.com/studiometa/ui/pull/611))
 
 ## [v1.10.0-beta.3](https://github.com/studiometa/ui/compare/1.10.0-beta.2..1.10.0-beta.3) (2026-08-05)
 
