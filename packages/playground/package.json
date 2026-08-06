@@ -9,12 +9,12 @@
     "build": "meta build"
   },
   "dependencies": {
-    "@studiometa/playground": "^0.3.11"
+    "@studiometa/playground": "^0.3.13"
   },
   "devDependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",
     "@motionone/easing": "^10.18.0",
-    "@studiometa/js-toolkit": "3.8.0",
+    "@studiometa/js-toolkit": "3.8.2",
     "deepmerge": "^4.3.1",
     "mapbox-gl": "^3.13.0",
     "morphdom": "^2.7.8",
