@@ -13,86 +13,107 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "typescript": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
     "./autoload": {
+      "typescript": "./src/autoload.ts",
       "types": "./dist/autoload.d.ts",
       "import": "./dist/autoload.js"
     },
     "./manifest": {
+      "typescript": "./src/manifest.ts",
       "types": "./dist/manifest.d.ts",
       "import": "./dist/manifest.js"
     },
     "./AbstractMapboxControl": {
+      "typescript": "./src/AbstractMapboxControl.ts",
       "types": "./dist/AbstractMapboxControl.d.ts",
       "import": "./dist/AbstractMapboxControl.js"
     },
     "./AbstractMapboxMapChild": {
+      "typescript": "./src/AbstractMapboxMapChild.ts",
       "types": "./dist/AbstractMapboxMapChild.d.ts",
       "import": "./dist/AbstractMapboxMapChild.js"
     },
     "./MapboxCluster": {
+      "typescript": "./src/MapboxCluster.ts",
       "types": "./dist/MapboxCluster.d.ts",
       "import": "./dist/MapboxCluster.js"
     },
     "./MapboxClusterItem": {
+      "typescript": "./src/MapboxClusterItem.ts",
       "types": "./dist/MapboxClusterItem.d.ts",
       "import": "./dist/MapboxClusterItem.js"
     },
     "./MapboxFullscreenControl": {
+      "typescript": "./src/MapboxFullscreenControl.ts",
       "types": "./dist/MapboxFullscreenControl.d.ts",
       "import": "./dist/MapboxFullscreenControl.js"
     },
     "./MapboxGeocoder": {
+      "typescript": "./src/MapboxGeocoder.ts",
       "types": "./dist/MapboxGeocoder.d.ts",
       "import": "./dist/MapboxGeocoder.js"
     },
     "./MapboxGeolocateControl": {
+      "typescript": "./src/MapboxGeolocateControl.ts",
       "types": "./dist/MapboxGeolocateControl.d.ts",
       "import": "./dist/MapboxGeolocateControl.js"
     },
     "./MapboxImage": {
+      "typescript": "./src/MapboxImage.ts",
       "types": "./dist/MapboxImage.d.ts",
       "import": "./dist/MapboxImage.js"
     },
     "./MapboxImages": {
+      "typescript": "./src/MapboxImages.ts",
       "types": "./dist/MapboxImages.d.ts",
       "import": "./dist/MapboxImages.js"
     },
     "./MapboxLayer": {
+      "typescript": "./src/MapboxLayer.ts",
       "types": "./dist/MapboxLayer.d.ts",
       "import": "./dist/MapboxLayer.js"
     },
     "./MapboxMap": {
+      "typescript": "./src/MapboxMap.ts",
       "types": "./dist/MapboxMap.d.ts",
       "import": "./dist/MapboxMap.js"
     },
     "./MapboxMarker": {
+      "typescript": "./src/MapboxMarker.ts",
       "types": "./dist/MapboxMarker.d.ts",
       "import": "./dist/MapboxMarker.js"
     },
     "./MapboxNavigationControl": {
+      "typescript": "./src/MapboxNavigationControl.ts",
       "types": "./dist/MapboxNavigationControl.d.ts",
       "import": "./dist/MapboxNavigationControl.js"
     },
     "./MapboxPopup": {
+      "typescript": "./src/MapboxPopup.ts",
       "types": "./dist/MapboxPopup.d.ts",
       "import": "./dist/MapboxPopup.js"
     },
     "./MapboxSource": {
+      "typescript": "./src/MapboxSource.ts",
       "types": "./dist/MapboxSource.d.ts",
       "import": "./dist/MapboxSource.js"
     },
     "./StoreLocator": {
+      "typescript": "./src/StoreLocator.ts",
       "types": "./dist/StoreLocator.d.ts",
       "import": "./dist/StoreLocator.js"
     },
     "./dependencies": {
+      "typescript": "./src/dependencies.ts",
       "types": "./dist/dependencies.d.ts",
       "import": "./dist/dependencies.js"
     },
     "./*": {
+      "typescript": "./src/*.ts",
       "types": "./dist/*.d.ts",
       "import": "./dist/*.js"
     }

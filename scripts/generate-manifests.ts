@@ -2,7 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { format, resolveConfig } from 'prettier';
-import { catalog as uiCatalog } from '../packages/ui/catalog.ts';
+import { catalog as uiCatalog } from '../packages/ui/src/catalog.ts';
 import { catalog as mapboxCatalog } from '../packages/ui-mapbox/src/catalog.ts';
 import type { ComponentCatalog, CuratedComponentMetadata } from './manifest-types.ts';
 
@@ -23,8 +23,8 @@ const targets: readonly PackageTarget[] = [
   {
     catalog: uiCatalog,
     packageDirectory: resolve(repositoryDirectory, 'packages/ui'),
-    sourceDirectory: resolve(repositoryDirectory, 'packages/ui'),
-    manifestPath: resolve(repositoryDirectory, 'packages/ui/manifest.ts'),
+    sourceDirectory: resolve(repositoryDirectory, 'packages/ui/src'),
+    manifestPath: resolve(repositoryDirectory, 'packages/ui/src/manifest.ts'),
   },
   {
     catalog: mapboxCatalog,

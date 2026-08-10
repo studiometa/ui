@@ -2,20 +2,22 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
 
-// `@studiometa/ui-mapbox` publishes its built `dist/`, so its `exports` map points at `dist/*.js`.
-// The playground bundles workspace packages from LOCAL SOURCE, so map every public subpath to its
-// `src/*.ts` module explicitly (derived from the `exports` keys, kept in sync automatically) rather
-// than letting the preset resolve the `exports` targets to the unbuilt `dist/`.
-const mapboxRoot = '../ui-mapbox';
-const mapboxExports = JSON.parse(readFileSync(resolve(`${mapboxRoot}/package.json`), 'utf8')).exports;
-const mapboxEntries = Object.fromEntries(
-  Object.keys(mapboxExports)
-    .filter((key) => key.startsWith('.') && !key.includes('*') && key !== './package.json')
-    .map((key) => [
-      key,
-      key === '.' ? `${mapboxRoot}/src/index.ts` : `${mapboxRoot}/src/${key.slice(2)}.ts`,
-    ]),
-);
+// `@studiometa/ui` and `@studiometa/ui-mapbox` publish their built `dist/`, so their `exports` maps
+// point at `dist/*.js`. The playground bundles workspace packages from LOCAL SOURCE, so map every
+// public subpath to its `.ts` module via the `typescript` export condition each package exposes
+// (the same condition the tests and type-checker use) rather than letting the preset resolve the
+// default `import`/`dist` target.
+function sourceEntries(root) {
+  const { exports } = JSON.parse(readFileSync(resolve(`${root}/package.json`), 'utf8'));
+  return Object.fromEntries(
+    Object.entries(exports)
+      .filter(([key, value]) => key.startsWith('.') && !key.includes('*') && typeof value === 'object')
+      .map(([key, value]) => [key, `${root}/${value.typescript.replace(/^\.\//, '')}`]),
+  );
+}
+
+const uiEntries = sourceEntries('../ui');
+const mapboxEntries = sourceEntries('../ui-mapbox');
 
 export default defineWebpackConfig({
   presets: [
@@ -65,7 +67,7 @@ export default defineWebpackConfig({
         // chunk and referenced by every entry, so there is a single runtime instance (no singleton /
         // identity hazard). ui exposes its barrel + `./manifest` + `./autoload` + every component
         // subpath; ui-mapbox likewise exposes its barrel + `./manifest` + `./autoload`.
-        { specifier: '@studiometa/ui', source: '../ui/**/*.ts', subpaths: true },
+        { specifier: '@studiometa/ui', source: '../ui/src/**/*.ts', entries: uiEntries },
         { specifier: '@studiometa/ui-mapbox', source: '../ui-mapbox/src/**/*.ts', entries: mapboxEntries },
       ],
       defaults: {

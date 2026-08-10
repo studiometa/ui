@@ -6,18 +6,18 @@ import { build as tsdownBuild } from 'tsdown';
 
 export const resolve = (path, origin = import.meta.url) => fileURLToPath(new URL(path, origin));
 
-const repositoryRoot = resolve('../');
+const srcRoot = resolve('../src');
 
 /** The `@studiometa/ui` sources build into their own package-local `dist/`. */
-export const outdir = resolve('../packages/ui/dist');
+export const outdir = resolve('../dist');
 
-// Mirror the previous esbuild entry set: every `.js`/`.ts` module under
-// `packages/ui`, excluding the emitted `dist/` and dependencies. `unbundle`
-// keeps the output tree one-to-one with these sources.
-const entryPoints = glob.sync(
-  ['packages/ui/**/*.js', 'packages/ui/**/*.ts', '!packages/ui/dist/**', '!**/node_modules/**'],
-  { cwd: repositoryRoot, absolute: true },
-);
+// Every `.js`/`.ts` module under `src/`, excluding dependencies. `unbundle`
+// keeps the emitted `dist/` tree one-to-one with these sources (e.g.
+// `src/Accordion/Accordion.ts` → `dist/Accordion/Accordion.js`).
+const entryPoints = glob.sync(['**/*.js', '**/*.ts', '!**/node_modules/**'], {
+  cwd: srcRoot,
+  absolute: true,
+});
 
 // Every non-relative, non-absolute specifier stays external, mirroring the
 // transpile-only esbuild build that never bundled a bare import (e.g.

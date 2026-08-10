@@ -1,28 +1,30 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  // `@studiometa/ui` and `@studiometa/ui-mapbox` publish their built `dist/`, but their `exports`
+  // maps also expose a `typescript` condition pointing at the `.ts` sources under `src/`. Activate
+  // it so in-repo tests run against source without a build step; keep the standard conditions after
+  // it so every other dependency resolves normally.
+  resolve: {
+    conditions: ['typescript', 'browser', 'import', 'module', 'default'],
+  },
   test: {
     root: '..',
     retry: 3,
     environment: 'happy-dom',
     alias: {
-      '^#private/(.*)': '../ui/$1',
-      // `@studiometa/ui-mapbox` publishes its built `dist/`, but in-repo tests
-      // run against the `.ts` sources under `src/` — resolve the barrel and its
-      // subpaths there instead of the unbuilt `dist/`.
-      '^@studiometa/ui-mapbox$': '../ui-mapbox/src/index.ts',
-      '^@studiometa/ui-mapbox/(.*)$': '../ui-mapbox/src/$1.ts',
+      '^#private/(.*)': '../ui/src/$1',
     },
     setupFiles: ['./tests/__utils__/dev.ts', './tests/__utils__/happydom.ts'],
     coverage: {
       provider: 'v8',
-      include: ['ui/**/*.ts', 'ui-mapbox/src/**/*.ts'],
+      include: ['ui/src/**/*.ts', 'ui-mapbox/src/**/*.ts'],
       exclude: [
         '**/tests/**/*.ts',
-        '**/ui/**/index.ts',
+        '**/ui/src/**/index.ts',
         '**/ui-mapbox/src/**/index.ts',
-        '**/ui/catalog.ts',
-        '**/ui/manifest.ts',
+        '**/ui/src/catalog.ts',
+        '**/ui/src/manifest.ts',
         '**/ui-mapbox/src/catalog.ts',
         '**/ui-mapbox/src/manifest.ts',
       ],

@@ -1,4 +1,4 @@
-import type { ComponentCatalog, CuratedComponentMetadata } from '../../scripts/manifest-types.js';
+import type { ComponentCatalog, CuratedComponentMetadata } from '../../../scripts/manifest-types.js';
 
 const components: readonly CuratedComponentMetadata[] = [
   { token: 'Accordion', group: 'accordion', children: ['AccordionItem'] },

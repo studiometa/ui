@@ -129,7 +129,7 @@ for (const symbol of allReferenceSymbols) {
 
 const uiPackage = JSON.parse(
   readFileSync(resolve(repositoryRoot, 'packages/ui/package.json'), 'utf8'),
-) as { exports: Record<string, string> };
+) as { exports: Record<string, unknown> };
 const explicitUiSubpaths = Object.keys(uiPackage.exports)
   .filter((key) => key.startsWith('./'))
   // `./manifest` is a generated autoloader component manifest and `./autoload` is a side-effect
@@ -173,7 +173,7 @@ for (const exportedName of mapboxExports) {
 
 const publicEntryPoints = [
   {
-    path: resolve(repositoryRoot, 'packages/ui/index.ts'),
+    path: resolve(repositoryRoot, 'packages/ui/src/index.ts'),
     package: 'npm:@studiometa/ui',
   },
   {
