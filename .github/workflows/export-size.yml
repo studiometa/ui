@@ -22,6 +22,69 @@ jobs:
         uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
+          fetch-depth: '0'
+      # Detect which packages the pull request affects. Each package re-runs when
+      # its own sources, the build tooling it actually uses, the shared root
+      # TypeScript config it extends, or the lockfile change. `scripts/**` builds
+      # only `@studiometa/ui` (into `packages/ui/dist`); `@studiometa/ui-mapbox` is
+      # built by its own `packages/ui-mapbox/scripts/**`, already covered by its
+      # own glob.
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ui:
+              - 'packages/ui/**'
+              - 'scripts/**'
+              - 'tsconfig*.json'
+              - 'package-lock.json'
+            ui_mapbox:
+              - 'packages/ui-mapbox/**'
+              - 'tsconfig*.json'
+              - 'package-lock.json'
+      # Build and measure only the affected packages. The export-size action
+      # renders one comment with a section per path, so a single invocation with
+      # the comma-joined paths avoids the comment clobbering that separate jobs
+      # (which share one comment) would cause. The action also builds the base
+      # branch with the same command and runs it without a shell, so each single
+      # package case is a command that already exists on `main`. When two or more
+      # packages change we use the `build:export-size` script: `&&` runs under
+      # npm's own shell, and its `if [ -d packages/<pkg> ]` guards skip a package
+      # that does not yet exist on the base branch, so the base-branch build stays
+      # green.
+      - id: plan
+        run: |
+          ui='${{ steps.filter.outputs.ui }}'
+          mapbox='${{ steps.filter.outputs.ui_mapbox }}'
+          paths=""
+          add() {
+            if [ -n "$paths" ]; then
+              paths="$paths,$1"
+            else
+              paths="$1"
+            fi
+          }
+          count=0
+          [ "$ui" = "true" ] && count=$((count + 1)) && add "packages/ui"
+          [ "$mapbox" = "true" ] && count=$((count + 1)) && add "packages/ui-mapbox"
+          if [ "$count" -ge 2 ]; then
+            build="npm run build:export-size"
+          elif [ "$ui" = "true" ]; then
+            build="npm run build"
+          elif [ "$mapbox" = "true" ]; then
+            build="npm run build --workspace=@studiometa/ui-mapbox"
+          fi
+          {
+            echo "build=$build"
+            echo "paths=$paths"
+            [ -n "$paths" ] && echo "run=true" || echo "run=false"
+          } >> "$GITHUB_OUTPUT"
+      - if: steps.plan.outputs.run == 'true'
+        uses: titouanmathis/export-size-action@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          build_script: ${{ steps.plan.outputs.build }}
+          paths: ${{ steps.plan.outputs.paths }}
           node-version: 24
           cache: 'npm'
       - name: Build and measure the pull request
