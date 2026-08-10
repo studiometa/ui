@@ -1,5 +1,5 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { clamp } from '@studiometa/js-toolkit/utils';
+import { clamp } from '@studiometa/js-toolkit/utils/clamp';
 import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import { getClosestIndex } from './utils.js';
 

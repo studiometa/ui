@@ -1,4 +1,5 @@
-import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withMountWhenInView } from '@studiometa/js-toolkit/withMountWhenInView';
 import type { BaseConfig } from '@studiometa/js-toolkit';
 
 /**

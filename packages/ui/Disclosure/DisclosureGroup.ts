@@ -1,6 +1,6 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { nextTick } from '@studiometa/js-toolkit/utils';
+import { nextTick } from '@studiometa/js-toolkit/utils/nextTick';
 import { DISCLOSURE_CONNECTED, DISCLOSURE_GROUP_CONNECTED, type Disclosure } from './Disclosure.js';
 
 export interface DisclosureGroupProps extends BaseProps {

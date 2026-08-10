@@ -1,6 +1,6 @@
-import { withMountWhenInView } from '@studiometa/js-toolkit';
+import { withMountWhenInView } from '@studiometa/js-toolkit/withMountWhenInView';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { loadImage } from '@studiometa/js-toolkit/utils';
+import { loadImage } from '@studiometa/js-toolkit/utils/loadImage';
 import { Transition } from '../Transition/index.js';
 
 export interface AbstractFigureProps extends BaseProps {

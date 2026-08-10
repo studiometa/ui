@@ -5,7 +5,11 @@ import type {
   BaseConfig,
   BaseInterface,
 } from '@studiometa/js-toolkit';
-import { clamp, fold, isString, randomInt, wrap } from '@studiometa/js-toolkit/utils';
+import { clamp } from '@studiometa/js-toolkit/utils/clamp';
+import { fold } from '@studiometa/js-toolkit/utils/fold';
+import { isString } from '@studiometa/js-toolkit/utils/isString';
+import { randomInt } from '@studiometa/js-toolkit/utils/randomInt';
+import { wrap } from '@studiometa/js-toolkit/utils/wrap';
 
 const INDEXABLE_BOUNDARIES = {
   CLAMP: 'clamp',

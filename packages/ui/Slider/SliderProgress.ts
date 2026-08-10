@@ -1,5 +1,7 @@
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { transform, map, domScheduler } from '@studiometa/js-toolkit/utils';
+import { transform } from '@studiometa/js-toolkit/utils/transform';
+import { map } from '@studiometa/js-toolkit/utils/map';
+import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
 import { AbstractSliderChild } from './AbstractSliderChild.js';
 
 export interface SliderProgressProps extends BaseProps {

@@ -1,5 +1,5 @@
 import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
-import { historyPush } from '@studiometa/js-toolkit/utils';
+import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
 import { Fetch, type FetchProps } from './Fetch.js';
 
 export interface FetchShopifyPartialProps extends FetchProps {

@@ -1,11 +1,10 @@
-import { Base, KeyServiceProps } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { KeyServiceProps } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import {
-  transition,
-  trapFocus as trap,
-  untrapFocus as untrap,
-  saveActiveElement,
-} from '@studiometa/js-toolkit/utils';
+import { transition } from '@studiometa/js-toolkit/utils/transition';
+import { trapFocus as trap } from '@studiometa/js-toolkit/utils/trapFocus';
+import { untrapFocus as untrap } from '@studiometa/js-toolkit/utils/untrapFocus';
+import { saveActiveElement } from '@studiometa/js-toolkit/utils/saveActiveElement';
 import { withDeprecation } from '../decorators/index.js';
 
 type ModalStates = Partial<

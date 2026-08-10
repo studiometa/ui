@@ -1,6 +1,10 @@
-import { Base, withFreezedOptions } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withFreezedOptions } from '@studiometa/js-toolkit/withFreezedOptions';
 import type { BaseProps, BaseConfig, ScrollInViewProps } from '@studiometa/js-toolkit';
-import { map, clamp01, animate, nextTick } from '@studiometa/js-toolkit/utils';
+import { map } from '@studiometa/js-toolkit/utils/map';
+import { clamp01 } from '@studiometa/js-toolkit/utils/clamp01';
+import { animate } from '@studiometa/js-toolkit/utils/animate';
+import { nextTick } from '@studiometa/js-toolkit/utils/nextTick';
 import type { Keyframe } from '@studiometa/js-toolkit/utils';
 
 export interface AbstractScrollAnimationProps extends BaseProps {

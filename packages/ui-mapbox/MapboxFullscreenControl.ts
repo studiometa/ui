@@ -1,4 +1,4 @@
-import { withExtraConfig } from '@studiometa/js-toolkit';
+import { withExtraConfig } from '@studiometa/js-toolkit/withExtraConfig';
 import type { FullscreenControlOptions } from 'mapbox-gl';
 import {
   AbstractMapboxControl,

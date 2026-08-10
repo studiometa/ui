@@ -1,4 +1,6 @@
-import { Base, ScrollInViewProps, withScrolledInView } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withScrolledInView } from '@studiometa/js-toolkit/withScrolledInView';
+import type { ScrollInViewProps } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { ScrollAnimationTarget } from './ScrollAnimationTarget.js';
 

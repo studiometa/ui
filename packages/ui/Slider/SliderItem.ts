@@ -1,6 +1,8 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { damp, domScheduler, transform } from '@studiometa/js-toolkit/utils';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
+import { transform } from '@studiometa/js-toolkit/utils/transform';
 
 export interface SliderItemProps extends BaseProps {}
 

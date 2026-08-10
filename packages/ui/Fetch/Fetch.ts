@@ -1,5 +1,8 @@
-import { Base, type BaseConfig, type BaseProps, BaseInterface } from '@studiometa/js-toolkit';
-import { domScheduler, historyPush, isFunction } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseConfig, BaseProps, BaseInterface } from '@studiometa/js-toolkit';
+import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
+import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
+import { isFunction } from '@studiometa/js-toolkit/utils/isFunction';
 import morphdom from 'morphdom';
 import { adoptNewScripts, getScripts } from './utils.js';
 

@@ -1,4 +1,4 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseConfig, BaseProps, BaseEventHookParams } from '@studiometa/js-toolkit';
 
 export interface ClickOutsideProps extends BaseProps {}

@@ -1,4 +1,4 @@
-import { throttle } from '@studiometa/js-toolkit/utils';
+import { throttle } from '@studiometa/js-toolkit/utils/throttle';
 import type { AbstractTrack } from './AbstractTrack.js';
 
 export type Modifier =

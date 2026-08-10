@@ -1,10 +1,8 @@
 import type { Base, BaseConfig } from '@studiometa/js-toolkit';
-import {
-  createMemoryStorageProvider,
-  createStorage,
-  isNumber,
-  nextFrame,
-} from '@studiometa/js-toolkit/utils';
+import { createMemoryStorageProvider } from '@studiometa/js-toolkit/utils/createMemoryStorageProvider';
+import { createStorage } from '@studiometa/js-toolkit/utils/createStorage';
+import { isNumber } from '@studiometa/js-toolkit/utils/isNumber';
+import { nextFrame } from '@studiometa/js-toolkit/utils/nextFrame';
 import type { IndexableInstructions, IndexableProps } from '../decorators/index.js';
 import { Indexable } from '../Indexable/index.js';
 import { AbstractCarouselChild } from './AbstractCarouselChild.js';

@@ -1,6 +1,8 @@
-import { Base, ScrollInViewProps, withScrolledInView } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withScrolledInView } from '@studiometa/js-toolkit/withScrolledInView';
+import type { ScrollInViewProps } from '@studiometa/js-toolkit';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { isDev } from '@studiometa/js-toolkit/utils';
+import { isDev } from '@studiometa/js-toolkit/utils/isDev';
 import { ScrollAnimationChild } from './ScrollAnimationChild.js';
 
 export interface ScrollAnimationParentProps extends BaseProps {

@@ -1,7 +1,8 @@
 import deepmerge from 'deepmerge';
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { memo, nextFrame } from '@studiometa/js-toolkit/utils';
+import { memo } from '@studiometa/js-toolkit/utils/memo';
+import { nextFrame } from '@studiometa/js-toolkit/utils/nextFrame';
 import { TrackContext } from './TrackContext.js';
 import { TrackEvent } from './TrackEvent.js';
 import { arrayMerge } from './utils.js';

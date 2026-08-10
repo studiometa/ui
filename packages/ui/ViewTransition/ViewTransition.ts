@@ -1,6 +1,7 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { addClass, removeClass } from '@studiometa/js-toolkit/utils';
+import { addClass } from '@studiometa/js-toolkit/utils/addClass';
+import { removeClass } from '@studiometa/js-toolkit/utils/removeClass';
 import { viewTransition } from './scheduler.js';
 
 export interface ViewTransitionProps extends BaseProps {

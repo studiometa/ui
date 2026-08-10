@@ -1,5 +1,5 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { getInstanceFromElement } from '@studiometa/js-toolkit';
+import { getInstanceFromElement } from '@studiometa/js-toolkit/getInstanceFromElement';
 import { Transition } from '../Transition/index.js';
 
 const FOCUSABLE_ELEMENTS = [

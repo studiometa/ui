@@ -1,4 +1,4 @@
-import { withMountWhenInView } from '@studiometa/js-toolkit';
+import { withMountWhenInView } from '@studiometa/js-toolkit/withMountWhenInView';
 import type { BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractPrefetch } from './AbstractPrefetch.js';
 

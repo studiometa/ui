@@ -1,6 +1,6 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { transition } from '@studiometa/js-toolkit/utils';
+import { transition } from '@studiometa/js-toolkit/utils/transition';
 
 type TabItem = {
   btn: HTMLElement;

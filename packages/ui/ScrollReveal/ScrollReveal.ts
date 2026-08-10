@@ -1,4 +1,6 @@
-import { withMountWhenInView, useScroll, ScrollServiceProps } from '@studiometa/js-toolkit';
+import { withMountWhenInView } from '@studiometa/js-toolkit/withMountWhenInView';
+import { useScroll } from '@studiometa/js-toolkit/useScroll';
+import type { ScrollServiceProps } from '@studiometa/js-toolkit';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { Transition } from '../Transition/index.js';
 

@@ -1,6 +1,8 @@
-import { Base, getClosestParent } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { getClosestParent } from '@studiometa/js-toolkit/getClosestParent';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { domScheduler, historyPush } from '@studiometa/js-toolkit/utils';
+import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
+import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
 import { FrameAnchor } from './FrameAnchor.js';
 import { FrameForm } from './FrameForm.js';
 import { FrameTarget } from './FrameTarget.js';

@@ -1,13 +1,12 @@
-import { Base, withDrag } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withDrag } from '@studiometa/js-toolkit/withDrag';
 import type { BaseProps, BaseConfig, DragServiceProps } from '@studiometa/js-toolkit';
-import {
-  clamp,
-  damp,
-  domScheduler,
-  getOffsetSizes,
-  map,
-  transform,
-} from '@studiometa/js-toolkit/utils';
+import { clamp } from '@studiometa/js-toolkit/utils/clamp';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
+import { getOffsetSizes } from '@studiometa/js-toolkit/utils/getOffsetSizes';
+import { map } from '@studiometa/js-toolkit/utils/map';
+import { transform } from '@studiometa/js-toolkit/utils/transform';
 
 export interface DraggableProps extends BaseProps {
   $refs: {

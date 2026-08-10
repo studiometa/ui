@@ -1,6 +1,6 @@
-import { withScrolledInView } from '@studiometa/js-toolkit';
+import { withScrolledInView } from '@studiometa/js-toolkit/withScrolledInView';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { isDev } from '@studiometa/js-toolkit/utils';
+import { isDev } from '@studiometa/js-toolkit/utils/isDev';
 import { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
 
 export interface ScrollAnimationProps extends BaseProps {

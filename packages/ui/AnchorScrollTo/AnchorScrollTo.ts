@@ -1,6 +1,6 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { scrollTo } from '@studiometa/js-toolkit/utils';
+import { scrollTo } from '@studiometa/js-toolkit/utils/scrollTo';
 
 export interface AnchorScrollToProps extends BaseProps {
   $el: HTMLAnchorElement;

@@ -6,7 +6,7 @@ import type {
   BaseDecorator,
   ScrollInViewProps,
 } from '@studiometa/js-toolkit';
-import { createElement } from '@studiometa/js-toolkit/utils';
+import { createElement } from '@studiometa/js-toolkit/utils/createElement';
 
 /**
  * Debug marker element interface.

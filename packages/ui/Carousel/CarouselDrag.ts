@@ -1,6 +1,7 @@
 import type { BaseConfig, BaseProps, DragServiceProps } from '@studiometa/js-toolkit';
-import { withDrag, withMountOnMediaQuery } from '@studiometa/js-toolkit';
-import { inertiaFinalValue } from '@studiometa/js-toolkit/utils';
+import { withDrag } from '@studiometa/js-toolkit/withDrag';
+import { withMountOnMediaQuery } from '@studiometa/js-toolkit/withMountOnMediaQuery';
+import { inertiaFinalValue } from '@studiometa/js-toolkit/utils/inertiaFinalValue';
 import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import { getClosestIndex } from './utils.js';
 

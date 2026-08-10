@@ -1,4 +1,4 @@
-import { camelCase } from '@studiometa/js-toolkit/utils';
+import { camelCase } from '@studiometa/js-toolkit/utils/camelCase';
 import type { DataValue } from './DataScope.js';
 
 export interface DataControlMember {

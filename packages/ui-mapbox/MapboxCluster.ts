@@ -1,5 +1,5 @@
 import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import { debounce } from '@studiometa/js-toolkit/utils';
+import { debounce } from '@studiometa/js-toolkit/utils/debounce';
 import type {
   Map,
   CircleLayerSpecification,

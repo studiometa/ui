@@ -1,5 +1,5 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { loadImage } from '@studiometa/js-toolkit/utils';
+import { loadImage } from '@studiometa/js-toolkit/utils/loadImage';
 import { AbstractFigure } from './AbstractFigure.js';
 
 export interface AbstractFigureDynamicProps extends BaseProps {

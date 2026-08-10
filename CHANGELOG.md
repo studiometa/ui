@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **@studiometa/ui, @studiometa/ui-mapbox:** import js-toolkit values from their per-symbol subpaths instead of the package barrel, shrinking every component's esm.sh footprint ([#619](https://github.com/studiometa/ui/pull/619))
+
 ## [v1.10.0-beta.5](https://github.com/studiometa/ui/compare/1.10.0-beta.4..1.10.0-beta.5) (2026-08-06)
 
 ### Changed

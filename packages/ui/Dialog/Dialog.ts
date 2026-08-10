@@ -1,6 +1,8 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseProps, BaseConfig, KeyServiceProps } from '@studiometa/js-toolkit';
-import { trapFocus, untrapFocus, saveActiveElement } from '@studiometa/js-toolkit/utils';
+import { trapFocus } from '@studiometa/js-toolkit/utils/trapFocus';
+import { untrapFocus } from '@studiometa/js-toolkit/utils/untrapFocus';
+import { saveActiveElement } from '@studiometa/js-toolkit/utils/saveActiveElement';
 import { Transition } from '../Transition/index.js';
 import { ViewTransition } from '../ViewTransition/index.js';
 

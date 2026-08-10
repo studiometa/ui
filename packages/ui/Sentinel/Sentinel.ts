@@ -1,4 +1,5 @@
-import { Base, withIntersectionObserver } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withIntersectionObserver } from '@studiometa/js-toolkit/withIntersectionObserver';
 import type { BaseConfig } from '@studiometa/js-toolkit';
 
 /**
