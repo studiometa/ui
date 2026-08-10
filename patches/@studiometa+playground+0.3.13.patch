@@ -1,0 +1,46 @@
+diff --git a/node_modules/@studiometa/playground/dist/front/js/components/Iframe.js b/node_modules/@studiometa/playground/dist/front/js/components/Iframe.js
+index 4a2f28d..535211a 100644
+--- a/node_modules/@studiometa/playground/dist/front/js/components/Iframe.js
++++ b/node_modules/@studiometa/playground/dist/front/js/components/Iframe.js
+@@ -95,9 +95,13 @@ ${html}
+       return Iframe.esbuildPromise.promise;
+     }
+     Iframe.esbuildPromise = Promise.withResolvers();
+-    const esbuild = await import("esbuild-wasm");
++    const esbuildUrl = `https://esm.sh/esbuild-wasm@${"0.24.2"}`;
++    const mod = await import(
++      /* webpackIgnore: true */ esbuildUrl
++    );
++    const esbuild = mod.default ?? mod;
+     await esbuild.initialize({
+-      wasmURL: new URL("esbuild-wasm/esbuild.wasm", import.meta.url)
++      wasmURL: `https://esm.sh/esbuild-wasm@${"0.24.2"}/esbuild.wasm`
+     });
+     Iframe.esbuild = esbuild;
+     Iframe.esbuildPromise.resolve(esbuild);
+diff --git a/node_modules/@studiometa/playground/dist/lib/plugins/PlaygroundLoadersPlugin.js b/node_modules/@studiometa/playground/dist/lib/plugins/PlaygroundLoadersPlugin.js
+index 533beb1..b23e51b 100644
+--- a/node_modules/@studiometa/playground/dist/lib/plugins/PlaygroundLoadersPlugin.js
++++ b/node_modules/@studiometa/playground/dist/lib/plugins/PlaygroundLoadersPlugin.js
+@@ -1,4 +1,6 @@
+-import { existsSync, readFileSync } from "node:fs";
++import { existsSync, readFileSync, realpathSync } from "node:fs";
++import { createRequire } from "node:module";
++import { dirname } from "node:path";
+ import VirtualModulesPlugin from "webpack-virtual-modules";
+ class PlaygroundLoadersPlugin {
+   loaderNames = ["html", "style", "script"];
+@@ -9,9 +11,11 @@ class PlaygroundLoadersPlugin {
+   apply(compiler) {
+     const virtualModulesConfig = {};
+     const defaultLoader = "export default async function loader(value) { return value };";
++    const require = createRequire(import.meta.url);
++    const packageRoot = realpathSync(dirname(require.resolve("@studiometa/playground/package.json")));
+     for (const loaderName of this.loaderNames) {
+-      const loaderContent = this.loaders && this.loaders[loaderName] && existsSync(this.loaders[loaderName]) ? readFileSync(this.loaders[loaderName]) : defaultLoader;
+-      virtualModulesConfig[`node_modules/@studiometa/playground/${loaderName}-loader.js`] = loaderContent;
++      const loaderContent = this.loaders && this.loaders[loaderName] && existsSync(this.loaders[loaderName]) ? readFileSync(this.loaders[loaderName], 'utf8') : defaultLoader;
++      virtualModulesConfig[`${packageRoot}/${loaderName}-loader.js`] = loaderContent;
+     }
+     const virtualModules = new VirtualModulesPlugin(virtualModulesConfig);
+     virtualModules.apply(compiler);
