@@ -19,8 +19,8 @@ const { config } = ts.readConfigFile(resolve(ROOT, 'tsconfig.json'), ts.sys.read
 const parsed = ts.parseJsonConfigFileContent(config, ts.sys, ROOT);
 
 const ENTRIES = {
-  '@studiometa/ui': 'packages/ui/index.ts',
-  '@studiometa/ui-mapbox': 'packages/ui-mapbox/index.ts',
+  '@studiometa/ui': 'packages/ui/src/index.ts',
+  '@studiometa/ui-mapbox': 'packages/ui-mapbox/src/index.ts',
 };
 
 const program = ts.createProgram(

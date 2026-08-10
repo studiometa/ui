@@ -129,7 +129,7 @@ for (const symbol of allReferenceSymbols) {
 
 const uiPackage = JSON.parse(
   readFileSync(resolve(repositoryRoot, 'packages/ui/package.json'), 'utf8'),
-) as { exports: Record<string, string> };
+) as { exports: Record<string, unknown> };
 const explicitUiSubpaths = Object.keys(uiPackage.exports)
   .filter((key) => key.startsWith('./'))
   // `./manifest` is a generated autoloader component manifest and `./autoload` is a side-effect
@@ -155,7 +155,7 @@ for (const subpath of explicitUiSubpaths) {
   report(documented, `Undocumented @studiometa/ui subpath: ${subpath}`);
 }
 
-const mapboxIndex = readFileSync(resolve(repositoryRoot, 'packages/ui-mapbox/index.ts'), 'utf8');
+const mapboxIndex = readFileSync(resolve(repositoryRoot, 'packages/ui-mapbox/src/index.ts'), 'utf8');
 // Only whole-module (`export * from './X.js'`) re-exports map to a documented item; named
 // re-exports (e.g. the dependency-injection helpers from `./dependencies.js`) are covered by the
 // per-symbol export validation below.
@@ -173,11 +173,11 @@ for (const exportedName of mapboxExports) {
 
 const publicEntryPoints = [
   {
-    path: resolve(repositoryRoot, 'packages/ui/index.ts'),
+    path: resolve(repositoryRoot, 'packages/ui/src/index.ts'),
     package: 'npm:@studiometa/ui',
   },
   {
-    path: resolve(repositoryRoot, 'packages/ui-mapbox/index.ts'),
+    path: resolve(repositoryRoot, 'packages/ui-mapbox/src/index.ts'),
     package: 'npm:@studiometa/ui-mapbox',
   },
 ] as const;

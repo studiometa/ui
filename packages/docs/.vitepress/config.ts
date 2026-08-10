@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
 import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
+import ts from 'typescript';
 import { withLeadingSlash } from '@studiometa/js-toolkit/utils';
 import glob from 'fast-glob';
 import { defineConfig } from 'vitepress';
@@ -35,7 +36,19 @@ export default defineConfig({
     ['link', { rel: 'icon', type: 'image/x-icon', href: '/logo.png' }],
   ],
   markdown: {
-    codeTransformers: [transformerTwoslash()],
+    // `@studiometa/ui` and `@studiometa/ui-mapbox` publish their built `dist/`, but their `exports`
+    // maps expose a `typescript` condition pointing at the `.ts` sources. Activate it so Twoslash
+    // type-checks the code samples against source, without requiring a build of the `dist/` types.
+    codeTransformers: [
+      transformerTwoslash({
+        twoslashOptions: {
+          compilerOptions: {
+            moduleResolution: ts.ModuleResolutionKind.Bundler,
+            customConditions: ['typescript'],
+          },
+        },
+      }),
+    ],
     // Explicitly load these languages for types hightlighting
     languages: ['js', 'jsx', 'ts', 'tsx'],
   },

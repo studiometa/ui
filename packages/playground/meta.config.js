@@ -1,5 +1,23 @@
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { playgroundPreset as playground, defineWebpackConfig } from '@studiometa/playground/preset';
+
+// `@studiometa/ui` and `@studiometa/ui-mapbox` publish their built `dist/`, so their `exports` maps
+// point at `dist/*.js`. The playground bundles workspace packages from LOCAL SOURCE, so map every
+// public subpath to its `.ts` module via the `typescript` export condition each package exposes
+// (the same condition the tests and type-checker use) rather than letting the preset resolve the
+// default `import`/`dist` target.
+function sourceEntries(root) {
+  const { exports } = JSON.parse(readFileSync(resolve(`${root}/package.json`), 'utf8'));
+  return Object.fromEntries(
+    Object.entries(exports)
+      .filter(([key, value]) => key.startsWith('.') && !key.includes('*') && typeof value === 'object')
+      .map(([key, value]) => [key, `${root}/${value.typescript.replace(/^\.\//, '')}`]),
+  );
+}
+
+const uiEntries = sourceEntries('../ui');
+const mapboxEntries = sourceEntries('../ui-mapbox');
 
 export default defineWebpackConfig({
   presets: [
@@ -49,8 +67,8 @@ export default defineWebpackConfig({
         // chunk and referenced by every entry, so there is a single runtime instance (no singleton /
         // identity hazard). ui exposes its barrel + `./manifest` + `./autoload` + every component
         // subpath; ui-mapbox likewise exposes its barrel + `./manifest` + `./autoload`.
-        { specifier: '@studiometa/ui', source: '../ui/**/*.ts', subpaths: true },
-        { specifier: '@studiometa/ui-mapbox', source: '../ui-mapbox/**/*.ts', subpaths: true },
+        { specifier: '@studiometa/ui', source: '../ui/src/**/*.ts', entries: uiEntries },
+        { specifier: '@studiometa/ui-mapbox', source: '../ui-mapbox/src/**/*.ts', entries: mapboxEntries },
       ],
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}

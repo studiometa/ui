@@ -10,14 +10,6 @@ import DisclosureDefault, { Disclosure as DisclosureNamed } from '@studiometa/ui
 import TabsDefault, { Tabs as TabsNamed } from '@studiometa/ui/Tabs';
 import SliderDefault, { Slider as SliderNamed } from '@studiometa/ui/Slider';
 import FrameDefault, { Frame as FrameNamed } from '@studiometa/ui/Frame';
-// The `.js`-extensioned subpaths must resolve to the same modules as the
-// extensionless ones above.
-import AccordionJsDefault, { Accordion as AccordionJsNamed } from '@studiometa/ui/Accordion.js';
-import ModalJsDefault, { Modal as ModalJsNamed } from '@studiometa/ui/Modal.js';
-import DisclosureJsDefault, { Disclosure as DisclosureJsNamed } from '@studiometa/ui/Disclosure.js';
-import TabsJsDefault, { Tabs as TabsJsNamed } from '@studiometa/ui/Tabs.js';
-import SliderJsDefault, { Slider as SliderJsNamed } from '@studiometa/ui/Slider.js';
-import FrameJsDefault, { Frame as FrameJsNamed } from '@studiometa/ui/Frame.js';
 // A "family" member has no default export — only its named export — exposed at
 // a flat top-level subpath (`@studiometa/ui/DataBind`, not `.../Data`).
 import { DataBind as DataBindNamed } from '@studiometa/ui/DataBind';
@@ -48,48 +40,30 @@ test.each([
   },
 );
 
-test.each([
-  ['Accordion', AccordionJsDefault, AccordionJsNamed, barrel.Accordion],
-  ['Modal', ModalJsDefault, ModalJsNamed, barrel.Modal],
-  ['Disclosure', DisclosureJsDefault, DisclosureJsNamed, barrel.Disclosure],
-  ['Tabs', TabsJsDefault, TabsJsNamed, barrel.Tabs],
-  ['Slider', SliderJsDefault, SliderJsNamed, barrel.Slider],
-  ['Frame', FrameJsDefault, FrameJsNamed, barrel.Frame],
-])(
-  '%s is available at its `.js`-extensioned subpath as default and named export',
-  (_name, def, named, fromBarrel) => {
-    // The default export is a js-toolkit `Base` subclass.
-    expect('$isBase' in def).toBe(true);
-    // The `.js`-extensioned subpath resolves to the same class as the
-    // extensionless subpath and the barrel export.
-    expect(def).toBe(named);
-    expect(def).toBe(fromBarrel);
-  },
-);
-
-// A component subpath must resolve to its MAIN component module (`X/X.ts`), not
-// the `index.ts` barrel — the subpath now exposes the lean component module
+// A component subpath must resolve to its MAIN component module (`X/X.js`), not
+// the `index.js` barrel — the subpath exposes the lean component module
 // directly. "Family" directories (e.g. `Data`, `decorators`, `Prefetch`) have
 // no single main file; instead each of their exported members is exposed at its
-// own flat top-level subpath resolving straight to the member module. Strict
-// Node resolution (`import.meta.resolve`) honours the package `exports` map
-// without importing the target.
+// own flat top-level subpath resolving straight to the member module. The
+// published package maps each subpath to its built `dist/` artefact; strict Node
+// resolution (`import.meta.resolve`) honours that `exports` map without importing
+// the target.
 test.each([
-  ['@studiometa/ui/Accordion', '/Accordion/Accordion.ts'],
-  ['@studiometa/ui/Modal', '/Modal/Modal.ts'],
-  ['@studiometa/ui/Disclosure', '/Disclosure/Disclosure.ts'],
+  ['@studiometa/ui/Accordion', '/dist/Accordion/Accordion.js'],
+  ['@studiometa/ui/Modal', '/dist/Modal/Modal.js'],
+  ['@studiometa/ui/Disclosure', '/dist/Disclosure/Disclosure.js'],
   // Family members resolve to their own module at a flat top-level subpath.
-  ['@studiometa/ui/DataBind', '/Data/DataBind.ts'],
-  ['@studiometa/ui/DisclosureGroup', '/Disclosure/DisclosureGroup.ts'],
-  ['@studiometa/ui/withTransition', '/decorators/withTransition.ts'],
-  ['@studiometa/ui/PrefetchWhenVisible', '/Prefetch/PrefetchWhenVisible.ts'],
+  ['@studiometa/ui/DataBind', '/dist/Data/DataBind.js'],
+  ['@studiometa/ui/DisclosureGroup', '/dist/Disclosure/DisclosureGroup.js'],
+  ['@studiometa/ui/withTransition', '/dist/decorators/withTransition.js'],
+  ['@studiometa/ui/PrefetchWhenVisible', '/dist/Prefetch/PrefetchWhenVisible.js'],
   // Sub-components resolve to their own module at a flat top-level subpath too,
   // distinct from their parent component's main module.
-  ['@studiometa/ui/AccordionItem', '/Accordion/AccordionItem.ts'],
-  ['@studiometa/ui/CarouselItem', '/Carousel/CarouselItem.ts'],
-  ['@studiometa/ui/TrackContext', '/Track/TrackContext.ts'],
+  ['@studiometa/ui/AccordionItem', '/dist/Accordion/AccordionItem.js'],
+  ['@studiometa/ui/CarouselItem', '/dist/Carousel/CarouselItem.js'],
+  ['@studiometa/ui/TrackContext', '/dist/Track/TrackContext.js'],
   // The nested deep path still resolves too (backward-compat with the wildcard).
-  ['@studiometa/ui/Accordion/AccordionItem', '/Accordion/AccordionItem.ts'],
+  ['@studiometa/ui/Accordion/AccordionItem', '/dist/Accordion/AccordionItem.js'],
 ])('%s resolves to its main module (not the index barrel)', (specifier, suffix) => {
   // @ts-expect-error import.meta.resolve is available under Node's ESM loader.
   const url: string = import.meta.resolve(specifier);

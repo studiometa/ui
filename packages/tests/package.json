@@ -19,6 +19,6 @@
   },
   "imports": {
     "#test-utils": "./__utils__/index.ts",
-    "#private/*": "../ui/*"
+    "#private/*": "../ui/src/*"
   }
 }

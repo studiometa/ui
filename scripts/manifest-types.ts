@@ -6,7 +6,7 @@ import type { ComponentLoadStrategy } from '@studiometa/js-toolkit';
  * The runtime manifest types (`ComponentManifest`, `ComponentManifestEntry`,
  * `ComponentLoadStrategy`) now live in `@studiometa/js-toolkit`. These two authoring types are
  * repository-local tooling contracts: they describe the hand-authored catalogs the generator reads
- * (`packages/ui/catalog.ts`, `packages/ui-mapbox/catalog.ts`), never a published runtime surface.
+ * (`packages/ui/catalog.ts`, `packages/ui-mapbox/src/catalog.ts`), never a published runtime surface.
  */
 
 /**

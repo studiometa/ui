@@ -68,7 +68,7 @@ jobs:
       # working setup in @weareikko/code-review; Node 24's bundled npm (>= 11.5.1) supports it.
       - name: Publish @studiometa/ui
         run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
-        working-directory: packages/ui/dist
+        working-directory: packages/ui
 
       - name: Build @studiometa/eslint-plugin-ui
         run: npm run build -w @studiometa/eslint-plugin-ui
@@ -80,7 +80,7 @@ jobs:
         run: npm run build -w @studiometa/ui-mapbox
       - name: Publish @studiometa/ui-mapbox
         run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
-        working-directory: packages/ui-mapbox/dist
+        working-directory: packages/ui-mapbox
 
       - uses: ncipollo/release-action@v1
         with:

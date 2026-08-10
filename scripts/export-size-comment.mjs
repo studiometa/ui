@@ -35,33 +35,33 @@ function kib(bytes) {
   return `${(bytes / 1024).toFixed(2)} kB`;
 }
 
-function delta(before, after) {
-  const diff = after - before;
-  const sign = diff > 0 ? '+' : '';
-  const percent = before === 0 ? '' : `, ${sign}${((diff / before) * 100).toFixed(1)}%`;
-  return `${sign}${kib(diff)}${percent}`;
+const HEADER = ['| Export | Size (gzip) | Diff |', '| :-- | --: | :-: |'];
+
+function name(subpath) {
+  return subpath === '.' ? '(index)' : subpath.replace(/^\.\//, '');
 }
 
-/**
- * Format one metric as `before → after (Δ)`, or new/removed when one side is
- * absent. Returns an empty string when the metric is unchanged.
- */
-function cell(beforeEntry, afterEntry, key) {
-  if (!beforeEntry) return `— → **${kib(afterEntry[key])}**`;
-  if (!afterEntry) return `~~${kib(beforeEntry[key])}~~ → —`;
-  if (beforeEntry[key] === afterEntry[key]) return kib(afterEntry[key]);
-  return `${kib(beforeEntry[key])} → **${kib(afterEntry[key])}** (${delta(beforeEntry[key], afterEntry[key])})`;
+// A signed gzip delta with percentage. Added exports read as +100%, removed
+// exports as -100% (their whole size appears or disappears).
+function diff(b, h) {
+  const before = b ? b.gzip : 0;
+  const after = h ? h.gzip : 0;
+  const bytes = after - before;
+  const percent = before === 0 ? 100 : (bytes / before) * 100;
+  const bytesSign = bytes > 0 ? '+' : '';
+  const percentSign = percent > 0 ? '+' : '';
+  return `${bytesSign}${kib(bytes)} (${percentSign}${percent.toFixed(1)}%)`;
 }
-
-const TABLE_HEADER = ['| Export | Min | Min + Gzip | Min + Brotli |', '| --- | ---: | ---: | ---: |'];
 
 const packages = [...new Set([...Object.keys(base), ...Object.keys(head)])].sort();
-const sections = [];
+const changedSections = [];
+const unchangedSections = [];
 let changedCount = 0;
+let unchangedCount = 0;
 
-for (const name of packages) {
-  const baseEntries = base[name] ?? {};
-  const headEntries = head[name] ?? {};
+for (const pkg of packages) {
+  const baseEntries = base[pkg] ?? {};
+  const headEntries = head[pkg] ?? {};
   const subpaths = [...new Set([...Object.keys(baseEntries), ...Object.keys(headEntries)])].sort();
 
   const changed = [];
@@ -69,44 +69,40 @@ for (const name of packages) {
   for (const subpath of subpaths) {
     const b = baseEntries[subpath];
     const h = headEntries[subpath];
-    const isUnchanged = b && h && b.raw === h.raw && b.gzip === h.gzip && b.brotli === h.brotli;
-    if (isUnchanged) {
-      unchanged.push(`| \`${subpath}\` | ${kib(h.raw)} | ${kib(h.gzip)} | ${kib(h.brotli)} |`);
+    if (b && h && b.gzip === h.gzip) {
+      unchanged.push(`| \`${name(subpath)}\` | ${kib(h.gzip)} | – |`);
     } else {
-      changed.push(`| \`${subpath}\` | ${cell(b, h, 'raw')} | ${cell(b, h, 'gzip')} | ${cell(b, h, 'brotli')} |`);
+      // Show the current size, or the removed one when the export is gone.
+      changed.push(`| \`${name(subpath)}\` | ${kib((h ?? b).gzip)} | ${diff(b, h)} |`);
     }
   }
 
-  if (changed.length === 0 && unchanged.length === 0) continue;
-  changedCount += changed.length;
-
-  const section = [`### ${name}`, ''];
   if (changed.length > 0) {
-    section.push(...TABLE_HEADER, ...changed);
-  } else {
-    section.push('No export size changes.');
+    changedCount += changed.length;
+    changedSections.push([`#### <kbd>${pkg}</kbd>`, '', ...HEADER, ...changed].join('\n'));
   }
   if (unchanged.length > 0) {
-    section.push(
-      '',
-      `<details><summary>Unchanged (${unchanged.length})</summary>`,
-      '',
-      ...TABLE_HEADER,
-      ...unchanged,
-      '</details>',
-    );
+    unchangedCount += unchanged.length;
+    unchangedSections.push([`#### <kbd>${pkg}</kbd>`, '', ...HEADER, ...unchanged].join('\n'));
   }
-  sections.push(section.join('\n'));
 }
 
-const heading = changedCount === 0 ? '## Export size — ✅ no changes' : '## Export size';
-const body = [
-  MARKER,
-  heading,
-  '',
-  'Sizes are bundled per export with peer dependencies left external, minified.',
-  '',
-  ...sections,
-].join('\n');
+const body = [MARKER, '## Export size', ''];
+body.push('Bundled per export with peer dependencies left external and minified; sizes are gzipped.', '');
 
-console.log(body);
+if (changedCount === 0) {
+  body.push('✅ No export size changes.', '');
+} else {
+  body.push(...changedSections.flatMap((section) => [section, '']));
+}
+
+if (unchangedCount > 0) {
+  body.push(
+    `<details><summary>Unchanged (${unchangedCount})</summary>`,
+    '',
+    ...unchangedSections.flatMap((section) => [section, '']),
+    '</details>',
+  );
+}
+
+console.log(body.join('\n'));

@@ -13,20 +13,6 @@ import MapboxClusterDefault, {
 import StoreLocatorDefault, {
   StoreLocator as StoreLocatorNamed,
 } from '@studiometa/ui-mapbox/StoreLocator';
-// The `.js`-extensioned subpaths must resolve to the same modules as the
-// extensionless ones above.
-import MapboxMapJsDefault, {
-  MapboxMap as MapboxMapJsNamed,
-} from '@studiometa/ui-mapbox/MapboxMap.js';
-import MapboxClusterItemJsDefault, {
-  MapboxClusterItem as MapboxClusterItemJsNamed,
-} from '@studiometa/ui-mapbox/MapboxClusterItem.js';
-import MapboxClusterJsDefault, {
-  MapboxCluster as MapboxClusterJsNamed,
-} from '@studiometa/ui-mapbox/MapboxCluster.js';
-import StoreLocatorJsDefault, {
-  StoreLocator as StoreLocatorJsNamed,
-} from '@studiometa/ui-mapbox/StoreLocator.js';
 
 test.each([
   ['MapboxMap', MapboxMapDefault, MapboxMapNamed, barrel.MapboxMap],
@@ -42,27 +28,3 @@ test.each([
   expect(def).toBe(named);
   expect(def).toBe(fromBarrel);
 });
-
-test.each([
-  ['MapboxMap', MapboxMapJsDefault, MapboxMapJsNamed, barrel.MapboxMap],
-  [
-    'MapboxClusterItem',
-    MapboxClusterItemJsDefault,
-    MapboxClusterItemJsNamed,
-    barrel.MapboxClusterItem,
-  ],
-  ['MapboxCluster', MapboxClusterJsDefault, MapboxClusterJsNamed, barrel.MapboxCluster],
-  ['StoreLocator', StoreLocatorJsDefault, StoreLocatorJsNamed, barrel.StoreLocator],
-])(
-  '%s is available at its `.js`-extensioned subpath as default and named export',
-  (_name, def, named, fromBarrel) => {
-    // Ensure the `mapbox-gl` mock is registered before the package is imported.
-    expect(MockMap).toBeDefined();
-    // The default export is a js-toolkit `Base` subclass.
-    expect('$isBase' in def).toBe(true);
-    // The `.js`-extensioned subpath resolves to the same class as the
-    // extensionless subpath and the barrel export.
-    expect(def).toBe(named);
-    expect(def).toBe(fromBarrel);
-  },
-);

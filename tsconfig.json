@@ -2,7 +2,16 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "lib": ["ESNext", "dom", "ES2015", "ES2016", "ES2017", "ES2018", "ES2019", "ES2020"],
+    "lib": [
+      "ESNext",
+      "dom",
+      "ES2015",
+      "ES2016",
+      "ES2017",
+      "ES2018",
+      "ES2019",
+      "ES2020"
+    ],
     "allowJs": true,
     "checkJs": true,
     "strict": false,
@@ -13,14 +22,23 @@
     "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "paths": {
-      "#private/*": ["./packages/ui/*"],
-      "#test-utils": ["./packages/tests/__utils__/index.ts"]
+      "#private/*": [
+        "./packages/ui/src/*"
+      ],
+      "#test-utils": [
+        "./packages/tests/__utils__/index.ts"
+      ]
     },
-    "types": ["node"]
+    "types": [
+      "node"
+    ],
+    "customConditions": [
+      "typescript"
+    ]
   },
   "include": [
-    "packages/ui/**/*.ts",
-    "packages/ui-mapbox/**/*.ts",
+    "packages/ui/src/**/*.ts",
+    "packages/ui-mapbox/src/**/*.ts",
     "packages/tests/**/*.ts",
     "scripts/**/*.ts"
   ]

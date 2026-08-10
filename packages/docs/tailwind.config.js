@@ -5,7 +5,7 @@ import { config as tailwindConfig } from '@studiometa/tailwind-config';
 
 tailwindConfig.corePlugins = undefined;
 
-const ui = path.resolve(__dirname, '../ui');
+const ui = path.resolve(__dirname, '../ui/src');
 const folders = fs
   .readdirSync(ui, { withFileTypes: true })
   .filter((item) => item.isDirectory() && item.name !== 'node_modules')

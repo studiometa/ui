@@ -2,8 +2,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { format, resolveConfig } from 'prettier';
-import { catalog as uiCatalog } from '../packages/ui/catalog.ts';
-import { catalog as mapboxCatalog } from '../packages/ui-mapbox/catalog.ts';
+import { catalog as uiCatalog } from '../packages/ui/src/catalog.ts';
+import { catalog as mapboxCatalog } from '../packages/ui-mapbox/src/catalog.ts';
 import type { ComponentCatalog, CuratedComponentMetadata } from './manifest-types.ts';
 
 const scriptsDirectory = dirname(fileURLToPath(import.meta.url));
@@ -12,20 +12,25 @@ const checkOnly = process.argv.includes('--check');
 
 interface PackageTarget {
   catalog: ComponentCatalog;
-  directory: string;
+  // Directory holding the `package.json` manifest.
+  packageDirectory: string;
+  // Directory holding the `.ts` sources and the generated `manifest.ts`.
+  sourceDirectory: string;
   manifestPath: string;
 }
 
 const targets: readonly PackageTarget[] = [
   {
     catalog: uiCatalog,
-    directory: resolve(repositoryDirectory, 'packages/ui'),
-    manifestPath: resolve(repositoryDirectory, 'packages/ui/manifest.ts'),
+    packageDirectory: resolve(repositoryDirectory, 'packages/ui'),
+    sourceDirectory: resolve(repositoryDirectory, 'packages/ui/src'),
+    manifestPath: resolve(repositoryDirectory, 'packages/ui/src/manifest.ts'),
   },
   {
     catalog: mapboxCatalog,
-    directory: resolve(repositoryDirectory, 'packages/ui-mapbox'),
-    manifestPath: resolve(repositoryDirectory, 'packages/ui-mapbox/manifest.ts'),
+    packageDirectory: resolve(repositoryDirectory, 'packages/ui-mapbox'),
+    sourceDirectory: resolve(repositoryDirectory, 'packages/ui-mapbox/src'),
+    manifestPath: resolve(repositoryDirectory, 'packages/ui-mapbox/src/manifest.ts'),
   },
 ];
 
@@ -64,20 +69,33 @@ function assertUnique(values: readonly string[], label: string) {
   }
 }
 
-function exportTarget(packageJson: { exports: Record<string, string> }, subpath: string): string {
+type ExportEntry = string | { import: string; types?: string };
+
+function exportImport(entry: ExportEntry): string {
+  return typeof entry === 'string' ? entry : entry.import;
+}
+
+function exportTarget(packageJson: { exports: Record<string, ExportEntry> }, subpath: string): string {
   const explicit = packageJson.exports[`./${subpath}`];
-  if (explicit) return explicit;
   const wildcard = packageJson.exports['./*'];
-  if (!wildcard) {
+  const entry = explicit ?? wildcard;
+  if (!entry) {
     throw new Error(`No export found for subpath ./${subpath}`);
   }
-  return wildcard.replace('*', subpath);
+  const target = explicit ? exportImport(entry) : exportImport(entry).replace('*', subpath);
+  // The published `@studiometa/ui-mapbox` maps subpaths to its built `dist/`
+  // tree; the generated `manifest.ts` sits at the source root and, once built,
+  // at the `dist/` root, so its `load()` specifiers must be relative to that
+  // root — strip the leading `./dist/` segment to recover the sibling path.
+  return target.replace(/^\.\/dist\//, './');
 }
 
 async function validateCatalog(target: PackageTarget) {
   const { catalog } = target;
-  const packageJson = JSON.parse(await readFile(resolve(target.directory, 'package.json'), 'utf8'));
-  const publicClasses = await collectExportedClasses(resolve(target.directory, 'index.ts'));
+  const packageJson = JSON.parse(
+    await readFile(resolve(target.packageDirectory, 'package.json'), 'utf8'),
+  );
+  const publicClasses = await collectExportedClasses(resolve(target.sourceDirectory, 'index.ts'));
   const tokens = catalog.components.map(({ token }) => token);
 
   assertUnique(tokens, `${catalog.packageName} component tokens`);
@@ -127,7 +145,7 @@ function serializeArrayProperty(name: string, values: readonly string[] | undefi
 function serializeComponent(
   catalog: ComponentCatalog,
   component: CuratedComponentMetadata,
-  packageJson: { exports: Record<string, string> },
+  packageJson: { exports: Record<string, ExportEntry> },
 ) {
   const { packageName, strategy } = catalog;
   const { token, group, children, styles, integrations } = component;
@@ -139,7 +157,9 @@ function serializeComponent(
 }
 
 async function generateManifest(target: PackageTarget): Promise<string> {
-  const packageJson = JSON.parse(await readFile(resolve(target.directory, 'package.json'), 'utf8'));
+  const packageJson = JSON.parse(
+    await readFile(resolve(target.packageDirectory, 'package.json'), 'utf8'),
+  );
   const entries = [...target.catalog.components]
     .sort((a, b) => a.token.localeCompare(b.token))
     .map((component) => serializeComponent(target.catalog, component, packageJson));

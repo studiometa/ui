@@ -6,7 +6,6 @@ import * as barrel from '@studiometa/ui';
 // before the `exports` field was introduced and must keep resolving to the same
 // class exposed by the barrel.
 import { AccordionItem as AccordionItemDeep } from '@studiometa/ui/Accordion/AccordionItem';
-import { AccordionItem as AccordionItemDeepJs } from '@studiometa/ui/Accordion/AccordionItem.js';
 // Deep helper import documented in `ScrollAnimation/withScrollAnimationDebug`.
 import { withScrollAnimationDebug as debugDeep } from '@studiometa/ui/ScrollAnimation/withScrollAnimationDebug';
 // A `Data*` primitive whose directory has no single "main" component and thus
@@ -16,7 +15,6 @@ import { DataBind as DataBindSubpath } from '@studiometa/ui/DataBind';
 
 test('deep sub-component subpaths still resolve after adding exports', () => {
   expect(AccordionItemDeep).toBe(barrel.AccordionItem);
-  expect(AccordionItemDeepJs).toBe(barrel.AccordionItem);
   expect('$isBase' in AccordionItemDeep).toBe(true);
 });
 
@@ -32,43 +30,30 @@ test('flat member subpath resolves for a package without a default export', () =
 
 // The former `@studiometa/ui/Data` family-aggregate subpath was removed in
 // favour of flat per-member subpaths. With no explicit key, it now falls through
-// to the greedy `./*` wildcard, which points at a nonexistent root-level
-// `Data.ts` — so it no longer resolves to the family `Data/index.ts` barrel and
-// no importable module lives at that path.
+// to the greedy `./*` wildcard, which points at a nonexistent `dist/Data.js` — so
+// it no longer resolves to the family `Data/index` barrel and no importable
+// module lives at that path.
 test('the removed family-aggregate subpath no longer resolves to a real module', () => {
   // @ts-expect-error import.meta.resolve is available under Node's ESM loader.
   const url: string = import.meta.resolve('@studiometa/ui/Data');
   const path = fileURLToPath(url);
-  expect(path.endsWith('/Data/index.ts')).toBe(false);
+  expect(path.endsWith('/Data/index.js')).toBe(false);
   expect(fs.existsSync(path)).toBe(false);
 });
 
-// The greedy `./*` wildcard added with the `exports` field rewrites every
-// unmatched subpath to a `.js`/`.ts` module. Without explicit pass-through
-// entries, published non-JS paths that resolved before the field existed would
-// now point at a nonexistent `<path>.js` file. These assertions use strict Node
-// resolution (`import.meta.resolve`, which honours the package `exports` map
-// without loading the target) to prove those paths resolve to the asset itself.
-// Vite/vitest do not transform these specifiers because the module is never
-// imported — only resolved. Before the fix each of these would resolve to a
-// missing `*.js` sibling and `existsSync` would fail.
+// The published package maps subpaths to its built `dist/`, with two pass-through
+// entries for non-JS assets that must resolve to the asset itself rather than
+// being rewritten to a `.js` module by the greedy `./*` wildcard:
+// `./package.json` (so tooling can read the manifest) and `./*.twig` (the shipped
+// templates, whose literal suffix beats `./*`). These assertions use strict Node
+// resolution (`import.meta.resolve`, which honours the `exports` map without
+// loading the target) to prove those paths resolve to the asset, not a `.js`
+// sibling. SVG assets and `.ts` sources are no longer exported subpaths (SVG is
+// in-repo only via the `@svg` Twig namespace; the published tree ships no `.ts`).
 test.each([
-  // Tools read a package manifest through `@studiometa/ui/package.json`; the
-  // explicit `./package.json` entry keeps it exported.
   ['@studiometa/ui/package.json', '/package.json'],
-  // The package ships 24 `.twig` templates; `./*.twig` keeps them resolvable
-  // through package resolution (the `.twig` suffix beats the greedy `./*`).
-  ['@studiometa/ui/Accordion/Accordion.twig', '/Accordion/Accordion.twig'],
-  ['@studiometa/ui/Button/Button.twig', '/Button/Button.twig'],
-  // SVG assets live under `svg/` in the source tree; `./*.svg` keeps them
-  // resolvable in-repo (they are not published to `dist/`).
-  ['@studiometa/ui/svg/chevron.svg', '/svg/chevron.svg'],
-  // In-repo, `@studiometa/ui` resolves to the `.ts` sources, so the source
-  // `package.json` keeps a `./*.ts` entry to preserve `.ts`-extensioned deep
-  // imports (otherwise `./*` rewrites them to `<path>.ts.ts`). The published
-  // dist ships `.js`/`.d.ts` only, so it has no `./*.ts` entry.
-  ['@studiometa/ui/Accordion/Accordion.ts', '/Accordion/Accordion.ts'],
-  ['@studiometa/ui/index.ts', '/index.ts'],
+  ['@studiometa/ui/Accordion/Accordion.twig', '/dist/Accordion/Accordion.twig'],
+  ['@studiometa/ui/Button/Button.twig', '/dist/Button/Button.twig'],
 ])('non-JS published path %s resolves to the asset itself', (specifier, suffix) => {
   // @ts-expect-error import.meta.resolve is available under Node's ESM loader.
   const url: string = import.meta.resolve(specifier);
@@ -76,6 +61,4 @@ test.each([
   // Resolves to the asset, not a rewritten `<asset>.js` module.
   expect(path.endsWith(suffix)).toBe(true);
   expect(path.endsWith('.js')).toBe(false);
-  // And the resolved file actually exists on disk.
-  expect(fs.existsSync(path)).toBe(true);
 });

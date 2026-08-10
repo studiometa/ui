@@ -43,8 +43,8 @@ class Extension extends TwigToolkitExtension
                 $loader->addPath($svg_path, 'svg');
             }
 
-            $pkg_template_path = $pkg_path . '/ui';
-            $pkg_svg_path = $pkg_path . '/ui/svg';
+            $pkg_template_path = $pkg_path . '/ui/src';
+            $pkg_svg_path = $pkg_path . '/ui/src/svg';
 
             // Add package paths last as fallbacks
             $loader->addPath($pkg_template_path, 'ui');
