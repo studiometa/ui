@@ -53,47 +53,60 @@ function cell(beforeEntry, afterEntry, key) {
   return `${kib(beforeEntry[key])} → **${kib(afterEntry[key])}** (${delta(beforeEntry[key], afterEntry[key])})`;
 }
 
+const TABLE_HEADER = ['| Export | Min | Min + Gzip | Min + Brotli |', '| --- | ---: | ---: | ---: |'];
+
 const packages = [...new Set([...Object.keys(base), ...Object.keys(head)])].sort();
 const sections = [];
+let changedCount = 0;
 
 for (const name of packages) {
   const baseEntries = base[name] ?? {};
   const headEntries = head[name] ?? {};
   const subpaths = [...new Set([...Object.keys(baseEntries), ...Object.keys(headEntries)])].sort();
 
-  const rows = [];
+  const changed = [];
+  const unchanged = [];
   for (const subpath of subpaths) {
     const b = baseEntries[subpath];
     const h = headEntries[subpath];
-    const unchanged = b && h && b.raw === h.raw && b.gzip === h.gzip && b.brotli === h.brotli;
-    if (unchanged) continue;
-    rows.push(
-      `| \`${subpath}\` | ${cell(b, h, 'raw')} | ${cell(b, h, 'gzip')} | ${cell(b, h, 'brotli')} |`,
-    );
+    const isUnchanged = b && h && b.raw === h.raw && b.gzip === h.gzip && b.brotli === h.brotli;
+    if (isUnchanged) {
+      unchanged.push(`| \`${subpath}\` | ${kib(h.raw)} | ${kib(h.gzip)} | ${kib(h.brotli)} |`);
+    } else {
+      changed.push(`| \`${subpath}\` | ${cell(b, h, 'raw')} | ${cell(b, h, 'gzip')} | ${cell(b, h, 'brotli')} |`);
+    }
   }
 
-  if (rows.length === 0) continue;
-  sections.push(
-    [
-      `### ${name}`,
+  if (changed.length === 0 && unchanged.length === 0) continue;
+  changedCount += changed.length;
+
+  const section = [`### ${name}`, ''];
+  if (changed.length > 0) {
+    section.push(...TABLE_HEADER, ...changed);
+  } else {
+    section.push('No export size changes.');
+  }
+  if (unchanged.length > 0) {
+    section.push(
       '',
-      '| Export | Min | Min + Gzip | Min + Brotli |',
-      '| --- | ---: | ---: | ---: |',
-      ...rows,
-    ].join('\n'),
-  );
+      `<details><summary>Unchanged (${unchanged.length})</summary>`,
+      '',
+      ...TABLE_HEADER,
+      ...unchanged,
+      '</details>',
+    );
+  }
+  sections.push(section.join('\n'));
 }
 
-const body =
-  sections.length === 0
-    ? `${MARKER}\n## Export size\n\n✅ No export size changes.`
-    : [
-        MARKER,
-        '## Export size',
-        '',
-        'Sizes are bundled per export with peer dependencies left external, minified.',
-        '',
-        ...sections,
-      ].join('\n');
+const heading = changedCount === 0 ? '## Export size — ✅ no changes' : '## Export size';
+const body = [
+  MARKER,
+  heading,
+  '',
+  'Sizes are bundled per export with peer dependencies left external, minified.',
+  '',
+  ...sections,
+].join('\n');
 
 console.log(body);
