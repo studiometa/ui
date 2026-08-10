@@ -6,7 +6,6 @@ import * as barrel from '@studiometa/ui';
 // before the `exports` field was introduced and must keep resolving to the same
 // class exposed by the barrel.
 import { AccordionItem as AccordionItemDeep } from '@studiometa/ui/Accordion/AccordionItem';
-import { AccordionItem as AccordionItemDeepJs } from '@studiometa/ui/Accordion/AccordionItem.js';
 // Deep helper import documented in `ScrollAnimation/withScrollAnimationDebug`.
 import { withScrollAnimationDebug as debugDeep } from '@studiometa/ui/ScrollAnimation/withScrollAnimationDebug';
 // A `Data*` primitive whose directory has no single "main" component and thus
@@ -16,7 +15,6 @@ import { DataBind as DataBindSubpath } from '@studiometa/ui/DataBind';
 
 test('deep sub-component subpaths still resolve after adding exports', () => {
   expect(AccordionItemDeep).toBe(barrel.AccordionItem);
-  expect(AccordionItemDeepJs).toBe(barrel.AccordionItem);
   expect('$isBase' in AccordionItemDeep).toBe(true);
 });
 

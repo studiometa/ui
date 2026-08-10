@@ -126,8 +126,6 @@ function writePublishedFiles() {
     // runtime. It is an explicit public entry, so it gets its own key rather than relying on the
     // greedy `./*` wildcard.
     './autoload': { types: './autoload.d.ts', import: './autoload.js' },
-    './autoload.js': { types: './autoload.d.ts', import: './autoload.js' },
-    './*.js': { types: './*.d.ts', import: './*.js' },
     './*': { types: './*.d.ts', import: './*.js' },
   };
 

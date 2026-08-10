@@ -15,10 +15,7 @@
   "exports": {
     ".": "./index.ts",
     "./autoload": "./autoload.ts",
-    "./autoload.js": "./autoload.ts",
     "./manifest": "./manifest.ts",
-    "./manifest.js": "./manifest.ts",
-    "./*.js": "./*.ts",
     "./*": "./*.ts"
   },
   "scripts": {

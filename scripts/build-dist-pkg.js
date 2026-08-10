@@ -64,12 +64,12 @@ function listReexportedFiles(dir) {
  * published one:
  *
  * - `.`                              → the barrel index;
- * - `./<File>` / `.js`               → a flat top-level subpath per module
+ * - `./<File>`                       → a flat top-level subpath per module
  *   re-exported by a directory `index.ts` — main components (`./Accordion` →
  *   `./Accordion/Accordion.js`), sub-components (`./AccordionItem` →
  *   `./Accordion/AccordionItem.js`) and family members (`./DataBind` →
  *   `./Data/DataBind.js`) alike (explicit keys so they win over the wildcard);
- * - `./<Component>/<File>` / `.js`   → deep imports of individual modules.
+ * - `./<Component>/<File>`           → deep imports of individual modules.
  *
  * @param   {string[]} componentDirs
  * @returns {Record<string, unknown>}
@@ -81,7 +81,6 @@ function buildExports(componentDirs) {
     // autoload runtime. It is an explicit public entry (a top-level module, not a component
     // directory), so it gets its own key rather than relying on the greedy `./*` wildcard.
     './autoload': { types: './autoload.d.ts', import: './autoload.js' },
-    './autoload.js': { types: './autoload.d.ts', import: './autoload.js' },
   };
 
   // For each directory, emit one flat top-level subpath per module its
@@ -91,9 +90,7 @@ function buildExports(componentDirs) {
   for (const dir of componentDirs) {
     for (const file of listReexportedFiles(dir)) {
       const base = `${dir}/${file}`;
-      const target = { types: `./${base}.d.ts`, import: `./${base}.js` };
-      exportsMap[`./${file}`] = target;
-      exportsMap[`./${file}.js`] = target;
+      exportsMap[`./${file}`] = { types: `./${base}.d.ts`, import: `./${base}.js` };
     }
   }
 
@@ -118,10 +115,7 @@ function buildExports(componentDirs) {
   // resolvable in the published package. The source `package.json` keeps its
   // `./*.ts` entry because the in-repo `.ts` files are consumed directly.
 
-  // Greedy wildcards for deep-file imports, e.g. `@studiometa/ui/Frame/types`.
-  // The `.js`-extensioned variant is declared first so it takes precedence over
-  // the extensionless one for `.js` specifiers.
-  exportsMap['./*.js'] = { types: './*.d.ts', import: './*.js' };
+  // Greedy wildcard for deep-file imports, e.g. `@studiometa/ui/Frame/types`.
   exportsMap['./*'] = { types: './*.d.ts', import: './*.js' };
 
   return exportsMap;

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { h } from '#test-utils';
 import { MockMap } from './mock-mapbox-gl.js';
 import { MapboxSource, MapboxLayer, MapboxImage, MapboxCluster } from '@studiometa/ui-mapbox';
-import { claimMapboxOwnership, getMapboxOwner } from '@studiometa/ui-mapbox/utils.js';
+import { claimMapboxOwnership, getMapboxOwner } from '@studiometa/ui-mapbox/utils';
 
 /**
  * Bind a child instance to a shared, already-loaded `MockMap` through a mocked
