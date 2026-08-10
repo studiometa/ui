@@ -41,14 +41,16 @@ function name(subpath) {
   return subpath === '.' ? '(index)' : subpath.replace(/^\.\//, '');
 }
 
-// A signed gzip delta with percentage, or a new/removed marker.
+// A signed gzip delta with percentage. Added exports read as +100%, removed
+// exports as -100% (their whole size appears or disappears).
 function diff(b, h) {
-  if (!b) return '🆕 new';
-  if (!h) return '🗑 removed';
-  const d = h.gzip - b.gzip;
-  const sign = d > 0 ? '+' : '';
-  const percent = b.gzip === 0 ? '' : ` (${sign}${((d / b.gzip) * 100).toFixed(1)}%)`;
-  return `${sign}${kib(d)}${percent}`;
+  const before = b ? b.gzip : 0;
+  const after = h ? h.gzip : 0;
+  const bytes = after - before;
+  const percent = before === 0 ? 100 : (bytes / before) * 100;
+  const bytesSign = bytes > 0 ? '+' : '';
+  const percentSign = percent > 0 ? '+' : '';
+  return `${bytesSign}${kib(bytes)} (${percentSign}${percent.toFixed(1)}%)`;
 }
 
 const packages = [...new Set([...Object.keys(base), ...Object.keys(head)])].sort();
