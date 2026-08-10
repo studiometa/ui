@@ -1,4 +1,4 @@
-import { registerManifest } from '@studiometa/js-toolkit';
+import { registerManifest } from '@studiometa/js-toolkit/registerManifest';
 import { manifest } from './manifest.js';
 
 // Side-effect entry: importing this module registers the `@studiometa/ui` manifest with the shared
