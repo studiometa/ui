@@ -102,6 +102,29 @@ function listFiles(dir, base = dir) {
 }
 
 /**
+ * List the modules re-exported by the package `index.ts`.
+ *
+ * The barrel re-exports each public module via `export … from './File.js'`
+ * specifiers (`export *`, `export { … }`, `export type { … }`). This parses
+ * those specifiers to recover the exact set of publicly exported files, each of
+ * which gets its own explicit `exports` key so it resolves to the module itself
+ * rather than being swallowed by the greedy `./*` wildcard used for deep-file
+ * imports. Files not re-exported there stay internal and get no subpath.
+ *
+ * @returns {string[]}
+ */
+function listReexportedFiles() {
+  const source = fs.readFileSync(resolve('../index.ts'), 'utf8');
+  const files = new Set();
+  const re = /from\s+['"]\.\/([^'"]+?)(?:\.js)?['"]/g;
+  let match;
+  while ((match = re.exec(source))) {
+    files.add(match[1]);
+  }
+  return [...files].sort();
+}
+
+/**
  * Write the files consumed when publishing the `dist/` folder to NPM:
  *
  * - a `package.json` derived from the source one, with the entrypoints and
@@ -126,8 +149,17 @@ function writePublishedFiles() {
     // runtime. It is an explicit public entry, so it gets its own key rather than relying on the
     // greedy `./*` wildcard.
     './autoload': { types: './autoload.d.ts', import: './autoload.js' },
-    './*': { types: './*.d.ts', import: './*.js' },
+    './manifest': { types: './manifest.d.ts', import: './manifest.js' },
   };
+
+  // One explicit flat subpath per module re-exported by `index.ts`, mirroring
+  // the source `exports` map but pointing at the emitted `.js`/`.d.ts` artefacts.
+  for (const file of listReexportedFiles()) {
+    pkg.exports[`./${file}`] = { types: `./${file}.d.ts`, import: `./${file}.js` };
+  }
+
+  // Greedy wildcard for deep-file imports not covered by an explicit key above.
+  pkg.exports['./*'] = { types: './*.d.ts', import: './*.js' };
 
   fs.writeFileSync(resolve('../dist/package.json'), `${JSON.stringify(pkg, null, 2)}\n`);
 
