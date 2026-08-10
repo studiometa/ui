@@ -7,33 +7,95 @@
   },
   "type": "module",
   "sideEffects": [
-    "./autoload.ts",
-    "./autoload.js"
+    "./dist/autoload.js"
   ],
-  "main": "index.ts",
-  "types": "index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./index.ts",
-    "./autoload": "./autoload.ts",
-    "./manifest": "./manifest.ts",
-    "./AbstractMapboxControl": "./AbstractMapboxControl.ts",
-    "./AbstractMapboxMapChild": "./AbstractMapboxMapChild.ts",
-    "./MapboxCluster": "./MapboxCluster.ts",
-    "./MapboxClusterItem": "./MapboxClusterItem.ts",
-    "./MapboxFullscreenControl": "./MapboxFullscreenControl.ts",
-    "./MapboxGeocoder": "./MapboxGeocoder.ts",
-    "./MapboxGeolocateControl": "./MapboxGeolocateControl.ts",
-    "./MapboxImage": "./MapboxImage.ts",
-    "./MapboxImages": "./MapboxImages.ts",
-    "./MapboxLayer": "./MapboxLayer.ts",
-    "./MapboxMap": "./MapboxMap.ts",
-    "./MapboxMarker": "./MapboxMarker.ts",
-    "./MapboxNavigationControl": "./MapboxNavigationControl.ts",
-    "./MapboxPopup": "./MapboxPopup.ts",
-    "./MapboxSource": "./MapboxSource.ts",
-    "./StoreLocator": "./StoreLocator.ts",
-    "./dependencies": "./dependencies.ts",
-    "./*": "./*.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./autoload": {
+      "types": "./dist/autoload.d.ts",
+      "import": "./dist/autoload.js"
+    },
+    "./manifest": {
+      "types": "./dist/manifest.d.ts",
+      "import": "./dist/manifest.js"
+    },
+    "./AbstractMapboxControl": {
+      "types": "./dist/AbstractMapboxControl.d.ts",
+      "import": "./dist/AbstractMapboxControl.js"
+    },
+    "./AbstractMapboxMapChild": {
+      "types": "./dist/AbstractMapboxMapChild.d.ts",
+      "import": "./dist/AbstractMapboxMapChild.js"
+    },
+    "./MapboxCluster": {
+      "types": "./dist/MapboxCluster.d.ts",
+      "import": "./dist/MapboxCluster.js"
+    },
+    "./MapboxClusterItem": {
+      "types": "./dist/MapboxClusterItem.d.ts",
+      "import": "./dist/MapboxClusterItem.js"
+    },
+    "./MapboxFullscreenControl": {
+      "types": "./dist/MapboxFullscreenControl.d.ts",
+      "import": "./dist/MapboxFullscreenControl.js"
+    },
+    "./MapboxGeocoder": {
+      "types": "./dist/MapboxGeocoder.d.ts",
+      "import": "./dist/MapboxGeocoder.js"
+    },
+    "./MapboxGeolocateControl": {
+      "types": "./dist/MapboxGeolocateControl.d.ts",
+      "import": "./dist/MapboxGeolocateControl.js"
+    },
+    "./MapboxImage": {
+      "types": "./dist/MapboxImage.d.ts",
+      "import": "./dist/MapboxImage.js"
+    },
+    "./MapboxImages": {
+      "types": "./dist/MapboxImages.d.ts",
+      "import": "./dist/MapboxImages.js"
+    },
+    "./MapboxLayer": {
+      "types": "./dist/MapboxLayer.d.ts",
+      "import": "./dist/MapboxLayer.js"
+    },
+    "./MapboxMap": {
+      "types": "./dist/MapboxMap.d.ts",
+      "import": "./dist/MapboxMap.js"
+    },
+    "./MapboxMarker": {
+      "types": "./dist/MapboxMarker.d.ts",
+      "import": "./dist/MapboxMarker.js"
+    },
+    "./MapboxNavigationControl": {
+      "types": "./dist/MapboxNavigationControl.d.ts",
+      "import": "./dist/MapboxNavigationControl.js"
+    },
+    "./MapboxPopup": {
+      "types": "./dist/MapboxPopup.d.ts",
+      "import": "./dist/MapboxPopup.js"
+    },
+    "./MapboxSource": {
+      "types": "./dist/MapboxSource.d.ts",
+      "import": "./dist/MapboxSource.js"
+    },
+    "./StoreLocator": {
+      "types": "./dist/StoreLocator.d.ts",
+      "import": "./dist/StoreLocator.js"
+    },
+    "./dependencies": {
+      "types": "./dist/dependencies.d.ts",
+      "import": "./dist/dependencies.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
+    }
   },
   "scripts": {
     "build": "node scripts/build.js"
@@ -72,5 +134,10 @@
     "@types/mapbox__mapbox-gl-geocoder": "^5.0.0",
     "mapbox-gl": "^3.13.0",
     "tsdown": "0.21.5"
-  }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE.md"
+  ]
 }

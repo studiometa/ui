@@ -80,7 +80,7 @@ jobs:
         run: npm run build -w @studiometa/ui-mapbox
       - name: Publish @studiometa/ui-mapbox
         run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
-        working-directory: packages/ui-mapbox/dist
+        working-directory: packages/ui-mapbox
 
       - uses: ncipollo/release-action@v1
         with:

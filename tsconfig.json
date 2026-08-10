@@ -14,13 +14,15 @@
     "skipLibCheck": true,
     "paths": {
       "#private/*": ["./packages/ui/*"],
-      "#test-utils": ["./packages/tests/__utils__/index.ts"]
+      "#test-utils": ["./packages/tests/__utils__/index.ts"],
+      "@studiometa/ui-mapbox": ["./packages/ui-mapbox/src/index.ts"],
+      "@studiometa/ui-mapbox/*": ["./packages/ui-mapbox/src/*"]
     },
     "types": ["node"]
   },
   "include": [
     "packages/ui/**/*.ts",
-    "packages/ui-mapbox/**/*.ts",
+    "packages/ui-mapbox/src/**/*.ts",
     "packages/tests/**/*.ts",
     "scripts/**/*.ts"
   ]
