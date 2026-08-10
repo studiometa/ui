@@ -13,6 +13,7 @@
     "manifest:check": "node scripts/generate-manifests.ts --check",
     "build": "npm run build -w @studiometa/ui",
     "build:export-size": "npm run build && (if [ -d packages/ui-mapbox ]; then npm run build --workspace=@studiometa/ui-mapbox; fi)",
+    "size": "node scripts/export-size.mjs",
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
     "lint:static": "oxlint --tsconfig ./tsconfig.json --type-aware",
     "lint:types": "tsgo --build tsconfig.lint.json",
