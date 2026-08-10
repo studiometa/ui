@@ -4,7 +4,7 @@
 // from its built `dist` entry with all bare dependencies (peers such as
 // `@studiometa/js-toolkit`) left external, minified, then measured raw, gzipped
 // and brotli-compressed. Requires the packages to be built first.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
@@ -33,18 +33,25 @@ function brotliSize(contents) {
  * @param   {string} pkgDir
  * @returns {{ subpath: string, entry: string }[]}
  */
-function publicEntries(exports, pkgDir) {
+function publicEntries(exports, manifestDir) {
   return Object.entries(exports)
     .filter(([key]) => key === '.' || (key.startsWith('./') && !key.includes('*') && key !== './package.json'))
     .filter(([, value]) => value && typeof value === 'object' && 'import' in value)
-    .map(([subpath, value]) => ({ subpath, entry: resolve(pkgDir, value.import) }));
+    .map(([subpath, value]) => ({ subpath, entry: resolve(manifestDir, value.import) }));
 }
 
 async function measure(pkg) {
   const pkgDir = resolve(root, pkg.dir);
-  const { exports } = JSON.parse(readFileSync(resolve(pkgDir, 'package.json'), 'utf8'));
+  if (!existsSync(pkgDir)) return null;
+  // On the base branch the published manifest may still be a generated
+  // `dist/package.json`; prefer it when present so base and head measure the
+  // same published surface regardless of layout. Entries resolve relative to it.
+  const distManifest = resolve(pkgDir, 'dist/package.json');
+  const manifestPath = existsSync(distManifest) ? distManifest : resolve(pkgDir, 'package.json');
+  const manifestDir = dirname(manifestPath);
+  const { exports } = JSON.parse(readFileSync(manifestPath, 'utf8'));
   const entries = [];
-  for (const { subpath, entry } of publicEntries(exports, pkgDir)) {
+  for (const { subpath, entry } of publicEntries(exports, manifestDir)) {
     const result = await build({
       entryPoints: [entry],
       bundle: true,
@@ -75,7 +82,8 @@ function kib(bytes) {
 
 const report = [];
 for (const pkg of packages) {
-  report.push(await measure(pkg));
+  const measured = await measure(pkg);
+  if (measured) report.push(measured);
 }
 
 const lines = [];
