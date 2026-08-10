@@ -4,74 +4,64 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - 'packages/ui/**'
+      - 'packages/ui-mapbox/**'
+      - 'scripts/export-size*.mjs'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   export_size:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the pull request
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          fetch-depth: '0'
-      # Detect which packages the pull request affects. Each package re-runs when
-      # its own sources, the build tooling it actually uses, the shared root
-      # TypeScript config it extends, or the lockfile change. `scripts/**` builds
-      # only `@studiometa/ui` (into `packages/ui/dist`); `@studiometa/ui-mapbox` is
-      # built by its own `packages/ui-mapbox/scripts/**`, already covered by its
-      # own glob.
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            ui:
-              - 'packages/ui/**'
-              - 'scripts/**'
-              - 'tsconfig*.json'
-              - 'package-lock.json'
-            ui_mapbox:
-              - 'packages/ui-mapbox/**'
-              - 'tsconfig*.json'
-              - 'package-lock.json'
-      # Build and measure only the affected packages. The export-size action
-      # renders one comment with a section per path, so a single invocation with
-      # the comma-joined paths avoids the comment clobbering that separate jobs
-      # (which share one comment) would cause. The action also builds the base
-      # branch with the same command and runs it without a shell, so each single
-      # package case is a command that already exists on `main`. When two or more
-      # packages change we use the `build:export-size` script: `&&` runs under
-      # npm's own shell, and its `if [ -d packages/<pkg> ]` guards skip a package
-      # that does not yet exist on the base branch, so the base-branch build stays
-      # green.
-      - id: plan
-        run: |
-          ui='${{ steps.filter.outputs.ui }}'
-          mapbox='${{ steps.filter.outputs.ui_mapbox }}'
-          paths=""
-          add() {
-            if [ -n "$paths" ]; then
-              paths="$paths,$1"
-            else
-              paths="$1"
-            fi
-          }
-          count=0
-          [ "$ui" = "true" ] && count=$((count + 1)) && add "packages/ui/dist"
-          [ "$mapbox" = "true" ] && count=$((count + 1)) && add "packages/ui-mapbox/dist"
-          if [ "$count" -ge 2 ]; then
-            build="npm run build:export-size"
-          elif [ "$ui" = "true" ]; then
-            build="npm run build"
-          elif [ "$mapbox" = "true" ]; then
-            build="npm run build --workspace=@studiometa/ui-mapbox"
-          fi
-          {
-            echo "build=$build"
-            echo "paths=$paths"
-            [ -n "$paths" ] && echo "run=true" || echo "run=false"
-          } >> "$GITHUB_OUTPUT"
-      - if: steps.plan.outputs.run == 'true'
-        uses: titouanmathis/export-size-action@main
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          build_script: ${{ steps.plan.outputs.build }}
-          paths: ${{ steps.plan.outputs.paths }}
           node-version: 24
+          cache: 'npm'
+      - name: Build and measure the pull request
+        run: |
+          npm install --no-audit --no-fund
+          npm run build:export-size
+          node scripts/export-size.mjs --json head.json
+
+      # Measure the base branch with its own copy of the script (a generated
+      # `dist/package.json` is preferred there, so older layouts still resolve).
+      # If the base predates the script, fall back to an empty baseline so every
+      # export reads as new instead of failing the job.
+      - name: Check out the base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+      - name: Build and measure the base branch
+        working-directory: base
+        run: |
+          npm install --no-audit --no-fund
+          npm run build:export-size
+          if [ -f scripts/export-size.mjs ]; then
+            GITHUB_STEP_SUMMARY= node scripts/export-size.mjs --json "$GITHUB_WORKSPACE/base.json"
+          else
+            echo '[]' > "$GITHUB_WORKSPACE/base.json"
+          fi
+
+      - name: Render and upsert the size comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/export-size-comment.mjs base.json head.json > comment.md
+          marker='<!-- export-size-report -->'
+          repo='${{ github.repository }}'
+          pr='${{ github.event.pull_request.number }}'
+          id=$(gh api "repos/$repo/issues/$pr/comments" --paginate \
+            --jq ".[] | select(.body | contains(\"$marker\")) | .id" | head -n1)
+          if [ -n "$id" ]; then
+            gh api --method PATCH "repos/$repo/issues/comments/$id" -F body=@comment.md >/dev/null
+          else
+            gh api --method POST "repos/$repo/issues/$pr/comments" -F body=@comment.md >/dev/null
+          fi
