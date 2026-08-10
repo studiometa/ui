@@ -85,6 +85,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           build_script: ${{ steps.plan.outputs.build }}
           paths: ${{ steps.plan.outputs.paths }}
+          # esbuild understands TypeScript; the default rollup bundler's parser chokes on the `.ts`
+          # sources the packages' `typescript` export condition resolves to.
+          bundler: esbuild
           node-version: 24
           cache: 'npm'
       - name: Build and measure the pull request
