@@ -1,4 +1,4 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { Toast } from './Toast.js';
 import { viewTransition } from '../ViewTransition/index.js';

@@ -1,5 +1,6 @@
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { transition, matrix } from '@studiometa/js-toolkit/utils';
+import { transition } from '@studiometa/js-toolkit/utils/transition';
+import { matrix } from '@studiometa/js-toolkit/utils/matrix';
 import { Modal } from '../Modal/index.js';
 
 export interface PanelProps extends BaseProps {

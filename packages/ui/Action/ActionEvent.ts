@@ -1,6 +1,6 @@
-import { getInstances } from '@studiometa/js-toolkit';
+import { getInstances } from '@studiometa/js-toolkit/getInstances';
 import type { Base } from '@studiometa/js-toolkit';
-import { isFunction } from '@studiometa/js-toolkit/utils';
+import { isFunction } from '@studiometa/js-toolkit/utils/isFunction';
 
 /**
  * Extract component name and an optional additional selector from a string.

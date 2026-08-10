@@ -1,6 +1,8 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { nextFrame, domScheduler, isFunction } from '@studiometa/js-toolkit/utils';
+import { nextFrame } from '@studiometa/js-toolkit/utils/nextFrame';
+import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
+import { isFunction } from '@studiometa/js-toolkit/utils/isFunction';
 import type { Slider } from './Slider.js';
 
 export interface AbstractSliderChildProps extends BaseProps {}

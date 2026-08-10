@@ -4,7 +4,10 @@ import type {
   ScrollInViewProps,
   WithScrolledInViewProps,
 } from '@studiometa/js-toolkit';
-import { damp, clamp01, domScheduler, isDev } from '@studiometa/js-toolkit/utils';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { clamp01 } from '@studiometa/js-toolkit/utils/clamp01';
+import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
+import { isDev } from '@studiometa/js-toolkit/utils/isDev';
 import { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
 
 export interface ScrollAnimationChildProps extends BaseProps {

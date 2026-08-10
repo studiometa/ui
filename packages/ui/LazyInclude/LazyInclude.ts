@@ -1,4 +1,4 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseProps, BaseInterface } from '@studiometa/js-toolkit';
 
 export interface LazyIncludeProps extends BaseProps {

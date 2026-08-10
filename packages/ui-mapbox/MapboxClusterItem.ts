@@ -1,4 +1,5 @@
-import { Base, type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { MAPBOX_CLUSTER_CONNECTED, type MapboxCluster } from './MapboxCluster.js';
 
 export interface MapboxClusterItemProps extends BaseProps {

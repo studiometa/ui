@@ -1,4 +1,4 @@
-import { domScheduler } from '@studiometa/js-toolkit/utils';
+import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractSliderChild } from './AbstractSliderChild.js';
 

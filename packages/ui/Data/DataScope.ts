@@ -1,6 +1,7 @@
-import { Base, getScopedGroups } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { getScopedGroups } from '@studiometa/js-toolkit/getScopedGroups';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { nextTick } from '@studiometa/js-toolkit/utils';
+import { nextTick } from '@studiometa/js-toolkit/utils/nextTick';
 import { DataChannel } from './DataChannel.js';
 
 export const DATA_GROUP_NAMESPACE = 'data:';

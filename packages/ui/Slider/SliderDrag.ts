@@ -1,5 +1,6 @@
 import type { BaseProps, BaseConfig, DragServiceProps } from '@studiometa/js-toolkit';
-import { Base, withDrag } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withDrag } from '@studiometa/js-toolkit/withDrag';
 
 export interface SliderDragProps extends BaseProps {
   $options: {

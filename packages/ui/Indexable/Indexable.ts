@@ -1,4 +1,5 @@
-import { Base, BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { withIndex } from '../decorators/index.js';
 
 /**

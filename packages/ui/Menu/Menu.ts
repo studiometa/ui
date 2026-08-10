@@ -1,6 +1,7 @@
-import { Base, getClosestParent } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { getClosestParent } from '@studiometa/js-toolkit/getClosestParent';
 import type { BaseConfig, BaseProps, KeyServiceProps } from '@studiometa/js-toolkit';
-import { nextTick } from '@studiometa/js-toolkit/utils';
+import { nextTick } from '@studiometa/js-toolkit/utils/nextTick';
 import { MenuBtn } from './MenuBtn.js';
 import { MenuList } from './MenuList.js';
 

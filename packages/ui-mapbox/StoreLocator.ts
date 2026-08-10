@@ -1,5 +1,6 @@
-import { Base, type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
-import { nextTick } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import { nextTick } from '@studiometa/js-toolkit/utils/nextTick';
 import type { Map, LngLatLike, LngLatBoundsLike, Popup } from 'mapbox-gl';
 import { getMapboxGl } from './dependencies.js';
 import { MapboxMap } from './MapboxMap.js';

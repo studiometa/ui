@@ -1,5 +1,7 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { nextFrame, domScheduler, isFunction } from '@studiometa/js-toolkit/utils';
+import { nextFrame } from '@studiometa/js-toolkit/utils/nextFrame';
+import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
+import { isFunction } from '@studiometa/js-toolkit/utils/isFunction';
 import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import type { Carousel } from './Carousel.js';
 

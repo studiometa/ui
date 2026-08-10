@@ -1,5 +1,5 @@
 import type { BaseConfig } from '@studiometa/js-toolkit';
-import { isDev } from '@studiometa/js-toolkit/utils';
+import { isDev } from '@studiometa/js-toolkit/utils/isDev';
 import { ScrollAnimationChild } from './ScrollAnimationChild.js';
 import { animationScrollWithEase } from './animationScrollWithEase.js';
 

@@ -1,5 +1,7 @@
-import { Base, BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { damp, transform } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { transform } from '@studiometa/js-toolkit/utils/transform';
 
 export interface CircularMarqueeProps extends BaseProps {
   $options: {

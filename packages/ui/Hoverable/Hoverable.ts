@@ -1,6 +1,11 @@
-import { Base, withRelativePointer } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withRelativePointer } from '@studiometa/js-toolkit/withRelativePointer';
 import type { BaseConfig, BaseProps, PointerServiceProps } from '@studiometa/js-toolkit';
-import { map, transform, damp, getOffsetSizes, clamp01 } from '@studiometa/js-toolkit/utils';
+import { map } from '@studiometa/js-toolkit/utils/map';
+import { transform } from '@studiometa/js-toolkit/utils/transform';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { getOffsetSizes } from '@studiometa/js-toolkit/utils/getOffsetSizes';
+import { clamp01 } from '@studiometa/js-toolkit/utils/clamp01';
 
 export interface HoverableProps extends BaseProps {
   $refs: {

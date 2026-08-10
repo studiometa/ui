@@ -1,6 +1,7 @@
-import { Base, withGroup } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withGroup } from '@studiometa/js-toolkit/withGroup';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { nextTick } from '@studiometa/js-toolkit/utils';
+import { nextTick } from '@studiometa/js-toolkit/utils/nextTick';
 import { getDataChannel } from './DataChannel.js';
 import { DataScope, getDataScope, DATA_GROUP_NAMESPACE } from './DataScope.js';
 import type { DataScopeMember, DataValue } from './DataScope.js';

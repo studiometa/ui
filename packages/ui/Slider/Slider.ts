@@ -1,17 +1,15 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type {
   BaseProps,
   BaseConfig,
   DragServiceProps,
   KeyServiceProps,
 } from '@studiometa/js-toolkit';
-import {
-  clamp,
-  createMemoryStorageProvider,
-  createStorage,
-  inertiaFinalValue,
-  nextFrame,
-} from '@studiometa/js-toolkit/utils';
+import { clamp } from '@studiometa/js-toolkit/utils/clamp';
+import { createMemoryStorageProvider } from '@studiometa/js-toolkit/utils/createMemoryStorageProvider';
+import { createStorage } from '@studiometa/js-toolkit/utils/createStorage';
+import { inertiaFinalValue } from '@studiometa/js-toolkit/utils/inertiaFinalValue';
+import { nextFrame } from '@studiometa/js-toolkit/utils/nextFrame';
 import { AbstractSliderChild } from './AbstractSliderChild.js';
 import { SliderDrag } from './SliderDrag.js';
 import { SliderItem } from './SliderItem.js';

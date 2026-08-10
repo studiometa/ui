@@ -1,5 +1,6 @@
 import type { BaseConfig, BaseProps, BaseDecorator, BaseInterface } from '@studiometa/js-toolkit';
-import { ease, isDev } from '@studiometa/js-toolkit/utils';
+import { ease } from '@studiometa/js-toolkit/utils/ease';
+import { isDev } from '@studiometa/js-toolkit/utils/isDev';
 import type { AbstractScrollAnimation } from './AbstractScrollAnimation.js';
 
 const regex = /ease([A-Z])/;

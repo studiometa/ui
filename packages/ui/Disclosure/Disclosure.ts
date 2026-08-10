@@ -1,4 +1,5 @@
-import { Base, useMutation } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { useMutation } from '@studiometa/js-toolkit/useMutation';
 import type { BaseConfig, BaseProps, MutationServiceInterface } from '@studiometa/js-toolkit';
 import { Transition } from '../Transition/index.js';
 import { ViewTransition } from '../ViewTransition/index.js';

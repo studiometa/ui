@@ -1,7 +1,8 @@
 import deepmerge from 'deepmerge';
-import { Base, BaseConfig } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseConfig } from '@studiometa/js-toolkit';
 import type { BaseProps } from '@studiometa/js-toolkit';
-import { transition } from '@studiometa/js-toolkit/utils';
+import { transition } from '@studiometa/js-toolkit/utils/transition';
 import type { AccordionCore as Accordion } from './AccordionCore.js';
 
 type AccordionItemStates = Partial<

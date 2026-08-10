@@ -1,5 +1,7 @@
-import { getInstances } from '@studiometa/js-toolkit';
-import { nextFrame, removeClass, transition } from '@studiometa/js-toolkit/utils';
+import { getInstances } from '@studiometa/js-toolkit/getInstances';
+import { nextFrame } from '@studiometa/js-toolkit/utils/nextFrame';
+import { removeClass } from '@studiometa/js-toolkit/utils/removeClass';
+import { transition } from '@studiometa/js-toolkit/utils/transition';
 import type {
   Base,
   BaseDecorator,

@@ -1,4 +1,5 @@
-import { Base, BaseProps } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseProps } from '@studiometa/js-toolkit';
 import type { BaseConfig } from '@studiometa/js-toolkit';
 import { withTransition } from '../decorators/index.js';
 

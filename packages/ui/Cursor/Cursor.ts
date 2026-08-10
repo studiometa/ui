@@ -1,6 +1,7 @@
-import { Base } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseConfig, PointerServiceProps, BaseProps } from '@studiometa/js-toolkit';
-import { damp, matrix } from '@studiometa/js-toolkit/utils';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { matrix } from '@studiometa/js-toolkit/utils/matrix';
 
 export interface CursorProps extends BaseProps {
   $options: {

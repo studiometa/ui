@@ -1,6 +1,9 @@
-import { Base, withMountWhenInView } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withMountWhenInView } from '@studiometa/js-toolkit/withMountWhenInView';
 import type { BaseProps, BaseInterface, ScrollServiceProps } from '@studiometa/js-toolkit';
-import { damp, clamp, transform } from '@studiometa/js-toolkit/utils';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { clamp } from '@studiometa/js-toolkit/utils/clamp';
+import { transform } from '@studiometa/js-toolkit/utils/transform';
 
 export interface LargeTextProps extends BaseProps {
   $refs: {

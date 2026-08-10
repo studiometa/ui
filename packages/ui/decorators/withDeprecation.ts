@@ -5,7 +5,7 @@ import type {
   BaseConfig,
   BaseInterface,
 } from '@studiometa/js-toolkit';
-import { isDev } from '@studiometa/js-toolkit/utils';
+import { isDev } from '@studiometa/js-toolkit/utils/isDev';
 
 export interface DeprecationProps extends BaseProps {}
 
