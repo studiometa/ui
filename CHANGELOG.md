@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.10.0-beta.6](https://github.com/studiometa/ui/compare/1.10.0-beta.5..1.10.0-beta.6) (2026-08-10)
+
 ### Added
 
 - **@studiometa/ui-mapbox:** expose each component at its own explicit subpath, e.g. `@studiometa/ui-mapbox/MapboxMap` ([#620](https://github.com/studiometa/ui/pull/620))
