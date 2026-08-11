@@ -28,7 +28,7 @@ export interface DataBindProps extends BaseProps {
 const EMPTY_DATA = Object.freeze({});
 
 type VirtualBinding =
-  | { type: 'text'; expression: string }
+  | { type: 'text' | 'if'; expression: string }
   | { type: 'prop' | 'attr' | 'class' | 'style'; name: string; expression: string };
 
 /**
@@ -40,8 +40,9 @@ type VirtualBinding =
  * onto the element. The bound target defaults to a form control's value or the
  * element's `textContent`, can be overridden with the `prop` option, keyed with
  * the `key` option, and propagated on mount with `immediate`; `data-bind:*`
- * attributes additionally drive an element's property, attribute, class, style
- * or text from the same value. It also exposes `set`, `toggle`, `increment` and
+ * attributes additionally drive an element's property, attribute, class, style,
+ * text or — on a `<template>` element — the presence of its content in the DOM
+ * from the same value. It also exposes `set`, `toggle`, `increment` and
  * `cycle` helpers to publish changes back to the group.
  *
  * @link https://ui.studiometa.dev/reference/items/DataBind/
@@ -70,6 +71,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
   __virtualBindings?: VirtualBinding[];
   __virtualValue?: DataValue;
   __hasVirtualValue = false;
+  __ifNodes?: ChildNode[];
 
   get isDataSource() {
     return false;
@@ -87,8 +89,12 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
       this.__virtualBindings = [];
 
       for (const attribute of this.$el.attributes) {
-        if (attribute.name === 'data-bind:text') {
-          this.__virtualBindings.push({ type: 'text', expression: attribute.value });
+        const simpleMatch = attribute.name.match(/^data-bind:(text|if)$/);
+        if (simpleMatch) {
+          this.__virtualBindings.push({
+            type: simpleMatch[1] as 'text' | 'if',
+            expression: attribute.value,
+          });
           continue;
         }
 
@@ -324,7 +330,39 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
         case 'text':
           this.target.textContent = (result ?? '') as string;
           break;
+        case 'if':
+          this.__applyIfBinding(Boolean(result));
+          break;
       }
+    }
+  }
+
+  /**
+   * Toggle the presence of the bound `<template>` content in the DOM. The
+   * content is cloned and inserted after the template element when the value
+   * is truthy, and removed when the value is falsy. Each insertion is a fresh
+   * clone, so any state held by the content is reset on every toggle.
+   * @private
+   */
+  __applyIfBinding(isPresent: boolean) {
+    const { target } = this;
+
+    if (!(target instanceof HTMLTemplateElement)) {
+      this.$warn(
+        'The data-bind:if binding can only be used on a <template> element. Use data-bind:attr.hidden to show or hide an element in place.',
+      );
+      return;
+    }
+
+    if (isPresent && !this.__ifNodes) {
+      const fragment = target.content.cloneNode(true) as DocumentFragment;
+      this.__ifNodes = [...fragment.childNodes];
+      target.after(fragment);
+    } else if (!isPresent && this.__ifNodes) {
+      for (const node of this.__ifNodes) {
+        node.remove();
+      }
+      this.__ifNodes = undefined;
     }
   }
 

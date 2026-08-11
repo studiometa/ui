@@ -72,6 +72,23 @@ The following disclosure keeps its button label while updating its class, ARIA s
 </div>
 ```
 
+### Conditional rendering
+
+Use the `data-bind:if` binding on a `<template>` element to add or remove DOM nodes based on the bound value, like `v-if` in Vue. The template content is cloned and inserted after the template when the expression is truthy, and removed when it is falsy. See the [conditional rendering reference](./js-api.md#conditional-rendering-with-data-bind-if) for details and trade-offs against `data-bind:attr.hidden`.
+
+```html
+<div data-component="DataScope" data-option-group="search">
+  <input name="query" data-component="DataModel" data-option-immediate />
+
+  <template data-component="DataBind" data-option-key="query" data-bind:if="value !== ''">
+    <p>
+      Results for
+      <strong data-component="DataBind" data-option-key="query" data-bind:text></strong>
+    </p>
+  </template>
+</div>
+```
+
 ### Advanced usage with computed and effects
 
 The whole family of `Data...` components adds reactivity to your HTML with a few `data-...` attributes.
