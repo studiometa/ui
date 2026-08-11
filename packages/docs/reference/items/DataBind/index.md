@@ -17,13 +17,10 @@ Import the components in your main app and use the [`DataModel` component](../Da
 ::: code-group
 
 ```js [app.js] twoslash
-import { registerComponent } from '@studiometa/js-toolkit';
+import { registerComponents } from '@studiometa/js-toolkit';
 import { Action, DataBind, DataModel, DataScope } from '@studiometa/ui';
 
-registerComponent(DataScope);
-registerComponent(DataBind);
-registerComponent(DataModel);
-registerComponent(Action);
+registerComponents(Action, DataScope, DataBind, DataModel);
 ```
 
 ```html [index.html]
