@@ -1,0 +1,18 @@
+<div
+  data-component="DataScope"
+  data-option-group="checkout"
+  class="grid gap-4 max-w-sm rounded ring p-4">
+  <label class="flex items-center gap-2">
+    <input type="checkbox" name="different-address" data-component="DataModel" />
+    <span>Ship to a different address</span>
+  </label>
+  <template
+    data-component="DataBind"
+    data-option-key="different-address"
+    data-bind:if>
+    <label class="grid gap-1">
+      <span>Shipping address</span>
+      <input name="shipping-address" class="p-2 bg-transparent ring rounded" />
+    </label>
+  </template>
+</div>

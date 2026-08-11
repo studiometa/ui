@@ -1,0 +1,17 @@
+<div
+  data-component="DataScope"
+  data-option-group="card"
+  class="grid gap-4 max-w-sm rounded ring p-4">
+  <label class="flex items-center gap-2">
+    <input type="checkbox" name="inverted" data-component="DataModel" />
+    <span>Invert the card</span>
+  </label>
+  <div
+    data-component="DataBind"
+    data-option-key="inverted"
+    data-bind:class.bg-zinc-900="value"
+    data-bind:class.text-white="value"
+    class="p-4 rounded ring transition">
+    A card that inverts its colors.
+  </div>
+</div>

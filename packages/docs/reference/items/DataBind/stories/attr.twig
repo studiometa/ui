@@ -1,0 +1,28 @@
+<div
+  data-component="DataScope"
+  data-option-group="disclosure"
+  class="grid gap-4 max-w-sm rounded ring p-4">
+  <button
+    type="button"
+    value="closed"
+    aria-controls="details"
+    aria-expanded="false"
+    data-component="Action DataModel"
+    data-option-key="state"
+    data-option-prop="value"
+    data-option-immediate
+    data-on:click="DataModel.toggle('open', 'closed')"
+    data-bind:attr.aria-expanded="String(value === 'open')"
+    class="p-2 rounded ring font-bold">
+    Details
+  </button>
+  <section
+    id="details"
+    hidden
+    data-component="DataBind"
+    data-option-key="state"
+    data-bind:attr.hidden="value !== 'open'"
+    class="p-2 rounded ring">
+    Disclosure content
+  </section>
+</div>

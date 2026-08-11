@@ -1,0 +1,24 @@
+<div
+  data-component="DataScope"
+  data-option-group="signup"
+  class="grid gap-4 max-w-sm rounded ring p-4">
+  <label class="grid gap-1">
+    <span>Email</span>
+    <input
+      type="email"
+      name="email"
+      placeholder="you@example.com"
+      data-component="DataModel"
+      data-option-immediate
+      class="p-2 bg-transparent ring rounded" />
+  </label>
+  <button
+    type="button"
+    disabled
+    data-component="DataBind"
+    data-option-key="email"
+    data-bind:prop.disabled="!value.includes('@')"
+    class="p-2 rounded ring font-bold disabled:opacity-50 disabled:cursor-not-allowed">
+    Subscribe
+  </button>
+</div>
