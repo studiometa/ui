@@ -28,7 +28,7 @@ If the option is explicitly set with the `data-option-prop` attribute, it will o
 - Type: `boolean`
 - Default: `false`
 
-Propagates the component's value on mount to other components in the same group. Inside a [`DataScope`](../DataScope/index.md), only [`DataModel`](../DataModel/index.md) sources hydrate the keyed value; immediate keyed `DataBind`, `DataComputed` and `DataEffect` components are subscribers and receive the hydrated values once all sources are collected.
+Propagates the component's value on mount to other components in the same group. Inside a [`DataScope`](../DataScope/index.md), only [`DataModel`](../DataModel/index.md) sources hydrate the keyed value; immediate keyed `DataBind`, `DataComputed` and `DataEffect` components are subscribers and receive the hydrated values once all sources are collected. An immediate keyed subscriber mounted after hydration — for example inside content inserted by [`data-bind:if`](#conditional-rendering-with-data-bind-if) — syncs with the current scoped value on mount instead of waiting for the next update.
 
 ### `group`
 
@@ -50,21 +50,48 @@ When using it with multiple checkboxes or a multiple select, use the `[]` suffix
 
 Virtual `data-bind:*` attributes update several parts of an element from the same value. When an element has one or more virtual bindings, they replace the default single `textContent` or property update.
 
-| Syntax                   | Behavior                                                                                                                                 |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `data-bind:prop.<name>`  | Assigns the DOM property.                                                                                                                |
-| `data-bind:attr.<name>`  | Removes the attribute for `false`, `null`, or `undefined`; writes an empty attribute for `true`; otherwise writes the stringified value. |
-| `data-bind:class.<name>` | Toggles the class according to the result's boolean value.                                                                               |
-| `data-bind:style.<name>` | Clears the style for `false`, `null`, or `undefined`; otherwise writes the stringified value.                                            |
-| `data-bind:text`         | Assigns `textContent`.                                                                                                                   |
+| Syntax                   | Behavior                                                                                                                                       |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `data-bind:prop.<name>`  | Assigns the DOM property.                                                                                                                      |
+| `data-bind:attr.<name>`  | Removes the attribute for `false`, `null`, or `undefined`; writes an empty attribute for `true`; otherwise writes the stringified value.       |
+| `data-bind:class.<name>` | Toggles the class according to the result's boolean value.                                                                                     |
+| `data-bind:style.<name>` | Clears the style for `false`, `null`, or `undefined`; otherwise writes the stringified value.                                                  |
+| `data-bind:text`         | Assigns `textContent`.                                                                                                                         |
+| `data-bind:if`           | On a `<template>` element only: inserts a clone of the template content after the template for a truthy result, removes it for a falsy result. |
 
-A non-empty attribute value is a JavaScript expression with access to `value`, `target`, and `$data`. An empty attribute passes through the current value. Bindings are read when first used; changing their attributes afterward is not supported.
+A non-empty attribute value is a JavaScript expression with access to `value`, `target`, and `$data`. An empty attribute passes through the current value. Bindings are read when first used; changing their attributes afterward is not supported. See the [virtual bindings examples](./examples.md#virtual-bindings) for a live example of each binding.
 
 Use kebab-case for camel-cased DOM properties because HTML attribute names are case-insensitive, for example `data-bind:prop.tab-index` targets `tabIndex`.
 
 For ARIA attributes, explicitly stringify booleans when `"false"` must remain present, for example `data-bind:attr.aria-selected="String(value === 'overview')"`.
 
 Expression errors are reported without interrupting updates to the other bindings, matching `DataComputed` and `DataEffect` behavior.
+
+### Conditional rendering with `data-bind:if`
+
+The `data-bind:if` binding adds or removes DOM nodes based on the bound value, like `v-if` in Vue or `x-if` in Alpine.js. It must be set on a `<template>` element: the template stays in the DOM and keeps the binding alive, while its content is cloned and inserted after the template when the expression is truthy, and removed when it is falsy.
+
+```html
+<template
+  data-component="DataBind"
+  data-option-group="search"
+  data-option-key="query"
+  data-bind:if="value !== ''">
+  <p>
+    Results for
+    <strong
+      data-component="DataBind"
+      data-option-group="search"
+      data-option-key="query"
+      data-option-immediate
+      data-bind:text></strong>
+  </p>
+</template>
+```
+
+Each insertion is a fresh clone of the template content, so components inside are mounted again and any state they held is reset on every toggle. Give nested keyed bindings the [`immediate` option](#immediate) so they sync with the current scoped value when they mount, as in the `<strong>` element above. Template content is inert until the first truthy value, so conditional content never flashes before the data is ready.
+
+Use `data-bind:if` when the element must not exist in the DOM — a form control that must not submit, an expensive subtree, or content that must be absent from the accessibility tree. To show or hide an element in place, prefer the cheaper `data-bind:attr.hidden`, `data-bind:class.<name>` or `data-bind:style.display` bindings, which keep the element and its state.
 
 ## Properties
 

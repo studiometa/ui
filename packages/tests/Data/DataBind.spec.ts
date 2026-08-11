@@ -687,4 +687,100 @@ describe('The DataBind component', () => {
     expect(button.disabled).toBe(true);
     expect(button.textContent).toBe('Label');
   });
+
+  it('should toggle the presence of template content with the if virtual binding', () => {
+    const template = h('template', { 'data-bind:if': 'value === "open"' });
+    template.innerHTML = '<p>Hello</p>';
+    const root = h('div', [template]);
+    const instance = new DataBind(template);
+
+    expect(root.querySelector('p')).toBeNull();
+
+    instance.set('open');
+    const inserted = root.querySelector('p');
+    expect(inserted).not.toBeNull();
+    expect(inserted.textContent).toBe('Hello');
+    expect(template.nextElementSibling).toBe(inserted);
+
+    instance.set('closed');
+    expect(root.querySelector('p')).toBeNull();
+
+    instance.set('open');
+    const reinserted = root.querySelector('p');
+    expect(reinserted).not.toBeNull();
+    expect(reinserted).not.toBe(inserted);
+  });
+
+  it('should insert every root node of the template content only once', () => {
+    const template = h('template', { 'data-bind:if': '' });
+    template.innerHTML = '<span>One</span><span>Two</span>';
+    const root = h('div', [template]);
+    const instance = new DataBind(template);
+
+    instance.set(true);
+    instance.set('still truthy');
+    expect(root.querySelectorAll('span')).toHaveLength(2);
+
+    instance.set('');
+    expect(root.querySelectorAll('span')).toHaveLength(0);
+
+    instance.set(1);
+    expect(root.querySelectorAll('span')).toHaveLength(2);
+  });
+
+  it('should toggle template content from group updates', async () => {
+    const source = new DataBind(h('div', { dataOptionGroup: 'if-group' }));
+    const template = h('template', {
+      dataOptionGroup: 'if-group',
+      'data-bind:if': 'value !== ""',
+    });
+    template.innerHTML = '<p>Result</p>';
+    const root = h('div', [template]);
+    const subscriber = new DataBind(template);
+    await mount(source, subscriber);
+
+    source.set('query');
+    expect(root.querySelector('p')).not.toBeNull();
+
+    source.set('');
+    expect(root.querySelector('p')).toBeNull();
+
+    await destroy(source, subscriber);
+  });
+
+  it('should sync late-mounted immediate keyed subscribers with the current scoped value', async () => {
+    const root = h('div', { dataOptionGroup: 'late' });
+    const input = h('input', { name: 'query', value: 'initial' });
+    root.append(input);
+    const scope = new DataScope(root);
+    const model = new DataModel(input);
+    await mount(scope, model);
+
+    model.set('current');
+
+    const output = h('div', { dataOptionKey: 'query', dataOptionImmediate: true });
+    root.append(output);
+    const late = new DataBind(output);
+    await mount(late);
+    expect(output.textContent).toBe('current');
+
+    const passiveOutput = h('div', { dataOptionKey: 'query' });
+    root.append(passiveOutput);
+    const passive = new DataBind(passiveOutput);
+    await mount(passive);
+    expect(passiveOutput.textContent).toBe('');
+
+    await destroy(scope, model, late, passive);
+  });
+
+  it('should warn when the if binding is used on a non-template element', () => {
+    const div = h('div', { 'data-bind:if': 'value' });
+    const instance = new DataBind(div);
+    const warnSpy = vi.spyOn(instance, '$warn', 'get');
+
+    instance.set(true);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    warnSpy.mockRestore();
+  });
 });

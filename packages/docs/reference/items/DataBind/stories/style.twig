@@ -1,0 +1,24 @@
+<div
+  data-component="DataScope"
+  data-option-group="progress"
+  class="grid gap-4 max-w-sm rounded ring p-4">
+  <label class="grid gap-1">
+    <span>Progress</span>
+    <input
+      type="range"
+      name="percent"
+      value="50"
+      min="0"
+      max="100"
+      data-component="DataModel"
+      data-option-immediate />
+  </label>
+  <div class="h-2 rounded ring overflow-hidden">
+    <div
+      data-component="DataBind"
+      data-option-key="percent"
+      data-bind:style.width="`${value}%`"
+      class="h-full bg-current"
+      style="width: 50%"></div>
+  </div>
+</div>

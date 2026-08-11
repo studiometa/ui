@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **DataBind:** add the `data-bind:if` virtual binding to render `<template>` content conditionally ([#626](https://github.com/studiometa/ui/pull/626))
+
+### Changed
+
+- **DataBind:** sync late-mounted `immediate` keyed subscribers with the current scoped value ([#626](https://github.com/studiometa/ui/pull/626))
+
 ## [v1.10.0](https://github.com/studiometa/ui/compare/1.9.0..1.10.0) (2026-08-11)
 
 This release promotes the `1.10.0` beta line to stable. It bundles every change published across `1.10.0-beta.0` through `1.10.0-beta.6`, see the sections below for the per-beta breakdown and pull request references. The bespoke browser CDN and the `@studiometa/ui-autoload` package explored during the beta line were both superseded before stable: load the packages from an ESM CDN such as [esm.sh](https://esm.sh) with the built-in `/autoload` entries instead, see the [Autoloading guide](https://ui.studiometa.dev/guide/autoloading/).

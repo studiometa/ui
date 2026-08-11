@@ -17,13 +17,10 @@ Import the components in your main app and use the [`DataModel` component](../Da
 ::: code-group
 
 ```js [app.js] twoslash
-import { registerComponent } from '@studiometa/js-toolkit';
+import { registerComponents } from '@studiometa/js-toolkit';
 import { Action, DataBind, DataModel, DataScope } from '@studiometa/ui';
 
-registerComponent(DataScope);
-registerComponent(DataBind);
-registerComponent(DataModel);
-registerComponent(Action);
+registerComponents(Action, DataScope, DataBind, DataModel);
 ```
 
 ```html [index.html]
@@ -69,6 +66,27 @@ The following disclosure keeps its button label while updating its class, ARIA s
     data-bind:attr.hidden="value !== 'open'">
     Disclosure content
   </section>
+</div>
+```
+
+### Conditional rendering
+
+Use the `data-bind:if` binding on a `<template>` element to add or remove DOM nodes based on the bound value, like `v-if` in Vue. The template content is cloned and inserted after the template when the expression is truthy, and removed when it is falsy. See the [conditional rendering reference](./js-api.md#conditional-rendering-with-data-bind-if) for details and trade-offs against `data-bind:attr.hidden`.
+
+```html
+<div data-component="DataScope" data-option-group="search">
+  <input name="query" data-component="DataModel" data-option-immediate />
+
+  <template data-component="DataBind" data-option-key="query" data-bind:if="value !== ''">
+    <p>
+      Results for
+      <strong
+        data-component="DataBind"
+        data-option-key="query"
+        data-option-immediate
+        data-bind:text></strong>
+    </p>
+  </template>
 </div>
 ```
 
