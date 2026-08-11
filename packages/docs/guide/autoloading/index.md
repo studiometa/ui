@@ -12,7 +12,7 @@ Add a module script. Import the `@studiometa/ui/autoload` entry. The import regi
 
 ```html
 <script type="module">
-  import 'https://esm.sh/@studiometa/ui@next/autoload';
+  import 'https://esm.sh/@studiometa/ui@latest/autoload';
 </script>
 
 <button
@@ -25,7 +25,7 @@ Add a module script. Import the `@studiometa/ui/autoload` entry. The import regi
 
 The runtime scans the document for `data-component` tokens, imports the matching modules, and registers them with the [js-toolkit](https://js-toolkit.studiometa.dev) runtime. The declarative contract (`data-component`, `data-ref`, `data-option-*`) is the same one that [Declarative runtime](/guide/concepts/declarative-runtime) describes.
 
-Use `@next` or an exact version during the prerelease line. See [Version pinning](#version-pinning).
+Pin an exact version in production. See [Version pinning](#version-pinning).
 
 ## Activate a package
 
@@ -33,8 +33,8 @@ Import one side-effect entry for each component package you use. Each import reg
 
 ```html
 <script type="module">
-  import 'https://esm.sh/@studiometa/ui@next/autoload'; // @studiometa/ui components
-  import 'https://esm.sh/@studiometa/ui-mapbox@next/autoload'; // @studiometa/ui-mapbox components
+  import 'https://esm.sh/@studiometa/ui@latest/autoload'; // @studiometa/ui components
+  import 'https://esm.sh/@studiometa/ui-mapbox@latest/autoload'; // @studiometa/ui-mapbox components
 </script>
 ```
 
@@ -55,13 +55,13 @@ A version reference follows the package's npm tags and semver ranges:
 
 ```html
 <script type="module">
-  import 'https://esm.sh/@studiometa/ui@next/autoload'; // current prerelease
-  import 'https://esm.sh/@studiometa/ui@1.10.0-beta.5/autoload'; // exact version
+  import 'https://esm.sh/@studiometa/ui@latest/autoload'; // latest stable release
+  import 'https://esm.sh/@studiometa/ui@1.10.0/autoload'; // exact version
   import 'https://esm.sh/@studiometa/ui@^1/autoload'; // semver range
 </script>
 ```
 
-Pin an exact version in production. An exact-version URL is immutable and stays cached the longest, and it makes every entry on the page resolve to the same version. A versionless URL follows the `latest` stable tag, so use `@next` or an exact version until a stable `1.x` release exists.
+Pin an exact version in production. An exact-version URL is immutable and stays cached the longest, and it makes every entry on the page resolve to the same version. A versionless URL and `@latest` follow the latest stable release.
 
 ## Loading strategies
 
@@ -129,8 +129,8 @@ To autoload your own js-toolkit components, build a manifest from your component
 You can also import components directly from the CDN, without the autoloader. This suits a script that builds components itself.
 
 ```js
-import { Action, Modal } from 'https://esm.sh/@studiometa/ui@1.10.0-beta.5'; // the whole surface
-import { Action } from 'https://esm.sh/@studiometa/ui@1.10.0-beta.5/Action'; // one component
+import { Action, Modal } from 'https://esm.sh/@studiometa/ui@1.10.0'; // the whole surface
+import { Action } from 'https://esm.sh/@studiometa/ui@1.10.0/Action'; // one component
 ```
 
 Manual imports and the autoloader do not conflict, while every import on the page resolves to one js-toolkit runtime. Pin the same version everywhere.
@@ -151,8 +151,8 @@ Declare an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Elemen
   }
 </script>
 <script type="module">
-  import 'https://esm.sh/@studiometa/ui@next/autoload';
-  import 'https://esm.sh/@studiometa/ui-mapbox@next/autoload';
+  import 'https://esm.sh/@studiometa/ui@latest/autoload';
+  import 'https://esm.sh/@studiometa/ui-mapbox@latest/autoload';
 </script>
 ```
 
