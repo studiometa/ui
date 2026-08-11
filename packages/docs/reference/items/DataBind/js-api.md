@@ -28,7 +28,7 @@ If the option is explicitly set with the `data-option-prop` attribute, it will o
 - Type: `boolean`
 - Default: `false`
 
-Propagates the component's value on mount to other components in the same group. Inside a [`DataScope`](../DataScope/index.md), only [`DataModel`](../DataModel/index.md) sources hydrate the keyed value; immediate keyed `DataBind`, `DataComputed` and `DataEffect` components are subscribers and receive the hydrated values once all sources are collected.
+Propagates the component's value on mount to other components in the same group. Inside a [`DataScope`](../DataScope/index.md), only [`DataModel`](../DataModel/index.md) sources hydrate the keyed value; immediate keyed `DataBind`, `DataComputed` and `DataEffect` components are subscribers and receive the hydrated values once all sources are collected. An immediate keyed subscriber mounted after hydration — for example inside content inserted by [`data-bind:if`](#conditional-rendering-with-data-bind-if) — syncs with the current scoped value on mount instead of waiting for the next update.
 
 ### `group`
 
@@ -83,12 +83,13 @@ The `data-bind:if` binding adds or removes DOM nodes based on the bound value, l
       data-component="DataBind"
       data-option-group="search"
       data-option-key="query"
+      data-option-immediate
       data-bind:text></strong>
   </p>
 </template>
 ```
 
-Each insertion is a fresh clone of the template content, so components inside are mounted again and any state they held is reset on every toggle. Template content is inert until the first truthy value, so conditional content never flashes before the data is ready.
+Each insertion is a fresh clone of the template content, so components inside are mounted again and any state they held is reset on every toggle. Give nested keyed bindings the [`immediate` option](#immediate) so they sync with the current scoped value when they mount, as in the `<strong>` element above. Template content is inert until the first truthy value, so conditional content never flashes before the data is ready.
 
 Use `data-bind:if` when the element must not exist in the DOM — a form control that must not submit, an expensive subtree, or content that must be absent from the accessibility tree. To show or hide an element in place, prefer the cheaper `data-bind:attr.hidden`, `data-bind:class.<name>` or `data-bind:style.display` bindings, which keep the element and its state.
 

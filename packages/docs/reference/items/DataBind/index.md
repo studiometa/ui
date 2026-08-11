@@ -83,7 +83,11 @@ Use the `data-bind:if` binding on a `<template>` element to add or remove DOM no
   <template data-component="DataBind" data-option-key="query" data-bind:if="value !== ''">
     <p>
       Results for
-      <strong data-component="DataBind" data-option-key="query" data-bind:text></strong>
+      <strong
+        data-component="DataBind"
+        data-option-key="query"
+        data-option-immediate
+        data-bind:text></strong>
     </p>
   </template>
 </div>

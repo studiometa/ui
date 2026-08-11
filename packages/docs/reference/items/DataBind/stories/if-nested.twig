@@ -1,0 +1,27 @@
+<div
+  data-component="DataScope"
+  data-option-group="search"
+  class="grid gap-4 max-w-sm rounded ring p-4">
+  <label class="grid gap-1">
+    <span>Search</span>
+    <input
+      name="query"
+      placeholder="Type to search…"
+      data-component="DataModel"
+      data-option-immediate
+      class="p-2 bg-transparent ring rounded" />
+  </label>
+  <template
+    data-component="DataBind"
+    data-option-key="query"
+    data-bind:if="value !== ''">
+    <p class="p-2 rounded ring">
+      Results for
+      <strong
+        data-component="DataBind"
+        data-option-key="query"
+        data-option-immediate
+        data-bind:text></strong>
+    </p>
+  </template>
+</div>

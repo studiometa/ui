@@ -454,7 +454,19 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
     }
 
     if (this.dataScope && this.dataKey) {
-      this.dataScope.hydrate(this.group, this);
+      if (this.isDataSource) {
+        this.dataScope.hydrate(this.group, this);
+        return;
+      }
+
+      // Subscribers mounted after hydration — content inserted by `data-bind:if`
+      // or any other DOM update — sync from the current scoped value; on first
+      // load the value is not collected yet and arrives through the
+      // post-hydration dispatch.
+      const data = this.$data;
+      if (this.dataKey in data) {
+        this.set(data[this.dataKey], false);
+      }
       return;
     }
 

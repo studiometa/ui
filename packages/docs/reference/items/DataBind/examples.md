@@ -134,6 +134,25 @@ The `data-bind:if` binding adds or removes the content of a `<template>` element
 
 </llm-only>
 
+The template content can hold components of its own: they mount when the content is inserted and are destroyed when it is removed. Give nested keyed bindings the [`immediate` option](./js-api.md#immediate) so they sync with the current scoped value on insertion — the results line below renders the query that inserted it, then follows every keystroke.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/if-nested.twig')"
+  :script="() => import('./stories/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/if-nested.twig
+<<< ./stories/app.js
+
+:::
+
+</llm-only>
+
 ## Immediate propagation
 
 In the following example, the first [`DataModel`](../DataModel/index.md) uses the [`immediate` option](./js-api.md#immediate) to hydrate the scoped `text` key on mount. The second model mirrors the same native `name`, and the keyed `DataBind` renders their shared value.

@@ -748,6 +748,31 @@ describe('The DataBind component', () => {
     await destroy(source, subscriber);
   });
 
+  it('should sync late-mounted immediate keyed subscribers with the current scoped value', async () => {
+    const root = h('div', { dataOptionGroup: 'late' });
+    const input = h('input', { name: 'query', value: 'initial' });
+    root.append(input);
+    const scope = new DataScope(root);
+    const model = new DataModel(input);
+    await mount(scope, model);
+
+    model.set('current');
+
+    const output = h('div', { dataOptionKey: 'query', dataOptionImmediate: true });
+    root.append(output);
+    const late = new DataBind(output);
+    await mount(late);
+    expect(output.textContent).toBe('current');
+
+    const passiveOutput = h('div', { dataOptionKey: 'query' });
+    root.append(passiveOutput);
+    const passive = new DataBind(passiveOutput);
+    await mount(passive);
+    expect(passiveOutput.textContent).toBe('');
+
+    await destroy(scope, model, late, passive);
+  });
+
   it('should warn when the if binding is used on a non-template element', () => {
     const div = h('div', { 'data-bind:if': 'value' });
     const instance = new DataBind(div);
