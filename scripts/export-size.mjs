@@ -124,8 +124,9 @@ async function measure(pkg) {
   return { name: pkg.name, entries };
 }
 
+// Bytes under 1 kB, kB above with trailing zeros trimmed (matching the comment).
 function kib(bytes) {
-  return `${(bytes / 1024).toFixed(2)} kB`;
+  return bytes < 1024 ? `${bytes} B` : `${parseFloat((bytes / 1024).toFixed(2))} kB`;
 }
 
 const report = [];

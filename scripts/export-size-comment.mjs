@@ -37,8 +37,14 @@ function index(path) {
 const base = index(basePath);
 const head = index(headPath);
 
+// Human-readable size, matching the previous action's `pretty-bytes` output:
+// bytes under 1 kB (so small diffs stay precise instead of rounding to
+// `0.00 kB`), kB above with trailing zeros trimmed (`446 B`, `1.11 kB`,
+// `3.4 kB`). The sign is preserved for deltas.
 function kib(bytes) {
-  return `${(bytes / 1024).toFixed(2)} kB`;
+  const abs = Math.abs(bytes);
+  const value = abs < 1024 ? `${abs} B` : `${parseFloat((abs / 1024).toFixed(2))} kB`;
+  return bytes < 0 ? `-${value}` : value;
 }
 
 const HEADER = ['| Export | Size (gzip) | Diff |', '| :-- | --: | :-: |'];
