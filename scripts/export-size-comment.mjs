@@ -12,8 +12,14 @@ if (!basePath || !headPath) {
   process.exit(1);
 }
 
+// Normalize an entry key so an older subpath-based report (`./Modal`) lines up
+// with a named-export report (`Modal`) in the diff.
+function key(entry) {
+  return entry === '.' ? '.' : entry.replace(/^\.\//, '');
+}
+
 /**
- * Index a report as `{ [package]: { [subpath]: { raw, gzip, brotli } } }`.
+ * Index a report as `{ [package]: { [name]: { raw, gzip, brotli } } }`.
  *
  * @param   {string} path
  * @returns {Record<string, Record<string, { raw: number, gzip: number, brotli: number }>>}
@@ -23,7 +29,7 @@ function index(path) {
   const map = {};
   for (const { name, entries } of report) {
     map[name] = {};
-    for (const entry of entries) map[name][entry.subpath] = entry;
+    for (const entry of entries) map[name][key(entry.subpath)] = entry;
   }
   return map;
 }
@@ -31,14 +37,20 @@ function index(path) {
 const base = index(basePath);
 const head = index(headPath);
 
+// Human-readable size, matching the previous action's `pretty-bytes` output:
+// bytes under 1 kB (so small diffs stay precise instead of rounding to
+// `0.00 kB`), kB above with trailing zeros trimmed (`446 B`, `1.11 kB`,
+// `3.4 kB`). The sign is preserved for deltas.
 function kib(bytes) {
-  return `${(bytes / 1024).toFixed(2)} kB`;
+  const abs = Math.abs(bytes);
+  const value = abs < 1024 ? `${abs} B` : `${parseFloat((abs / 1024).toFixed(2))} kB`;
+  return bytes < 0 ? `-${value}` : value;
 }
 
 const HEADER = ['| Export | Size (gzip) | Diff |', '| :-- | --: | :-: |'];
 
-function name(subpath) {
-  return subpath === '.' ? '(index)' : subpath.replace(/^\.\//, '');
+function name(entry) {
+  return entry === '.' ? '(barrel)' : entry;
 }
 
 // A signed gzip delta with percentage. Added exports read as +100%, removed
