@@ -8,27 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [v1.10.0](https://github.com/studiometa/ui/compare/1.9.0..1.10.0) (2026-08-11)
 
-This release promotes the `1.10.0` beta line to stable. It bundles every change published across `1.10.0-beta.0` through `1.10.0-beta.6` — see the sections below for the per-beta breakdown and pull request references. The bespoke browser CDN and the `@studiometa/ui-autoload` package explored during the beta line were both superseded before stable: load the packages from an ESM CDN such as [esm.sh](https://esm.sh) with the built-in `/autoload` entries instead — see the [Autoloading guide](https://ui.studiometa.dev/guide/autoloading/).
+This release promotes the `1.10.0` beta line to stable. It bundles every change published across `1.10.0-beta.0` through `1.10.0-beta.6`, see the sections below for the per-beta breakdown and pull request references. The bespoke browser CDN and the `@studiometa/ui-autoload` package explored during the beta line were both superseded before stable: load the packages from an ESM CDN such as [esm.sh](https://esm.sh) with the built-in `/autoload` entries instead, see the [Autoloading guide](https://ui.studiometa.dev/guide/autoloading/).
 
 ### Added
 
-- **@studiometa/ui-mapbox:** add the new `@studiometa/ui-mapbox` package — the `@studiometa/vue-mapbox-gl` components ported to js-toolkit (`MapboxMap`, `MapboxMarker`, `MapboxPopup`, `MapboxCluster`, `MapboxSource`, `MapboxLayer`, `MapboxImage`, the control components, `MapboxGeocoder` and `StoreLocator`), each exposed at its own subpath, e.g. `@studiometa/ui-mapbox/MapboxMap` ([#561](https://github.com/studiometa/ui/pull/561), [#620](https://github.com/studiometa/ui/pull/620))
-- **@studiometa/ui-mapbox:** resolve the `mapbox-gl` peer dependency (and the optional geocoder) with a lazy `import()` on first map build, or let a host supply its own instance with `provideMapboxGl` / `provideMapboxGeocoder` ([#575](https://github.com/studiometa/ui/pull/575))
+- **@studiometa/ui-mapbox:** add a new `@studiometa/ui-mapbox` package with `MapboxMap`, `MapboxMarker`, `MapboxPopup`, `MapboxCluster`, `MapboxSource`, `MapboxLayer`, `MapboxImage`, the control components, `MapboxGeocoder` and `StoreLocator` components ([#561](https://github.com/studiometa/ui/pull/561), [#620](https://github.com/studiometa/ui/pull/620))
 - **Autoloading:** add the `@studiometa/ui/autoload` and `@studiometa/ui-mapbox/autoload` side-effect entries, registering each package's manifest with the `@studiometa/js-toolkit` autoload runtime for declarative, no-build usage ([#598](https://github.com/studiometa/ui/pull/598), [#614](https://github.com/studiometa/ui/pull/614), [#617](https://github.com/studiometa/ui/pull/617))
 - **Toaster:** add the `Toaster` and `Toast` components — a headless notifications region built on two `aria-live` regions, each toast a `Timer`-based `Toast` with a pausable auto-dismiss countdown ([#572](https://github.com/studiometa/ui/pull/572))
 
 ### Changed
 
 - Require `@studiometa/js-toolkit` `^3.9.0` as a peer dependency ([#617](https://github.com/studiometa/ui/pull/617))
-- **@studiometa/ui, @studiometa/ui-mapbox:** replace every `export *` barrel re-export with explicit named exports so the public surface is statically analyzable ([#611](https://github.com/studiometa/ui/pull/611))
-- **@studiometa/ui, @studiometa/ui-mapbox:** import js-toolkit values from their per-symbol subpaths instead of the package barrel, shrinking every component's esm.sh footprint ([#619](https://github.com/studiometa/ui/pull/619))
-- **@studiometa/ui, @studiometa/ui-mapbox:** move sources under `src/`, build to `dist/`, and publish the package folder with a single root `package.json` ([#620](https://github.com/studiometa/ui/pull/620))
+- Replace every `export *` barrel re-export with explicit named exports so the public surface is statically analyzable ([#611](https://github.com/studiometa/ui/pull/611))
+- Import js-toolkit values from their per-symbol subpaths instead of the package barrel, shrinking every component's esm.sh footprint ([#619](https://github.com/studiometa/ui/pull/619))
+- Move sources under `src/`, build to `dist/`, and publish the package folder with a single root `package.json` ([#620](https://github.com/studiometa/ui/pull/620))
 - **Build:** migrate the library builds from esbuild to tsdown ([#585](https://github.com/studiometa/ui/pull/585))
-- **Release:** publish the npm packages with tokenless trusted publishing (OIDC provenance) ([#586](https://github.com/studiometa/ui/pull/586))
-
-### Removed
-
-- **@studiometa/ui, @studiometa/ui-mapbox:** remove the redundant `.js` subpath exports; use the extensionless subpaths instead ([#620](https://github.com/studiometa/ui/pull/620))
 
 ## [v1.10.0-beta.6](https://github.com/studiometa/ui/compare/1.10.0-beta.5..1.10.0-beta.6) (2026-08-10)
 
