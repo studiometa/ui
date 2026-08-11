@@ -1,9 +1,15 @@
 // Measure the published export sizes of the workspace packages, replacing the
 // third-party export-size GitHub Action with a local check built on esbuild (the
-// same toolchain family as our tsdown builder). Each public subpath is bundled
-// from its built `dist` entry with all bare dependencies (peers such as
-// `@studiometa/js-toolkit`) left external, minified, then measured raw, gzipped
-// and brotli-compressed. Requires the packages to be built first.
+// same toolchain family as our tsdown builder).
+//
+// Each named export of a package barrel is measured as it is actually consumed —
+// `import { Name } from '@studiometa/ui'` — by tree-shaking that single symbol
+// out of the built barrel, with every bare dependency (peers such as
+// `@studiometa/js-toolkit`) left external and the output minified, then measured
+// raw, gzipped and brotli-compressed. The whole barrel (`.`) and any side-effect
+// or non-barrel entry (`autoload`, `manifest`) are measured from their own entry.
+// A symbol reachable from several places (the barrel and its own subpath) has one
+// size, so results are keyed by name and measured once. Requires a prior build.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,14 +32,50 @@ function brotliSize(contents) {
   }).length;
 }
 
+// Bundle with esbuild and measure the combined output (dynamic-import chunks are
+// summed) raw, gzipped and brotli-compressed.
+async function sizeOf(options) {
+  const result = await build({
+    bundle: true,
+    minify: true,
+    format: 'esm',
+    platform: 'neutral',
+    // Leave every bare import (peers, third-party) external so the measurement
+    // reflects the package's own shipped code, not its dependencies.
+    packages: 'external',
+    write: false,
+    logLevel: 'silent',
+    ...options,
+  });
+  const contents = Buffer.concat(result.outputFiles.map((file) => file.contents));
+  return { raw: contents.length, gzip: gzipSync(contents).length, brotli: brotliSize(contents) };
+}
+
+// The value exports of a built barrel, via esbuild's metafile (type-only exports
+// are erased in the emitted JavaScript and carry no size, so they are excluded).
+async function barrelExports(entry) {
+  const { metafile } = await build({
+    entryPoints: [entry],
+    bundle: true,
+    metafile: true,
+    write: false,
+    format: 'esm',
+    packages: 'external',
+    logLevel: 'silent',
+  });
+  const output = Object.values(metafile.outputs).find((out) => out.entryPoint);
+  return (output?.exports ?? []).filter((exported) => exported !== 'default').sort();
+}
+
 /**
- * List a package's public subpaths and the built `dist` entry each resolves to.
+ * List a package's explicit (non-pattern) subpath exports and the built entry
+ * each resolves to.
  *
  * @param   {Record<string, unknown>} exports
- * @param   {string} pkgDir
+ * @param   {string} manifestDir
  * @returns {{ subpath: string, entry: string }[]}
  */
-function publicEntries(exports, manifestDir) {
+function publicSubpaths(exports, manifestDir) {
   return Object.entries(exports)
     .filter(([key]) => key === '.' || (key.startsWith('./') && !key.includes('*') && key !== './package.json'))
     .filter(([, value]) => value && typeof value === 'object' && 'import' in value)
@@ -50,29 +92,35 @@ async function measure(pkg) {
   const manifestPath = existsSync(distManifest) ? distManifest : resolve(pkgDir, 'package.json');
   const manifestDir = dirname(manifestPath);
   const { exports } = JSON.parse(readFileSync(manifestPath, 'utf8'));
-  const entries = [];
-  for (const { subpath, entry } of publicEntries(exports, manifestDir)) {
-    const result = await build({
-      entryPoints: [entry],
-      bundle: true,
-      minify: true,
-      format: 'esm',
-      platform: 'neutral',
-      // Leave every bare import (peers, third-party) external so the measurement
-      // reflects the package's own shipped code, not its dependencies.
-      packages: 'external',
-      write: false,
-      logLevel: 'silent',
-    });
-    const { contents } = result.outputFiles[0];
-    entries.push({
-      subpath,
-      raw: contents.length,
-      gzip: gzipSync(contents).length,
-      brotli: brotliSize(contents),
+
+  const barrelEntry = resolve(manifestDir, exports['.'].import);
+  const resolveDir = dirname(barrelEntry);
+  const names = await barrelExports(barrelEntry);
+
+  // One row per unique export name; a name seen again (e.g. a barrel export that
+  // also has its own subpath) is skipped since it is the same code, same size.
+  const byName = new Map();
+  async function record(exportName, options) {
+    if (!byName.has(exportName)) byName.set(exportName, { subpath: exportName, ...(await sizeOf(options)) });
+  }
+
+  // The whole barrel, then every named export tree-shaken out of it.
+  await record('.', { entryPoints: [barrelEntry] });
+  for (const name of names) {
+    await record(name, {
+      stdin: { contents: `export { ${name} } from ${JSON.stringify(barrelEntry)}`, resolveDir, loader: 'js' },
     });
   }
-  entries.sort((a, b) => b.gzip - a.gzip);
+
+  // Explicit subpaths that are not barrel exports — side-effect and non-barrel
+  // entries such as `autoload` and `manifest` — measured from their own entry.
+  for (const { subpath, entry } of publicSubpaths(exports, manifestDir)) {
+    const name = subpath === '.' ? '.' : subpath.replace(/^\.\//, '');
+    if (byName.has(name)) continue;
+    await record(name, { entryPoints: [entry] });
+  }
+
+  const entries = [...byName.values()].sort((a, b) => b.gzip - a.gzip);
   return { name: pkg.name, entries };
 }
 
