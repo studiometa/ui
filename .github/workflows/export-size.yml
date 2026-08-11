@@ -8,6 +8,7 @@ on:
       - 'packages/ui/**'
       - 'packages/ui-mapbox/**'
       - 'package-lock.json'
+      - '.github/workflows/export-size.yml'
 
 permissions:
   contents: read
