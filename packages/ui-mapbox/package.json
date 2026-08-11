@@ -141,7 +141,7 @@
   "homepage": "https://github.com/studiometa/ui#readme",
   "peerDependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.0.0",
-    "@studiometa/js-toolkit": "^3.9.0-beta.2",
+    "@studiometa/js-toolkit": "^3.9.0",
     "mapbox-gl": "^3.0.0"
   },
   "peerDependenciesMeta": {
@@ -151,7 +151,7 @@
   },
   "devDependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",
-    "@studiometa/js-toolkit": "^3.9.0-beta.2",
+    "@studiometa/js-toolkit": "^3.9.0",
     "@types/mapbox__mapbox-gl-geocoder": "^5.0.0",
     "mapbox-gl": "^3.13.0",
     "tsdown": "0.21.5"
