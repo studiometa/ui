@@ -12,10 +12,10 @@ This release promotes the `1.10.0` beta line to stable. It bundles every change 
 
 ### Added
 
+- **@studiometa/ui-mapbox:** add the new `@studiometa/ui-mapbox` package — the `@studiometa/vue-mapbox-gl` components ported to js-toolkit (`MapboxMap`, `MapboxMarker`, `MapboxPopup`, `MapboxCluster`, `MapboxSource`, `MapboxLayer`, `MapboxImage`, the control components, `MapboxGeocoder` and `StoreLocator`), each exposed at its own subpath, e.g. `@studiometa/ui-mapbox/MapboxMap` ([#561](https://github.com/studiometa/ui/pull/561), [#620](https://github.com/studiometa/ui/pull/620))
+- **@studiometa/ui-mapbox:** resolve the `mapbox-gl` peer dependency (and the optional geocoder) with a lazy `import()` on first map build, or let a host supply its own instance with `provideMapboxGl` / `provideMapboxGeocoder` ([#575](https://github.com/studiometa/ui/pull/575))
 - **Autoloading:** add the `@studiometa/ui/autoload` and `@studiometa/ui-mapbox/autoload` side-effect entries, registering each package's manifest with the `@studiometa/js-toolkit` autoload runtime for declarative, no-build usage ([#598](https://github.com/studiometa/ui/pull/598), [#614](https://github.com/studiometa/ui/pull/614), [#617](https://github.com/studiometa/ui/pull/617))
 - **Toaster:** add the `Toaster` and `Toast` components — a headless notifications region built on two `aria-live` regions, each toast a `Timer`-based `Toast` with a pausable auto-dismiss countdown ([#572](https://github.com/studiometa/ui/pull/572))
-- **Mapbox:** add `provideMapboxGl` / `provideMapboxGeocoder` injection and their resolvers so a host can supply its own `mapbox-gl` instance, otherwise resolved with a lazy `import()` on first map build ([#575](https://github.com/studiometa/ui/pull/575))
-- **@studiometa/ui-mapbox:** expose each component at its own explicit subpath, e.g. `@studiometa/ui-mapbox/MapboxMap` ([#620](https://github.com/studiometa/ui/pull/620))
 
 ### Changed
 
