@@ -1,11 +1,22 @@
 import { test, expect } from 'vitest';
 import * as barrel from '@studiometa/ui-motion';
 import MotionDefault, { Motion as MotionNamed } from '@studiometa/ui-motion/Motion';
+import MotionScrollTimelineDefault, {
+  MotionScrollTimeline as MotionScrollTimelineNamed,
+} from '@studiometa/ui-motion/MotionScrollTimeline';
 
-test('Motion is available at its own subpath as default and named export', () => {
+test.each([
+  ['Motion', MotionDefault, MotionNamed, barrel.Motion],
+  [
+    'MotionScrollTimeline',
+    MotionScrollTimelineDefault,
+    MotionScrollTimelineNamed,
+    barrel.MotionScrollTimeline,
+  ],
+])('%s is available at its own subpath as default and named export', (_name, def, named, fromBarrel) => {
   // The default export is a js-toolkit `Base` subclass.
-  expect('$isBase' in MotionDefault).toBe(true);
+  expect('$isBase' in def).toBe(true);
   // The default, named and barrel exports all reference the exact same class.
-  expect(MotionDefault).toBe(MotionNamed);
-  expect(MotionDefault).toBe(barrel.Motion);
+  expect(def).toBe(named);
+  expect(def).toBe(fromBarrel);
 });

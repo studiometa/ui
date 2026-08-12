@@ -5,6 +5,7 @@ test('@studiometa/ui-motion exports', () => {
   expect(Object.keys(components).toSorted()).toMatchInlineSnapshot(`
     [
       "Motion",
+      "MotionScrollTimeline",
       "provideMotion",
       "resolveMotion",
     ]

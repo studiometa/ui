@@ -306,6 +306,8 @@ test('@studiometa/ui-motion barrel export surface', () => {
       "Motion [value]",
       "MotionModule [type]",
       "MotionProps [type]",
+      "MotionScrollTimeline [value]",
+      "MotionScrollTimelineProps [type]",
       "provideMotion [value]",
       "resolveMotion [value]",
     ]

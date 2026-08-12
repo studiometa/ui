@@ -96,9 +96,37 @@ export const mockAnimate = vi.fn(
   },
 );
 
-provideMotion({ animate: mockAnimate } as unknown as MotionModule);
+/** Every `scroll()` link created since the last {@link resetMockMotion} call. */
+export const scrollLinks: Array<{
+  animation: MockAnimation;
+  options: Record<string, unknown>;
+  stop: ReturnType<typeof vi.fn>;
+  stopped: boolean;
+}> = [];
+
+export const mockScroll = vi.fn(
+  (animation: MockAnimation, options: Record<string, unknown>) => {
+    const link = { animation, options, stopped: false, stop: vi.fn() };
+    link.stop.mockImplementation(() => {
+      link.stopped = true;
+    });
+    scrollLinks.push(link);
+    return link.stop;
+  },
+);
+
+/**
+ * The injected module double. Mutable on purpose: specs can delete `scroll`
+ * to simulate a `motion/mini` build, then restore it.
+ */
+export const mockMotionModule = { animate: mockAnimate, scroll: mockScroll };
+
+provideMotion(mockMotionModule as unknown as MotionModule);
 
 export function resetMockMotion() {
   animations.length = 0;
+  scrollLinks.length = 0;
   mockAnimate.mockClear();
+  mockScroll.mockClear();
+  mockMotionModule.scroll = mockScroll;
 }
