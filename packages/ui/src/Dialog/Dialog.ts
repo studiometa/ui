@@ -62,6 +62,13 @@ export class Dialog<T extends BaseProps = BaseProps> extends Base<T & DialogProp
   };
 
   /**
+   * The in-flight `close()` run, so concurrent calls await the same
+   * choreography instead of racing it.
+   * @private
+   */
+  __closing: Promise<void> | null = null;
+
+  /**
    * Get the native `<dialog>` element.
    */
   get dialog(): HTMLDialogElement {
@@ -98,8 +105,8 @@ export class Dialog<T extends BaseProps = BaseProps> extends Base<T & DialogProp
       document.documentElement.style.overflow = 'hidden';
     }
 
-    this.$emit('open');
-    await Promise.all(this.transitions.map((transition) => transition.enter()));
+    const pending = this.__emitExtendable('open');
+    await Promise.all([...this.transitions.map((transition) => transition.enter()), ...pending]);
   }
 
   /**
@@ -110,10 +117,24 @@ export class Dialog<T extends BaseProps = BaseProps> extends Base<T & DialogProp
       return;
     }
 
-    this.$emit('close');
-    // The leave transitions are awaited **before** the native hide so the
-    // dialog is still painted while its children animate out.
-    await Promise.all(this.transitions.map((transition) => transition.leave()));
+    if (!this.__closing) {
+      this.__closing = this.__close().finally(() => {
+        this.__closing = null;
+      });
+    }
+
+    return this.__closing;
+  }
+
+  /**
+   * Run the closing choreography: collect the `close` event extensions, await
+   * them alongside the leave transitions — the dialog is still painted while
+   * its children animate out — then hide the native dialog.
+   * @private
+   */
+  async __close(): Promise<void> {
+    const pending = this.__emitExtendable('close');
+    await Promise.all([...this.transitions.map((transition) => transition.leave()), ...pending]);
     this.dialog.close();
 
     if (!this.$options.modal && this.$options.trapFocus) {
@@ -123,6 +144,31 @@ export class Dialog<T extends BaseProps = BaseProps> extends Base<T & DialogProp
     if (this.$options.scrollLock) {
       document.documentElement.style.overflow = '';
     }
+  }
+
+  /**
+   * Emit a lifecycle event whose listeners can extend the choreography with
+   * `event.detail.waitUntil(promise)` — any component (or plain JavaScript)
+   * can hold the dialog open (or its `open()` promise pending) without being
+   * a declared child. Registration is only valid while the event dispatches;
+   * later calls warn and are ignored.
+   * @private
+   */
+  __emitExtendable(name: 'open' | 'close'): Promise<unknown>[] {
+    const pending: Promise<unknown>[] = [];
+    let dispatching = true;
+    const waitUntil = (promise: Promise<unknown>) => {
+      if (!dispatching) {
+        this.$warn(
+          `\`waitUntil\` must be called synchronously while the \`${name}\` event dispatches.`,
+        );
+        return;
+      }
+      pending.push(promise);
+    };
+    this.$emit(new CustomEvent(name, { detail: { waitUntil } }));
+    dispatching = false;
+    return pending;
   }
 
   /**
