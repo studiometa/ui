@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- **@studiometa/ui-motion:** add a new `@studiometa/ui-motion` package with `Motion` and `MotionScrollTimeline` components to animate elements declaratively with [Motion](https://motion.dev)
+- **@studiometa/ui-motion:** add a new `@studiometa/ui-motion` package with `Motion` and `MotionScrollTimeline` components to animate elements declaratively with [Motion](https://motion.dev) ([#628](https://github.com/studiometa/ui/pull/628))
 - **DataBind:** add the `data-bind:if` virtual binding to render `<template>` content conditionally ([#626](https://github.com/studiometa/ui/pull/626))
 
 ### Changed
