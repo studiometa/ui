@@ -18,6 +18,7 @@ function sourceEntries(root) {
 
 const uiEntries = sourceEntries('../ui');
 const mapboxEntries = sourceEntries('../ui-mapbox');
+const motionEntries = sourceEntries('../ui-motion');
 
 export default defineWebpackConfig({
   presets: [
@@ -58,6 +59,7 @@ export default defineWebpackConfig({
         'morphdom',
         { specifier: 'mapbox-gl', esmSh: { bundle: true } },
         { specifier: '@mapbox/mapbox-gl-geocoder', esmSh: { bundle: true } },
+        { specifier: 'motion', esmSh: { bundle: true } },
         { specifier: '@studiometa/js-toolkit', subpaths: true },
         // Workspace packages bundled from local source so the playground reflects the working tree.
         // `subpaths: true` reads each package's `package.json` `exports` map and builds every subpath
@@ -69,6 +71,7 @@ export default defineWebpackConfig({
         // subpath; ui-mapbox likewise exposes its barrel + `./manifest` + `./autoload`.
         { specifier: '@studiometa/ui', source: '../ui/src/**/*.ts', entries: uiEntries },
         { specifier: '@studiometa/ui-mapbox', source: '../ui-mapbox/src/**/*.ts', entries: mapboxEntries },
+        { specifier: '@studiometa/ui-motion', source: '../ui-motion/src/**/*.ts', entries: motionEntries },
       ],
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
