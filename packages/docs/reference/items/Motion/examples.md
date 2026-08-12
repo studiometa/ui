@@ -69,7 +69,7 @@ The `motion-*` events bubble, so a single routing [`Action`](/reference/items/Ac
 
 ## Spring entrance and exit for a `Dialog`
 
-The [`Dialog`](/reference/items/Dialog/) component handles the top layer, focus and scroll lock; its `open` event plays a spring entrance on the `Motion` box — physics a CSS transition cannot express. The exit springs too: every closing interaction (button, backdrop, <kbd>Esc</kbd>) calls `reverse()` instead of closing directly, and the bubbling `motion-complete` event closes the dialog once the box is back at its starting styles. The `progress === 0` guard tells the exit apart from the entrance, which completes at `progress === 1`.
+The [`Dialog`](/reference/items/Dialog/) component handles the top layer, focus and scroll lock, and its lifecycle events are [extendable](/reference/items/Dialog/js-api#extending-the-choreography-with-waituntil): registering a promise with `event.detail.waitUntil()` makes the dialog wait for it. The `open` event plays a spring entrance on the `Motion` box, the `close` event plays it in reverse, and the dialog stays painted until the exit settles — physics a CSS transition cannot express. Every closing interaction (button, backdrop, <kbd>Esc</kbd>) just calls `Dialog.close()`.
 
 <llm-exclude>
   <PreviewPlayground

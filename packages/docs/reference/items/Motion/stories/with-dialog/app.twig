@@ -7,20 +7,20 @@
 </button>
 
 {# The <dialog> host carries NO display utility, so its native open/closed
-   display (block / none) is preserved. The `open` event plays the box's
-   spring entrance; every closing interaction plays it in reverse instead of
-   closing directly, and the bubbling `motion-complete` closes the dialog once
-   the box is back at its starting styles (progress 0 = exit, 1 = entrance). #}
+   display (block / none) is preserved. Both lifecycle events expose
+   `event.detail.waitUntil(promise)`: the `open` event plays the box's spring
+   entrance, and the `close` event plays it in reverse — the dialog stays
+   painted until the registered promise settles. #}
 <dialog
   id="motion-modal"
   data-component="Action Dialog"
-  data-on:open="Motion(#motion-modal-box)->target.play()"
-  data-on:cancel.prevent="Motion(#motion-modal-box)->target.reverse()"
-  data-on:motion-complete="Motion(#motion-modal-box)->target.progress === 0 && Dialog.close()"
+  data-on:open="Motion(#motion-modal-box)->event.detail.waitUntil(target.play())"
+  data-on:close="Motion(#motion-modal-box)->event.detail.waitUntil(target.reverse())"
+  data-on:cancel.prevent="Dialog.close()"
   class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent overflow-y-auto">
   <div
     data-component="Action"
-    data-on:click="Motion(#motion-modal-box)->target.reverse()"
+    data-on:click="Dialog(#motion-modal)->target.close()"
     class="fixed inset-0 bg-black/50"></div>
 
   <div
@@ -42,7 +42,7 @@
       <button
         type="button"
         data-component="Action"
-        data-on:click="Motion(#motion-modal-box)->target.reverse()"
+        data-on:click="Dialog(#motion-modal)->target.close()"
         class="px-4 py-2 rounded bg-gray-900 text-white">
         Close
       </button>

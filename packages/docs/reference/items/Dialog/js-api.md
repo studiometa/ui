@@ -95,7 +95,7 @@ Emitted when the dialog starts closing, before the leave transitions run. The `d
 
 Both lifecycle events expose `event.detail.waitUntil(promise)`, modeled on the Service Worker [`ExtendableEvent`](https://developer.mozilla.org/en-US/docs/Web/API/ExtendableEvent/waitUntil). Any listener can register a promise while the event dispatches, and the dialog awaits it alongside its transition children — on `close`, the native dialog stays painted until every registered promise settles. This lets any component participate in the open and close choreography without being a declared child.
 
-For example, a `Motion` box (from `@studiometa/ui-motion`) can spring in and out with the dialog through two [`Action`](/reference/items/Action/) attributes:
+For example, a [`Motion`](/reference/items/Motion/) box can spring in and out with the dialog through two [`Action`](/reference/items/Action/) attributes:
 
 <!-- prettier-ignore-start -->
 ```html {3,4}
