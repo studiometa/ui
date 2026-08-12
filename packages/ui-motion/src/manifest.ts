@@ -11,4 +11,15 @@ export const manifest: ComponentManifest = {
     group: 'motion',
     load: () => import('./Motion.js').then(({ Motion }) => Motion),
   },
+  MotionScrollTimeline: {
+    token: 'MotionScrollTimeline',
+    packageName: '@studiometa/ui-motion',
+    subpath: 'MotionScrollTimeline',
+    exportName: 'MotionScrollTimeline',
+    strategy: 'visible',
+    group: 'motion',
+    children: ['Motion'],
+    load: () =>
+      import('./MotionScrollTimeline.js').then(({ MotionScrollTimeline }) => MotionScrollTimeline),
+  },
 };

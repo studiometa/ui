@@ -1,13 +1,15 @@
-import type { animate } from 'motion';
+import type { animate, scroll } from 'motion';
 
 /**
  * The subset of the `motion` module the components consume. Declared
  * structurally so a host can inject the full `motion` entry, the smaller
  * `motion/mini` entry or any compatible build — only the members listed here
- * are ever read.
+ * are ever read. `scroll` is optional because `motion/mini` does not ship it;
+ * only `MotionScrollTimeline` needs it.
  */
 export interface MotionModule {
   animate: typeof animate;
+  scroll?: typeof scroll;
 }
 
 let motionInstance: MotionModule | undefined;
