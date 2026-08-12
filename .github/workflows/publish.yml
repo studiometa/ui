@@ -82,6 +82,12 @@ jobs:
         run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
         working-directory: packages/ui-mapbox
 
+      - name: Build @studiometa/ui-motion
+        run: npm run build -w @studiometa/ui-motion
+      - name: Publish @studiometa/ui-motion
+        run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
+        working-directory: packages/ui-motion
+
       - uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref }}
