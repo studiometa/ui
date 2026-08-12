@@ -6,6 +6,7 @@ import type {
   DOMKeyframesDefinition,
 } from 'motion';
 import { getMotion, resolveMotion } from './dependencies.js';
+import type { MotionModule } from './dependencies.js';
 
 export interface MotionProps extends BaseProps {
   $options: {
@@ -13,6 +14,12 @@ export interface MotionProps extends BaseProps {
     animate: DOMKeyframesDefinition;
     transition: AnimationOptions;
     autoplay: boolean;
+    hover: DOMKeyframesDefinition;
+    press: DOMKeyframesDefinition;
+    inView: DOMKeyframesDefinition;
+    inViewMargin: string;
+    inViewAmount: string;
+    once: boolean;
   };
 }
 
@@ -48,6 +55,12 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
       animate: Object,
       transition: Object,
       autoplay: { type: Boolean, default: true },
+      hover: Object,
+      press: Object,
+      inView: Object,
+      inViewMargin: String,
+      inViewAmount: String,
+      once: Boolean,
     },
   };
 
@@ -63,6 +76,12 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
    * @private
    */
   __completionToken = 0;
+
+  /**
+   * The stop function of each gesture binding, released on destroy.
+   * @private
+   */
+  __gestureStops: VoidFunction[] = [];
 
   /**
    * Whether the current animation was built from the `animate` and
@@ -102,7 +121,8 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
   }
 
   /**
-   * Apply the `initial` styles, then autoplay the `animate` keyframes.
+   * Apply the `initial` styles, autoplay the `animate` keyframes, then bind
+   * the gesture options.
    */
   async mounted() {
     const { initial, animate, autoplay } = this.$options;
@@ -119,15 +139,23 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
     if (autoplay && Object.keys(animate).length > 0) {
       this.play();
     }
+
+    this.__bindGestures(motion);
   }
 
   /**
-   * Stop the current animation on destroy, keeping the styles it reached.
+   * Stop the current animation and release the gesture bindings on destroy,
+   * keeping the styles the animation reached.
    */
   destroyed() {
     this.__completionToken += 1;
     this.__controls?.stop();
     this.__controls = null;
+
+    for (const stop of this.__gestureStops) {
+      stop();
+    }
+    this.__gestureStops = [];
   }
 
   /**
@@ -255,6 +283,104 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
    */
   complete() {
     this.__controls?.complete();
+  }
+
+  /**
+   * Bind the `hover`, `press` and `inView` gesture options with Motion's own
+   * gesture functions (touch-filtered, keyboard-accessible press, real
+   * IntersectionObserver). Nothing binds when an option is empty, so idle
+   * elements pay nothing. Gesture animations are transient: they never become
+   * the current animation and emit no lifecycle events.
+   * @private
+   */
+  __bindGestures(motion: MotionModule) {
+    const { hover, press, inView, inViewMargin, inViewAmount, once } = this.$options;
+
+    if (Object.keys(hover).length > 0) {
+      if (motion.hover) {
+        this.__gestureStops.push(
+          motion.hover(this.$el, () => {
+            const controls = this.__startGesture(hover);
+            return () => this.__revertGesture(controls);
+          }),
+        );
+      } else {
+        this.__warnMissingGesture('hover');
+      }
+    }
+
+    if (Object.keys(press).length > 0) {
+      if (motion.press) {
+        this.__gestureStops.push(
+          motion.press(this.$el, () => {
+            const controls = this.__startGesture(press);
+            return () => this.__revertGesture(controls);
+          }),
+        );
+      } else {
+        this.__warnMissingGesture('press');
+      }
+    }
+
+    if (Object.keys(inView).length > 0) {
+      if (motion.inView) {
+        const options: { margin?: string; amount?: 'some' | 'all' | number } = {};
+        if (inViewMargin) {
+          options.margin = inViewMargin;
+        }
+        if (inViewAmount) {
+          const numeric = Number(inViewAmount);
+          options.amount = Number.isNaN(numeric) ? (inViewAmount as 'some' | 'all') : numeric;
+        }
+        this.__gestureStops.push(
+          motion.inView(
+            this.$el,
+            () => {
+              const controls = this.__startGesture(inView);
+              // With no leave handler returned, `inView()` fires once and the
+              // reached styles persist.
+              if (once) {
+                return undefined;
+              }
+              return () => this.__revertGesture(controls);
+            },
+            options as Parameters<NonNullable<MotionModule['inView']>>[2],
+          ),
+        );
+      } else {
+        this.__warnMissingGesture('inView');
+      }
+    }
+  }
+
+  /**
+   * Animate to a gesture state, alongside — not replacing — the current
+   * animation.
+   * @private
+   */
+  __startGesture(keyframes: DOMKeyframesDefinition): AnimationPlaybackControlsWithThen {
+    return getMotion().animate(this.$el, keyframes, this.$options.transition);
+  }
+
+  /**
+   * Revert a gesture by playing its animation backward: the element returns
+   * to the exact styles captured when the gesture started, with no knowledge
+   * of base values needed.
+   * @private
+   */
+  __revertGesture(controls: AnimationPlaybackControlsWithThen) {
+    controls.speed = -Math.abs(controls.speed || 1);
+    controls.play();
+  }
+
+  /**
+   * Warn about a gesture option the resolved motion module cannot honor.
+   * @private
+   */
+  __warnMissingGesture(name: string) {
+    this.$warn(
+      `The resolved motion module has no \`${name}()\` (e.g. \`motion/mini\`). Provide the full \`motion\` entry to use the \`${name}\` option.`,
+    );
   }
 
   /**

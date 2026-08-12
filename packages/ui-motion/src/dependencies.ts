@@ -1,15 +1,19 @@
-import type { animate, scroll } from 'motion';
+import type { animate, scroll, hover, press, inView } from 'motion';
 
 /**
  * The subset of the `motion` module the components consume. Declared
  * structurally so a host can inject the full `motion` entry, the smaller
  * `motion/mini` entry or any compatible build — only the members listed here
- * are ever read. `scroll` is optional because `motion/mini` does not ship it;
- * only `MotionScrollTimeline` needs it.
+ * are ever read. Everything but `animate` is optional because `motion/mini`
+ * does not ship it: `scroll` powers `MotionScrollTimeline`, and `hover`,
+ * `press` and `inView` power the matching `Motion` gesture options.
  */
 export interface MotionModule {
   animate: typeof animate;
   scroll?: typeof scroll;
+  hover?: typeof hover;
+  press?: typeof press;
+  inView?: typeof inView;
 }
 
 let motionInstance: MotionModule | undefined;

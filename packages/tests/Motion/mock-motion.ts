@@ -115,11 +115,48 @@ export const mockScroll = vi.fn(
   },
 );
 
+type GestureStart = (element: Element, info?: unknown) => void | (() => void);
+
 /**
- * The injected module double. Mutable on purpose: specs can delete `scroll`
- * to simulate a `motion/mini` build, then restore it.
+ * A registry per gesture function: the registered start callbacks, so specs
+ * can simulate a gesture (`start()` returns the end handler), plus the stop
+ * spies returned to the component.
  */
-export const mockMotionModule = { animate: mockAnimate, scroll: mockScroll };
+function createGestureMock() {
+  const handlers: GestureStart[] = [];
+  const stops: ReturnType<typeof vi.fn>[] = [];
+  const optionsCalls: unknown[] = [];
+  const fn = vi.fn((element: Element, onStart: GestureStart, options?: unknown) => {
+    handlers.push(onStart);
+    optionsCalls.push(options);
+    const stop = vi.fn();
+    stops.push(stop);
+    return stop;
+  });
+  function reset() {
+    handlers.length = 0;
+    stops.length = 0;
+    optionsCalls.length = 0;
+    fn.mockClear();
+  }
+  return { fn, handlers, stops, optionsCalls, reset };
+}
+
+export const mockHover = createGestureMock();
+export const mockPress = createGestureMock();
+export const mockInView = createGestureMock();
+
+/**
+ * The injected module double. Mutable on purpose: specs can delete members
+ * to simulate a `motion/mini` build, then restore them.
+ */
+export const mockMotionModule = {
+  animate: mockAnimate,
+  scroll: mockScroll,
+  hover: mockHover.fn,
+  press: mockPress.fn,
+  inView: mockInView.fn,
+};
 
 provideMotion(mockMotionModule as unknown as MotionModule);
 
@@ -128,5 +165,11 @@ export function resetMockMotion() {
   scrollLinks.length = 0;
   mockAnimate.mockClear();
   mockScroll.mockClear();
+  mockHover.reset();
+  mockPress.reset();
+  mockInView.reset();
   mockMotionModule.scroll = mockScroll;
+  mockMotionModule.hover = mockHover.fn;
+  mockMotionModule.press = mockPress.fn;
+  mockMotionModule.inView = mockInView.fn;
 }
