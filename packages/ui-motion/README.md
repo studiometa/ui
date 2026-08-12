@@ -37,19 +37,29 @@ registerComponent(Motion);
 The `initial` styles are applied on mount, then the `animate` keyframes play automatically. Disable the automatic playback with `data-option-no-autoplay` and drive the animation from an [`Action`](https://ui.studiometa.dev/reference/items/Action/) instead:
 
 ```html
-<div
-  data-component="Motion"
-  data-option-animate='{ "x": 100 }'
-  data-option-no-autoplay>
-  ...
-</div>
+<div data-component="Motion" data-option-animate='{ "x": 100 }' data-option-no-autoplay>...</div>
 
 <button data-component="Action" data-on:click="Motion->target.play()">Play</button>
 <button data-component="Action" data-on:click="Motion->target.reverse()">Reverse</button>
-<button data-component="Action" data-on:click="Motion->target.animate({ rotate: 360 })">Spin</button>
+<button data-component="Action" data-on:click="Motion->target.animate({ rotate: 360 })">
+  Spin
+</button>
 ```
 
 The playback API is `play()`, `pause()`, `reverse()`, `seek(progress)`, `stop()`, `cancel()`, `complete()` and `animate(keyframes, options)`. The component emits bubbling `motion-play`, `motion-pause`, `motion-complete`, `motion-cancel` and `motion-stop` events an ancestor `Action` can catch and route.
+
+For scroll-driven animations, wrap `Motion` components in a `MotionScrollTimeline`: the wrapper's traversal of the viewport defines the timeline and every child is bound to that progress with Motion's `scroll()`, hardware-accelerated where the browser supports `ScrollTimeline`:
+
+```html
+<section data-component="MotionScrollTimeline" class="h-[300vh]">
+  <div
+    data-component="Motion"
+    data-option-animate='{ "opacity": [0, 1, 0] }'
+    data-option-no-autoplay>
+    ...
+  </div>
+</section>
+```
 
 ## Providing `motion`
 
