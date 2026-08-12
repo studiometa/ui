@@ -109,4 +109,4 @@ For example, a `Motion` box (from `@studiometa/ui-motion`) can spring in and out
 ```
 <!-- prettier-ignore-end -->
 
-Registration is only valid synchronously, while the event dispatches; later calls warn and are ignored.
+Registration is only valid synchronously, while the event dispatches; later calls warn and are ignored. A rejected extension never blocks the choreography: the rejection is reported with a warning and the run completes.

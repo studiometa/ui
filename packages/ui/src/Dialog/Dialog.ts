@@ -151,7 +151,10 @@ export class Dialog<T extends BaseProps = BaseProps> extends Base<T & DialogProp
    * `event.detail.waitUntil(promise)` — any component (or plain JavaScript)
    * can hold the dialog open (or its `open()` promise pending) without being
    * a declared child. Registration is only valid while the event dispatches;
-   * later calls warn and are ignored.
+   * later calls warn and are ignored. Every registered promise is wrapped so
+   * a rejection settles with a warning instead of propagating — a failing
+   * extension must never leave the choreography incomplete (native dialog
+   * open, scroll locked).
    * @private
    */
   __emitExtendable(name: 'open' | 'close'): Promise<unknown>[] {
@@ -164,7 +167,11 @@ export class Dialog<T extends BaseProps = BaseProps> extends Base<T & DialogProp
         );
         return;
       }
-      pending.push(promise);
+      pending.push(
+        Promise.resolve(promise).catch((error) => {
+          this.$warn(`An extension of the \`${name}\` event rejected.`, error);
+        }),
+      );
     };
     this.$emit(new CustomEvent(name, { detail: { waitUntil } }));
     dispatching = false;

@@ -241,6 +241,25 @@ describe('The Dialog component', () => {
     expect(warn).toHaveBeenCalledTimes(1);
   });
 
+  it('should complete the closing choreography when an extension rejects', async () => {
+    const { dialog, el } = await createDialog();
+    const warn = vi.fn();
+    Object.defineProperty(dialog, '$warn', { configurable: true, get: () => warn });
+    dialog.$on('close', (event) => {
+      (event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>).detail.waitUntil(
+        Promise.reject(new Error('extension failed')),
+      );
+    });
+
+    await dialog.open();
+    await dialog.close();
+
+    // The rejection is reported, and the dialog still hides and cleans up.
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(el.close).toHaveBeenCalledTimes(1);
+    expect(document.documentElement.style.overflow).toBe('');
+  });
+
   it('should let concurrent close calls await the same run', async () => {
     const { dialog, el } = await createDialog();
     const closeFn = vi.fn();
