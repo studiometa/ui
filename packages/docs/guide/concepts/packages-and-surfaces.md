@@ -4,13 +4,14 @@ The project publishes behavior, templates and integrations through separate pack
 
 ## Packages
 
-| Package | Provides | Install when |
-| --- | --- | --- |
-| [`@studiometa/ui`](https://www.npmjs.com/package/@studiometa/ui) | JavaScript classes, decorators, helpers, public types and source templates | You need browser behavior or consume package files from a JavaScript build |
-| [`studiometa/ui`](https://packagist.org/packages/studiometa/ui) | Twig extension, package templates, SVG namespaces and icon management | Your server renders Twig templates |
-| [`@studiometa/ui-mapbox`](https://www.npmjs.com/package/@studiometa/ui-mapbox) | Declarative js-toolkit components for Mapbox GL | Your interface contains an interactive Mapbox map |
+| Package                                                                        | Provides                                                                   | Install when                                                               |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [`@studiometa/ui`](https://www.npmjs.com/package/@studiometa/ui)               | JavaScript classes, decorators, helpers, public types and source templates | You need browser behavior or consume package files from a JavaScript build |
+| [`studiometa/ui`](https://packagist.org/packages/studiometa/ui)                | Twig extension, package templates, SVG namespaces and icon management      | Your server renders Twig templates                                         |
+| [`@studiometa/ui-mapbox`](https://www.npmjs.com/package/@studiometa/ui-mapbox) | Declarative js-toolkit components for Mapbox GL                            | Your interface contains an interactive Mapbox map                          |
+| [`@studiometa/ui-motion`](https://www.npmjs.com/package/@studiometa/ui-motion) | Declarative js-toolkit components for the Motion animation library         | Your interface animates elements with Motion                               |
 
-The JavaScript packages are ESM-only and use [`@studiometa/js-toolkit`](https://js-toolkit.studiometa.dev) as their component runtime. `@studiometa/ui-mapbox` also expects `mapbox-gl`; its geocoder integration has an optional peer dependency.
+The JavaScript packages are ESM-only and use [`@studiometa/js-toolkit`](https://js-toolkit.studiometa.dev) as their component runtime. `@studiometa/ui-mapbox` also expects `mapbox-gl`; its geocoder integration has an optional peer dependency. `@studiometa/ui-motion` expects `motion`.
 
 The NPM and Composer distributions use the same template sources from `packages/ui`. NPM exposes those source files to JavaScript build tools, while the Composer extension registers them with Twig through namespace-based lookup. Install the distribution used by your rendering pipeline; projects combining JavaScript behavior with Twig normally install both.
 

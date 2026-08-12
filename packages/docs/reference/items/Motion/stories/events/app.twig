@@ -1,0 +1,52 @@
+<div
+  data-component="Action"
+  data-on:motion-play="DataBind->target.set('playing')"
+  data-on:motion-pause="DataBind->target.set('paused')"
+  data-on:motion-complete="DataBind->target.set('complete')"
+  data-on:motion-stop="DataBind->target.set('stopped')"
+  data-on:motion-cancel="DataBind->target.set('cancelled')"
+  class="grid gap-4 justify-items-start">
+  <div
+    data-component="Motion"
+    data-option-animate='{ "x": 160 }'
+    data-option-transition='{ "duration": 1.5 }'
+    data-option-no-autoplay
+    class="px-6 py-4 rounded-lg bg-blue-400 dark:bg-blue-600 text-white font-bold">
+    Watch my status
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.play()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Play
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.pause()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Pause
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.stop()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Stop
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.cancel()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Cancel
+    </button>
+  </div>
+
+  <p>
+    Status: <strong data-component="DataBind">idle</strong>
+  </p>
+</div>

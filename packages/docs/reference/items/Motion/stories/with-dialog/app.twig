@@ -1,0 +1,55 @@
+<button
+  type="button"
+  data-component="Action"
+  data-on:click="Dialog(#motion-modal)->target.open()"
+  class="px-4 py-2 rounded bg-blue-600 text-white font-semibold">
+  Open dialog
+</button>
+
+{# The <dialog> host carries NO display utility, so its native open/closed
+   display (block / none) is preserved. The `open` event plays the box's
+   spring entrance; every closing interaction plays it in reverse instead of
+   closing directly, and the bubbling `motion-complete` closes the dialog once
+   the box is back at its starting styles (progress 0 = exit, 1 = entrance). #}
+<dialog
+  id="motion-modal"
+  data-component="Action Dialog"
+  data-on:open="Motion(#motion-modal-box)->target.play()"
+  data-on:cancel.prevent="Motion(#motion-modal-box)->target.reverse()"
+  data-on:motion-complete="Motion(#motion-modal-box)->target.progress === 0 && Dialog.close()"
+  class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent overflow-y-auto">
+  <div
+    data-component="Action"
+    data-on:click="Motion(#motion-modal-box)->target.reverse()"
+    class="fixed inset-0 bg-black/50"></div>
+
+  <div
+    class="pointer-events-none relative flex min-h-full items-center justify-center p-4">
+    <div
+      id="motion-modal-box"
+      data-component="Motion"
+      data-option-initial='{ "opacity": 0, "scale": 0.8, "y": 40 }'
+      data-option-animate='{ "opacity": 1, "scale": 1, "y": 0 }'
+      data-option-transition='{ "type": "spring", "bounce": 0.4 }'
+      data-option-no-autoplay
+      class="pointer-events-auto relative w-full max-w-lg p-8 rounded-lg bg-white text-black shadow-2xl">
+      <h2 class="text-xl font-bold mb-3">Spring entrance and exit</h2>
+      <p class="mb-6 text-black/60">
+        The <code>Dialog</code> handles the top layer, focus and scroll lock; the
+        <code>Motion</code> box springs in on its <code>open</code> event and springs
+        back out before the dialog closes — physics a CSS transition cannot express.
+      </p>
+      <button
+        type="button"
+        data-component="Action"
+        data-on:click="Motion(#motion-modal-box)->target.reverse()"
+        class="px-4 py-2 rounded bg-gray-900 text-white">
+        Close
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  dialog::backdrop { background: transparent; }
+</style>

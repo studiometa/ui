@@ -1,0 +1,63 @@
+<div class="grid gap-4 justify-items-start">
+  <div
+    data-component="Motion"
+    data-option-animate='{ "x": 200, "rotate": 180 }'
+    data-option-transition='{ "duration": 2, "ease": "easeInOut" }'
+    data-option-no-autoplay
+    class="size-16 rounded-lg bg-blue-400 dark:bg-blue-600"></div>
+
+  <div class="flex flex-wrap gap-2">
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.play()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Play
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.pause()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Pause
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.reverse()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Reverse
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.stop()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Stop
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.cancel()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Cancel
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.complete()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Complete
+    </button>
+  </div>
+
+  <label class="flex items-center gap-2">
+    Seek<input
+      type="range"
+      min="0"
+      max="100"
+      value="0"
+      data-component="Action"
+      data-on:input="Motion->target.seek(event.target.valueAsNumber / 100)" />
+  </label>
+</div>

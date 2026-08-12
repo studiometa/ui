@@ -1,0 +1,42 @@
+<div class="grid gap-4 justify-items-start">
+  <div
+    data-component="Motion"
+    data-option-animate='{ "x": 160, "rotate": 10 }'
+    data-option-transition='{ "type": "spring", "bounce": 0.4 }'
+    data-option-no-autoplay
+    class="px-6 py-4 rounded-lg bg-blue-400 dark:bg-blue-600 text-white font-bold">
+    Drive me!
+  </div>
+
+  <div class="flex gap-2">
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.play()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Play
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.reverse()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Reverse
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:mouseenter="Motion->target.play()"
+      data-on:mouseleave="Motion->target.reverse()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Hover me
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="Motion->target.animate({ rotate: 360, x: 0 }, { duration: 1 })"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Spin back
+    </button>
+  </div>
+</div>

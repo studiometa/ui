@@ -1,0 +1,38 @@
+<div class="grid gap-4 justify-items-start">
+  {# One element carries the whole engine: `TimerProgress` emits a 0 → 1 ratio
+     on every frame, and the co-located `Action` folds it into a 0 → 1 → 0
+     triangle wave before handing it to `Motion.seek()` — one 8s timer cycle
+     yoyos the animation out and back. #}
+  <div
+    data-component="Action Motion TimerProgress"
+    data-option-delay="8"
+    data-option-repeat
+    data-option-no-autoplay
+    data-option-animate='{ "x": 200, "rotate": 360, "borderRadius": "50%" }'
+    data-on:timer-progress="Motion.seek(1 - Math.abs(2 * event.detail[0] - 1))"
+    class="size-16 rounded-lg bg-blue-400 dark:bg-blue-600"></div>
+
+  <div class="flex flex-wrap gap-2">
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="TimerProgress->target.pause()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Pause
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="TimerProgress->target.resume()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Resume
+    </button>
+    <button
+      type="button"
+      data-component="Action"
+      data-on:click="TimerProgress->target.restart()"
+      class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+      Restart
+    </button>
+  </div>
+</div>
