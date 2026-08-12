@@ -171,4 +171,91 @@ describe('The Dialog component', () => {
     await dialog.close();
     expect(order).toEqual(['leave', 'close']);
   });
+
+  it('should await promises registered with `waitUntil` on the close event before hiding', async () => {
+    const { dialog, el } = await createDialog();
+    let release: () => void;
+    const extension = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    dialog.$on('close', (event) => {
+      (event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>).detail.waitUntil(
+        extension,
+      );
+    });
+
+    await dialog.open();
+    const closing = dialog.close();
+    // The extension is pending: the native dialog must still be open.
+    await Promise.resolve();
+    expect(el.close).not.toHaveBeenCalled();
+
+    release();
+    await closing;
+    expect(el.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('should await promises registered with `waitUntil` on the open event', async () => {
+    const { dialog } = await createDialog();
+    let release: () => void;
+    const extension = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    dialog.$on('open', (event) => {
+      (event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>).detail.waitUntil(
+        extension,
+      );
+    });
+
+    let opened = false;
+    const opening = dialog.open().then(() => {
+      opened = true;
+    });
+    // The native dialog shows immediately; only the promise resolution waits.
+    expect(dialog.dialog.open).toBe(true);
+    await Promise.resolve();
+    expect(opened).toBe(false);
+
+    release();
+    await opening;
+    expect(opened).toBe(true);
+  });
+
+  it('should ignore and warn on `waitUntil` calls after the event dispatched', async () => {
+    const { dialog, el } = await createDialog();
+    // `$warn` is a prototype getter: shadow it on the instance to observe calls.
+    const warn = vi.fn();
+    Object.defineProperty(dialog, '$warn', { configurable: true, get: () => warn });
+    let waitUntil: (promise: Promise<unknown>) => void;
+    dialog.$on('close', (event) => {
+      ({ waitUntil } = (event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>)
+        .detail);
+    });
+
+    await dialog.open();
+    await dialog.close();
+    expect(el.close).toHaveBeenCalledTimes(1);
+
+    // A late registration must not wedge anything and must warn.
+    waitUntil(new Promise(() => {}));
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('should let concurrent close calls await the same run', async () => {
+    const { dialog, el } = await createDialog();
+    const closeFn = vi.fn();
+    dialog.$on('close', (event) => {
+      closeFn();
+      (event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>).detail.waitUntil(
+        Promise.resolve(),
+      );
+    });
+
+    await dialog.open();
+    await Promise.all([dialog.close(), dialog.close()]);
+
+    // One choreography: one close event, one native hide.
+    expect(closeFn).toHaveBeenCalledTimes(1);
+    expect(el.close).toHaveBeenCalledTimes(1);
+  });
 });
