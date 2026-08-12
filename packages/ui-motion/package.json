@@ -37,6 +37,11 @@
       "types": "./dist/MotionScrollTimeline.d.ts",
       "import": "./dist/MotionScrollTimeline.js"
     },
+    "./MotionSequence": {
+      "typescript": "./src/MotionSequence.ts",
+      "types": "./dist/MotionSequence.d.ts",
+      "import": "./dist/MotionSequence.js"
+    },
     "./dependencies": {
       "typescript": "./src/dependencies.ts",
       "types": "./dist/dependencies.d.ts",

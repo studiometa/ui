@@ -14,6 +14,7 @@ export interface MotionProps extends BaseProps {
     animate: DOMKeyframesDefinition;
     transition: AnimationOptions;
     autoplay: boolean;
+    at: string;
     hover: DOMKeyframesDefinition;
     press: DOMKeyframesDefinition;
     inView: DOMKeyframesDefinition;
@@ -55,6 +56,7 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
       animate: Object,
       transition: Object,
       autoplay: { type: Boolean, default: true },
+      at: String,
       hover: Object,
       press: Object,
       inView: Object,
@@ -125,7 +127,7 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
    * the gesture options.
    */
   async mounted() {
-    const { initial, animate, autoplay } = this.$options;
+    const { initial, autoplay } = this.$options;
     const motion = await resolveMotion();
 
     if (!this.$isMounted) {
@@ -136,11 +138,21 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
       motion.animate(this.$el, initial, { duration: 0 });
     }
 
-    if (autoplay && Object.keys(animate).length > 0) {
+    if (autoplay && this.__hasDeclaredAnimation) {
       this.play();
     }
 
     this.__bindGestures(motion);
+  }
+
+  /**
+   * Whether the options declare an animation to play — the gate for
+   * `autoplay`. Subclasses building their animation from another source
+   * (e.g. `MotionSequence` from its children) override this.
+   * @protected
+   */
+  get __hasDeclaredAnimation(): boolean {
+    return Object.keys(this.$options.animate).length > 0;
   }
 
   /**
@@ -385,8 +397,9 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
 
   /**
    * Create the animation from the `animate` and `transition` options and make
-   * it the current one.
-   * @private
+   * it the current one. Subclasses override this to build the current
+   * animation from another source.
+   * @protected
    */
   __createControls(): AnimationPlaybackControlsWithThen {
     const { animate, transition } = this.$options;

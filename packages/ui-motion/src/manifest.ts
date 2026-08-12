@@ -22,4 +22,14 @@ export const manifest: ComponentManifest = {
     load: () =>
       import('./MotionScrollTimeline.js').then(({ MotionScrollTimeline }) => MotionScrollTimeline),
   },
+  MotionSequence: {
+    token: 'MotionSequence',
+    packageName: '@studiometa/ui-motion',
+    subpath: 'MotionSequence',
+    exportName: 'MotionSequence',
+    strategy: 'visible',
+    group: 'motion',
+    children: ['Motion'],
+    load: () => import('./MotionSequence.js').then(({ MotionSequence }) => MotionSequence),
+  },
 };

@@ -6,6 +6,7 @@ import type { ComponentCatalog, CuratedComponentMetadata } from '../../../script
 const components: readonly CuratedComponentMetadata[] = [
   { token: 'Motion', group: 'motion' },
   { token: 'MotionScrollTimeline', group: 'motion', children: ['Motion'] },
+  { token: 'MotionSequence', group: 'motion', children: ['Motion'] },
 ];
 
 /** The autoload catalog for every declarative `@studiometa/ui-motion` component. */
