@@ -67,13 +67,13 @@ A getter returning every [`Transition`](/reference/items/Transition/) and [`View
 
 - Returns `Promise<void>`
 
-Open the dialog: call `showModal()` (or `show()` when `modal` is `false`), lock the scroll, emit `open`, then run every child's `enter()`. A no-op if the dialog is already open. Resolves once the enter transitions have finished.
+Open the dialog: call `showModal()` (or `show()` when `modal` is `false`), lock the scroll, emit `open`, then run every child's `enter()` alongside the [`waitUntil` extensions](#extending-the-choreography-with-waituntil). A no-op if the dialog is already open. Resolves once the enter choreography has finished.
 
 ### `close`
 
 - Returns `Promise<void>`
 
-Close the dialog: emit `close`, run every child's `leave()`, **then** call `dialog.close()`, release the focus-trap (non-modal path) and unlock the scroll. A no-op if the dialog is already closed. Resolves once closed.
+Close the dialog: emit `close`, run every child's `leave()` alongside the [`waitUntil` extensions](#extending-the-choreography-with-waituntil), **then** call `dialog.close()`, release the focus-trap (non-modal path) and unlock the scroll. A no-op if the dialog is already closed, and concurrent calls await the same run. Resolves once closed.
 
 ### `toggle`
 
@@ -85,8 +85,28 @@ Call `close()` if the dialog is open, `open()` otherwise.
 
 ### `open`
 
-Emitted when the dialog starts opening, before the enter transitions run.
+Emitted when the dialog starts opening, before the enter transitions run. The `detail` carries a [`waitUntil`](#extending-the-choreography-with-waituntil) function.
 
 ### `close`
 
-Emitted when the dialog starts closing, before the leave transitions run.
+Emitted when the dialog starts closing, before the leave transitions run. The `detail` carries a [`waitUntil`](#extending-the-choreography-with-waituntil) function.
+
+## Extending the choreography with `waitUntil`
+
+Both lifecycle events expose `event.detail.waitUntil(promise)`, modeled on the Service Worker [`ExtendableEvent`](https://developer.mozilla.org/en-US/docs/Web/API/ExtendableEvent/waitUntil). Any listener can register a promise while the event dispatches, and the dialog awaits it alongside its transition children — on `close`, the native dialog stays painted until every registered promise settles. This lets any component participate in the open and close choreography without being a declared child.
+
+For example, a `Motion` box (from `@studiometa/ui-motion`) can spring in and out with the dialog through two [`Action`](/reference/items/Action/) attributes:
+
+<!-- prettier-ignore-start -->
+```html {3,4}
+<dialog
+  data-component="Action Dialog"
+  data-on:open="Motion(#box)->event.detail.waitUntil(target.play())"
+  data-on:close="Motion(#box)->event.detail.waitUntil(target.reverse())"
+  data-on:cancel.prevent="Dialog.close()">
+  …
+</dialog>
+```
+<!-- prettier-ignore-end -->
+
+Registration is only valid synchronously, while the event dispatches; later calls warn and are ignored.
