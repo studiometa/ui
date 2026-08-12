@@ -7,7 +7,9 @@ import { provideMotion, type MotionModule } from '@studiometa/ui-motion';
  * through {@link MockAnimation.finish}.
  */
 export class MockAnimation {
-  element: Element;
+  element: Element | null;
+  /** The segments array when built from `animate(sequence, options)`. */
+  sequence: unknown[] | null;
   keyframes: Record<string, unknown>;
   options: Record<string, unknown> | undefined;
   speed = 1;
@@ -26,13 +28,22 @@ export class MockAnimation {
   __callbacks: [() => void, () => void][] = [];
 
   constructor(
-    element: Element,
-    keyframes: Record<string, unknown>,
+    target: Element | unknown[],
+    keyframes?: Record<string, unknown>,
     options?: Record<string, unknown>,
   ) {
-    this.element = element;
-    this.keyframes = keyframes;
-    this.options = options;
+    if (Array.isArray(target)) {
+      // Sequence overload: `animate(sequence, sequenceOptions)`.
+      this.element = null;
+      this.sequence = target;
+      this.keyframes = {};
+      this.options = keyframes;
+    } else {
+      this.element = target;
+      this.sequence = null;
+      this.keyframes = keyframes ?? {};
+      this.options = options;
+    }
   }
 
   play() {
@@ -89,8 +100,12 @@ export class MockAnimation {
 export const animations: MockAnimation[] = [];
 
 export const mockAnimate = vi.fn(
-  (element: Element, keyframes: Record<string, unknown>, options?: Record<string, unknown>) => {
-    const animation = new MockAnimation(element, keyframes, options);
+  (
+    target: Element | unknown[],
+    keyframes?: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ) => {
+    const animation = new MockAnimation(target, keyframes, options);
     animations.push(animation);
     return animation;
   },
