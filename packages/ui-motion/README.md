@@ -48,6 +48,12 @@ The `initial` styles are applied on mount, then the `animate` keyframes play aut
 
 The playback API is `play()`, `pause()`, `reverse()`, `seek(progress)`, `stop()`, `cancel()`, `complete()` and `animate(keyframes, options)`. The component emits bubbling `motion-play`, `motion-pause`, `motion-complete`, `motion-cancel` and `motion-stop` events an ancestor `Action` can catch and route.
 
+The `hover`, `press` and `inView` options apply keyframes while their state holds (through Motion's touch-filtered, keyboard-accessible gesture functions) and revert when it ends:
+
+```html
+<div data-component="Motion" data-option-hover='{ "scale": 1.1 }'>Hover me</div>
+```
+
 For scroll-driven animations, wrap `Motion` components in a `MotionScrollTimeline`: the wrapper's traversal of the viewport defines the timeline and every child is bound to that progress with Motion's `scroll()`, hardware-accelerated where the browser supports `ScrollTimeline`:
 
 ```html

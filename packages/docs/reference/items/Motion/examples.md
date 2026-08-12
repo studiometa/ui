@@ -67,6 +67,27 @@ The `motion-*` events bubble, so a single routing [`Action`](/reference/items/Ac
 
 </llm-only>
 
+## Gestures
+
+The `hover`, `press` and `inView` options apply keyframes while their state holds, through Motion's own gesture functions: hover filters out touch emulation, press responds to pointer and keyboard alike, and in-view uses a real `IntersectionObserver`. When the state ends, the gesture animation plays backward — no base values to declare.
+
+<llm-exclude>
+  <PreviewPlayground
+    :html="() => import('./stories/gestures/app.twig')"
+    :script="() => import('./stories/gestures/app.js?raw')"
+    />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/gestures/app.twig
+<<< ./stories/gestures/app.js
+
+:::
+
+</llm-only>
+
 ## Spring entrance and exit for a `Dialog`
 
 The [`Dialog`](/reference/items/Dialog/) component handles the top layer, focus and scroll lock, and its lifecycle events are [extendable](/reference/items/Dialog/js-api#extending-the-choreography-with-waituntil): registering a promise with `event.detail.waitUntil()` makes the dialog wait for it. The `open` event plays a spring entrance on the `Motion` box, the `close` event plays it in reverse, and the dialog stays painted until the exit settles — physics a CSS transition cannot express. Every closing interaction (button, backdrop, <kbd>Esc</kbd>) just calls `Dialog.close()`.

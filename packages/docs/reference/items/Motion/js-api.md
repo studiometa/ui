@@ -73,6 +73,74 @@ Whether the `animate` keyframes play automatically on mount. Since the default i
 ```
 <!-- prettier-ignore-end -->
 
+#### `hover`
+
+- Type: `DOMKeyframesDefinition`
+- Default: `{}`
+
+Keyframes applied while the element is hovered, through Motion's [`hover()`](https://motion.dev/docs/hover) — real hover only, touch emulation is filtered out. When the hover ends, the gesture animation plays backward, returning the element to the styles it had when the gesture began.
+
+<!-- prettier-ignore-start -->
+```html {3}
+<div
+  data-component="Motion"
+  data-option-hover='{ "scale": 1.1 }'>
+  …
+</div>
+```
+<!-- prettier-ignore-end -->
+
+#### `press`
+
+- Type: `DOMKeyframesDefinition`
+- Default: `{}`
+
+Keyframes applied while the element is pressed, through Motion's [`press()`](https://motion.dev/docs/press) — pointer and keyboard alike, so the state is accessible for free. Reverts like `hover` when the press ends.
+
+#### `inView`
+
+- Type: `DOMKeyframesDefinition`
+- Default: `{}`
+
+Keyframes applied when the element enters the viewport, through Motion's [`inView()`](https://motion.dev/docs/inview). Reverts when the element leaves, unless [`once`](#once) is set.
+
+<!-- prettier-ignore-start -->
+```html {3,4}
+<div
+  data-component="Motion"
+  data-option-initial='{ "opacity": 0, "y": 24 }'
+  data-option-in-view='{ "opacity": 1, "y": 0 }'
+  data-option-once>
+  …
+</div>
+```
+<!-- prettier-ignore-end -->
+
+#### `inViewMargin`
+
+- Type: `string`
+- Default: `''`
+
+The viewport margin for the `inView` detection, in CSS margin syntax (e.g. `"-100px"` to trigger 100px inside the viewport).
+
+#### `inViewAmount`
+
+- Type: `'some' | 'all' | number`
+- Default: `'some'`
+
+How much of the element must be visible to trigger `inView`: `"some"`, `"all"`, or a `0`–`1` proportion.
+
+#### `once`
+
+- Type: `boolean`
+- Default: `false`
+
+When set, the `inView` keyframes play once and the reached styles persist — the element is no longer watched.
+
+::: info Gesture animations are transient
+The gesture options animate alongside the declared animation: they never become the [current animation](#methods) and emit no lifecycle events. Like `scroll()`, the gesture functions are not part of `motion/mini` — a gesture option warns and is skipped when the [provided module](#providing-the-motion-dependency) lacks its function.
+:::
+
 ### Events
 
 All events are dispatched as bubbling `CustomEvent`s on the component's element, so they can be listened to with [`Action`](/reference/items/Action/)'s `data-on:<event>` attribute — either on the same element or on an ancestor. Use the `.stop` modifier to contain them.
