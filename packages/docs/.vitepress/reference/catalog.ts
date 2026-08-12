@@ -997,6 +997,7 @@ export const referenceCatalog = [
         'MotionScrollTimeline',
         '/reference/items/Motion/js-api#motionscrolltimeline',
       ),
+      motionSymbol('MotionSequence', '/reference/items/Motion/js-api#motionsequence'),
       motionSymbol(
         'provideMotion',
         '/reference/items/Motion/js-api#providing-the-motion-dependency',

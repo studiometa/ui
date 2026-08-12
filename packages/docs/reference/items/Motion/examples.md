@@ -130,6 +130,27 @@ A single element carries `Action`, `Motion` and [`TimerProgress`](/reference/ite
 
 </llm-only>
 
+## Staggered sequence
+
+[`MotionSequence`](./js-api#motionsequence) composes its `Motion` children into one timeline: the `stagger` option spreads the first three items, the finale positions itself with `data-option-at="+0.2"`, and one `Action` target plays or reverses the entire choreography — a single animation under the hood.
+
+<llm-exclude>
+  <PreviewPlayground
+    :html="() => import('./stories/sequence/app.twig')"
+    :script="() => import('./stories/sequence/app.js?raw')"
+    />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/sequence/app.twig
+<<< ./stories/sequence/app.js
+
+:::
+
+</llm-only>
+
 ## Scroll-driven timeline
 
 [`MotionScrollTimeline`](./js-api#motionscrolltimeline) separates the timeline from the animations, like the `ScrollAnimation` family: the tall section defines the scroll range, and every `Motion` inside it is driven by that progress through Motion's `scroll()` — hardware-accelerated where the browser supports `ScrollTimeline`. Keyframe arrays give each child a multi-step track across the same range, and registering the timeline is enough: it mounts its `Motion` children itself.

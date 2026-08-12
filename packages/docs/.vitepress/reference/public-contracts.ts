@@ -910,4 +910,12 @@ export const publicContractSymbols = [
     href: '/reference/items/Motion/js-api',
     status: 'stable',
   },
+  {
+    name: 'MotionSequenceProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui-motion',
+    importPath: '@studiometa/ui-motion',
+    href: '/reference/items/Motion/js-api',
+    status: 'stable',
+  },
 ] satisfies ReferenceSymbol[];
