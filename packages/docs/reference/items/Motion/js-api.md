@@ -344,6 +344,13 @@ Per-layer keyframes applied to each subject, mapping to the builder's [`new()`/`
 
 Enable the layout morph on each subject (the builder's `layout()`), so position and size changes animate smoothly.
 
+#### `auto`
+
+- Type: `boolean`
+- Default: `true`
+
+Enable [ambient wiring](#ambient-wiring): the component wraps any `dom-update` announced inside its subtree and joins the lifecycle of a containing `Dialog`. Opt out with `data-option-no-auto`.
+
 ### Events
 
 The same events as [`ViewTransition`](/reference/items/ViewTransition/js-api#events), in the same order: `enter`, `enter-start`, `enter-end` around the enter transition and `leave`, `leave-start`, `leave-end` around the leave transition.
@@ -356,6 +363,43 @@ The same events as [`ViewTransition`](/reference/items/ViewTransition/js-api#eve
 | `leave()`        | Swap `enterTo` for `leaveTo` inside a view transition. Resolves once the animation settles.                   |
 | `toggle()`       | Toggle between enter and leave, entering first.                                                               |
 | `update(mutate)` | The underlying primitive: run any DOM mutation as a view transition configured by the options. Never rejects. |
+
+### Ambient wiring
+
+Containment is the wiring: with the `auto` option (on by default), a mounted `MotionView` listens for the bubbling `dom-update` event that mutating components — [`Fetch`](/reference/items/Fetch/), [`DataBind`](/reference/items/DataBind/)'s `data-bind:if` — announce before changing the DOM, and runs the announced change through `update()` so it plays as a view transition. Nesting the mutators inside the component is enough, with zero wiring attributes on either side:
+
+<!-- prettier-ignore-start -->
+```html {1}
+<div data-component="MotionView" data-option-transition='{ "type": "spring", "bounce": 0.2 }'>
+  <form action="/search" data-component="Fetch">
+    <input type="search" name="q" />
+  </form>
+
+  <template data-component="DataBind" data-option-key="expanded" data-bind:if>
+    <p>…</p>
+  </template>
+</div>
+```
+<!-- prettier-ignore-end -->
+
+A `MotionView` placed inside a [`Dialog`](/reference/items/Dialog/) also joins its lifecycle: the dialog's extendable `open` and `close` events bubble past the component, which hands itself to `detail.waitUntil()` — the dialog then awaits `enter()` on open and `leave()` on close.
+
+Opt out with `data-option-no-auto`. Explicit wiring through [`Action`](/reference/items/Action/) remains for cross-subtree topologies, where the mutator and the animated subtree are not nested:
+
+<!-- prettier-ignore-start -->
+```html {4}
+<form
+  action="/search"
+  data-component="Fetch Action"
+  data-on:dom-update="MotionView(#list)->event.detail.wrap(target)">
+  <input type="search" name="q" />
+</form>
+
+<ul id="list" data-component="MotionView">
+  …
+</ul>
+```
+<!-- prettier-ignore-end -->
 
 ### Notes
 
