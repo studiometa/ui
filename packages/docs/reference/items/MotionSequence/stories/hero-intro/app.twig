@@ -1,0 +1,48 @@
+{# One choreography, played on mount: `data-option-autoplay` belongs to the
+   sequence, never to the children — the sequence owns their playback. The
+   badge and the heading follow one another in DOM order, the paragraph joins
+   the heading with `data-option-at="<"`, and the button overlaps the end of
+   the paragraph with the relative offset `data-option-at="-0.2"`. #}
+<div
+  data-component="MotionSequence"
+  data-option-autoplay
+  class="grid max-w-xl justify-items-start gap-4 rounded-lg p-8 ring">
+  <span
+    data-component="Motion"
+    data-option-initial='{ "opacity": 0, "scale": 0.8 }'
+    data-option-animate='{ "opacity": 1, "scale": 1 }'
+    data-option-transition='{ "type": "spring", "bounce": 0.5 }'
+    class="rounded-full bg-emerald-400/20 px-3 py-1 text-sm font-bold text-emerald-700 ring ring-emerald-400 dark:text-emerald-300">
+    New
+  </span>
+
+  <h2
+    data-component="Motion"
+    data-option-initial='{ "opacity": 0, "y": 24 }'
+    data-option-animate='{ "opacity": 1, "y": 0 }'
+    data-option-transition='{ "type": "spring", "bounce": 0.2 }'
+    class="text-3xl font-bold">
+    Animate the whole hero as one timeline
+  </h2>
+
+  <p
+    data-component="Motion"
+    data-option-initial='{ "opacity": 0, "y": 16 }'
+    data-option-animate='{ "opacity": 1, "y": 0 }'
+    data-option-at="<"
+    class="text-current/70">
+    This paragraph starts with the heading, not after it: <code>"&lt;"</code>
+    positions a segment at the start of the previous one.
+  </p>
+
+  <button
+    type="button"
+    data-component="Motion"
+    data-option-initial='{ "opacity": 0, "y": 12, "scale": 0.9 }'
+    data-option-animate='{ "opacity": 1, "y": 0, "scale": 1 }'
+    data-option-transition='{ "type": "spring", "bounce": 0.4 }'
+    data-option-at="-0.2"
+    class="rounded bg-blue-600 px-4 py-2 font-semibold text-white">
+    Get started
+  </button>
+</div>
