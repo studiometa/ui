@@ -35,6 +35,22 @@ Styles applied to the element on mount, before anything plays. Use it to define 
 
 The target keyframes of the animation. They play on mount when [`autoplay`](#autoplay) is enabled.
 
+A single value per property (`{ "opacity": 1 }`) animates from whatever the element currently shows, so replaying a settled animation moves nothing. Write the keyframes as `[from, to]` arrays (`{ "opacity": [0, 1] }`) to pin the starting point, and every [`play()`](#methods) replays the same motion:
+
+<!-- prettier-ignore-start -->
+```html {4}
+<div
+  data-component="Motion"
+  data-option-initial='{ "opacity": 0 }'
+  data-option-animate='{ "opacity": [0, 1] }'
+  data-option-autoplay>
+  …
+</div>
+```
+<!-- prettier-ignore-end -->
+
+Keep [`initial`](#initial) alongside: it paints the starting state before the component mounts, where the keyframes only apply once the animation runs.
+
 ### `transition`
 
 - Type: `AnimationOptions`

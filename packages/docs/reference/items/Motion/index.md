@@ -14,7 +14,7 @@ The `motion` peer dependency is resolved with a lazy `import()` the first time a
 
 ## Usage
 
-Option values are parsed as JSON, so object keys must be quoted:
+Option values are parsed as JSON, so object keys must be quoted. The animation below plays once on mount, which a preview finishes booting before you look at it — hence the replay button, which calls `play()` to restart it:
 
 <llm-exclude>
 <PreviewPlayground
