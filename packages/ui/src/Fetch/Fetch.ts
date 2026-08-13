@@ -4,6 +4,7 @@ import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
 import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
 import morphdom from 'morphdom';
 import { viewTransition as scheduleViewTransition } from '../ViewTransition/scheduler.js';
+import { emitDomUpdate, runWrapped } from '../utils/dom-update.js';
 import { adoptNewScripts, getScripts } from './utils.js';
 
 export interface FetchProps extends BaseProps {
@@ -27,11 +28,6 @@ export type FetchConstructor<T extends Fetch = Fetch> = {
   new (...args: any[]): T;
   prototype: Fetch;
 } & Pick<typeof Fetch, keyof typeof Fetch>;
-
-/**
- * Transition runner registered with `wrap()` on the `fetch-update` event payload. It receives an `apply` function that injects the fetched content into the DOM and is awaited before the `fetch-update-after` event is emitted.
- */
-export type FetchUpdateWrapper = (apply: () => void) => void | Promise<unknown>;
 
 /**
  * Fetch class.
@@ -85,7 +81,7 @@ export class Fetch<T extends BaseProps = BaseProps>
    */
   static config: BaseConfig = {
     name: 'Fetch',
-    emits: Object.values(this.FETCH_EVENTS),
+    emits: [...Object.values(this.FETCH_EVENTS), 'dom-update'],
     refs: ['headers[]'],
     options: {
       history: Boolean,
@@ -359,8 +355,18 @@ export class Fetch<T extends BaseProps = BaseProps>
    * a declarative option string.
    * @protected
    */
-  __parseResponse(response: Response, url: URL, requestInit: RequestInit): Promise<string> | string {
-    const fn = new Function('response', 'url', 'requestInit', 'self', `return ${this.$options.response}`);
+  __parseResponse(
+    response: Response,
+    url: URL,
+    requestInit: RequestInit,
+  ): Promise<string> | string {
+    const fn = new Function(
+      'response',
+      'url',
+      'requestInit',
+      'self',
+      `return ${this.$options.response}`,
+    );
     return fn.call(this, response, url, requestInit, self);
   }
 
@@ -406,7 +412,7 @@ export class Fetch<T extends BaseProps = BaseProps>
   /**
    * Dispatch the contents to update to their matching FrameTarget.
    *
-   * The `fetch-update` event payload exposes a `wrap(runner)` function letting listeners substitute the transition runner that applies the fetched content. The runner receives an `apply` function that injects the content into the DOM and is awaited before the `fetch-update-after` event. Registration is only valid synchronously while the event dispatches and the last `wrap` call wins. With no registered runner and the `viewTransition` option enabled, the update runs through the shared `viewTransition` scheduler — batched and serialized with every other scheduled view transition, falling back to a direct update when the API is unavailable.
+   * After the `fetch-update` event, the bubbling `dom-update` protocol event announces the imminent DOM change. Its `detail.wrap()` lets a listener register a runner — a function receiving the `apply` callback, or a transitioner object exposing `update(mutate)` — that substitutes the default update path and is awaited before the `fetch-update-after` event. Registration is only valid synchronously while the event dispatches and the last `wrap` call wins. With no registered runner and the `viewTransition` option enabled, the update runs through the shared `viewTransition` scheduler — batched and serialized with every other scheduled view transition, falling back to a direct update when the API is unavailable.
    */
   async update(url: URL, requestInit: RequestInit, content: string) {
     const { FETCH_EVENTS } = this.constructor;
@@ -428,22 +434,12 @@ export class Fetch<T extends BaseProps = BaseProps>
       });
     }
 
-    const runner = this.__emitUpdate(url, requestInit, fragment);
+    this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, fragment });
+
+    const runner = emitDomUpdate(this);
 
     if (runner) {
-      let applied = false;
-      const apply = () => {
-        applied = true;
-        this.__updateDOM(fragment);
-      };
-      try {
-        await runner(apply);
-      } catch (error) {
-        this.$warn(`The \`${FETCH_EVENTS.UPDATE}\` event runner rejected.`, error);
-        if (!applied) {
-          apply();
-        }
-      }
+      await runWrapped(this, runner, () => this.__updateDOM(fragment));
     } else if (viewTransition) {
       await scheduleViewTransition(() => {
         this.__updateDOM(fragment);
@@ -453,28 +449,6 @@ export class Fetch<T extends BaseProps = BaseProps>
     }
 
     this.$emit(FETCH_EVENTS.AFTER_UPDATE, { instance: this, url, requestInit, fragment });
-  }
-
-  /**
-   * Emit the `fetch-update` event with a `wrap(runner)` function on its payload and return the registered transition runner, if any. Registration is only valid while the event dispatches: later calls warn and are ignored. A single runner is kept — the last `wrap` call during dispatch wins.
-   * @private
-   */
-  __emitUpdate(url: URL, requestInit: RequestInit, fragment: Document): FetchUpdateWrapper | null {
-    const { FETCH_EVENTS } = this.constructor;
-    let dispatching = true;
-    let runner: FetchUpdateWrapper | null = null;
-    const wrap = (newRunner: FetchUpdateWrapper) => {
-      if (!dispatching) {
-        this.$warn(
-          `\`wrap\` must be called synchronously while the \`${FETCH_EVENTS.UPDATE}\` event dispatches.`,
-        );
-        return;
-      }
-      runner = newRunner;
-    };
-    this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, fragment, wrap });
-    dispatching = false;
-    return runner;
   }
 
   /**

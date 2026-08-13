@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **DataBind:** sync late-mounted `immediate` keyed subscribers with the current scoped value ([#626](https://github.com/studiometa/ui/pull/626))
 - **Dialog:** make the `open` and `close` events extendable with `event.detail.waitUntil()` so any component can join the open and close choreography ([#627](https://github.com/studiometa/ui/pull/627))
-- **Fetch:** let listeners substitute the content transition runner with `event.detail.wrap()` on the `fetch-update` event ([#632](https://github.com/studiometa/ui/pull/632))
+- **Fetch:** announce content updates with the bubbling `dom-update` protocol event whose `wrap()` lets a listener or transitioner run the swap ([#632](https://github.com/studiometa/ui/pull/632))
 - **Fetch:** route the default view transition through the shared `viewTransition` scheduler so it batches and serializes with every other view transition ([#632](https://github.com/studiometa/ui/pull/632))
 
 ## [v1.10.0](https://github.com/studiometa/ui/compare/1.9.0..1.10.0) (2026-08-11)

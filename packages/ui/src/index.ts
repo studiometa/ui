@@ -72,7 +72,6 @@ export {
   type FetchShopifyPartialProps,
   type FetchShopifySectionConstructor,
   type FetchShopifySectionProps,
-  type FetchUpdateWrapper,
 } from './Fetch/index.js';
 export {
   Figure,
@@ -189,6 +188,7 @@ export {
   type TrackShopifyProps,
 } from './Track/index.js';
 export { Transition, type TransitionConstructor } from './Transition/index.js';
+export type { DomUpdateRunner, DomUpdateTransitioner } from './utils/dom-update.js';
 export {
   viewTransition,
   ViewTransition,

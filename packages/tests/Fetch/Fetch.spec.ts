@@ -995,7 +995,7 @@ describe('The Fetch class', () => {
       container.remove();
     });
 
-    it('should let a `wrap` runner substitute the default transition runner', async () => {
+    it('should let a `dom-update` runner substitute the default transition runner', async () => {
       const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
       document.body.appendChild(container);
 
@@ -1018,8 +1018,8 @@ describe('The Fetch class', () => {
 
       let contentBeforeApply: string | undefined;
       let contentAfterApply: string | undefined;
-      fetch.$on('fetch-update', (event: CustomEvent) => {
-        event.detail[0].wrap((apply: () => void) => {
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap((apply: () => void) => {
           contentBeforeApply = document.getElementById('test')?.textContent;
           apply();
           contentAfterApply = document.getElementById('test')?.textContent;
@@ -1037,6 +1037,34 @@ describe('The Fetch class', () => {
       container.remove();
     });
 
+    it('should let a `dom-update` transitioner run the update through its `update` method', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+
+      await mount(fetch);
+
+      let contentAfterMutate: string | undefined;
+      const update = vi.fn((mutate: () => void) => {
+        mutate();
+        contentAfterMutate = document.getElementById('test')?.textContent;
+      });
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap({ update });
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(update).toHaveBeenCalledOnce();
+      expect(update).toHaveBeenCalledWith(expect.any(Function));
+      expect(contentAfterMutate).toBe('new content');
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+
+      container.remove();
+    });
+
     it('should keep the last `wrap` runner registered during dispatch', async () => {
       const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
       document.body.appendChild(container);
@@ -1048,9 +1076,9 @@ describe('The Fetch class', () => {
 
       const firstRunner = vi.fn((apply: () => void) => apply());
       const lastRunner = vi.fn((apply: () => void) => apply());
-      fetch.$on('fetch-update', (event: CustomEvent) => {
-        event.detail[0].wrap(firstRunner);
-        event.detail[0].wrap(lastRunner);
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap(firstRunner);
+        event.detail.wrap(lastRunner);
       });
 
       await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
@@ -1062,7 +1090,7 @@ describe('The Fetch class', () => {
       container.remove();
     });
 
-    it('should ignore and warn on `wrap` calls after the `fetch-update` event dispatched', async () => {
+    it('should ignore and warn on `wrap` calls after the `dom-update` event dispatched', async () => {
       const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
       document.body.appendChild(container);
 
@@ -1074,8 +1102,8 @@ describe('The Fetch class', () => {
       await mount(fetch);
 
       let wrap: (runner: (apply: () => void) => void) => void;
-      fetch.$on('fetch-update', (event: CustomEvent) => {
-        wrap = event.detail[0].wrap;
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        wrap = event.detail.wrap;
       });
 
       await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
@@ -1088,7 +1116,7 @@ describe('The Fetch class', () => {
 
       expect(lateRunner).not.toHaveBeenCalled();
       expect(warnFn).toHaveBeenCalledWith(
-        '`wrap` must be called synchronously while the `fetch-update` event dispatches.',
+        '`wrap` must be called synchronously while the `dom-update` event dispatches.',
       );
 
       container.remove();
@@ -1108,14 +1136,14 @@ describe('The Fetch class', () => {
       await mount(fetch);
 
       const error = new Error('Runner failed');
-      fetch.$on('fetch-update', (event: CustomEvent) => {
-        event.detail[0].wrap(() => Promise.reject(error));
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap(() => Promise.reject(error));
       });
 
       await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
 
       expect(document.getElementById('test')?.textContent).toBe('new content');
-      expect(warnFn).toHaveBeenCalledWith('The `fetch-update` event runner rejected.', error);
+      expect(warnFn).toHaveBeenCalledWith('The `dom-update` runner rejected.', error);
       expect(fn).toHaveBeenCalled();
 
       container.remove();
@@ -1135,8 +1163,8 @@ describe('The Fetch class', () => {
       await mount(fetch);
 
       const error = new Error('Runner failed');
-      fetch.$on('fetch-update', (event: CustomEvent) => {
-        event.detail[0].wrap(() => {
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap(() => {
           throw error;
         });
       });
@@ -1144,7 +1172,7 @@ describe('The Fetch class', () => {
       await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
 
       expect(document.getElementById('test')?.textContent).toBe('new content');
-      expect(warnFn).toHaveBeenCalledWith('The `fetch-update` event runner rejected.', error);
+      expect(warnFn).toHaveBeenCalledWith('The `dom-update` runner rejected.', error);
       expect(fn).toHaveBeenCalled();
 
       container.remove();
@@ -1163,8 +1191,8 @@ describe('The Fetch class', () => {
       await mount(fetch);
 
       const error = new Error('Runner failed');
-      fetch.$on('fetch-update', (event: CustomEvent) => {
-        event.detail[0].wrap((apply: () => void) => {
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap((apply: () => void) => {
           apply();
           return Promise.reject(error);
         });
@@ -1174,7 +1202,7 @@ describe('The Fetch class', () => {
 
       expect(document.getElementById('test')?.textContent).toBe('new content');
       expect(updateDOMSpy).toHaveBeenCalledOnce();
-      expect(warnFn).toHaveBeenCalledWith('The `fetch-update` event runner rejected.', error);
+      expect(warnFn).toHaveBeenCalledWith('The `dom-update` runner rejected.', error);
 
       container.remove();
     });
