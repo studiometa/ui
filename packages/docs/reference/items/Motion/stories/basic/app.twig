@@ -1,14 +1,13 @@
 {# The animation plays once, on mount. A preview boots before you look at it,
-   so the story pairs it with a replay button. The keyframes are written as
-   `[from, to]` arrays on purpose: a single target value would animate from
-   whatever the element currently shows, so a replay of a settled animation
-   would have nothing to move. #}
+   so the story pairs it with a replay button: `play()` restarts the animation
+   from the `initial` styles, which the component folds into the keyframes as
+   the starting point. #}
 <div class="grid justify-items-start gap-4">
   <div
     id="basic-box"
     data-component="Motion"
     data-option-initial='{ "opacity": 0, "y": 24, "scale": 0.9 }'
-    data-option-animate='{ "opacity": [0, 1], "y": [24, 0], "scale": [0.9, 1] }'
+    data-option-animate='{ "opacity": 1, "y": 0, "scale": 1 }'
     data-option-transition='{ "type": "spring", "bounce": 0.3, "duration": 0.8 }'
     data-option-autoplay
     class="rounded-lg bg-blue-400 px-6 py-4 font-bold text-white dark:bg-blue-600">

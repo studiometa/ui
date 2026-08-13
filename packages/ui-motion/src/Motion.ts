@@ -402,11 +402,36 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
    * @protected
    */
   __createControls(): AnimationPlaybackControlsWithThen {
-    const { animate, transition } = this.$options;
-    const controls = getMotion().animate(this.$el, animate, transition);
+    const { transition } = this.$options;
+    const controls = getMotion().animate(this.$el, this.keyframes, transition);
     this.__controls = controls;
     this.__fromOptions = true;
     return controls;
+  }
+
+  /**
+   * The keyframes of the declared animation, with the `initial` styles folded
+   * in as the starting point of every property they both describe.
+   *
+   * Motion reads a lone target value as "from wherever the element is now", so
+   * a settled animation would have nothing left to move on the next `play()`.
+   * Pairing each such value with its `initial` counterpart pins the start, and
+   * the animation replays identically for as long as the options stand. A
+   * property already written as a `[from, to]` array is left untouched, and so
+   * is one the `initial` styles say nothing about — there, animating from the
+   * current state is the point.
+   */
+  get keyframes(): DOMKeyframesDefinition {
+    const { initial, animate } = this.$options;
+    const keyframes: Record<string, unknown> = { ...animate };
+
+    for (const [property, to] of Object.entries(keyframes)) {
+      if (!Array.isArray(to) && property in initial) {
+        keyframes[property] = [initial[property], to];
+      }
+    }
+
+    return keyframes as DOMKeyframesDefinition;
   }
 
   /**

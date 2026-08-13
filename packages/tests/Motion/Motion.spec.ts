@@ -60,6 +60,36 @@ describe('Motion component', () => {
     expect(calls['motion-play']).toBe(0);
   });
 
+  it('should start each keyframe at its initial style so a replay repeats the motion', async () => {
+    const { el } = await mountMotion({
+      dataOptionInitial: '{ "opacity": 0, "y": 24 }',
+      dataOptionAnimate: '{ "opacity": 1, "y": 0 }',
+      dataOptionAutoplay: '',
+    });
+
+    // The `initial` styles are applied first, then folded into the keyframes
+    // as the starting point of the declared animation.
+    expect(mockAnimate).toHaveBeenNthCalledWith(1, el, { opacity: 0, y: 24 }, { duration: 0 });
+    expect(mockAnimate).toHaveBeenNthCalledWith(
+      2,
+      el,
+      { opacity: [0, 1], y: [24, 0] },
+      {},
+    );
+  });
+
+  it('should keep explicit keyframe arrays and properties absent from initial', async () => {
+    const { el } = await mountMotion({
+      dataOptionInitial: '{ "opacity": 0 }',
+      dataOptionAnimate: '{ "opacity": [0.2, 1], "x": 100 }',
+      dataOptionAutoplay: '',
+    });
+
+    // The array wins over `initial`, and `x` — which `initial` says nothing
+    // about — keeps animating from the current state.
+    expect(mockAnimate).toHaveBeenNthCalledWith(2, el, { opacity: [0.2, 1], x: 100 }, {});
+  });
+
   it('should autoplay the animate keyframes with the transition options when enabled', async () => {
     const { el, calls } = await mountMotion({
       dataOptionAnimate: '{ "x": 100 }',

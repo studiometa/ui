@@ -86,7 +86,7 @@ export class MotionSequence<T extends BaseProps = BaseProps> extends Motion<
     const { stagger, transition } = this.$options;
 
     const sequence = this.__sequencedChildren.map((child, index) => {
-      const { animate, transition: childTransition, at } = child.$options;
+      const { transition: childTransition, at } = child.$options;
       const options: Record<string, unknown> = { ...childTransition };
 
       if (at !== '') {
@@ -96,7 +96,9 @@ export class MotionSequence<T extends BaseProps = BaseProps> extends Motion<
         options.at = index * stagger;
       }
 
-      return [child.$el, animate, options];
+      // `keyframes`, not the raw `animate` option: each segment starts from
+      // the child's `initial` styles, so the sequence replays identically.
+      return [child.$el, child.keyframes, options];
     });
 
     const controls = motion.animate(

@@ -15,7 +15,7 @@ Object options are parsed as JSON: quote the keys (`data-option-animate='{ "x": 
 - Type: `DOMKeyframesDefinition`
 - Default: `{}`
 
-Styles applied to the element on mount, before anything plays. Use it to define the starting state of an enter animation without a flash of the final state.
+Styles applied to the element on mount, before anything plays. Use it to define the starting state of an enter animation without a flash of the final state. It doubles as the starting point of the [`animate`](#animate) keyframes, so the declared animation always plays from here — however many times it runs.
 
 <!-- prettier-ignore-start -->
 ```html {3}
@@ -35,21 +35,21 @@ Styles applied to the element on mount, before anything plays. Use it to define 
 
 The target keyframes of the animation. They play on mount when [`autoplay`](#autoplay) is enabled.
 
-A single value per property (`{ "opacity": 1 }`) animates from whatever the element currently shows, so replaying a settled animation moves nothing. Write the keyframes as `[from, to]` arrays (`{ "opacity": [0, 1] }`) to pin the starting point, and every [`play()`](#methods) replays the same motion:
+Each property the [`initial`](#initial) option also describes starts from that style, so the declared animation replays identically for as long as the options stand — declare the starting state once, in `initial`:
 
 <!-- prettier-ignore-start -->
-```html {4}
+```html {3,4}
 <div
   data-component="Motion"
-  data-option-initial='{ "opacity": 0 }'
-  data-option-animate='{ "opacity": [0, 1] }'
+  data-option-initial='{ "opacity": 0, "y": 24 }'
+  data-option-animate='{ "opacity": 1, "y": 0 }'
   data-option-autoplay>
   …
 </div>
 ```
 <!-- prettier-ignore-end -->
 
-Keep [`initial`](#initial) alongside: it paints the starting state before the component mounts, where the keyframes only apply once the animation runs.
+A property `initial` says nothing about animates from whatever the element currently shows, which is what a one-off transition to a new state wants. To pin a starting point without painting it on mount, write that property as a `[from, to]` array (`{ "opacity": [0.2, 1] }`) — an explicit array is never overridden.
 
 ### `transition`
 

@@ -50,6 +50,24 @@ describe('MotionSequence component', () => {
     expect(animation.options).toBeUndefined();
   });
 
+  it('should start each segment at its child initial styles', async () => {
+    const { kids } = await mountSequence({ dataOptionAutoplay: '' }, [
+      { dataOptionInitial: '{ "opacity": 0 }', dataOptionAnimate: '{ "opacity": 1 }' },
+      { dataOptionAnimate: '{ "y": 50 }' },
+    ]);
+
+    // The child's `initial` styles are their own `animate()` call, so the
+    // sequence is picked by shape rather than by index.
+    const sequenced = animations.find((animation) => animation.sequence);
+
+    expect(sequenced.sequence).toEqual([
+      // Folded from `initial`, so replaying the sequence repeats the motion.
+      [kids[0], { opacity: [0, 1] }, {}],
+      // No `initial`: the segment still animates from the current state.
+      [kids[1], { y: 50 }, {}],
+    ]);
+  });
+
   it('should position segments with the at option, parsing numbers', async () => {
     const { kids } = await mountSequence({ dataOptionAutoplay: '' }, [
       { dataOptionAnimate: '{ "x": 100 }', dataOptionAt: '0.5' },
