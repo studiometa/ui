@@ -93,26 +93,40 @@ Each insertion is a fresh clone of the template content, so components inside ar
 
 Use `data-bind:if` when the element must not exist in the DOM — a form control that must not submit, an expensive subtree, or content that must be absent from the accessibility tree. To show or hide an element in place, prefer the cheaper `data-bind:attr.hidden`, `data-bind:class.<name>` or `data-bind:style.display` bindings, which keep the element and its state.
 
-### Wrapping the DOM change with the `bind-if` event
+### Wrapping the DOM change with the `dom-update` event
 
-Before `data-bind:if` inserts or removes the template content, the component emits a bubbling `bind-if` event. Its `detail` carries the new logical state as `isPresent` and a `wrap(runner)` function: a listener can call `wrap()` to substitute the function that runs the DOM change, with the runner receiving an `apply()` callback that performs the actual insertion or removal.
+Before `data-bind:if` inserts or removes the template content, the component emits the bubbling `dom-update` protocol event — the shared announcement components use before an imminent DOM change. Its `detail` carries the new logical state as `isPresent` and a `wrap(runner)` function: a listener can call `wrap()` to substitute what runs the DOM change. The runner is either a function receiving an `apply()` callback that performs the actual insertion or removal, or a duck-typed transitioner exposing an `update(mutate)` method — like `MotionView` from `@studiometa/ui-motion` — whose `update()` receives the callback.
 
 ```ts
-type BindIfRunner = (apply: () => void) => void | Promise<unknown>;
+interface DomUpdateTransitioner {
+  update(mutate: () => void | Promise<void>): void | Promise<unknown>;
+}
+
+type DomUpdateRunner = ((apply: () => void) => void | Promise<unknown>) | DomUpdateTransitioner;
 ```
 
 - `wrap()` is only valid synchronously, while the event dispatches — later calls warn and are ignored.
 - A single runner runs the change: the last `wrap()` call wins.
 - The DOM change is never lost: without a runner it runs synchronously as before, and a rejected runner is reported with a warning before the change is applied anyway if the runner did not call `apply()`.
 
-Because the removal also goes through the runner, the removed nodes stay in the DOM until the runner calls `apply()` — this is what enables exit animations for removed template content. And because the event bubbles, an ancestor [`Action`](../Action/index.md) can catch it and route it across the page, the same pattern as the [`Timer`](../Timer/index.md) events. For example, a `MotionView` component (from `@studiometa/ui-motion`) can wrap both the insertion and the removal in a view transition:
+Because the removal also goes through the runner, the removed nodes stay in the DOM until the runner calls `apply()` — this is what enables exit animations for removed template content. And because the event bubbles, an enclosing `MotionView` wraps any `dom-update` announced in its subtree with no wiring at all:
+
+```html
+<div data-component="MotionView">
+  <template data-component="DataBind" data-option-key="query" data-bind:if="value !== ''">
+    …
+  </template>
+</div>
+```
+
+For cross-subtree topologies — when the transitioner does not enclose the template — an ancestor [`Action`](../Action/index.md) can catch the event and route it across the page, the same pattern as the [`Timer`](../Timer/index.md) events:
 
 <!-- prettier-ignore-start -->
 ```html {4}
 <template
   data-component="Action DataBind"
   data-option-key="query"
-  data-on:bind-if="MotionView(#panel)->event.detail.wrap((apply) => target.update(apply))"
+  data-on:dom-update="MotionView(#panel)->event.detail.wrap(target)"
   data-bind:if="value !== ''">
   …
 </template>
