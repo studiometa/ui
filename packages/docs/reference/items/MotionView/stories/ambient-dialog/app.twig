@@ -1,0 +1,59 @@
+<button
+  type="button"
+  data-component="Action"
+  data-on:click="Dialog(#ambient-modal)->target.open()"
+  class="px-4 py-2 rounded bg-blue-600 text-white font-semibold">
+  Open dialog
+</button>
+
+{# The MotionView box carries no wiring attribute: nested inside the Dialog,
+   it ambiently joins the bubbling `open`/`close` lifecycle — the Dialog calls
+   its `enter()`/`leave()` through `waitUntil()` and stays painted until the
+   view transition finishes. #}
+<dialog
+  id="ambient-modal"
+  data-component="Action Dialog"
+  data-on:cancel.prevent="Dialog.close()"
+  class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent overflow-y-auto">
+  <div
+    data-component="Action"
+    data-on:click="Dialog(#ambient-modal)->target.close()"
+    class="fixed inset-0 bg-black/50"></div>
+
+  <div
+    class="pointer-events-none relative flex min-h-full items-center justify-center p-4">
+    <div
+      data-component="MotionView"
+      data-option-view-transition-name="ambient-modal-box"
+      data-option-transition='{ "type": "spring", "bounce": 0.3 }'
+      data-option-enter-to="opacity-100 translate-y-0 scale-100"
+      data-option-leave-to="opacity-0 translate-y-8 scale-95"
+      class="pointer-events-auto relative w-full max-w-lg p-8 rounded-lg bg-white text-black shadow-2xl opacity-0 translate-y-8 scale-95">
+      <h2 class="text-xl font-bold mb-3">Ambient view transitions</h2>
+      <p class="mb-6 text-black/60">
+        No <code>data-on:open</code>, no <code>data-on:close</code>: the
+        <code>MotionView</code> heard the dialog's lifecycle because it lives inside
+        it, and swaps its state classes inside a spring view transition.
+      </p>
+      <button
+        type="button"
+        data-component="Action"
+        data-on:click="Dialog(#ambient-modal)->target.close()"
+        class="px-4 py-2 rounded bg-gray-900 text-white">
+        Close
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  dialog::backdrop {
+    background: transparent;
+  }
+
+  /* Chromium quirk: a view-transition layer on top-layer content can paint
+     behind the page snapshot mid-transition; lifting the group fixes it. */
+  ::view-transition-group(ambient-modal-box) {
+    z-index: 1;
+  }
+</style>
