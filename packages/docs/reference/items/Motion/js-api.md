@@ -33,7 +33,7 @@ Styles applied to the element on mount, before anything plays. Use it to define 
 - Type: `DOMKeyframesDefinition`
 - Default: `{}`
 
-The target keyframes of the animation. They play automatically on mount unless [`autoplay`](#autoplay) is disabled.
+The target keyframes of the animation. They play on mount when [`autoplay`](#autoplay) is enabled.
 
 ### `transition`
 
@@ -56,16 +56,16 @@ Motion's animation options: `duration`, `delay`, `ease`, `type` (`"tween"`, `"sp
 ### `autoplay`
 
 - Type: `boolean`
-- Default: `true`
+- Default: `false`
 
-Whether the `animate` keyframes play automatically on mount. Since the default is `true`, use the negated `data-option-no-autoplay` attribute to require an explicit `play()`.
+Whether the `animate` keyframes play automatically on mount. Enable it with the `data-option-autoplay` attribute; without it, playback waits for an explicit `play()`.
 
 <!-- prettier-ignore-start -->
 ```html {4}
 <div
   data-component="Motion"
   data-option-animate='{ "x": 100 }'
-  data-option-no-autoplay>
+  data-option-autoplay>
   …
 </div>
 ```
@@ -183,7 +183,7 @@ Methods are callable from an `Action` effect — on the same element or through 
 ```html {2,3}
 <div data-component="Action" data-on:mouseenter="Motion(#logo)->target.play()"
   data-on:mouseleave="Motion(#logo)->target.reverse()">
-  <div id="logo" data-component="Motion" data-option-animate='{ "scale": 1.2 }' data-option-no-autoplay>…</div>
+  <div id="logo" data-component="Motion" data-option-animate='{ "scale": 1.2 }'>…</div>
 </div>
 ```
 <!-- prettier-ignore-end -->

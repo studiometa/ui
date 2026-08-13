@@ -6,7 +6,7 @@ title: Motion examples
 
 ## Action-driven playback
 
-Autoplay is disabled, so the card only moves when asked to. The buttons are [`Action`](/reference/items/Action/) components targeting the `Motion` instance with the arrow syntax, the hover pattern combines `play()` and `reverse()` for a symmetric in/out animation, and the last button runs a one-off spin with `animate()` — clicking Play afterwards returns to the animation declared by the options.
+Autoplay is off by default, so the card only moves when asked to. The buttons are [`Action`](/reference/items/Action/) components targeting the `Motion` instance with the arrow syntax, the hover pattern combines `play()` and `reverse()` for a symmetric in/out animation, and the last button runs a one-off spin with `animate()` — clicking Play afterwards returns to the animation declared by the options.
 
 <llm-exclude>
   <PreviewPlayground

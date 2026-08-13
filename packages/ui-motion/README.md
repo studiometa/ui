@@ -29,15 +29,16 @@ registerComponent(Motion);
   data-component="Motion"
   data-option-initial='{ "opacity": 0, "y": 24 }'
   data-option-animate='{ "opacity": 1, "y": 0 }'
-  data-option-transition='{ "type": "spring", "bounce": 0.3 }'>
+  data-option-transition='{ "type": "spring", "bounce": 0.3 }'
+  data-option-autoplay>
   Hello world!
 </div>
 ```
 
-The `initial` styles are applied on mount, then the `animate` keyframes play automatically. Disable the automatic playback with `data-option-no-autoplay` and drive the animation from an [`Action`](https://ui.studiometa.dev/reference/items/Action/) instead:
+The `initial` styles are applied on mount, then the `animate` keyframes play when playback on mount is enabled with `data-option-autoplay`. Without it, drive the animation from an [`Action`](https://ui.studiometa.dev/reference/items/Action/) instead:
 
 ```html
-<div data-component="Motion" data-option-animate='{ "x": 100 }' data-option-no-autoplay>...</div>
+<div data-component="Motion" data-option-animate='{ "x": 100 }'>...</div>
 
 <button data-component="Action" data-on:click="Motion->target.play()">Play</button>
 <button data-component="Action" data-on:click="Motion->target.reverse()">Reverse</button>
@@ -58,12 +59,7 @@ The `hover`, `press` and `inView` options apply keyframes while their state hold
 
 ```html
 <section data-component="MotionScrollTimeline" class="h-[300vh]">
-  <div
-    data-component="Motion"
-    data-option-animate='{ "opacity": [0, 1, 0] }'
-    data-option-no-autoplay>
-    ...
-  </div>
+  <div data-component="Motion" data-option-animate='{ "opacity": [0, 1, 0] }'>...</div>
 </section>
 ```
 
