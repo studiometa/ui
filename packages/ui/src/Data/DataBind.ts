@@ -347,7 +347,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
    * is truthy, and removed when the value is falsy. Each insertion is a fresh
    * clone, so any state held by the content is reset on every toggle. Before
    * the change runs, a bubbling `bind-if` event exposes
-   * `event.detail.through(runner)` so any listener can substitute the
+   * `event.detail.wrap(runner)` so any listener can substitute the
    * function that runs the DOM change — to wrap it in a view transition, for
    * example, and give removed content an exit animation. Registration is only
    * valid while the event dispatches — later calls warn and are ignored — and
@@ -396,15 +396,15 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
 
     let dispatching = true;
     let runner: BindIfRunner | undefined;
-    const through = (fn: BindIfRunner) => {
+    const wrap = (fn: BindIfRunner) => {
       if (!dispatching) {
-        this.$warn('`through` must be called synchronously while the `bind-if` event dispatches.');
+        this.$warn('`wrap` must be called synchronously while the `bind-if` event dispatches.');
         return;
       }
       runner = fn;
     };
 
-    this.$emit(new CustomEvent('bind-if', { detail: { isPresent, through }, bubbles: true }));
+    this.$emit(new CustomEvent('bind-if', { detail: { isPresent, wrap }, bubbles: true }));
     dispatching = false;
 
     if (!runner) {

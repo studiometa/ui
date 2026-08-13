@@ -784,7 +784,7 @@ describe('The DataBind component', () => {
     warnSpy.mockRestore();
   });
 
-  it('should emit a bubbling bind-if event whose through runner defers the insertion', () => {
+  it('should emit a bubbling bind-if event whose wrap runner defers the insertion', () => {
     const template = h('template', { 'data-bind:if': '' });
     template.innerHTML = '<p>Hello</p>';
     const root = h('div', [template]);
@@ -794,7 +794,7 @@ describe('The DataBind component', () => {
     let apply: () => void;
     root.addEventListener('bind-if', (event) => {
       detail = (event as CustomEvent<BindIfDetail>).detail;
-      detail.through((run) => {
+      detail.wrap((run) => {
         apply = run;
       });
     });
@@ -802,7 +802,7 @@ describe('The DataBind component', () => {
     instance.set(true);
 
     expect(detail.isPresent).toBe(true);
-    expect(typeof detail.through).toBe('function');
+    expect(typeof detail.wrap).toBe('function');
     expect(root.querySelector('p')).toBeNull();
 
     apply();
@@ -810,7 +810,7 @@ describe('The DataBind component', () => {
     expect(template.nextElementSibling).toBe(root.querySelector('p'));
   });
 
-  it('should keep removed template content in the DOM until the through runner applies', () => {
+  it('should keep removed template content in the DOM until the wrap runner applies', () => {
     const template = h('template', { 'data-bind:if': '' });
     template.innerHTML = '<p>Bye</p>';
     const root = h('div', [template]);
@@ -823,7 +823,7 @@ describe('The DataBind component', () => {
     let apply: () => void;
     root.addEventListener('bind-if', (event) => {
       detail = (event as CustomEvent<BindIfDetail>).detail;
-      detail.through((run) => {
+      detail.wrap((run) => {
         apply = run;
       });
     });
@@ -838,7 +838,7 @@ describe('The DataBind component', () => {
     expect(root.querySelector('p')).toBeNull();
   });
 
-  it('should ignore and warn on through calls after the bind-if event dispatched', () => {
+  it('should ignore and warn on wrap calls after the bind-if event dispatched', () => {
     const template = h('template', { 'data-bind:if': '' });
     template.innerHTML = '<p>Hello</p>';
     const root = h('div', [template]);
@@ -847,20 +847,20 @@ describe('The DataBind component', () => {
     const warn = vi.fn();
     Object.defineProperty(instance, '$warn', { configurable: true, get: () => warn });
 
-    let through: BindIfDetail['through'];
+    let wrap: BindIfDetail['wrap'];
     root.addEventListener('bind-if', (event) => {
-      ({ through } = (event as CustomEvent<BindIfDetail>).detail);
+      ({ wrap } = (event as CustomEvent<BindIfDetail>).detail);
     });
 
     instance.set(true);
     expect(root.querySelector('p')).not.toBeNull();
 
-    through(() => {});
+    wrap(() => {});
     expect(warn).toHaveBeenCalledTimes(1);
     expect(root.querySelectorAll('p')).toHaveLength(1);
   });
 
-  it('should warn and still apply the DOM change when the through runner rejects', async () => {
+  it('should warn and still apply the DOM change when the wrap runner rejects', async () => {
     const template = h('template', { 'data-bind:if': '' });
     template.innerHTML = '<p>Hello</p>';
     const root = h('div', [template]);
@@ -869,7 +869,7 @@ describe('The DataBind component', () => {
     Object.defineProperty(instance, '$warn', { configurable: true, get: () => warn });
 
     root.addEventListener('bind-if', (event) => {
-      (event as CustomEvent<BindIfDetail>).detail.through(() =>
+      (event as CustomEvent<BindIfDetail>).detail.wrap(() =>
         Promise.reject(new Error('runner failed')),
       );
     });
@@ -894,7 +894,7 @@ describe('The DataBind component', () => {
     root.addEventListener('bind-if', (event) => {
       const { detail } = event as CustomEvent<BindIfDetail>;
       states.push(detail.isPresent);
-      detail.through((run) => {
+      detail.wrap((run) => {
         applies.push(run);
       });
     });
@@ -918,5 +918,5 @@ describe('The DataBind component', () => {
 
 type BindIfDetail = {
   isPresent: boolean;
-  through(runner: (apply: () => void) => void | Promise<unknown>): void;
+  wrap(runner: (apply: () => void) => void | Promise<unknown>): void;
 };
