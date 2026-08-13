@@ -1,19 +1,20 @@
-{# The MotionView carries no wiring attribute: it ambiently wraps the
-   `dom-update` event that `data-bind:if` announces before changing the DOM,
-   so the insertion AND the removal play as one spring view transition. #}
 <div
-  data-component="MotionView"
-  data-option-transition='{ "type": "spring", "bounce": 0.2 }'
-  data-option-layout
-  class="max-w-sm">
+  data-component="DataScope"
+  data-option-group="ambient-panel"
+  class="grid gap-4 rounded ring p-4 max-w-sm">
+  <label class="flex items-center gap-2">
+    <input type="checkbox" name="details" data-component="DataModel" />
+    <span>Show the details</span>
+  </label>
+  {# The MotionView sits just outside the template, not around the whole
+     widget: the `dom-update` event that `data-bind:if` announces before
+     changing the DOM bubbles up to it, so the insertion AND the removal play
+     as one spring view transition — and the `layout` morph hugs the panel
+     region only, leaving the checkbox above it untouched. #}
   <div
-    data-component="DataScope"
-    data-option-group="ambient-panel"
-    class="grid gap-4 rounded ring p-4">
-    <label class="flex items-center gap-2">
-      <input type="checkbox" name="details" data-component="DataModel" />
-      <span>Show the details</span>
-    </label>
+    data-component="MotionView"
+    data-option-transition='{ "type": "spring", "bounce": 0.2 }'
+    data-option-layout>
     <template data-component="DataBind" data-option-key="details" data-bind:if>
       <p class="p-4 rounded bg-emerald-400/20 ring ring-emerald-400">
         I was inserted inside a view transition — and I animate out too, even

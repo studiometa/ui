@@ -28,7 +28,7 @@ describe('Motion gesture options', () => {
   });
 
   it('should bind nothing without gesture options', async () => {
-    await mountMotion({ dataOptionAnimate: '{ "x": 100 }', dataOptionNoAutoplay: '' });
+    await mountMotion({ dataOptionAnimate: '{ "x": 100 }' });
 
     expect(mockHover.fn).not.toHaveBeenCalled();
     expect(mockPress.fn).not.toHaveBeenCalled();

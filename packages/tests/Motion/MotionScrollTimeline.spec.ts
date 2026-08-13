@@ -1,16 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Importing the mock injects the `motion` module double through `provideMotion`
 // before the components resolve it below.
-import { animations, mockAnimate, scrollLinks, mockMotionModule, resetMockMotion } from './mock-motion.js';
+import {
+  animations,
+  mockAnimate,
+  scrollLinks,
+  mockMotionModule,
+  resetMockMotion,
+} from './mock-motion.js';
 import { MotionScrollTimeline } from '@studiometa/ui-motion';
 import { h, wait } from '#test-utils';
 
 function motionChild(animate: string) {
-  return h('div', {
-    dataComponent: 'Motion',
-    dataOptionAnimate: animate,
-    dataOptionNoAutoplay: '',
-  });
+  return h('div', { dataComponent: 'Motion', dataOptionAnimate: animate });
 }
 
 async function mountTimeline(attributes: Record<string, string> = {}, children = 2) {

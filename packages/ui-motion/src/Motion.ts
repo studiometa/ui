@@ -29,8 +29,8 @@ export interface MotionProps extends BaseProps {
  *
  * Animate the component's root element declaratively with the
  * [Motion](https://motion.dev) library. The `initial` styles are applied on
- * mount, then the `animate` keyframes play automatically unless `autoplay` is
- * disabled with `data-option-no-autoplay`.
+ * mount, then the `animate` keyframes play when playback on mount is enabled
+ * with `data-option-autoplay`.
  *
  * The component holds a single current animation. `play()` and `reverse()`
  * always drive the animation declared by the options — recreating it when an
@@ -55,7 +55,7 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
       initial: Object,
       animate: Object,
       transition: Object,
-      autoplay: { type: Boolean, default: true },
+      autoplay: Boolean,
       at: String,
       hover: Object,
       press: Object,
@@ -123,8 +123,8 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
   }
 
   /**
-   * Apply the `initial` styles, autoplay the `animate` keyframes, then bind
-   * the gesture options.
+   * Apply the `initial` styles, play the `animate` keyframes when `autoplay`
+   * is enabled, then bind the gesture options.
    */
   async mounted() {
     const { initial, autoplay } = this.$options;
@@ -402,11 +402,36 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
    * @protected
    */
   __createControls(): AnimationPlaybackControlsWithThen {
-    const { animate, transition } = this.$options;
-    const controls = getMotion().animate(this.$el, animate, transition);
+    const { transition } = this.$options;
+    const controls = getMotion().animate(this.$el, this.keyframes, transition);
     this.__controls = controls;
     this.__fromOptions = true;
     return controls;
+  }
+
+  /**
+   * The keyframes of the declared animation, with the `initial` styles folded
+   * in as the starting point of every property they both describe.
+   *
+   * Motion reads a lone target value as "from wherever the element is now", so
+   * a settled animation would have nothing left to move on the next `play()`.
+   * Pairing each such value with its `initial` counterpart pins the start, and
+   * the animation replays identically for as long as the options stand. A
+   * property already written as a `[from, to]` array is left untouched, and so
+   * is one the `initial` styles say nothing about — there, animating from the
+   * current state is the point.
+   */
+  get keyframes(): DOMKeyframesDefinition {
+    const { initial, animate } = this.$options;
+    const keyframes: Record<string, unknown> = { ...animate };
+
+    for (const [property, to] of Object.entries(keyframes)) {
+      if (!Array.isArray(to) && property in initial) {
+        keyframes[property] = [initial[property], to];
+      }
+    }
+
+    return keyframes as DOMKeyframesDefinition;
   }
 
   /**

@@ -1,0 +1,58 @@
+{# The article itself is the timeline, and the `offset` maps progress 0 to its
+   top reaching the top of the viewport and progress 1 to its bottom reaching
+   the bottom — the reading range. The single Motion child inside the sticky
+   bar is scrubbed by that progress, so its scaleX track reads as the share of
+   the article already scrolled. #}
+<section
+  data-component="MotionScrollTimeline"
+  data-option-offset='["start start", "end end"]'
+  class="relative">
+  <div class="sticky top-0 h-1.5 bg-zinc-200 dark:bg-zinc-800">
+    <div
+      data-component="Motion"
+      data-option-animate='{ "scaleX": [0, 1] }'
+      class="h-full origin-left bg-blue-500 dark:bg-blue-400"></div>
+  </div>
+
+  <article class="mx-auto max-w-xl px-6 py-16 flex flex-col gap-6">
+    <h2 class="text-3xl font-bold">Reading progress</h2>
+    <p>
+      Scroll this article: the bar above sticks to the top of the section and
+      fills from left to right as the content goes by. Nothing listens to the
+      scroll event — the timeline binds the bar to the scroll position once, on
+      mount.
+    </p>
+    <p>
+      The bar is a plain <code>Motion</code> child. It declares a single
+      <code>scaleX</code> track from 0 to 1, keeps its
+      <code>autoplay</code> off, and the timeline takes over its playback: the animation
+      never runs on its own clock, it is scrubbed.
+    </p>
+    <p>
+      Scaling is the cheap way to draw a progress bar: the browser animates a
+      transform instead of a width, and the
+      <code>origin-left</code> class anchors the growth to the left edge.
+    </p>
+    <p>
+      The default <code>offset</code> would start the bar as soon as the section enters
+      the viewport from the bottom, so the bar would already be part-filled on the
+      first paint. The
+      <code>["start start", "end end"]</code> range instead follows the section's
+      own scroll, which is what a reader expects from a progress indicator.
+    </p>
+    <p>
+      Any number of children can share the same timeline. A second
+      <code>Motion</code> could fade a "back to top" button in over the last part
+      of the range, without a single line of JavaScript.
+    </p>
+    <p>
+      Where the browser supports <code>ScrollTimeline</code>, the link is
+      hardware-accelerated and runs off the main thread; elsewhere Motion falls
+      back to a scroll listener with the same result.
+    </p>
+    <p>
+      The link is released when the timeline is destroyed, so a section that
+      leaves the page leaves nothing behind.
+    </p>
+  </article>
+</section>

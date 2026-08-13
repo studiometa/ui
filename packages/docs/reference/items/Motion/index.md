@@ -4,7 +4,7 @@ badges: [JS]
 
 # Motion <Badges :texts="$frontmatter.badges" />
 
-The `Motion` component animates its root element declaratively with the [Motion](https://motion.dev) library. Describe the animation with the `initial`, `animate` and `transition` options: the `initial` styles are applied on mount, then the `animate` keyframes play automatically — or on demand when autoplay is disabled.
+The `Motion` component animates its root element declaratively with the [Motion](https://motion.dev) library. Describe the animation with the `initial`, `animate` and `transition` options: the `initial` styles are applied on mount, then the `animate` keyframes play on demand — or automatically when autoplay is enabled with `data-option-autoplay`.
 
 The component is a thin, headless playback surface exposing imperative methods that an [`Action`](/reference/items/Action/) can call from any interaction: `play()` and `reverse()` always drive the animation declared by the options, while `animate()` runs a one-off to arbitrary keyframes. All its events bubble, so an ancestor `Action` can catch and route them; use the `.stop` event modifier to contain them in nested setups.
 
@@ -14,7 +14,7 @@ The `motion` peer dependency is resolved with a lazy `import()` the first time a
 
 ## Usage
 
-Option values are parsed as JSON, so object keys must be quoted:
+Option values are parsed as JSON, so object keys must be quoted. The animation below plays once on mount, which a preview finishes booting before you look at it — hence the replay button, which calls `play()` to restart it:
 
 <llm-exclude>
 <PreviewPlayground
@@ -35,14 +35,13 @@ Option values are parsed as JSON, so object keys must be quoted:
 
 ## Driving the animation with `Action`
 
-Disable autoplay with `data-option-no-autoplay` and control the playback from any interaction — see the [examples](./examples.html) for a complete demo:
+Autoplay is off by default, so the playback is yours to control from any interaction — see the [examples](./examples.html) for a complete demo:
 
 <!-- prettier-ignore-start -->
 ```html
 <div
   data-component="Motion"
-  data-option-animate='{ "x": 100 }'
-  data-option-no-autoplay>
+  data-option-animate='{ "x": 100 }'>
   …
 </div>
 

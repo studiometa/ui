@@ -1,0 +1,36 @@
+<p class="py-8 text-center text-current/60">
+  Scroll down ↓
+</p>
+
+{# One timeline, one scroll range, three Motion children: only the travelled
+   distance differs. The far layer moves the least and the near one the most,
+   so the speed difference alone reads as depth — no per-layer wiring, the
+   timeline scrubs them all with the same progress. #}
+<section data-component="MotionScrollTimeline" class="relative h-[250vh]">
+  <div
+    class="sticky top-0 grid h-screen grid-cols-1 grid-rows-1 place-items-center overflow-hidden">
+    <div
+      data-component="Motion"
+      data-option-animate='{ "y": [80, -80] }'
+      class="col-start-1 row-start-1 size-72 rounded-full bg-blue-400/30 dark:bg-blue-600/30"></div>
+    <div
+      data-component="Motion"
+      data-option-animate='{ "y": [180, -180] }'
+      class="col-start-1 row-start-1 w-64 rounded-lg bg-white p-6 text-black shadow-2xl dark:bg-zinc-100">
+      <h2 class="text-xl font-bold">Parallax layers</h2>
+      <p class="mt-2 text-black/60">
+        Same range, three speeds.
+      </p>
+    </div>
+    <div
+      data-component="Motion"
+      data-option-animate='{ "y": [300, -300] }'
+      class="col-start-1 row-start-1 mt-56 ml-56 rounded-full bg-emerald-400 px-4 py-2 font-bold text-white dark:bg-emerald-600">
+      Closest
+    </div>
+  </div>
+</section>
+
+<p class="py-8 text-center text-current/60">
+  Done ↑
+</p>

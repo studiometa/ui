@@ -50,17 +50,51 @@ describe('Motion component', () => {
   });
 
   it('should apply the initial styles on mount without playing', async () => {
-    const { el, calls } = await mountMotion({ dataOptionInitial: '{ "opacity": 0 }' });
+    const { el, calls } = await mountMotion({
+      dataOptionInitial: '{ "opacity": 0 }',
+      dataOptionAutoplay: '',
+    });
 
     expect(mockAnimate).toHaveBeenCalledTimes(1);
     expect(mockAnimate).toHaveBeenCalledWith(el, { opacity: 0 }, { duration: 0 });
     expect(calls['motion-play']).toBe(0);
   });
 
-  it('should autoplay the animate keyframes with the transition options', async () => {
+  it('should start each keyframe at its initial style so a replay repeats the motion', async () => {
+    const { el } = await mountMotion({
+      dataOptionInitial: '{ "opacity": 0, "y": 24 }',
+      dataOptionAnimate: '{ "opacity": 1, "y": 0 }',
+      dataOptionAutoplay: '',
+    });
+
+    // The `initial` styles are applied first, then folded into the keyframes
+    // as the starting point of the declared animation.
+    expect(mockAnimate).toHaveBeenNthCalledWith(1, el, { opacity: 0, y: 24 }, { duration: 0 });
+    expect(mockAnimate).toHaveBeenNthCalledWith(
+      2,
+      el,
+      { opacity: [0, 1], y: [24, 0] },
+      {},
+    );
+  });
+
+  it('should keep explicit keyframe arrays and properties absent from initial', async () => {
+    const { el } = await mountMotion({
+      dataOptionInitial: '{ "opacity": 0 }',
+      dataOptionAnimate: '{ "opacity": [0.2, 1], "x": 100 }',
+      dataOptionAutoplay: '',
+    });
+
+    // The array wins over `initial`, and `x` — which `initial` says nothing
+    // about — keeps animating from the current state.
+    expect(mockAnimate).toHaveBeenNthCalledWith(2, el, { opacity: [0.2, 1], x: 100 }, {});
+  });
+
+  it('should autoplay the animate keyframes with the transition options when enabled', async () => {
     const { el, calls } = await mountMotion({
       dataOptionAnimate: '{ "x": 100 }',
       dataOptionTransition: '{ "duration": 1 }',
+      dataOptionAutoplay: '',
     });
 
     expect(mockAnimate).toHaveBeenCalledTimes(1);
@@ -72,10 +106,9 @@ describe('Motion component', () => {
     expect(calls['motion-complete']).toBe(1);
   });
 
-  it('should not autoplay when disabled, and play on demand', async () => {
+  it('should not autoplay by default, and play on demand', async () => {
     const { instance, calls } = await mountMotion({
       dataOptionAnimate: '{ "x": 100 }',
-      dataOptionNoAutoplay: '',
     });
 
     expect(instance.$options.autoplay).toBe(false);
@@ -92,7 +125,10 @@ describe('Motion component', () => {
   });
 
   it('should replay the same animation on repeated play calls', async () => {
-    const { instance } = await mountMotion({ dataOptionAnimate: '{ "x": 100 }' });
+    const { instance } = await mountMotion({
+      dataOptionAnimate: '{ "x": 100 }',
+      dataOptionAutoplay: '',
+    });
 
     instance.play();
     await wait(0);
@@ -104,7 +140,6 @@ describe('Motion component', () => {
   it('should reverse from the end when nothing has played yet', async () => {
     const { instance, calls } = await mountMotion({
       dataOptionAnimate: '{ "x": 100 }',
-      dataOptionNoAutoplay: '',
     });
 
     instance.reverse();
@@ -118,7 +153,10 @@ describe('Motion component', () => {
   });
 
   it('should flip the playback direction with reverse and play', async () => {
-    const { instance } = await mountMotion({ dataOptionAnimate: '{ "x": 100 }' });
+    const { instance } = await mountMotion({
+      dataOptionAnimate: '{ "x": 100 }',
+      dataOptionAutoplay: '',
+    });
 
     instance.reverse();
     await wait(0);
@@ -132,7 +170,6 @@ describe('Motion component', () => {
   it('should pause the current animation, and ignore pause when idle', async () => {
     const { instance, calls } = await mountMotion({
       dataOptionAnimate: '{ "x": 100 }',
-      dataOptionNoAutoplay: '',
     });
 
     instance.pause();
@@ -150,6 +187,7 @@ describe('Motion component', () => {
     const { el, instance, calls } = await mountMotion({
       dataOptionAnimate: '{ "x": 100 }',
       dataOptionTransition: '{ "duration": 1 }',
+      dataOptionAutoplay: '',
     });
 
     instance.animate({ y: 50 }, { duration: 3 });
@@ -173,6 +211,7 @@ describe('Motion component', () => {
     const { el, instance } = await mountMotion({
       dataOptionAnimate: '{ "x": 100 }',
       dataOptionTransition: '{ "duration": 1 }',
+      dataOptionAutoplay: '',
     });
 
     instance.animate({ rotate: 360 });
@@ -199,7 +238,10 @@ describe('Motion component', () => {
   });
 
   it('should stop the current animation and create a fresh one on the next play', async () => {
-    const { instance, calls } = await mountMotion({ dataOptionAnimate: '{ "x": 100 }' });
+    const { instance, calls } = await mountMotion({
+      dataOptionAnimate: '{ "x": 100 }',
+      dataOptionAutoplay: '',
+    });
 
     instance.stop();
     expect(animations[0].state).toBe('stopped');
@@ -212,7 +254,10 @@ describe('Motion component', () => {
   });
 
   it('should cancel the current animation', async () => {
-    const { instance, calls } = await mountMotion({ dataOptionAnimate: '{ "x": 100 }' });
+    const { instance, calls } = await mountMotion({
+      dataOptionAnimate: '{ "x": 100 }',
+      dataOptionAutoplay: '',
+    });
 
     instance.cancel();
     expect(animations[0].state).toBe('cancelled');
@@ -221,7 +266,10 @@ describe('Motion component', () => {
   });
 
   it('should jump to the end state with complete', async () => {
-    const { instance, calls } = await mountMotion({ dataOptionAnimate: '{ "x": 100 }' });
+    const { instance, calls } = await mountMotion({
+      dataOptionAnimate: '{ "x": 100 }',
+      dataOptionAutoplay: '',
+    });
 
     instance.complete();
     await wait(0);
@@ -232,7 +280,6 @@ describe('Motion component', () => {
   it('should seek the current animation, creating it paused when idle', async () => {
     const { instance } = await mountMotion({
       dataOptionAnimate: '{ "x": 100 }',
-      dataOptionNoAutoplay: '',
     });
 
     await instance.seek(0.5);
@@ -249,7 +296,6 @@ describe('Motion component', () => {
   it('should expose the playback state through getters', async () => {
     const { instance } = await mountMotion({
       dataOptionAnimate: '{ "x": 100 }',
-      dataOptionNoAutoplay: '',
     });
 
     expect(instance.controls).toBeNull();
@@ -265,7 +311,11 @@ describe('Motion component', () => {
   });
 
   it('should dispatch bubbling events', async () => {
-    const el = h('div', { dataComponent: 'Motion', dataOptionAnimate: '{ "x": 100 }' });
+    const el = h('div', {
+      dataComponent: 'Motion',
+      dataOptionAnimate: '{ "x": 100 }',
+      dataOptionAutoplay: '',
+    });
     const parent = h('div', [el]);
     let bubbled = 0;
     parent.addEventListener('motion-play', () => {
@@ -280,7 +330,10 @@ describe('Motion component', () => {
   });
 
   it('should stop the current animation on destroy without completing', async () => {
-    const { instance, calls } = await mountMotion({ dataOptionAnimate: '{ "x": 100 }' });
+    const { instance, calls } = await mountMotion({
+      dataOptionAnimate: '{ "x": 100 }',
+      dataOptionAutoplay: '',
+    });
 
     await instance.$destroy();
     expect(animations[0].state).toBe('stopped');

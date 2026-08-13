@@ -15,7 +15,7 @@ Object options are parsed as JSON: quote the keys (`data-option-animate='{ "x": 
 - Type: `DOMKeyframesDefinition`
 - Default: `{}`
 
-Styles applied to the element on mount, before anything plays. Use it to define the starting state of an enter animation without a flash of the final state.
+Styles applied to the element on mount, before anything plays. Use it to define the starting state of an enter animation without a flash of the final state. It doubles as the starting point of the [`animate`](#animate) keyframes, so the declared animation always plays from here — however many times it runs.
 
 <!-- prettier-ignore-start -->
 ```html {3}
@@ -33,7 +33,23 @@ Styles applied to the element on mount, before anything plays. Use it to define 
 - Type: `DOMKeyframesDefinition`
 - Default: `{}`
 
-The target keyframes of the animation. They play automatically on mount unless [`autoplay`](#autoplay) is disabled.
+The target keyframes of the animation. They play on mount when [`autoplay`](#autoplay) is enabled.
+
+Each property the [`initial`](#initial) option also describes starts from that style, so the declared animation replays identically for as long as the options stand — declare the starting state once, in `initial`:
+
+<!-- prettier-ignore-start -->
+```html {3,4}
+<div
+  data-component="Motion"
+  data-option-initial='{ "opacity": 0, "y": 24 }'
+  data-option-animate='{ "opacity": 1, "y": 0 }'
+  data-option-autoplay>
+  …
+</div>
+```
+<!-- prettier-ignore-end -->
+
+A property `initial` says nothing about animates from whatever the element currently shows, which is what a one-off transition to a new state wants. To pin a starting point without painting it on mount, write that property as a `[from, to]` array (`{ "opacity": [0.2, 1] }`) — an explicit array is never overridden.
 
 ### `transition`
 
@@ -56,16 +72,16 @@ Motion's animation options: `duration`, `delay`, `ease`, `type` (`"tween"`, `"sp
 ### `autoplay`
 
 - Type: `boolean`
-- Default: `true`
+- Default: `false`
 
-Whether the `animate` keyframes play automatically on mount. Since the default is `true`, use the negated `data-option-no-autoplay` attribute to require an explicit `play()`.
+Whether the `animate` keyframes play automatically on mount. Enable it with the `data-option-autoplay` attribute; without it, playback waits for an explicit `play()`.
 
 <!-- prettier-ignore-start -->
 ```html {4}
 <div
   data-component="Motion"
   data-option-animate='{ "x": 100 }'
-  data-option-no-autoplay>
+  data-option-autoplay>
   …
 </div>
 ```
@@ -183,7 +199,7 @@ Methods are callable from an `Action` effect — on the same element or through 
 ```html {2,3}
 <div data-component="Action" data-on:mouseenter="Motion(#logo)->target.play()"
   data-on:mouseleave="Motion(#logo)->target.reverse()">
-  <div id="logo" data-component="Motion" data-option-animate='{ "scale": 1.2 }' data-option-no-autoplay>…</div>
+  <div id="logo" data-component="Motion" data-option-animate='{ "scale": 1.2 }'>…</div>
 </div>
 ```
 <!-- prettier-ignore-end -->
