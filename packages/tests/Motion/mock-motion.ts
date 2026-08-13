@@ -130,6 +130,80 @@ export const mockScroll = vi.fn(
   },
 );
 
+/**
+ * Chainable double for the builder `animateView()` returns: it records every
+ * subject and layer call in order, runs the update callback when awaited, and
+ * settles like the real builder — resolving to an animation exposing a
+ * `finished` promise, or rejecting when {@link MockViewBuilder.rejects} is set.
+ */
+export class MockViewBuilder {
+  update: () => void | Promise<void>;
+  options: Record<string, unknown> | undefined;
+  /** Every builder method call, in order, as `[method, ...args]`. */
+  calls: [string, ...unknown[]][] = [];
+  /** When `true`, the thenable rejects after running the update. */
+  rejects = false;
+
+  constructor(update: () => void | Promise<void>, options?: Record<string, unknown>) {
+    this.update = update;
+    this.options = options;
+  }
+
+  add(...args: unknown[]) {
+    return this.__record('add', args);
+  }
+
+  new(...args: unknown[]) {
+    return this.__record('new', args);
+  }
+
+  old(...args: unknown[]) {
+    return this.__record('old', args);
+  }
+
+  enter(...args: unknown[]) {
+    return this.__record('enter', args);
+  }
+
+  exit(...args: unknown[]) {
+    return this.__record('exit', args);
+  }
+
+  layout(...args: unknown[]) {
+    return this.__record('layout', args);
+  }
+
+  then(resolve: (value: { finished: Promise<void> }) => void, reject?: (reason?: unknown) => void) {
+    Promise.resolve(this.update()).then(() => {
+      if (this.rejects) {
+        reject?.(new Error('view transition rejected'));
+        return;
+      }
+      resolve({ finished: Promise.resolve() });
+    });
+  }
+
+  __record(method: string, args: unknown[]) {
+    this.calls.push([method, ...args]);
+    return this;
+  }
+}
+
+/** Every view builder created since the last {@link resetMockMotion} call. */
+export const viewBuilders: MockViewBuilder[] = [];
+
+/** Shared flag copied onto every new {@link MockViewBuilder} as `rejects`. */
+export const mockAnimateViewState = { reject: false };
+
+export const mockAnimateView = vi.fn(
+  (update: () => void | Promise<void>, options?: Record<string, unknown>) => {
+    const builder = new MockViewBuilder(update, options);
+    builder.rejects = mockAnimateViewState.reject;
+    viewBuilders.push(builder);
+    return builder;
+  },
+);
+
 type GestureStart = (element: Element, info?: unknown) => void | (() => void);
 
 /**
@@ -167,6 +241,7 @@ export const mockInView = createGestureMock();
  */
 export const mockMotionModule = {
   animate: mockAnimate,
+  animateView: mockAnimateView,
   scroll: mockScroll,
   hover: mockHover.fn,
   press: mockPress.fn,
@@ -178,11 +253,15 @@ provideMotion(mockMotionModule as unknown as MotionModule);
 export function resetMockMotion() {
   animations.length = 0;
   scrollLinks.length = 0;
+  viewBuilders.length = 0;
+  mockAnimateViewState.reject = false;
   mockAnimate.mockClear();
+  mockAnimateView.mockClear();
   mockScroll.mockClear();
   mockHover.reset();
   mockPress.reset();
   mockInView.reset();
+  mockMotionModule.animateView = mockAnimateView;
   mockMotionModule.scroll = mockScroll;
   mockMotionModule.hover = mockHover.fn;
   mockMotionModule.press = mockPress.fn;

@@ -7,6 +7,7 @@ import MotionScrollTimelineDefault, {
 import MotionSequenceDefault, {
   MotionSequence as MotionSequenceNamed,
 } from '@studiometa/ui-motion/MotionSequence';
+import MotionViewDefault, { MotionView as MotionViewNamed } from '@studiometa/ui-motion/MotionView';
 
 test.each([
   ['Motion', MotionDefault, MotionNamed, barrel.Motion],
@@ -17,6 +18,7 @@ test.each([
     barrel.MotionScrollTimeline,
   ],
   ['MotionSequence', MotionSequenceDefault, MotionSequenceNamed, barrel.MotionSequence],
+  ['MotionView', MotionViewDefault, MotionViewNamed, barrel.MotionView],
 ])('%s is available at its own subpath as default and named export', (_name, def, named, fromBarrel) => {
   // The default export is a js-toolkit `Base` subclass.
   expect('$isBase' in def).toBe(true);

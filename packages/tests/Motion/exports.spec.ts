@@ -7,6 +7,7 @@ test('@studiometa/ui-motion exports', () => {
       "Motion",
       "MotionScrollTimeline",
       "MotionSequence",
+      "MotionView",
       "provideMotion",
       "resolveMotion",
     ]
