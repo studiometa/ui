@@ -36,7 +36,27 @@ The scroll range, in Motion's [offset syntax](https://motion.dev/docs/scroll#off
 
 The scroll axis driving the timeline.
 
+### `trackContentSize`
+
+- Type: `boolean`
+- Default: `false`
+
+Watch the scroll container for content size changes, through Motion's own [`trackContentSize`](https://motion.dev/docs/scroll) option. The scroll range is measured once and re-measured on resize, so content that grows or shrinks **after** mount without resizing anything — lazy-loaded images landing, a filtered list dropping rows, an accordion opening — leaves the timeline mapped to a range the page no longer has. Turn this on there.
+
+It is not free: Motion compares the container's `scrollWidth` and `scrollHeight` on **every frame** for as long as the timeline lives, and each change costs a re-measure. Leave it off when the content settles before the first scroll.
+
+<!-- prettier-ignore-start -->
+```html {3}
+<section
+  data-component="MotionScrollTimeline"
+  data-option-track-content-size>
+  …
+</section>
+```
+<!-- prettier-ignore-end -->
+
 ## Notes
 
 - `scroll()` is not part of `motion/mini`: when the [provided module](/reference/items/Motion/js-api#providing-the-motion-dependency) lacks it, the timeline warns and leaves its children untouched.
 - Each child gets its own `scroll()` link, released when the timeline is destroyed.
+- `trackContentSize` only changes the JavaScript path: where the browser drives the timeline natively with `ScrollTimeline` or `ViewTimeline`, it reads the live scroll range on its own.

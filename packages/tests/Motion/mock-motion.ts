@@ -1,4 +1,7 @@
 import { vi } from 'vitest';
+// The value readers are pure DOM readers, not animation drivers: the double
+// uses the real ones so the captured base values follow Motion's semantics.
+import { transformProps, readTransformValue, getComputedStyle } from 'motion';
 import { provideMotion, type MotionModule } from '@studiometa/ui-motion';
 
 /**
@@ -246,6 +249,9 @@ export const mockMotionModule = {
   hover: mockHover.fn,
   press: mockPress.fn,
   inView: mockInView.fn,
+  transformProps,
+  readTransformValue,
+  getComputedStyle,
 };
 
 provideMotion(mockMotionModule as unknown as MotionModule);

@@ -86,6 +86,13 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
   __gestureStops: VoidFunction[] = [];
 
   /**
+   * The base value of every property a gesture animated, captured the first
+   * time a gesture touched it — the values a gesture returns to when it ends.
+   * @private
+   */
+  __baseValues: Record<string, string | number> = {};
+
+  /**
    * Whether the current animation was built from the `animate` and
    * `transition` options, as opposed to an imperative `animate()` call.
    * @private
@@ -312,8 +319,8 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
       if (motion.hover) {
         this.__gestureStops.push(
           motion.hover(this.$el, () => {
-            const controls = this.__startGesture(hover);
-            return () => this.__revertGesture(controls);
+            this.__startGesture(hover);
+            return () => this.__revertGesture(hover);
           }),
         );
       } else {
@@ -325,8 +332,8 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
       if (motion.press) {
         this.__gestureStops.push(
           motion.press(this.$el, () => {
-            const controls = this.__startGesture(press);
-            return () => this.__revertGesture(controls);
+            this.__startGesture(press);
+            return () => this.__revertGesture(press);
           }),
         );
       } else {
@@ -348,13 +355,13 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
           motion.inView(
             this.$el,
             () => {
-              const controls = this.__startGesture(inView);
+              this.__startGesture(inView);
               // With no leave handler returned, `inView()` fires once and the
               // reached styles persist.
               if (once) {
                 return undefined;
               }
-              return () => this.__revertGesture(controls);
+              return () => this.__revertGesture(inView);
             },
             options as Parameters<NonNullable<MotionModule['inView']>>[2],
           ),
@@ -367,22 +374,79 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
 
   /**
    * Animate to a gesture state, alongside — not replacing — the current
-   * animation.
+   * animation, capturing the base value of every property it touches first.
    * @private
    */
   __startGesture(keyframes: DOMKeyframesDefinition): AnimationPlaybackControlsWithThen {
+    this.__captureBaseValues(keyframes);
     return getMotion().animate(this.$el, keyframes, this.$options.transition);
   }
 
   /**
-   * Revert a gesture by playing its animation backward: the element returns
-   * to the exact styles captured when the gesture started, with no knowledge
-   * of base values needed.
+   * Capture the element's current value for every property a gesture is about
+   * to animate, once per property and never refreshed afterwards.
+   *
+   * The read mirrors Motion's own `VisualElement.readValueFromInstance()`: the
+   * parsed transform matrix for a transform property, the computed style
+   * otherwise — both through Motion's own readers, so the values come back in
+   * the shape its animations expect. Motion React hydrates the same snapshot
+   * (its `baseTarget`) the first time it reads a value and keeps it, which is
+   * what makes a return immune to a second gesture starting while the previous
+   * one is still returning.
+   *
+   * A property the readers cannot resolve is left out, so nothing is invented:
+   * the return animation simply does not touch it.
    * @private
    */
-  __revertGesture(controls: AnimationPlaybackControlsWithThen) {
-    controls.speed = -Math.abs(controls.speed || 1);
-    controls.play();
+  __captureBaseValues(keyframes: DOMKeyframesDefinition) {
+    const { transformProps, readTransformValue, getComputedStyle } = getMotion();
+
+    for (const property of Object.keys(keyframes)) {
+      if (property in this.__baseValues) {
+        continue;
+      }
+
+      if (readTransformValue && transformProps?.has(property)) {
+        this.__baseValues[property] = readTransformValue(this.$el, property);
+        continue;
+      }
+
+      const computed = getComputedStyle?.(this.$el, property);
+
+      if (typeof computed === 'string' && computed !== '') {
+        const numeric = Number(computed);
+        this.__baseValues[property] = Number.isNaN(numeric) ? computed : numeric;
+      }
+    }
+  }
+
+  /**
+   * Return the element to its base values when a gesture ends, animating
+   * forward with the `transition` option — the gesture animation is never
+   * rewound.
+   *
+   * This is what Motion React does: ending a gesture deactivates its variant
+   * (`node.animationState.setActive("whileHover", false)`), which recomputes
+   * the target of every property the variant owned and animates to it. Playing
+   * the gesture animation backward instead would run its easing or spring
+   * curve in reverse — a different feel — and could never reach a base value
+   * the element did not hold when the gesture started.
+   * @private
+   */
+  __revertGesture(keyframes: DOMKeyframesDefinition) {
+    const base: Record<string, string | number> = {};
+
+    for (const property of Object.keys(keyframes)) {
+      if (property in this.__baseValues) {
+        base[property] = this.__baseValues[property];
+      }
+    }
+
+    if (Object.keys(base).length === 0) {
+      return;
+    }
+
+    getMotion().animate(this.$el, base as DOMKeyframesDefinition, this.$options.transition);
   }
 
   /**

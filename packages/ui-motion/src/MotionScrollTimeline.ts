@@ -4,7 +4,16 @@ import type { scroll } from 'motion';
 import { Motion } from './Motion.js';
 import { resolveMotion } from './dependencies.js';
 
-type ScrollOptions = NonNullable<Parameters<typeof scroll>[1]>;
+/**
+ * The options `scroll()` accepts, widened with `trackContentSize`.
+ *
+ * `scroll()` forwards every option it does not read itself to `scrollInfo()`,
+ * which declares `trackContentSize` on its own `ScrollInfoOptions` — Motion's
+ * public `ScrollOptions` interface simply omits it.
+ */
+type ScrollOptions = NonNullable<Parameters<typeof scroll>[1]> & {
+  trackContentSize?: boolean;
+};
 
 export interface MotionScrollTimelineProps extends BaseProps {
   $children: {
@@ -13,6 +22,7 @@ export interface MotionScrollTimelineProps extends BaseProps {
   $options: {
     offset: string[];
     axis: 'x' | 'y';
+    trackContentSize: boolean;
   };
 }
 
@@ -53,6 +63,7 @@ export class MotionScrollTimeline<T extends BaseProps = BaseProps> extends Base<
     options: {
       offset: { type: Array, default: () => ['start end', 'end start'] },
       axis: { type: String, default: 'y' },
+      trackContentSize: Boolean,
     },
   };
 
@@ -108,10 +119,13 @@ export class MotionScrollTimeline<T extends BaseProps = BaseProps> extends Base<
       return;
     }
 
-    const { offset, axis } = this.$options;
+    const { offset, axis, trackContentSize } = this.$options;
     const options: ScrollOptions = { target: this.$el, axis };
     if (offset.length > 0) {
       options.offset = offset as ScrollOptions['offset'];
+    }
+    if (trackContentSize) {
+      options.trackContentSize = true;
     }
     this.__stops.push(scrollFn(controls, options));
   }

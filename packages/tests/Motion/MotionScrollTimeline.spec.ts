@@ -67,6 +67,20 @@ describe('MotionScrollTimeline component', () => {
     expect(scrollLinks[0].options.axis).toBe('x');
   });
 
+  it('should not track the content size by default', async () => {
+    await mountTimeline();
+
+    expect(scrollLinks[0].options).not.toHaveProperty('trackContentSize');
+  });
+
+  it('should forward the trackContentSize option', async () => {
+    await mountTimeline({ dataOptionTrackContentSize: '' });
+
+    for (const link of scrollLinks) {
+      expect(link.options.trackContentSize).toBe(true);
+    }
+  });
+
   it('should release every scroll link on destroy', async () => {
     const { instance } = await mountTimeline();
 
