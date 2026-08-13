@@ -69,7 +69,7 @@ The `motion-*` events bubble, so a single routing [`Action`](/reference/items/Ac
 
 ## Gestures
 
-The `hover`, `press` and `inView` options apply keyframes while their state holds, through Motion's own gesture functions: hover filters out touch emulation, press responds to pointer and keyboard alike, and in-view uses a real `IntersectionObserver`. When the state ends, the gesture animation plays backward — no base values to declare.
+The `hover`, `press` and `inView` options apply keyframes while their state holds, through Motion's own gesture functions: hover filters out touch emulation, press responds to pointer and keyboard alike, and in-view uses a real `IntersectionObserver`. When the state ends, a new animation plays forward to the base values of the properties the gesture touched — the base values are read from the element itself, so there is nothing to declare.
 
 <llm-exclude>
   <PreviewPlayground

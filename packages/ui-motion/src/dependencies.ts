@@ -1,4 +1,14 @@
-import type { animate, animateView, scroll, hover, press, inView } from 'motion';
+import type {
+  animate,
+  animateView,
+  scroll,
+  hover,
+  press,
+  inView,
+  transformProps,
+  readTransformValue,
+  getComputedStyle,
+} from 'motion';
 
 /**
  * The subset of the `motion` module the components consume. Declared
@@ -8,6 +18,11 @@ import type { animate, animateView, scroll, hover, press, inView } from 'motion'
  * does not ship it: `animateView` powers `MotionView`, `scroll` powers
  * `MotionScrollTimeline`, and `hover`, `press` and `inView` power the
  * matching `Motion` gesture options.
+ *
+ * `transformProps`, `readTransformValue` and `getComputedStyle` are Motion's
+ * own value readers. `Motion` uses them to capture the base value a gesture
+ * returns to, the way Motion's `VisualElement.readValueFromInstance()` does.
+ * They ship alongside the gesture functions in the full entry.
  */
 export interface MotionModule {
   animate: typeof animate;
@@ -16,6 +31,9 @@ export interface MotionModule {
   hover?: typeof hover;
   press?: typeof press;
   inView?: typeof inView;
+  transformProps?: typeof transformProps;
+  readTransformValue?: typeof readTransformValue;
+  getComputedStyle?: typeof getComputedStyle;
 }
 
 let motionInstance: MotionModule | undefined;

@@ -92,7 +92,7 @@ Whether the `animate` keyframes play automatically on mount. Enable it with the 
 - Type: `DOMKeyframesDefinition`
 - Default: `{}`
 
-Keyframes applied while the element is hovered, through Motion's [`hover()`](https://motion.dev/docs/hover) — real hover only, touch emulation is filtered out. When the hover ends, the gesture animation plays backward, returning the element to the styles it had when the gesture began.
+Keyframes applied while the element is hovered, through Motion's [`hover()`](https://motion.dev/docs/hover) — real hover only, touch emulation is filtered out. When the hover ends, a new animation plays **forward** to the base values of the properties the gesture touched, with the same [`transition`](#transition) — the same return Motion for React performs when it deactivates a `whileHover` variant. The base value of each property is read from the element once, the first time a gesture touches it, so the return never plays the easing or spring curve backward and never depends on a gesture animation still being around.
 
 <!-- prettier-ignore-start -->
 ```html {3}
@@ -109,14 +109,14 @@ Keyframes applied while the element is hovered, through Motion's [`hover()`](htt
 - Type: `DOMKeyframesDefinition`
 - Default: `{}`
 
-Keyframes applied while the element is pressed, through Motion's [`press()`](https://motion.dev/docs/press) — pointer and keyboard alike, so the state is accessible for free. Reverts like `hover` when the press ends.
+Keyframes applied while the element is pressed, through Motion's [`press()`](https://motion.dev/docs/press) — pointer and keyboard alike, so the state is accessible for free. Returns to the base values like `hover` when the press ends.
 
 ### `inView`
 
 - Type: `DOMKeyframesDefinition`
 - Default: `{}`
 
-Keyframes applied when the element enters the viewport, through Motion's [`inView()`](https://motion.dev/docs/inview). Reverts when the element leaves, unless [`once`](#once) is set.
+Keyframes applied when the element enters the viewport, through Motion's [`inView()`](https://motion.dev/docs/inview). Returns to the base values when the element leaves, unless [`once`](#once) is set. Declaring [`initial`](#initial) is the way to choose those base values: it is applied on mount, so it is what the element holds when the first reveal reads it.
 
 <!-- prettier-ignore-start -->
 ```html {3,4}
@@ -152,7 +152,7 @@ How much of the element must be visible to trigger `inView`: `"some"`, `"all"`, 
 When set, the `inView` keyframes play once and the reached styles persist — the element is no longer watched.
 
 ::: info Gesture animations are transient
-The gesture options animate alongside the declared animation: they never become the [current animation](#methods) and emit no lifecycle events. Like `scroll()`, the gesture functions are not part of `motion/mini` — a gesture option warns and is skipped when the [provided module](#providing-the-motion-dependency) lacks its function.
+The gesture options animate alongside the declared animation: they never become the [current animation](#methods) and emit no lifecycle events — and neither does the animation returning to the base values. Like `scroll()`, the gesture functions are not part of `motion/mini` — a gesture option warns and is skipped when the [provided module](#providing-the-motion-dependency) lacks its function.
 :::
 
 ## Events
