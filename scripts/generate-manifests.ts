@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { format, resolveConfig } from 'prettier';
 import { catalog as uiCatalog } from '../packages/ui/src/catalog.ts';
 import { catalog as mapboxCatalog } from '../packages/ui-mapbox/src/catalog.ts';
+import { catalog as motionCatalog } from '../packages/ui-motion/src/catalog.ts';
 import type { ComponentCatalog, CuratedComponentMetadata } from './manifest-types.ts';
 
 const scriptsDirectory = dirname(fileURLToPath(import.meta.url));
@@ -31,6 +32,12 @@ const targets: readonly PackageTarget[] = [
     packageDirectory: resolve(repositoryDirectory, 'packages/ui-mapbox'),
     sourceDirectory: resolve(repositoryDirectory, 'packages/ui-mapbox/src'),
     manifestPath: resolve(repositoryDirectory, 'packages/ui-mapbox/src/manifest.ts'),
+  },
+  {
+    catalog: motionCatalog,
+    packageDirectory: resolve(repositoryDirectory, 'packages/ui-motion'),
+    sourceDirectory: resolve(repositoryDirectory, 'packages/ui-motion/src'),
+    manifestPath: resolve(repositoryDirectory, 'packages/ui-motion/src/manifest.ts'),
   },
 ];
 

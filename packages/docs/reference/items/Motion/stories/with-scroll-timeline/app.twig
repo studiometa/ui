@@ -1,0 +1,25 @@
+<p class="py-8 text-center text-current/60">
+  Scroll down ↓
+</p>
+
+<section data-component="MotionScrollTimeline" class="relative h-[300vh]">
+  <div
+    class="sticky top-0 flex h-screen flex-col items-center justify-center gap-6 overflow-hidden">
+    <h2
+      data-component="Motion"
+      data-option-animate='{ "opacity": [0, 1, 1, 0], "y": [80, 0, 0, -80] }'
+      data-option-no-autoplay
+      class="text-3xl font-bold">
+      Driven by scroll
+    </h2>
+    <div
+      data-component="Motion"
+      data-option-animate='{ "rotate": [0, 360], "scale": [0.5, 1.5], "borderRadius": ["10%", "50%"] }'
+      data-option-no-autoplay
+      class="size-24 bg-blue-400 dark:bg-blue-600"></div>
+  </div>
+</section>
+
+<p class="py-8 text-center text-current/60">
+  Done ↑
+</p>

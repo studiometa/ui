@@ -13,6 +13,7 @@
     "@happy-dom/global-registrator": "^20.8.8",
     "@studiometa/ui": "file:../ui",
     "@studiometa/ui-mapbox": "file:../ui-mapbox",
+    "@studiometa/ui-motion": "file:../ui-motion",
     "@vitest/coverage-v8": "4.1.1",
     "happy-dom": "^20.8.8",
     "vitest": "4.1.1"

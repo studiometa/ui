@@ -7,6 +7,7 @@ on:
     paths:
       - 'packages/ui/**'
       - 'packages/ui-mapbox/**'
+      - 'packages/ui-motion/**'
       - 'package-lock.json'
       - '.github/workflows/export-size.yml'
 
@@ -24,4 +25,5 @@ jobs:
           packages: |
             @studiometa/ui:packages/ui
             @studiometa/ui-mapbox:packages/ui-mapbox
+            @studiometa/ui-motion:packages/ui-motion
           build: npm run build:export-size

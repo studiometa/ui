@@ -18,6 +18,7 @@
     "deepmerge": "^4.3.1",
     "mapbox-gl": "^3.13.0",
     "morphdom": "^2.7.8",
+    "motion": "^13.0.0",
     "tsdown": "^0.21.5"
   }
 }

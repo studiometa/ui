@@ -1,0 +1,50 @@
+---
+badges: [JS]
+---
+
+# Motion <Badges :texts="$frontmatter.badges" />
+
+The `Motion` component animates its root element declaratively with the [Motion](https://motion.dev) library. Describe the animation with the `initial`, `animate` and `transition` options: the `initial` styles are applied on mount, then the `animate` keyframes play automatically — or on demand when autoplay is disabled.
+
+The component is a thin, headless playback surface exposing imperative methods that an [`Action`](/reference/items/Action/) can call from any interaction: `play()` and `reverse()` always drive the animation declared by the options, while `animate()` runs a one-off to arbitrary keyframes. All its events bubble, so an ancestor `Action` can catch and route them; use the `.stop` event modifier to contain them in nested setups.
+
+The `motion` peer dependency is resolved with a lazy `import()` the first time an animation is built, so it stays out of your main bundle until needed. See [providing the Motion dependency](./js-api#providing-the-motion-dependency) to inject a specific build such as `motion/mini`.
+
+## Usage
+
+Option values are parsed as JSON, so object keys must be quoted:
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/basic/app.twig')"
+  :script="() => import('./stories/basic/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/basic/app.twig
+<<< ./stories/basic/app.js
+
+:::
+
+</llm-only>
+
+## Driving the animation with `Action`
+
+Disable autoplay with `data-option-no-autoplay` and control the playback from any interaction — see the [examples](./examples.html) for a complete demo:
+
+<!-- prettier-ignore-start -->
+```html
+<div
+  data-component="Motion"
+  data-option-animate='{ "x": 100 }'
+  data-option-no-autoplay>
+  …
+</div>
+
+<button data-component="Action" data-on:click="Motion->target.play()">Play</button>
+<button data-component="Action" data-on:click="Motion->target.reverse()">Reverse</button>
+```
+<!-- prettier-ignore-end -->

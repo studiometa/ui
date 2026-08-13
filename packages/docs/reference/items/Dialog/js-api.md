@@ -102,7 +102,7 @@ Both lifecycle events expose `event.detail.waitUntil(x)`, modeled on the Service
 - a **promise** (any thenable), awaited as is
 - a **transitioner**: a duck-typed object with `enter()` and `leave()` methods, e.g. `MotionView` from `@studiometa/ui-motion` — the dialog follows its lifecycle by awaiting `enter()` on `open` and `leave()` on `close`
 
-For example, a `Motion` box (from `@studiometa/ui-motion`) can spring in and out with the dialog through two [`Action`](/reference/items/Action/) attributes:
+For example, a [`Motion`](/reference/items/Motion/) box can spring in and out with the dialog through two [`Action`](/reference/items/Action/) attributes:
 
 <!-- prettier-ignore-start -->
 ```html {3,4}

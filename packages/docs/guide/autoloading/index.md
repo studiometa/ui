@@ -35,6 +35,7 @@ Import one side-effect entry for each component package you use. Each import reg
 <script type="module">
   import 'https://esm.sh/@studiometa/ui@latest/autoload'; // @studiometa/ui components
   import 'https://esm.sh/@studiometa/ui-mapbox@latest/autoload'; // @studiometa/ui-mapbox components
+  import 'https://esm.sh/@studiometa/ui-motion@latest/autoload'; // @studiometa/ui-motion components
 </script>
 ```
 
@@ -43,11 +44,12 @@ The same entries resolve from `node_modules` when you install the packages and l
 ```js
 import '@studiometa/ui/autoload';
 import '@studiometa/ui-mapbox/autoload';
+import '@studiometa/ui-motion/autoload';
 ```
 
-Import both entries at the top of one module. The two manifests register before the runtime starts, so they join into one loader over the composed set. Import `@studiometa/ui-mapbox/autoload` only when you use the Mapbox family — see [Mapbox integration](#mapbox-integration).
+Import the entries at the top of one module. The manifests register before the runtime starts, so they join into one loader over the composed set. Import `@studiometa/ui-mapbox/autoload` only when you use the Mapbox family — see [Mapbox integration](#mapbox-integration) — and `@studiometa/ui-motion/autoload` only when you use [Motion](#motion-integration).
 
-Every component on the page must resolve to one `@studiometa/js-toolkit` runtime. `@studiometa/ui` and `@studiometa/ui-mapbox` share the same `@studiometa/js-toolkit` peer, so one pin on that peer resolves the whole set.
+Every component on the page must resolve to one `@studiometa/js-toolkit` runtime. `@studiometa/ui`, `@studiometa/ui-mapbox` and `@studiometa/ui-motion` share the same `@studiometa/js-toolkit` peer, so one pin on that peer resolves the whole set.
 
 ### Version pinning
 
@@ -160,6 +162,26 @@ Load the Mapbox stylesheet yourself, and the geocoder stylesheet only when you u
 
 You own the `mapbox-gl` module, so its Web Worker is same-origin and a strict Content Security Policy works. When you load `mapbox-gl` from a CDN that builds its worker from a `blob:` URL, allow it: `Content-Security-Policy: worker-src blob:;`.
 
+## Motion integration
+
+The `Motion` component loads like any other component, but the autoloader does not bundle the [`motion`](https://motion.dev) library. You provide it through an import map, which keeps you in control of the Motion version:
+
+```html
+<script type="importmap">
+  {
+    "imports": {
+      "motion": "https://esm.sh/motion@13"
+    }
+  }
+</script>
+<script type="module">
+  import 'https://esm.sh/@studiometa/ui@latest/autoload';
+  import 'https://esm.sh/@studiometa/ui-motion@latest/autoload';
+</script>
+```
+
+The component resolves `motion` lazily the first time an animation is built. In a bundled build you can inject a specific entry — such as the smaller `motion/mini` — with `provideMotion()`; see the [Motion JS API](/reference/items/Motion/js-api#providing-the-motion-dependency).
+
 ## Shopify integration
 
 Most Shopify components autoload as they do in a bundled build. `FetchShopifyPartial` is the exception. The `@shopify/partial-rendering` adapter is not resolved in a no-build setup, so the component logs a diagnostic and falls back to the base [`Fetch`](/reference/items/Fetch/) behavior. Use a bundled build when you need partial rendering.
@@ -190,6 +212,7 @@ A no-build install trades flexibility for a zero-build setup. Its constraints ar
 - **No templates or stylesheets.** No Twig, no `data-mount`, and no CSS — including no Mapbox CSS.
 - **ES2020 module browsers only.**
 - **Mapbox is not provided.** You supply `mapbox-gl` and its CSS through an import map.
+- **Motion is not provided.** You supply `motion` through an import map.
 - **Shopify partial rendering is excluded.** `FetchShopifyPartial` falls back to base `Fetch`.
 
 ## Next steps

@@ -6,6 +6,7 @@
   "include": [
     "packages/ui/src/**/*.ts",
     "packages/ui-mapbox/src/**/*.ts",
+    "packages/ui-motion/src/**/*.ts",
     "scripts/**/*.ts"
   ]
 }

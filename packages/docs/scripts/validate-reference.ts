@@ -180,6 +180,10 @@ const publicEntryPoints = [
     path: resolve(repositoryRoot, 'packages/ui-mapbox/src/index.ts'),
     package: 'npm:@studiometa/ui-mapbox',
   },
+  {
+    path: resolve(repositoryRoot, 'packages/ui-motion/src/index.ts'),
+    package: 'npm:@studiometa/ui-motion',
+  },
 ] as const;
 const program = ts.createProgram(
   publicEntryPoints.map((entry) => entry.path),

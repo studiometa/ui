@@ -21,6 +21,7 @@ const parsed = ts.parseJsonConfigFileContent(config, ts.sys, ROOT);
 const ENTRIES = {
   '@studiometa/ui': 'packages/ui/src/index.ts',
   '@studiometa/ui-mapbox': 'packages/ui-mapbox/src/index.ts',
+  '@studiometa/ui-motion': 'packages/ui-motion/src/index.ts',
 };
 
 const program = ts.createProgram(
@@ -297,6 +298,24 @@ test('@studiometa/ui-mapbox barrel export surface', () => {
       "provideMapboxGl [value]",
       "resolveMapboxGeocoder [value]",
       "resolveMapboxGl [value]",
+    ]
+  `);
+});
+
+test('@studiometa/ui-motion barrel export surface', () => {
+  expect(surface(ENTRIES['@studiometa/ui-motion'])).toMatchInlineSnapshot(`
+    [
+      "Motion [value]",
+      "MotionModule [type]",
+      "MotionProps [type]",
+      "MotionScrollTimeline [value]",
+      "MotionScrollTimelineProps [type]",
+      "MotionSequence [value]",
+      "MotionSequenceProps [type]",
+      "MotionView [value]",
+      "MotionViewProps [type]",
+      "provideMotion [value]",
+      "resolveMotion [value]",
     ]
   `);
 });

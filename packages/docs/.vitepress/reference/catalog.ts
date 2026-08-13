@@ -12,6 +12,7 @@ import { publicContractSymbols } from './public-contracts.ts';
 const uiPackage = 'npm:@studiometa/ui' as const;
 const twigPackage = 'composer:studiometa/ui' as const;
 const mapboxPackage = 'npm:@studiometa/ui-mapbox' as const;
+const motionPackage = 'npm:@studiometa/ui-motion' as const;
 
 export const kindLabels: Record<ReferenceKind, string> = {
   component: 'Components',
@@ -79,6 +80,20 @@ function mapboxSymbol(
     kind,
     package: mapboxPackage,
     importPath: '@studiometa/ui-mapbox',
+    href,
+  };
+}
+
+function motionSymbol(
+  name: string,
+  href: string,
+  kind: ReferenceSymbolKind = 'component',
+): ReferenceSymbol {
+  return {
+    name,
+    kind,
+    package: motionPackage,
+    importPath: '@studiometa/ui-motion',
     href,
   };
 }
@@ -963,6 +978,45 @@ export const referenceCatalog = [
       ),
     ],
     related: ['dialog', 'panel'],
+  },
+  {
+    id: 'motion',
+    title: 'Motion',
+    summary: 'Animate elements declaratively with Motion and drive the playback from interactions.',
+    kind: 'component',
+    path: '/reference/items/Motion/',
+    family: 'animation',
+    primaryTask: 'animation',
+    tags: ['motion', 'animation', 'spring', 'playback'],
+    surfaces: ['js'],
+    packages: [motionPackage],
+    status: 'stable',
+    symbols: [
+      motionSymbol('Motion', '/reference/items/Motion/js-api#motion'),
+      motionSymbol(
+        'MotionScrollTimeline',
+        '/reference/items/Motion/js-api#motionscrolltimeline',
+      ),
+      motionSymbol('MotionSequence', '/reference/items/Motion/js-api#motionsequence'),
+      motionSymbol('MotionView', '/reference/items/Motion/js-api#motionview'),
+      motionSymbol(
+        'provideMotion',
+        '/reference/items/Motion/js-api#providing-the-motion-dependency',
+        'helper',
+      ),
+      motionSymbol(
+        'resolveMotion',
+        '/reference/items/Motion/js-api#providing-the-motion-dependency',
+        'helper',
+      ),
+      motionSymbol(
+        'MotionModule',
+        '/reference/items/Motion/js-api#providing-the-motion-dependency',
+        'type',
+      ),
+    ],
+    capabilities: ['enter animations', 'spring physics', 'imperative playback'],
+    related: ['action', 'transition', 'scroll-reveal'],
   },
   {
     id: 'panel',

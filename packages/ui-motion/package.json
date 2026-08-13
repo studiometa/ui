@@ -1,0 +1,95 @@
+{
+  "name": "@studiometa/ui-motion",
+  "version": "1.10.0",
+  "description": "Vanilla js-toolkit components to animate elements declaratively with Motion",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "sideEffects": [
+    "./dist/autoload.js"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "typescript": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./autoload": {
+      "typescript": "./src/autoload.ts",
+      "types": "./dist/autoload.d.ts",
+      "import": "./dist/autoload.js"
+    },
+    "./manifest": {
+      "typescript": "./src/manifest.ts",
+      "types": "./dist/manifest.d.ts",
+      "import": "./dist/manifest.js"
+    },
+    "./Motion": {
+      "typescript": "./src/Motion.ts",
+      "types": "./dist/Motion.d.ts",
+      "import": "./dist/Motion.js"
+    },
+    "./MotionScrollTimeline": {
+      "typescript": "./src/MotionScrollTimeline.ts",
+      "types": "./dist/MotionScrollTimeline.d.ts",
+      "import": "./dist/MotionScrollTimeline.js"
+    },
+    "./MotionSequence": {
+      "typescript": "./src/MotionSequence.ts",
+      "types": "./dist/MotionSequence.d.ts",
+      "import": "./dist/MotionSequence.js"
+    },
+    "./MotionView": {
+      "typescript": "./src/MotionView.ts",
+      "types": "./dist/MotionView.d.ts",
+      "import": "./dist/MotionView.js"
+    },
+    "./dependencies": {
+      "typescript": "./src/dependencies.ts",
+      "types": "./dist/dependencies.d.ts",
+      "import": "./dist/dependencies.js"
+    },
+    "./*": {
+      "typescript": "./src/*.ts",
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/studiometa/ui.git"
+  },
+  "keywords": [
+    "ui",
+    "components",
+    "motion",
+    "animation",
+    "js-toolkit"
+  ],
+  "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/studiometa/ui/issues"
+  },
+  "homepage": "https://github.com/studiometa/ui#readme",
+  "peerDependencies": {
+    "@studiometa/js-toolkit": "^3.9.0",
+    "motion": "^13.0.0"
+  },
+  "devDependencies": {
+    "@studiometa/js-toolkit": "^3.9.0",
+    "motion": "^13.0.0",
+    "tsdown": "0.21.5"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE.md"
+  ]
+}

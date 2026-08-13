@@ -18,15 +18,18 @@ export default defineConfig({
     setupFiles: ['./tests/__utils__/dev.ts', './tests/__utils__/happydom.ts'],
     coverage: {
       provider: 'v8',
-      include: ['ui/src/**/*.ts', 'ui-mapbox/src/**/*.ts'],
+      include: ['ui/src/**/*.ts', 'ui-mapbox/src/**/*.ts', 'ui-motion/src/**/*.ts'],
       exclude: [
         '**/tests/**/*.ts',
         '**/ui/src/**/index.ts',
         '**/ui-mapbox/src/**/index.ts',
+        '**/ui-motion/src/**/index.ts',
         '**/ui/src/catalog.ts',
         '**/ui/src/manifest.ts',
         '**/ui-mapbox/src/catalog.ts',
         '**/ui-mapbox/src/manifest.ts',
+        '**/ui-motion/src/catalog.ts',
+        '**/ui-motion/src/manifest.ts',
       ],
     },
     // The CDN workspace has its own vitest config and dedicated CI jobs (cdn_unit / cdn_build /
