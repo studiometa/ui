@@ -24,8 +24,8 @@ export interface MotionScrollTimelineProps extends BaseProps {
  * to that progress with Motion's `scroll()` — hardware-accelerated where the
  * browser supports `ScrollTimeline`. The children declare their keyframes as
  * usual and keep their whole playback surface; the timeline takes over their
- * playback on mount, so give them `data-option-no-autoplay` to avoid a play
- * before the link lands.
+ * playback on mount — leave their `autoplay` off (its default) so nothing
+ * plays before the link lands.
  *
  * `scroll()` is not part of `motion/mini`: when the injected module lacks it,
  * the timeline warns and leaves its children untouched.
@@ -33,7 +33,7 @@ export interface MotionScrollTimelineProps extends BaseProps {
  * @example
  * ```html
  * <section data-component="MotionScrollTimeline" class="h-[300vh]">
- *   <div data-component="Motion" data-option-animate='{ "opacity": [0, 1, 0] }' data-option-no-autoplay>
+ *   <div data-component="Motion" data-option-animate='{ "opacity": [0, 1, 0] }'>
  *     Content
  *   </div>
  * </section>

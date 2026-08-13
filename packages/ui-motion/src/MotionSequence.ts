@@ -25,17 +25,18 @@ export interface MotionSequenceProps extends BaseProps {
  * By default segments run one after another; a child's `at` option positions
  * its segment explicitly (a time in seconds, a relative offset like `"-0.2"`,
  * or `"<"` for "with the previous"), and the `stagger` option spreads the
- * children automatically. Give the children `data-option-no-autoplay` — the
- * sequence owns their playback.
+ * children automatically. The sequence owns the children's playback — leave
+ * their `autoplay` off (its default) and enable it on the sequence itself
+ * with `data-option-autoplay` to play on mount.
  *
  * Sequences need the full `motion` entry: `motion/mini`'s `animate()` does
  * not support them.
  *
  * @example
  * ```html
- * <ul data-component="MotionSequence" data-option-stagger="0.1">
- *   <li data-component="Motion" data-option-animate='{ "opacity": 1, "y": 0 }' data-option-initial='{ "opacity": 0, "y": 16 }' data-option-no-autoplay>…</li>
- *   <li data-component="Motion" data-option-animate='{ "opacity": 1, "y": 0 }' data-option-initial='{ "opacity": 0, "y": 16 }' data-option-no-autoplay>…</li>
+ * <ul data-component="MotionSequence" data-option-stagger="0.1" data-option-autoplay>
+ *   <li data-component="Motion" data-option-animate='{ "opacity": 1, "y": 0 }' data-option-initial='{ "opacity": 0, "y": 16 }'>…</li>
+ *   <li data-component="Motion" data-option-animate='{ "opacity": 1, "y": 0 }' data-option-initial='{ "opacity": 0, "y": 16 }'>…</li>
  * </ul>
  * ```
  *

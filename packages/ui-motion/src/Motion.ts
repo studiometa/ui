@@ -29,8 +29,8 @@ export interface MotionProps extends BaseProps {
  *
  * Animate the component's root element declaratively with the
  * [Motion](https://motion.dev) library. The `initial` styles are applied on
- * mount, then the `animate` keyframes play automatically unless `autoplay` is
- * disabled with `data-option-no-autoplay`.
+ * mount, then the `animate` keyframes play when playback on mount is enabled
+ * with `data-option-autoplay`.
  *
  * The component holds a single current animation. `play()` and `reverse()`
  * always drive the animation declared by the options — recreating it when an
@@ -55,7 +55,7 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
       initial: Object,
       animate: Object,
       transition: Object,
-      autoplay: { type: Boolean, default: true },
+      autoplay: Boolean,
       at: String,
       hover: Object,
       press: Object,
@@ -123,8 +123,8 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
   }
 
   /**
-   * Apply the `initial` styles, autoplay the `animate` keyframes, then bind
-   * the gesture options.
+   * Apply the `initial` styles, play the `animate` keyframes when `autoplay`
+   * is enabled, then bind the gesture options.
    */
   async mounted() {
     const { initial, autoplay } = this.$options;
