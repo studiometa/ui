@@ -32,4 +32,13 @@ export const manifest: ComponentManifest = {
     children: ['Motion'],
     load: () => import('./MotionSequence.js').then(({ MotionSequence }) => MotionSequence),
   },
+  MotionView: {
+    token: 'MotionView',
+    packageName: '@studiometa/ui-motion',
+    subpath: 'MotionView',
+    exportName: 'MotionView',
+    strategy: 'visible',
+    group: 'motion',
+    load: () => import('./MotionView.js').then(({ MotionView }) => MotionView),
+  },
 };

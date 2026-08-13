@@ -42,6 +42,11 @@
       "types": "./dist/MotionSequence.d.ts",
       "import": "./dist/MotionSequence.js"
     },
+    "./MotionView": {
+      "typescript": "./src/MotionView.ts",
+      "types": "./dist/MotionView.d.ts",
+      "import": "./dist/MotionView.js"
+    },
     "./dependencies": {
       "typescript": "./src/dependencies.ts",
       "types": "./dist/dependencies.d.ts",
