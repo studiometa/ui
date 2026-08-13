@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Fetch } from '@studiometa/ui';
 import { Window } from 'happy-dom';
-import { h, mount } from '#test-utils';
+import { h, mount, wait } from '#test-utils';
 
 describe('The Fetch class', () => {
   describe('getters', () => {
@@ -907,6 +907,7 @@ describe('The Fetch class', () => {
         callback();
         return {
           ready: Promise.resolve(),
+          finished: Promise.resolve(),
         };
       });
       Object.defineProperty(document, 'startViewTransition', {
@@ -938,6 +939,7 @@ describe('The Fetch class', () => {
         callback();
         return {
           ready: Promise.resolve(),
+          finished: Promise.resolve(),
         };
       });
       Object.defineProperty(document, 'startViewTransition', {
@@ -952,6 +954,256 @@ describe('The Fetch class', () => {
 
       // Clean up
       delete (document as any).startViewTransition;
+      container.remove();
+    });
+
+    it('should batch simultaneous updates into a single view transition', async () => {
+      const container = h('div', { id: 'container' }, [
+        h('div', { id: 'test' }, ['old content']),
+        h('div', { id: 'other' }, ['old other']),
+      ]);
+      document.body.appendChild(container);
+
+      const fetchA = new Fetch(h('a', { href: 'https://example.com' }));
+      const fetchB = new Fetch(h('a', { href: 'https://example.com' }));
+      await mount(fetchA, fetchB);
+
+      const transitionSpy = vi.fn((callback: () => void | Promise<void>) => {
+        callback();
+        return {
+          ready: Promise.resolve(),
+          finished: Promise.resolve(),
+        };
+      });
+      Object.defineProperty(document, 'startViewTransition', {
+        value: transitionSpy,
+        configurable: true,
+      });
+
+      await Promise.all([
+        fetchA.update(new URL('https://example.com'), {}, '<div id="test">new content</div>'),
+        fetchB.update(new URL('https://example.com'), {}, '<div id="other">new other</div>'),
+      ]);
+
+      // The shared scheduler flushed both updates in ONE view transition.
+      expect(transitionSpy).toHaveBeenCalledTimes(1);
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+      expect(document.getElementById('other')?.textContent).toBe('new other');
+
+      // Clean up
+      delete (document as any).startViewTransition;
+      container.remove();
+    });
+
+    it('should let a `dom-update` runner substitute the default transition runner', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+
+      await mount(fetch);
+
+      const transitionSpy = vi.fn((callback: () => void) => {
+        callback();
+        return {
+          ready: Promise.resolve(),
+          finished: Promise.resolve(),
+        };
+      });
+      Object.defineProperty(document, 'startViewTransition', {
+        value: transitionSpy,
+        configurable: true,
+      });
+
+      let contentBeforeApply: string | undefined;
+      let contentAfterApply: string | undefined;
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap((apply: () => void) => {
+          contentBeforeApply = document.getElementById('test')?.textContent;
+          apply();
+          contentAfterApply = document.getElementById('test')?.textContent;
+        });
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(contentBeforeApply).toBe('old content');
+      expect(contentAfterApply).toBe('new content');
+      expect(transitionSpy).not.toHaveBeenCalled();
+
+      // Clean up
+      delete (document as any).startViewTransition;
+      container.remove();
+    });
+
+    it('should let a `dom-update` transitioner run the update through its `update` method', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+
+      await mount(fetch);
+
+      let contentAfterMutate: string | undefined;
+      const update = vi.fn((mutate: () => void) => {
+        mutate();
+        contentAfterMutate = document.getElementById('test')?.textContent;
+      });
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap({ update });
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(update).toHaveBeenCalledOnce();
+      expect(update).toHaveBeenCalledWith(expect.any(Function));
+      expect(contentAfterMutate).toBe('new content');
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+
+      container.remove();
+    });
+
+    it('should keep the last `wrap` runner registered during dispatch', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+
+      await mount(fetch);
+
+      const firstRunner = vi.fn((apply: () => void) => apply());
+      const lastRunner = vi.fn((apply: () => void) => apply());
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap(firstRunner);
+        event.detail.wrap(lastRunner);
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(firstRunner).not.toHaveBeenCalled();
+      expect(lastRunner).toHaveBeenCalledOnce();
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+
+      container.remove();
+    });
+
+    it('should ignore and warn on `wrap` calls after the `dom-update` event dispatched', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const warnFn = vi.fn();
+      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
+
+      await mount(fetch);
+
+      let wrap: (runner: (apply: () => void) => void) => void;
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        wrap = event.detail.wrap;
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      // The default path ran since no runner was registered during dispatch.
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+
+      const lateRunner = vi.fn();
+      wrap(lateRunner);
+
+      expect(lateRunner).not.toHaveBeenCalled();
+      expect(warnFn).toHaveBeenCalledWith(
+        '`wrap` must be called synchronously while the `dom-update` event dispatches.',
+      );
+
+      container.remove();
+    });
+
+    it('should apply the content and warn when a `wrap` runner rejects', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const warnFn = vi.fn();
+      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
+      const fn = vi.fn();
+      fetch.$on('fetch-update-after', () => fn());
+
+      await mount(fetch);
+
+      const error = new Error('Runner failed');
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap(() => Promise.reject(error));
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+      expect(warnFn).toHaveBeenCalledWith('The `dom-update` runner rejected.', error);
+      expect(fn).toHaveBeenCalled();
+
+      container.remove();
+    });
+
+    it('should apply the content and warn when a `wrap` runner throws synchronously', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const warnFn = vi.fn();
+      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
+      const fn = vi.fn();
+      fetch.$on('fetch-update-after', () => fn());
+
+      await mount(fetch);
+
+      const error = new Error('Runner failed');
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap(() => {
+          throw error;
+        });
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+      expect(warnFn).toHaveBeenCalledWith('The `dom-update` runner rejected.', error);
+      expect(fn).toHaveBeenCalled();
+
+      container.remove();
+    });
+
+    it('should not apply the content twice when a `wrap` runner rejects after applying', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const warnFn = vi.fn();
+      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
+      const updateDOMSpy = vi.spyOn(fetch, '__updateDOM');
+
+      await mount(fetch);
+
+      const error = new Error('Runner failed');
+      fetch.$on('dom-update', (event: CustomEvent) => {
+        event.detail.wrap((apply: () => void) => {
+          apply();
+          return Promise.reject(error);
+        });
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+      expect(updateDOMSpy).toHaveBeenCalledOnce();
+      expect(warnFn).toHaveBeenCalledWith('The `dom-update` runner rejected.', error);
+
       container.remove();
     });
   });
@@ -1069,6 +1321,9 @@ describe('The Fetch class', () => {
 
       await mount(fetch);
       await fetch.fetch(new URL('https://example.com'));
+      // `fetch()` does not await `update()`, and the scheduled view transition
+      // resolves in a later microtask: flush before asserting.
+      await wait(0);
 
       expect(eventLog).toContain('fetch-before');
       expect(eventLog).toContain('fetch-fetch');

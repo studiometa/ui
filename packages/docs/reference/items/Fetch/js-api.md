@@ -61,7 +61,7 @@ Adds custom headers to the fetch request.
 - Type: `boolean`
 - Default: `true`
 
-Disables support for the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API).
+Wrap the content update in a [View Transition](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API), through the same [`viewTransition` scheduler](/reference/items/ViewTransition/) as every other component — updates requested in the same tick are batched into one transition and batches are serialized, so a `Fetch` swap never fights a [`Toaster`](/reference/items/Toaster/) or [`ViewTransition`](/reference/items/ViewTransition/) animation over the one-transition-per-document limit. Falls back to a direct update when the API is unavailable. Disable it with `data-option-no-view-transition`.
 
 ```html
 <a href="/path" data-component="Fetch" data-option-no-view-transition>Fetch</a>
@@ -112,10 +112,7 @@ Defines the URL to fetch. This makes it possible to drive the `Fetch` component 
 The value is resolved against the current location, so both absolute and relative URLs are supported. When set, `src` **takes precedence** over the element's own destination: it overrides a `<a>`'s `href` and a `<form>`'s `action`. For a GET `<form>`, the live form data is still folded onto the `src` URL, so a fixed query in `src` (e.g. `?section_id=…`) survives alongside the form fields, with form fields winning on conflict.
 
 ```html
-<div
-  data-component="Action InView Fetch"
-  data-option-src="/path"
-  data-on:in-view="Fetch.fetch()">
+<div data-component="Action InView Fetch" data-option-src="/path" data-on:in-view="Fetch.fetch()">
   …
 </div>
 ```
@@ -188,10 +185,7 @@ The declarative click, submit and popstate flows call this method for you, but i
 - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit), optional): extra options merged into the [`requestInit` getter](#requestinit-1) for this call.
 
 ```html
-<div
-  data-component="Action InView Fetch"
-  data-option-src="/path"
-  data-on:in-view="Fetch.fetch()">
+<div data-component="Action InView Fetch" data-option-src="/path" data-on:in-view="Fetch.fetch()">
   …
 </div>
 ```
@@ -282,6 +276,16 @@ Emitted when the DOM is updated.
   - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
   - `document` (`Document`): the content of the response, parsed with a [DOMParse](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser)
 
+### `dom-update`
+
+Emitted after the [`fetch-update` event](#fetch-update), right before the fetched content is applied to the DOM. Unlike the `fetch-*` events, this is a shared protocol event announcing an imminent DOM change — see [the `dom-update` protocol event](#the-dom-update-protocol-event).
+
+**Detail**
+
+The event `detail` is a bare object (not an argument array) with the following property:
+
+- `wrap` (`(runner: DomUpdateRunner) => void`): registers a runner or transitioner that substitutes the default update path
+
 ### `fetch-update-after`
 
 Emitted when the DOM has been updated.
@@ -317,3 +321,29 @@ Emitted when the fetch request has been aborted.
   - `url` (`URL`): the URL that was fetched
   - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
   - `reason` (`any`): the reason the request was aborted
+
+## The `dom-update` protocol event
+
+Before applying the fetched content, `Fetch` dispatches the bubbling [`dom-update` event](#dom-update) announcing the imminent DOM change. Because it bubbles, any ancestor can listen for it and call `event.detail.wrap(runnerOrTransitioner)` to substitute the runner that applies the fetched content — instead of the default [View Transition](#viewtransition) or direct update — and drive the swap with its own choreography, similar to Turbo's `turbo:before-render` render substitution.
+
+`wrap()` accepts a `DomUpdateRunner`, which is either form:
+
+- a **function** with the signature `(apply: () => void) => void | Promise<unknown>`: it receives an `apply` function that injects the fetched content into the DOM, and its return value is awaited before the [`fetch-update-after` event](#fetch-update-after) is emitted
+- a **transitioner**: any duck-typed object with an `update(mutate)` method (the `DomUpdateTransitioner` interface), e.g. `MotionView` from `@studiometa/ui-motion` — its `update()` method receives the apply function and its return value is awaited the same way
+
+The protocol enforces three rules:
+
+- **Synchronous registration only**: `wrap` must be called synchronously while the event dispatches — later calls warn and are ignored.
+- **Last call wins**: a single runner is kept, the last `wrap` call during dispatch replaces any previous one.
+- **The content is never lost**: if the runner throws or rejects, the error is logged with a warning and the content is applied directly when it has not been applied yet. The `fetch-update-after` event is always emitted.
+
+With the upcoming ambient `MotionView` from `@studiometa/ui-motion`, the common case is pure nesting: a `MotionView` wrapping the updated content picks up the bubbling event by itself, with no attributes to write. When the transitioner lives elsewhere in the tree, an [Action](/reference/items/Action/) is the explicit escape hatch to route the event to it:
+
+```html
+<div data-component="Action" data-on:dom-update="MotionView(#list)->event.detail.wrap(target)">
+  <ul id="list">
+    …
+  </ul>
+  <a href="/page/2" data-component="Fetch">Next page</a>
+</div>
+```

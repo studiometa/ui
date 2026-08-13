@@ -2,8 +2,9 @@ import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseConfig, BaseProps, BaseInterface } from '@studiometa/js-toolkit';
 import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
 import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
-import { isFunction } from '@studiometa/js-toolkit/utils/isFunction';
 import morphdom from 'morphdom';
+import { viewTransition as scheduleViewTransition } from '../ViewTransition/scheduler.js';
+import { emitDomUpdate, runWrapped } from '../utils/dom-update.js';
 import { adoptNewScripts, getScripts } from './utils.js';
 
 export interface FetchProps extends BaseProps {
@@ -80,7 +81,7 @@ export class Fetch<T extends BaseProps = BaseProps>
    */
   static config: BaseConfig = {
     name: 'Fetch',
-    emits: Object.values(this.FETCH_EVENTS),
+    emits: [...Object.values(this.FETCH_EVENTS), 'dom-update'],
     refs: ['headers[]'],
     options: {
       history: Boolean,
@@ -354,8 +355,18 @@ export class Fetch<T extends BaseProps = BaseProps>
    * a declarative option string.
    * @protected
    */
-  __parseResponse(response: Response, url: URL, requestInit: RequestInit): Promise<string> | string {
-    const fn = new Function('response', 'url', 'requestInit', 'self', `return ${this.$options.response}`);
+  __parseResponse(
+    response: Response,
+    url: URL,
+    requestInit: RequestInit,
+  ): Promise<string> | string {
+    const fn = new Function(
+      'response',
+      'url',
+      'requestInit',
+      'self',
+      `return ${this.$options.response}`,
+    );
     return fn.call(this, response, url, requestInit, self);
   }
 
@@ -400,6 +411,8 @@ export class Fetch<T extends BaseProps = BaseProps>
 
   /**
    * Dispatch the contents to update to their matching FrameTarget.
+   *
+   * After the `fetch-update` event, the bubbling `dom-update` protocol event announces the imminent DOM change. Its `detail.wrap()` lets a listener register a runner — a function receiving the `apply` callback, or a transitioner object exposing `update(mutate)` — that substitutes the default update path and is awaited before the `fetch-update-after` event. Registration is only valid synchronously while the event dispatches and the last `wrap` call wins. With no registered runner and the `viewTransition` option enabled, the update runs through the shared `viewTransition` scheduler — batched and serialized with every other scheduled view transition, falling back to a direct update when the API is unavailable.
    */
   async update(url: URL, requestInit: RequestInit, content: string) {
     const { FETCH_EVENTS } = this.constructor;
@@ -423,10 +436,14 @@ export class Fetch<T extends BaseProps = BaseProps>
 
     this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, fragment });
 
-    if (viewTransition && isFunction(document.startViewTransition)) {
-      await document.startViewTransition(() => {
+    const runner = emitDomUpdate(this);
+
+    if (runner) {
+      await runWrapped(this, runner, () => this.__updateDOM(fragment));
+    } else if (viewTransition) {
+      await scheduleViewTransition(() => {
         this.__updateDOM(fragment);
-      }).ready;
+      });
     } else {
       this.__updateDOM(fragment);
     }

@@ -116,6 +116,8 @@ test('@studiometa/ui barrel export surface', () => {
       "DisclosureGroup [value]",
       "DisclosureGroupProps [type]",
       "DisclosureProps [type]",
+      "DomUpdateRunner [type]",
+      "DomUpdateTransitioner [type]",
       "Draggable [value]",
       "DraggableProps [type]",
       "Fetch [value]",

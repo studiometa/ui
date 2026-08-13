@@ -271,6 +271,22 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'DomUpdateRunner',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Fetch/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'DomUpdateTransitioner',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Fetch/js-api',
+    status: 'stable',
+  },
+  {
     name: 'DraggableProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',
@@ -288,6 +304,14 @@ export const publicContractSymbols = [
   },
   {
     name: 'FetchProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Fetch/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'FetchUpdateWrapper',
     kind: 'type',
     package: 'npm:@studiometa/ui',
     importPath: '@studiometa/ui',
