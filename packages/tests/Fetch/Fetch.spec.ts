@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Fetch } from '@studiometa/ui';
 import { Window } from 'happy-dom';
-import { h, mount } from '#test-utils';
+import { h, mount, wait } from '#test-utils';
 
 describe('The Fetch class', () => {
   describe('getters', () => {
@@ -907,6 +907,7 @@ describe('The Fetch class', () => {
         callback();
         return {
           ready: Promise.resolve(),
+          finished: Promise.resolve(),
         };
       });
       Object.defineProperty(document, 'startViewTransition', {
@@ -938,6 +939,7 @@ describe('The Fetch class', () => {
         callback();
         return {
           ready: Promise.resolve(),
+          finished: Promise.resolve(),
         };
       });
       Object.defineProperty(document, 'startViewTransition', {
@@ -949,6 +951,44 @@ describe('The Fetch class', () => {
 
       expect(transitionSpy).not.toHaveBeenCalled();
       expect(updateDOMSpy).toHaveBeenCalled();
+
+      // Clean up
+      delete (document as any).startViewTransition;
+      container.remove();
+    });
+
+    it('should batch simultaneous updates into a single view transition', async () => {
+      const container = h('div', { id: 'container' }, [
+        h('div', { id: 'test' }, ['old content']),
+        h('div', { id: 'other' }, ['old other']),
+      ]);
+      document.body.appendChild(container);
+
+      const fetchA = new Fetch(h('a', { href: 'https://example.com' }));
+      const fetchB = new Fetch(h('a', { href: 'https://example.com' }));
+      await mount(fetchA, fetchB);
+
+      const transitionSpy = vi.fn((callback: () => void | Promise<void>) => {
+        callback();
+        return {
+          ready: Promise.resolve(),
+          finished: Promise.resolve(),
+        };
+      });
+      Object.defineProperty(document, 'startViewTransition', {
+        value: transitionSpy,
+        configurable: true,
+      });
+
+      await Promise.all([
+        fetchA.update(new URL('https://example.com'), {}, '<div id="test">new content</div>'),
+        fetchB.update(new URL('https://example.com'), {}, '<div id="other">new other</div>'),
+      ]);
+
+      // The shared scheduler flushed both updates in ONE view transition.
+      expect(transitionSpy).toHaveBeenCalledTimes(1);
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+      expect(document.getElementById('other')?.textContent).toBe('new other');
 
       // Clean up
       delete (document as any).startViewTransition;
@@ -968,6 +1008,7 @@ describe('The Fetch class', () => {
         callback();
         return {
           ready: Promise.resolve(),
+          finished: Promise.resolve(),
         };
       });
       Object.defineProperty(document, 'startViewTransition', {
@@ -1252,6 +1293,9 @@ describe('The Fetch class', () => {
 
       await mount(fetch);
       await fetch.fetch(new URL('https://example.com'));
+      // `fetch()` does not await `update()`, and the scheduled view transition
+      // resolves in a later microtask: flush before asserting.
+      await wait(0);
 
       expect(eventLog).toContain('fetch-before');
       expect(eventLog).toContain('fetch-fetch');

@@ -2,8 +2,8 @@ import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseConfig, BaseProps, BaseInterface } from '@studiometa/js-toolkit';
 import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
 import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
-import { isFunction } from '@studiometa/js-toolkit/utils/isFunction';
 import morphdom from 'morphdom';
+import { viewTransition as scheduleViewTransition } from '../ViewTransition/scheduler.js';
 import { adoptNewScripts, getScripts } from './utils.js';
 
 export interface FetchProps extends BaseProps {
@@ -406,7 +406,7 @@ export class Fetch<T extends BaseProps = BaseProps>
   /**
    * Dispatch the contents to update to their matching FrameTarget.
    *
-   * The `fetch-update` event payload exposes a `wrap(runner)` function letting listeners substitute the transition runner that applies the fetched content. The runner receives an `apply` function that injects the content into the DOM and is awaited before the `fetch-update-after` event. Registration is only valid synchronously while the event dispatches and the last `wrap` call wins. With no registered runner, the default paths run: a View Transition when the `viewTransition` option is enabled and supported, a direct update otherwise.
+   * The `fetch-update` event payload exposes a `wrap(runner)` function letting listeners substitute the transition runner that applies the fetched content. The runner receives an `apply` function that injects the content into the DOM and is awaited before the `fetch-update-after` event. Registration is only valid synchronously while the event dispatches and the last `wrap` call wins. With no registered runner and the `viewTransition` option enabled, the update runs through the shared `viewTransition` scheduler — batched and serialized with every other scheduled view transition, falling back to a direct update when the API is unavailable.
    */
   async update(url: URL, requestInit: RequestInit, content: string) {
     const { FETCH_EVENTS } = this.constructor;
@@ -444,10 +444,10 @@ export class Fetch<T extends BaseProps = BaseProps>
           apply();
         }
       }
-    } else if (viewTransition && isFunction(document.startViewTransition)) {
-      await document.startViewTransition(() => {
+    } else if (viewTransition) {
+      await scheduleViewTransition(() => {
         this.__updateDOM(fragment);
-      }).ready;
+      });
     } else {
       this.__updateDOM(fragment);
     }

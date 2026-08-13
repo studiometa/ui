@@ -61,7 +61,7 @@ Adds custom headers to the fetch request.
 - Type: `boolean`
 - Default: `true`
 
-Disables support for the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API).
+Wrap the content update in a [View Transition](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API), through the same [`viewTransition` scheduler](/reference/items/ViewTransition/) as every other component — updates requested in the same tick are batched into one transition and batches are serialized, so a `Fetch` swap never fights a [`Toaster`](/reference/items/Toaster/) or [`ViewTransition`](/reference/items/ViewTransition/) animation over the one-transition-per-document limit. Falls back to a direct update when the API is unavailable. Disable it with `data-option-no-view-transition`.
 
 ```html
 <a href="/path" data-component="Fetch" data-option-no-view-transition>Fetch</a>
