@@ -295,7 +295,7 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
-    name: 'FetchThroughRunner',
+    name: 'FetchUpdateWrapper',
     kind: 'type',
     package: 'npm:@studiometa/ui',
     importPath: '@studiometa/ui',

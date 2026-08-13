@@ -29,9 +29,9 @@ export type FetchConstructor<T extends Fetch = Fetch> = {
 } & Pick<typeof Fetch, keyof typeof Fetch>;
 
 /**
- * Transition runner registered with `through()` on the `fetch-update` event payload. It receives an `apply` function that injects the fetched content into the DOM and is awaited before the `fetch-update-after` event is emitted.
+ * Transition runner registered with `wrap()` on the `fetch-update` event payload. It receives an `apply` function that injects the fetched content into the DOM and is awaited before the `fetch-update-after` event is emitted.
  */
-export type FetchThroughRunner = (apply: () => void) => void | Promise<unknown>;
+export type FetchUpdateWrapper = (apply: () => void) => void | Promise<unknown>;
 
 /**
  * Fetch class.
@@ -406,7 +406,7 @@ export class Fetch<T extends BaseProps = BaseProps>
   /**
    * Dispatch the contents to update to their matching FrameTarget.
    *
-   * The `fetch-update` event payload exposes a `through(runner)` function letting listeners substitute the transition runner that applies the fetched content. The runner receives an `apply` function that injects the content into the DOM and is awaited before the `fetch-update-after` event. Registration is only valid synchronously while the event dispatches and the last `through` call wins. With no registered runner, the default paths run: a View Transition when the `viewTransition` option is enabled and supported, a direct update otherwise.
+   * The `fetch-update` event payload exposes a `wrap(runner)` function letting listeners substitute the transition runner that applies the fetched content. The runner receives an `apply` function that injects the content into the DOM and is awaited before the `fetch-update-after` event. Registration is only valid synchronously while the event dispatches and the last `wrap` call wins. With no registered runner, the default paths run: a View Transition when the `viewTransition` option is enabled and supported, a direct update otherwise.
    */
   async update(url: URL, requestInit: RequestInit, content: string) {
     const { FETCH_EVENTS } = this.constructor;
@@ -456,23 +456,23 @@ export class Fetch<T extends BaseProps = BaseProps>
   }
 
   /**
-   * Emit the `fetch-update` event with a `through(runner)` function on its payload and return the registered transition runner, if any. Registration is only valid while the event dispatches: later calls warn and are ignored. A single runner is kept — the last `through` call during dispatch wins.
+   * Emit the `fetch-update` event with a `wrap(runner)` function on its payload and return the registered transition runner, if any. Registration is only valid while the event dispatches: later calls warn and are ignored. A single runner is kept — the last `wrap` call during dispatch wins.
    * @private
    */
-  __emitUpdate(url: URL, requestInit: RequestInit, fragment: Document): FetchThroughRunner | null {
+  __emitUpdate(url: URL, requestInit: RequestInit, fragment: Document): FetchUpdateWrapper | null {
     const { FETCH_EVENTS } = this.constructor;
     let dispatching = true;
-    let runner: FetchThroughRunner | null = null;
-    const through = (newRunner: FetchThroughRunner) => {
+    let runner: FetchUpdateWrapper | null = null;
+    const wrap = (newRunner: FetchUpdateWrapper) => {
       if (!dispatching) {
         this.$warn(
-          `\`through\` must be called synchronously while the \`${FETCH_EVENTS.UPDATE}\` event dispatches.`,
+          `\`wrap\` must be called synchronously while the \`${FETCH_EVENTS.UPDATE}\` event dispatches.`,
         );
         return;
       }
       runner = newRunner;
     };
-    this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, fragment, through });
+    this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, fragment, wrap });
     dispatching = false;
     return runner;
   }

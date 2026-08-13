@@ -275,7 +275,7 @@ Emitted when the DOM is updated.
   - `url` (`URL`): the URL that was fetched
   - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
   - `document` (`Document`): the content of the response, parsed with a [DOMParse](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser)
-  - `through` (`(runner: FetchThroughRunner) => void`): registers a [transition runner](#substituting-the-transition-runner-with-through) that substitutes the default update path
+  - `wrap` (`(runner: FetchUpdateWrapper) => void`): registers a [transition runner](#substituting-the-transition-runner-with-wrap) that substitutes the default update path
 
 ### `fetch-update-after`
 
@@ -313,14 +313,14 @@ Emitted when the fetch request has been aborted.
   - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
   - `reason` (`any`): the reason the request was aborted
 
-## Substituting the transition runner with `through`
+## Substituting the transition runner with `wrap`
 
-The [`fetch-update` event](#fetch-update) exposes a `through(runner)` function on its payload. Any listener can substitute the transition runner that applies the fetched content — instead of the default [View Transition](#viewtransition) or direct update — and drive the swap with its own choreography, similar to Turbo's `turbo:before-render` render substitution.
+The [`fetch-update` event](#fetch-update) exposes a `wrap(runner)` function on its payload. Any listener can substitute the transition runner that applies the fetched content — instead of the default [View Transition](#viewtransition) or direct update — and drive the swap with its own choreography, similar to Turbo's `turbo:before-render` render substitution.
 
-The runner has the `FetchThroughRunner` signature: `(apply: () => void) => void | Promise<unknown>`. It receives an `apply` function that injects the fetched content into the DOM, and its return value is awaited before the [`fetch-update-after` event](#fetch-update-after) is emitted.
+The runner has the `FetchUpdateWrapper` signature: `(apply: () => void) => void | Promise<unknown>`. It receives an `apply` function that injects the fetched content into the DOM, and its return value is awaited before the [`fetch-update-after` event](#fetch-update-after) is emitted.
 
-- **Synchronous registration only**: `through` must be called synchronously while the event dispatches — later calls warn and are ignored.
-- **Last call wins**: a single runner is kept, the last `through` call during dispatch replaces any previous one.
+- **Synchronous registration only**: `wrap` must be called synchronously while the event dispatches — later calls warn and are ignored.
+- **Last call wins**: a single runner is kept, the last `wrap` call during dispatch replaces any previous one.
 - **The content is never lost**: if the runner throws or rejects, the error is logged with a warning and the content is applied directly when `apply` has not run yet. The `fetch-update-after` event is always emitted.
 
 This is the seam used by the upcoming `MotionView` component from `@studiometa/ui-motion` to animate fetched-content swaps, wired declaratively through an [Action](/reference/items/Action/):
@@ -328,7 +328,7 @@ This is the seam used by the upcoming `MotionView` component from `@studiometa/u
 ```html
 <div
   data-component="Action"
-  data-on:fetch-update="MotionView(#list)->event.detail[0].through((apply) => target.update(apply))">
+  data-on:fetch-update="MotionView(#list)->event.detail[0].wrap((apply) => target.update(apply))">
   <ul id="list">
     …
   </ul>

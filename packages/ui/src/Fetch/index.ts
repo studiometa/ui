@@ -2,7 +2,7 @@ export {
   Fetch,
   type FetchConstructor,
   type FetchProps,
-  type FetchThroughRunner,
+  type FetchUpdateWrapper,
 } from './Fetch.js';
 export {
   FetchShopifyPartial,
