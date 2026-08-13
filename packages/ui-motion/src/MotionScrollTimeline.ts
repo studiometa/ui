@@ -39,7 +39,7 @@ export interface MotionScrollTimelineProps extends BaseProps {
  * </section>
  * ```
  *
- * @link https://ui.studiometa.dev/reference/items/Motion/js-api#motionscrolltimeline
+ * @link https://ui.studiometa.dev/reference/items/MotionScrollTimeline/
  */
 export class MotionScrollTimeline<T extends BaseProps = BaseProps> extends Base<
   MotionScrollTimelineProps & T

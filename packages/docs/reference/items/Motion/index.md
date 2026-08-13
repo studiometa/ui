@@ -10,6 +10,8 @@ The component is a thin, headless playback surface exposing imperative methods t
 
 The `motion` peer dependency is resolved with a lazy `import()` the first time an animation is built, so it stays out of your main bundle until needed. See [providing the Motion dependency](./js-api#providing-the-motion-dependency) to inject a specific build such as `motion/mini`.
 
+`Motion` is the playback primitive of `@studiometa/ui-motion`, which also ships [`MotionScrollTimeline`](/reference/items/MotionScrollTimeline/) to drive a group of `Motion` children with the scroll, [`MotionSequence`](/reference/items/MotionSequence/) to compose them into one staggered timeline, and [`MotionView`](/reference/items/MotionView/) to play DOM updates as view transitions.
+
 ## Usage
 
 Option values are parsed as JSON, so object keys must be quoted:

@@ -931,7 +931,7 @@ export const publicContractSymbols = [
     kind: 'type',
     package: 'npm:@studiometa/ui-motion',
     importPath: '@studiometa/ui-motion',
-    href: '/reference/items/Motion/js-api',
+    href: '/reference/items/MotionScrollTimeline/js-api',
     status: 'stable',
   },
   {
@@ -939,7 +939,7 @@ export const publicContractSymbols = [
     kind: 'type',
     package: 'npm:@studiometa/ui-motion',
     importPath: '@studiometa/ui-motion',
-    href: '/reference/items/Motion/js-api',
+    href: '/reference/items/MotionSequence/js-api',
     status: 'stable',
   },
   {
@@ -947,7 +947,7 @@ export const publicContractSymbols = [
     kind: 'type',
     package: 'npm:@studiometa/ui-motion',
     importPath: '@studiometa/ui-motion',
-    href: '/reference/items/Motion/js-api',
+    href: '/reference/items/MotionView/js-api',
     status: 'stable',
   },
 ] satisfies ReferenceSymbol[];
