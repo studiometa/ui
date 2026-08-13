@@ -12,10 +12,7 @@ import { MotionView } from '@studiometa/ui-motion';
 import { ViewTransition } from '@studiometa/ui';
 import { h } from '#test-utils';
 
-async function mountView(
-  attributes: Record<string, string> = {},
-  children: HTMLElement[] = [],
-) {
+async function mountView(attributes: Record<string, string> = {}, children: HTMLElement[] = []) {
   const el = h('div', { dataComponent: 'MotionView', ...attributes }, children);
   const instance = new MotionView(el);
   await instance.$mount();
@@ -149,5 +146,74 @@ describe('MotionView component', () => {
 
     await expect(instance.update(mutate)).resolves.toBeUndefined();
     expect(mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('should wrap a `dom-update` announced inside its subtree', async () => {
+    const child = h('div');
+    const { instance } = await mountView({}, [child]);
+    const wrap = vi.fn();
+
+    child.dispatchEvent(new CustomEvent('dom-update', { bubbles: true, detail: { wrap } }));
+
+    expect(wrap).toHaveBeenCalledTimes(1);
+    expect(wrap).toHaveBeenCalledWith(instance);
+
+    await instance.$destroy();
+  });
+
+  it('should not wrap a `dom-update` with the `auto` option disabled', async () => {
+    const child = h('div');
+    const { instance } = await mountView({ dataOptionNoAuto: '' }, [child]);
+    const wrap = vi.fn();
+
+    child.dispatchEvent(new CustomEvent('dom-update', { bubbles: true, detail: { wrap } }));
+
+    expect(wrap).not.toHaveBeenCalled();
+
+    await instance.$destroy();
+  });
+
+  it('should join the lifecycle of a containing dialog only', async () => {
+    const { el, instance } = await mountView();
+    const ancestor = h('div', {}, [el]);
+    document.body.append(ancestor);
+    const sibling = h('div');
+    document.body.append(sibling);
+    const waitUntil = vi.fn();
+
+    for (const event of ['open', 'close']) {
+      ancestor.dispatchEvent(new CustomEvent(event, { bubbles: true, detail: { waitUntil } }));
+    }
+    expect(waitUntil).toHaveBeenCalledTimes(2);
+    expect(waitUntil).toHaveBeenCalledWith(instance);
+
+    waitUntil.mockClear();
+    sibling.dispatchEvent(new CustomEvent('open', { bubbles: true, detail: { waitUntil } }));
+    el.dispatchEvent(new CustomEvent('open', { bubbles: true, detail: { waitUntil } }));
+    expect(waitUntil).not.toHaveBeenCalled();
+
+    await instance.$destroy();
+    ancestor.remove();
+    sibling.remove();
+  });
+
+  it('should stop listening once destroyed', async () => {
+    const child = h('div');
+    const { el, instance } = await mountView({}, [child]);
+    const ancestor = h('div', {}, [el]);
+    document.body.append(ancestor);
+    const wrap = vi.fn();
+    const waitUntil = vi.fn();
+
+    await instance.$destroy();
+
+    child.dispatchEvent(new CustomEvent('dom-update', { bubbles: true, detail: { wrap } }));
+    ancestor.dispatchEvent(new CustomEvent('open', { bubbles: true, detail: { waitUntil } }));
+    ancestor.dispatchEvent(new CustomEvent('close', { bubbles: true, detail: { waitUntil } }));
+
+    expect(wrap).not.toHaveBeenCalled();
+    expect(waitUntil).not.toHaveBeenCalled();
+
+    ancestor.remove();
   });
 });
