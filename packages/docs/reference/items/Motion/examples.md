@@ -151,6 +151,27 @@ A single element carries `Action`, `Motion` and [`TimerProgress`](/reference/ite
 
 </llm-only>
 
+## Animated state change with `MotionView`
+
+[`MotionView`](./js-api#motionview) wraps DOM updates in Motion's `animateView()`, as a drop-in alternative to [`ViewTransition`](/reference/items/ViewTransition/): toggling swaps the `enterTo`/`leaveTo` classes inside a view transition, and the spring `transition` with the `layout` morph animates the card between its two states — no `::view-transition-*` CSS needed. Where view transitions are unavailable, the classes still swap, only without animation.
+
+<llm-exclude>
+  <PreviewPlayground
+    :html="() => import('./stories/view/app.twig')"
+    :script="() => import('./stories/view/app.js?raw')"
+    />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/view/app.twig
+<<< ./stories/view/app.js
+
+:::
+
+</llm-only>
+
 ## Scroll-driven timeline
 
 [`MotionScrollTimeline`](./js-api#motionscrolltimeline) separates the timeline from the animations, like the `ScrollAnimation` family: the tall section defines the scroll range, and every `Motion` inside it is driven by that progress through Motion's `scroll()` — hardware-accelerated where the browser supports `ScrollTimeline`. Keyframe arrays give each child a multi-step track across the same range, and registering the timeline is enough: it mounts its `Motion` children itself.

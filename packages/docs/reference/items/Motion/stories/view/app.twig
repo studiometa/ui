@@ -1,0 +1,19 @@
+<div class="grid gap-4 justify-items-start">
+  <div
+    data-component="MotionView"
+    data-option-enter-to="w-72 p-8 rounded-3xl bg-emerald-400 dark:bg-emerald-600"
+    data-option-leave-to="w-40 p-4 rounded bg-blue-400 dark:bg-blue-600"
+    data-option-transition='{ "type": "spring", "bounce": 0.3 }'
+    data-option-layout
+    class="w-40 p-4 rounded bg-blue-400 dark:bg-blue-600 text-white font-bold">
+    One card, two states
+  </div>
+
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="MotionView->target.toggle()"
+    class="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">
+    Toggle
+  </button>
+</div>

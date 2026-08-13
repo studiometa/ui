@@ -54,7 +54,7 @@ The `hover`, `press` and `inView` options apply keyframes while their state hold
 <div data-component="Motion" data-option-hover='{ "scale": 1.1 }'>Hover me</div>
 ```
 
-`MotionSequence` composes its `Motion` children into one timeline (with per-child `at` positions or an automatic `stagger`), and the whole playback surface drives the sequence. For scroll-driven animations, wrap `Motion` components in a `MotionScrollTimeline`: the wrapper's traversal of the viewport defines the timeline and every child is bound to that progress with Motion's `scroll()`, hardware-accelerated where the browser supports `ScrollTimeline`:
+`MotionView` wraps DOM updates (its `enter()`/`leave()`/`toggle()` class swaps, or any mutation through `update()`) in Motion's `animateView()`, as a drop-in alternative to the `ViewTransition` component powered by Motion keyframes and springs instead of CSS pseudo-elements. `MotionSequence` composes its `Motion` children into one timeline (with per-child `at` positions or an automatic `stagger`), and the whole playback surface drives the sequence. For scroll-driven animations, wrap `Motion` components in a `MotionScrollTimeline`: the wrapper's traversal of the viewport defines the timeline and every child is bound to that progress with Motion's `scroll()`, hardware-accelerated where the browser supports `ScrollTimeline`:
 
 ```html
 <section data-component="MotionScrollTimeline" class="h-[300vh]">
