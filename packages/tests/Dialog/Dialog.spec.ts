@@ -221,6 +221,96 @@ describe('The Dialog component', () => {
     expect(opened).toBe(true);
   });
 
+  it('should bubble the `open` and `close` events up the DOM tree', async () => {
+    // The dialog is a child of `document.body`: an ancestor listener receives
+    // the bubbling lifecycle events.
+    const { dialog } = await createDialog();
+    const openFn = vi.fn();
+    const closeFn = vi.fn();
+    document.body.addEventListener('open', openFn);
+    document.body.addEventListener('close', closeFn);
+
+    await dialog.open();
+    expect(openFn).toHaveBeenCalledTimes(1);
+    await dialog.close();
+    expect(closeFn).toHaveBeenCalledTimes(1);
+
+    document.body.removeEventListener('open', openFn);
+    document.body.removeEventListener('close', closeFn);
+  });
+
+  it('should follow the lifecycle of a transitioner given to `waitUntil`', async () => {
+    const { dialog, el } = await createDialog();
+    let releaseEnter: () => void;
+    let releaseLeave: () => void;
+    const transitioner = {
+      enter: vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            releaseEnter = resolve;
+          }),
+      ),
+      leave: vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            releaseLeave = resolve;
+          }),
+      ),
+    };
+    dialog.$on('open', (event) => {
+      (event as CustomEvent<{ waitUntil(x: unknown): void }>).detail.waitUntil(transitioner);
+    });
+    dialog.$on('close', (event) => {
+      (event as CustomEvent<{ waitUntil(x: unknown): void }>).detail.waitUntil(transitioner);
+    });
+
+    let opened = false;
+    const opening = dialog.open().then(() => {
+      opened = true;
+    });
+    // `enter()` was called on open and its pending promise holds `open()`.
+    expect(transitioner.enter).toHaveBeenCalledTimes(1);
+    expect(transitioner.leave).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(opened).toBe(false);
+
+    releaseEnter();
+    await opening;
+    expect(opened).toBe(true);
+
+    const closing = dialog.close();
+    // `leave()` was called on close and the native dialog is still open.
+    expect(transitioner.leave).toHaveBeenCalledTimes(1);
+    await Promise.resolve();
+    expect(el.close).not.toHaveBeenCalled();
+
+    releaseLeave();
+    await closing;
+    expect(el.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('should complete the choreography when a transitioner method rejects', async () => {
+    const { dialog, el } = await createDialog();
+    const warn = vi.fn();
+    Object.defineProperty(dialog, '$warn', { configurable: true, get: () => warn });
+    const error = new Error('transitioner failed');
+    const transitioner = {
+      enter: () => Promise.resolve(),
+      leave: () => Promise.reject(error),
+    };
+    dialog.$on('close', (event) => {
+      (event as CustomEvent<{ waitUntil(x: unknown): void }>).detail.waitUntil(transitioner);
+    });
+
+    await dialog.open();
+    await dialog.close();
+
+    // The rejection is reported, and the dialog still hides and cleans up.
+    expect(warn).toHaveBeenCalledWith('An extension of the `close` event rejected.', error);
+    expect(el.close).toHaveBeenCalledTimes(1);
+    expect(document.documentElement.style.overflow).toBe('');
+  });
+
   it('should ignore and warn on `waitUntil` calls after the event dispatched', async () => {
     const { dialog, el } = await createDialog();
     // `$warn` is a prototype getter: shadow it on the instance to observe calls.
@@ -228,8 +318,9 @@ describe('The Dialog component', () => {
     Object.defineProperty(dialog, '$warn', { configurable: true, get: () => warn });
     let waitUntil: (promise: Promise<unknown>) => void;
     dialog.$on('close', (event) => {
-      ({ waitUntil } = (event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>)
-        .detail);
+      ({ waitUntil } = (
+        event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>
+      ).detail);
     });
 
     await dialog.open();

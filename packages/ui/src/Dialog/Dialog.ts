@@ -32,6 +32,16 @@ export interface DialogProps extends BaseProps {
 }
 
 /**
+ * A transitioner following the dialog lifecycle — the duck-typed object form
+ * accepted by `waitUntil()`: `enter()` is awaited on `open`, `leave()` on
+ * `close`.
+ */
+interface DialogTransitioner {
+  enter(): unknown;
+  leave(): unknown;
+}
+
+/**
  * Dialog class.
  *
  * A headless wrapper around the native `<dialog>` element. It owns only what
@@ -147,33 +157,42 @@ export class Dialog<T extends BaseProps = BaseProps> extends Base<T & DialogProp
   }
 
   /**
-   * Emit a lifecycle event whose listeners can extend the choreography with
-   * `event.detail.waitUntil(promise)` — any component (or plain JavaScript)
-   * can hold the dialog open (or its `open()` promise pending) without being
-   * a declared child. Registration is only valid while the event dispatches;
-   * later calls warn and are ignored. Every registered promise is wrapped so
-   * a rejection settles with a warning instead of propagating — a failing
-   * extension must never leave the choreography incomplete (native dialog
-   * open, scroll locked).
+   * Emit a bubbling lifecycle event whose listeners can extend the
+   * choreography with `event.detail.waitUntil(x)` — any component (or plain
+   * JavaScript) can hold the dialog open (or its `open()` promise pending)
+   * without being a declared child, and ancestors can route the event since
+   * it bubbles. `waitUntil()` accepts a thenable, or a transitioner: a
+   * duck-typed object with `enter()` and `leave()` methods following the
+   * dialog lifecycle — `enter()` is awaited on `open`, `leave()` on `close`.
+   * Registration is only valid while the event dispatches; later calls warn
+   * and are ignored. Every registered promise is wrapped so a rejection
+   * settles with a warning instead of propagating — a failing extension must
+   * never leave the choreography incomplete (native dialog open, scroll
+   * locked).
    * @private
    */
   __emitExtendable(name: 'open' | 'close'): Promise<unknown>[] {
     const pending: Promise<unknown>[] = [];
+    const method = name === 'open' ? 'enter' : 'leave';
     let dispatching = true;
-    const waitUntil = (promise: Promise<unknown>) => {
+    const waitUntil = (extension: Promise<unknown> | DialogTransitioner) => {
       if (!dispatching) {
         this.$warn(
           `\`waitUntil\` must be called synchronously while the \`${name}\` event dispatches.`,
         );
         return;
       }
+      const value =
+        typeof (extension as DialogTransitioner)?.[method] === 'function'
+          ? (extension as DialogTransitioner)[method]()
+          : extension;
       pending.push(
-        Promise.resolve(promise).catch((error) => {
+        Promise.resolve(value).catch((error) => {
           this.$warn(`An extension of the \`${name}\` event rejected.`, error);
         }),
       );
     };
-    this.$emit(new CustomEvent(name, { detail: { waitUntil } }));
+    this.$emit(new CustomEvent(name, { detail: { waitUntil }, bubbles: true }));
     dispatching = false;
     return pending;
   }
