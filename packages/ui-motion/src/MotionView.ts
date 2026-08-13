@@ -19,6 +19,7 @@ export interface MotionViewProps extends BaseProps {
     enter: DOMKeyframesDefinition;
     exit: DOMKeyframesDefinition;
     layout: boolean;
+    auto: boolean;
   };
 }
 
@@ -36,6 +37,12 @@ export interface MotionViewProps extends BaseProps {
  * The mutation is never lost: without browser support the update applies
  * without animation, and `animateView()` is not part of `motion/mini` — the
  * component then warns and applies updates directly.
+ *
+ * Containment is the wiring: with the `auto` option (on by default), the
+ * component wraps any `dom-update` announced by a mutating component inside
+ * its subtree, and joins the open/close lifecycle of a containing `Dialog`
+ * through the extendable events' `waitUntil()`. Explicit `Action` wiring
+ * (`event.detail.wrap(target)`) remains for cross-subtree topologies.
  *
  * @example
  * ```html
@@ -65,6 +72,10 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
       enter: Object,
       exit: Object,
       layout: Boolean,
+      auto: {
+        type: Boolean,
+        default: true,
+      },
     },
   };
 
@@ -74,6 +85,39 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
   state: 'entering' | 'leaving' | null = null;
 
   /**
+   * Wrap a `dom-update` announced by a mutating component inside the subtree:
+   * the bubbling event reaches the root element, and passing the instance to
+   * `detail.wrap()` lets the emitter run its mutation through `update()`.
+   * @private
+   */
+  __onDomUpdate = (event: Event) => {
+    const { wrap } = (event as CustomEvent).detail ?? {};
+    if (typeof wrap === 'function') {
+      wrap(this);
+    }
+  };
+
+  /**
+   * Join the open/close lifecycle of a containing `Dialog`: its extendable
+   * events bubble up past the root element to the document, and handing the
+   * instance to `detail.waitUntil()` lets the dialog call `enter()` on open
+   * and `leave()` on close.
+   * @private
+   */
+  __onDialogPhase = (event: Event) => {
+    const { target } = event;
+    const { waitUntil } = (event as CustomEvent).detail ?? {};
+    if (
+      target instanceof Element &&
+      target !== this.$el &&
+      target.contains(this.$el) &&
+      typeof waitUntil === 'function'
+    ) {
+      waitUntil(this);
+    }
+  };
+
+  /**
    * Get the transition target.
    */
   get target(): HTMLElement {
@@ -81,13 +125,31 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
   }
 
   /**
-   * Assign the configured `view-transition-name` to the target element.
+   * Assign the configured `view-transition-name` to the target element and,
+   * with the `auto` option, listen for ambient wiring events: `dom-update`
+   * from descendant mutators on the root element, and the extendable
+   * `open`/`close` events of a containing `Dialog` on the document.
    */
   mounted() {
-    const { viewTransitionName } = this.$options;
+    const { viewTransitionName, auto } = this.$options;
     if (viewTransitionName) {
       this.target.style.setProperty('view-transition-name', viewTransitionName);
     }
+
+    if (auto) {
+      this.$el.addEventListener('dom-update', this.__onDomUpdate);
+      document.addEventListener('open', this.__onDialogPhase);
+      document.addEventListener('close', this.__onDialogPhase);
+    }
+  }
+
+  /**
+   * Remove the ambient wiring listeners.
+   */
+  destroyed() {
+    this.$el.removeEventListener('dom-update', this.__onDomUpdate);
+    document.removeEventListener('open', this.__onDialogPhase);
+    document.removeEventListener('close', this.__onDialogPhase);
   }
 
   /**
