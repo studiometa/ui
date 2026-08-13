@@ -112,10 +112,7 @@ Defines the URL to fetch. This makes it possible to drive the `Fetch` component 
 The value is resolved against the current location, so both absolute and relative URLs are supported. When set, `src` **takes precedence** over the element's own destination: it overrides a `<a>`'s `href` and a `<form>`'s `action`. For a GET `<form>`, the live form data is still folded onto the `src` URL, so a fixed query in `src` (e.g. `?section_id=…`) survives alongside the form fields, with form fields winning on conflict.
 
 ```html
-<div
-  data-component="Action InView Fetch"
-  data-option-src="/path"
-  data-on:in-view="Fetch.fetch()">
+<div data-component="Action InView Fetch" data-option-src="/path" data-on:in-view="Fetch.fetch()">
   …
 </div>
 ```
@@ -188,10 +185,7 @@ The declarative click, submit and popstate flows call this method for you, but i
 - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit), optional): extra options merged into the [`requestInit` getter](#requestinit-1) for this call.
 
 ```html
-<div
-  data-component="Action InView Fetch"
-  data-option-src="/path"
-  data-on:in-view="Fetch.fetch()">
+<div data-component="Action InView Fetch" data-option-src="/path" data-on:in-view="Fetch.fetch()">
   …
 </div>
 ```
@@ -281,6 +275,7 @@ Emitted when the DOM is updated.
   - `url` (`URL`): the URL that was fetched
   - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
   - `document` (`Document`): the content of the response, parsed with a [DOMParse](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser)
+  - `through` (`(runner: FetchThroughRunner) => void`): registers a [transition runner](#substituting-the-transition-runner-with-through) that substitutes the default update path
 
 ### `fetch-update-after`
 
@@ -317,3 +312,26 @@ Emitted when the fetch request has been aborted.
   - `url` (`URL`): the URL that was fetched
   - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
   - `reason` (`any`): the reason the request was aborted
+
+## Substituting the transition runner with `through`
+
+The [`fetch-update` event](#fetch-update) exposes a `through(runner)` function on its payload. Any listener can substitute the transition runner that applies the fetched content — instead of the default [View Transition](#viewtransition) or direct update — and drive the swap with its own choreography, similar to Turbo's `turbo:before-render` render substitution.
+
+The runner has the `FetchThroughRunner` signature: `(apply: () => void) => void | Promise<unknown>`. It receives an `apply` function that injects the fetched content into the DOM, and its return value is awaited before the [`fetch-update-after` event](#fetch-update-after) is emitted.
+
+- **Synchronous registration only**: `through` must be called synchronously while the event dispatches — later calls warn and are ignored.
+- **Last call wins**: a single runner is kept, the last `through` call during dispatch replaces any previous one.
+- **The content is never lost**: if the runner throws or rejects, the error is logged with a warning and the content is applied directly when `apply` has not run yet. The `fetch-update-after` event is always emitted.
+
+This is the seam used by the upcoming `MotionView` component from `@studiometa/ui-motion` to animate fetched-content swaps, wired declaratively through an [Action](/reference/items/Action/):
+
+```html
+<div
+  data-component="Action"
+  data-on:fetch-update="MotionView(#list)->event.detail[0].through((apply) => target.update(apply))">
+  <ul id="list">
+    …
+  </ul>
+  <a href="/page/2" data-component="Fetch">Next page</a>
+</div>
+```

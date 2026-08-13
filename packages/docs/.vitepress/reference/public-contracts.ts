@@ -295,6 +295,14 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'FetchThroughRunner',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Fetch/js-api',
+    status: 'stable',
+  },
+  {
     name: 'FetchShopifyPartialConstructor',
     kind: 'type',
     package: 'npm:@studiometa/ui',
