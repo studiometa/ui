@@ -37,7 +37,7 @@ export function emitDomUpdate(
   let runner: DomUpdateRunner | null = null;
   let dispatching = true;
 
-  const wrap = (newRunner: DomUpdateRunner) => {
+  function wrap(newRunner: DomUpdateRunner) {
     if (!dispatching) {
       instance.$warn(
         '`wrap` must be called synchronously while the `dom-update` event dispatches.',
@@ -45,7 +45,7 @@ export function emitDomUpdate(
       return;
     }
     runner = newRunner;
-  };
+  }
 
   instance.$el.dispatchEvent(
     new CustomEvent('dom-update', { detail: { ...detail, wrap }, bubbles: true }),
@@ -71,10 +71,10 @@ export async function runWrapped(
   applyChange: () => void,
 ): Promise<void> {
   let applied = false;
-  const apply = () => {
+  function apply() {
     applied = true;
     applyChange();
-  };
+  }
   try {
     await runner(apply);
   } catch (error) {
