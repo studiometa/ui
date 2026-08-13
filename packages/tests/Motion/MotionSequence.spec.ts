@@ -6,7 +6,7 @@ import { MotionSequence } from '@studiometa/ui-motion';
 import { h, wait } from '#test-utils';
 
 function motionChild(attributes: Record<string, string>) {
-  return h('div', { dataComponent: 'Motion', dataOptionNoAutoplay: '', ...attributes });
+  return h('div', { dataComponent: 'Motion', ...attributes });
 }
 
 async function mountSequence(
@@ -36,7 +36,7 @@ describe('MotionSequence component', () => {
   });
 
   it('should autoplay one sequence built from the children in DOM order', async () => {
-    const { el, kids } = await mountSequence();
+    const { el, kids } = await mountSequence({ dataOptionAutoplay: '' });
     let played = 0;
     el.addEventListener('motion-play', () => (played += 1));
 
@@ -51,7 +51,7 @@ describe('MotionSequence component', () => {
   });
 
   it('should position segments with the at option, parsing numbers', async () => {
-    const { kids } = await mountSequence({}, [
+    const { kids } = await mountSequence({ dataOptionAutoplay: '' }, [
       { dataOptionAnimate: '{ "x": 100 }', dataOptionAt: '0.5' },
       { dataOptionAnimate: '{ "y": 50 }', dataOptionAt: '<' },
     ]);
@@ -63,7 +63,7 @@ describe('MotionSequence component', () => {
   });
 
   it('should spread the segments with stagger, explicit at winning', async () => {
-    const { kids } = await mountSequence({ dataOptionStagger: '0.2' }, [
+    const { kids } = await mountSequence({ dataOptionStagger: '0.2', dataOptionAutoplay: '' }, [
       { dataOptionAnimate: '{ "x": 100 }' },
       { dataOptionAnimate: '{ "y": 50 }' },
       { dataOptionAnimate: '{ "rotate": 90 }', dataOptionAt: '2' },
@@ -77,17 +77,17 @@ describe('MotionSequence component', () => {
   });
 
   it('should pass its transition as the sequence options', async () => {
-    await mountSequence({ dataOptionTransition: '{ "duration": 3 }' });
+    await mountSequence({ dataOptionTransition: '{ "duration": 3 }', dataOptionAutoplay: '' });
     expect(animations[0].options).toEqual({ duration: 3 });
   });
 
   it('should skip children without keyframes and not autoplay when none remain', async () => {
-    await mountSequence({}, [{}, {}]);
+    await mountSequence({ dataOptionAutoplay: '' }, [{}, {}]);
     expect(mockAnimate).not.toHaveBeenCalled();
   });
 
   it('should drive the whole sequence with the inherited playback surface', async () => {
-    const { instance } = await mountSequence({ dataOptionNoAutoplay: '' });
+    const { instance } = await mountSequence();
     expect(mockAnimate).not.toHaveBeenCalled();
 
     instance.play();
