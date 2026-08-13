@@ -31,6 +31,8 @@ type VirtualBinding =
   | { type: 'text' | 'if'; expression: string }
   | { type: 'prop' | 'attr' | 'class' | 'style'; name: string; expression: string };
 
+type BindIfRunner = (apply: () => void) => void | Promise<unknown>;
+
 /**
  * DataBind class.
  *
@@ -58,6 +60,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
 )<DataBindProps & T> {
   static config: BaseConfig = {
     name: 'DataBind',
+    emits: ['bind-if'],
     options: {
       prop: String,
       immediate: Boolean,
@@ -72,6 +75,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
   __virtualValue?: DataValue;
   __hasVirtualValue = false;
   __ifNodes?: ChildNode[];
+  __ifPresent = false;
 
   get isDataSource() {
     return false;
@@ -341,7 +345,15 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
    * Toggle the presence of the bound `<template>` content in the DOM. The
    * content is cloned and inserted after the template element when the value
    * is truthy, and removed when the value is falsy. Each insertion is a fresh
-   * clone, so any state held by the content is reset on every toggle.
+   * clone, so any state held by the content is reset on every toggle. Before
+   * the change runs, a bubbling `bind-if` event exposes
+   * `event.detail.through(runner)` so any listener can substitute the
+   * function that runs the DOM change — to wrap it in a view transition, for
+   * example, and give removed content an exit animation. Registration is only
+   * valid while the event dispatches — later calls warn and are ignored — and
+   * the last registered runner wins. A rejected runner is reported with a
+   * warning and never loses the change: the insert or removal runs anyway if
+   * the runner did not call `apply()`.
    * @private
    */
   __applyIfBinding(isPresent: boolean) {
@@ -354,16 +366,63 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
       return;
     }
 
-    if (isPresent && !this.__ifNodes) {
-      const fragment = target.content.cloneNode(true) as DocumentFragment;
-      this.__ifNodes = [...fragment.childNodes];
-      target.after(fragment);
-    } else if (!isPresent && this.__ifNodes) {
-      for (const node of this.__ifNodes) {
-        node.remove();
-      }
-      this.__ifNodes = undefined;
+    if (isPresent === this.__ifPresent) {
+      return;
     }
+
+    this.__ifPresent = isPresent;
+
+    // The logical state is tracked synchronously by `__ifPresent` while the
+    // DOM change may run later through a runner, so each closure guards on
+    // `__ifNodes` to stay a no-op when queued runners apply in sequence.
+    const apply = isPresent
+      ? () => {
+          if (this.__ifNodes) {
+            return;
+          }
+          const fragment = target.content.cloneNode(true) as DocumentFragment;
+          this.__ifNodes = [...fragment.childNodes];
+          target.after(fragment);
+        }
+      : () => {
+          if (!this.__ifNodes) {
+            return;
+          }
+          for (const node of this.__ifNodes) {
+            node.remove();
+          }
+          this.__ifNodes = undefined;
+        };
+
+    let dispatching = true;
+    let runner: BindIfRunner | undefined;
+    const through = (fn: BindIfRunner) => {
+      if (!dispatching) {
+        this.$warn('`through` must be called synchronously while the `bind-if` event dispatches.');
+        return;
+      }
+      runner = fn;
+    };
+
+    this.$emit(new CustomEvent('bind-if', { detail: { isPresent, through }, bubbles: true }));
+    dispatching = false;
+
+    if (!runner) {
+      apply();
+      return;
+    }
+
+    let applied = false;
+    function applyOnce() {
+      applied = true;
+      apply();
+    }
+    Promise.resolve(runner(applyOnce)).catch((error) => {
+      this.$warn('The runner of the `bind-if` event rejected.', error);
+      if (!applied) {
+        applyOnce();
+      }
+    });
   }
 
   /**
