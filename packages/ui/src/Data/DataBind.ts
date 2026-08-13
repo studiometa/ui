@@ -16,6 +16,7 @@ import {
   writeControlValue,
 } from './formControl.js';
 import { getCallback } from './utils.js';
+import { emitDomUpdate, runWrapped } from '../utils/dom-update.js';
 
 export interface DataBindProps extends BaseProps {
   $options: {
@@ -30,8 +31,6 @@ const EMPTY_DATA = Object.freeze({});
 type VirtualBinding =
   | { type: 'text' | 'if'; expression: string }
   | { type: 'prop' | 'attr' | 'class' | 'style'; name: string; expression: string };
-
-type BindIfRunner = (apply: () => void) => void | Promise<unknown>;
 
 /**
  * DataBind class.
@@ -60,7 +59,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
 )<DataBindProps & T> {
   static config: BaseConfig = {
     name: 'DataBind',
-    emits: ['bind-if'],
+    emits: ['dom-update'],
     options: {
       prop: String,
       immediate: Boolean,
@@ -174,8 +173,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
    */
   get __channel() {
     return (
-      this.dataScope?.getChannel(this.group) ??
-      getDataChannel(this.$group as Set<DataScopeMember>)
+      this.dataScope?.getChannel(this.group) ?? getDataChannel(this.$group as Set<DataScopeMember>)
     );
   }
 
@@ -346,12 +344,12 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
    * content is cloned and inserted after the template element when the value
    * is truthy, and removed when the value is falsy. Each insertion is a fresh
    * clone, so any state held by the content is reset on every toggle. Before
-   * the change runs, a bubbling `bind-if` event exposes
-   * `event.detail.wrap(runner)` so any listener can substitute the
-   * function that runs the DOM change — to wrap it in a view transition, for
-   * example, and give removed content an exit animation. Registration is only
-   * valid while the event dispatches — later calls warn and are ignored — and
-   * the last registered runner wins. A rejected runner is reported with a
+   * the change runs, the bubbling `dom-update` protocol event exposes
+   * `event.detail.wrap(runner)` so any listener can substitute the function or
+   * transitioner that runs the DOM change — to wrap it in a view transition,
+   * for example, and give removed content an exit animation. Registration is
+   * only valid while the event dispatches — later calls warn and are ignored —
+   * and the last registered runner wins. A rejected runner is reported with a
    * warning and never loses the change: the insert or removal runs anyway if
    * the runner did not call `apply()`.
    * @private
@@ -394,35 +392,15 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
           this.__ifNodes = undefined;
         };
 
-    let dispatching = true;
-    let runner: BindIfRunner | undefined;
-    const wrap = (fn: BindIfRunner) => {
-      if (!dispatching) {
-        this.$warn('`wrap` must be called synchronously while the `bind-if` event dispatches.');
-        return;
-      }
-      runner = fn;
-    };
+    const runner = emitDomUpdate(this, { isPresent });
 
-    this.$emit(new CustomEvent('bind-if', { detail: { isPresent, wrap }, bubbles: true }));
-    dispatching = false;
-
-    if (!runner) {
-      apply();
-      return;
-    }
-
-    let applied = false;
-    function applyOnce() {
-      applied = true;
+    if (runner) {
+      // Intentionally not awaited: the reactive pipeline stays synchronous
+      // while the runner defers the DOM change.
+      runWrapped(this, runner, apply);
+    } else {
       apply();
     }
-    Promise.resolve(runner(applyOnce)).catch((error) => {
-      this.$warn('The runner of the `bind-if` event rejected.', error);
-      if (!applied) {
-        applyOnce();
-      }
-    });
   }
 
   /**
@@ -456,8 +434,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
 
     const isRadio = isInput(this.target) && this.target.type === 'radio';
     const hasCustomCheckboxValues =
-      isCheckbox(this.target) &&
-      (typeof onValue !== 'boolean' || typeof offValue !== 'boolean');
+      isCheckbox(this.target) && (typeof onValue !== 'boolean' || typeof offValue !== 'boolean');
 
     if (isRadio || hasCustomCheckboxValues) {
       this.$warn('The toggle() values can not be represented by this input.');

@@ -284,9 +284,7 @@ describe('The DataBind component', () => {
   });
 
   it('should reject mutation helpers on computed values and effects', () => {
-    const computed = new DataComputed(
-      h('div', { dataOptionCompute: 'value' }, ['current']),
-    );
+    const computed = new DataComputed(h('div', { dataOptionCompute: 'value' }, ['current']));
     computed.toggle('next', 'current');
     expect(computed.value).toBe('current');
 
@@ -381,8 +379,7 @@ describe('The DataBind component', () => {
     });
     const immediateElement = h('div', {
       dataOptionGroup: 'immediate-effect',
-      dataOptionEffect:
-        'target.dataset.calls = String(Number(target.dataset.calls || 0) + 1)',
+      dataOptionEffect: 'target.dataset.calls = String(Number(target.dataset.calls || 0) + 1)',
       dataOptionImmediate: true,
     });
     const passive = new DataEffect(passiveElement);
@@ -403,8 +400,7 @@ describe('The DataBind component', () => {
     const source = new DataBind(h('div', { dataOptionGroup: 'lifecycle' }));
     const effectElement = h('div', {
       dataOptionGroup: 'lifecycle',
-      dataOptionEffect:
-        'target.dataset.calls = String(Number(target.dataset.calls || 0) + 1)',
+      dataOptionEffect: 'target.dataset.calls = String(Number(target.dataset.calls || 0) + 1)',
     });
     const effect = new DataEffect(effectElement);
     await mount(source, effect);
@@ -784,16 +780,16 @@ describe('The DataBind component', () => {
     warnSpy.mockRestore();
   });
 
-  it('should emit a bubbling bind-if event whose wrap runner defers the insertion', () => {
+  it('should emit a bubbling dom-update event whose wrap runner defers the insertion', () => {
     const template = h('template', { 'data-bind:if': '' });
     template.innerHTML = '<p>Hello</p>';
     const root = h('div', [template]);
     const instance = new DataBind(template);
 
-    let detail: BindIfDetail;
+    let detail: DomUpdateDetail;
     let apply: () => void;
-    root.addEventListener('bind-if', (event) => {
-      detail = (event as CustomEvent<BindIfDetail>).detail;
+    root.addEventListener('dom-update', (event) => {
+      detail = (event as CustomEvent<DomUpdateDetail>).detail;
       detail.wrap((run) => {
         apply = run;
       });
@@ -819,10 +815,10 @@ describe('The DataBind component', () => {
     instance.set(true);
     expect(root.querySelector('p')).not.toBeNull();
 
-    let detail: BindIfDetail;
+    let detail: DomUpdateDetail;
     let apply: () => void;
-    root.addEventListener('bind-if', (event) => {
-      detail = (event as CustomEvent<BindIfDetail>).detail;
+    root.addEventListener('dom-update', (event) => {
+      detail = (event as CustomEvent<DomUpdateDetail>).detail;
       detail.wrap((run) => {
         apply = run;
       });
@@ -838,7 +834,30 @@ describe('The DataBind component', () => {
     expect(root.querySelector('p')).toBeNull();
   });
 
-  it('should ignore and warn on wrap calls after the bind-if event dispatched', () => {
+  it('should defer the DOM change to a duck-typed transitioner registered through wrap', () => {
+    const template = h('template', { 'data-bind:if': '' });
+    template.innerHTML = '<p>Hello</p>';
+    const root = h('div', [template]);
+    const instance = new DataBind(template);
+
+    let mutate: () => void;
+    const update = vi.fn((fn: () => void) => {
+      mutate = fn;
+    });
+    root.addEventListener('dom-update', (event) => {
+      (event as CustomEvent<DomUpdateDetail>).detail.wrap({ update });
+    });
+
+    instance.set(true);
+
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(root.querySelector('p')).toBeNull();
+
+    mutate();
+    expect(root.querySelector('p')).not.toBeNull();
+  });
+
+  it('should ignore and warn on wrap calls after the dom-update event dispatched', () => {
     const template = h('template', { 'data-bind:if': '' });
     template.innerHTML = '<p>Hello</p>';
     const root = h('div', [template]);
@@ -847,9 +866,9 @@ describe('The DataBind component', () => {
     const warn = vi.fn();
     Object.defineProperty(instance, '$warn', { configurable: true, get: () => warn });
 
-    let wrap: BindIfDetail['wrap'];
-    root.addEventListener('bind-if', (event) => {
-      ({ wrap } = (event as CustomEvent<BindIfDetail>).detail);
+    let wrap: DomUpdateDetail['wrap'];
+    root.addEventListener('dom-update', (event) => {
+      ({ wrap } = (event as CustomEvent<DomUpdateDetail>).detail);
     });
 
     instance.set(true);
@@ -857,6 +876,9 @@ describe('The DataBind component', () => {
 
     wrap(() => {});
     expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(
+      '`wrap` must be called synchronously while the `dom-update` event dispatches.',
+    );
     expect(root.querySelectorAll('p')).toHaveLength(1);
   });
 
@@ -868,8 +890,8 @@ describe('The DataBind component', () => {
     const warn = vi.fn();
     Object.defineProperty(instance, '$warn', { configurable: true, get: () => warn });
 
-    root.addEventListener('bind-if', (event) => {
-      (event as CustomEvent<BindIfDetail>).detail.wrap(() =>
+    root.addEventListener('dom-update', (event) => {
+      (event as CustomEvent<DomUpdateDetail>).detail.wrap(() =>
         Promise.reject(new Error('runner failed')),
       );
     });
@@ -891,8 +913,8 @@ describe('The DataBind component', () => {
 
     const applies: Array<() => void> = [];
     const states: boolean[] = [];
-    root.addEventListener('bind-if', (event) => {
-      const { detail } = event as CustomEvent<BindIfDetail>;
+    root.addEventListener('dom-update', (event) => {
+      const { detail } = event as CustomEvent<DomUpdateDetail>;
       states.push(detail.isPresent);
       detail.wrap((run) => {
         applies.push(run);
@@ -916,7 +938,11 @@ describe('The DataBind component', () => {
   });
 });
 
-type BindIfDetail = {
+type DomUpdateDetail = {
   isPresent: boolean;
-  wrap(runner: (apply: () => void) => void | Promise<unknown>): void;
+  wrap(
+    runner:
+      | ((apply: () => void) => void | Promise<unknown>)
+      | { update(mutate: () => void | Promise<void>): void | Promise<unknown> },
+  ): void;
 };

@@ -61,6 +61,7 @@ export {
   type DisclosureGroupProps,
   type DisclosureProps,
 } from './Disclosure/index.js';
+export type { DomUpdateRunner, DomUpdateTransitioner } from './utils/dom-update.js';
 export { Draggable, type DraggableProps } from './Draggable/index.js';
 export {
   Fetch,
