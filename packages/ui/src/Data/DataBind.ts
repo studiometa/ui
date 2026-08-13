@@ -16,6 +16,7 @@ import {
   writeControlValue,
 } from './formControl.js';
 import { getCallback } from './utils.js';
+import { emitDomUpdate, runWrapped } from '../utils/dom-update.js';
 
 export interface DataBindProps extends BaseProps {
   $options: {
@@ -58,6 +59,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
 )<DataBindProps & T> {
   static config: BaseConfig = {
     name: 'DataBind',
+    emits: ['dom-update'],
     options: {
       prop: String,
       immediate: Boolean,
@@ -72,6 +74,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
   __virtualValue?: DataValue;
   __hasVirtualValue = false;
   __ifNodes?: ChildNode[];
+  __ifPresent = false;
 
   get isDataSource() {
     return false;
@@ -170,8 +173,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
    */
   get __channel() {
     return (
-      this.dataScope?.getChannel(this.group) ??
-      getDataChannel(this.$group as Set<DataScopeMember>)
+      this.dataScope?.getChannel(this.group) ?? getDataChannel(this.$group as Set<DataScopeMember>)
     );
   }
 
@@ -341,7 +343,15 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
    * Toggle the presence of the bound `<template>` content in the DOM. The
    * content is cloned and inserted after the template element when the value
    * is truthy, and removed when the value is falsy. Each insertion is a fresh
-   * clone, so any state held by the content is reset on every toggle.
+   * clone, so any state held by the content is reset on every toggle. Before
+   * the change runs, the bubbling `dom-update` protocol event exposes
+   * `event.detail.wrap(runner)` so any listener can substitute the function or
+   * transitioner that runs the DOM change — to wrap it in a view transition,
+   * for example, and give removed content an exit animation. Registration is
+   * only valid while the event dispatches — later calls warn and are ignored —
+   * and the last registered runner wins. A rejected runner is reported with a
+   * warning and never loses the change: the insert or removal runs anyway if
+   * the runner did not call `apply()`.
    * @private
    */
   __applyIfBinding(isPresent: boolean) {
@@ -354,15 +364,42 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
       return;
     }
 
-    if (isPresent && !this.__ifNodes) {
-      const fragment = target.content.cloneNode(true) as DocumentFragment;
-      this.__ifNodes = [...fragment.childNodes];
-      target.after(fragment);
-    } else if (!isPresent && this.__ifNodes) {
-      for (const node of this.__ifNodes) {
-        node.remove();
-      }
-      this.__ifNodes = undefined;
+    if (isPresent === this.__ifPresent) {
+      return;
+    }
+
+    this.__ifPresent = isPresent;
+
+    // The logical state is tracked synchronously by `__ifPresent` while the
+    // DOM change may run later through a runner, so each closure guards on
+    // `__ifNodes` to stay a no-op when queued runners apply in sequence.
+    const apply = isPresent
+      ? () => {
+          if (this.__ifNodes) {
+            return;
+          }
+          const fragment = target.content.cloneNode(true) as DocumentFragment;
+          this.__ifNodes = [...fragment.childNodes];
+          target.after(fragment);
+        }
+      : () => {
+          if (!this.__ifNodes) {
+            return;
+          }
+          for (const node of this.__ifNodes) {
+            node.remove();
+          }
+          this.__ifNodes = undefined;
+        };
+
+    const runner = emitDomUpdate(this, { isPresent });
+
+    if (runner) {
+      // Intentionally not awaited: the reactive pipeline stays synchronous
+      // while the runner defers the DOM change.
+      runWrapped(this, runner, apply);
+    } else {
+      apply();
     }
   }
 
@@ -397,8 +434,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
 
     const isRadio = isInput(this.target) && this.target.type === 'radio';
     const hasCustomCheckboxValues =
-      isCheckbox(this.target) &&
-      (typeof onValue !== 'boolean' || typeof offValue !== 'boolean');
+      isCheckbox(this.target) && (typeof onValue !== 'boolean' || typeof offValue !== 'boolean');
 
     if (isRadio || hasCustomCheckboxValues) {
       this.$warn('The toggle() values can not be represented by this input.');
