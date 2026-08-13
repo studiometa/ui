@@ -47,13 +47,9 @@
 </dialog>
 
 <style>
-  dialog::backdrop {
-    background: transparent;
-  }
+  dialog::backdrop { background: transparent; }
 
   /* Chromium quirk: a view-transition layer on top-layer content can paint
-     behind the page snapshot mid-transition; lifting the group fixes it. */
-  ::view-transition-group(ambient-modal-box) {
-    z-index: 1;
-  }
+  behind the page snapshot mid-transition; lifting the group fixes it. */
+  ::view-transition-group(ambient-modal-box) { z-index: 1; }
 </style>

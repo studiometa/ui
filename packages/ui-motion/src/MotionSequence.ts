@@ -39,7 +39,7 @@ export interface MotionSequenceProps extends BaseProps {
  * </ul>
  * ```
  *
- * @link https://ui.studiometa.dev/reference/items/Motion/js-api#motionsequence
+ * @link https://ui.studiometa.dev/reference/items/MotionSequence/
  */
 export class MotionSequence<T extends BaseProps = BaseProps> extends Motion<
   MotionSequenceProps & T

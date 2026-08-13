@@ -95,7 +95,7 @@ Use `data-bind:if` when the element must not exist in the DOM — a form control
 
 ### Wrapping the DOM change with the `dom-update` event
 
-Before `data-bind:if` inserts or removes the template content, the component emits the bubbling `dom-update` protocol event — the shared announcement components use before an imminent DOM change. Its `detail` carries the new logical state as `isPresent` and a `wrap(runner)` function: a listener can call `wrap()` to substitute what runs the DOM change. The runner is either a function receiving an `apply()` callback that performs the actual insertion or removal, or a duck-typed transitioner exposing an `update(mutate)` method — like `MotionView` from `@studiometa/ui-motion` — whose `update()` receives the callback.
+Before `data-bind:if` inserts or removes the template content, the component emits the bubbling `dom-update` protocol event — the shared announcement components use before an imminent DOM change. Its `detail` carries the new logical state as `isPresent` and a `wrap(runner)` function: a listener can call `wrap()` to substitute what runs the DOM change. The runner is either a function receiving an `apply()` callback that performs the actual insertion or removal, or a duck-typed transitioner exposing an `update(mutate)` method — like [`MotionView`](/reference/items/MotionView/) from `@studiometa/ui-motion` — whose `update()` receives the callback.
 
 ```ts
 interface DomUpdateTransitioner {

@@ -329,7 +329,7 @@ Before applying the fetched content, `Fetch` dispatches the bubbling [`dom-updat
 `wrap()` accepts a `DomUpdateRunner`, which is either form:
 
 - a **function** with the signature `(apply: () => void) => void | Promise<unknown>`: it receives an `apply` function that injects the fetched content into the DOM, and its return value is awaited before the [`fetch-update-after` event](#fetch-update-after) is emitted
-- a **transitioner**: any duck-typed object with an `update(mutate)` method (the `DomUpdateTransitioner` interface), e.g. `MotionView` from `@studiometa/ui-motion` — its `update()` method receives the apply function and its return value is awaited the same way
+- a **transitioner**: any duck-typed object with an `update(mutate)` method (the `DomUpdateTransitioner` interface), e.g. [`MotionView`](/reference/items/MotionView/) from `@studiometa/ui-motion` — its `update()` method receives the apply function and its return value is awaited the same way
 
 The protocol enforces three rules:
 
@@ -337,7 +337,7 @@ The protocol enforces three rules:
 - **Last call wins**: a single runner is kept, the last `wrap` call during dispatch replaces any previous one.
 - **The content is never lost**: if the runner throws or rejects, the error is logged with a warning and the content is applied directly when it has not been applied yet. The `fetch-update-after` event is always emitted.
 
-With the upcoming ambient `MotionView` from `@studiometa/ui-motion`, the common case is pure nesting: a `MotionView` wrapping the updated content picks up the bubbling event by itself, with no attributes to write. When the transitioner lives elsewhere in the tree, an [Action](/reference/items/Action/) is the explicit escape hatch to route the event to it:
+With the [ambient `MotionView`](/reference/items/MotionView/js-api#ambient-wiring) from `@studiometa/ui-motion`, the common case is pure nesting: a `MotionView` wrapping the updated content picks up the bubbling event by itself, with no attributes to write. When the transitioner lives elsewhere in the tree, an [Action](/reference/items/Action/) is the explicit escape hatch to route the event to it:
 
 ```html
 <div data-component="Action" data-on:dom-update="MotionView(#list)->event.detail.wrap(target)">

@@ -52,7 +52,7 @@ export interface MotionViewProps extends BaseProps {
  * <button data-component="Action" data-on:click="MotionView->target.toggle()">Toggle</button>
  * ```
  *
- * @link https://ui.studiometa.dev/reference/items/Motion/js-api#motionview
+ * @link https://ui.studiometa.dev/reference/items/MotionView/
  */
 export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionViewProps & T> {
   /**
