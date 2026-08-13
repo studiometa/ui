@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - **DataBind:** sync late-mounted `immediate` keyed subscribers with the current scoped value ([#626](https://github.com/studiometa/ui/pull/626))
-- **DataBind:** emit a bubbling `bind-if` event whose `through()` lets listeners wrap the `data-bind:if` DOM change (e.g. in a view transition)
+- **DataBind:** emit a bubbling `bind-if` event whose `through()` lets listeners wrap the `data-bind:if` DOM change (e.g. in a view transition) ([#634](https://github.com/studiometa/ui/pull/634))
 - **Dialog:** make the `open` and `close` events extendable with `event.detail.waitUntil()` so any component can join the open and close choreography ([#627](https://github.com/studiometa/ui/pull/627))
 
 ## [v1.10.0](https://github.com/studiometa/ui/compare/1.9.0..1.10.0) (2026-08-11)
