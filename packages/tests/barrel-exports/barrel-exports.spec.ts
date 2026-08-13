@@ -127,6 +127,7 @@ test('@studiometa/ui barrel export surface', () => {
       "FetchShopifySection [value]",
       "FetchShopifySectionConstructor [type]",
       "FetchShopifySectionProps [type]",
+      "FetchThroughRunner [type]",
       "Figure [value]",
       "FigureProps [type]",
       "FigureShopify [value]",

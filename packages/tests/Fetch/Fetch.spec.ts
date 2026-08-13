@@ -954,6 +954,189 @@ describe('The Fetch class', () => {
       delete (document as any).startViewTransition;
       container.remove();
     });
+
+    it('should let a `through` runner substitute the default transition runner', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+
+      await mount(fetch);
+
+      const transitionSpy = vi.fn((callback: () => void) => {
+        callback();
+        return {
+          ready: Promise.resolve(),
+        };
+      });
+      Object.defineProperty(document, 'startViewTransition', {
+        value: transitionSpy,
+        configurable: true,
+      });
+
+      let contentBeforeApply: string | undefined;
+      let contentAfterApply: string | undefined;
+      fetch.$on('fetch-update', (event: CustomEvent) => {
+        event.detail[0].through((apply: () => void) => {
+          contentBeforeApply = document.getElementById('test')?.textContent;
+          apply();
+          contentAfterApply = document.getElementById('test')?.textContent;
+        });
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(contentBeforeApply).toBe('old content');
+      expect(contentAfterApply).toBe('new content');
+      expect(transitionSpy).not.toHaveBeenCalled();
+
+      // Clean up
+      delete (document as any).startViewTransition;
+      container.remove();
+    });
+
+    it('should keep the last `through` runner registered during dispatch', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+
+      await mount(fetch);
+
+      const firstRunner = vi.fn((apply: () => void) => apply());
+      const lastRunner = vi.fn((apply: () => void) => apply());
+      fetch.$on('fetch-update', (event: CustomEvent) => {
+        event.detail[0].through(firstRunner);
+        event.detail[0].through(lastRunner);
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(firstRunner).not.toHaveBeenCalled();
+      expect(lastRunner).toHaveBeenCalledOnce();
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+
+      container.remove();
+    });
+
+    it('should ignore and warn on `through` calls after the `fetch-update` event dispatched', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const warnFn = vi.fn();
+      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
+
+      await mount(fetch);
+
+      let through: (runner: (apply: () => void) => void) => void;
+      fetch.$on('fetch-update', (event: CustomEvent) => {
+        through = event.detail[0].through;
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      // The default path ran since no runner was registered during dispatch.
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+
+      const lateRunner = vi.fn();
+      through(lateRunner);
+
+      expect(lateRunner).not.toHaveBeenCalled();
+      expect(warnFn).toHaveBeenCalledWith(
+        '`through` must be called synchronously while the `fetch-update` event dispatches.',
+      );
+
+      container.remove();
+    });
+
+    it('should apply the content and warn when a `through` runner rejects', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const warnFn = vi.fn();
+      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
+      const fn = vi.fn();
+      fetch.$on('fetch-update-after', () => fn());
+
+      await mount(fetch);
+
+      const error = new Error('Runner failed');
+      fetch.$on('fetch-update', (event: CustomEvent) => {
+        event.detail[0].through(() => Promise.reject(error));
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+      expect(warnFn).toHaveBeenCalledWith('The `fetch-update` event runner rejected.', error);
+      expect(fn).toHaveBeenCalled();
+
+      container.remove();
+    });
+
+    it('should apply the content and warn when a `through` runner throws synchronously', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const warnFn = vi.fn();
+      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
+      const fn = vi.fn();
+      fetch.$on('fetch-update-after', () => fn());
+
+      await mount(fetch);
+
+      const error = new Error('Runner failed');
+      fetch.$on('fetch-update', (event: CustomEvent) => {
+        event.detail[0].through(() => {
+          throw error;
+        });
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+      expect(warnFn).toHaveBeenCalledWith('The `fetch-update` event runner rejected.', error);
+      expect(fn).toHaveBeenCalled();
+
+      container.remove();
+    });
+
+    it('should not apply the content twice when a `through` runner rejects after applying', async () => {
+      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
+      document.body.appendChild(container);
+
+      const anchor = h('a', { href: 'https://example.com' });
+      const fetch = new Fetch(anchor);
+      const warnFn = vi.fn();
+      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
+      const updateDOMSpy = vi.spyOn(fetch, '__updateDOM');
+
+      await mount(fetch);
+
+      const error = new Error('Runner failed');
+      fetch.$on('fetch-update', (event: CustomEvent) => {
+        event.detail[0].through((apply: () => void) => {
+          apply();
+          return Promise.reject(error);
+        });
+      });
+
+      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
+
+      expect(document.getElementById('test')?.textContent).toBe('new content');
+      expect(updateDOMSpy).toHaveBeenCalledOnce();
+      expect(warnFn).toHaveBeenCalledWith('The `fetch-update` event runner rejected.', error);
+
+      container.remove();
+    });
   });
 
   describe('error handling', () => {
