@@ -83,6 +83,8 @@ Call `close()` if the dialog is open, `open()` otherwise.
 
 ## Events
 
+Both lifecycle events bubble up the DOM tree, so ancestors can route them and any listener up the tree can join the choreography.
+
 ### `open`
 
 Emitted when the dialog starts opening, before the enter transitions run. The `detail` carries a [`waitUntil`](#extending-the-choreography-with-waituntil) function.
@@ -93,7 +95,12 @@ Emitted when the dialog starts closing, before the leave transitions run. The `d
 
 ## Extending the choreography with `waitUntil`
 
-Both lifecycle events expose `event.detail.waitUntil(promise)`, modeled on the Service Worker [`ExtendableEvent`](https://developer.mozilla.org/en-US/docs/Web/API/ExtendableEvent/waitUntil). Any listener can register a promise while the event dispatches, and the dialog awaits it alongside its transition children — on `close`, the native dialog stays painted until every registered promise settles. This lets any component participate in the open and close choreography without being a declared child.
+Both lifecycle events expose `event.detail.waitUntil(x)`, modeled on the Service Worker [`ExtendableEvent`](https://developer.mozilla.org/en-US/docs/Web/API/ExtendableEvent/waitUntil). Any listener can register an extension while the event dispatches, and the dialog awaits it alongside its transition children — on `close`, the native dialog stays painted until every registered extension settles. This lets any component participate in the open and close choreography without being a declared child.
+
+`waitUntil()` accepts either form:
+
+- a **promise** (any thenable), awaited as is
+- a **transitioner**: a duck-typed object with `enter()` and `leave()` methods, e.g. `MotionView` from `@studiometa/ui-motion` — the dialog follows its lifecycle by awaiting `enter()` on `open` and `leave()` on `close`
 
 For example, a `Motion` box (from `@studiometa/ui-motion`) can spring in and out with the dialog through two [`Action`](/reference/items/Action/) attributes:
 
@@ -105,6 +112,19 @@ For example, a `Motion` box (from `@studiometa/ui-motion`) can spring in and out
   data-on:close="Motion(#box)->event.detail.waitUntil(target.reverse())"
   data-on:cancel.prevent="Dialog.close()">
   …
+</dialog>
+```
+<!-- prettier-ignore-end -->
+
+With the transitioner form, a single handler is enough — pass the transitioner itself and the dialog picks the right phase, like a `MotionView` navigation panel animating out before the dialog hides:
+
+<!-- prettier-ignore-start -->
+```html {3}
+<dialog
+  data-component="Action Dialog"
+  data-on:close="MotionView(#nav)->event.detail.waitUntil(target)"
+  data-on:cancel.prevent="Dialog.close()">
+  <nav id="nav">…</nav>
 </dialog>
 ```
 <!-- prettier-ignore-end -->
