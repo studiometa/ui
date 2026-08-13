@@ -1,4 +1,9 @@
-export { Fetch, type FetchConstructor, type FetchProps } from './Fetch.js';
+export {
+  Fetch,
+  type FetchConstructor,
+  type FetchProps,
+  type FetchThroughRunner,
+} from './Fetch.js';
 export {
   FetchShopifyPartial,
   type FetchShopifyPartialConstructor,

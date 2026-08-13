@@ -72,6 +72,7 @@ export {
   type FetchShopifyPartialProps,
   type FetchShopifySectionConstructor,
   type FetchShopifySectionProps,
+  type FetchThroughRunner,
 } from './Fetch/index.js';
 export {
   Figure,
