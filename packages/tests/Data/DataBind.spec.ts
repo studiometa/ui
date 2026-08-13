@@ -783,4 +783,140 @@ describe('The DataBind component', () => {
     expect(warnSpy).toHaveBeenCalledTimes(1);
     warnSpy.mockRestore();
   });
+
+  it('should emit a bubbling bind-if event whose through runner defers the insertion', () => {
+    const template = h('template', { 'data-bind:if': '' });
+    template.innerHTML = '<p>Hello</p>';
+    const root = h('div', [template]);
+    const instance = new DataBind(template);
+
+    let detail: BindIfDetail;
+    let apply: () => void;
+    root.addEventListener('bind-if', (event) => {
+      detail = (event as CustomEvent<BindIfDetail>).detail;
+      detail.through((run) => {
+        apply = run;
+      });
+    });
+
+    instance.set(true);
+
+    expect(detail.isPresent).toBe(true);
+    expect(typeof detail.through).toBe('function');
+    expect(root.querySelector('p')).toBeNull();
+
+    apply();
+    expect(root.querySelector('p')).not.toBeNull();
+    expect(template.nextElementSibling).toBe(root.querySelector('p'));
+  });
+
+  it('should keep removed template content in the DOM until the through runner applies', () => {
+    const template = h('template', { 'data-bind:if': '' });
+    template.innerHTML = '<p>Bye</p>';
+    const root = h('div', [template]);
+    const instance = new DataBind(template);
+
+    instance.set(true);
+    expect(root.querySelector('p')).not.toBeNull();
+
+    let detail: BindIfDetail;
+    let apply: () => void;
+    root.addEventListener('bind-if', (event) => {
+      detail = (event as CustomEvent<BindIfDetail>).detail;
+      detail.through((run) => {
+        apply = run;
+      });
+    });
+
+    instance.set(false);
+
+    // The exit-animation enabler: the content stays until the runner applies.
+    expect(detail.isPresent).toBe(false);
+    expect(root.querySelector('p')).not.toBeNull();
+
+    apply();
+    expect(root.querySelector('p')).toBeNull();
+  });
+
+  it('should ignore and warn on through calls after the bind-if event dispatched', () => {
+    const template = h('template', { 'data-bind:if': '' });
+    template.innerHTML = '<p>Hello</p>';
+    const root = h('div', [template]);
+    const instance = new DataBind(template);
+    // `$warn` is a prototype getter: shadow it on the instance to observe calls.
+    const warn = vi.fn();
+    Object.defineProperty(instance, '$warn', { configurable: true, get: () => warn });
+
+    let through: BindIfDetail['through'];
+    root.addEventListener('bind-if', (event) => {
+      ({ through } = (event as CustomEvent<BindIfDetail>).detail);
+    });
+
+    instance.set(true);
+    expect(root.querySelector('p')).not.toBeNull();
+
+    through(() => {});
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(root.querySelectorAll('p')).toHaveLength(1);
+  });
+
+  it('should warn and still apply the DOM change when the through runner rejects', async () => {
+    const template = h('template', { 'data-bind:if': '' });
+    template.innerHTML = '<p>Hello</p>';
+    const root = h('div', [template]);
+    const instance = new DataBind(template);
+    const warn = vi.fn();
+    Object.defineProperty(instance, '$warn', { configurable: true, get: () => warn });
+
+    root.addEventListener('bind-if', (event) => {
+      (event as CustomEvent<BindIfDetail>).detail.through(() =>
+        Promise.reject(new Error('runner failed')),
+      );
+    });
+
+    instance.set(true);
+    expect(root.querySelector('p')).toBeNull();
+
+    await nextTick();
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(root.querySelectorAll('p')).toHaveLength(1);
+  });
+
+  it('should keep the if bookkeeping consistent on rapid toggles with a deferring runner', () => {
+    const template = h('template', { 'data-bind:if': '' });
+    template.innerHTML = '<p>Flash</p>';
+    const root = h('div', [template]);
+    const instance = new DataBind(template);
+
+    const applies: Array<() => void> = [];
+    const states: boolean[] = [];
+    root.addEventListener('bind-if', (event) => {
+      const { detail } = event as CustomEvent<BindIfDetail>;
+      states.push(detail.isPresent);
+      detail.through((run) => {
+        applies.push(run);
+      });
+    });
+
+    instance.set(true);
+    instance.set(false);
+    expect(states).toEqual([true, false]);
+
+    // Toggling to the same logical state emits nothing.
+    instance.set(false);
+    expect(states).toEqual([true, false]);
+
+    for (const apply of applies) {
+      apply();
+    }
+
+    expect(root.querySelectorAll('p')).toHaveLength(0);
+    expect(instance.__ifNodes).toBeUndefined();
+  });
 });
+
+type BindIfDetail = {
+  isPresent: boolean;
+  through(runner: (apply: () => void) => void | Promise<unknown>): void;
+};
