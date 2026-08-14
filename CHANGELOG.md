@@ -8,20 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- **@studiometa/ui-motion:** add a new `@studiometa/ui-motion` package with `Motion` and `MotionScrollTimeline` components to animate elements declaratively with [Motion](https://motion.dev) ([#628](https://github.com/studiometa/ui/pull/628))
-- **@studiometa/ui-motion:** add the `hover`, `press` and `inView` gesture options to `Motion` ([#629](https://github.com/studiometa/ui/pull/629))
-- **@studiometa/ui-motion:** add the `MotionSequence` component to orchestrate `Motion` children as one staggered timeline ([#630](https://github.com/studiometa/ui/pull/630))
-- **@studiometa/ui-motion:** add the `MotionView` component to animate DOM updates with Motion's `animateView()` ([#633](https://github.com/studiometa/ui/pull/633))
-- **DataBind:** add the `data-bind:if` virtual binding to render `<template>` content conditionally ([#626](https://github.com/studiometa/ui/pull/626))
+- **@studiometa/ui-motion:** add a new `@studiometa/ui-motion` package with the `Motion`, `MotionScrollTimeline`, `MotionSequence` and `MotionView` components to animate elements declaratively with [Motion](https://motion.dev) ([#628](https://github.com/studiometa/ui/pull/628), [#629](https://github.com/studiometa/ui/pull/629), [#630](https://github.com/studiometa/ui/pull/630), [#633](https://github.com/studiometa/ui/pull/633), [#636](https://github.com/studiometa/ui/pull/636), [#637](https://github.com/studiometa/ui/pull/637), [#638](https://github.com/studiometa/ui/pull/638), [#640](https://github.com/studiometa/ui/pull/640), [#641](https://github.com/studiometa/ui/pull/641))
+- **DataBind:** add the `data-bind:if` virtual binding to render `<template>` content conditionally, announcing each change with the bubbling `dom-update` protocol event ([#626](https://github.com/studiometa/ui/pull/626), [#634](https://github.com/studiometa/ui/pull/634))
 
 ### Changed
 
-- **DataBind:** sync late-mounted `immediate` keyed subscribers with the current scoped value ([#626](https://github.com/studiometa/ui/pull/626))
-- **DataBind:** announce the `data-bind:if` DOM change with the bubbling `dom-update` protocol event whose `wrap()` lets a listener or transitioner run it ([#634](https://github.com/studiometa/ui/pull/634))
-- **Dialog:** make the `open` and `close` events extendable with `event.detail.waitUntil()` so any component can join the open and close choreography ([#627](https://github.com/studiometa/ui/pull/627))
-- **Dialog:** make the `open` and `close` events bubble and let `waitUntil()` accept a transitioner whose `enter()`/`leave()` follows the dialog lifecycle ([#635](https://github.com/studiometa/ui/pull/635))
-- **Fetch:** announce content updates with the bubbling `dom-update` protocol event whose `wrap()` lets a listener or transitioner run the swap ([#632](https://github.com/studiometa/ui/pull/632))
-- **Fetch:** route the default view transition through the shared `viewTransition` scheduler so it batches and serializes with every other view transition ([#632](https://github.com/studiometa/ui/pull/632))
+- **Dialog:** make the `open` and `close` events bubble and extendable with `event.detail.waitUntil()`, which also accepts a transitioner ([#627](https://github.com/studiometa/ui/pull/627), [#635](https://github.com/studiometa/ui/pull/635))
+- **Fetch:** announce content updates with the bubbling `dom-update` protocol event and route the default view transition through the shared `viewTransition` scheduler ([#632](https://github.com/studiometa/ui/pull/632))
 
 ## [v1.10.0](https://github.com/studiometa/ui/compare/1.9.0..1.10.0) (2026-08-11)
 
