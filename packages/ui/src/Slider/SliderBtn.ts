@@ -1,82 +1,45 @@
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { AbstractSliderChild } from './AbstractSliderChild.js';
+import { Base } from '@studiometa/js-toolkit';
+import { SliderContext } from './Slider.js';
 
-export interface SliderBtnProps extends BaseProps {
-  $options: {
-    prev: boolean;
-    next: boolean;
-    contain: boolean;
-  };
+export interface SliderBtnProps {
+  $el: HTMLButtonElement;
+  $options: { prev: boolean; next: boolean };
 }
 
 /**
- * SliderBtn class.
+ * Previous or next control. State waits for a Slider context; clicks use the
+ * current context and do nothing when none exists.
  *
- * A previous/next navigation button for the Slider. Configured through the
- * `prev` and `next` options, it calls the parent Slider's `goPrev`/`goNext` on
- * click and toggles its own `disabled` attribute at the slider bounds. With the
- * `contain` option it additionally disables the next button once the contained
- * end state is reached, provided the parent Slider also runs in `contain` mode.
+ * @link https://ui.studiometa.dev/reference/items/Slider/
  */
-export class SliderBtn<T extends BaseProps = BaseProps> extends AbstractSliderChild<
-  T & SliderBtnProps
-> {
-  /**
-   * Config.
-   */
-  static config: BaseConfig = {
+export class SliderBtn extends Base<SliderBtnProps> {
+  static config = {
     name: 'SliderBtn',
-    options: {
-      prev: Boolean,
-      next: Boolean,
-      contain: Boolean,
-    },
+    options: { prev: Boolean, next: Boolean },
   };
 
-  /**
-   * Update attributes.
-   */
-  update(index: number) {
-    const { slider } = this;
-    if (!slider) {
-      return;
-    }
-
-    if (this.$options.contain && !slider.$options.contain) {
-      this.$warn(
-        `The contain option will only works if the parent Slider also has the contain option.`,
-      );
-    }
-
-    const isContainMaxState =
-      this.$options.contain &&
-      slider.$options.contain &&
-      slider.containMaxState === slider.getStates()[index].x[slider.$options.mode];
-
-    if (
-      (index === 0 && this.$options.prev) ||
-      ((index === slider.indexMax || isContainMaxState) && this.$options.next)
-    ) {
-      this.$el.setAttribute('disabled', '');
-    } else {
-      this.$el.removeAttribute('disabled');
-    }
+  async mounted() {
+    const { state } = await this.$inject(SliderContext);
+    return state.subscribe(
+      ({ index, total }) => {
+        this.$write(() => this.update(index, total));
+      },
+      { immediate: true },
+    );
   }
 
-  /**
-   * Go prev or next on click.
-   */
-  onClick() {
-    const { prev, next } = this.$options;
-    const { slider } = this;
-    if (!slider) {
-      return;
-    }
+  update(index: number, total: number): void {
+    const isFirst = index === 0 && this.$options.prev;
+    const isLast = index >= total - 1 && this.$options.next;
+    this.$el.toggleAttribute('disabled', isFirst || isLast);
+  }
 
-    if (prev) {
-      slider.goPrev();
-    } else if (next) {
-      slider.goNext();
+  onClick(): void {
+    const api = this.$injectSync(SliderContext);
+    if (this.$options.prev) {
+      api?.goPrev();
+    } else if (this.$options.next) {
+      api?.goNext();
     }
   }
 }

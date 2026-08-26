@@ -87,7 +87,6 @@ export const catalog: ComponentCatalog = {
     'AbstractFigure',
     'AbstractFigureDynamic',
     'AbstractPrefetch',
-    'AbstractSliderChild',
     'AbstractTrack',
     'ActionEvent',
     'DataRegistry',

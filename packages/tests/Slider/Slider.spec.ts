@@ -1,174 +1,219 @@
-import { describe, it, expect, vi } from 'vitest';
-import {
-  Slider as SliderCore,
-  SliderBtn,
-  SliderCount,
-  SliderDrag,
-  SliderItem,
-} from '@studiometa/ui';
-import { getInstanceFromElement } from '@studiometa/js-toolkit';
-import type { BaseConfig } from '@studiometa/js-toolkit';
-import { h } from '#test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { frames, resetDom, settle } from '@studiometa/js-toolkit/test';
+import { Slider } from '#private/Slider/Slider.js';
+import { SliderBtn } from '#private/Slider/SliderBtn.js';
+import { SliderCount } from '#private/Slider/SliderCount.js';
+import { SliderItem } from '#private/Slider/SliderItem.js';
 
-/**
- * A Slider subclass registering the child controls, mirroring the documented
- * usage where controls are added through `config.components`.
- */
-class Slider extends SliderCore {
-  static config: BaseConfig = {
-    name: 'Slider',
-    components: {
-      SliderItem,
-      SliderDrag,
-      SliderCount,
-      SliderBtn,
-    },
-  };
-}
+registerComponents(Slider, SliderBtn, SliderCount);
 
-function sliderHtml() {
-  const root = h('div');
+const ITEM_WIDTH = 100;
+
+afterEach(resetDom);
+
+function render({ items = 3, options = '' } = {}): HTMLElement {
+  const root = document.createElement('div');
+  root.setAttribute('data-component', 'Slider');
   root.innerHTML = `
-    <div data-component="Slider" data-option-contain>
-      <div data-component="SliderDrag" data-ref="wrapper">
-        <div data-component="SliderItem">1</div>
-        <div data-component="SliderItem">2</div>
-        <div data-component="SliderItem">3</div>
-      </div>
-      <button data-component="SliderBtn" data-option-next data-option-contain>Next</button>
-      <div data-component="SliderCount"><span data-ref="current">0</span></div>
+    <div data-ref="wrapper" tabindex="0" style="width:${ITEM_WIDTH}px;overflow:hidden;display:flex">
+      ${Array.from(
+        { length: items },
+        (_, index) =>
+          `<div data-component="SliderItem" style="flex:0 0 ${ITEM_WIDTH}px;height:20px">${index}</div>`,
+      ).join('')}
     </div>
+    <button type="button" data-component="SliderBtn" data-option-prev="">prev</button>
+    <button type="button" data-component="SliderBtn" data-option-next="">next</button>
+    <p data-component="SliderCount"><span data-ref="current"></span>/<span data-ref="total"></span></p>
   `;
+  for (const attribute of options.split(' ').filter(Boolean)) {
+    root.setAttribute(attribute, '');
+  }
+  document.body.append(root);
   return root;
 }
 
-describe('The Slider component', () => {
-  it('should not prevent drag or drop when delta.y is greater than delta.x', async () => {
-    const div = h('div', [h('div', { dataComponent: 'SliderItem' })]);
-    const slider = new SliderCore(div);
-    const spy = vi.spyOn(slider, '$children', 'get');
-    // @ts-expect-error
-    spy.mockImplementation(() => ({
-      SliderItem: [],
-    }));
+function get(root: HTMLElement) {
+  const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-component="SliderBtn"]')];
+  return {
+    slider: getInstance<Slider>(root, 'Slider')!,
+    prev: buttons[0],
+    next: buttons[1],
+    current: root.querySelector('[data-ref="current"]') as HTMLElement,
+    total: root.querySelector('[data-ref="total"]') as HTMLElement,
+  };
+}
 
-    slider.onSliderDragDrag({
-      args: [
-        // @ts-expect-error
-        {
-          distance: {
-            x: 10,
-            y: 100,
-          },
-          delta: {
-            x: 10,
-            y: 100,
-          },
-        },
-      ],
-    });
-    expect(slider.__distanceX).toBe(10);
+async function ready(root: HTMLElement) {
+  await settle();
+  await frames(4);
+  return get(root);
+}
+
+describe('Slider', () => {
+  it('collects its items and publishes the initial state', async () => {
+    const root = render();
+    const { slider, current, total } = await ready(root);
+
+    expect(slider.items.size).toBe(3);
+    expect(slider.items.items.every((item) => item instanceof SliderItem)).toBe(true);
+    expect(slider.state.value).toEqual({ index: 0, total: 3 });
+    expect(current.textContent).toBe('1');
+    expect(total.textContent).toBe('3');
   });
 
-  it('should connect a `contain` SliderBtn on first mount without reading empty geometry', async () => {
-    const root = sliderHtml();
-    const sliderEl = root.querySelector('[data-component="Slider"]') as HTMLElement;
-    const btnEl = root.querySelector('[data-component="SliderBtn"]') as HTMLElement;
+  it('sets the carousel accessibility attributes', async () => {
+    const root = render();
+    const { slider } = await ready(root);
 
-    vi.useFakeTimers();
-    // A `contain` SliderBtn used to crash on first mount by reading the Slider
-    // geometry (`states`) before `Slider.mounted()` had computed it. Reaching
-    // the assertions below (rather than an unhandled scheduler error) proves the
-    // update no longer runs against a not-yet-initialised Slider.
-    const slider = new Slider(sliderEl);
-    slider.$mount();
-    await vi.advanceTimersByTimeAsync(200);
-    vi.useRealTimers();
-
-    const btn = getInstanceFromElement(btnEl, SliderBtn);
-    expect(btn?.slider).toBeInstanceOf(SliderCore);
-  });
-});
-
-describe('A Slider child component', () => {
-  it('should synchronise even when fully mounted before its Slider', async () => {
-    const root = sliderHtml();
-    const sliderEl = root.querySelector('[data-component="Slider"]') as HTMLElement;
-    const countEl = root.querySelector('[data-component="SliderCount"]') as HTMLElement;
-    const currentRef = countEl.querySelector('[data-ref="current"]') as HTMLElement;
-
-    vi.useFakeTimers();
-
-    // Fully mount the child *before* the Slider is even constructed, so it
-    // cannot resolve `$closest('Slider')` on its own.
-    const count = new SliderCount(countEl);
-    count.$mount();
-    await vi.advanceTimersByTimeAsync(200);
-    // Not connected yet: the counter still shows its initial markup.
-    expect(currentRef.textContent).toBe('0');
-
-    // Mounting the Slider connects the pre-mounted child (parent-side handshake)
-    // and seeds the current index (0, rendered as `0 + 1`).
-    const slider = new Slider(sliderEl);
-    slider.$mount();
-    await vi.advanceTimersByTimeAsync(200);
-    expect(currentRef.textContent).toBe('1');
-
-    // A later index change propagates through the store subscription, proving
-    // the child is genuinely connected (not merely showing the default value).
-    slider.goTo(2);
-    await vi.advanceTimersByTimeAsync(200);
-    expect(currentRef.textContent).toBe('3');
-
-    vi.useRealTimers();
-  });
-});
-
-describe('The SliderBtn component in `contain` mode', () => {
-  function createStates(leftValues: number[]) {
-    return leftValues.map((left) => ({ x: { left, center: 0, right: 0 } }));
-  }
-
-  it('should be disabled once the parent reaches the max contain state', () => {
-    const el = h('button', {
-      dataComponent: 'SliderBtn',
-      dataOptionNext: true,
-      dataOptionContain: true,
-    });
-    const btn = new SliderBtn(el);
-
-    const states = createStates([0, -10, -20, -100, -100, -100]);
-    const fakeSlider = {
-      $options: { contain: true, mode: 'left' as const },
-      indexMax: 5,
-      containMaxState: -100,
-      getStates: () => states,
-    };
-    // Shadow the inherited `slider` getter with a controlled instance.
-    Object.defineProperty(btn, 'slider', { configurable: true, get: () => fakeSlider });
-
-    // Index 3 is the first state matching the max contain value → disabled.
-    btn.update(3);
-    expect(el.hasAttribute('disabled')).toBe(true);
-
-    // Index 2 has not reached the max contain state and is not the last index.
-    btn.update(2);
-    expect(el.hasAttribute('disabled')).toBe(false);
+    expect(root.getAttribute('role')).toBe('group');
+    expect(root.getAttribute('aria-roledescription')).toBe('carousel');
+    const [item] = slider.items.items;
+    expect(item.$el.getAttribute('aria-roledescription')).toBe('slide');
+    expect(item.$el.getAttribute('aria-label')).toBe(item.$id);
   });
 
-  it('should not be disabled when the parent Slider cannot be resolved', () => {
-    const el = h('button', {
-      dataComponent: 'SliderBtn',
-      dataOptionNext: true,
-      dataOptionContain: true,
-    });
-    el.setAttribute('disabled', '');
-    const btn = new SliderBtn(el);
-    Object.defineProperty(btn, 'slider', { configurable: true, get: () => undefined });
+  it('navigates on a real click and moves every slide', async () => {
+    const root = render();
+    const { slider, next } = await ready(root);
 
-    // With no resolvable Slider the update is a no-op and must not throw.
-    expect(() => btn.update(0)).not.toThrow();
-    // The pre-existing attribute is left untouched (no dereference happened).
-    expect(el.hasAttribute('disabled')).toBe(true);
+    next.click();
+    await frames(30);
+
+    expect(slider.currentIndex).toBe(1);
+    for (const item of slider.items) {
+      expect(item.x).toBe(-ITEM_WIDTH);
+      expect(item.$el.style.transform).toContain('translate3d(-');
+    }
+  });
+
+  it('flags the active slide', async () => {
+    const root = render();
+    const { slider, next } = await ready(root);
+    const [first, second] = slider.items.items;
+
+    expect(first.$el.classList.contains('is-active')).toBe(true);
+
+    next.click();
+    await frames(4);
+    expect(first.$el.classList.contains('is-active')).toBe(false);
+    expect(second.$el.classList.contains('is-active')).toBe(true);
+  });
+
+  it('updates every control through the provided signal', async () => {
+    const root = render();
+    const { slider, next, current } = await ready(root);
+
+    next.click();
+    await frames(4);
+
+    expect(current.textContent).toBe('2');
+    expect(slider.state.value).toEqual({ index: 1, total: 3 });
+  });
+
+  it('disables the buttons at the bounds', async () => {
+    const root = render({ items: 2 });
+    const { next, prev } = await ready(root);
+
+    expect(prev.disabled).toBe(true);
+    expect(next.disabled).toBe(false);
+
+    next.click();
+    await frames(4);
+    expect(prev.disabled).toBe(false);
+    expect(next.disabled).toBe(true);
+  });
+
+  it('navigates with the arrow keys when the wrapper has the focus', async () => {
+    const root = render();
+    const { slider } = await ready(root);
+    const wrapper = root.querySelector('[data-ref="wrapper"]') as HTMLElement;
+
+    wrapper.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await frames(2);
+    expect(slider.currentIndex).toBe(1);
+
+    wrapper.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    await frames(2);
+    expect(slider.currentIndex).toBe(0);
+
+    root.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await frames(2);
+    expect(slider.currentIndex).toBe(0);
+  });
+
+  it('reacts to a slide added after mount', async () => {
+    const root = render({ items: 2 });
+    const { slider, total, next } = await ready(root);
+    expect(slider.items.size).toBe(2);
+
+    const added = document.createElement('div');
+    added.setAttribute('data-component', 'SliderItem');
+    added.style.cssText = `flex:0 0 ${ITEM_WIDTH}px;height:20px`;
+    (root.querySelector('[data-ref="wrapper"]') as HTMLElement).append(added);
+    await ready(root);
+
+    expect(slider.items.size).toBe(3);
+    expect(total.textContent).toBe('3');
+    expect(next.disabled).toBe(false);
+  });
+
+  it('clamps instead of throwing when the active slide is removed', async () => {
+    const root = render({ items: 3 });
+    const { slider, next } = await ready(root);
+
+    next.click();
+    next.click();
+    await frames(4);
+    expect(slider.currentIndex).toBe(2);
+
+    slider.items.items[2].$el.remove();
+    await ready(root);
+
+    expect(slider.items.size).toBe(2);
+    expect(slider.currentIndex).toBe(1);
+    expect(slider.state.value).toEqual({ index: 1, total: 2 });
+  });
+
+  it('connects a control that mounts before its slider', async () => {
+    const count = document.createElement('p');
+    count.setAttribute('data-component', 'SliderCount');
+    count.innerHTML = '<span data-ref="current"></span>';
+    document.body.append(count);
+    await settle();
+    expect(count.textContent).toBe('');
+
+    const root = render();
+    root.append(count);
+    await ready(root);
+
+    expect(count.querySelector('[data-ref="current"]')?.textContent).toBe('1');
+  });
+
+  it('leaves a control with no slider above it inert', async () => {
+    const button = document.createElement('button');
+    button.setAttribute('data-component', 'SliderBtn');
+    button.setAttribute('data-option-next', '');
+    document.body.append(button);
+    await settle();
+
+    button.click();
+    await frames(2);
+    expect(button.disabled).toBe(false);
+  });
+
+  it('resets a slide position when it leaves the DOM', async () => {
+    const root = render();
+    const { slider, next } = await ready(root);
+
+    next.click();
+    await frames(30);
+    const [first] = slider.items.items;
+    expect(first.x).toBe(-ITEM_WIDTH);
+
+    first.$el.remove();
+    await ready(root);
+    expect(first.x).toBe(0);
   });
 });

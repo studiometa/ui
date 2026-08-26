@@ -1,161 +1,108 @@
-import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { damp } from '@studiometa/js-toolkit/utils/damp';
-import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
-import { transform } from '@studiometa/js-toolkit/utils/transform';
+import { Base, useRaf, useResize, type MountedReturn } from '@studiometa/js-toolkit';
+import { damp } from '@studiometa/js-toolkit/utils';
 
-export interface SliderItemProps extends BaseProps {}
+export interface SliderItemRect {
+  x: number;
+  width: number;
+}
 
 /**
- * SliderItem class.
+ * One slide with cached geometry and damped horizontal movement.
  *
- * A single slide within the Slider. It caches its bounding rectangle for the
- * Slider's position computations and translates itself along the x axis on
- * demand — either instantly via `moveInstantly` or with a damped, ticked
- * animation via `move` — while exposing `activate`/`disactivate` to toggle its
- * `is-active` state and setting `role`/`aria` attributes for accessibility.
+ * @link https://ui.studiometa.dev/reference/items/Slider/
  */
-export class SliderItem<T extends BaseProps = BaseProps> extends Base<T & SliderItemProps> {
-  /**
-   * Config.
-   */
-  static config: BaseConfig = {
-    name: 'SliderItem',
-  };
+export class SliderItem extends Base {
+  static config = { name: 'SliderItem' };
 
-  /**
-   * The SliderItem `x` position.
-   */
+  /** Target position. */
   x = 0;
 
-  /**
-   * The smoothed `x` position.
-   */
+  /** Smoothed position. */
   dampedX = 0;
 
   /**
-   * Item original position.
+   * Cached untranslated geometry, invalidated on resize.
+   * @private
    */
-  __rect: {
-    x: number;
-    y: number;
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-    width: number;
-    height: number;
-  };
+  __rect: SliderItemRect | null = null;
 
   /**
-   * Wether the slider item size should be evaluated or not.
+   * Releases the frame subscription while the slide is settling.
+   * @private
    */
-  shouldEvaluateRect = false;
+  __unsubscribeFrame: (() => void) | null = null;
 
-  /**
-   * Size of the slider item.
-   */
-  get rect() {
-    if (!this.__rect || this.shouldEvaluateRect) {
-      this.shouldEvaluateRect = false;
-      const x = this.x * -1;
-      const rect = this.$el.getBoundingClientRect().toJSON();
-      this.__rect = {
-        ...rect,
-        left: rect.left + x,
-        right: rect.left + x + rect.width,
-        x: rect.left + x,
-      };
+  /** Position and width as if the slide were untranslated. */
+  get rect(): SliderItemRect {
+    if (!this.__rect) {
+      const rect = this.$el.getBoundingClientRect();
+      this.__rect = { x: rect.left - this.dampedX, width: rect.width };
     }
-
     return this.__rect;
   }
 
-  /**
-   * Mounted hook
-   */
-  mounted() {
-    this.setAccessibilityAttributes();
-  }
-
-  /**
-   * Update SliderItem bounding rectangle on resize.
-   */
-  resized() {
-    this.shouldEvaluateRect = true;
-  }
-
-  /**
-   * Reset position to `0` on destroy.
-   */
-  destroyed() {
-    this.moveInstantly(0);
-  }
-
-  /**
-   * Ticked hook.
-   * @todo create AbstractSliderItem with `render` method
-   * @todo add state to SliderItem
-   * @todo add origin to SliderItem
-   */
-  ticked() {
-    this.dampedX = damp(this.x, this.dampedX, 0.1, 0.00001);
-    this.render();
-
-    if (this.dampedX === this.x) {
-      this.$services.disable('ticked');
-    }
-  }
-
-  /**
-   * Set accessibility attributes for the component
-   */
-  setAccessibilityAttributes() {
+  mounted(): MountedReturn {
     this.$el.setAttribute('role', 'group');
     this.$el.setAttribute('aria-roledescription', 'slide');
     this.$el.setAttribute('aria-label', this.$id);
+
+    return [
+      useResize().subscribe(() => {
+        this.__rect = null;
+      }),
+      () => this.__stopTicking(),
+    ];
   }
 
-  /**
-   * Enable the SliderItem.
-   */
-  activate() {
+  unmounted(): void {
+    this.moveInstantly(0);
+  }
+
+  activate(): void {
     this.$el.classList.add('is-active');
   }
 
-  /**
-   * Disable the SliderItem.
-   */
-  disactivate() {
+  disactivate(): void {
     this.$el.classList.remove('is-active');
   }
 
-  /**
-   * Move the SliderItem to the given target position.
-   */
-  move(targetPosition: number) {
+  /** Move with inertia. */
+  move(targetPosition: number): void {
     this.x = targetPosition;
-
-    if (!this.$services.has('ticked')) {
-      this.$services.enable('ticked');
-    }
+    this.__startTicking();
   }
 
-  /**
-   * Move the SliderItem instantly to the given target position.
-   */
-  moveInstantly(targetPosition: number) {
+  /** Move now, no animation. */
+  moveInstantly(targetPosition: number): void {
     this.x = targetPosition;
     this.dampedX = targetPosition;
-    this.render();
+    this.$write(() => this.render());
+  }
+
+  render(): void {
+    this.$el.style.transform = `translate3d(${this.dampedX}px, 0px, 0px)`;
   }
 
   /**
-   * Render the component.
+   * Start damping towards the target position, once.
+   * @private
    */
-  render() {
-    domScheduler.write(() => {
-      transform(this.$el, { x: this.dampedX });
+  __startTicking(): void {
+    this.__unsubscribeFrame ??= useRaf().subscribe(({ delta }) => {
+      this.dampedX = damp(this.x, this.dampedX, 0.1, delta, 0.00001);
+      if (this.dampedX === this.x) {
+        this.__stopTicking();
+      }
+      return () => this.render();
     });
+  }
+
+  /**
+   * Leave the frame service once the slide has settled.
+   * @private
+   */
+  __stopTicking(): void {
+    this.__unsubscribeFrame?.();
+    this.__unsubscribeFrame = null;
   }
 }

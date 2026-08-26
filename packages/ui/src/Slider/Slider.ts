@@ -1,36 +1,37 @@
-import { Base } from '@studiometa/js-toolkit/Base';
-import type {
-  BaseProps,
-  BaseConfig,
-  DragServiceProps,
-  KeyServiceProps,
+import {
+  Base,
+  createContext,
+  signal,
+  withResize,
+  type ChildrenCollection,
+  type DelegatedEvent,
+  type MountedReturn,
+  type RefEvent,
+  type Signal,
 } from '@studiometa/js-toolkit';
-import { clamp } from '@studiometa/js-toolkit/utils/clamp';
-import { createMemoryStorageProvider } from '@studiometa/js-toolkit/utils/createMemoryStorageProvider';
-import { createStorage } from '@studiometa/js-toolkit/utils/createStorage';
-import { inertiaFinalValue } from '@studiometa/js-toolkit/utils/inertiaFinalValue';
-import { nextFrame } from '@studiometa/js-toolkit/utils/nextFrame';
-import { AbstractSliderChild } from './AbstractSliderChild.js';
+import { clamp } from '@studiometa/js-toolkit/utils';
 import { SliderDrag } from './SliderDrag.js';
 import { SliderItem } from './SliderItem.js';
 
 export type SliderModes = 'left' | 'center' | 'right';
 
-type SliderState = { x: Record<SliderModes, number> };
+export interface SliderState {
+  index: number;
+  total: number;
+}
 
-/**
- * Shape of the per-instance store shared with the child components.
- */
-export type SliderStore = { index: number };
+/** State and navigation commands exposed to Slider controls. */
+export interface SliderApi {
+  state: Signal<SliderState>;
+  goTo(index: number): void;
+  goNext(): void;
+  goPrev(): void;
+}
 
-export interface SliderProps extends BaseProps {
-  $refs: {
-    wrapper: HTMLElement;
-  };
-  $children: {
-    SliderItem: SliderItem[];
-    SliderDrag: SliderDrag[];
-  };
+export const SliderContext = /* @__PURE__ */ createContext<SliderApi>('slider');
+
+export interface SliderProps {
+  $refs: { wrapper: HTMLElement };
   $options: {
     mode: SliderModes;
     fitBounds: boolean;
@@ -38,36 +39,25 @@ export interface SliderProps extends BaseProps {
     sensitivity: number;
     dropSensitivity: number;
   };
+  $emits: { goto: { index: number }; index: { index: number } };
+}
+
+interface SliderItemState {
+  left: number;
+  center: number;
+  right: number;
 }
 
 /**
- * Slider class.
- *
- * The root of the carousel/slider system. It measures its `SliderItem`
- * children against the `wrapper` ref to compute per-slide positions for the
- * `left`, `center` and `right` modes, then drives navigation through `goTo`,
- * `goNext` and `goPrev` — emitting `goto` and `index` events and broadcasting
- * the active index over a per-instance store its `AbstractSliderChild`
- * controls subscribe to. Drag interactions handled by the `SliderDrag` child
- * feed inertia-based slide selection, honouring the `fitBounds`, `contain`,
- * `sensitivity` and `dropSensitivity` options, and arrow-key navigation is
- * supported when the wrapper is focused.
+ * Root carousel component with live slides, controls, and optional drag support.
  *
  * @link https://ui.studiometa.dev/reference/items/Slider/
- * @todo a11y
  */
-export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProps> {
-  /**
-   * Config.
-   */
-  static config: BaseConfig = {
+export class Slider extends withResize(Base)<SliderProps> {
+  static config = {
     name: 'Slider',
     refs: ['wrapper'],
-    emits: ['goto', 'index'],
-    components: {
-      SliderItem,
-      SliderDrag,
-    },
+    components: { SliderItem, SliderDrag },
     options: {
       mode: { type: String, default: 'left' },
       fitBounds: Boolean,
@@ -77,356 +67,251 @@ export class Slider<T extends BaseProps = BaseProps> extends Base<T & SliderProp
     },
   };
 
-  /**
-   * Distance on the x axis.
-   * @private
-   */
-  __distanceX = 0;
+  state = signal<SliderState>({ index: 0, total: 0 });
+
+  /** Provided during construction so controls can resolve it before mount. */
+  api: SliderApi = this.$provide(SliderContext, {
+    state: this.state,
+    goTo: (index) => this.goTo(index),
+    goNext: () => this.goNext(),
+    goPrev: () => this.goPrev(),
+  });
+
+  items: ChildrenCollection<SliderItem> = this.$watchChildren<SliderItem>('SliderItem', {
+    added: () => this.refresh(),
+    removed: () => this.refresh(),
+  });
+
+  states: SliderItemState[] = [];
+
+  origins: Record<SliderModes, number> = { left: 0, center: 0, right: 0 };
 
   /**
-   * Initial x position.
-   * @private
-   */
-  __initialX = 0;
-
-  /**
-   * Index of the current active slide.
+   * The active slide's position in the live collection.
    * @private
    */
   __currentIndex = 0;
 
   /**
-   * Store all the states.
+   * The active slide's offset when the current gesture started.
+   * @private
    */
-  states: SliderState[] = [];
+  __initialX = 0;
 
   /**
-   * Per-instance store used to broadcast the current index to the child
-   * components. Children subscribe to it through a guarded `$closest('Slider')`
-   * lookup instead of dereferencing the deprecated `$parent` accessor.
+   * The offset the slides are currently following the pointer to.
+   * @private
    */
-  store = createStorage<SliderStore>({ provider: createMemoryStorageProvider() });
+  __distanceX = 0;
 
-  /**
-   * Origins for the different modes.
-   */
-  origins: Record<SliderModes, number> = {
-    left: 0,
-    center: 0,
-    right: 0,
-  };
-
-  /**
-   * Wether or not the wrapper is focused.
-   */
-  hasFocus = false;
-
-  /**
-   * Get the current index.
-   */
-  get currentIndex() {
+  get currentIndex(): number {
     return this.__currentIndex;
   }
 
-  /**
-   * Set the current index and emit the `index` event.
-   */
   set currentIndex(value: number) {
-    this.currentSliderItem.disactivate();
-    this.$emit('index', value);
-    this.store.set('index', value);
+    this.currentSliderItem?.disactivate();
     this.__currentIndex = value;
-    this.currentSliderItem.activate();
+    this.$emit('index', { index: value });
+    this.state.value = { index: value, total: this.items.size };
+    this.currentSliderItem?.activate();
   }
 
-  /**
-   * Get the current state.
-   */
-  get currentState() {
-    return this.states[this.currentIndex];
-  }
-
-  /**
-   * Get the first state.
-   */
-  get firstState() {
-    return this.states[0];
-  }
-
-  /**
-   * Get the last state.
-   */
-  get lastState() {
-    return this.states.at(-1);
-  }
-
-  /**
-   * Get the minimal contain state value.
-   */
-  get containMinState(): number {
-    return this.getStateValueByMode(this.firstState.x, 'left');
-  }
-
-  /**
-   * Get the maximal contain state value.
-   */
-  get containMaxState(): number {
-    return this.getStateValueByMode(this.lastState.x, 'right');
-  }
-
-  /**
-   * Get the last index.
-   */
   get indexMax(): number {
-    return this.$children.SliderItem.length - 1;
+    return this.items.size - 1;
   }
 
-  /**
-   * Get the current SliderItem
-   */
-  get currentSliderItem() {
-    return this.$children.SliderItem[this.currentIndex];
+  get currentSliderItem(): SliderItem | undefined {
+    return this.items.items[this.__currentIndex];
   }
 
-  /**
-   * Get the states for each SliderItem.
-   */
-  getStates(): SliderState[] {
-    const { wrapper } = this.$refs;
-    const originRect = wrapper.getBoundingClientRect();
-
-    this.origins = {
-      left: originRect.left,
-      center: originRect.x + originRect.width / 2,
-      right: originRect.x + originRect.width,
-    };
-
-    const states: SliderState[] = this.$children.SliderItem.map((item) => ({
-      x: {
-        left: (item.rect.x - this.origins.left) * -1,
-        center: (item.rect.x + item.rect.width / 2 - this.origins.center) * -1,
-        right: (item.rect.x + item.rect.width - this.origins.right) * -1,
-      },
-    }));
-
-    if (this.$options.contain) {
-      const { mode } = this.$options;
-      // Find state where last child has passed the wrapper bound completely
-      if (mode === 'left') {
-        const lastChild = this.$children.SliderItem.at(-1);
-
-        const maxState = states.find((state) => {
-          const lastChildPosition =
-            lastChild.rect.x - this.origins.left + lastChild.rect.width + state.x.left;
-          const diffWithWrapperBound = originRect.width - lastChildPosition;
-          if (diffWithWrapperBound > 0) {
-            state.x.left = Math.min(state.x.left + diffWithWrapperBound, 0);
-            return true;
-          }
-
-          return false;
-        });
-
-        if (maxState) {
-          return states.map((state) => {
-            state.x.left = Math.max(state.x.left, maxState.x.left);
-            return state;
-          });
-        }
-      }
-
-      if (mode === 'right') {
-        const maxStateIndex = states.findIndex((state) => state.x.right <= 0);
-        const maxState = maxStateIndex < 0 ? states.at(-1) : states[maxStateIndex - 1];
-
-        return states.map((state) => {
-          state.x.right = maxStateIndex < 0 ? maxState.x.right : Math.min(state.x.right, 0);
-          return state;
-        });
-      }
-
-      if (mode === 'center') {
-        this.$warn('The `center` mode is not yet compatible with the `contain` mode.');
-      }
-    }
-
-    return states;
+  get containMinState(): number {
+    return this.states[0]?.left ?? 0;
   }
 
-  /**
-   * Get an origin by mode.
-   */
-  getOriginByMode(mode?: SliderModes) {
-    return this.origins[mode ?? this.$options.mode];
+  get containMaxState(): number {
+    return this.states.at(-1)?.right ?? 0;
   }
 
-  /**
-   * Get a state value according to the given mode.
-   */
-  getStateValueByMode(state: SliderState['x'], mode?: SliderModes) {
-    return state[mode ?? this.$options.mode];
+  mounted(): MountedReturn {
+    const inherited = super.mounted();
+    this.$el.setAttribute('role', 'group');
+    this.$el.setAttribute('aria-roledescription', 'carousel');
+    this.refresh();
+    return inherited;
   }
 
-  /**
-   * Mounted hook.
-   */
-  mounted() {
-    this.states = this.getStates();
-    this.setAccessibilityAttributes();
-    this.goTo(this.currentIndex);
-    this.connectChildren();
-  }
-
-  /**
-   * Connect the child components that track the current index, including those
-   * that mounted before this Slider. Runs after `goTo` has seeded the store so
-   * connected children synchronise against an initialised Slider.
-   */
-  connectChildren() {
-    for (const children of Object.values(this.$children as Record<string, Base[]>)) {
-      for (const child of children) {
-        if (child instanceof AbstractSliderChild) {
-          child.__connect(this as unknown as Slider);
-        }
-      }
-    }
-  }
-
-  /**
-   * Resized hook.
-   */
-  resized() {
-    nextFrame(() => {
+  /** Re-measure geometry and publish the current state. */
+  refresh(): void {
+    this.$read(() => {
       this.states = this.getStates();
-      nextFrame(() => {
-        this.goTo(this.currentIndex);
-      });
+      this.$write(() => this.goTo(Math.min(this.__currentIndex, Math.max(0, this.indexMax))));
     });
   }
 
-  /**
-   * Set accessibility attributes for the component
-   */
-  setAccessibilityAttributes() {
-    this.$el.setAttribute('role', 'group');
-    this.$el.setAttribute('aria-roledescription', 'carousel');
+  resized(): void {
+    this.refresh();
   }
 
-  /**
-   * Go to the next slide.
-   */
-  goNext() {
-    if (this.currentIndex + 1 > this.indexMax) {
+  getStates(): SliderItemState[] {
+    const items = this.items.items;
+    if (items.length === 0) {
+      return [];
+    }
+
+    const originRect = this.$refs.wrapper.getBoundingClientRect();
+    this.origins = {
+      left: originRect.left,
+      center: originRect.left + originRect.width / 2,
+      right: originRect.left + originRect.width,
+    };
+
+    const states: SliderItemState[] = items.map((item) => ({
+      left: (item.rect.x - this.origins.left) * -1,
+      center: (item.rect.x + item.rect.width / 2 - this.origins.center) * -1,
+      right: (item.rect.x + item.rect.width - this.origins.right) * -1,
+    }));
+
+    if (!this.$options.contain) {
+      return states;
+    }
+
+    const { mode } = this.$options;
+
+    if (mode === 'left') {
+      const lastItem = items.at(-1) as SliderItem;
+      const maxState = states.find((state) => {
+        const lastPosition = lastItem.rect.x - this.origins.left + lastItem.rect.width + state.left;
+        const difference = originRect.width - lastPosition;
+        if (difference > 0) {
+          state.left = Math.min(state.left + difference, 0);
+          return true;
+        }
+        return false;
+      });
+
+      if (maxState) {
+        for (const state of states) {
+          state.left = Math.max(state.left, maxState.left);
+        }
+      }
+      return states;
+    }
+
+    if (mode === 'right') {
+      const maxStateIndex = states.findIndex((state) => state.right <= 0);
+      const maxState = maxStateIndex < 0 ? states.at(-1) : states[maxStateIndex - 1];
+      for (const state of states) {
+        state.right = maxStateIndex < 0 ? (maxState?.right ?? 0) : Math.min(state.right, 0);
+      }
+      return states;
+    }
+
+    this.$warn(
+      'slider.incompatible-modes',
+      'The `center` mode is not compatible with the `contain` mode.',
+    );
+    return states;
+  }
+
+  getStateValueByMode(state: SliderItemState, mode?: SliderModes): number {
+    return state[mode ?? this.$options.mode];
+  }
+
+  goNext(): void {
+    if (this.currentIndex + 1 <= this.indexMax) {
+      this.goTo(this.currentIndex + 1);
+    }
+  }
+
+  goPrev(): void {
+    if (this.currentIndex - 1 >= 0) {
+      this.goTo(this.currentIndex - 1);
+    }
+  }
+
+  /** Navigate to an index clamped to the live slide collection. */
+  goTo(index: number): void {
+    if (this.items.size === 0) {
+      this.currentIndex = 0;
       return;
     }
 
-    this.goTo(this.currentIndex + 1);
-  }
-
-  /**
-   * Go to the previous slide.
-   */
-  goPrev() {
-    if (this.currentIndex - 1 < 0) {
-      return;
+    const clamped = Math.max(0, Math.min(index, this.indexMax));
+    const state = this.states[clamped];
+    if (state) {
+      const value = this.getStateValueByMode(state);
+      for (const item of this.items) {
+        item.move(value);
+      }
     }
 
-    this.goTo(this.currentIndex - 1);
+    this.currentIndex = clamped;
+    this.$emit('goto', { index: clamped });
   }
 
-  /**
-   * Go to the given index.
-   */
-  goTo(index: number) {
-    if (index < 0 || index > this.indexMax) {
-      throw new Error('Index out of bound.');
-    }
-
-    const state = this.getStateValueByMode(this.states[index].x);
-
-    for (const item of this.$children.SliderItem) {
-      item.move(state);
-    }
-
-    this.currentIndex = index;
-    this.$emit('goto', index);
-  }
-
-  /**
-   * Listen to the Draggable `start` event.
-   */
-  onSliderDragStart() {
-    this.__initialX = this.currentSliderItem ? this.currentSliderItem.x : 0;
+  /** Capture the slide position at the start of a drag. */
+  onSliderDragStart(): void {
+    this.__initialX = this.currentSliderItem?.x ?? 0;
     this.__distanceX = this.__initialX;
   }
 
-  /**
-   * Listen to the Draggable `drag` event.
-   */
-  onSliderDragDrag({ args: [props] }: { args: [DragServiceProps] }) {
-    this.__distanceX = this.__initialX + props.distance.x * this.$options.sensitivity;
+  /** Follow the pointer relative to the gesture start. */
+  onSliderDragDrag({ payload: props }: DelegatedEvent<SliderDrag, 'drag'>): void {
+    this.__distanceX = this.__initialX + props.distanceX * this.$options.sensitivity;
 
-    for (const item of this.$children.SliderItem) {
+    for (const item of this.items) {
       item.moveInstantly(this.__distanceX);
     }
   }
 
-  /**
-   * Listen to the Draggable `drop` event and find the new active slide.
-   */
-  onSliderDragDrop({ args: [props] }: { args: [DragServiceProps] }) {
+  /** Select the closest slide using the drag service's projected settle position. */
+  onSliderDragDrop({ payload: props }: DelegatedEvent<SliderDrag, 'drop'>): void {
+    const first = this.states[0];
+    const last = this.states.at(-1);
+    if (!first || !last) {
+      return;
+    }
+
+    const projected = (props.finalX - props.x) * this.$options.dropSensitivity;
     let finalX = clamp(
-      inertiaFinalValue(this.__distanceX, props.delta.x * this.$options.dropSensitivity),
-      this.getStateValueByMode(this.firstState.x),
-      this.getStateValueByMode(this.lastState.x),
+      this.__distanceX + projected,
+      this.getStateValueByMode(first),
+      this.getStateValueByMode(last),
     );
 
-    const absoluteDifferencesBetweenDistanceAndState = this.states.map((state) =>
-      Math.abs(finalX - this.getStateValueByMode(state.x)),
+    const differences = this.states.map((state) =>
+      Math.abs(finalX - this.getStateValueByMode(state)),
     );
-    const minimumDifference = Math.min(...absoluteDifferencesBetweenDistanceAndState);
-    const closestIndex = absoluteDifferencesBetweenDistanceAndState.indexOf(minimumDifference);
+    const closestIndex = differences.indexOf(Math.min(...differences));
 
     if (this.$options.fitBounds) {
       this.goTo(closestIndex);
-    } else {
-      if (this.$options.contain) {
-        finalX = Math.min(this.containMinState, finalX);
-        finalX = Math.max(this.containMaxState, finalX);
-      }
-      for (const item of this.$children.SliderItem) {
-        item.move(finalX);
-      }
-      this.currentIndex = closestIndex;
+      return;
     }
+
+    if (this.$options.contain) {
+      finalX = Math.min(this.containMinState, finalX);
+      finalX = Math.max(this.containMaxState, finalX);
+    }
+
+    for (const item of this.items) {
+      item.move(finalX);
+    }
+
+    // Without `fitBounds`, publish the index without snapping slide positions.
+    this.currentIndex = closestIndex;
   }
 
   /**
-   * Enable focus.
+   * Arrow-key navigation. The handler is delegated from the `wrapper` ref, so
+   * it only fires when the focus is inside the wrapper.
    */
-  onWrapperFocus() {
-    this.hasFocus = true;
-  }
-
-  /**
-   * Disable focus.
-   */
-  onWrapperBlur() {
-    this.hasFocus = false;
-  }
-
-  /**
-   * Go prev or next when focus is on the wrapper and pressing arrow keys.
-   */
-  keyed({ LEFT, RIGHT, isDown }: KeyServiceProps) {
-    if (this.hasFocus && isDown) {
-      if (LEFT) {
-        this.goPrev();
-      } else if (RIGHT) {
-        this.goNext();
-      }
+  onWrapperKeydown({ event }: RefEvent): void {
+    const { key } = event as KeyboardEvent;
+    if (key === 'ArrowLeft') {
+      this.goPrev();
+    } else if (key === 'ArrowRight') {
+      this.goNext();
     }
   }
 }
-
-export default Slider;

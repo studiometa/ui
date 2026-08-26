@@ -1,47 +1,31 @@
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { transform } from '@studiometa/js-toolkit/utils/transform';
-import { map } from '@studiometa/js-toolkit/utils/map';
-import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
-import { AbstractSliderChild } from './AbstractSliderChild.js';
+import { Base } from '@studiometa/js-toolkit';
+import { map } from '@studiometa/js-toolkit/utils';
+import { SliderContext } from './Slider.js';
 
-export interface SliderProgressProps extends BaseProps {
-  $refs: {
-    progress: HTMLElement;
-  };
+export interface SliderProgressProps {
+  $refs: { progress: HTMLElement };
 }
 
 /**
- * SliderProgress class.
+ * Progress bar that maps the active index across the published slide total.
  *
- * A progress indicator for the Slider. It translates its `progress` ref along
- * the x axis in proportion to the active index over the slider's total range,
- * revealing more of the bar as the slider advances.
+ * @link https://ui.studiometa.dev/reference/items/Slider/
  */
-export class SliderProgress<T extends BaseProps = BaseProps> extends AbstractSliderChild<
-  T & SliderProgressProps
-> {
-  /**
-   * Config.
-   */
-  static config: BaseConfig = {
-    name: 'SliderProgress',
-    refs: ['progress'],
-  };
+export class SliderProgress extends Base<SliderProgressProps> {
+  static config = { name: 'SliderProgress', refs: ['progress'] };
 
-  /**
-   * Update the progress indicator.
-   */
-  update(index: number) {
-    const { slider } = this;
-    if (!slider) {
-      return;
-    }
+  async mounted() {
+    const { state } = await this.$inject(SliderContext);
+    return state.subscribe(({ index, total }) => this.update(index, total), { immediate: true });
+  }
 
-    domScheduler.read(() => {
+  update(index: number, total: number): void {
+    this.$read(() => {
       const { progress } = this.$refs;
-      const x = map(index, 0, slider.indexMax, progress.clientWidth * -1, 0);
-      domScheduler.write(() => {
-        transform(progress, { x });
+      const indexMax = total - 1;
+      const x = indexMax > 0 ? map(index, 0, indexMax, progress.clientWidth * -1, 0) : 0;
+      this.$write(() => {
+        progress.style.transform = `translate3d(${x}px, 0px, 0px)`;
       });
     });
   }

@@ -1,64 +1,61 @@
-import type { BaseProps, BaseConfig, DragServiceProps } from '@studiometa/js-toolkit';
-import { Base } from '@studiometa/js-toolkit/Base';
-import { withDrag } from '@studiometa/js-toolkit/withDrag';
+import {
+  Base,
+  DRAG_MODES,
+  withDrag,
+  type DragProps,
+  type MountedReturn,
+} from '@studiometa/js-toolkit';
 
-export interface SliderDragProps extends BaseProps {
-  $options: {
-    scrollLockThreshold: number;
+export interface SliderDragProps {
+  $emits: {
+    start: DragProps;
+    drag: DragProps;
+    drop: DragProps;
+    inertia: DragProps;
+    stop: DragProps;
   };
 }
 
 /**
- * SliderDrag class.
+ * Optional draggable track that emits the drag lifecycle to its Slider.
  *
- * The draggable track of the Slider, built on the `withDrag` decorator. It
- * re-emits the drag lifecycle as `start`, `drag`, `drop`, `inertia` and `stop`
- * events for the parent Slider to translate into slide motion, and blocks
- * vertical scrolling during a mostly-horizontal touch drag once movement passes
- * the `scrollLockThreshold` option.
+ * @link https://ui.studiometa.dev/reference/items/Slider/
  */
-export class SliderDrag<T extends BaseProps = BaseProps> extends withDrag(Base)<
-  T & SliderDragProps
-> {
-  /**
-   * Config.
-   */
-  static config: BaseConfig = {
-    name: 'SliderDrag',
-    emits: ['start', 'drag', 'drop', 'inertia', 'stop'],
-    options: {
-      scrollLockThreshold: {
-        type: Number,
-        default: 10,
-      },
-    },
-  };
+export class SliderDrag extends withDrag(Base)<SliderDragProps> {
+  static config = { name: 'SliderDrag' };
 
   /**
-   * Test if the scroll should be blocked. Used with the touchmove event to prevent
-   * scrolling vertically when trying to drag the slider.
+   * Inline `touch-action` to put back, when this component set it.
+   * @private
    */
-  get shouldPreventScroll() {
-    const { distance } = this.$services.get('dragged') as DragServiceProps;
-    return (
-      Math.abs(distance.x) > this.$options.scrollLockThreshold &&
-      Math.abs(distance.x) > Math.abs(distance.y)
-    );
-  }
+  __previousTouchAction: string | null = null;
 
   /**
-   * Touchmove handler.
+   * Preserve vertical page gestures. Set `touch-action` before the drag service
+   * subscribes because it reads the computed value once.
    */
-  onTouchmove({ event }: { event: TouchEvent }) {
-    if (this.shouldPreventScroll) {
-      event.preventDefault();
+  mounted(): MountedReturn {
+    if (getComputedStyle(this.$el).touchAction === 'auto') {
+      this.__previousTouchAction = this.$el.style.touchAction;
+      this.$el.style.touchAction = 'pan-y';
     }
+
+    return [
+      super.mounted(),
+      () => {
+        if (this.__previousTouchAction !== null) {
+          this.$el.style.touchAction = this.__previousTouchAction;
+          this.__previousTouchAction = null;
+        }
+      },
+    ];
   }
 
-  /**
-   * Emit drag events.
-   */
-  dragged(props: DragServiceProps) {
+  /** Re-emit non-idle drag modes. Copy props before retaining them asynchronously. */
+  dragged(props: DragProps): void {
+    if (props.mode === DRAG_MODES.IDLE) {
+      return;
+    }
     this.$emit(props.mode, props);
   }
 }

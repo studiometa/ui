@@ -1,37 +1,30 @@
-import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { AbstractSliderChild } from './AbstractSliderChild.js';
+import { Base } from '@studiometa/js-toolkit';
+import { SliderContext } from './Slider.js';
 
-export interface SliderCountProps extends BaseProps {
-  $refs: {
-    current: HTMLElement;
-  };
+export interface SliderCountProps {
+  $refs: { current: HTMLElement; total: HTMLElement };
 }
 
 /**
- * SliderCount class.
+ * Displays the current slide number and optional total.
  *
- * A slide index counter for the Slider. It writes the human-readable position
- * of the active slide (the current index plus one) into its `current` ref
- * whenever the Slider index changes.
+ * @link https://ui.studiometa.dev/reference/items/Slider/
  */
-export class SliderCount<T extends BaseProps = BaseProps> extends AbstractSliderChild<
-  T & SliderCountProps
-> {
-  /**
-   * Config.
-   */
-  static config: BaseConfig = {
-    name: 'SliderCount',
-    refs: ['current'],
-  };
+export class SliderCount extends Base<SliderCountProps> {
+  static config = { name: 'SliderCount', refs: ['current', 'total'] };
 
-  /**
-   * Update the current counter indicator.
-   */
-  update(index: number) {
-    domScheduler.write(() => {
-      this.$refs.current.textContent = `${index + 1}`;
-    });
+  async mounted() {
+    const { state } = await this.$inject(SliderContext);
+    return state.subscribe(
+      ({ index, total }) => {
+        this.$write(() => {
+          this.$refs.current.textContent = String(index + 1);
+          if (this.$refs.total) {
+            this.$refs.total.textContent = String(total);
+          }
+        });
+      },
+      { immediate: true },
+    );
   }
 }

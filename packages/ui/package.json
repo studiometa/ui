@@ -47,11 +47,6 @@
       "types": "./dist/Prefetch/AbstractPrefetch.d.ts",
       "import": "./dist/Prefetch/AbstractPrefetch.js"
     },
-    "./AbstractSliderChild": {
-      "typescript": "./src/Slider/AbstractSliderChild.ts",
-      "types": "./dist/Slider/AbstractSliderChild.d.ts",
-      "import": "./dist/Slider/AbstractSliderChild.js"
-    },
     "./AbstractTrack": {
       "typescript": "./src/Track/AbstractTrack.ts",
       "types": "./dist/Track/AbstractTrack.d.ts",
