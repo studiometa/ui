@@ -21,5 +21,9 @@
   "imports": {
     "#test-utils": "./__utils__/index.ts",
     "#private/*": "../ui/src/*"
+  },
+  "devDependencies": {
+    "@rollup/plugin-swc": "^0.4.1",
+    "@swc/core": "^1.16.1"
   }
 }

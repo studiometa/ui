@@ -1,0 +1,128 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { captureDiagnostics, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
+import { FigureVideo } from '#private/FigureVideo/FigureVideo.js';
+
+registerComponents(FigureVideo);
+
+afterEach(resetDom);
+
+const OFFSCREEN = 'position:absolute;top:300vh;left:0;width:50px;height:50px';
+const ONSCREEN = 'position:absolute;top:0;left:0;width:50px;height:50px';
+
+// A real 1x1 PNG, so `loadImage()` succeeds without network access.
+const PIXEL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+/** A bounded quiet period, for the assertions that nothing has loaded. */
+async function quiet(): Promise<void> {
+  for (let i = 0; i < 6; i += 1) {
+    await settle();
+  }
+}
+
+function render(
+  style: string,
+  attributes = 'data-option-lazy="true"',
+): { el: HTMLElement; video: HTMLVideoElement } {
+  const root = document.createElement('div');
+  root.innerHTML = `
+    <div data-component="FigureVideo" style="${style}" ${attributes}>
+      <video data-ref="video" data-poster="${PIXEL}">
+        <source data-src="${PIXEL}" type="video/mp4" />
+      </video>
+    </div>`;
+  document.body.append(root);
+  const el = root.firstElementChild as HTMLElement;
+  return { el, video: el.querySelector('[data-ref="video"]') as HTMLVideoElement };
+}
+
+/**
+ * `loadSources()` waits on the real `loadeddata` event, which a data-URI
+ * `<source>` may never fire in a headless browser. Dispatching it directly
+ * is the same technique used elsewhere in this migration to drive a
+ * component's logic without depending on real media decoding.
+ */
+function fireLoadedData(video: HTMLVideoElement): void {
+  video.dispatchEvent(new Event('loadeddata'));
+}
+
+describe('FigureVideo', () => {
+  it('loads the poster and sources once scrolled into view, emitting load', async () => {
+    const { el, video } = render(OFFSCREEN);
+    const events: unknown[] = [];
+    el.addEventListener('load', () => events.push(1));
+
+    await quiet();
+    expect(events).toEqual([]);
+    expect(video.querySelector('source')?.src).toBe('');
+
+    el.setAttribute('style', ONSCREEN);
+    await settle();
+    fireLoadedData(video);
+    await waitFor(() => events.length > 0);
+
+    expect(events).toEqual([1]);
+    expect(video.querySelector('source')?.src).toBe(PIXEL);
+    expect(video.poster).toBe(PIXEL);
+  });
+
+  it('does not load when the `lazy` option is not set', async () => {
+    const { el, video } = render(ONSCREEN, '');
+    const events: unknown[] = [];
+    el.addEventListener('load', () => events.push(1));
+
+    await quiet();
+    fireLoadedData(video);
+    await quiet();
+
+    expect(events).toEqual([]);
+  });
+
+  it('does not reload once already loaded', async () => {
+    const { el, video } = render(ONSCREEN);
+    await settle();
+    fireLoadedData(video);
+    const instance = await waitFor(() =>
+      getInstance<FigureVideo>(el, 'FigureVideo')?.hasLoaded
+        ? getInstance<FigureVideo>(el, 'FigureVideo')!
+        : null,
+    );
+    const spy = vi.spyOn(instance, 'load');
+
+    // A later mount cycle on the same instance — the in-view strategy can
+    // trigger one — must not repeat the load.
+    await instance.mounted();
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(instance.hasLoaded).toBe(true);
+  });
+
+  it('settles and reports when the sources fail, instead of hanging forever', async () => {
+    const { el, video } = render(ONSCREEN);
+    const log = captureDiagnostics();
+
+    await settle();
+    // v3 waits on `loadeddata` alone, so this never settled and `mounted()`
+    // never returned.
+    video.dispatchEvent(new Event('error'));
+    await waitFor(() => log.codes.includes('figure-video.load-failed'));
+
+    // Left un-loaded, so a later mount cycle can retry.
+    expect(getInstance<FigureVideo>(el, 'FigureVideo')!.hasLoaded).toBe(false);
+
+    log.stop();
+  });
+
+  it('warns and does not throw when the video ref is missing', async () => {
+    const root = document.createElement('div');
+    root.innerHTML = `<div data-component="FigureVideo" style="${ONSCREEN}" data-option-lazy="true"></div>`;
+    document.body.append(root);
+    const log = captureDiagnostics();
+
+    await expect(quiet()).resolves.toBeUndefined();
+
+    expect(log.codes).toEqual(['figure-video.invalid-ref']);
+    log.stop();
+  });
+});

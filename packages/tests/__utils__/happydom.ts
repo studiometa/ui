@@ -1,6 +1,6 @@
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
 import { afterEach } from 'vitest';
-import { getInstances } from '@studiometa/js-toolkit';
+import { resetDom } from '@studiometa/js-toolkit/test';
 
 GlobalRegistrator.register();
 
@@ -63,13 +63,17 @@ function clearPendingRafs() {
   pendingRafs.clear();
 }
 
-// Clean up after every test: destroy any component a test left mounted (which
-// stops its services — the RAF loop, pointer/resize listeners…) and cancel any
-// frame still pending (e.g. an in-flight transition). This keeps a test's
-// asynchronous work from leaking into the next test file and firing against a
-// torn-down environment.
+// Clean up after every test: empty the document, which lets the shared mutation
+// observer dispose every controller it built (and with them the RAF loop, the
+// pointer and resize listeners…), then cancel any frame still pending — an
+// in-flight transition, for instance. This keeps a test's asynchronous work
+// from leaking into the next test file and firing against a torn-down
+// environment.
+//
+// v3's page-wide `getInstances()` is gone in v4: instances live on their
+// element and nothing collects them, so `resetDom()` from
+// `@studiometa/js-toolkit/test` is the supported way to reach them all.
 afterEach(async () => {
-  const mounted = [...getInstances()].filter((instance) => instance.$isMounted);
-  await Promise.allSettled(mounted.map((instance) => instance.$destroy()));
+  await resetDom();
   clearPendingRafs();
 });

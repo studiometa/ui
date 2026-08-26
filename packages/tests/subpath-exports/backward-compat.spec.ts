@@ -2,25 +2,25 @@ import { test, expect } from 'vitest';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import * as barrel from '@studiometa/ui';
-// Deep sub-component import: `@studiometa/ui/Accordion/AccordionItem` resolved
+// Deep sub-component import: `@studiometa/ui/Carousel/CarouselItem` resolved
 // before the `exports` field was introduced and must keep resolving to the same
 // class exposed by the barrel.
-import { AccordionItem as AccordionItemDeep } from '@studiometa/ui/Accordion/AccordionItem';
-// Deep helper import documented in `ScrollAnimation/withScrollAnimationDebug`.
-import { withScrollAnimationDebug as debugDeep } from '@studiometa/ui/ScrollAnimation/withScrollAnimationDebug';
+import { CarouselItem as CarouselItemDeep } from '@studiometa/ui/Carousel/CarouselItem';
+// Deep helper import documented in `decorators/withTransition`.
+import { withTransition as transitionDeep } from '@studiometa/ui/decorators/withTransition';
 // A `Data*` primitive whose directory has no single "main" component and thus
 // exposes no default export, but which is exposed at its own flat top-level
 // member subpath (`@studiometa/ui/DataBind`, not a `.../Data` family aggregate).
 import { DataBind as DataBindSubpath } from '@studiometa/ui/DataBind';
 
 test('deep sub-component subpaths still resolve after adding exports', () => {
-  expect(AccordionItemDeep).toBe(barrel.AccordionItem);
-  expect('$isBase' in AccordionItemDeep).toBe(true);
+  expect(CarouselItemDeep).toBe(barrel.CarouselItem);
+  expect('$isBase' in CarouselItemDeep).toBe(true);
 });
 
 test('documented deep helper subpath still resolves', () => {
-  expect(typeof debugDeep).toBe('function');
-  expect(debugDeep).toBe(barrel.withScrollAnimationDebug);
+  expect(typeof transitionDeep).toBe('function');
+  expect(transitionDeep).toBe(barrel.withTransition);
 });
 
 test('flat member subpath resolves for a package without a default export', () => {
@@ -52,7 +52,7 @@ test('the removed family-aggregate subpath no longer resolves to a real module',
 // in-repo only via the `@svg` Twig namespace; the published tree ships no `.ts`).
 test.each([
   ['@studiometa/ui/package.json', '/package.json'],
-  ['@studiometa/ui/Accordion/Accordion.twig', '/dist/Accordion/Accordion.twig'],
+  ['@studiometa/ui/Figure/Figure.twig', '/dist/Figure/Figure.twig'],
   ['@studiometa/ui/Button/Button.twig', '/dist/Button/Button.twig'],
 ])('non-JS published path %s resolves to the asset itself', (specifier, suffix) => {
   // @ts-expect-error import.meta.resolve is available under Node's ESM loader.
