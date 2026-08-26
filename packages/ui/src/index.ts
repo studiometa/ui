@@ -1,5 +1,13 @@
-export { Accordion, AccordionItem, type AccordionItemProps } from './Accordion/index.js';
-export { Action, Target, type ActionProps, type TargetProps } from './Action/index.js';
+export {
+  Action,
+  ActionEvent,
+  EFFECT_ARGUMENTS,
+  getEffect,
+  Target,
+  type ActionProps,
+  type ActionTarget,
+  type EffectFunction,
+} from './Action/index.js';
 export {
   AnchorNav,
   AnchorNavLink,
@@ -7,53 +15,68 @@ export {
   type AnchorNavLinkProps,
   type AnchorNavProps,
 } from './AnchorNav/index.js';
-export { AnchorScrollTo, type AnchorScrollToProps } from './AnchorScrollTo/index.js';
 export {
   AbstractCarouselChild,
   AbstractCarouselComponent,
   Carousel,
   CarouselBtn,
+  CarouselContext,
   CarouselDrag,
   CarouselItem,
   CarouselWrapper,
-  type AbstractCarouselChildProps,
-  type AbstractCarouselComponentProps,
+  getClosestIndex,
+  type CarouselApi,
   type CarouselBtnProps,
-  type CarouselDragProps,
-  type CarouselItemProps,
   type CarouselProps,
-  type CarouselStore,
-  type CarouselWrapperProps,
+  type CarouselScrollPosition,
+  type CarouselState,
 } from './Carousel/index.js';
 export { CircularMarquee, type CircularMarqueeProps } from './CircularMarquee/index.js';
-export { ClickOutside, type ClickOutsideProps } from './ClickOutside/index.js';
+export { ClickOutside } from './ClickOutside/index.js';
 export { Cursor, type CursorProps } from './Cursor/index.js';
 export {
   DataBind,
   DataComputed,
   DataEffect,
   DataModel,
+  DataRegistry,
+  DataRegistryContext,
   DataScope,
+  getCallback,
+  isCheckbox,
+  isInput,
+  isSelect,
+  readControlValue,
+  resolveDataRegistry,
+  resolvePropertyName,
+  serializeControlValue,
+  setProperty,
+  valuesEqual,
+  writeControlValue,
+  type DataBindOptions,
   type DataBindProps,
   type DataComputedProps,
+  type DataControlContext,
+  type DataControlMember,
   type DataEffectProps,
+  type DataExpression,
   type DataModelProps,
+  type DataRegistryOptions,
+  type DataScopeMember,
   type DataScopeProps,
+  type DataUpdate,
   type DataValue,
 } from './Data/index.js';
 export {
   withDeprecation,
-  withIndex,
   withTransition,
   type DeprecationInterface,
   type DeprecationProps,
-  type IndexableBoundary,
-  type IndexableInstructions,
-  type IndexableInterface,
-  type IndexableProps,
+  type Transitionable,
   type TransitionInterface,
   type TransitionProps,
 } from './decorators/index.js';
+export { Defer, type DeferProps } from './Defer/index.js';
 export { Dialog, type DialogProps } from './Dialog/index.js';
 export {
   Disclosure,
@@ -61,23 +84,28 @@ export {
   type DisclosureGroupProps,
   type DisclosureProps,
 } from './Disclosure/index.js';
-export type { DomUpdateRunner, DomUpdateTransitioner } from './utils/dom-update.js';
-export { Draggable, type DraggableProps } from './Draggable/index.js';
+export { Draggable, type DraggablePosition, type DraggableProps } from './Draggable/index.js';
 export {
   Fetch,
+  FETCH_EVENTS,
   FetchShopifyPartial,
   FetchShopifySection,
-  type FetchConstructor,
+  HEADER_NAMES,
+  SECTIONS_PARAMETER,
+  type FetchEmits,
+  type FetchEventBase,
   type FetchProps,
-  type FetchShopifyPartialConstructor,
   type FetchShopifyPartialProps,
-  type FetchShopifySectionConstructor,
   type FetchShopifySectionProps,
 } from './Fetch/index.js';
 export {
+  AbstractFigure,
+  AbstractFigureDynamic,
   Figure,
   FigureShopify,
   FigureTwicpics,
+  type AbstractFigureDynamicProps,
+  type AbstractFigureProps,
   type FigureProps,
   type FigureShopifyProps,
   type FigureTwicpicsProps,
@@ -88,68 +116,34 @@ export {
   type FigureVideoProps,
   type FigureVideoTwicpicsProps,
 } from './FigureVideo/index.js';
+export { Hoverable, type HoverableBounds, type HoverableProps } from './Hoverable/index.js';
 export {
-  AbstractFrameTrigger,
-  Frame,
-  FrameAnchor,
-  FrameForm,
-  FrameLoader,
-  FrameTarget,
-  FrameTriggerLoader,
-  type AbstractFrameTriggerProps,
-  type FrameAnchorProps,
-  type FrameContentAfterEvent,
-  type FrameContentEvent,
-  type FrameErrorEvent,
-  type FrameFetchAfterEvent,
-  type FrameFetchBeforeEvent,
-  type FrameFetchEvent,
-  type FrameFormProps,
-  type FrameLoaderProps,
-  type FrameProps,
-  type FrameRequestInit,
-  type FrameTargetProps,
-  type FrameTriggerEvent,
-  type FrameTriggerLoaderProps,
-} from './Frame/index.js';
-export { Hoverable, type HoverableProps } from './Hoverable/index.js';
-export { Indexable } from './Indexable/index.js';
+  Indexable,
+  INDEXABLE_BOUNDARIES,
+  INDEXABLE_INSTRUCTIONS,
+  type IndexableBoundary,
+  type IndexableInstruction,
+  type IndexableProps,
+} from './Indexable/index.js';
 export { InView, InViewOnce } from './InView/index.js';
 export { LargeText, type LargeTextProps } from './LargeText/index.js';
-export { LazyInclude, type LazyIncludeProps } from './LazyInclude/index.js';
-export { Menu, MenuBtn, MenuList, type MenuListProps, type MenuProps } from './Menu/index.js';
-export { Modal, ModalWithTransition, type ModalProps } from './Modal/index.js';
-export { Panel, type PanelProps } from './Panel/index.js';
+export {
+  Menu,
+  MenuBtn,
+  MenuList,
+  type MenuBtnProps,
+  type MenuListProps,
+  type MenuProps,
+} from './Menu/index.js';
 export {
   AbstractPrefetch,
-  PrefetchWhenOver,
+  PrefetchOnInteraction,
   PrefetchWhenVisible,
   type AbstractPrefetchProps,
 } from './Prefetch/index.js';
-export {
-  AbstractScrollAnimation,
-  animationScrollWithEase,
-  ScrollAnimation,
-  ScrollAnimationChild,
-  ScrollAnimationChildWithEase,
-  ScrollAnimationParent,
-  ScrollAnimationTarget,
-  ScrollAnimationTimeline,
-  ScrollAnimationWithEase,
-  withScrollAnimationDebug,
-  type AbstractScrollAnimationProps,
-  type AnimationScrollWithEaseInterface,
-  type AnimationScrollWithEaseProps,
-  type ScrollAnimationChildProps,
-  type ScrollAnimationParentProps,
-  type ScrollAnimationProps,
-  type ScrollAnimationTargetProps,
-  type ScrollAnimationTimelineProps,
-  type WithScrollAnimationDebugInterface,
-  type WithScrollAnimationDebugProps,
-} from './ScrollAnimation/index.js';
 export { ScrollReveal, type ScrollRevealProps } from './ScrollReveal/index.js';
-export { Sentinel } from './Sentinel/index.js';
+export { ScrollTo, type ScrollToProps } from './ScrollTo/index.js';
+export { Sentinel, type SentinelProps } from './Sentinel/index.js';
 export {
   AbstractSliderChild,
   Slider,
@@ -172,7 +166,7 @@ export {
 } from './Slider/index.js';
 export { Sticky, type StickyProps } from './Sticky/index.js';
 export { Tabs, type TabsProps } from './Tabs/index.js';
-export { Timer, TimerProgress, type TimerProps } from './Timer/index.js';
+export { Timer, TimerProgress, type TimerProgressProps, type TimerProps } from './Timer/index.js';
 export {
   Toast,
   Toaster,
@@ -181,16 +175,25 @@ export {
   type ToastProps,
 } from './Toaster/index.js';
 export {
+  AbstractTrack,
+  resolveDetailPlaceholders,
   Track,
+  TRACK_PSEUDO_EVENTS,
   TrackContext,
+  TrackEvent,
   TrackShopify,
+  type AbstractTrackProps,
   type TrackContextProps,
   type TrackProps,
+  type TrackPseudoEvent,
   type TrackShopifyProps,
 } from './Track/index.js';
-export { Transition, type TransitionConstructor } from './Transition/index.js';
+export { Transition } from './Transition/index.js';
+export { ViewTransition, type ViewTransitionProps } from './ViewTransition/index.js';
 export {
-  viewTransition,
-  ViewTransition,
-  type ViewTransitionProps,
-} from './ViewTransition/index.js';
+  MODIFIERS,
+  parseEventDefinition,
+  type ParsedEventDefinition,
+  type Modifier,
+} from './utils/event-modifiers.js';
+export { compileExpression, type CompiledExpression } from './utils/expression.js';

@@ -1,54 +1,70 @@
-import type {
+import {
   Base,
-  BaseDecorator,
-  BaseProps,
-  BaseConfig,
-  BaseInterface,
+  type BaseConfig,
+  type BaseConstructor,
+  type MixedClass,
+  type MountedReturn,
 } from '@studiometa/js-toolkit';
-import { isDev } from '@studiometa/js-toolkit/utils/isDev';
-
-export interface DeprecationProps extends BaseProps {}
-
-export interface DeprecationInterface extends BaseInterface {}
 
 /**
- * Mark a class a deprecated.
+ * What the mixin adds to the class it wraps: nothing a consumer can call. The
+ * whole behaviour is the warning, and it fires by itself.
  */
-export function withDeprecation<S extends Base>(
-  BaseClass: typeof Base,
+export interface DeprecationInterface {}
+
+/**
+ * v1 declared a `DeprecationProps` next to the interface. The mixin reads no
+ * option and declares no ref, so that type was empty in v1 too; it stays as an
+ * alias so an existing import keeps resolving.
+ */
+export type DeprecationProps = Record<never, never>;
+
+/**
+ * Mark a component as deprecated: every instance warns once when it mounts.
+ *
+ * Two things changed from v1. The warning goes to `$warn()`, the diagnostic
+ * channel, instead of a `console.warn` behind an `isDev` check — v4 has no
+ * `isDev` and the channel decides for itself whether anything is printed. And
+ * the hook is a plain `mounted()` rather than v1's `after-mounted` listener
+ * wired from the constructor, because chaining `super.mounted()` is the v4
+ * mixin contract: every core service mixin binds from `mounted()` too.
+ */
+export function withDeprecation<T extends BaseConstructor>(
+  BaseClass: T,
   message?: string,
-): BaseDecorator<DeprecationInterface, S, DeprecationProps> {
-  /**
-   * Class.
-   */
-  class Deprecated<T extends BaseProps = BaseProps> extends BaseClass<T & DeprecationProps> {
+): MixedClass<T, DeprecationInterface> {
+  // Typed against the concrete `Base` rather than the public signature's type
+  // parameter, and cast on the way out — the split `withTransition()` and
+  // core's own `createServiceMixin()` use, for the same reason: a class that
+  // extends a *type parameter* must declare `constructor(...args: any[])`,
+  // which would add a constructor this mixin does not need.
+  class Deprecated extends (BaseClass as unknown as typeof Base) {
     /**
-     * Config.
+     * Typed rather than spelled with a `name`: `BaseConfig` requires one, and a
+     * name set here would be inherited by any consumer that declared none,
+     * registering it under a name it never chose.
      */
-    static config: BaseConfig = {
-      name: 'Deprecated',
-    };
+    static config = {} as BaseConfig;
 
     /**
-     * Warn about the deprecation once the component is mounted.
-     *
-     * The warning is wired in the constructor through the `after-mounted`
-     * event rather than a `mounted()` hook: js-toolkit calls a single
-     * `mounted` method per instance, so a subclass defining its own
-     * `mounted()` (like `Modal`) would shadow the decorator and swallow the
-     * warning. Subscribing to the event sidesteps that entirely.
+     * Whether this instance has already warned. A v4 move is a destroy plus a
+     * mount of the same instance, and one deprecation notice per element is
+     * enough.
+     * @private
      */
-    constructor(...args: ConstructorParameters<typeof Base>) {
-      super(...args);
-      this.$on('after-mounted', () => {
-        if (isDev) {
-          const notice = `The ${this.$options.name} component is deprecated.`;
-          console.warn(message ? `${notice} ${message}` : notice);
-        }
-      });
+    __hasWarned = false;
+
+    mounted(): MountedReturn {
+      if (!this.__hasWarned) {
+        this.__hasWarned = true;
+        const name = (this.constructor as unknown as { config: BaseConfig }).config.name;
+        const notice = `The ${name} component is deprecated.`;
+        this.$warn('ui.deprecated', message ? `${notice} ${message}` : notice);
+      }
+
+      return super.mounted?.();
     }
   }
 
-  // @ts-ignore
-  return Deprecated;
+  return Deprecated as unknown as MixedClass<T, DeprecationInterface>;
 }

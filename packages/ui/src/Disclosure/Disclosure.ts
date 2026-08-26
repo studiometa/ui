@@ -225,6 +225,7 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
    * Register with the closest group, migrating when a nearer nested group is
    * mounted after this disclosure.
    * @internal
+   * @private
    */
   __connect(
     group: DisclosureGroup | undefined = this.$closest<DisclosureGroup>('DisclosureGroup:mounted'),
@@ -242,6 +243,7 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
   /**
    * Disconnect from a group that is being destroyed.
    * @internal
+   * @private
    */
   __disconnect(group: DisclosureGroup) {
     if (this.__group === group) {
@@ -252,6 +254,7 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
   /**
    * Apply an initial state without transitions or lifecycle events.
    * @internal
+   * @private
    */
   __setInitialState(open: boolean) {
     this.isOpen = open;
@@ -265,6 +268,7 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
    * Set open state, optionally bypassing the disabled guard for group invariant
    * enforcement.
    * @internal
+   * @private
    */
   __setOpen(open: boolean, force = false): Promise<void> {
     if (this.isOpen === open || (this.disabled && !force)) {
@@ -327,6 +331,7 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
   /**
    * Synchronize the trigger's actual and group-imposed disabled states.
    * @internal
+   * @private
    */
   __syncDisabledState(groupLocked = this.group?.__isItemLocked(this as unknown as Disclosure)) {
     this.$refs.trigger.disabled = this.disabled;

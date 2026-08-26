@@ -239,6 +239,7 @@ export class DisclosureGroup<T extends BaseProps = BaseProps> extends Base<
   /**
    * Relay item state changes through the group.
    * @internal
+   * @private
    */
   __onItemStateChange(item: Disclosure, open: boolean) {
     this.$emit(open ? 'open' : 'close', item, item.index);

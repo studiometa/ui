@@ -82,7 +82,10 @@ function exportImport(entry: ExportEntry): string {
   return typeof entry === 'string' ? entry : entry.import;
 }
 
-function exportTarget(packageJson: { exports: Record<string, ExportEntry> }, subpath: string): string {
+function exportTarget(
+  packageJson: { exports: Record<string, ExportEntry> },
+  subpath: string,
+): string {
   const explicit = packageJson.exports[`./${subpath}`];
   const wildcard = packageJson.exports['./*'];
   const entry = explicit ?? wildcard;
@@ -145,22 +148,23 @@ async function validateCatalog(target: PackageTarget) {
   }
 }
 
-function serializeArrayProperty(name: string, values: readonly string[] | undefined) {
-  return values ? `\n    ${name}: ${JSON.stringify(values)},` : '';
-}
-
 function serializeComponent(
   catalog: ComponentCatalog,
   component: CuratedComponentMetadata,
   packageJson: { exports: Record<string, ExportEntry> },
 ) {
-  const { packageName, strategy } = catalog;
-  const { token, group, children, styles, integrations } = component;
+  const { strategy } = catalog;
+  const { token } = component;
   const subpath = component.subpath ?? token;
   const exportName = component.exportName ?? token;
   const importPath = exportTarget(packageJson, subpath).replace(/\.ts$/, '.js');
 
-  return `  ${JSON.stringify(token)}: {\n    token: ${JSON.stringify(token)},\n    packageName: ${JSON.stringify(packageName)},\n    subpath: ${JSON.stringify(subpath)},\n    exportName: ${JSON.stringify(exportName)},\n    strategy: ${JSON.stringify(strategy)},\n    group: ${JSON.stringify(group)},${serializeArrayProperty('children', children)}${serializeArrayProperty('styles', styles)}${serializeArrayProperty('integrations', integrations)}\n    load: () => import(${JSON.stringify(importPath)}).then(({ ${exportName} }) => ${exportName}),\n  },`;
+  // js-toolkit v4 narrowed a manifest entry to what the registry actually
+  // reads: the lazy importer and the mount strategy it should use before the
+  // module is loaded. `token`, `packageName`, `subpath`, `exportName`, `group`,
+  // `children`, `styles` and `integrations` were v3 fields with no runtime
+  // consumer; they stay in the authoring catalog, which is where they belong.
+  return `  ${JSON.stringify(token)}: {\n    mountStrategy: ${JSON.stringify(strategy)},\n    load: () => import(${JSON.stringify(importPath)}).then(({ ${exportName} }) => ${exportName}),\n  },`;
 }
 
 async function generateManifest(target: PackageTarget): Promise<string> {
