@@ -1,14 +1,10 @@
-import { Base } from '@studiometa/js-toolkit/Base';
-import { useMutation } from '@studiometa/js-toolkit/useMutation';
-import type { BaseConfig, BaseProps, MutationServiceInterface } from '@studiometa/js-toolkit';
-import { Transition } from '../Transition/index.js';
-import { ViewTransition } from '../ViewTransition/index.js';
+import { Base, type MountedReturn, type OptionChange } from '@studiometa/js-toolkit';
+import { Transition } from '../Transition/Transition.js';
+import { ViewTransition } from '../ViewTransition/ViewTransition.js';
+import type { Transitionable } from '../decorators/withTransition.js';
 import type { DisclosureGroup } from './DisclosureGroup.js';
 
-export const DISCLOSURE_CONNECTED = 'disclosure:connected';
-export const DISCLOSURE_GROUP_CONNECTED = 'disclosure-group:connected';
-
-export interface DisclosureProps extends BaseProps {
+export type DisclosureProps = {
   $refs: {
     trigger: HTMLButtonElement;
     panel: HTMLElement;
@@ -17,22 +13,44 @@ export interface DisclosureProps extends BaseProps {
     open: boolean;
     disabled: boolean;
   };
-}
+  /**
+   * Every event carries its emitter as the event target, so none of them needs
+   * a payload. v3 passed the instance as the detail; a delegated
+   * `onDisclosureOpen({ target })` handler now receives the same thing typed.
+   */
+  $emits: {
+    open: void;
+    close: void;
+    'after-open': void;
+    'after-close': void;
+  };
+};
 
 /**
  * An independently mountable disclosure controlled by a native button.
  *
- * A Disclosure works on its own and advertises itself to the closest
+ * A Disclosure works on its own and is adopted by the closest
  * `DisclosureGroup` when one exists. The group is therefore optional and does
- * not own the child's registration or lifecycle.
+ * not own the child's construction or lifecycle.
+ *
+ * **How the group is found changed completely in v4.** v3 asked
+ * `$closest('DisclosureGroup:mounted')` and, because nothing announced a
+ * mount, backed it with a two-way document `CustomEvent` handshake
+ * (`disclosure:connected` / `disclosure-group:connected`) plus a document-wide
+ * `MutationObserver` re-running the lookup after any DOM change. All of it is
+ * gone: the group holds a live `$watchChildren()` collection and claims the
+ * disclosures below it, `__claim()` refuses a claim from a group that is
+ * further away than the current one, and `__release()` falls back to the
+ * nearest *mounted* group when the current one unmounts. Nesting, late
+ * mounting in either order, DOM moves and group teardown all fall out of that,
+ * with no listener on `document` and no observer.
  *
  * @link https://ui.studiometa.dev/reference/items/Disclosure/
  */
-export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & DisclosureProps> {
-  static config: BaseConfig = {
+export class Disclosure extends Base<DisclosureProps> {
+  static config = {
     name: 'Disclosure',
     components: { Transition, ViewTransition },
-    emits: ['open', 'close', 'after-open', 'after-close'],
     refs: ['trigger', 'panel'],
     options: {
       open: Boolean,
@@ -41,16 +59,10 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
   };
 
   /**
-   * The closest group this disclosure registered with.
+   * The closest group that claimed this disclosure.
    * @private
    */
   __group?: DisclosureGroup;
-
-  /**
-   * Remove the standing group connection listener.
-   * @private
-   */
-  __offGroupConnected?: () => void;
 
   /**
    * Monotonically increasing operation identifier used to contain stale
@@ -61,22 +73,10 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
 
   /**
    * Serialize transition calls so an opposing transition never interrupts a
-   * still-pending toolkit transition promise.
+   * still-pending transition promise.
    * @private
    */
   __transitionQueue: Promise<void> = Promise.resolve();
-
-  /**
-   * Shared document mutation service used to reconnect after DOM reparenting.
-   * @private
-   */
-  __mutationService?: MutationServiceInterface;
-
-  /**
-   * Per-instance key for the shared mutation service.
-   * @private
-   */
-  __mutationKey = Symbol('Disclosure');
 
   /**
    * Preserve an authored ARIA-disabled state independently from the temporary
@@ -87,6 +87,9 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
 
   /**
    * Current open state.
+   *
+   * A field, not `$options.open`: v4's `$options` is a read-only view over the
+   * attributes, so the option is the *initial* state and this is the state.
    */
   isOpen = false;
 
@@ -101,7 +104,7 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
    * This disclosure's current index in its group, in DOM order.
    */
   get index(): number {
-    return this.group?.items.indexOf(this as unknown as Disclosure) ?? -1;
+    return this.group?.items.indexOf(this) ?? -1;
   }
 
   /**
@@ -114,63 +117,59 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
   /**
    * Transition children owned by this disclosure, excluding transitions from
    * nested disclosures.
+   *
+   * The filter names `this.$config.name` rather than the literal `'Disclosure'`
+   * so a renamed subclass still recognises its own transitions.
    */
-  get transitions(): Array<Transition | ViewTransition> {
+  get transitions(): Transitionable[] {
     const transitions = this.$query<Transition>('Transition');
     const viewTransitions = this.$query<ViewTransition>('ViewTransition');
     return [...transitions, ...viewTransitions].filter(
-      (transition) => transition.$closest<Disclosure>('Disclosure') === this,
+      (transition) => transition.$closest(this.$config.name) === (this as Base),
     );
   }
 
   /**
-   * Initialize accessibility state and advertise this disclosure.
+   * Initialize accessibility state and the initial open state.
+   *
+   * Nothing here looks for a group: the group finds this instance, through the
+   * mount announcement its own `$watchChildren()` collection listens for.
    */
-  mounted() {
+  mounted(): MountedReturn {
     this.__initializeAccessibility();
     this.__setInitialState(this.$options.open);
 
-    const onGroupConnected = () => this.__connect();
-    document.addEventListener(DISCLOSURE_GROUP_CONNECTED, onGroupConnected);
-    this.__offGroupConnected = () =>
-      document.removeEventListener(DISCLOSURE_GROUP_CONNECTED, onGroupConnected);
-
-    this.__mutationService = useMutation(document, { childList: true, subtree: true });
-    this.__mutationService.add(this.__mutationKey, () => this.__connect());
-
-    this.__connect();
-    this.__advertise();
+    return () => {
+      this.__operation += 1;
+      this.$refs.panel.hidden = !this.isOpen;
+      this.$refs.panel.inert = false;
+      this.__group = undefined;
+    };
   }
 
   /**
-   * Re-resolve the closest group after a DOM update.
+   * Re-apply the trigger state when the option changes, whether it was written
+   * by `enable()`/`disable()` or by the markup.
+   *
+   * This is v3's `updated()`, narrowed to the one option that had a reason to
+   * be re-read. The initial run is skipped on purpose: option effects run
+   * **before** `mounted()`, so syncing here would clear an authored
+   * `aria-disabled` before `__initializeAccessibility()` had a chance to
+   * record it.
    */
-  updated() {
-    this.__connect();
+  optionDisabledChanged({ initial }: OptionChange<boolean>): void {
+    if (initial) {
+      return;
+    }
     this.__syncDisabledState();
-  }
-
-  /**
-   * Unregister from the cached group and cancel pending completions.
-   */
-  destroyed() {
-    this.__operation += 1;
-    this.__offGroupConnected?.();
-    this.__offGroupConnected = undefined;
-    this.__mutationService?.remove(this.__mutationKey);
-    this.__mutationService = undefined;
-    this.$refs.panel.hidden = !this.isOpen;
-    this.$refs.panel.inert = false;
-    this.__group?.unregister(this as unknown as Disclosure);
-    this.__group = undefined;
   }
 
   /**
    * Toggle when the native trigger is clicked.
    */
-  onTriggerClick() {
+  onTriggerClick(): Promise<void> | undefined {
     if (this.disabled || this.$refs.trigger.getAttribute('aria-disabled') === 'true') {
-      return;
+      return undefined;
     }
 
     return this.toggle();
@@ -184,7 +183,7 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
       return Promise.resolve();
     }
 
-    return this.group ? this.group.open(this as unknown as Disclosure) : this.__setOpen(true);
+    return this.group ? this.group.open(this) : this.__setOpen(true);
   }
 
   /**
@@ -195,7 +194,7 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
       return Promise.resolve();
     }
 
-    return this.group ? this.group.close(this as unknown as Disclosure) : this.__setOpen(false);
+    return this.group ? this.group.close(this) : this.__setOpen(false);
   }
 
   /**
@@ -207,48 +206,75 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
 
   /**
    * Enable user interaction.
+   *
+   * v3 assigned `this.$options.disabled = false`. v4's `$options` is a
+   * read-only view over the attributes, and this pair is the one genuine
+   * reconfiguration in the whole of `@studiometa/ui`, so it writes the
+   * attribute the option reads — the same statement the markup makes. The
+   * option getter re-reads the DOM on every access, so the new value is
+   * visible on the next line rather than on the next mutation record.
+   *
+   * The presence-only spelling is deliberate: a boolean option is true when
+   * its attribute is there. A responsive `data-option-disabled:s` would still
+   * outrank it at that breakpoint, which is a limit of writing an option back
+   * rather than of this pair.
    */
-  enable() {
-    this.$options.disabled = false;
+  enable(): void {
+    this.$el.removeAttribute('data-option-disabled');
     this.__syncDisabledState();
   }
 
   /**
    * Disable user interaction.
    */
-  disable() {
-    this.$options.disabled = true;
+  disable(): void {
+    this.$el.setAttribute('data-option-disabled', '');
     this.__syncDisabledState();
   }
 
   /**
-   * Register with the closest group, migrating when a nearer nested group is
-   * mounted after this disclosure.
+   * Accept a group's claim, unless the current group is nearer.
+   *
+   * Both groups above a nested disclosure watch it, and they claim in mount
+   * order, which is not the nesting order. The test is containment: a claim is
+   * accepted when the claiming group sits inside the current one.
    * @internal
    * @private
    */
-  __connect(
-    group: DisclosureGroup | undefined = this.$closest<DisclosureGroup>('DisclosureGroup:mounted'),
-  ) {
-    if (group === this.__group) {
-      group?.register(this as unknown as Disclosure);
+  __claim(group: DisclosureGroup): void {
+    if (this.__group === group) {
       return;
     }
 
-    this.__group?.unregister(this as unknown as Disclosure);
+    if (this.__group && !this.__group.$el.contains(group.$el)) {
+      return;
+    }
+
+    const previous = this.__group;
     this.__group = group;
-    this.__group?.register(this as unknown as Disclosure);
+    previous?.__scheduleReconcile();
+    group.__scheduleReconcile();
+    this.__syncDisabledState();
   }
 
   /**
-   * Disconnect from a group that is being destroyed.
+   * Leave a group that stopped watching this disclosure, falling back to the
+   * nearest group still mounted above it.
    * @internal
    * @private
    */
-  __disconnect(group: DisclosureGroup) {
-    if (this.__group === group) {
-      this.__group = undefined;
+  __release(group: DisclosureGroup): void {
+    group.__scheduleReconcile();
+    if (this.__group !== group) {
+      return;
     }
+
+    // The releasing group has already cleared `$isMounted`, so `$closest()`
+    // skips it and answers with the next mounted group above, which is v3's
+    // `$closest('DisclosureGroup:mounted')` rule with none of its plumbing.
+    this.__group = this.$closest<DisclosureGroup>('DisclosureGroup') ?? undefined;
+    this.__group?.__scheduleReconcile();
+    this.__syncDisabledState();
   }
 
   /**
@@ -256,9 +282,8 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
    * @internal
    * @private
    */
-  __setInitialState(open: boolean) {
+  __setInitialState(open: boolean): void {
     this.isOpen = open;
-    this.$options.open = open;
     this.$refs.trigger.setAttribute('aria-expanded', String(open));
     this.$refs.panel.hidden = !open;
     this.$refs.panel.inert = false;
@@ -279,23 +304,21 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
 
     if (open) {
       this.isOpen = true;
-      this.$options.open = true;
       this.$refs.panel.hidden = false;
       this.$refs.panel.inert = false;
       this.$refs.trigger.setAttribute('aria-expanded', 'true');
-      this.$emit('open', this);
-      this.group?.__onItemStateChange(this as unknown as Disclosure, true);
+      this.$emit('open');
+      this.group?.__onItemStateChange(this, true);
     } else {
       if (this.$refs.panel.contains(document.activeElement)) {
         this.$refs.trigger.focus();
       }
 
       this.isOpen = false;
-      this.$options.open = false;
       this.$refs.trigger.setAttribute('aria-expanded', 'false');
       this.$refs.panel.inert = true;
-      this.$emit('close', this);
-      this.group?.__onItemStateChange(this as unknown as Disclosure, false);
+      this.$emit('close');
+      this.group?.__onItemStateChange(this, false);
     }
 
     const run = async () => {
@@ -308,7 +331,11 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
       );
       for (const result of results) {
         if (result.status === 'rejected') {
-          this.$warn(result.reason);
+          this.$error(
+            'disclosure.transition-failed',
+            'A child transition rejected while the disclosure was changing state.',
+            result.reason,
+          );
         }
       }
 
@@ -320,7 +347,7 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
         this.$refs.panel.hidden = true;
         this.$refs.panel.inert = false;
       }
-      this.$emit(open ? 'after-open' : 'after-close', this);
+      this.$emit(open ? 'after-open' : 'after-close');
     };
 
     const completion = this.__transitionQueue.then(run, run);
@@ -333,7 +360,7 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
    * @internal
    * @private
    */
-  __syncDisabledState(groupLocked = this.group?.__isItemLocked(this as unknown as Disclosure)) {
+  __syncDisabledState(groupLocked = this.group?.__isItemLocked(this)): void {
     this.$refs.trigger.disabled = this.disabled;
     if (groupLocked || this.__authoredAriaDisabled) {
       this.$refs.trigger.setAttribute('aria-disabled', 'true');
@@ -346,11 +373,14 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
    * Create the ARIA relationship between trigger and panel.
    * @private
    */
-  __initializeAccessibility() {
+  __initializeAccessibility(): void {
     const { trigger, panel } = this.$refs;
 
     if (!(trigger instanceof HTMLButtonElement)) {
-      this.$warn('The `trigger` ref should be a native <button> element.');
+      this.$warn(
+        'disclosure.trigger-not-a-button',
+        'The `trigger` ref should be a native <button> element.',
+      );
     }
 
     this.__authoredAriaDisabled = trigger.getAttribute('aria-disabled') === 'true';
@@ -360,18 +390,4 @@ export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & Disclo
     panel.setAttribute('aria-labelledby', trigger.id);
     this.__syncDisabledState();
   }
-
-  /**
-   * Advertise this independently registered child to mounted groups.
-   * @private
-   */
-  __advertise() {
-    document.dispatchEvent(
-      new CustomEvent(DISCLOSURE_CONNECTED, {
-        detail: this,
-      }),
-    );
-  }
 }
-
-export default Disclosure;

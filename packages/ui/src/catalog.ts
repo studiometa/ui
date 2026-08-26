@@ -33,7 +33,7 @@ const components: readonly CuratedComponentMetadata[] = [
   { token: 'Defer', group: 'defer' },
   { token: 'Dialog', group: 'dialog', children: ['Transition', 'ViewTransition'] },
   { token: 'Disclosure', group: 'disclosure', children: ['Transition', 'ViewTransition'] },
-  { token: 'DisclosureGroup', group: 'disclosure' },
+  { token: 'DisclosureGroup', group: 'disclosure', children: ['Disclosure'] },
   { token: 'Draggable', group: 'draggable' },
   { token: 'Fetch', group: 'fetch' },
   { token: 'FetchShopifyPartial', group: 'fetch', integrations: ['shopify'] },

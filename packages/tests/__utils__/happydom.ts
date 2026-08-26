@@ -4,6 +4,18 @@ import { resetDom } from '@studiometa/js-toolkit/test';
 
 GlobalRegistrator.register();
 
+// `reportError()` is a platform global every browser ships and neither Node nor
+// happy-dom provides. js-toolkit's diagnostic channel calls it as its default
+// error sink, so `$error()` — which several ported families use to report a
+// failure they recovered from — throws a `ReferenceError` here instead of
+// reporting anything, and the rejection then poisons the rest of the file.
+// Route it to `console.error`, which is what the platform's own default does.
+if (typeof globalThis.reportError !== 'function') {
+  (globalThis as Record<string, unknown>).reportError = (error: unknown) => {
+    console.error(error);
+  };
+}
+
 let y = 0;
 let x = 0;
 
