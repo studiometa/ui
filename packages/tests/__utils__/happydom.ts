@@ -16,6 +16,28 @@ if (typeof globalThis.reportError !== 'function') {
   };
 }
 
+// `window instanceof Window` is true in every browser. `@happy-dom/global-
+// registrator` copies the window's properties onto Node's `globalThis` instead
+// of replacing it, so the global `window` is a plain object and the check is
+// false here. js-toolkit's scroll service branches on exactly that check to
+// tell a window target from an element one, so `useScroll()`/`useWindowScroll()`
+// otherwise read `window.scrollLeft` and iterate `window.children` — and throw.
+// Restore the invariant on the check itself rather than on the object, which
+// would mean re-parenting Node's global.
+Object.defineProperty(Window, Symbol.hasInstance, {
+  value: (value: unknown) =>
+    value === globalThis || Object.prototype.isPrototypeOf.call(Window.prototype, value),
+});
+
+// WebIDL makes every interface with an indexed property getter iterable, so
+// `[...element.children]` and `for (const child of element.children)` work in
+// every browser. happy-dom's `HTMLCollection` has no `Symbol.iterator`, which
+// makes js-toolkit's scroll service throw `scroller.children is not iterable`
+// the moment anything subscribes to `useScroll()` or `useWindowScroll()`.
+if (typeof HTMLCollection.prototype[Symbol.iterator] !== 'function') {
+  HTMLCollection.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator];
+}
+
 let y = 0;
 let x = 0;
 
