@@ -22,25 +22,50 @@
       "types": "./dist/autoload.d.ts",
       "import": "./dist/autoload.js"
     },
-    "./Accordion": {
-      "typescript": "./src/Accordion/Accordion.ts",
-      "types": "./dist/Accordion/Accordion.d.ts",
-      "import": "./dist/Accordion/Accordion.js"
+    "./AbstractCarouselChild": {
+      "typescript": "./src/Carousel/AbstractCarouselChild.ts",
+      "types": "./dist/Carousel/AbstractCarouselChild.d.ts",
+      "import": "./dist/Carousel/AbstractCarouselChild.js"
     },
-    "./AccordionItem": {
-      "typescript": "./src/Accordion/AccordionItem.ts",
-      "types": "./dist/Accordion/AccordionItem.d.ts",
-      "import": "./dist/Accordion/AccordionItem.js"
+    "./AbstractCarouselComponent": {
+      "typescript": "./src/Carousel/AbstractCarouselComponent.ts",
+      "types": "./dist/Carousel/AbstractCarouselComponent.d.ts",
+      "import": "./dist/Carousel/AbstractCarouselComponent.js"
+    },
+    "./AbstractFigure": {
+      "typescript": "./src/Figure/AbstractFigure.ts",
+      "types": "./dist/Figure/AbstractFigure.d.ts",
+      "import": "./dist/Figure/AbstractFigure.js"
+    },
+    "./AbstractFigureDynamic": {
+      "typescript": "./src/Figure/AbstractFigureDynamic.ts",
+      "types": "./dist/Figure/AbstractFigureDynamic.d.ts",
+      "import": "./dist/Figure/AbstractFigureDynamic.js"
+    },
+    "./AbstractPrefetch": {
+      "typescript": "./src/Prefetch/AbstractPrefetch.ts",
+      "types": "./dist/Prefetch/AbstractPrefetch.d.ts",
+      "import": "./dist/Prefetch/AbstractPrefetch.js"
+    },
+    "./AbstractSliderChild": {
+      "typescript": "./src/Slider/AbstractSliderChild.ts",
+      "types": "./dist/Slider/AbstractSliderChild.d.ts",
+      "import": "./dist/Slider/AbstractSliderChild.js"
+    },
+    "./AbstractTrack": {
+      "typescript": "./src/Track/AbstractTrack.ts",
+      "types": "./dist/Track/AbstractTrack.d.ts",
+      "import": "./dist/Track/AbstractTrack.js"
     },
     "./Action": {
       "typescript": "./src/Action/Action.ts",
       "types": "./dist/Action/Action.d.ts",
       "import": "./dist/Action/Action.js"
     },
-    "./Target": {
-      "typescript": "./src/Action/Target.ts",
-      "types": "./dist/Action/Target.d.ts",
-      "import": "./dist/Action/Target.js"
+    "./ActionEvent": {
+      "typescript": "./src/Action/ActionEvent.ts",
+      "types": "./dist/Action/ActionEvent.d.ts",
+      "import": "./dist/Action/ActionEvent.js"
     },
     "./AnchorNav": {
       "typescript": "./src/AnchorNav/AnchorNav.ts",
@@ -56,21 +81,6 @@
       "typescript": "./src/AnchorNav/AnchorNavTarget.ts",
       "types": "./dist/AnchorNav/AnchorNavTarget.d.ts",
       "import": "./dist/AnchorNav/AnchorNavTarget.js"
-    },
-    "./AnchorScrollTo": {
-      "typescript": "./src/AnchorScrollTo/AnchorScrollTo.ts",
-      "types": "./dist/AnchorScrollTo/AnchorScrollTo.d.ts",
-      "import": "./dist/AnchorScrollTo/AnchorScrollTo.js"
-    },
-    "./AbstractCarouselChild": {
-      "typescript": "./src/Carousel/AbstractCarouselChild.ts",
-      "types": "./dist/Carousel/AbstractCarouselChild.d.ts",
-      "import": "./dist/Carousel/AbstractCarouselChild.js"
-    },
-    "./AbstractCarouselComponent": {
-      "typescript": "./src/Carousel/AbstractCarouselComponent.ts",
-      "types": "./dist/Carousel/AbstractCarouselComponent.d.ts",
-      "import": "./dist/Carousel/AbstractCarouselComponent.js"
     },
     "./Carousel": {
       "typescript": "./src/Carousel/Carousel.ts",
@@ -132,10 +142,20 @@
       "types": "./dist/Data/DataModel.d.ts",
       "import": "./dist/Data/DataModel.js"
     },
+    "./DataRegistry": {
+      "typescript": "./src/Data/registry.ts",
+      "types": "./dist/Data/registry.d.ts",
+      "import": "./dist/Data/registry.js"
+    },
     "./DataScope": {
       "typescript": "./src/Data/DataScope.ts",
       "types": "./dist/Data/DataScope.d.ts",
       "import": "./dist/Data/DataScope.js"
+    },
+    "./Defer": {
+      "typescript": "./src/Defer/Defer.ts",
+      "types": "./dist/Defer/Defer.d.ts",
+      "import": "./dist/Defer/Defer.js"
     },
     "./Dialog": {
       "typescript": "./src/Dialog/Dialog.ts",
@@ -197,46 +217,6 @@
       "types": "./dist/FigureVideo/FigureVideoTwicpics.d.ts",
       "import": "./dist/FigureVideo/FigureVideoTwicpics.js"
     },
-    "./AbstractFrameTrigger": {
-      "typescript": "./src/Frame/AbstractFrameTrigger.ts",
-      "types": "./dist/Frame/AbstractFrameTrigger.d.ts",
-      "import": "./dist/Frame/AbstractFrameTrigger.js"
-    },
-    "./Frame": {
-      "typescript": "./src/Frame/Frame.ts",
-      "types": "./dist/Frame/Frame.d.ts",
-      "import": "./dist/Frame/Frame.js"
-    },
-    "./FrameAnchor": {
-      "typescript": "./src/Frame/FrameAnchor.ts",
-      "types": "./dist/Frame/FrameAnchor.d.ts",
-      "import": "./dist/Frame/FrameAnchor.js"
-    },
-    "./FrameForm": {
-      "typescript": "./src/Frame/FrameForm.ts",
-      "types": "./dist/Frame/FrameForm.d.ts",
-      "import": "./dist/Frame/FrameForm.js"
-    },
-    "./FrameLoader": {
-      "typescript": "./src/Frame/FrameLoader.ts",
-      "types": "./dist/Frame/FrameLoader.d.ts",
-      "import": "./dist/Frame/FrameLoader.js"
-    },
-    "./FrameTarget": {
-      "typescript": "./src/Frame/FrameTarget.ts",
-      "types": "./dist/Frame/FrameTarget.d.ts",
-      "import": "./dist/Frame/FrameTarget.js"
-    },
-    "./FrameTriggerLoader": {
-      "typescript": "./src/Frame/FrameTriggerLoader.ts",
-      "types": "./dist/Frame/FrameTriggerLoader.d.ts",
-      "import": "./dist/Frame/FrameTriggerLoader.js"
-    },
-    "./types": {
-      "typescript": "./src/Frame/types.ts",
-      "types": "./dist/Frame/types.d.ts",
-      "import": "./dist/Frame/types.js"
-    },
     "./Hoverable": {
       "typescript": "./src/Hoverable/Hoverable.ts",
       "types": "./dist/Hoverable/Hoverable.d.ts",
@@ -262,11 +242,6 @@
       "types": "./dist/LargeText/LargeText.d.ts",
       "import": "./dist/LargeText/LargeText.js"
     },
-    "./LazyInclude": {
-      "typescript": "./src/LazyInclude/LazyInclude.ts",
-      "types": "./dist/LazyInclude/LazyInclude.d.ts",
-      "import": "./dist/LazyInclude/LazyInclude.js"
-    },
     "./Menu": {
       "typescript": "./src/Menu/Menu.ts",
       "types": "./dist/Menu/Menu.d.ts",
@@ -282,100 +257,30 @@
       "types": "./dist/Menu/MenuList.d.ts",
       "import": "./dist/Menu/MenuList.js"
     },
-    "./Modal": {
-      "typescript": "./src/Modal/Modal.ts",
-      "types": "./dist/Modal/Modal.d.ts",
-      "import": "./dist/Modal/Modal.js"
-    },
-    "./ModalWithTransition": {
-      "typescript": "./src/Modal/ModalWithTransition.ts",
-      "types": "./dist/Modal/ModalWithTransition.d.ts",
-      "import": "./dist/Modal/ModalWithTransition.js"
-    },
-    "./Panel": {
-      "typescript": "./src/Panel/Panel.ts",
-      "types": "./dist/Panel/Panel.d.ts",
-      "import": "./dist/Panel/Panel.js"
-    },
-    "./AbstractPrefetch": {
-      "typescript": "./src/Prefetch/AbstractPrefetch.ts",
-      "types": "./dist/Prefetch/AbstractPrefetch.d.ts",
-      "import": "./dist/Prefetch/AbstractPrefetch.js"
-    },
-    "./PrefetchWhenOver": {
-      "typescript": "./src/Prefetch/PrefetchWhenOver.ts",
-      "types": "./dist/Prefetch/PrefetchWhenOver.d.ts",
-      "import": "./dist/Prefetch/PrefetchWhenOver.js"
+    "./PrefetchOnInteraction": {
+      "typescript": "./src/Prefetch/PrefetchOnInteraction.ts",
+      "types": "./dist/Prefetch/PrefetchOnInteraction.d.ts",
+      "import": "./dist/Prefetch/PrefetchOnInteraction.js"
     },
     "./PrefetchWhenVisible": {
       "typescript": "./src/Prefetch/PrefetchWhenVisible.ts",
       "types": "./dist/Prefetch/PrefetchWhenVisible.d.ts",
       "import": "./dist/Prefetch/PrefetchWhenVisible.js"
     },
-    "./AbstractScrollAnimation": {
-      "typescript": "./src/ScrollAnimation/AbstractScrollAnimation.ts",
-      "types": "./dist/ScrollAnimation/AbstractScrollAnimation.d.ts",
-      "import": "./dist/ScrollAnimation/AbstractScrollAnimation.js"
-    },
-    "./ScrollAnimation": {
-      "typescript": "./src/ScrollAnimation/ScrollAnimation.ts",
-      "types": "./dist/ScrollAnimation/ScrollAnimation.d.ts",
-      "import": "./dist/ScrollAnimation/ScrollAnimation.js"
-    },
-    "./ScrollAnimationChild": {
-      "typescript": "./src/ScrollAnimation/ScrollAnimationChild.ts",
-      "types": "./dist/ScrollAnimation/ScrollAnimationChild.d.ts",
-      "import": "./dist/ScrollAnimation/ScrollAnimationChild.js"
-    },
-    "./ScrollAnimationChildWithEase": {
-      "typescript": "./src/ScrollAnimation/ScrollAnimationChildWithEase.ts",
-      "types": "./dist/ScrollAnimation/ScrollAnimationChildWithEase.d.ts",
-      "import": "./dist/ScrollAnimation/ScrollAnimationChildWithEase.js"
-    },
-    "./ScrollAnimationParent": {
-      "typescript": "./src/ScrollAnimation/ScrollAnimationParent.ts",
-      "types": "./dist/ScrollAnimation/ScrollAnimationParent.d.ts",
-      "import": "./dist/ScrollAnimation/ScrollAnimationParent.js"
-    },
-    "./ScrollAnimationTarget": {
-      "typescript": "./src/ScrollAnimation/ScrollAnimationTarget.ts",
-      "types": "./dist/ScrollAnimation/ScrollAnimationTarget.d.ts",
-      "import": "./dist/ScrollAnimation/ScrollAnimationTarget.js"
-    },
-    "./ScrollAnimationTimeline": {
-      "typescript": "./src/ScrollAnimation/ScrollAnimationTimeline.ts",
-      "types": "./dist/ScrollAnimation/ScrollAnimationTimeline.d.ts",
-      "import": "./dist/ScrollAnimation/ScrollAnimationTimeline.js"
-    },
-    "./ScrollAnimationWithEase": {
-      "typescript": "./src/ScrollAnimation/ScrollAnimationWithEase.ts",
-      "types": "./dist/ScrollAnimation/ScrollAnimationWithEase.d.ts",
-      "import": "./dist/ScrollAnimation/ScrollAnimationWithEase.js"
-    },
-    "./animationScrollWithEase": {
-      "typescript": "./src/ScrollAnimation/animationScrollWithEase.ts",
-      "types": "./dist/ScrollAnimation/animationScrollWithEase.d.ts",
-      "import": "./dist/ScrollAnimation/animationScrollWithEase.js"
-    },
-    "./withScrollAnimationDebug": {
-      "typescript": "./src/ScrollAnimation/withScrollAnimationDebug.ts",
-      "types": "./dist/ScrollAnimation/withScrollAnimationDebug.d.ts",
-      "import": "./dist/ScrollAnimation/withScrollAnimationDebug.js"
-    },
     "./ScrollReveal": {
       "typescript": "./src/ScrollReveal/ScrollReveal.ts",
       "types": "./dist/ScrollReveal/ScrollReveal.d.ts",
       "import": "./dist/ScrollReveal/ScrollReveal.js"
     },
+    "./ScrollTo": {
+      "typescript": "./src/ScrollTo/ScrollTo.ts",
+      "types": "./dist/ScrollTo/ScrollTo.d.ts",
+      "import": "./dist/ScrollTo/ScrollTo.js"
+    },
     "./Sentinel": {
       "typescript": "./src/Sentinel/Sentinel.ts",
       "types": "./dist/Sentinel/Sentinel.d.ts",
       "import": "./dist/Sentinel/Sentinel.js"
-    },
-    "./AbstractSliderChild": {
-      "typescript": "./src/Slider/AbstractSliderChild.ts",
-      "types": "./dist/Slider/AbstractSliderChild.d.ts",
-      "import": "./dist/Slider/AbstractSliderChild.js"
     },
     "./Slider": {
       "typescript": "./src/Slider/Slider.ts",
@@ -422,6 +327,11 @@
       "types": "./dist/Tabs/Tabs.d.ts",
       "import": "./dist/Tabs/Tabs.js"
     },
+    "./Target": {
+      "typescript": "./src/Action/Target.ts",
+      "types": "./dist/Action/Target.d.ts",
+      "import": "./dist/Action/Target.js"
+    },
     "./Timer": {
       "typescript": "./src/Timer/Timer.ts",
       "types": "./dist/Timer/Timer.d.ts",
@@ -452,6 +362,11 @@
       "types": "./dist/Track/TrackContext.d.ts",
       "import": "./dist/Track/TrackContext.js"
     },
+    "./TrackEvent": {
+      "typescript": "./src/Track/TrackEvent.ts",
+      "types": "./dist/Track/TrackEvent.d.ts",
+      "import": "./dist/Track/TrackEvent.js"
+    },
     "./TrackShopify": {
       "typescript": "./src/Track/TrackShopify.ts",
       "types": "./dist/Track/TrackShopify.d.ts",
@@ -467,20 +382,10 @@
       "types": "./dist/ViewTransition/ViewTransition.d.ts",
       "import": "./dist/ViewTransition/ViewTransition.js"
     },
-    "./scheduler": {
-      "typescript": "./src/ViewTransition/scheduler.ts",
-      "types": "./dist/ViewTransition/scheduler.d.ts",
-      "import": "./dist/ViewTransition/scheduler.js"
-    },
     "./withDeprecation": {
       "typescript": "./src/decorators/withDeprecation.ts",
       "types": "./dist/decorators/withDeprecation.d.ts",
       "import": "./dist/decorators/withDeprecation.js"
-    },
-    "./withIndex": {
-      "typescript": "./src/decorators/withIndex.ts",
-      "types": "./dist/decorators/withIndex.d.ts",
-      "import": "./dist/decorators/withIndex.js"
     },
     "./withTransition": {
       "typescript": "./src/decorators/withTransition.ts",
@@ -534,11 +439,11 @@
     "morphdom": "^2.7.8"
   },
   "devDependencies": {
-    "@studiometa/js-toolkit": "^3.9.0"
+    "@studiometa/js-toolkit": "^4.0.0-alpha.0"
   },
   "peerDependencies": {
     "@shopify/partial-rendering": "*",
-    "@studiometa/js-toolkit": "^3.9.0"
+    "@studiometa/js-toolkit": "^4.0.0-alpha.0"
   },
   "peerDependenciesMeta": {
     "@shopify/partial-rendering": {
