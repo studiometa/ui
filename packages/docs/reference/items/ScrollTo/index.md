@@ -16,11 +16,19 @@ It should be used on `<a>` elements only.
 
 ## Usage
 
-This component can be directly imported and defined as a dependency of your application and set up to be instanciated on elements matching the `a[href^="#"]` selector:
+Register the component and mark the anchors it should enhance:
 
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
 import { ScrollTo } from '@studiometa/ui';
 
-registerComponent(ScrollTo, 'a[href^="#"]');
+registerComponent(ScrollTo);
 ```
+
+```html
+<a href="#section" data-component="ScrollTo">Go to section</a>
+```
+
+::: warning No selector registration
+js-toolkit v4 mounts a component from its `data-component` token only — `registerComponent()` takes no selector. Add the attribute when you render the links, or add it from your own script when the markup is not yours.
+:::

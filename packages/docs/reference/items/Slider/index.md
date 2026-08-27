@@ -38,14 +38,12 @@ By default, the `SliderItem` and `SliderDrag` components are included in the `Sl
 - `SliderDots` to have a secondary navigation
 - `SliderProgress` to add a progress bar
 
-These components need to be added as child components of the `Slider` component, so a `Slider` class must be reimplemented in your project:
+`Slider` declares only `SliderItem` and `SliderDrag` as its own children, so register the other members yourself:
 
-::: code-group
-
-```js twoslash [Slider.js]
-import { Base, createApp } from '@studiometa/js-toolkit';
+```js twoslash [app.js]
+import { registerComponents } from '@studiometa/js-toolkit';
 import {
-  Slider as SliderCore,
+  Slider,
   SliderBtn,
   SliderCount,
   SliderDots,
@@ -54,32 +52,15 @@ import {
   SliderProgress,
 } from '@studiometa/ui';
 
-export class Slider extends SliderCore {
-  static config = {
-    components: {
-      SliderBtn,
-      SliderCount,
-      SliderDots,
-      SliderDrag,
-      SliderItem,
-      SliderProgress,
-    },
-  };
-}
+registerComponents(
+  Slider,
+  SliderBtn,
+  SliderCount,
+  SliderDots,
+  SliderDrag,
+  SliderItem,
+  SliderProgress,
+);
 ```
 
-```js twoslash [app.js]
-import { Base, createApp } from '@studiometa/js-toolkit';
-import { Slider } from './Slider.js';
-
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Slider,
-    },
-  };
-}
-
-export default createApp(App);
-```
+Registering a member is enough for it to mount: a component is found by its own `data-component` token, wherever it sits in the slider's markup.

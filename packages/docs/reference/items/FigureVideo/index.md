@@ -60,18 +60,9 @@ export default class FigureVideo extends FigureVideoTwicpics {
 And replace the import in your app to import your local class instead of the one from the package.
 
 ```diff
-  import { Base, createApp } from '@studiometa/js-toolkit';
 - import { FigureVideo } from '@studiometa/ui';
 + import { FigureVideo } from './FigureVideo.js';
+  import { registerComponent } from '@studiometa/js-toolkit';
 
-  class App extends Base {
-    static config = {
-      name: 'App',
-      components: {
-        FigureVideo,
-      }
-    };
-  }
-
-  export default createApp(App);
+  registerComponent(FigureVideo);
 ```

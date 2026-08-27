@@ -20,23 +20,24 @@ Slider                                 data-component="Slider"
 
 ## Parts
 
-| Part | Selector | Required | Role |
-| --- | --- | --- | --- |
-| Root | `data-component="Slider"` | Yes | Owns the index and drives every child. |
-| Track | `data-component="SliderDrag"` | Yes | The `data-ref="wrapper"` element holding the slides; enables drag. |
-| Item | `data-component="SliderItem"` | Yes (× n) | One slide. |
-| Button | `data-component="SliderBtn"` | Optional | Previous / next control. |
-| Count | `data-component="SliderCount"` | Optional | Displays the current index. |
-| Dots | `data-component="SliderDots"` | Optional | Secondary dot navigation. |
-| Progress | `data-component="SliderProgress"` | Optional | Progress indicator. |
+| Part     | Selector                          | Required  | Role                                                               |
+| -------- | --------------------------------- | --------- | ------------------------------------------------------------------ |
+| Root     | `data-component="Slider"`         | Yes       | Owns the index and drives every child.                             |
+| Track    | `data-component="SliderDrag"`     | Yes       | The `data-ref="wrapper"` element holding the slides; enables drag. |
+| Item     | `data-component="SliderItem"`     | Yes (× n) | One slide.                                                         |
+| Button   | `data-component="SliderBtn"`      | Optional  | Previous / next control.                                           |
+| Count    | `data-component="SliderCount"`    | Optional  | Displays the current index.                                        |
+| Dots     | `data-component="SliderDots"`     | Optional  | Secondary dot navigation.                                          |
+| Progress | `data-component="SliderProgress"` | Optional  | Progress indicator.                                                |
 
 ## Registering the parts
 
-`SliderItem` and `SliderDrag` are registered on `Slider` by default. To use any of the optional controls you must extend `Slider` and register the extra children yourself:
+`SliderItem` and `SliderDrag` are registered on `Slider` by default. To use any of the optional controls, register them yourself:
 
-```js twoslash [Slider.js]
+```js twoslash [app.js]
+import { registerComponents } from '@studiometa/js-toolkit';
 import {
-  Slider as SliderCore,
+  Slider,
   SliderBtn,
   SliderCount,
   SliderDots,
@@ -45,18 +46,15 @@ import {
   SliderProgress,
 } from '@studiometa/ui';
 
-export class Slider extends SliderCore {
-  static config = {
-    components: {
-      SliderBtn,
-      SliderCount,
-      SliderDots,
-      SliderDrag,
-      SliderItem,
-      SliderProgress,
-    },
-  };
-}
+registerComponents(
+  Slider,
+  SliderBtn,
+  SliderCount,
+  SliderDots,
+  SliderDrag,
+  SliderItem,
+  SliderProgress,
+);
 ```
 
 See the [JavaScript API](./js-api/) for the options exposed by each part.

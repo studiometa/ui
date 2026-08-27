@@ -10,11 +10,19 @@ Use the `FigureVideoTwicpics` component to display loop, muted & autoplay decora
 
 Register the component in your JavaScript app and use the Twig template to display videos.
 
+The Twig template writes `data-component="FigureVideo"`, and a component mounts on its configured name, so declare that name on a subclass:
+
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
 import { FigureVideoTwicpics } from '@studiometa/ui';
 
-registerComponent(FigureVideoTwicpics, 'FigureVideo');
+class FigureVideo extends FigureVideoTwicpics {
+  static config = {
+    name: 'FigureVideo',
+  };
+}
+
+registerComponent(FigureVideo);
 ```
 
 ```twig
@@ -52,22 +60,15 @@ export default class FigureVideo extends FigureVideoTwicpics {
 And replace the import in your app to import your local class instead of the one from the package.
 
 ```diff
-  import { Base, createApp } from '@studiometa/js-toolkit';
+  import { registerComponent } from '@studiometa/js-toolkit';
 - import { FigureVideoTwicpics } from '@studiometa/ui';
-+ import { FigureVideo } from './Figure.js';
++ import { FigureVideo } from './FigureVideo.js';
 
-  class App extends Base {
-    static config = {
-      name: 'App',
-      components: {
--       FigureVideo: FigureVideoTwicpics,
-+       FigureVideo,
-      }
-    };
-  }
-
-  export default createApp(App);
+- registerComponent(FigureVideoTwicpics);
++ registerComponent(FigureVideo);
 ```
+
+The local class must declare `name: 'FigureVideo'`, because a component mounts on its configured name and the Twig template writes `data-component="FigureVideo"`.
 
 ::: warning
 Setting the domain and path via getters in JavaScript will work with lazyloaded images. If you disable lazyloading when using the Twig template, you will need to specify the `twic_domain` and `twic_path` Twig options.
