@@ -184,3 +184,10 @@ export class Sticky<T extends BaseProps = BaseProps> extends withResize(withScro
     return parent;
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Sticky`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Sticky;

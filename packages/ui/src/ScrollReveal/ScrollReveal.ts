@@ -121,3 +121,10 @@ export class ScrollReveal extends withTransition(Base)<ScrollRevealProps> {
     void this.enter();
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/ScrollReveal`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default ScrollReveal;

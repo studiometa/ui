@@ -19,3 +19,10 @@ export class ClickOutside extends Base<{
     }
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/ClickOutside`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default ClickOutside;

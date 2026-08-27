@@ -287,3 +287,10 @@ export class Draggable<T extends BaseProps = BaseProps> extends withResize(
     });
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Draggable`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Draggable;

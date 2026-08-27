@@ -12,19 +12,19 @@ export type DisclosureGroupProps = {
     collapsible: boolean;
   };
   /**
-   * The group's own events.
+   * The group's own events, namespaced `disclosure-group-`.
    *
-   * `open` and `close` share their names with the disclosures', and v4's
-   * `$emit()` bubbles, so a listener bound on the group's element also hears
-   * the events its children emit. The two are told apart by their payload — a
-   * group event always carries one, a disclosure event carries `null` — or by
-   * `event.target`. The names are v1's and are deliberately kept: renaming a
-   * public event is a product decision rather than a migration one.
+   * v4's `$emit()` bubbles, so a listener bound on the group's element also
+   * hears the events its children emit. Under v1's names both arrived as a
+   * plain `open`, and telling them apart meant reading `event.target` or the
+   * shape of the payload. The two namespaces make them distinguishable by name
+   * on a single listener, which is what `on<Child><Event>` handler resolution
+   * needs to work at all.
    */
   $emits: {
-    open: { item: Disclosure; index: number };
-    close: { item: Disclosure; index: number };
-    change: { items: Disclosure[] };
+    'disclosure-group-open': { item: Disclosure; index: number };
+    'disclosure-group-close': { item: Disclosure; index: number };
+    'disclosure-group-change': { items: Disclosure[] };
   };
 };
 
@@ -210,8 +210,11 @@ export class DisclosureGroup extends Base<DisclosureGroupProps> {
    * @private
    */
   __onItemStateChange(item: Disclosure, open: boolean): void {
-    this.$emit(open ? 'open' : 'close', { item, index: item.index });
-    this.$emit('change', { items: this.openItems });
+    this.$emit(open ? 'disclosure-group-open' : 'disclosure-group-close', {
+      item,
+      index: item.index,
+    });
+    this.$emit('disclosure-group-change', { items: this.openItems });
     this.__syncLockedState();
   }
 

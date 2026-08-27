@@ -23,3 +23,10 @@ export class Figure<T extends BaseProps = BaseProps> extends AbstractFigure<T> {
     name: 'Figure',
   };
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Figure`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Figure;

@@ -111,3 +111,10 @@ export class Toaster<T extends BaseProps = BaseProps> extends Base<ToasterProps 
     return toast;
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Toaster`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Toaster;

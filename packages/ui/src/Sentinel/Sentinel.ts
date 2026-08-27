@@ -27,3 +27,10 @@ export class Sentinel<T extends BaseProps = BaseProps> extends withInView(Base, 
     this.$emit('intersected', props);
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Sentinel`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Sentinel;

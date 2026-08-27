@@ -124,3 +124,10 @@ export class Dialog extends withKey(Base)<DialogProps> {
     return this.$el.open ? this.close() : this.open();
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Dialog`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Dialog;

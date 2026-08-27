@@ -135,3 +135,10 @@ export class Action extends Base<ActionProps> {
     this.__releaseOptionBinding = this.__parseOptions()?.attach();
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Action`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Action;

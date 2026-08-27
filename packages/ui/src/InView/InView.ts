@@ -25,3 +25,10 @@ export class InView extends Base<InViewProps> {
     this.$emit('out-of-view');
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/InView`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default InView;

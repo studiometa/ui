@@ -118,25 +118,25 @@ Disables interaction and synchronizes the native button's `disabled` state. It d
 
 ### Events
 
-#### `open`
+#### `disclosure-open`
 
 Emitted immediately after open state is committed, with the `Disclosure` instance as payload.
 
-#### `close`
+#### `disclosure-close`
 
 Emitted immediately after close state is committed, with the `Disclosure` instance as payload.
 
-#### `after-open`
+#### `disclosure-after-open`
 
 Emitted with the `Disclosure` instance after all owned enter transitions finish and only if the disclosure is still open.
 
-#### `after-close`
+#### `disclosure-after-close`
 
 Emitted with the `Disclosure` instance after all owned leave transitions finish, the panel is hidden, and only if the disclosure is still closed.
 
 ### Transition serialization
 
-Opening and closing state is committed synchronously, but transition work is queued. Opposing operations never interrupt a still-pending toolkit transition promise. Stale completions do not hide a panel or emit an `after-*` event for a state that has since changed. Errors from transition children are warned and do not reject the disclosure operation.
+Opening and closing state is committed synchronously, but transition work is queued. Opposing operations never interrupt a still-pending toolkit transition promise. Stale completions do not hide a panel or emit a `disclosure-after-*` event for a state that has since changed. Errors from transition children are warned and do not reject the disclosure operation.
 
 ## `DisclosureGroup`
 
@@ -223,14 +223,14 @@ Unknown indexes, foreign disclosures, and disabled target disclosures are ignore
 
 ### Events
 
-#### `open`
+#### `disclosure-group-open`
 
 Relays an item opening with the `Disclosure` instance and its DOM-order index.
 
-#### `close`
+#### `disclosure-group-close`
 
 Relays an item closing with the `Disclosure` instance and its DOM-order index.
 
-#### `change`
+#### `disclosure-group-change`
 
 Emitted after an item state change with the current `openItems` array.

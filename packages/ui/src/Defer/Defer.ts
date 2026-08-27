@@ -125,3 +125,10 @@ export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T>
     this.hasLoaded = this.$options.terminateOnLoad;
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Defer`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Defer;

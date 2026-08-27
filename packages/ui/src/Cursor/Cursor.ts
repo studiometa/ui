@@ -149,3 +149,10 @@ export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<C
     })}`;
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Cursor`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Cursor;

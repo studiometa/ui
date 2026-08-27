@@ -203,3 +203,10 @@ export class Indexable<T extends BaseProps = BaseProps> extends Base<IndexablePr
     return this.goTo(this.normalizeIndex(this.currentIndex + direction));
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Indexable`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Indexable;

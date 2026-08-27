@@ -87,3 +87,10 @@ export class ViewTransition<T extends BaseProps = BaseProps>
     }
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/ViewTransition`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default ViewTransition;

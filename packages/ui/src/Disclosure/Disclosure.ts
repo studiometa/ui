@@ -16,13 +16,21 @@ export type DisclosureProps = {
   /**
    * Every event carries its emitter as the event target, so none of them needs
    * a payload. v3 passed the instance as the detail; a delegated
-   * `onDisclosureOpen({ target })` handler now receives the same thing typed.
+   * `onDisclosureDisclosureOpen({ target })` handler now receives the same
+   * thing typed.
+   *
+   * The `disclosure-` prefix is the family's namespace, the convention `Defer`
+   * (`defer-content`, `defer-error`, `defer-always`) and `Fetch` (`fetch-*`)
+   * already set. It is what keeps these apart from `DisclosureGroup`'s own
+   * `disclosure-group-*` events: v4's `$emit()` bubbles, so a listener on the
+   * group's element hears its children too, and under the v1 names both sides
+   * arrived as plain `open`.
    */
   $emits: {
-    open: void;
-    close: void;
-    'after-open': void;
-    'after-close': void;
+    'disclosure-open': void;
+    'disclosure-close': void;
+    'disclosure-after-open': void;
+    'disclosure-after-close': void;
   };
 };
 
@@ -307,7 +315,7 @@ export class Disclosure extends Base<DisclosureProps> {
       this.$refs.panel.hidden = false;
       this.$refs.panel.inert = false;
       this.$refs.trigger.setAttribute('aria-expanded', 'true');
-      this.$emit('open');
+      this.$emit('disclosure-open');
       this.group?.__onItemStateChange(this, true);
     } else {
       if (this.$refs.panel.contains(document.activeElement)) {
@@ -317,7 +325,7 @@ export class Disclosure extends Base<DisclosureProps> {
       this.isOpen = false;
       this.$refs.trigger.setAttribute('aria-expanded', 'false');
       this.$refs.panel.inert = true;
-      this.$emit('close');
+      this.$emit('disclosure-close');
       this.group?.__onItemStateChange(this, false);
     }
 
@@ -347,7 +355,7 @@ export class Disclosure extends Base<DisclosureProps> {
         this.$refs.panel.hidden = true;
         this.$refs.panel.inert = false;
       }
-      this.$emit(open ? 'after-open' : 'after-close');
+      this.$emit(open ? 'disclosure-after-open' : 'disclosure-after-close');
     };
 
     const completion = this.__transitionQueue.then(run, run);
@@ -391,3 +399,10 @@ export class Disclosure extends Base<DisclosureProps> {
     this.__syncDisabledState();
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Disclosure`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Disclosure;

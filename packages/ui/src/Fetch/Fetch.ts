@@ -504,3 +504,10 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     this.__abortController.abort(reason);
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Fetch`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default Fetch;

@@ -138,3 +138,10 @@ export class FigureVideo<T extends BaseProps = BaseProps> extends withTransition
     this.$emit('load');
   }
 }
+
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/FigureVideo`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
+export default FigureVideo;

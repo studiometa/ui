@@ -55,7 +55,11 @@ function tick(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-/** The events a group emitted itself, excluding the ones its children bubbled up. */
+/**
+ * The events a group emitted itself. The `disclosure-group-` namespace already
+ * separates them from the disclosures' own `disclosure-*` events, so this also
+ * asserts that no child ever emits under the group's name.
+ */
 function ownEvents(group: DisclosureGroup, type: string): CustomEvent[] {
   const events: CustomEvent[] = [];
   group.$on(type, (event) => {
@@ -109,8 +113,8 @@ describe('The Disclosure component', () => {
     const { trigger, panel } = refs(disclosure);
     const open = vi.fn();
     const close = vi.fn();
-    disclosure.$on('open', open);
-    disclosure.$on('close', close);
+    disclosure.$on('disclosure-open', open);
+    disclosure.$on('disclosure-close', close);
 
     trigger.click();
     await settle();
@@ -132,7 +136,7 @@ describe('The Disclosure component', () => {
     const root = await render(itemHtml());
     const disclosure = disclosureAt(root);
     const events: Array<{ detail: unknown; target: EventTarget | null }> = [];
-    disclosure.$on('open', (event) => {
+    disclosure.$on('disclosure-open', (event) => {
       events.push({ detail: (event as CustomEvent).detail, target: event.target });
     });
 
@@ -291,7 +295,7 @@ describe('The Disclosure component', () => {
       () => new Promise<void>((resolve) => (resolvePending = resolve)),
     );
     const afterOpen = vi.fn();
-    disclosure.$on('after-open', afterOpen);
+    disclosure.$on('disclosure-after-open', afterOpen);
 
     const opening = disclosure.open();
     await tick();
@@ -457,7 +461,7 @@ describe('The DisclosureGroup component', () => {
     const group = groupOf(root.firstElementChild as HTMLElement);
     const items = [0, 1, 2].map((index) => disclosureAt(root, index));
     const reentrant = vi.fn(() => group.open(2));
-    group.$on('close', reentrant, { once: true });
+    group.$on('disclosure-group-close', reentrant, { once: true });
 
     await group.open(1);
 
@@ -471,7 +475,7 @@ describe('The DisclosureGroup component', () => {
     );
     const group = groupOf(root.firstElementChild as HTMLElement);
     const second = disclosureAt(root, 1);
-    const events = ownEvents(group, 'open');
+    const events = ownEvents(group, 'disclosure-group-open');
 
     await second.open();
 
@@ -548,8 +552,8 @@ describe('The DisclosureGroup component', () => {
     );
     const group = groupOf(root.firstElementChild as HTMLElement);
     const second = disclosureAt(root, 1);
-    const open = ownEvents(group, 'open');
-    const change = ownEvents(group, 'change');
+    const open = ownEvents(group, 'disclosure-group-open');
+    const change = ownEvents(group, 'disclosure-group-change');
 
     await second.open();
 
