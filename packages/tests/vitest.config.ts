@@ -1,6 +1,10 @@
+import { resolve } from 'node:path';
 import swc from '@rollup/plugin-swc';
+import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, withFilter } from 'vite';
 import 'vitest/config';
+
+const packagesRoot = resolve(import.meta.dirname, '..');
 
 /**
  * Stage-3 decorators are not lowered by Oxc, Vite's TypeScript transformer, and
@@ -10,7 +14,7 @@ import 'vitest/config';
  *
  * The filter keeps the transform off everything with no decorator in it. A
  * `code: '@'` match alone is not enough: SWC parses whatever it is handed as
- * TypeScript, and an `.html` fixture holds an `@` of its own.
+ * TypeScript, and the browser runner's own `index.html` holds an `@` of its own.
  */
 function decorators() {
   return withFilter(
@@ -26,26 +30,90 @@ function decorators() {
   );
 }
 
+/**
+ * These four specs read the repository rather than the DOM — the TypeScript
+ * compiler API, `node:fs`, `node:child_process` — so they are the one part of
+ * the suite that cannot run in a browser and gets a Node project of its own.
+ */
+const staticAnalysisSpecs = [
+  'barrel-exports/barrel-exports.spec.ts',
+  'autoload/manifest.spec.ts',
+  'subpath-exports/subpath-exports.spec.ts',
+  'subpath-exports/backward-compat.spec.ts',
+];
+
+// `@studiometa/ui` and `@studiometa/ui-mapbox` publish their built `dist/`, but their `exports`
+// maps also expose a `typescript` condition pointing at the `.ts` sources under `src/`. Activate
+// it so in-repo tests run against source without a build step; keep the standard conditions after
+// it so every other dependency resolves normally.
+const sourceCondition = 'typescript';
+
 export default defineConfig({
-  plugins: [decorators()],
-  // `@studiometa/ui` and `@studiometa/ui-mapbox` publish their built `dist/`, but their `exports`
-  // maps also expose a `typescript` condition pointing at the `.ts` sources under `src/`. Activate
-  // it so in-repo tests run against source without a build step; keep the standard conditions after
-  // it so every other dependency resolves normally.
-  resolve: {
-    conditions: ['typescript', 'browser', 'import', 'module', 'default'],
-  },
   test: {
-    root: '..',
-    retry: 3,
-    environment: 'happy-dom',
-    alias: {
-      '^#private/(.*)': '../ui/src/$1',
-    },
-    setupFiles: ['./tests/__utils__/dev.ts', './tests/__utils__/happydom.ts'],
+    projects: [
+      {
+        plugins: [decorators()],
+        resolve: {
+          conditions: [sourceCondition, 'browser', 'import', 'module', 'default'],
+        },
+        // `ui-motion`, `ui-mapbox` and `Tabs` are still v3 sources reaching for
+        // subpaths v4 removed (`./withExtraConfig`, `./utils/addClass`,
+        // `./utils/nextTick`…). The dependency scanner crawls every spec's
+        // import graph up front, so one dead subpath aborts the whole run
+        // before a single test collects. Skipping discovery defers each import
+        // to the request that needs it, which keeps the failure inside the spec
+        // that owns it.
+        optimizeDeps: { noDiscovery: true, include: [] },
+        server: {
+          // The sources under test live in sibling packages, outside the Vite root.
+          fs: { allow: [packagesRoot] },
+        },
+        test: {
+          name: 'chromium',
+          retry: 3,
+          exclude: [...staticAnalysisSpecs, '**/node_modules/**'],
+          // These components ask the platform questions no DOM emulation
+          // answers: `IntersectionObserver`, layout geometry, computed styles,
+          // `document.location`, and the browser globals
+          // `@studiometa/js-toolkit` is entitled to use — `reportError()` among
+          // them. Run them in the browser they target.
+          //
+          // The root stays on this package. Pointing it at `packages/` instead
+          // — which is what the happy-dom config did, harmlessly, because Node
+          // needs no dev server — makes Vite serve and crawl the whole
+          // monorepo, and the run hangs before the first test collects.
+          browser: {
+            enabled: true,
+            provider: playwright(),
+            headless: true,
+            screenshotFailures: false,
+            instances: [{ browser: 'chromium' }],
+          },
+          alias: {
+            '^#private/(.*)': `${packagesRoot}/ui/src/$1`,
+          },
+          setupFiles: ['./__utils__/dev.ts', './__utils__/teardown.ts'],
+        },
+      },
+      {
+        plugins: [decorators()],
+        resolve: {
+          conditions: [sourceCondition, 'node', 'import', 'module', 'default'],
+        },
+        test: {
+          name: 'node',
+          environment: 'node',
+          include: staticAnalysisSpecs,
+          alias: {
+            '^#private/(.*)': `${packagesRoot}/ui/src/$1`,
+          },
+          setupFiles: ['./__utils__/dev.ts'],
+        },
+      },
+    ],
     coverage: {
       provider: 'v8',
-      include: ['ui/src/**/*.ts', 'ui-mapbox/src/**/*.ts', 'ui-motion/src/**/*.ts'],
+      include: ['../ui/src/**/*.ts', '../ui-mapbox/src/**/*.ts', '../ui-motion/src/**/*.ts'],
       exclude: [
         '**/tests/**/*.ts',
         '**/ui/src/**/index.ts',
@@ -59,9 +127,5 @@ export default defineConfig({
         '**/ui-motion/src/manifest.ts',
       ],
     },
-    // The CDN workspace has its own vitest config and dedicated CI jobs (cdn_unit / cdn_build /
-    // cdn_browser); exclude it here so its tests are not also collected by this root run with the
-    // wrong config and working directory.
-    exclude: ['**/.symfony/vendor/**', '**/api/vendor/**', '**/cdn/**'],
   },
 });

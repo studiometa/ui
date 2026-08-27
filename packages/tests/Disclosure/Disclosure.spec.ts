@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getInstance, registerComponents } from '@studiometa/js-toolkit';
-import { resetDom, settle } from '@studiometa/js-toolkit/test';
+import { captureDiagnostics, resetDom, settle } from '@studiometa/js-toolkit/test';
 import { Disclosure } from '#private/Disclosure/Disclosure.js';
 import { DisclosureGroup } from '#private/Disclosure/DisclosureGroup.js';
 import { Transition } from '#private/Transition/Transition.js';
@@ -186,11 +186,6 @@ describe('The Disclosure component', () => {
     expect(disclosure.disabled).toBe(false);
   });
 
-  // Fails under happy-dom, which never delivers the mutation record: its
-  // `MutationObserver.observe()` keeps the first `attributeFilter` it was given
-  // for a node instead of replacing it, so every option attribute registered
-  // after the very first component is invisible to the framework's one document
-  // observer. The component's own effect is correct; the runner cannot see it.
   it('re-syncs the trigger when the option is written from the markup', async () => {
     const root = await render(itemHtml());
     const disclosure = disclosureAt(root);
@@ -281,6 +276,12 @@ describe('The Disclosure component', () => {
   });
 
   it('waits for every transition when one rejects', async () => {
+    // The component recovers from the rejection and reports it on the
+    // diagnostic channel, whose default sink is `reportError()` — a real
+    // browser turns that into a global error, which the runner would flag as
+    // an unhandled error. Capturing the channel is both how the report is
+    // asserted and what suppresses the sink.
+    const diagnostics = captureDiagnostics();
     const root = await render(itemHtml({ transitions: 2 }));
     const disclosure = disclosureAt(root);
     const [rejecting, pending] = disclosure.transitions;
@@ -299,6 +300,8 @@ describe('The Disclosure component', () => {
     await opening;
 
     expect(afterOpen).toHaveBeenCalledOnce();
+    expect(diagnostics.codes).toEqual(['disclosure.transition-failed']);
+    diagnostics.stop();
   });
 
   it('clears transient inert state when unmounted during leave', async () => {
