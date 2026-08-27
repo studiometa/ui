@@ -3,7 +3,7 @@
  * current DOM at event time.
  */
 
-export { Action, type ActionProps } from './Action.js';
-export { ActionEvent, type ActionTarget } from './ActionEvent.js';
-export { EFFECT_ARGUMENTS, getEffect, type EffectFunction } from './expression.js';
-export { Target } from './Target.js';
+export { Action, type ActionProps } from "./Action.js";
+export { ActionEvent, type ActionTarget } from "./ActionEvent.js";
+export { EFFECT_ARGUMENTS, type EffectFunction } from "./expression.js";
+export { Target } from "./Target.js";

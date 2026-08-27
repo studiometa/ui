@@ -1,7 +1,7 @@
-import { test, expect } from 'vitest';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
-import ts from 'typescript';
+import { test, expect } from "vitest";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+import ts from "typescript";
 
 // Snapshot the FULL public export surface of each package barrel — values AND
 // type-only exports — so converting `export *` re-exports to explicit named
@@ -13,15 +13,15 @@ import ts from 'typescript';
 // `typescript` is resolved from the workspace root — it is the compiler the
 // whole repo already relies on — so it is not a direct dependency here.
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
-const { config } = ts.readConfigFile(resolve(ROOT, 'tsconfig.json'), ts.sys.readFile);
+const { config } = ts.readConfigFile(resolve(ROOT, "tsconfig.json"), ts.sys.readFile);
 const parsed = ts.parseJsonConfigFileContent(config, ts.sys, ROOT);
 
 const ENTRIES = {
-  '@studiometa/ui': 'packages/ui/src/index.ts',
-  '@studiometa/ui-mapbox': 'packages/ui-mapbox/src/index.ts',
-  '@studiometa/ui-motion': 'packages/ui-motion/src/index.ts',
+  "@studiometa/ui": "packages/ui/src/index.ts",
+  "@studiometa/ui-mapbox": "packages/ui-mapbox/src/index.ts",
+  "@studiometa/ui-motion": "packages/ui-motion/src/index.ts",
 };
 
 const program = ts.createProgram(
@@ -46,14 +46,14 @@ function surface(rel: string): string[] {
     .map((symbol) => {
       const resolved =
         symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol;
-      const kind = resolved.flags & ts.SymbolFlags.Value ? 'value' : 'type';
+      const kind = resolved.flags & ts.SymbolFlags.Value ? "value" : "type";
       return `${symbol.getName()} [${kind}]`;
     })
     .sort();
 }
 
-test('@studiometa/ui barrel export surface', () => {
-  expect(surface(ENTRIES['@studiometa/ui'])).toMatchInlineSnapshot(`
+test("@studiometa/ui barrel export surface", () => {
+  expect(surface(ENTRIES["@studiometa/ui"])).toMatchInlineSnapshot(`
     [
       "AbstractCarouselChild [value]",
       "AbstractCarouselComponent [value]",
@@ -88,7 +88,6 @@ test('@studiometa/ui barrel export surface', () => {
       "CircularMarquee [value]",
       "CircularMarqueeProps [type]",
       "ClickOutside [value]",
-      "CompiledExpression [type]",
       "Cursor [value]",
       "CursorProps [type]",
       "DataBind [value]",
@@ -167,7 +166,6 @@ test('@studiometa/ui barrel export surface', () => {
       "MenuListProps [type]",
       "MenuProps [type]",
       "Modifier [type]",
-      "ParsedEventDefinition [type]",
       "PrefetchOnInteraction [value]",
       "PrefetchWhenVisible [value]",
       "SECTIONS_PARAMETER [value]",
@@ -224,30 +222,14 @@ test('@studiometa/ui barrel export surface', () => {
       "Transitionable [type]",
       "ViewTransition [value]",
       "ViewTransitionProps [type]",
-      "compileExpression [value]",
-      "getCallback [value]",
-      "getClosestIndex [value]",
-      "getEffect [value]",
-      "isCheckbox [value]",
-      "isInput [value]",
-      "isSelect [value]",
-      "parseEventDefinition [value]",
-      "readControlValue [value]",
-      "resolveDataRegistry [value]",
-      "resolveDetailPlaceholders [value]",
-      "resolvePropertyName [value]",
-      "serializeControlValue [value]",
-      "setProperty [value]",
-      "valuesEqual [value]",
       "withDeprecation [value]",
       "withTransition [value]",
-      "writeControlValue [value]",
     ]
   `);
 });
 
-test('@studiometa/ui-mapbox barrel export surface', () => {
-  expect(surface(ENTRIES['@studiometa/ui-mapbox'])).toMatchInlineSnapshot(`
+test("@studiometa/ui-mapbox barrel export surface", () => {
+  expect(surface(ENTRIES["@studiometa/ui-mapbox"])).toMatchInlineSnapshot(`
     [
       "AbstractMapboxControl [value]",
       "AbstractMapboxControlProps [type]",
@@ -294,8 +276,8 @@ test('@studiometa/ui-mapbox barrel export surface', () => {
   `);
 });
 
-test('@studiometa/ui-motion barrel export surface', () => {
-  expect(surface(ENTRIES['@studiometa/ui-motion'])).toMatchInlineSnapshot(`
+test("@studiometa/ui-motion barrel export surface", () => {
+  expect(surface(ENTRIES["@studiometa/ui-motion"])).toMatchInlineSnapshot(`
     [
       "Motion [value]",
       "MotionModule [type]",

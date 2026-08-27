@@ -1,7 +1,7 @@
-import { test, expect } from 'vitest';
-import * as components from '@studiometa/ui';
+import { test, expect } from "vitest";
+import * as components from "@studiometa/ui";
 
-test('components exports', () => {
+test("components exports", () => {
   expect(Object.keys(components).toSorted()).toMatchInlineSnapshot(`
     [
       "AbstractCarouselChild",
@@ -86,24 +86,8 @@ test('components exports', () => {
       "TrackShopify",
       "Transition",
       "ViewTransition",
-      "compileExpression",
-      "getCallback",
-      "getClosestIndex",
-      "getEffect",
-      "isCheckbox",
-      "isInput",
-      "isSelect",
-      "parseEventDefinition",
-      "readControlValue",
-      "resolveDataRegistry",
-      "resolveDetailPlaceholders",
-      "resolvePropertyName",
-      "serializeControlValue",
-      "setProperty",
-      "valuesEqual",
       "withDeprecation",
       "withTransition",
-      "writeControlValue",
     ]
   `);
 });
