@@ -434,11 +434,11 @@
     "morphdom": "^2.7.8"
   },
   "devDependencies": {
-    "@studiometa/js-toolkit": "^4.0.0-alpha.0"
+    "@studiometa/js-toolkit": "^4.0.0-alpha.1"
   },
   "peerDependencies": {
     "@shopify/partial-rendering": "*",
-    "@studiometa/js-toolkit": "^4.0.0-alpha.0"
+    "@studiometa/js-toolkit": "^4.0.0-alpha.1"
   },
   "peerDependenciesMeta": {
     "@shopify/partial-rendering": {

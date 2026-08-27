@@ -38,7 +38,7 @@
   },
   "overrides": {
     "@typescript/vfs": "1.6.4",
-    "@studiometa/js-toolkit": "4.0.0-alpha.0"
+    "@studiometa/js-toolkit": "4.0.0-alpha.1"
   },
   "dependencies": {
     "patch-package": "8.0.1"
