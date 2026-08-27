@@ -4,7 +4,7 @@ badges: [JS]
 
 # Transition <Badges :texts="$frontmatter.badges" />
 
-The Transition primitive should be used when creating components which can switch between two states (often visible/hidden). It implements the [`transition` utility](https://js-toolkit.studiometa.dev/utils/css/transition.html) from the [@studiometa/js-toolkit package](https://js-toolkit.studiometa.dev) and provides configuration via `data-option-...` attributes and actions with the `enter`, `leave` and `toggle` methods which trigger the transition between the two states of the component.
+The Transition primitive should be used when creating components which can switch between two states (often visible/hidden). It implements the [transition utilities](https://js-toolkit-v4.studiometa.dev/utils/transitions.html) from the [@studiometa/js-toolkit package](https://js-toolkit-v4.studiometa.dev) and provides configuration via `data-option-...` attributes and actions with the `enter`, `leave` and `toggle` methods which trigger the transition between the two states of the component.
 
 It is available as a `Transition` component as well as a `withTransition(Base)` decorator.
 
@@ -25,7 +25,7 @@ export default class Togglable extends Transition {
 Once you component is created, you can use it in your app and trigger its `enter` and `leave` methods to switch its states:
 
 ```js {2,10,13-15,17-19}
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import Togglable from './Togglable.js';
 
 class App extends Base {
@@ -38,15 +38,15 @@ class App extends Base {
   };
 
   onEnterBtnClick() {
-    this.$children.Togglable[0].enter();
+    this.$query('Togglable')[0].enter();
   }
 
   onLeaveBtnClick() {
-    this.$children.Togglable[0].leave();
+    this.$query('Togglable')[0].leave();
   }
 }
 
-export default createApp(App);
+registerComponent(App);
 ```
 
 You can now add a togglable component in your HTML with the needed option to describe the transition:

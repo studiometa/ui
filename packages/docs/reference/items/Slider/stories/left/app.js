@@ -1,8 +1,7 @@
-import { registerComponent } from '@studiometa/js-toolkit';
-import { Figure } from '@studiometa/ui';
-
+import { registerComponents } from '@studiometa/js-toolkit';
 import {
-  Slider as SliderCore,
+  Figure,
+  Slider,
   SliderBtn,
   SliderCount,
   SliderDots,
@@ -11,19 +10,13 @@ import {
   SliderProgress,
 } from '@studiometa/ui';
 
-class Slider extends SliderCore {
-  static config = {
-    name: 'Slider',
-    components: {
-      SliderBtn,
-      SliderCount,
-      SliderDots,
-      SliderDrag,
-      SliderItem,
-      SliderProgress,
-    },
-  };
-}
-
-registerComponent(Figure);
-registerComponent(Slider);
+registerComponents(
+  Figure,
+  Slider,
+  SliderBtn,
+  SliderCount,
+  SliderDots,
+  SliderDrag,
+  SliderItem,
+  SliderProgress,
+);

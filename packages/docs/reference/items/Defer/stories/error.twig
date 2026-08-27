@@ -1,4 +1,7 @@
-<div data-component="Defer" data-option-src="{{ twig_toolkit_url('/404').withQueryParameter('content', 'hello world!').withQueryParameter('wait', 1) }}">
+{# `.invalid` is reserved by RFC 2606 and never resolves, so the request fails at the network
+   level. A 404 would not: `fetch()` resolves for any HTTP status, so `Defer` would inject the
+   error page's markup instead of showing the `error` ref. #}
+<div data-component="Defer" data-option-src="https://defer.invalid/section">
   <span data-ref="loading">Loading...</span>
-  <span data-ref="error" class="hidden"></span>
+  <span data-ref="error" class="hidden">The content could not be loaded.</span>
 </div>
