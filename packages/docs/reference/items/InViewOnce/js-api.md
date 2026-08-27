@@ -10,7 +10,7 @@ The `InViewOnce` class extends the [`InView` primitive](/reference/items/InView/
 
 ### `in-view`
 
-Emitted once, when the element first enters the viewport. The component then terminates and disconnects its observer, so the event never fires again.
+Emitted once, when the element first enters the viewport. `InViewOnce` declares the `visible` mount strategy, which mounts and never unmounts, and it suppresses `out-of-view`, so the event never fires again.
 
 ```js
 onInViewOnceInView() {
@@ -20,17 +20,10 @@ onInViewOnceInView() {
 
 ## Options
 
-### `intersectionObserver`
-
-- Type: `object`
-- Default: `{ threshold: [0, 1] }`
-
-Options forwarded to the underlying [`IntersectionObserver`](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/IntersectionObserver#options) instance created by the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html). Use it to adjust the `rootMargin`, `threshold` or `root` used to detect the viewport crossing.
+`InViewOnce` declares none. The viewport margin belongs to the mount strategy, so it is written on the `data-mount` attribute as the strategy's suffix — the value becomes the [`IntersectionObserver`](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/IntersectionObserver#options) `rootMargin`:
 
 ```html
-<div data-component="InViewOnce" data-option-intersection-observer='{ "rootMargin": "100px" }'>
-  ...
-</div>
+<div data-component="InViewOnce" data-mount="visible:100px">...</div>
 ```
 
 ## See also

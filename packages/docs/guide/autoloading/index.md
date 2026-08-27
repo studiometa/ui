@@ -1,6 +1,6 @@
 # Autoloading
 
-`@studiometa/ui` ships a declarative autoloader entry. You import one side-effect module. The [`@studiometa/js-toolkit`](https://js-toolkit.studiometa.dev) autoload runtime then finds components from their `data-component` attribute and loads each component's JavaScript when it is needed.
+`@studiometa/ui` ships a declarative autoloader entry. You import one side-effect module. The [`@studiometa/js-toolkit`](https://js-toolkit-v4.studiometa.dev) registry then finds components from their `data-component` attribute and loads each component's JavaScript when it is needed.
 
 The autoloader works the same way with a bundler and from a CDN. The same markup runs in a bundled application, a content site, a prototype, or a CMS template. The `@studiometa/ui/autoload` entry ships JavaScript only — no Twig templates and no stylesheets. Read [Limitations](#limitations) before you use it in an application.
 
@@ -23,7 +23,7 @@ Add a module script. Import the `@studiometa/ui/autoload` entry. The import regi
 </button>
 ```
 
-The runtime scans the document for `data-component` tokens, imports the matching modules, and registers them with the [js-toolkit](https://js-toolkit.studiometa.dev) runtime. The declarative contract (`data-component`, `data-ref`, `data-option-*`) is the same one that [Declarative runtime](/guide/concepts/declarative-runtime) describes.
+The runtime scans the document for `data-component` tokens, imports the matching modules, and registers them with the [js-toolkit](https://js-toolkit-v4.studiometa.dev) runtime. The declarative contract (`data-component`, `data-ref`, `data-option-*`) is the same one that [Declarative runtime](/guide/concepts/declarative-runtime) describes.
 
 Pin an exact version in production. See [Version pinning](#version-pinning).
 
@@ -65,38 +65,28 @@ A version reference follows the package's npm tags and semver ranges:
 
 Pin an exact version in production. An exact-version URL is immutable and stays cached the longest, and it makes every entry on the page resolve to the same version. A versionless URL and `@latest` follow the latest stable release.
 
-## Loading strategies
+## Mount strategies
 
-Each component has a default loading strategy in its manifest. Override it per element with `data-load`. There are four strategies:
+Each manifest entry carries a default mount strategy. Override it per element with `data-mount`. There are six:
 
-| Strategy      | The component loads when…                                                                    |
-| ------------- | -------------------------------------------------------------------------------------------- |
-| `eager`       | the runtime starts.                                                                          |
-| `visible`     | the element is near the viewport (200px margin, `IntersectionObserver`). Default for Mapbox. |
-| `idle`        | the browser is idle (`requestIdleCallback`, 2-second timeout).                               |
-| `interaction` | the first `pointerover`, `pointerdown`, or `focusin` on the element.                         |
-
-```html
-<div data-component="Dialog" data-load="interaction">Loads on hover, touch, or focus</div>
-```
-
-When a browser API is not available, the strategy falls back to eager loading.
-
-The runtime resolves the strategy in this order:
-
-1. An [eager `<meta>`](#eager-components) declaration. It always wins.
-2. A valid `data-load` attribute. An invalid value logs a warning and uses the manifest default.
-3. The manifest default.
-
-### Eager components
-
-Make a component load and mount at once, whatever its strategy, with a `<meta>` element:
+| Strategy        | The component mounts when…                                                |
+| --------------- | ------------------------------------------------------------------------- |
+| `eager`         | the runtime starts. The default for every `@studiometa/ui` component.     |
+| `visible`       | the element crosses into the viewport, once.                              |
+| `in-view`       | the element is in the viewport, and unmounts when it leaves. Reversible.  |
+| `idle`          | the browser is idle.                                                      |
+| `interaction`   | the first `pointerenter`, `pointerdown` or `focusin` on the element.      |
+| `media:<query>` | the media query matches, and unmounts when it stops matching. Reversible. |
 
 ```html
-<meta name="js-toolkit:eager" content="Accordion, Action, Modal" />
+<div data-component="Dialog" data-mount="interaction">Mounts on hover, touch, or focus</div>
 ```
 
-The `content` is a comma-separated list of tokens. Several metas concatenate. The runtime trims whitespace and drops empty and duplicate tokens. It ignores an unknown token and logs a warning.
+`visible` and `in-view` take an optional `IntersectionObserver` root margin — `data-mount="in-view:50%"`. `interaction` takes an optional `page` scope — `data-mount="interaction:page"` — which waits for the first deliberate interaction anywhere in the document rather than on the element.
+
+The element's `data-mount` always wins over the manifest default. An invalid value reports a `component.invalid-mount-strategy` diagnostic and the entry's default is used.
+
+The `@studiometa/ui` manifest ships every component as `eager`; `@studiometa/ui-mapbox` and `@studiometa/ui-motion` ship theirs as `visible`, so their heavy dependencies stay off the critical path.
 
 ## Component discovery
 
@@ -106,7 +96,7 @@ The runtime scans the document at startup and then observes it with a `MutationO
 - **Added subtrees** — elements inserted after startup.
 - **Multiple tokens** — space-separated values such as `data-component="Action Timer"`.
 
-The runtime imports and registers each token once for the whole document. When a component registers, it also registers the child components it exposes. For example, `Accordion` brings in `AccordionItem`, so nested families work without a list of every child.
+The runtime imports and registers each token once for the whole document. When a component registers, it also registers the child components it exposes. For example, `Slider` brings in `SliderItem` and `SliderDrag`, so nested families work without a list of every child.
 
 The runtime cleans up observers and listeners when an element leaves the DOM. Discovery follows node insertion and removal, so the runtime does not observe a change to the `data-component` attribute of an element already in the DOM. Add or replace the element instead.
 
@@ -114,24 +104,36 @@ When `MutationObserver` is not available, the initial scan still runs, but the r
 
 ## Programmatic API
 
-The autoload runtime and its helpers live in `@studiometa/js-toolkit`. The `@studiometa/ui/autoload` entry is only the side-effect wrapper that registers the `@studiometa/ui` manifest; the programmatic API — `autoload`, `registerManifests`, `defineManifest`, and the glob adapters — is imported directly from `@studiometa/js-toolkit`. Use it to compose a subset of packages, to scope discovery to a `root` element, or to build your own entry.
+The manifest runtime lives in `@studiometa/js-toolkit`. The `@studiometa/ui/autoload` entry is only the side-effect wrapper that hands the `@studiometa/ui` manifest to `registerManifest()`; the programmatic API — `registerManifest`, `defineManifest`, and the glob adapters — is imported directly from `@studiometa/js-toolkit`. Use it to compose a subset of packages or to build your own entry.
 
 ```js
-import { autoload } from '@studiometa/js-toolkit';
+import { registerManifest } from '@studiometa/js-toolkit';
 import { manifest as uiManifest } from '@studiometa/ui/manifest';
 
-const handle = autoload({ manifests: [uiManifest], eager: ['Action'] });
-handle.stop(); // stop discovery
+registerManifest(uiManifest);
 ```
 
-To autoload your own js-toolkit components, build a manifest from your component files with `defineManifest` and register it with `registerManifests`, both from `@studiometa/js-toolkit`. See the [js-toolkit autoload guide](https://js-toolkit.studiometa.dev) and the [autoload API reference](https://js-toolkit.studiometa.dev/api/autoload) for every export.
+A manifest maps `data-component` tokens to a lazy importer and an optional mount strategy:
+
+```js
+import { registerManifest } from '@studiometa/js-toolkit';
+
+registerManifest({
+  Gallery: {
+    mountStrategy: 'visible',
+    load: () => import('./components/Gallery.js').then(({ Gallery }) => Gallery),
+  },
+});
+```
+
+To autoload your own components from their files, build the manifest with `defineManifest` and one of the glob adapters — `fromMetaGlob` for Vite, `fromWebpackContext` for webpack — then register it the same way. See the [js-toolkit documentation](https://js-toolkit-v4.studiometa.dev) for every export.
 
 ## Manual imports
 
 You can also import components directly from the CDN, without the autoloader. This suits a script that builds components itself.
 
 ```js
-import { Action, Modal } from 'https://esm.sh/@studiometa/ui@1.10.0'; // the whole surface
+import { Action, Dialog } from 'https://esm.sh/@studiometa/ui@1.10.0'; // the whole surface
 import { Action } from 'https://esm.sh/@studiometa/ui@1.10.0/Action'; // one component
 ```
 
@@ -158,7 +160,7 @@ Declare an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Elemen
 </script>
 ```
 
-Load the Mapbox stylesheet yourself, and the geocoder stylesheet only when you use `MapboxGeocoder`. Give each map a valid access token through its `data-option-map-options`. Mapbox components default to the `visible` strategy, so the map code loads when a map nears the viewport.
+Load the Mapbox stylesheet yourself, and the geocoder stylesheet only when you use `MapboxGeocoder`. Give each map a valid access token through its `data-option-map-options`. Mapbox components default to the `visible` mount strategy, so the map code loads when a map crosses into the viewport.
 
 You own the `mapbox-gl` module, so its Web Worker is same-origin and a strict Content Security Policy works. When you load `mapbox-gl` from a CDN that builds its worker from a `blob:` URL, allow it: `Content-Security-Policy: worker-src blob:;`.
 
@@ -188,16 +190,20 @@ Most Shopify components autoload as they do in a bundled build. `FetchShopifyPar
 
 ## Diagnostics
 
-The runtime logs warnings under the `[@studiometa/js-toolkit/autoload]` prefix for recoverable conditions: a conflicting runtime version, an unknown token, an unknown eager component, an invalid `data-load` value, an invalid manifest strategy, or an unavailable browser API.
-
-When a component fails to import or register, the runtime logs an error and dispatches a bubbling `js-toolkit:error` `CustomEvent` on the document element. Its `detail` carries the `token`, the `stage` (`import` or `registration`), and the `error`:
+Recoverable conditions — a duplicate manifest token, an invalid `data-mount` value, a registry conflict, a component that fails to load or mount — are reported on js-toolkit's diagnostic channel rather than written straight to the console. Each one is a bubbling `js-toolkit:diagnostic` `CustomEvent` whose `detail` carries a stable `code`, a `severity` of `warning` or `error`, a `message`, the `component` name, and, for an error, the original `error`:
 
 ```js
-document.addEventListener('js-toolkit:error', (event) => {
-  const { token, stage, error } = event.detail;
-  console.error(`Component ${token} failed at ${stage}:`, error);
+import { DIAGNOSTICS, EVENTS } from '@studiometa/js-toolkit';
+
+document.addEventListener(EVENTS.diagnostic, (event) => {
+  const { code, severity, message, component, error } = event.detail;
+  if (code === DIAGNOSTICS.component.loadFailed) {
+    console.error(`Component ${component} failed to load: ${message}`, error);
+  }
 });
 ```
+
+`DIAGNOSTICS` enumerates every code core reports. A component outside core mints its own in the same `namespace.detail` shape, which is what makes a listener able to filter.
 
 esm.sh serves a source map with every asset, so developer tools show the original sources. The autoloader targets ES2020 module browsers (Chrome 63+, Firefox 67+, Safari 11.1+, Edge 79+).
 
@@ -209,7 +215,7 @@ A no-build install trades flexibility for a zero-build setup. Its constraints ar
 - **One js-toolkit runtime.** Every component on the page must resolve to one `@studiometa/js-toolkit` runtime. Do not mix CDN components with a separate npm build that bundles its own copy.
 - **No `data-component` mutation.** The runtime observes inserted and removed nodes only.
 - **No Shadow DOM.** Components own standard light-DOM elements.
-- **No templates or stylesheets.** No Twig, no `data-mount`, and no CSS — including no Mapbox CSS.
+- **No templates or stylesheets.** No Twig and no CSS — including no Mapbox CSS.
 - **ES2020 module browsers only.**
 - **Mapbox is not provided.** You supply `mapbox-gl` and its CSS through an import map.
 - **Motion is not provided.** You supply `motion` through an import map.
@@ -217,6 +223,5 @@ A no-build install trades flexibility for a zero-build setup. Its constraints ar
 
 ## Next steps
 
-- [js-toolkit autoload guide](https://js-toolkit.studiometa.dev) — autoload your own components.
-- [autoload API reference](https://js-toolkit.studiometa.dev/api/autoload) — every export.
+- [js-toolkit documentation](https://js-toolkit-v4.studiometa.dev) — the registry, manifests and mount strategies.
 - [Declarative runtime](/guide/concepts/declarative-runtime) — the `data-component` / `data-option-*` contract.

@@ -4,7 +4,7 @@ title: ScrollReveal JS API
 
 # JS API
 
-The `ScrollReveal` class extends the [`Transition` primitive](/reference/items/Transition/) with the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html). As it inherits their APIs, make sure to have a look at their own API references too.
+The `ScrollReveal` class mixes in the [`Transition` behavior](/reference/items/Transition/), whose API it inherits. Unlike the other viewport-driven components it does not use a mount strategy: `repeat` chooses between revealing once and revealing on every entry, and that is a runtime choice a static strategy cannot express, so the component mounts normally and subscribes to the viewport itself. Its `intersectionObserver` option is therefore a real observer configuration.
 
 ## Options
 

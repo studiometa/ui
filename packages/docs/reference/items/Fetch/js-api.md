@@ -30,7 +30,7 @@ This option can be used to extract specific content from the response, but the m
 - Type: `boolean`
 - Default: `false`
 
-Updates the browser's history when performing a request. The [`historyPush` function](https://js-toolkit.studiometa.dev/utils/history/historyPush.html#historypush) will be used in the background.
+Updates the browser's history when performing a request. The `historyPush` utility from [`@studiometa/js-toolkit`](https://js-toolkit-v4.studiometa.dev) will be used in the background.
 
 ### `requestInit`
 

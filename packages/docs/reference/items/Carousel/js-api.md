@@ -147,4 +147,4 @@ Use `next` or `prev` to step through the items, or a numeric string (e.g. `"2"`)
 
 ## CarouselDrag
 
-Adds pointer-drag navigation to the wrapper, built with the [`withDrag`](https://js-toolkit.studiometa.dev/api/decorators/withDrag.html) and [`withMountOnMediaQuery`](https://js-toolkit.studiometa.dev/api/decorators/withMountOnMediaQuery.html) decorators. It only mounts on fine-pointer devices (`(pointer: fine)`), leaving native CSS scroll-snap to handle touch devices. Apply it to the same element as `CarouselWrapper`.
+Adds pointer-drag navigation to the wrapper, built with the [`withDrag` mixin](https://js-toolkit-v4.studiometa.dev) and the `media:(pointer: fine)` [mount strategy](/guide/autoloading/#mount-strategies). It only mounts on fine-pointer devices, leaving native CSS scroll-snap to handle touch devices. Apply it to the same element as `CarouselWrapper`.

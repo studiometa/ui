@@ -28,7 +28,7 @@ registerComponent(ScrollReveal);
 
 ### Configuring an offset for the reveal
 
-The `ScrollReveal` component uses the [`withMountWhenInView` decorator] to detect when the root element is entering the viewport. You can configure an offset by using the `data-option-intersection-observer` option from the decorator to adjust the `rootMargin` property.
+The `ScrollReveal` component subscribes to the viewport itself rather than using a mount strategy, because its `repeat` option chooses the behavior at runtime. Configure an offset with the `intersectionObserver` option, which is passed straight to the observer, to adjust the `rootMargin` property.
 
 #### Via the `data-option` attribute in HTML
 

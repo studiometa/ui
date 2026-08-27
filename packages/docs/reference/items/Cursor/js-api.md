@@ -4,7 +4,7 @@ title: Cursor JS API
 
 # JS API
 
-The `Cursor` component extends the [`Base` class](https://js-toolkit.studiometa.dev/api/configuration.html) using the [Pointer Service](https://js-toolkit.studiometa.dev/api/services/usePointer.html). It inherits their respective APIs. See both linked references.
+The `Cursor` component extends the [`Base` class](https://js-toolkit-v4.studiometa.dev) using the pointer and animation-frame services. It inherits their respective APIs.
 
 ## Options
 

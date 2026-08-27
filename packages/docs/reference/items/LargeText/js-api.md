@@ -4,7 +4,7 @@ title: LargeText JS API
 
 # JS API
 
-The `LargeText` component extends the [`Base` class](https://js-toolkit.studiometa.dev/api/configuration.html) and implements the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html). It inherits their respective APIs. See both linked references.
+The `LargeText` component declares the `in-view:50%` [mount strategy](/guide/autoloading/#mount-strategies), so it mounts half a viewport before it scrolls in and unmounts once it is that far past. Override the margin per element with `data-mount="in-view:<rootMargin>"`.
 
 ## Options
 

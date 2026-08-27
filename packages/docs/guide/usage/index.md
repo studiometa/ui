@@ -4,31 +4,42 @@ This page is a quickstart for rendering markup and registering behavior. Read th
 
 ## Registering components
 
-Import the components your page uses and register them with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) or `registerComponents`:
+Import the components your page uses and register them with [`registerComponent`](https://js-toolkit-v4.studiometa.dev/api/registry/registerComponent.html) or `registerComponents`:
 
 ```js
 import { registerComponents } from '@studiometa/js-toolkit';
-import { Accordion, Cursor } from '@studiometa/ui';
+import { Disclosure, Cursor } from '@studiometa/ui';
 
-registerComponents(Accordion, Cursor);
+registerComponents(Disclosure, Cursor);
 ```
 
 Registered classes mount on matching `data-component` elements:
 
 ```html
-<div data-component="Accordion">…</div>
+<div data-component="Disclosure">…</div>
 ```
 
-Pass an alias or selector when the DOM uses a different component name:
+A component mounts on its configured name and on nothing else. When the DOM
+uses a different name, subclass the component and declare that name:
 
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
-import { AnchorScrollTo } from '@studiometa/ui';
+import { ScrollTo } from '@studiometa/ui';
 
-registerComponent(AnchorScrollTo, 'a[href^="#"]');
+class SmoothAnchor extends ScrollTo {
+  static config = {
+    name: 'SmoothAnchor',
+  };
+}
+
+registerComponent(SmoothAnchor);
 ```
 
-See [Declarative runtime](/guide/concepts/declarative-runtime) for options, refs, events, lifecycle, multiple components on one element and when to use `createApp`.
+::: tip Some components register themselves
+Importing a component whose class carries the `@component()` decorator registers it, so a bare `import` is enough for it to mount. Registering it again is harmless, and calling `registerComponent()` for every component you use keeps one readable list whichever form a component takes.
+:::
+
+See [Declarative runtime](/guide/concepts/declarative-runtime) for options, refs, events, lifecycle and multiple components on one element.
 
 ## Rendering Twig templates
 

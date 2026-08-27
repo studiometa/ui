@@ -4,13 +4,13 @@ The library separates ready-to-use solutions from reusable building blocks. Clas
 
 ## Choose the right abstraction
 
-| Need | Prefer | Example |
-| --- | --- | --- |
-| A complete interaction or interface solution | Component | [`Dialog`](/reference/items/Dialog/), [`Slider`](/reference/items/Slider/) |
-| Lower-level behavior to compose or extend | Primitive | [`Transition`](/reference/items/Transition/), [`Indexable`](/reference/items/Indexable/) |
-| Reusable behavior applied to a class | Decorator | [`withTransition`](/reference/items/withTransition/), [`withDeprecation`](/reference/items/withDeprecation/) |
-| Local behavior expressed in markup | Declarative component | [`Action`](/reference/items/Action/), the [Data family](./index.md#the-data-family) |
-| Coordination across unrelated page features | Application component | [`createApp`](./declarative-runtime.md#when-to-use-createapp) |
+| Need                                         | Prefer                | Example                                                                                                      |
+| -------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------ |
+| A complete interaction or interface solution | Component             | [`Dialog`](/reference/items/Dialog/), [`Slider`](/reference/items/Slider/)                                   |
+| Lower-level behavior to compose or extend    | Primitive             | [`Transition`](/reference/items/Transition/), [`Indexable`](/reference/items/Indexable/)                     |
+| Reusable behavior applied to a class         | Decorator             | [`withTransition`](/reference/items/withTransition/), [`withDeprecation`](/reference/items/withDeprecation/) |
+| Local behavior expressed in markup           | Declarative component | [`Action`](/reference/items/Action/), the [Data family](./index.md#the-data-family)                          |
+| Coordination across unrelated page features  | Application component | [an ordinary component on the page root](./declarative-runtime.md#when-to-use-an-application-component)      |
 
 Start at the highest-level abstraction that satisfies the requirement. Moving to a lower-level primitive or custom class gives more control but also makes the application responsible for more state, structure and accessibility behavior.
 
@@ -36,9 +36,7 @@ Use an item's **Anatomy** page when its child hierarchy, matching refs or requir
 Several independent behaviors can share one element through a space-separated `data-component` value:
 
 ```html
-<a data-component="Action Fetch" href="/next-page" data-option-history>
-  Next page
-</a>
+<a data-component="Action Fetch" href="/next-page" data-option-history>Next page</a>
 ```
 
 Co-location is useful when each behavior can operate independently. Prefer a compound family when children exchange events, inherit configuration or depend on a specific hierarchy.

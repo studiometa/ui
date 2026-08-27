@@ -24,7 +24,7 @@ Then in your html make sure to have similar id and href for the link and the tar
 </div>
 ```
 
-You can then add options from the [withTransition](/reference/items/Transition/#transition) and [withMountWhenInView](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html):
+You can then add [transition options](/reference/items/Transition/js-api) on the links, and set the viewport margin of a target with `data-mount="in-view:<rootMargin>"`:
 
 ```html{16}
 <div data-component="AnchorNav">

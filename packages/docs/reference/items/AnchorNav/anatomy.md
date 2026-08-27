@@ -16,11 +16,11 @@ AnchorNav                                data-component="AnchorNav"
 
 ## Parts
 
-| Part | Selector | Required | Role |
-| --- | --- | --- | --- |
-| Root | `data-component="AnchorNav"` | Yes | Connects each link to its target and toggles the active link. |
-| Link | `data-component="AnchorNavLink"` | Yes (× n) | An anchor whose `href="#id"` matches a target. Accepts [`withTransition`](../Transition/#transition) options. |
-| Target | `data-component="AnchorNavTarget"` | Yes (× n) | A section whose `id` matches a link. Accepts [`withMountWhenInView`](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html) options. |
+| Part   | Selector                           | Required  | Role                                                                                                          |
+| ------ | ---------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------- |
+| Root   | `data-component="AnchorNav"`       | Yes       | Connects each link to its target and toggles the active link.                                                 |
+| Link   | `data-component="AnchorNavLink"`   | Yes (× n) | An anchor whose `href="#id"` matches a target. Accepts [`withTransition`](../Transition/#transition) options. |
+| Target | `data-component="AnchorNavTarget"` | Yes (× n) | A section whose `id` matches a link. Its viewport margin is the `data-mount="in-view:<rootMargin>"` suffix.   |
 
 A link and its target are paired when the link's `href` (minus the `#`) equals the target's `id`.
 

@@ -4,7 +4,7 @@ title: Draggable JS API
 
 # JS API
 
-The `Draggable` component uses the [`withDrag` decorator](https://js-toolkit.studiometa.dev/api/decorators/withDrag.html) of the [`@studiometa/js-toolkit` package](https://js-toolkit.studiometa.dev) and inherits from all of its APIs.
+The `Draggable` component uses the [`withDrag` mixin](https://js-toolkit-v4.studiometa.dev) of the [`@studiometa/js-toolkit` package](https://js-toolkit-v4.studiometa.dev) and inherits from all of its APIs.
 
 ## Options
 

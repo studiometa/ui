@@ -12,7 +12,7 @@ Adds drag capabilities to the slider. It should wrap the slider items, usually p
 </div>
 ```
 
-This component uses the [`withDrag` decorator](https://js-toolkit.studiometa.dev/api/decorators/withDrag.html) and inherits from its APIs.
+This component uses the [`withDrag` mixin](https://js-toolkit-v4.studiometa.dev) and inherits from its APIs.
 
 ## Options
 
