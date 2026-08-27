@@ -26,9 +26,10 @@ Templates expose an `attr` parameter for the root element. Package templates mer
 Pass application classes, IDs and data attributes through `attr` instead of copying a template only to change its root element:
 
 ```twig
-{% include '@ui/Modal/Modal.twig' with {
+{% include '@ui/Figure/Figure.twig' with {
+  src: '/images/cover.jpg',
   attr: {
-    id: 'newsletter-modal',
+    id: 'newsletter-cover',
     class: 'relative z-50',
   },
 } %}

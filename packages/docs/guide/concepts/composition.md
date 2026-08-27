@@ -8,8 +8,7 @@ The library separates ready-to-use solutions from reusable building blocks. Clas
 | --- | --- | --- |
 | A complete interaction or interface solution | Component | [`Dialog`](/reference/items/Dialog/), [`Slider`](/reference/items/Slider/) |
 | Lower-level behavior to compose or extend | Primitive | [`Transition`](/reference/items/Transition/), [`Indexable`](/reference/items/Indexable/) |
-| Reusable behavior applied to a class | Decorator | [`withTransition`](/reference/items/withTransition/), [`withIndex`](/reference/items/withIndex/) |
-| A standalone operation | Helper | [`viewTransition`](/reference/items/view-transition-helper/) |
+| Reusable behavior applied to a class | Decorator | [`withTransition`](/reference/items/withTransition/), [`withDeprecation`](/reference/items/withDeprecation/) |
 | Local behavior expressed in markup | Declarative component | [`Action`](/reference/items/Action/), the [Data family](./index.md#the-data-family) |
 | Coordination across unrelated page features | Application component | [`createApp`](./declarative-runtime.md#when-to-use-createapp) |
 
@@ -20,17 +19,15 @@ Start at the highest-level abstraction that satisfies the requirement. Moving to
 A compound component divides one feature into a root orchestrator and focused children. The root registers child classes through its js-toolkit `components` configuration, and markup declares the hierarchy:
 
 ```html
-<div data-component="Accordion">
-  <section data-component="AccordionItem">
-    <button data-ref="btn">Section</button>
-    <div data-ref="container">
-      <div data-ref="content">…</div>
-    </div>
+<div data-component="DisclosureGroup" data-option-no-multiple>
+  <section data-component="Disclosure">
+    <h3><button type="button" data-ref="trigger">Section</button></h3>
+    <div data-ref="panel" hidden>…</div>
   </section>
 </div>
 ```
 
-The `Accordion` family includes its item behavior and public contracts. Other examples include Slider, Carousel, Menu, Frame, ScrollAnimation and MapboxMap. A family's canonical Reference page documents related symbols together even when consumers can import those symbols independently.
+The `Disclosure` family includes its group behavior and public contracts. Other examples include Slider, Carousel, Menu, Track and MapboxMap. A family's canonical Reference page documents related symbols together even when consumers can import those symbols independently.
 
 Use an item's **Anatomy** page when its child hierarchy, matching refs or required structure forms part of the contract.
 

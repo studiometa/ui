@@ -14,20 +14,24 @@ Import one of the available prefetch component in you app and use them in your H
 
 ```js twoslash [app.js]
 import { registerComponent } from '@studiometa/js-toolkit';
-import { PrefetchWhenOver, PrefetchWhenVisible } from '@studiometa/ui';
+import { PrefetchOnInteraction, PrefetchWhenVisible } from '@studiometa/ui';
 
-registerComponent(PrefetchWhenOver);
+registerComponent(PrefetchOnInteraction);
 registerComponent(PrefetchWhenVisible);
 ```
 
 ```html [index.html]
-<!-- Will be prefetched on mouseenter -->
-<a href="/path" data-component="PrefetchWhenOver">...</a>
+<!-- Will be prefetched on the first pointer, touch or keyboard interaction -->
+<a href="/path" data-component="PrefetchOnInteraction">...</a>
 
 <!-- Will be prefetched when visible in the viewport -->
 <a href="/path" data-component="PrefetchWhenVisible">...</a>
 ```
 
+:::
+
+::: tip Renamed in v2
+`PrefetchOnInteraction` was named `PrefetchWhenOver` in v1. It no longer listens for `mouseenter` on a mounted instance: it uses the `interaction` mount strategy, which mounts on the first `pointerenter`, `pointerdown` or `focusin`. That covers touch and keyboard, which a mouse-only `mouseenter` never did.
 :::
 
 ### Create your own prefetch strategy
@@ -39,7 +43,7 @@ import { AbstractPrefetch } from '@studiometa/ui';
 
 export default class PrefetchOnPointerdown extends AbstractPrefetch {
   static config = {
-    name: 'AbstractPrefetch',
+    name: 'PrefetchOnPointerdown',
   };
 
   onPointerdown() {

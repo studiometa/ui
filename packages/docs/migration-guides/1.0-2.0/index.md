@@ -1,5 +1,14 @@
 # v1.x → v2.x
 
+::: danger This page is incomplete and partly out of date
+It was written before the v2 component port. Two things it says are no longer true:
+
+- The `ScrollAnimation` family is **removed** from v2, not refactored. `ScrollAnimationTimeline` and `ScrollAnimationTarget` do not exist. Use [`@studiometa/ui-motion`](/reference/items/Motion/) instead.
+- Everything below still assumes `@studiometa/js-toolkit` v3. v2 runs on v4, whose `Base` API differs.
+
+The complete v1 → v2 guide is **not written yet**. Until it is, read the removals and renames on each Reference item page.
+:::
+
 You will find on this page documentation on all the breaking changes included in the v2.x of the package.
 
 [[toc]]

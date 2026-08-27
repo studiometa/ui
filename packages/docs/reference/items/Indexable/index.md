@@ -6,8 +6,6 @@ badges: [JS]
 
 The Indexable primitive provides index management for components that need to navigate between multiple items. It offers methods to move between indices (`goNext()`, `goPrev()`, `goTo()`), supports different boundary behaviors (clamp, loop, bounce), and emits events when the index changes. It suits building components like sliders, carousels, tabs, or any component that needs to track and navigate through a collection of items.
 
-It is available as an `Indexable` component as well as a `withIndex(Base)` decorator.
-
 ## Usage
 
 ### Standalone

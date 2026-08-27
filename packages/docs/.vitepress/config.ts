@@ -191,12 +191,18 @@ function getReferenceSidebar() {
       collapsed: true,
       items: linksForKind('decorator'),
     },
-    {
-      text: 'Helpers and utilities',
-      link: '/reference/helpers/',
-      collapsed: true,
-      items: linksForKind('helper'),
-    },
+    // A kind with no documented item keeps its overview page — the URL is public and the page
+    // explains the absence — but it is not offered as a collapsible group with nothing inside.
+    ...(linksForKind('helper').length
+      ? [
+          {
+            text: 'Helpers and utilities',
+            link: '/reference/helpers/',
+            collapsed: true,
+            items: linksForKind('helper'),
+          },
+        ]
+      : []),
   ];
 }
 

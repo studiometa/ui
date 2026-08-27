@@ -15,7 +15,15 @@ The `data-option-no-prefetch` attribute disables prefetching on specific element
 
 ## Getters
 
+### `url`
+
+- Return: `URL | null`
+
+The URL read from the root anchor's `href`, or `null` when the anchor has no destination.
+
 ### `isPrefetchable`
+
+- Return: `boolean`
 
 Getter used to check if the current URL is prefetchable or not. Prefetchable URLs are different from the current URL, not a hash in the current URL and share the same origin with the current page.
 

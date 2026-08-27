@@ -136,7 +136,7 @@ Registered components mount when matching elements enter the observed document a
 - clean up application-owned listeners and resources in lifecycle hooks;
 - treat server-rendered markup as the source of the initial state.
 
-Components such as [`Fetch`](/reference/items/Fetch/) and [`Frame`](/reference/items/Frame/) update parts of the DOM while cooperating with this lifecycle.
+Components such as [`Fetch`](/reference/items/Fetch/) and [`Defer`](/reference/items/Defer/) update parts of the DOM while cooperating with this lifecycle.
 
 ## When to use `createApp`
 

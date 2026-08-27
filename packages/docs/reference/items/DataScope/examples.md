@@ -48,7 +48,7 @@ The following example implements two independent tab interfaces with `DataScope`
 
 ## Accordion
 
-This example uses the same mirrored-model pattern for two independent accordion interfaces. Each button toggles the shared `active` key with [`toggle()`](../DataBind/js-api.md); opening one panel closes the other panels in that scope, and clicking the open item closes it. The `Accordion` component is not registered.
+This example uses the same mirrored-model pattern for two independent accordion interfaces. Each button toggles the shared `active` key with [`toggle()`](../DataBind/js-api.md); opening one panel closes the other panels in that scope, and clicking the open item closes it. No [`Disclosure`](../Disclosure/) component is registered.
 
 <llm-exclude>
 <PreviewPlayground

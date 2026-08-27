@@ -17,8 +17,12 @@ function sourceEntries(root) {
 }
 
 const uiEntries = sourceEntries('../ui');
-const mapboxEntries = sourceEntries('../ui-mapbox');
-const motionEntries = sourceEntries('../ui-motion');
+
+// `@studiometa/ui-mapbox` and `@studiometa/ui-motion` are NOT ported to `@studiometa/js-toolkit` v4
+// yet. Their v3 sources still import subpaths v4 removed (`/withExtraConfig`, `/utils/nextTick`,
+// `/utils/addClass`, `/utils/removeClass`), which is a hard resolve error for the bundler and fails
+// the whole playground build — and with it `npm run docs:build`. They are left out until their own
+// ports land; put them back on this list in the same commit that ports them.
 
 export default defineWebpackConfig({
   presets: [
@@ -70,8 +74,6 @@ export default defineWebpackConfig({
         // identity hazard). ui exposes its barrel + `./manifest` + `./autoload` + every component
         // subpath; ui-mapbox likewise exposes its barrel + `./manifest` + `./autoload`.
         { specifier: '@studiometa/ui', source: '../ui/src/**/*.ts', entries: uiEntries },
-        { specifier: '@studiometa/ui-mapbox', source: '../ui-mapbox/src/**/*.ts', entries: mapboxEntries },
-        { specifier: '@studiometa/ui-motion', source: '../ui-motion/src/**/*.ts', entries: motionEntries },
       ],
       defaults: {
         html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
