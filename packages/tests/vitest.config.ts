@@ -32,14 +32,21 @@ function decorators() {
 
 /**
  * These four specs read the repository rather than the DOM — the TypeScript
- * compiler API, `node:fs`, `node:child_process` — so they are the one part of
- * the suite that cannot run in a browser and gets a Node project of its own.
+ * compiler API, `node:fs`, `node:child_process`, `import.meta.resolve` — so
+ * they are the one part of the suite that cannot run in a browser and get a
+ * Node project of their own.
+ *
+ * The line is drawn by what a spec imports, not by what it is about. Importing
+ * `@studiometa/ui` registers every component, and registration needs a
+ * `MutationObserver`, so a spec that loads the barrel cannot run under Node at
+ * all. Three files that asserted both halves are split along that line, with
+ * the repository half named `*-resolution` / `*-freshness`.
  */
 const staticAnalysisSpecs = [
   'barrel-exports/barrel-exports.spec.ts',
-  'autoload/manifest.spec.ts',
-  'subpath-exports/subpath-exports.spec.ts',
-  'subpath-exports/backward-compat.spec.ts',
+  'autoload/manifest-freshness.spec.ts',
+  'subpath-exports/resolution.spec.ts',
+  'subpath-exports/backward-compat-resolution.spec.ts',
 ];
 
 // `@studiometa/ui` and `@studiometa/ui-mapbox` publish their built `dist/`, but their `exports`
@@ -97,9 +104,11 @@ export default defineConfig({
       },
       {
         plugins: [decorators()],
-        resolve: {
-          conditions: [sourceCondition, 'node', 'import', 'module', 'default'],
-        },
+        // No `typescript` condition here, deliberately. Nothing in this project
+        // imports a package under test — that is the whole reason these four
+        // specs are separated — and two of them assert where the *published*
+        // `exports` map points, which the source condition would answer with
+        // `src/` and hide.
         test: {
           name: 'node',
           environment: 'node',
