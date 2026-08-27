@@ -7,25 +7,7 @@ import {
   type MountedReturn,
   type PointerProps,
 } from '@studiometa/js-toolkit';
-import { smoothTo } from '@studiometa/js-toolkit/utils';
-
-/**
- * The keyed shape `smoothTo()` returns.
- *
- * `SmoothToRecord` is not re-exported by `@studiometa/js-toolkit/utils` in
- * 4.0.0-alpha.0, and the field cannot infer it because its own initializer
- * reads `this.motion`. Drop this alias once the type is public.
- */
-interface SmoothToRecord<K extends string> {
-  (values?: Partial<Record<K, number>>): Record<K, number>;
-  subscribe(callback: (values: Record<K, number>) => unknown): () => void;
-  raw(): Record<K, number>;
-  add(deltas: Partial<Record<K, number>>): Record<K, number>;
-  jump(values: Partial<Record<K, number>>): Record<K, number>;
-  readonly isMoving: boolean;
-  destroy(): void;
-}
-import { matrix } from '@studiometa/js-toolkit/utils';
+import { matrix, smoothTo, type SmoothToRecord } from '@studiometa/js-toolkit/utils';
 
 export type CursorProps = BaseProps & {
   $options: {
