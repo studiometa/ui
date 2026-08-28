@@ -41,8 +41,7 @@ export class MockMap {
    * the layer scoped `(event, layerId, fn)` signature used by `MapboxCluster`.
    */
   on(event: string, arg2: string | Function, arg3?: Function) {
-    const [layer, fn] =
-      typeof arg2 === 'function' ? [null, arg2] : [arg2, arg3 as Function];
+    const [layer, fn] = typeof arg2 === 'function' ? [null, arg2] : [arg2, arg3 as Function];
     const key = layer ? `${event}:${layer}` : event;
     if (!this._listeners[key]) this._listeners[key] = [];
     this._listeners[key].push(fn);
@@ -50,8 +49,7 @@ export class MockMap {
   }
 
   off(event: string, arg2: string | Function, arg3?: Function) {
-    const [layer, fn] =
-      typeof arg2 === 'function' ? [null, arg2] : [arg2, arg3 as Function];
+    const [layer, fn] = typeof arg2 === 'function' ? [null, arg2] : [arg2, arg3 as Function];
     const key = layer ? `${event}:${layer}` : event;
     this._listeners[key] = (this._listeners[key] || []).filter((f) => f !== fn);
     return this;

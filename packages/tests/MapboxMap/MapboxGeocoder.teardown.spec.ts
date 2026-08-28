@@ -1,14 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
-import { h } from '#test-utils';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { mount, settle } from '@studiometa/js-toolkit/test';
 
 /**
  * The geocoder module is loaded lazily via a dynamic `import()` inside
  * `MapboxGeocoder.mounted()`. To reproduce the mount/teardown race we gate that
- * import behind a controllable promise so the component can be destroyed while
+ * import behind a controllable promise so the component can be unmounted while
  * the import is still pending.
  *
- * This spec deliberately declares its own gated mock instead of reusing the
- * synchronous mock from `mock-mapbox-gl.ts` (mocks are file-scoped, so the other
+ * This spec deliberately declares its own mocks instead of reusing the
+ * synchronous ones from `mock-mapbox-gl.ts` (mocks are file-scoped, so the other
  * geocoder specs keep their instant import).
  */
 const gate = vi.hoisted(() => {
@@ -27,14 +28,36 @@ const gate = vi.hoisted(() => {
   };
 });
 
-vi.mock('mapbox-gl', () => ({
-  default: {
-    Map: class {
-      on = vi.fn();
-      remove = vi.fn();
-    },
-  },
-}));
+/**
+ * A `mapbox-gl` `Map` double with just enough of an event emitter for
+ * `MapboxMap` to forward events and for the map children to bind their `remove`
+ * and `style.load` watches.
+ */
+const stub = vi.hoisted(() => {
+  class StubMap {
+    _listeners: Record<string, Array<(payload?: unknown) => void>> = {};
+    remove = vi.fn();
+    removeControl = vi.fn();
+
+    on(type: string, listener: (payload?: unknown) => void) {
+      (this._listeners[type] ??= []).push(listener);
+      return this;
+    }
+
+    off(type: string, listener: (payload?: unknown) => void) {
+      this._listeners[type] = (this._listeners[type] ?? []).filter((fn) => fn !== listener);
+      return this;
+    }
+
+    fire(type: string, payload?: unknown) {
+      (this._listeners[type] ?? []).forEach((listener) => listener(payload));
+    }
+  }
+
+  return { StubMap };
+});
+
+vi.mock('mapbox-gl', () => ({ default: { Map: stub.StubMap } }));
 
 vi.mock('@mapbox/mapbox-gl-geocoder', async () => {
   await gate.promise;
@@ -45,28 +68,37 @@ vi.mock('@mapbox/mapbox-gl-geocoder', async () => {
   return { default: MockGeocoder };
 });
 
-const { MapboxGeocoder, provideMapboxGl } = await import('@studiometa/ui-mapbox');
+const { MapboxGeocoder, MapboxMap, provideMapboxGl } = await import('@studiometa/ui-mapbox');
 
-// This spec stubs `$closest` instead of mounting a real `MapboxMap`, so nothing
-// resolves `mapbox-gl`. Provide the mock namespace the geocoder hands to its
-// control (the gated `MockGeocoder` ignores it, but `getMapboxGl()` must resolve).
-provideMapboxGl({ Map: class {} } as unknown as Parameters<typeof provideMapboxGl>[0]);
+// Inject the stub namespace so the mounted `MapboxMap` builds a `StubMap`
+// without reaching for the real library.
+provideMapboxGl({ Map: stub.StubMap } as unknown as Parameters<typeof provideMapboxGl>[0]);
 
-function createGeocoder() {
-  const mockMap = { removeControl: vi.fn() };
-  const el = h('div', {
-    'data-component': 'MapboxGeocoder',
-    'data-option-options': '{"accessToken":"geo-token"}',
-  });
-  const instance = new MapboxGeocoder(el);
-  // Mock $closest since async component resolution doesn't set it up.
-  instance.$closest = vi.fn((query: string) => {
-    if (query === 'MapboxMap') {
-      return { map: mockMap, isLoaded: true, $options: { accessToken: 'parent-token' } } as any;
-    }
-    return undefined;
-  });
-  return { instance, mockMap };
+registerComponents(MapboxMap, MapboxGeocoder);
+
+/**
+ * Mount a loaded `MapboxMap` holding one `MapboxGeocoder`. The geocoder's
+ * `mounted()` is still awaiting the gated import when this resolves.
+ */
+async function mountGeocoder() {
+  const root = await mount(`
+    <div data-component="MapboxMap" data-option-access-token="test-token">
+      <div data-ref="container"></div>
+      <div data-component="MapboxGeocoder" data-option-options='{"accessToken":"geo-token"}'></div>
+    </div>
+  `);
+  const mapEl = root.querySelector<HTMLElement>('[data-component="MapboxMap"]')!;
+  const el = root.querySelector<HTMLElement>('[data-component="MapboxGeocoder"]')!;
+  const mapbox = getInstance<InstanceType<typeof MapboxMap>>(mapEl, 'MapboxMap')!;
+
+  (mapbox.map as unknown as InstanceType<typeof stub.StubMap>).fire('load');
+  await settle();
+
+  return {
+    mapbox,
+    instance: getInstance<InstanceType<typeof MapboxGeocoder>>(el, 'MapboxGeocoder')!,
+    stubMap: mapbox.map as unknown as InstanceType<typeof stub.StubMap>,
+  };
 }
 
 // Real timers: the gated dynamic import does not settle cleanly under fake
@@ -76,36 +108,33 @@ function tick() {
 }
 
 describe('MapboxGeocoder teardown race', () => {
-  it('should not create or add the control when destroyed before the import resolves', async () => {
+  it('should not create or add the control when unmounted before the import resolves', async () => {
     gate.reset();
-    const { instance, mockMap } = createGeocoder();
-
-    instance.$mount();
+    const { instance, stubMap } = await mountGeocoder();
     await tick();
 
     // The dynamic import is still pending: no control has been created yet.
     expect(instance.control).toBeUndefined();
 
-    // Destroy while the import is in flight, then let it resolve afterwards.
-    instance.$destroy();
+    // Unmount while the import is in flight, then let it resolve afterwards.
+    instance.$unmount();
     await tick();
     gate.open();
     await tick();
 
     // The control must never be created nor added to the map after teardown.
     expect(instance.control).toBeUndefined();
-    expect(mockMap.removeControl).not.toHaveBeenCalled();
+    expect(stubMap.removeControl).not.toHaveBeenCalled();
   });
 
   it('should create and add the control on a normal mount', async () => {
     gate.reset();
-    const { instance } = createGeocoder();
+    const { instance } = await mountGeocoder();
 
-    instance.$mount();
     gate.open();
     await tick();
 
     expect(instance.control).toBeDefined();
-    expect(instance.control.addTo).toHaveBeenCalledWith(instance.$el);
+    expect(instance.control!.addTo).toHaveBeenCalledWith(instance.$el);
   });
 });

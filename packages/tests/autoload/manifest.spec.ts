@@ -1,31 +1,47 @@
-import { Base, type BaseConstructor } from '@studiometa/js-toolkit';
+import { Base, type BaseConstructor, type ComponentManifestEntry } from '@studiometa/js-toolkit';
 import { manifest as uiManifest } from '@studiometa/ui/manifest';
 import { manifest as mapboxManifest } from '@studiometa/ui-mapbox/manifest';
+import { manifest as motionManifest } from '@studiometa/ui-motion/manifest';
 import * as uiExports from '@studiometa/ui';
 import * as mapboxExports from '@studiometa/ui-mapbox';
+import * as motionExports from '@studiometa/ui-motion';
 import { describe, expect, it } from 'vitest';
 
 function isBaseConstructor(value: unknown): value is BaseConstructor {
   return typeof value === 'function' && value.prototype instanceof Base;
 }
 
+// js-toolkit v4 narrowed a manifest entry to what the registry reads before the
+// module is loaded: `{ load, mountStrategy }`. v3's `token`, `packageName`,
+// `subpath` and `exportName` fields had no runtime consumer and are gone from
+// the generated output — they stay in the authoring catalog, which is where the
+// generator reads them from. So the token is no longer restated inside the
+// entry: it *is* the key, which is why the assertions below read the key and
+// then check that the loaded class agrees with it.
 describe.each([
   ['@studiometa/ui', uiManifest, uiExports as Record<string, unknown>, 'eager'],
   ['@studiometa/ui-mapbox', mapboxManifest, mapboxExports as Record<string, unknown>, 'visible'],
-] as const)('%s ./manifest export', (packageName, manifest, exports, strategy) => {
-  it('keys every entry by its own token and its own package name', () => {
-    for (const [token, entry] of Object.entries(manifest)) {
-      expect(entry.token).toBe(token);
-      expect(entry.packageName).toBe(packageName);
-      expect(entry.strategy).toBe(strategy);
+  ['@studiometa/ui-motion', motionManifest, motionExports as Record<string, unknown>, 'visible'],
+] as const)('%s ./manifest export', (_packageName, manifest, exports, strategy) => {
+  it('declares the package mount strategy on every entry', () => {
+    expect(Object.keys(manifest).length).toBeGreaterThan(0);
+
+    for (const entry of Object.values(manifest) as ComponentManifestEntry[]) {
+      expect(entry.mountStrategy).toBe(strategy);
     }
   });
 
-  it('loads each entry to the Base constructor exposed by the barrel', async () => {
-    for (const entry of Object.values(manifest)) {
+  it('loads each entry to the Base constructor the barrel exports under its token', async () => {
+    for (const [token, entry] of Object.entries(manifest) as [string, ComponentManifestEntry][]) {
       const Constructor = await entry.load();
+
       expect(isBaseConstructor(Constructor)).toBe(true);
-      expect(exports[entry.exportName]).toBe(Constructor);
+      // The registry keys an instance, its `$id` and its `INSTANCES` entry by
+      // the *resolved config name*, and reports a `registry.lazy-name-mismatch`
+      // when it disagrees with the manifest key. Asserting it here is what used
+      // to be `entry.token === token`.
+      expect((Constructor as BaseConstructor).config.name).toBe(token);
+      expect(exports[token]).toBe(Constructor);
     }
   });
 });

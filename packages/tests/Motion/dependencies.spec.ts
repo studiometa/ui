@@ -25,7 +25,6 @@ function freshDependencies(): Promise<typeof import('@studiometa/ui-motion/depen
 }
 
 describe('ui-motion dependency injection', () => {
-
   it('throws from getMotion before motion is resolved', async () => {
     const { getMotion } = await freshDependencies();
     expect(() => getMotion()).toThrow(/has not been resolved/);

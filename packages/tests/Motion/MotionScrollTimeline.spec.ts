@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 // Importing the mock injects the `motion` module double through `provideMotion`
 // before the components resolve it below.
 import {
@@ -8,8 +8,18 @@ import {
   mockMotionModule,
   resetMockMotion,
 } from './mock-motion.js';
-import { MotionScrollTimeline } from '@studiometa/ui-motion';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { captureDiagnostics, resetDom, settle } from '@studiometa/js-toolkit/test';
+import { Motion, MotionScrollTimeline } from '@studiometa/ui-motion';
 import { h, wait } from '#test-utils';
+
+// v4 does not mount a component's children for it: `config.components` declares
+// the family, but every element is mounted by the registry. So the children have
+// to be registered, and the whole subtree has to be in the document, for the
+// timeline to have anything to bind.
+registerComponents(Motion, MotionScrollTimeline);
+
+afterEach(resetDom);
 
 function motionChild(animate: string) {
   return h('div', { dataComponent: 'Motion', dataOptionAnimate: animate });
@@ -20,9 +30,11 @@ async function mountTimeline(attributes: Record<string, string> = {}, children =
     motionChild(`{ "x": ${(index + 1) * 100} }`),
   );
   const el = h('section', { dataComponent: 'MotionScrollTimeline', ...attributes }, kids);
-  const instance = new MotionScrollTimeline(el);
-  await instance.$mount();
+  document.body.append(el);
+  await settle();
   await wait(0);
+
+  const instance = getInstance<MotionScrollTimeline>(el, 'MotionScrollTimeline')!;
 
   return { el, instance };
 }
@@ -81,10 +93,12 @@ describe('MotionScrollTimeline component', () => {
     }
   });
 
-  it('should release every scroll link on destroy', async () => {
+  it('should release every scroll link on unmount', async () => {
     const { instance } = await mountTimeline();
 
-    await instance.$destroy();
+    // v4 renamed the inverse of `$mount()`, and the release is now the cleanup
+    // the `mounted()` hook returns rather than a `destroyed()` body.
+    instance.$unmount();
     expect(scrollLinks.every((link) => link.stopped)).toBe(true);
   });
 
@@ -92,17 +106,14 @@ describe('MotionScrollTimeline component', () => {
     // Simulate a `motion/mini` build: the injected module has no `scroll`.
     mockMotionModule.scroll = undefined as never;
 
-    const kids = [motionChild('{ "x": 100 }')];
-    const el = h('section', { dataComponent: 'MotionScrollTimeline' }, kids);
-    const instance = new MotionScrollTimeline(el);
-    const warn = vi.fn();
-    Object.defineProperty(instance, '$warn', { configurable: true, get: () => warn });
+    // `$warn()` reports on the diagnostic channel in v4, so the capture reads
+    // the channel rather than stubbing the method or spying on the console.
+    const log = captureDiagnostics();
+    await mountTimeline({}, 1);
 
-    await instance.$mount();
-    await wait(0);
-
-    expect(warn).toHaveBeenCalledTimes(1);
+    expect(log.codes).toEqual(['motion-scroll-timeline.missing-scroll']);
     expect(mockAnimate).not.toHaveBeenCalled();
     expect(scrollLinks).toHaveLength(0);
+    log.stop();
   });
 });

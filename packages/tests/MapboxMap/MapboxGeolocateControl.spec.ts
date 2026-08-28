@@ -1,82 +1,56 @@
-import { describe, it, expect, vi } from 'vitest';
-import { h } from '#test-utils';
-import { MockMap } from './mock-mapbox-gl.js';
-import { MapboxGeolocateControl } from '@studiometa/ui-mapbox';
+import { describe, it, expect } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { settle } from '@studiometa/js-toolkit/test';
+import { MapboxGeolocateControl, MapboxMap } from '@studiometa/ui-mapbox';
+import { mountMap } from './harness.js';
 
-function createControl(attrs: Record<string, string> = {}) {
-  const mockMap = new MockMap();
-  const el = h('div', {
-    'data-component': 'MapboxGeolocateControl',
-    ...attrs,
-  });
+registerComponents(MapboxMap, MapboxGeolocateControl);
 
-  const instance = new MapboxGeolocateControl(el);
-  // Mock $closest since async component resolution doesn't set it up
-  instance.$closest = vi.fn((query: string) => {
-    if (query === 'MapboxMap') {
-      return { map: mockMap, isLoaded: true, $options: { accessToken: 'token' } } as any;
-    }
-    return undefined;
-  });
+/** Mount a loaded `MapboxMap` holding one `MapboxGeolocateControl`. */
+async function createControl(attrs = '') {
+  const context = await mountMap(`<div data-component="MapboxGeolocateControl" ${attrs}></div>`);
+  await context.load();
+  const el = context.mapEl.querySelector<HTMLElement>('[data-component="MapboxGeolocateControl"]')!;
 
-  return { instance, mockMap };
+  return {
+    instance: getInstance<MapboxGeolocateControl>(el, 'MapboxGeolocateControl')!,
+    mockMap: context.mockMap,
+  };
 }
 
 describe('MapboxGeolocateControl component', () => {
   it('should mount and add control to map', async () => {
-    const { instance, mockMap } = createControl();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance, mockMap } = await createControl();
 
     expect(mockMap.addControl).toHaveBeenCalledWith(instance.control, 'top-right');
   });
 
   it('should default position to top-right', async () => {
-    const { instance } = createControl();
+    const { instance } = await createControl();
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
-
+    // `position` is declared by `AbstractMapboxControl` and reaches this
+    // subclass through v4's prototype-chain config merge — the job
+    // `withExtraConfig()` used to do in v3.
     expect(instance.$options.position).toBe('top-right');
   });
 
   it('should use custom position', async () => {
-    const { instance, mockMap } = createControl({ 'data-option-position': 'bottom-right' });
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance, mockMap } = await createControl('data-option-position="bottom-right"');
 
     expect(mockMap.addControl).toHaveBeenCalledWith(instance.control, 'bottom-right');
   });
 
-  it('should remove control on destroy', async () => {
-    const { instance, mockMap } = createControl();
+  it('should remove control on unmount', async () => {
+    const { instance, mockMap } = await createControl();
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    instance.$unmount();
+    await settle();
 
     expect(mockMap.removeControl).toHaveBeenCalled();
   });
 
   it('should reuse the same control instance', async () => {
-    const { instance } = createControl();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance } = await createControl();
 
     expect(instance.control).toBe(instance.control);
   });

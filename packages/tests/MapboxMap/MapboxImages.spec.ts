@@ -1,37 +1,35 @@
 import { describe, it, expect, vi } from 'vitest';
-import { h } from '#test-utils';
-import { MockMap } from './mock-mapbox-gl.js';
-import { MapboxImages } from '@studiometa/ui-mapbox';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { captureDiagnostics, recordEvents, settle } from '@studiometa/js-toolkit/test';
+import { MapboxImages, MapboxMap } from '@studiometa/ui-mapbox';
+import { mountMap } from './harness.js';
 
-function createImages(attrs: Record<string, string> = {}) {
-  const mockMap = new MockMap();
-  const el = h('div', {
-    'data-component': 'MapboxImages',
-    'data-option-sources':
-      '[{"name":"one","url":"/one.png"},{"name":"two","url":"/two.png"}]',
-    ...attrs,
-  });
+registerComponents(MapboxMap, MapboxImages);
 
-  const instance = new MapboxImages(el);
-  // Mock $closest since async component resolution doesn't set it up
-  instance.$closest = vi.fn((query: string) => {
-    if (query === 'MapboxMap') {
-      return { map: mockMap, isLoaded: true, $options: { accessToken: 'token' } } as any;
-    }
-    return undefined;
-  });
+const SOURCES = '[{"name":"one","url":"/one.png"},{"name":"two","url":"/two.png"}]';
 
-  return { instance, mockMap };
+/**
+ * Mount a `MapboxMap` holding one `MapboxImages`, WITHOUT loading the map yet:
+ * the sprites are registered on `map-load`, so a test seeds or stubs the map
+ * double first and then calls `context.load()`.
+ */
+async function createImages(sources: string | null = SOURCES) {
+  const context = await mountMap(
+    `<div data-component="MapboxImages" ${sources === null ? '' : `data-option-sources='${sources}'`}></div>`,
+  );
+  const el = context.mapEl.querySelector<HTMLElement>('[data-component="MapboxImages"]')!;
+
+  return {
+    context,
+    instance: getInstance<MapboxImages>(el, 'MapboxImages')!,
+    mockMap: context.mockMap,
+  };
 }
 
 describe('MapboxImages component', () => {
   it('should load and add every image on mount', async () => {
-    const { instance, mockMap } = createImages();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { context, mockMap } = await createImages();
+    await context.load();
 
     expect(mockMap.addImage).toHaveBeenCalledTimes(2);
     expect(mockMap.addImage).toHaveBeenCalledWith('one', expect.anything(), undefined);
@@ -39,72 +37,49 @@ describe('MapboxImages component', () => {
   });
 
   it('should emit a single map-ready event with every image', async () => {
-    const { instance } = createImages();
-    const handler = vi.fn();
+    const { context, instance } = await createImages();
+    const log = recordEvents(instance.$el, 'map-ready');
+    await context.load();
 
-    vi.useFakeTimers();
-    instance.$mount();
-    instance.$on('map-ready', handler);
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
-
-    expect(handler).toHaveBeenCalledTimes(1);
-    const images = handler.mock.calls[0][0].detail[0];
+    expect(log.events).toHaveLength(1);
+    // v4 payloads are one named object: the batch travels as `detail.images`.
+    const { images } = log.events[0].detail as { images: unknown[] };
     expect(images).toHaveLength(2);
+    log.stop();
   });
 
   it('should default sources to an empty array', async () => {
-    const mockMap = new MockMap();
-    const el = h('div', { 'data-component': 'MapboxImages' });
-    const instance = new MapboxImages(el);
-    instance.$closest = vi.fn((query: string) => {
-      if (query === 'MapboxMap') {
-        return { map: mockMap, isLoaded: true, $options: {} } as any;
-      }
-      return undefined;
-    });
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { context, instance, mockMap } = await createImages(null);
+    await context.load();
 
     expect(instance.$options.sources).toEqual([]);
     expect(mockMap.addImage).not.toHaveBeenCalled();
   });
 
-  it('should remove every image on destroy', async () => {
-    const { instance, mockMap } = createImages();
+  it('should remove every image on unmount', async () => {
+    const { context, instance, mockMap } = await createImages();
+    await context.load();
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    instance.$unmount();
+    await settle();
 
     expect(mockMap.removeImage).toHaveBeenCalledWith('one');
     expect(mockMap.removeImage).toHaveBeenCalledWith('two');
   });
 
-  it('should only remove the images it added on destroy', async () => {
-    const { instance, mockMap } = createImages();
+  it('should only remove the images it added on unmount', async () => {
+    const { context, instance, mockMap } = await createImages();
     // "one" already exists on the map, added by someone else: this instance does
     // not own it and must not remove it. "two" is new and owned by this instance.
     mockMap.seedImage('one');
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
+    await context.load();
 
     // Only the new sprite was added.
     expect(mockMap.addImage).toHaveBeenCalledTimes(1);
     expect(mockMap.addImage).toHaveBeenCalledWith('two', expect.anything(), undefined);
 
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    instance.$unmount();
+    await settle();
 
     // Only the newly added sprite is removed; the pre-existing one is preserved.
     expect(mockMap.removeImage).toHaveBeenCalledTimes(1);
@@ -114,8 +89,7 @@ describe('MapboxImages component', () => {
   });
 
   it('should clean up already-added sprites when a later image in the batch fails (H5)', async () => {
-    const { instance, mockMap } = createImages();
-    instance.$options.log = true;
+    const { context, instance, mockMap } = await createImages();
     // `one` loads fine and is added; `two` fails to load, rejecting the batch
     // after `one` was already added.
     mockMap.loadImage = vi.fn((url: string, cb: (error: unknown, image: unknown) => void) => {
@@ -125,64 +99,59 @@ describe('MapboxImages component', () => {
         cb(null, {});
       }
     });
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const onError = vi.fn();
-    instance.$on('map-error', onError);
+    // v3 asserted on a `console.warn` spy; v4 reports a recovered failure on the
+    // diagnostic channel, so the assertion reads the namespaced code instead of
+    // the sink the default handler happens to write to.
+    const diagnostics = captureDiagnostics();
+    const log = recordEvents(instance.$el, 'map-error');
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    await Promise.resolve();
-    vi.useRealTimers();
+    await context.load();
 
     // `one` was added before `two` rejected; the rejection is contained (routed
-    // to the `map-error` event, not an unhandled rejection).
+    // to the `map-error` event and the diagnostic channel, not an unhandled
+    // rejection).
     expect(mockMap.addImage).toHaveBeenCalledWith('one', expect.anything(), undefined);
-    expect(onError).toHaveBeenCalled();
+    expect(diagnostics.codes).toContain('mapbox-map-child.failed');
+    expect(log.events).toHaveLength(1);
 
     // Teardown removes the sprite that WAS added, even though the batch failed
     // before completing — no orphan survives.
-    vi.useFakeTimers();
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    instance.$unmount();
+    await settle();
 
     expect(mockMap.removeImage).toHaveBeenCalledWith('one');
     expect(mockMap._images).toEqual({});
 
-    warn.mockRestore();
+    log.stop();
+    diagnostics.stop();
   });
 
-  it('should not leave orphan images when destroyed before the loads resolve', async () => {
-    const { instance, mockMap } = createImages();
-    // Defer every image load so the component can be destroyed while they are
+  it('should not leave orphan images when unmounted before the loads resolve', async () => {
+    const { context, instance, mockMap } = await createImages();
+    // Defer every image load so the component can be unmounted while they are
     // still in flight, reproducing the mount/teardown race.
     const callbacks: Array<(error: unknown, image: unknown) => void> = [];
     mockMap.loadImage = vi.fn((_url: string, cb: (error: unknown, image: unknown) => void) => {
       callbacks.push(cb);
     });
-    const ready = vi.fn();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    instance.$on('map-ready', ready);
-    await vi.advanceTimersByTimeAsync(100);
+    const log = recordEvents(instance.$el, 'map-ready');
+    await context.load();
 
     // The loads are still pending: nothing has been added to the sprite yet.
     expect(mockMap.addImage).not.toHaveBeenCalled();
 
-    // Destroy while the loads are in flight, then let them resolve afterwards.
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
+    // Unmount while the loads are in flight, then let them resolve afterwards.
+    instance.$unmount();
+    await settle();
     callbacks.forEach((cb) => cb(null, {}));
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    await settle();
 
     // Every image added after teardown must be removed again: no orphan sprites
-    // and no `map-ready` event emitted after destroy.
+    // and no `map-ready` event emitted after unmount.
     expect(mockMap.removeImage).toHaveBeenCalledWith('one');
     expect(mockMap.removeImage).toHaveBeenCalledWith('two');
     expect(mockMap._images).toEqual({});
-    expect(ready).not.toHaveBeenCalled();
+    expect(log.events).toHaveLength(0);
+    log.stop();
   });
 });

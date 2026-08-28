@@ -1,80 +1,59 @@
-import { describe, it, expect, vi } from 'vitest';
-import { h } from '#test-utils';
-import { MockMap } from './mock-mapbox-gl.js';
-import { MapboxSource, MapboxLayer, MapboxImage, MapboxCluster } from '@studiometa/ui-mapbox';
+import { describe, it, expect } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { settle } from '@studiometa/js-toolkit/test';
+import type { MockMap } from './mock-mapbox-gl.js';
+import {
+  MapboxCluster,
+  MapboxImage,
+  MapboxLayer,
+  MapboxMap,
+  MapboxSource,
+} from '@studiometa/ui-mapbox';
 import { claimMapboxOwnership, getMapboxOwner } from '@studiometa/ui-mapbox/utils';
+import { append, mountMap } from './harness.js';
 
-/**
- * Bind a child instance to a shared, already-loaded `MockMap` through a mocked
- * `$closest`, mirroring how the async component resolution would.
- */
-function bind(instance: any, mockMap: MockMap) {
-  instance.$closest = vi.fn((query: string) =>
-    query === 'MapboxMap'
-      ? ({ map: mockMap, isLoaded: true, $options: { accessToken: 'token' } } as any)
-      : undefined,
-  );
+registerComponents(MapboxMap, MapboxSource, MapboxLayer, MapboxImage, MapboxCluster);
+
+function sourceHtml(id = 'my-source') {
+  return `<div data-component="MapboxSource" data-option-id="${id}" data-option-source='{"type":"geojson","data":{"type":"FeatureCollection","features":[]}}'></div>`;
 }
 
-async function mount(instance: any) {
-  vi.useFakeTimers();
-  instance.$mount();
-  await vi.advanceTimersByTimeAsync(100);
-  vi.useRealTimers();
+function layerHtml(id = 'my-layer', source = 'my-source') {
+  return `<div data-component="MapboxLayer" data-option-id="${id}" data-option-layer='${JSON.stringify({ type: 'fill', source })}'></div>`;
 }
 
-async function destroy(instance: any) {
-  vi.useFakeTimers();
-  instance.$destroy();
-  await vi.advanceTimersByTimeAsync(100);
-  vi.useRealTimers();
+function imageHtml(name = 'my-image') {
+  return `<div data-component="MapboxImage" data-option-name="${name}" data-option-url="https://example.test/icon.png"></div>`;
 }
 
-function makeSource(mockMap: MockMap, id = 'my-source') {
-  const el = h('div', {
-    'data-component': 'MapboxSource',
-    'data-option-id': id,
-    'data-option-source': '{"type":"geojson","data":{"type":"FeatureCollection","features":[]}}',
-  });
-  const instance = new MapboxSource(el);
-  bind(instance, mockMap);
-  return instance;
+/** Mount a loaded `MapboxMap` the declarative children can be appended to. */
+async function mountLoadedMap() {
+  const context = await mountMap();
+  await context.load();
+  return context;
 }
 
-function makeLayer(mockMap: MockMap, id = 'my-layer', source = 'my-source') {
-  const el = h('div', {
-    'data-component': 'MapboxLayer',
-    'data-option-id': id,
-    'data-option-layer': JSON.stringify({ type: 'fill', source }),
-  });
-  const instance = new MapboxLayer(el);
-  bind(instance, mockMap);
-  return instance;
+/** Append a child and hand back its instance. */
+async function add<T>(mapEl: HTMLElement, html: string, name: string): Promise<T> {
+  const el = await append(mapEl, html);
+  return getInstance<never>(el, name) as T;
 }
 
-function makeImage(mockMap: MockMap, name = 'my-image') {
-  const el = h('div', {
-    'data-component': 'MapboxImage',
-    'data-option-name': name,
-    'data-option-url': 'https://example.test/icon.png',
-  });
-  const instance = new MapboxImage(el);
-  bind(instance, mockMap);
-  return instance;
+/** Replace the style, then let every deferred re-injection land. */
+async function setStyle(mockMap: MockMap) {
+  mockMap.setStyle('mapbox://styles/mapbox/dark-v11');
+  await settle();
 }
 
 describe('style-reload re-injection (H7)', () => {
   it('re-injects a mounted MapboxSource + MapboxLayer + MapboxImage after setStyle', async () => {
-    const mockMap = new MockMap();
-    const source = makeSource(mockMap);
-    const layer = makeLayer(mockMap);
-    const image = makeImage(mockMap);
+    const { mapEl, mockMap } = await mountLoadedMap();
 
     // Mount source first so its `style.load` handler runs before the layer's;
     // either order works (the layer's standing `sourcedata` watch recovers too).
-    await mount(source);
-    await mount(layer);
-    await mount(image);
+    await add<MapboxSource>(mapEl, sourceHtml(), 'MapboxSource');
+    await add<MapboxLayer>(mapEl, layerHtml(), 'MapboxLayer');
+    await add<MapboxImage>(mapEl, imageHtml(), 'MapboxImage');
 
     // Everything is on the initial style.
     expect(mockMap.getSource('my-source')).toBeDefined();
@@ -86,13 +65,7 @@ describe('style-reload re-injection (H7)', () => {
 
     // A full style replacement wipes sources, layers and sprites, then fires
     // `style.load`. The mounted children must re-inject onto the new style.
-    mockMap.setStyle('mapbox://styles/mapbox/dark-v11');
-    // Flush the microtask the layer defers its (re)commit to.
-    await Promise.resolve();
-    await Promise.resolve();
-    // Flush the image's async re-add (loadImage + addImage).
-    await Promise.resolve();
-    await Promise.resolve();
+    await setStyle(mockMap);
 
     expect(mockMap.getSource('my-source')).toBeDefined();
     expect(mockMap.getLayer('my-layer')).toBeDefined();
@@ -103,55 +76,52 @@ describe('style-reload re-injection (H7)', () => {
     expect(mockMap.addLayer.mock.calls.length).toBeGreaterThan(addLayerCalls);
   });
 
-  it('does not re-inject after the child is destroyed', async () => {
-    const mockMap = new MockMap();
-    const source = makeSource(mockMap);
-    await mount(source);
-    await destroy(source);
+  it('does not re-inject after the child is unmounted', async () => {
+    const { mapEl, mockMap } = await mountLoadedMap();
+    const source = await add<MapboxSource>(mapEl, sourceHtml(), 'MapboxSource');
+
+    source.$unmount();
+    await settle();
 
     const addSourceCalls = mockMap.addSource.mock.calls.length;
-    mockMap.setStyle('mapbox://styles/mapbox/dark-v11');
+    await setStyle(mockMap);
 
-    // A destroyed child unsubscribed from `style.load`: no resurrection.
+    // An unmounted child unsubscribed from `style.load`: no resurrection.
     expect(mockMap.addSource.mock.calls.length).toBe(addSourceCalls);
     expect(mockMap.getSource('my-source')).toBeUndefined();
   });
 
   it('re-owns the resource after setStyle so its later teardown still removes it', async () => {
-    const mockMap = new MockMap();
-    const source = makeSource(mockMap);
-    await mount(source);
+    const { mapEl, mockMap } = await mountLoadedMap();
+    const source = await add<MapboxSource>(mapEl, sourceHtml(), 'MapboxSource');
 
-    mockMap.setStyle('mapbox://styles/mapbox/dark-v11');
+    await setStyle(mockMap);
     expect(mockMap.getSource('my-source')).toBeDefined();
 
     // Ownership was re-claimed on re-injection, so teardown still cleans up.
-    await destroy(source);
+    source.$unmount();
+    await settle();
     expect(mockMap.getSource('my-source')).toBeUndefined();
   });
 
   it('recovers a still-mounted layer when its source is removed then re-added (H7 source-teardown case)', async () => {
-    const mockMap = new MockMap();
-    const source = makeSource(mockMap);
-    const layer = makeLayer(mockMap);
-
-    await mount(source);
-    await mount(layer);
+    const { mapEl, mockMap } = await mountLoadedMap();
+    const source = await add<MapboxSource>(mapEl, sourceHtml(), 'MapboxSource');
+    await add<MapboxLayer>(mapEl, layerHtml(), 'MapboxLayer');
     expect(mockMap.getLayer('my-layer')).toBeDefined();
 
     // The source tears down (a `Fetch` swap of the source alone, say): it drops
     // every referencing layer — including this still-mounted one — then the
     // source itself.
-    await destroy(source);
+    source.$unmount();
+    await settle();
     expect(mockMap.getLayer('my-layer')).toBeUndefined();
     expect(mockMap.getSource('my-source')).toBeUndefined();
 
     // The source comes back later. The layer's standing `sourcedata` watch must
     // re-commit it rather than leaving it gone for good.
-    const source2 = makeSource(mockMap);
-    await mount(source2);
-    await Promise.resolve();
-    await Promise.resolve();
+    await add<MapboxSource>(mapEl, sourceHtml(), 'MapboxSource');
+    await settle();
 
     expect(mockMap.getSource('my-source')).toBeDefined();
     expect(mockMap.getLayer('my-layer')).toBeDefined();
@@ -160,18 +130,18 @@ describe('style-reload re-injection (H7)', () => {
 
 describe('MapboxCluster style-reload re-injection (H7)', () => {
   it('re-adds its source + layers after setStyle without duplicating listeners', async () => {
-    const mockMap = new MockMap();
-    const el = h('div', { 'data-component': 'MapboxCluster' });
-    const cluster = new MapboxCluster(el);
-    bind(cluster, mockMap);
+    const { mapEl, mockMap } = await mountLoadedMap();
+    const cluster = await add<MapboxCluster>(
+      mapEl,
+      '<div data-component="MapboxCluster"></div>',
+      'MapboxCluster',
+    );
 
-    vi.useFakeTimers();
-    cluster.$mount();
-    await vi.advanceTimersByTimeAsync(200);
-    vi.useRealTimers();
-
-    const sourceId = (cluster as any).__getId('source');
-    const clustersId = (cluster as any).__getId('clusters');
+    function id(suffix: string) {
+      return (cluster as unknown as { __getId(s: string): string }).__getId(suffix);
+    }
+    const sourceId = id('source');
+    const clustersId = id('clusters');
 
     expect(mockMap.getSource(sourceId)).toBeDefined();
     expect(mockMap.getLayer(clustersId)).toBeDefined();
@@ -181,7 +151,7 @@ describe('MapboxCluster style-reload re-injection (H7)', () => {
     // setStyle wipes source + layers (but leaves the layer-scoped listeners),
     // then fires `style.load`. The cluster must re-add its source and layers and
     // must NOT stack a second copy of every listener.
-    mockMap.setStyle('mapbox://styles/mapbox/dark-v11');
+    await setStyle(mockMap);
 
     expect(mockMap.getSource(sourceId)).toBeDefined();
     expect(mockMap.getLayer(clustersId)).toBeDefined();
@@ -191,9 +161,8 @@ describe('MapboxCluster style-reload re-injection (H7)', () => {
 
 describe('ownership staleness (H6)', () => {
   it('self-heals the registry across setStyle so a post-setStyle same-id resource is not misclassified', async () => {
-    const mockMap = new MockMap();
-    const source = makeSource(mockMap);
-    await mount(source);
+    const { mapEl, mockMap } = await mountLoadedMap();
+    const source = await add<MapboxSource>(mapEl, sourceHtml(), 'MapboxSource');
 
     // Snapshot the owner while live.
     expect(getMapboxOwner(mockMap, 'source:my-source')).toBe(source);
@@ -212,9 +181,8 @@ describe('ownership staleness (H6)', () => {
   });
 
   it('external removeSource does not leave a stale owner that deletes a stranger later same-id source', async () => {
-    const mockMap = new MockMap();
-    const source = makeSource(mockMap);
-    await mount(source);
+    const { mapEl, mockMap } = await mountLoadedMap();
+    const source = await add<MapboxSource>(mapEl, sourceHtml(), 'MapboxSource');
     expect(mockMap.getSource('my-source')).toBeDefined();
 
     // External code removes the source out from under the component.
@@ -232,27 +200,27 @@ describe('ownership staleness (H6)', () => {
     // source (it no longer owns the id). The only `removeSource('my-source')`
     // call is the external one above — teardown adds none.
     const removeCallsBefore = mockMap.removeSource.mock.calls.length;
-    await destroy(source);
+    source.$unmount();
+    await settle();
     expect(mockMap.getSource('my-source')).toBe(strangerSource);
     expect(mockMap.removeSource.mock.calls.length).toBe(removeCallsBefore);
   });
 
   it('a new family source does not adopt a stranger source left after an external removeSource', async () => {
-    const mockMap = new MockMap();
-    const source = makeSource(mockMap);
-    await mount(source);
+    const { mapEl, mockMap } = await mountLoadedMap();
+    const source = await add<MapboxSource>(mapEl, sourceHtml(), 'MapboxSource');
 
     // External removeSource + a stranger re-adds under the same id.
     mockMap.removeSource('my-source');
     mockMap.addSource('my-source', { type: 'geojson' });
     const strangerSource = mockMap.getSource('my-source');
-    await destroy(source);
+    source.$unmount();
+    await settle();
 
     // A brand new family MapboxSource mounts on the same id. It sees the id
     // taken but unowned (the stale entry was pruned), so it must leave the
     // stranger's source untouched rather than adopting it.
-    const newSource = makeSource(mockMap);
-    await mount(newSource);
+    const newSource = await add<MapboxSource>(mapEl, sourceHtml(), 'MapboxSource');
 
     // Not adopted: still the stranger's object, and the new instance does not
     // own it.
@@ -260,12 +228,13 @@ describe('ownership staleness (H6)', () => {
     expect(getMapboxOwner(mockMap, 'source:my-source')).toBeUndefined();
 
     // On teardown the new instance must not delete the stranger's source.
-    await destroy(newSource);
+    newSource.$unmount();
+    await settle();
     expect(mockMap.getSource('my-source')).toBe(strangerSource);
   });
 
-  it('prunes a stale entry on read via the liveness probe', () => {
-    const mockMap = new MockMap();
+  it('prunes a stale entry on read via the liveness probe', async () => {
+    const { mockMap } = await mountLoadedMap();
     const ownerA = {};
     let live = true;
     claimMapboxOwnership(mockMap, 'source:x', ownerA, () => live);
