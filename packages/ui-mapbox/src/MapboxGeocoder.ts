@@ -85,7 +85,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
 
     // The component may have been destroyed while the dynamic import was still
     // resolving. Bail out before creating and adding the control, otherwise it
-    // would be attached after `destroyed()` already ran (and saw `__control`
+    // would be attached after `__onDestroyed()` already ran (and saw `__control`
     // undefined), leaking an orphan control.
     if (!this.$isMounted) {
       return;

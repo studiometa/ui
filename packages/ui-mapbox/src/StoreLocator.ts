@@ -1,4 +1,5 @@
 import { Base } from '@studiometa/js-toolkit/Base';
+import { whenDOMSettled } from '@studiometa/js-toolkit/whenDOMSettled';
 import type { BaseProps, BaseConfig, ChildrenCollection } from '@studiometa/js-toolkit';
 import type { Map, LngLatLike, LngLatBoundsLike, Popup } from 'mapbox-gl';
 import { getMapboxGl } from './dependencies.js';
@@ -216,16 +217,17 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   );
 
   /**
-   * The closest child `MapboxMap` component.
+   * The child `MapboxMap` component, once it has mounted.
+   *
+   * The getter does not warn when there is none. v4 mounts a wrapper before the
+   * elements inside it and guarantees no mount ordering, so "no map yet" is the
+   * normal state on every healthy locator — v3's warning here fired on every
+   * page load and recovered silently a moment later. A locator with genuinely
+   * no map in its markup is reported once instead, from
+   * {@link __warnWhenMapIsMissing}.
    */
-  get mapboxMap() {
-    const mapboxMap = this.$query<MapboxMap>('MapboxMap')[0];
-
-    if (!mapboxMap) {
-      this.$warn('store-locator.no-map', 'Can not find a child MapboxMap component.');
-    }
-
-    return mapboxMap;
+  get mapboxMap(): MapboxMap | undefined {
+    return this.$query<MapboxMap>('MapboxMap')[0];
   }
 
   /**
@@ -623,6 +625,25 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   }
 
   /**
+   * Report a locator with no `MapboxMap` in its markup, once.
+   *
+   * The check reads the **element**, not the mounted instance: DOM ancestry is
+   * a fact that exists before anything mounts, so it is immune both to v4's
+   * lack of mount ordering and to the map's mount strategy — a `data-mount`
+   * that has not fired yet is not a missing map. `whenDOMSettled()` waits for
+   * the mutation batch that brought the locator in, which is the earliest
+   * moment the markup can be judged complete.
+   * @private
+   */
+  async __warnWhenMapIsMissing() {
+    await whenDOMSettled();
+
+    if (this.$isMounted && !this.$el.querySelector('[data-component="MapboxMap"]')) {
+      this.$warn('store-locator.no-map', 'Can not find a child MapboxMap component.');
+    }
+  }
+
+  /**
    * Detach the current cluster listeners so a replacement can be wired afresh.
    * @private
    */
@@ -696,6 +717,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
 
     this.__bindMap();
     this.__waitForConnectedMap();
+    this.__warnWhenMapIsMissing();
   }
 
   /**

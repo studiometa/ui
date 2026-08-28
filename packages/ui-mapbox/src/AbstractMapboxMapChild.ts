@@ -46,7 +46,7 @@ export const MAPBOX_MAP_CONNECTED = 'mapbox-map:connected';
  *    global queue runs lifecycle hooks with no try/catch: a single synchronous
  *    throw wedges the queue and freezes every mount/destroy on the page. The
  *    ready callback and the subclass teardown (`__onDestroyed`) are both run
- *    inside a try/catch that routes to `$warn` + a `map-error` event and never
+ *    inside a try/catch that routes to `$error` + a `map-error` event and never
  *    rethrows.
  * 2. **Dead-map safety** — once ready, the child subscribes to the map's own
  *    `remove` event; when it fires the cached map reference is dropped so no
@@ -103,7 +103,7 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    *
    * The callback may be synchronous or `async`: a returned promise is awaited
    * inside the same containment as a synchronous body, so a rejection routes to
-   * `$warn` + the `map-error` event instead of surfacing as an unhandled rejection.
+   * `$error` + the `map-error` event instead of surfacing as an unhandled rejection.
    * @private
    */
   __readyCallback?: (map: Map) => void | Promise<void>;
@@ -282,7 +282,7 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    * Run the ready callback inside a uniform containment for both synchronous
    * throws and rejected promises: a synchronous body is wrapped in `try/catch`,
    * and an `async` body's returned promise is awaited so its rejection routes to
-   * `$warn` + the `map-error` event instead of becoming an unhandled rejection.
+   * `$error` + the `map-error` event instead of becoming an unhandled rejection.
    * Neither path ever rethrows into the global lifecycle queue.
    * @private
    * @param {Map} map
@@ -398,8 +398,10 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
   }
 
   /**
-   * Contain an error raised by a guarded injection or teardown: warn and emit an
-   * `map-error` event, but never rethrow into the global queue.
+   * Contain an error raised by a guarded injection or teardown: report it on the
+   * diagnostic channel — `$error()`, which carries the cause a warning has
+   * nowhere to put — and emit a `map-error` event, but never rethrow into the
+   * global queue.
    * @private
    * @param {unknown} err
    */
@@ -439,6 +441,14 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    * Runs the guarded subclass teardown, then flushes every base subscription
    * (`map-load`, the map's `remove`, the connected retry). Subclasses override
    * `__onDestroyed` rather than this method.
+   *
+   * **`__readyMap` and `__readyMapboxMap` are deliberately kept.** An
+   * asynchronous injection still in flight — `MapboxImage` awaiting
+   * `loadImage`, `MapboxImages` awaiting its batch — resolves after this runs
+   * and undoes itself by checking `this.__readyMap === map`. Clearing them here
+   * would read like an obvious cleanup and would strand every sprite those
+   * paths add after teardown. The map reference is dropped by the map's own
+   * `remove` handler instead, which is the event that actually invalidates it.
    */
   unmounted() {
     try {
