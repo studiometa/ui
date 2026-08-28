@@ -1,5 +1,5 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig, ChildrenCollection } from '@studiometa/js-toolkit';
 import type { scroll } from 'motion';
 import { Motion } from './Motion.js';
 import { resolveMotion } from './dependencies.js';
@@ -16,9 +16,6 @@ type ScrollOptions = NonNullable<Parameters<typeof scroll>[1]> & {
 };
 
 export interface MotionScrollTimelineProps extends BaseProps {
-  $children: {
-    Motion: Motion[];
-  };
   $options: {
     offset: string[];
     axis: 'x' | 'y';
@@ -68,13 +65,21 @@ export class MotionScrollTimeline<T extends BaseProps = BaseProps> extends Base<
   };
 
   /**
-   * The stop function of each `scroll()` link, released on destroy.
+   * The stop function of each `scroll()` link, released on unmount.
    * @private
    */
   __stops: VoidFunction[] = [];
 
   /**
-   * Bind every `Motion` child to this element's scroll progress.
+   * The mounted `Motion` descendants, live and in DOM order — v4's replacement
+   * for `$children.Motion`.
+   * @private
+   */
+  __children: ChildrenCollection<Motion> = this.$watchChildren<Motion>('Motion');
+
+  /**
+   * Bind every `Motion` child to this element's scroll progress, and release
+   * every link when the mount cycle ends.
    */
   async mounted() {
     const motion = await resolveMotion();
@@ -85,24 +90,22 @@ export class MotionScrollTimeline<T extends BaseProps = BaseProps> extends Base<
 
     if (!motion.scroll) {
       this.$warn(
+        'motion-scroll-timeline.missing-scroll',
         'The resolved motion module has no `scroll()` (e.g. `motion/mini`). Provide the full `motion` entry to use MotionScrollTimeline.',
       );
       return;
     }
 
-    for (const child of this.$children.Motion) {
+    for (const child of this.__children) {
       this.__link(motion.scroll, child);
     }
-  }
 
-  /**
-   * Release every scroll link on destroy.
-   */
-  destroyed() {
-    for (const stop of this.__stops) {
-      stop();
-    }
-    this.__stops = [];
+    return () => {
+      for (const stop of this.__stops) {
+        stop();
+      }
+      this.__stops = [];
+    };
   }
 
   /**

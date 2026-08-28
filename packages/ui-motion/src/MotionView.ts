@@ -1,7 +1,5 @@
 import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { addClass } from '@studiometa/js-toolkit/utils/addClass';
-import { removeClass } from '@studiometa/js-toolkit/utils/removeClass';
 import type { animateView, DOMKeyframesDefinition } from 'motion';
 import { resolveMotion } from './dependencies.js';
 
@@ -20,6 +18,19 @@ export interface MotionViewProps extends BaseProps {
     exit: DOMKeyframesDefinition;
     layout: boolean;
     auto: boolean;
+  };
+  /**
+   * The transition lifecycle, declared in the props type now that v4 removed
+   * the runtime `config.emits` list. The names mirror `ViewTransition`'s, which
+   * is what makes the two interchangeable.
+   */
+  $emits: {
+    enter: void;
+    'enter-start': void;
+    'enter-end': void;
+    leave: void;
+    'leave-start': void;
+    'leave-end': void;
   };
 }
 
@@ -60,7 +71,6 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
    */
   static config: BaseConfig = {
     name: 'MotionView',
-    emits: ['enter', 'enter-start', 'enter-end', 'leave', 'leave-start', 'leave-end', 'toggle'],
     options: {
       viewTransitionName: String,
       enterTo: String,
@@ -136,20 +146,21 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
       this.target.style.setProperty('view-transition-name', viewTransitionName);
     }
 
-    if (auto) {
-      this.$el.addEventListener('dom-update', this.__onDomUpdate);
-      document.addEventListener('open', this.__onDialogPhase);
-      document.addEventListener('close', this.__onDialogPhase);
+    if (!auto) {
+      return;
     }
-  }
 
-  /**
-   * Remove the ambient wiring listeners.
-   */
-  destroyed() {
-    this.$el.removeEventListener('dom-update', this.__onDomUpdate);
-    document.removeEventListener('open', this.__onDialogPhase);
-    document.removeEventListener('close', this.__onDialogPhase);
+    this.$el.addEventListener('dom-update', this.__onDomUpdate);
+    document.addEventListener('open', this.__onDialogPhase);
+    document.addEventListener('close', this.__onDialogPhase);
+
+    // v4 has no `destroyed()`: the teardown is the closure `mounted()` returns,
+    // which also keeps it paired with the `auto` branch that installed it.
+    return () => {
+      this.$el.removeEventListener('dom-update', this.__onDomUpdate);
+      document.removeEventListener('open', this.__onDialogPhase);
+      document.removeEventListener('close', this.__onDialogPhase);
+    };
   }
 
   /**
@@ -165,6 +176,7 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
 
     if (!motion.animateView) {
       this.$warn(
+        'motion-view.missing-animate-view',
         'The resolved motion module has no `animateView()` (e.g. `motion/mini`). Provide the full `motion` entry to animate updates with MotionView.',
       );
       await mutate();
@@ -224,8 +236,7 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
     this.$emit('enter');
     this.$emit('enter-start');
     await this.update(() => {
-      removeClass(this.target, this.$options.leaveTo);
-      addClass(this.target, this.$options.enterTo);
+      this.__toggleClasses(this.$options.leaveTo, this.$options.enterTo);
     });
     this.$emit('enter-end');
   }
@@ -238,8 +249,7 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
     this.$emit('leave');
     this.$emit('leave-start');
     await this.update(() => {
-      removeClass(this.target, this.$options.enterTo);
-      addClass(this.target, this.$options.leaveTo);
+      this.__toggleClasses(this.$options.enterTo, this.$options.leaveTo);
     });
     this.$emit('leave-end');
   }
@@ -250,6 +260,27 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
    */
   toggle(): Promise<void> {
     return this.state === 'entering' ? this.leave() : this.enter();
+  }
+
+  /**
+   * Swap one space separated class list for another on the target.
+   *
+   * v4 ships no `addClass`/`removeClass`: both were one-line wrappers over
+   * `classList`, and the only thing they added — splitting a space separated
+   * option value — is what this does, exactly as `ViewTransition` does it.
+   * @private
+   */
+  __toggleClasses(remove: string, add: string): void {
+    const removed = remove.split(' ').filter(Boolean);
+    const added = add.split(' ').filter(Boolean);
+
+    if (removed.length > 0) {
+      this.target.classList.remove(...removed);
+    }
+
+    if (added.length > 0) {
+      this.target.classList.add(...added);
+    }
   }
 }
 
