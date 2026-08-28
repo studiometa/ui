@@ -48,22 +48,34 @@ The [Mapbox GL stylesheet](/reference/items/MapboxMap/#installation) and a [Mapb
 
 ## Usage
 
-The `StoreLocator` declares no child components — `StoreLocator`, `MapboxMap`, `MapboxCluster`, `MapboxClusterItem` and the optional `MapboxGeocoder` are each [registered](/guide/usage/#registering-components) independently and mount on their own; the orchestrator then discovers them in its subtree once mounted. As with a plain map, the recommended default is to lazy-register each component with js-toolkit's [`importWhen*` helpers](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) and the per-component subpaths (each subpath's default export is the component class), keeping the heavy `mapbox-gl` dependency out of your main bundle until the store locator is on the page.
+The `StoreLocator` declares no child components — `StoreLocator`, `MapboxMap`, `MapboxCluster`, `MapboxClusterItem` and the optional `MapboxGeocoder` are each [registered](/guide/usage/#registering-components) independently and mount on their own; the orchestrator watches its subtree for them, so mount order does not matter and a cluster inserted later is picked up on its own. As with a plain map, the recommended default is to register the family as a [manifest](/guide/autoloading/), keeping the heavy `mapbox-gl` dependency out of your main bundle until the store locator is on the page.
 
 Because a `MapboxClusterItem` resolves its cluster and the cluster resolves its map through the closest matching ancestor, the DOM nests them: the `MapboxCluster` wraps the sidebar list of `MapboxClusterItem`s **inside** the `MapboxMap`, next to the map container. The `StoreLocator` wraps the map. The cluster carries **no** authored data — it derives its source from the registered items.
 
 ::: code-group
 
 ```js [app.js]
-import { registerComponents, importWhenVisible } from '@studiometa/js-toolkit';
+import { registerManifest } from '@studiometa/js-toolkit';
 
 // Register only the components your page uses; order doesn't matter.
-registerComponents(
-  importWhenVisible(() => import('@studiometa/ui-mapbox/StoreLocator'), 'StoreLocator'),
-  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'),
-  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxCluster'), 'MapboxCluster'),
-  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxClusterItem'), 'MapboxClusterItem'),
-);
+registerManifest({
+  StoreLocator: {
+    mountStrategy: 'visible',
+    load: () => import('@studiometa/ui-mapbox/StoreLocator'),
+  },
+  MapboxMap: {
+    mountStrategy: 'visible',
+    load: () => import('@studiometa/ui-mapbox/MapboxMap'),
+  },
+  MapboxCluster: {
+    mountStrategy: 'visible',
+    load: () => import('@studiometa/ui-mapbox/MapboxCluster'),
+  },
+  MapboxClusterItem: {
+    mountStrategy: 'visible',
+    load: () => import('@studiometa/ui-mapbox/MapboxClusterItem'),
+  },
+});
 ```
 
 ```html [index.html]
@@ -113,16 +125,19 @@ Clicking anywhere in a `MapboxClusterItem` selects it (the orchestrator delegate
 
 ## Lazy loading
 
-Registering the family pulls in `MapboxMap` and its heavy `mapbox-gl` dependency (~230&nbsp;kB gzipped). Register it lazily so it is code-split into its own chunk and only loaded when the locator is on the page, using the same [`importWhen*` helpers](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) as the rest of the [`MapboxMap` family](/reference/items/MapboxMap/#lazy-loading):
+Registering the family pulls in `MapboxMap` and its heavy `mapbox-gl` dependency (~230&nbsp;kB gzipped). Register it through a [manifest](/guide/autoloading/) so it is code-split into its own chunk and only loaded when the locator is on the page, the same way as the rest of the [`MapboxMap` family](/reference/items/MapboxMap/#lazy-loading):
 
 ```js
-import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
+import { registerManifest } from '@studiometa/js-toolkit';
 
-registerComponent(
-  importWhenVisible(() => import('@studiometa/ui-mapbox/StoreLocator'), 'StoreLocator'),
-);
+registerManifest({
+  StoreLocator: {
+    mountStrategy: 'visible',
+    load: () => import('@studiometa/ui-mapbox/StoreLocator'),
+  },
+});
 ```
 
-When lazy-loading only the `StoreLocator` subpath, remember to register the `MapboxMap`, `MapboxCluster` and `MapboxClusterItem` it orchestrates too (each is available at its own subpath, whose default export is the component class, so a dynamic import needs no destructuring).
+When registering only the `StoreLocator` entry, remember to register the `MapboxMap`, `MapboxCluster` and `MapboxClusterItem` it orchestrates too (each is available at its own subpath, whose default export is the component class, so the importer needs no destructuring). The whole package's manifest is available at `@studiometa/ui-mapbox/manifest` when you want all of it.
 
-`importWhenIdle`, `importOnInteraction` and `importOnMediaQuery` are available too — see the [MapboxMap lazy-loading note](/reference/items/MapboxMap/#lazy-loading).
+The `idle`, `interaction` and `media:<query>` strategies are available too, and `data-mount` overrides any of them per element — see the [MapboxMap lazy-loading note](/reference/items/MapboxMap/#lazy-loading).

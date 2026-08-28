@@ -73,18 +73,36 @@ registerComponent(MapboxMap);
 
 ## Lazy loading
 
-Keep `mapbox-gl` out of your main bundle by lazy-registering each component with js-toolkit's [`importWhen*` helpers](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) and the per-component subpaths. `importWhenVisible` defers the dynamic import until a `MapboxMap` element scrolls into view, then hands the resolved component to `registerComponent`, code-splitting `mapbox-gl` into its own chunk loaded only when a map is actually needed.
+Keep `mapbox-gl` out of your main bundle by registering the family as a [manifest](/guide/autoloading/) rather than as classes. A manifest entry is a lazy importer plus a mount strategy, so the dynamic import is deferred until an element that needs it is about to mount — `mapbox-gl` lands in its own chunk, loaded only when a map is actually on the page.
 
-Every component is available at its own subpath (`@studiometa/ui-mapbox/<Component>`), whose default export is the component class — so the dynamic import needs no destructuring. Because each component is registered independently, lazy-register each one you use: deferring `MapboxMap` pulls in `mapbox-gl`, but a marker or a cluster is its own module and must get its own lazy registration.
+The package ships its own manifest, which is the shortest way to get all of it:
 
 ```js
-import { registerComponents, importWhenVisible } from '@studiometa/js-toolkit';
+import { registerManifest } from '@studiometa/js-toolkit';
+import { manifest } from '@studiometa/ui-mapbox/manifest';
 
-registerComponents(
-  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'),
-  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMarker'), 'MapboxMarker'),
-  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxPopup'), 'MapboxPopup'),
-);
+registerManifest(manifest);
 ```
 
-Reach for a different trigger when it fits better: `importWhenIdle` (load during browser idle time), `importOnInteraction` (wait for a first click/focus/touch on the element) or `importOnMediaQuery` (load only above a breakpoint, e.g. to skip the map on small screens).
+Every component is also available at its own subpath (`@studiometa/ui-mapbox/<Component>`), whose default export is the component class, so a hand-written manifest can carry only the components you use. Each component is registered independently, so list every one you declare: deferring `MapboxMap` pulls in `mapbox-gl`, but a marker or a cluster is its own module and needs its own entry.
+
+```js
+import { registerManifest } from '@studiometa/js-toolkit';
+
+registerManifest({
+  MapboxMap: {
+    mountStrategy: 'visible',
+    load: () => import('@studiometa/ui-mapbox/MapboxMap'),
+  },
+  MapboxMarker: {
+    mountStrategy: 'visible',
+    load: () => import('@studiometa/ui-mapbox/MapboxMarker'),
+  },
+  MapboxPopup: {
+    mountStrategy: 'visible',
+    load: () => import('@studiometa/ui-mapbox/MapboxPopup'),
+  },
+});
+```
+
+Reach for a different strategy when it fits better — `idle`, `interaction`, `media:<query>` — and override any of them per element with `data-mount`. The [Autoloading](/guide/autoloading/) guide lists all six.

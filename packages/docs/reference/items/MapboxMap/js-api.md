@@ -7,7 +7,7 @@ outline: deep
 
 This page documents thirteen components — a single root component, `MapboxMap`, which owns the Mapbox `Map` instance, plus the twelve children below — built on the `AbstractMapboxMapChild` (and, for controls, `AbstractMapboxControl`) base classes. The [`StoreLocator`](/reference/items/StoreLocator/) orchestrator completes the family on its own page. Every child resolves the closest parent `MapboxMap` on its own and registers itself against its map once it is loaded.
 
-[Register](/guide/usage/#registering-components) each component you use — ideally behind a lazy [`importWhen*` helper](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) so the heavy `mapbox-gl` dependency stays out of your main bundle (see [Lazy loading](/reference/items/MapboxMap/#lazy-loading)).
+[Register](/guide/usage/#registering-components) each component you use — ideally through a lazy [manifest](/guide/autoloading/) entry so the heavy `mapbox-gl` dependency stays out of your main bundle (see [Lazy loading](/reference/items/MapboxMap/#lazy-loading)).
 
 - **[Map](#map)** — `MapboxMap`
 - **[Markers & Popups](#markers-popups)** — `MapboxMarker`, `MapboxPopup`
@@ -124,9 +124,11 @@ Whether the map has finished loading.
 
 #### Events
 
-The component emits a custom `map-load` event, plus all the common Mapbox GL map events prefixed with `map-` to avoid conflicts with native events. Each handler receives the corresponding Mapbox event object (the `map-load` handler receives the `map` instance).
+The component emits a custom `map-load` event, plus all the common Mapbox GL map events prefixed with `map-` to avoid conflicts with native events. Every payload is a named object: `map-load` carries `{ map }`, and every forwarded event carries the Mapbox event object as `{ event }`.
 
 ##### `map-load`
+
+- Payload: `{ map }`
 
 The map finished loading (custom event).
 
@@ -233,7 +235,7 @@ A drag ends.
 Listen to these events from a parent component with `on<ComponentName><EventName>` methods:
 
 ```js
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import { MapboxMap } from '@studiometa/ui-mapbox';
 
 class App extends Base {
@@ -242,20 +244,20 @@ class App extends Base {
     components: { MapboxMap },
   };
 
-  onMapboxMapMapLoad({ args: [map] }) {
+  onMapboxMapMapLoad({ payload: { map } }) {
     console.log('Map is ready', map);
   }
 
-  onMapboxMapMapClick({ args: [event] }) {
+  onMapboxMapMapClick({ payload: { event } }) {
     console.log('Clicked at', event.lngLat);
   }
 
-  onMapboxMapMapZoomend({ args: [event] }) {
+  onMapboxMapMapZoomend({ payload: { event } }) {
     console.log('New zoom level', event.target.getZoom());
   }
 }
 
-createApp(App);
+registerComponent(App);
 ```
 
 ## Markers & Popups
@@ -324,7 +326,7 @@ The underlying Popup instance.
 
 ## Controls
 
-All controls extend [`AbstractMapboxMapChild`](#abstractmapboxmapchild) and expose the underlying Mapbox control through a `control` getter. They share a `position` option and are added to the map on mount, removed on destroy.
+All controls extend [`AbstractMapboxMapChild`](#abstractmapboxmapchild) and expose the underlying Mapbox control through a `control` getter. They share a `position` option and are added to the map on mount, removed on unmount.
 
 ### MapboxNavigationControl
 
@@ -470,15 +472,15 @@ Where the control is mounted, depending on `add-to-map`.
 
 ##### `map-result`
 
-- Payload: `result`
+- Payload: `{ result }`
 
-Emitted when the geocoder resolves an address, carrying the geocoder's `result` (its selected feature).
+Emitted when the geocoder resolves an address, carrying the geocoder's selected feature.
 
 ## Data
 
 ### MapboxSource
 
-Add a [source](https://docs.mapbox.com/style-spec/reference/sources/) to the map. On destroy, every layer tied to the source is removed before the source itself.
+Add a [source](https://docs.mapbox.com/style-spec/reference/sources/) to the map. On unmount, every layer tied to the source is removed before the source itself.
 
 #### Options
 
@@ -584,9 +586,9 @@ A list of image definitions, each `{ name, url, options? }`. See [`MapboxImage`]
 
 ##### `map-ready`
 
-- Payload: `MapboxImage[]`
+- Payload: `{ images }`
 
-Emitted once every image has been loaded and added.
+Emitted once every image has been loaded and added, carrying the loaded images.
 
 ## Cluster
 
@@ -697,7 +699,7 @@ Register a `MapboxClusterItem` and schedule a coalesced rebuild. Called automati
 
 ##### `unregister(item)`
 
-Unregister a `MapboxClusterItem` and schedule a coalesced rebuild. Called automatically by items on destroy.
+Unregister a `MapboxClusterItem` and schedule a coalesced rebuild. Called automatically by items on unmount.
 
 ##### `setData(data)`
 
@@ -707,25 +709,25 @@ Replace the live source data directly, bypassing the item registry — for imper
 
 ##### `map-cluster-click`
 
-- Payload: `(clusterId, event)`
+- Payload: `{ clusterId, event }`
 
 A cluster was clicked. Call `event.preventDefault()` to skip the default zoom-to-cluster behavior.
 
 ##### `map-item-click`
 
-- Payload: `(item, feature, event)`
+- Payload: `{ item, feature, event }`
 
 An unclustered point was clicked. `item` is the registered `MapboxClusterItem` behind the feature, or `undefined` when none could be resolved.
 
 ##### `map-update`
 
-- Payload: `(items)`
+- Payload: `{ items }`
 
 The item set changed (a rebuild ran). Carries the live item set so an orchestrator can re-fit and re-filter.
 
 ### MapboxClusterItem
 
-A single entry of a `MapboxCluster` — at once a rendered list item AND a map feature. It resolves the closest `MapboxCluster` ancestor, pushes itself into its registry on mount (`register`) and pulls itself out on destroy (`unregister`), so the cluster never has to query for its children. It is headless and passive: it never selects itself — a [`StoreLocator`](/reference/items/StoreLocator/) orchestrator (when one wraps the cluster) drives its state setters.
+A single entry of a `MapboxCluster` — at once a rendered list item AND a map feature. It resolves the closest `MapboxCluster` ancestor, pushes itself into its registry on mount (`register`) and pulls itself out on unmount (`unregister`), so the cluster never has to query for its children. It is headless and passive: it never selects itself — a [`StoreLocator`](/reference/items/StoreLocator/) orchestrator (when one wraps the cluster) drives its state setters.
 
 #### Options
 
@@ -799,7 +801,9 @@ Toggle the `data-active` attribute and the `aria-current="true"` state — the s
 
 ##### `map-error`
 
-Emitted when unregistering the item throws. The error is contained and passed as the payload.
+- Payload: `{ error }`
+
+Emitted when unregistering the item throws. The failure is contained and reported on the diagnostic channel as well.
 
 ## AbstractMapboxMapChild
 
@@ -823,7 +827,9 @@ The Mapbox `Map` instance of the parent map.
 
 ##### `map-error`
 
-Emitted when guarded map injection or teardown throws. The error is contained and passed as the payload.
+- Payload: `{ error }`
+
+Emitted when guarded map injection or teardown throws. The failure is contained and reported on the diagnostic channel as well.
 
 ```js
 import { AbstractMapboxMapChild } from '@studiometa/ui-mapbox';

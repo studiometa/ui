@@ -8,7 +8,7 @@
     data-option-delay="8"
     data-option-repeat
     data-option-animate='{ "x": 200, "rotate": 360, "borderRadius": "50%" }'
-    data-on:timer-progress="Motion.seek(1 - Math.abs(2 * event.detail[0] - 1))"
+    data-on:timer-progress="Motion.seek(1 - Math.abs(2 * event.detail.ratio - 1))"
     class="size-16 rounded-lg bg-blue-400 dark:bg-blue-600"></div>
 
   <div class="flex flex-wrap gap-2">

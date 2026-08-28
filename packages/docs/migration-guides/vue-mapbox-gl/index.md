@@ -32,19 +32,26 @@ The Mapbox GL stylesheet is still required. Keep importing it as before:
 @import 'mapbox-gl/dist/mapbox-gl.css';
 ```
 
-Instead of registering the components on a Vue app, register them with js-toolkit. Every component is self-registering — `MapboxMap` no longer declares its children, so each one must be registered with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html). Register only the ones you use — a bare map needs only `MapboxMap`, but every marker, control, source or cluster you declare needs its own registration. Registration order does not matter, because a child registered before its `MapboxMap` still wires up once the map connects. Because `mapbox-gl` is heavy (~230&nbsp;kB gzipped), the recommended default is to lazy-register each component with js-toolkit's [`importWhen*` helpers](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) and the per-component subpaths (each subpath's default export is the component class):
+Instead of registering the components on a Vue app, register them with js-toolkit. Every component is self-registering — `MapboxMap` no longer declares its children, so each one must be registered with [`registerComponent`](https://js-toolkit-v4.studiometa.dev/api/registry/registerComponent.html). Register only the ones you use — a bare map needs only `MapboxMap`, but every marker, control, source or cluster you declare needs its own registration. Registration order does not matter, because a child registered before its `MapboxMap` still wires up once the map connects. Because `mapbox-gl` is heavy (~230&nbsp;kB gzipped), the recommended default is to register them through a lazy [manifest](/guide/autoloading/), whose entries import the per-component subpaths on demand (each subpath's default export is the component class):
 
 ```js
-import { registerComponent, importWhenVisible } from '@studiometa/js-toolkit';
+import { registerManifest } from '@studiometa/js-toolkit';
 
 // Register only the components your page uses; order doesn't matter.
-registerComponent(importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'));
-registerComponent(
-  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMarker'), 'MapboxMarker'),
-);
-registerComponent(
-  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxPopup'), 'MapboxPopup'),
-);
+registerManifest({
+  MapboxMap: {
+    mountStrategy: 'visible',
+    load: () => import('@studiometa/ui-mapbox/MapboxMap'),
+  },
+  MapboxMarker: {
+    mountStrategy: 'visible',
+    load: () => import('@studiometa/ui-mapbox/MapboxMarker'),
+  },
+  MapboxPopup: {
+    mountStrategy: 'visible',
+    load: () => import('@studiometa/ui-mapbox/MapboxPopup'),
+  },
+});
 ```
 
 ## Component mapping
@@ -122,7 +129,7 @@ The Vue library re-emits Mapbox map events prefixed with `mb-` (e.g. `@mb-load`,
 Every public event uses the `map-` prefix. The `MapboxMap` component re-emits the full list of Mapbox map events; `MapboxCluster` emits `map-cluster-click`, `map-item-click` (an unclustered point, resolved back to the registered `MapboxClusterItem` behind it) and `map-update` (the item set changed); `MapboxGeocoder` emits `map-result`; `MapboxImage` and `MapboxImages` emit `map-ready`; map children emit `map-error` when guarded lifecycle work fails; and `StoreLocator` emits `map-select`, `map-deselect` and `map-filter`. See each component's events in the [JS API](/reference/items/MapboxMap/js-api).
 
 ```js
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import { MapboxMap } from '@studiometa/ui-mapbox';
 
 class App extends Base {
@@ -131,16 +138,16 @@ class App extends Base {
     components: { MapboxMap },
   };
 
-  onMapboxMapMapLoad({ args: [map] }) {
+  onMapboxMapMapLoad({ payload: { map } }) {
     console.log('Map is ready', map);
   }
 
-  onMapboxMapMapClick({ args: [event] }) {
+  onMapboxMapMapClick({ payload: { event } }) {
     console.log('Clicked at', event.lngLat);
   }
 }
 
-createApp(App);
+registerComponent(App);
 ```
 
 ### Slots → DOM children and refs
@@ -262,7 +269,7 @@ A complete map with a marker and an attached popup.
 ```
 
 ```js
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import { MapboxMap } from '@studiometa/ui-mapbox';
 
 class App extends Base {
@@ -271,10 +278,10 @@ class App extends Base {
     components: { MapboxMap },
   };
 
-  onMapboxMapMapLoad({ args: [map] }) {
+  onMapboxMapMapLoad({ payload: { map } }) {
     // former @mb-load handler
   }
 }
 
-createApp(App);
+registerComponent(App);
 ```

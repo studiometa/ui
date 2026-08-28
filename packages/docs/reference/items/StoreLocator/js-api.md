@@ -10,7 +10,7 @@ The store locator is an **orchestrator** built on the [`MapboxMap` family](/refe
 - `StoreLocator` — the coordinator, wrapping a [`MapboxMap`](/reference/items/MapboxMap/js-api#map) that contains a [`MapboxCluster`](/reference/items/MapboxMap/js-api#cluster).
 - [`MapboxClusterItem`](/reference/items/MapboxMap/js-api#mapboxclusteritem) — a single store entry; it registers with the cluster (the owner of the item registry), and the orchestrator reads and drives it. There is **no** dedicated store-item class.
 
-The `StoreLocator` declares no child components, so nothing is ever double-mounted. [Register](/guide/usage/#registering-components) `StoreLocator`, `MapboxMap`, `MapboxCluster` and `MapboxClusterItem` each independently — ideally behind a lazy [`importWhen*` helper](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html) (see [Lazy loading](/reference/items/MapboxMap/#lazy-loading)). The orchestrator discovers them in its subtree with `$query` once mounted, retrying a few ticks for asynchronously-mounted children (the geocoder lazy-imports its module).
+The `StoreLocator` declares no child components, so nothing is ever double-mounted. [Register](/guide/usage/#registering-components) `StoreLocator`, `MapboxMap`, `MapboxCluster` and `MapboxClusterItem` each independently — ideally through a lazy [manifest](/guide/autoloading/) entry (see [Lazy loading](/reference/items/MapboxMap/#lazy-loading)). The orchestrator watches its subtree for the cluster and the optional geocoder, so it does not matter which mounts first, nor whether the geocoder has finished importing its module.
 
 To change the store set after mount, change the DOM of the list (add/remove `MapboxClusterItem` elements): the cluster re-derives the map data and emits a `map-update`, and the orchestrator re-fits and re-filters automatically.
 
@@ -113,10 +113,12 @@ Clear the current selection, close the popup, remove the active state and emit [
 
 #### `map-select`
 
-Emitted when a store is selected, with the selected `MapboxClusterItem` instance. Wire your detail panel here.
+- Payload: `{ item }`
+
+Emitted when a store is selected, carrying the selected `MapboxClusterItem` instance. Wire your detail panel here.
 
 ```js
-onStoreLocatorMapSelect({ args: [item] }) {
+onStoreLocatorMapSelect({ payload: { item } }) {
   // item.id, item.lngLat, item.$el …
 }
 ```
@@ -127,10 +129,12 @@ Emitted when the selection is cleared through [`deselect()`](#deselect).
 
 #### `map-filter`
 
-Emitted whenever the in-view list is recomputed (on every map `moveend` and after an item-set change), with the array of in-view items in display order (nearest-first unless `no-sort` is set).
+- Payload: `{ items }`
+
+Emitted whenever the in-view list is recomputed (on every map `moveend` and after an item-set change), carrying the in-view items in display order (nearest-first unless `no-sort` is set).
 
 ```js
-onStoreLocatorMapFilter({ args: [items] }) {
+onStoreLocatorMapFilter({ payload: { items } }) {
   // e.g. update a "N stores in view" counter
 }
 ```
