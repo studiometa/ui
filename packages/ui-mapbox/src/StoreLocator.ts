@@ -534,6 +534,10 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     map.on('moveend', this.__handleMoveEnd);
     this.__wireCluster(this.__clusters.items[0]);
     this.__wireGeocoder(this.__geocoders.items[0]);
+    // Unconditionally, not only on a first wire: a cluster that wired before
+    // the map loaded got a `__refresh()` with no map to fit or filter against,
+    // and this is the first moment there is one.
+    this.__refresh();
   };
 
   /**
@@ -676,9 +680,10 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   }
 
   /**
-   * Mounted hook: bind the delegated sidebar click, resolve and bind the map,
-   * and install the standing connected-event subscriptions so a late or replaced
-   * map/cluster (re)binds instead of stranding the orchestrator.
+   * Mounted hook: wire whatever the children collections already hold, bind the
+   * delegated sidebar click, resolve and bind the map, and install the standing
+   * `MAPBOX_MAP_CONNECTED` subscription so a late or replaced map rebinds
+   * instead of stranding the orchestrator.
    */
   mounted() {
     this.$el.addEventListener('click', this.__handleListClick);

@@ -1,4 +1,5 @@
 import { Base } from '@studiometa/js-toolkit/Base';
+import { whenDOMSettled } from '@studiometa/js-toolkit/whenDOMSettled';
 import type { BaseProps, BaseConfig, ChildrenCollection } from '@studiometa/js-toolkit';
 import type { scroll } from 'motion';
 import { Motion } from './Motion.js';
@@ -82,7 +83,12 @@ export class MotionScrollTimeline<T extends BaseProps = BaseProps> extends Base<
    * every link when the mount cycle ends.
    */
   async mounted() {
-    const motion = await resolveMotion();
+    // v4 guarantees no mount ordering, and `$watchChildren()` seeds its
+    // collection in a microtask, so the timeline can reach `mounted()` before a
+    // single child exists. `whenDOMSettled()` waits for the mutation batch that
+    // brought this subtree in to finish mounting everything eager in it, which
+    // is what v3 got for free by having the parent construct its children.
+    const [motion] = await Promise.all([resolveMotion(), whenDOMSettled()]);
 
     if (!this.$isMounted) {
       return;

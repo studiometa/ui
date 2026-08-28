@@ -1,3 +1,4 @@
+import { whenDOMSettled } from '@studiometa/js-toolkit/whenDOMSettled';
 import type { BaseProps, BaseConfig, ChildrenCollection } from '@studiometa/js-toolkit';
 import type { AnimationPlaybackControlsWithThen, AnimationSequence, SequenceOptions } from 'motion';
 import { Motion } from './Motion.js';
@@ -63,6 +64,27 @@ export class MotionSequence<T extends BaseProps = BaseProps> extends Motion<
    * @private
    */
   __children: ChildrenCollection<Motion> = this.$watchChildren<Motion>('Motion');
+
+  /**
+   * Wait for the children before letting `Motion.mounted()` decide whether
+   * there is anything to autoplay.
+   *
+   * v4 guarantees no mount ordering, and `$watchChildren()` seeds its
+   * collection in a microtask, so the sequence can reach `mounted()` with an
+   * empty collection and skip its own autoplay. `whenDOMSettled()` waits for
+   * the mutation batch that brought this subtree in to finish mounting
+   * everything eager in it — which is what v3 got for free by having the
+   * parent construct its children.
+   */
+  async mounted(): Promise<void> {
+    await whenDOMSettled();
+
+    if (!this.$isMounted) {
+      return;
+    }
+
+    await super.mounted();
+  }
 
   /**
    * The sequence has an animation to autoplay as soon as it has children
