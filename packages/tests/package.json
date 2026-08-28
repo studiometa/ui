@@ -21,8 +21,6 @@
     "#private/*": "../ui/src/*"
   },
   "devDependencies": {
-    "@rollup/plugin-swc": "^0.4.1",
-    "@swc/core": "^1.16.1",
     "@vitest/browser": "4.1.1",
     "@vitest/browser-playwright": "4.1.1",
     "playwright": "^1.50.0"

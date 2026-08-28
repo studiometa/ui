@@ -1,34 +1,9 @@
 import { resolve } from 'node:path';
-import swc from '@rollup/plugin-swc';
 import { playwright } from '@vitest/browser-playwright';
-import { defineConfig, withFilter } from 'vite';
+import { defineConfig } from 'vite';
 import 'vitest/config';
 
 const packagesRoot = resolve(import.meta.dirname, '..');
-
-/**
- * Stage-3 decorators are not lowered by Oxc, Vite's TypeScript transformer, and
- * no engine ships them yet, so they are compiled with SWC first. This is what
- * the Vite 8 migration guide documents, and the same plugin
- * `@studiometa/js-toolkit` uses for its own suite.
- *
- * The filter keeps the transform off everything with no decorator in it. A
- * `code: '@'` match alone is not enough: SWC parses whatever it is handed as
- * TypeScript, and the browser runner's own `index.html` holds an `@` of its own.
- */
-function decorators() {
-  return withFilter(
-    swc({
-      swc: {
-        jsc: {
-          parser: { syntax: 'typescript', decorators: true, decoratorsBeforeExport: true },
-          transform: { decoratorVersion: '2023-11' },
-        },
-      },
-    }),
-    { transform: { id: /\.[cm]?[jt]sx?$/, code: '@' } },
-  );
-}
 
 /**
  * These four specs read the repository rather than the DOM — the TypeScript
@@ -59,7 +34,6 @@ export default defineConfig({
   test: {
     projects: [
       {
-        plugins: [decorators()],
         resolve: {
           conditions: [sourceCondition, 'browser', 'import', 'module', 'default'],
         },
@@ -103,7 +77,6 @@ export default defineConfig({
         },
       },
       {
-        plugins: [decorators()],
         // No `typescript` condition here, deliberately. Nothing in this project
         // imports a package under test — that is the whole reason these four
         // specs are separated — and two of them assert where the *published*
