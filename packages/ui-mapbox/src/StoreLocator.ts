@@ -1,21 +1,12 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { nextTick } from '@studiometa/js-toolkit/utils/nextTick';
+import type { BaseProps, BaseConfig, ChildrenCollection } from '@studiometa/js-toolkit';
 import type { Map, LngLatLike, LngLatBoundsLike, Popup } from 'mapbox-gl';
 import { getMapboxGl } from './dependencies.js';
 import { MapboxMap } from './MapboxMap.js';
 import { MAPBOX_MAP_CONNECTED } from './AbstractMapboxMapChild.js';
-import { MAPBOX_CLUSTER_CONNECTED, type MapboxCluster } from './MapboxCluster.js';
+import type { MapboxCluster } from './MapboxCluster.js';
 import type { MapboxClusterItem } from './MapboxClusterItem.js';
 import type { MapboxGeocoder } from './MapboxGeocoder.js';
-
-/**
- * Maximum number of `nextTick` retries used to wire the `MapboxCluster` and the
- * optional `MapboxGeocoder`. They are mounted asynchronously (the geocoder even
- * lazy-imports its module), so they may not be queryable yet on the `map-load`
- * event: we poll a few ticks before giving up.
- */
-const WIRE_CHILDREN_MAX_ATTEMPTS = 10;
 
 export interface StoreLocatorProps extends BaseProps {
   $options: {
@@ -23,6 +14,16 @@ export interface StoreLocatorProps extends BaseProps {
     noSort: boolean;
     fitOnUpdate: boolean;
     popupOptions: Record<string, unknown>;
+  };
+  /**
+   * The orchestrator's own events, declared in the props type now that v4
+   * removed the runtime `config.emits` list. Each payload is one named object
+   * rather than v3's positional `detail` array.
+   */
+  $emits: {
+    'map-select': { item: MapboxClusterItem };
+    'map-deselect': void;
+    'map-filter': { items: MapboxClusterItem[] };
   };
 }
 
@@ -52,17 +53,16 @@ export interface StoreLocatorProps extends BaseProps {
  *    and the `map-select` event.
  *
  * The orchestrator requires its `MapboxCluster` (and `MapboxMap`) to live within
- * its own subtree; it resolves them with `$query`, retries a few ticks for
- * asynchronously-mounted children, and — like the map children — subscribes to
- * the `MAPBOX_MAP_CONNECTED` / `MAPBOX_CLUSTER_CONNECTED` events so a late or
- * replaced map/cluster (re)binds instead of stranding the orchestrator on a
- * destroyed instance, and to the map's own `remove` event so a removed map is
- * never called into. Register each component independently (e.g. with
- * `registerComponent`, optionally behind a lazy `importWhen*` helper):
- * `StoreLocator`, `MapboxMap`, `MapboxCluster` and `MapboxClusterItem`.
- * Registration order does not matter because children resolve their map through
- * the connected-event retry, and the orchestrator declares no child components
- * so nothing is ever double-mounted.
+ * its own subtree. It watches both with `$watchChildren()`, so a cluster or
+ * geocoder that mounts late — or one that replaces the wired instance — is
+ * picked up without polling; it subscribes to `MAPBOX_MAP_CONNECTED` because a
+ * map announces its Mapbox instance *after* mounting, which a children
+ * collection cannot report; and it subscribes to the map's own `remove` event
+ * so a removed map is never called into. Register each component independently
+ * with `registerComponent`: `StoreLocator`, `MapboxMap`, `MapboxCluster` and
+ * `MapboxClusterItem`. Registration and mount order do not matter — v4
+ * guarantees neither — and the orchestrator declares no child components so
+ * nothing is ever double-mounted.
  *
  * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
@@ -72,13 +72,12 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    *
    * No child components are declared: `MapboxMap`, `MapboxCluster`,
    * `MapboxClusterItem` and `MapboxGeocoder` are each registered independently
-   * (e.g. with `registerComponent`, optionally behind a lazy `importWhen*`
-   * helper) and mount on their own. The orchestrator discovers them through
-   * `$query` once available — declaring them here would double-mount them.
+   * with `registerComponent` and mount on their own. The orchestrator discovers
+   * them through `$watchChildren()` — declaring them here would double-mount
+   * them, since v4 mounts a declared element through the registry either way.
    */
   static config: BaseConfig = {
     name: 'StoreLocator',
-    emits: ['map-select', 'map-deselect', 'map-filter'],
     options: {
       itemZoomLevel: {
         type: Number,
@@ -136,14 +135,14 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
 
   /**
    * Unsubscribe callbacks for the `MapboxCluster` listeners, flushed both on
-   * destroy and when the cluster is replaced (so the orchestrator re-wires onto
-   * the new instance rather than staying subscribed to the destroyed one).
+   * unmount and when the cluster is replaced (so the orchestrator re-wires onto
+   * the new instance rather than staying subscribed to the unmounted one).
    * @private
    */
   __offCluster: Array<() => void> = [];
 
   /**
-   * Unsubscribe callbacks for the `MapboxGeocoder` listeners, flushed on destroy.
+   * Unsubscribe callbacks for the `MapboxGeocoder` listeners, flushed on unmount.
    * @private
    */
   __offGeocoder: Array<() => void> = [];
@@ -171,24 +170,50 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   __offMapConnected?: () => void;
 
   /**
-   * Off handle for the standing document-level `MAPBOX_CLUSTER_CONNECTED` retry
-   * subscription, so a cluster that mounts late — or replaces the wired one — is
-   * (re)wired instead of stranding the orchestrator on a destroyed instance.
+   * The mounted `MapboxCluster` descendants, live and in DOM order.
+   *
+   * This replaces v3's bounded `nextTick` retry loop **and** the
+   * `MAPBOX_CLUSTER_CONNECTED` document event the orchestrator used to listen
+   * for. Both existed to answer one question v3 could not: "has the cluster
+   * mounted yet?" — v4 answers it with a live collection, so a cluster that
+   * mounts late, or one that replaces the wired one, is picked up by the
+   * `added`/`removed` callbacks with nothing to poll. The cluster keeps
+   * dispatching `MAPBOX_CLUSTER_CONNECTED` for `MapboxClusterItem`: an item
+   * looks *up* for its cluster, and v4 has no watching counterpart to
+   * `$closest()`.
    * @private
    */
-  __offClusterConnected?: () => void;
+  __clusters: ChildrenCollection<MapboxCluster> = this.$watchChildren<MapboxCluster>(
+    'MapboxCluster',
+    {
+      added: (cluster) => this.__wireCluster(cluster),
+      removed: (cluster) => {
+        if (this.__cluster === cluster) {
+          this.__unwireCluster();
+          this.__wireCluster(this.__clusters.items[0]);
+        }
+      },
+    },
+  );
 
   /**
-   * Whether the `MapboxCluster` listeners are already attached.
+   * The mounted `MapboxGeocoder` descendants, live and in DOM order. The
+   * geocoder is optional, so nothing waits for it: it wires itself whenever it
+   * turns up.
    * @private
    */
-  __clusterWired = false;
-
-  /**
-   * Whether the `MapboxGeocoder` `map-result` listener is already attached.
-   * @private
-   */
-  __geocoderWired = false;
+  __geocoders: ChildrenCollection<MapboxGeocoder> = this.$watchChildren<MapboxGeocoder>(
+    'MapboxGeocoder',
+    {
+      added: (geocoder) => this.__wireGeocoder(geocoder),
+      removed: (geocoder) => {
+        if (this.__geocoder === geocoder) {
+          this.__unwireGeocoder();
+          this.__wireGeocoder(this.__geocoders.items[0]);
+        }
+      },
+    },
+  );
 
   /**
    * The closest child `MapboxMap` component.
@@ -197,7 +222,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     const mapboxMap = this.$query<MapboxMap>('MapboxMap')[0];
 
     if (!mapboxMap) {
-      this.$warn('Can not find a child MapboxMap component.');
+      this.$warn('store-locator.no-map', 'Can not find a child MapboxMap component.');
     }
 
     return mapboxMap;
@@ -207,14 +232,14 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    * The child `MapboxCluster`, discovered in the subtree.
    */
   get cluster(): MapboxCluster | undefined {
-    return this.__cluster ?? this.$query<MapboxCluster>('MapboxCluster')[0];
+    return this.__cluster ?? this.__clusters.items[0];
   }
 
   /**
    * The optional child `MapboxGeocoder`, discovered in the subtree.
    */
   get geocoder(): MapboxGeocoder | undefined {
-    return this.__geocoder ?? this.$query<MapboxGeocoder>('MapboxGeocoder')[0];
+    return this.__geocoder ?? this.__geocoders.items[0];
   }
 
   /**
@@ -250,7 +275,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     });
 
     this.__openPopup(item);
-    this.$emit('map-select', item);
+    this.$emit('map-select', { item });
   }
 
   /**
@@ -295,7 +320,10 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
       this.__popup = new (getMapboxGl().Popup)(this.$options.popupOptions);
     }
 
-    this.__popup.setLngLat(item.lngLat as LngLatLike).setHTML(content).addTo(map);
+    this.__popup
+      .setLngLat(item.lngLat as LngLatLike)
+      .setHTML(content)
+      .addTo(map);
   }
 
   /**
@@ -376,7 +404,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     }
 
     this.__reorderList(inView);
-    this.$emit('map-filter', inView);
+    this.$emit('map-filter', { items: inView });
   }
 
   /**
@@ -401,7 +429,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    * @private
    */
   __handleItemClick = (event: Event) => {
-    const [item] = (event as CustomEvent).detail ?? [];
+    const { item } = (event as CustomEvent).detail ?? {};
 
     if (item) {
       this.selectItem(item as MapboxClusterItem);
@@ -452,7 +480,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    * @private
    */
   __handleGeocoderResult = (event: Event) => {
-    const [result] = (event as CustomEvent).detail ?? [];
+    const { result } = (event as CustomEvent).detail ?? {};
     const map = this.__map;
 
     if (!map || !result) {
@@ -504,7 +532,8 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     this.__bindMapRemove(map);
     map.off('moveend', this.__handleMoveEnd);
     map.on('moveend', this.__handleMoveEnd);
-    this.__wireChildren();
+    this.__wireCluster(this.__clusters.items[0]);
+    this.__wireGeocoder(this.__geocoders.items[0]);
   };
 
   /**
@@ -590,42 +619,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   }
 
   /**
-   * Subscribe once to `MAPBOX_CLUSTER_CONNECTED` and (re)wire when a
-   * `MapboxCluster` inside this orchestrator connects. A cluster that replaces
-   * the wired one drops the stale wiring and re-wires onto the new instance, so
-   * list clicks, viewport filtering and selection keep working after a swap.
-   * @private
-   */
-  __waitForConnectedCluster() {
-    if (this.__offClusterConnected) {
-      return;
-    }
-
-    const handler = (event: Event) => {
-      const cluster = (event as CustomEvent<MapboxCluster>).detail;
-
-      if (!cluster?.$el || !this.$el.contains(cluster.$el)) {
-        return;
-      }
-
-      if (this.__cluster && this.__cluster !== cluster) {
-        // A replacement cluster: drop the stale wiring and re-wire onto it.
-        this.__unwireCluster();
-      }
-
-      if (!this.__clusterWired) {
-        this.__wireChildren();
-      }
-    };
-
-    document.addEventListener(MAPBOX_CLUSTER_CONNECTED, handler);
-    this.__offClusterConnected = () =>
-      document.removeEventListener(MAPBOX_CLUSTER_CONNECTED, handler);
-  }
-
-  /**
-   * Detach the current cluster listeners and reset the wiring flag so
-   * `__wireChildren` binds afresh onto a replacement cluster.
+   * Detach the current cluster listeners so a replacement can be wired afresh.
    * @private
    */
   __unwireCluster() {
@@ -633,49 +627,52 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
       off();
     }
     this.__offCluster = [];
-    this.__clusterWired = false;
     this.__cluster = undefined;
   }
 
   /**
-   * Attach the `MapboxCluster`/`MapboxGeocoder` listeners once those children
-   * are available. Both mount asynchronously (the geocoder even lazy-imports its
-   * module), so we poll a bounded number of ticks until *each* is wired — the
-   * cluster is required, the geocoder optional. A locator missing the geocoder
-   * simply polls to the attempt cap (bounded and harmless). The standing
-   * connected-event subscriptions cover anything that mounts after the cap.
+   * Detach the current geocoder listener.
    * @private
-   * @param {number} attempt
    */
-  __wireChildren(attempt = 0) {
-    const { cluster, geocoder } = this;
+  __unwireGeocoder() {
+    for (const off of this.__offGeocoder) {
+      off();
+    }
+    this.__offGeocoder = [];
+    this.__geocoder = undefined;
+  }
 
-    // The cluster becomes queryable as soon as it is constructed, but its
-    // GeoJSON source is only added from its `mounted()` hook. Observing
-    // `$isMounted` guarantees the source is ready before we wire and refresh.
-    if (cluster && cluster.$isMounted && !this.__clusterWired) {
-      this.__clusterWired = true;
-      this.__cluster = cluster;
-      this.__offCluster.push(cluster.$on('map-item-click', this.__handleItemClick));
-      this.__offCluster.push(cluster.$on('map-update', this.__handleClusterUpdate));
-      // Catch up on the cluster's current item set: it may have emitted its
-      // seeded `map-update` before we subscribed.
-      this.__refresh();
+  /**
+   * Attach the `MapboxCluster` listeners, once, to the first cluster in the
+   * subtree. A no-op while the orchestrator itself is unmounted: the collection
+   * outlives a mount cycle, so `mounted()` wires whatever it already holds.
+   * @private
+   */
+  __wireCluster(cluster?: MapboxCluster) {
+    if (!cluster || this.__cluster || !this.$isMounted) {
+      return;
     }
 
-    if (geocoder && !this.__geocoderWired) {
-      this.__geocoderWired = true;
-      this.__geocoder = geocoder;
-      this.__offGeocoder.push(geocoder.$on('map-result', this.__handleGeocoderResult));
+    this.__cluster = cluster;
+    this.__offCluster.push(cluster.$on('map-item-click', this.__handleItemClick));
+    this.__offCluster.push(cluster.$on('map-update', this.__handleClusterUpdate));
+    // Catch up on the cluster's current item set: it may have emitted its
+    // seeded `map-update` before we subscribed.
+    this.__refresh();
+  }
+
+  /**
+   * Attach the optional `MapboxGeocoder` listener, once, to the first geocoder
+   * in the subtree.
+   * @private
+   */
+  __wireGeocoder(geocoder?: MapboxGeocoder) {
+    if (!geocoder || this.__geocoder || !this.$isMounted) {
+      return;
     }
 
-    if ((!this.__clusterWired || !this.__geocoderWired) && attempt < WIRE_CHILDREN_MAX_ATTEMPTS) {
-      nextTick(() => {
-        if (this.$isMounted) {
-          this.__wireChildren(attempt + 1);
-        }
-      });
-    }
+    this.__geocoder = geocoder;
+    this.__offGeocoder.push(geocoder.$on('map-result', this.__handleGeocoderResult));
   }
 
   /**
@@ -686,16 +683,21 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   mounted() {
     this.$el.addEventListener('click', this.__handleListClick);
 
+    // The children collections outlive a mount cycle, so a remount re-wires
+    // from whatever they already hold; anything mounting later arrives through
+    // their `added` callbacks.
+    this.__wireCluster(this.__clusters.items[0]);
+    this.__wireGeocoder(this.__geocoders.items[0]);
+
     this.__bindMap();
     this.__waitForConnectedMap();
-    this.__waitForConnectedCluster();
   }
 
   /**
-   * Destroyed hook: detach every listener, close the popup and clear the cached
+   * Unmounted hook: detach every listener, close the popup and clear the cached
    * references — even when the element has already been detached from the DOM.
    */
-  destroyed() {
+  unmounted() {
     for (const off of this.__offCluster) {
       off();
     }
@@ -711,8 +713,6 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     this.__offMapRemove = undefined;
     this.__offMapConnected?.();
     this.__offMapConnected = undefined;
-    this.__offClusterConnected?.();
-    this.__offClusterConnected = undefined;
 
     this.__map?.off('moveend', this.__handleMoveEnd);
     this.$el.removeEventListener('click', this.__handleListClick);
@@ -724,8 +724,6 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
     this.__cluster = undefined;
     this.__geocoder = undefined;
     this.isLoaded = false;
-    this.__clusterWired = false;
-    this.__geocoderWired = false;
   }
 }
 

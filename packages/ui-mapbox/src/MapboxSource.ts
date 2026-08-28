@@ -62,7 +62,7 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
       const data = JSON.parse(content) as GeoJSONSourceSpecification['data'];
       return { ...source, data } as SourceSpecification;
     } catch (err) {
-      this.$warn('Invalid JSON in the `geojson` ref:', err);
+      this.$error('mapbox-source.invalid-geojson', 'Invalid JSON in the `geojson` ref.', err);
       return source;
     }
   }

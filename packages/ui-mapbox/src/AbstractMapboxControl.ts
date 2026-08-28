@@ -47,13 +47,11 @@ export class AbstractMapboxControl<T extends BaseProps = BaseProps> extends Abst
    */
   get control() {
     if (!this.__control) {
-      const {
-        position: _position,
-        name: _name,
-        debug: _debug,
-        log: _log,
-        ...options
-      } = this.$options;
+      // Everything but `position` is forwarded to the concrete control. v3 also
+      // had to drop `name`, `debug` and `log` here: those were built-in
+      // js-toolkit options that v4 no longer defines, so they are gone from
+      // `$options` and there is nothing left to filter out.
+      const { position: _position, ...options } = this.$options;
       this.__control = this.createControl(options);
     }
 
