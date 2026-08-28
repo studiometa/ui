@@ -8,9 +8,38 @@ import {
   mockMotionModule,
   resetMockMotion,
 } from './mock-motion.js';
+import { captureDiagnostics } from '@studiometa/js-toolkit/test';
 import { MotionView } from '@studiometa/ui-motion';
 import { ViewTransition } from '@studiometa/ui';
 import { h } from '#test-utils';
+
+/**
+ * The transition lifecycle both components run, in order.
+ *
+ * v4 removed the runtime `config.emits` list — the names live in each
+ * component's `$emits` props type and are erased at runtime — so "MotionView
+ * mirrors ViewTransition" is asserted against what the two actually emit
+ * rather than against two arrays neither class carries any more.
+ */
+const TRANSITION_EVENTS = [
+  'enter',
+  'enter-start',
+  'enter-end',
+  'leave',
+  'leave-start',
+  'leave-end',
+];
+
+/** Record the transition events reaching an element, in delivery order. */
+function recordTransitionEvents(el: HTMLElement) {
+  const events: string[] = [];
+
+  for (const type of TRANSITION_EVENTS) {
+    el.addEventListener(type, () => events.push(type));
+  }
+
+  return events;
+}
 
 async function mountView(attributes: Record<string, string> = {}, children: HTMLElement[] = []) {
   const el = h('div', { dataComponent: 'MotionView', ...attributes }, children);
@@ -25,9 +54,31 @@ describe('MotionView component', () => {
     resetMockMotion();
   });
 
-  it('should have the correct config, mirroring ViewTransition', () => {
+  it('should have the correct config', () => {
     expect(MotionView.config.name).toBe('MotionView');
-    expect(MotionView.config.emits).toEqual(ViewTransition.config.emits);
+  });
+
+  it('should emit the same transition lifecycle as ViewTransition', async () => {
+    const { el, instance } = await mountView({ dataOptionEnterTo: 'shown' });
+    const viewEl = h('div', { dataComponent: 'ViewTransition', dataOptionEnterTo: 'shown' });
+    const viewTransition = new ViewTransition(viewEl);
+    await viewTransition.$mount();
+
+    const motionEvents = recordTransitionEvents(el);
+    const nativeEvents = recordTransitionEvents(viewEl);
+
+    await instance.enter();
+    await instance.leave();
+    await viewTransition.enter();
+    await viewTransition.leave();
+
+    // Same names, same order: that is what makes MotionView a drop-in
+    // replacement, and it is the half of the old `config.emits` comparison that
+    // was ever worth asserting.
+    expect(motionEvents).toEqual(TRANSITION_EVENTS);
+    expect(nativeEvents).toEqual(TRANSITION_EVENTS);
+
+    viewTransition.$unmount();
   });
 
   it('should apply the `view-transition-name` on mount', async () => {
@@ -85,14 +136,16 @@ describe('MotionView component', () => {
 
     const el = h('div', { dataComponent: 'MotionView' });
     const instance = new MotionView(el);
-    const warn = vi.fn();
-    Object.defineProperty(instance, '$warn', { configurable: true, get: () => warn });
+    // `$warn()` reports on the diagnostic channel in v4, so the capture reads
+    // the channel rather than stubbing the method or spying on the console.
+    const log = captureDiagnostics();
     await instance.$mount();
 
     const mutate = vi.fn();
     await instance.update(mutate);
 
-    expect(warn).toHaveBeenCalledTimes(1);
+    expect(log.codes).toEqual(['motion-view.missing-animate-view']);
+    log.stop();
     expect(mutate).toHaveBeenCalledTimes(1);
     expect(mockAnimateView).not.toHaveBeenCalled();
   });
@@ -103,10 +156,7 @@ describe('MotionView component', () => {
       dataOptionLeaveTo: 'hidden',
       dataOptionEnterTo: 'shown',
     });
-    const events: string[] = [];
-    for (const event of MotionView.config.emits as string[]) {
-      el.addEventListener(event, () => events.push(event));
-    }
+    const events = recordTransitionEvents(el);
 
     await instance.enter();
     expect(events).toEqual(['enter', 'enter-start', 'enter-end']);
@@ -158,7 +208,7 @@ describe('MotionView component', () => {
     expect(wrap).toHaveBeenCalledTimes(1);
     expect(wrap).toHaveBeenCalledWith(instance);
 
-    await instance.$destroy();
+    instance.$unmount();
   });
 
   it('should not wrap a `dom-update` with the `auto` option disabled', async () => {
@@ -170,7 +220,7 @@ describe('MotionView component', () => {
 
     expect(wrap).not.toHaveBeenCalled();
 
-    await instance.$destroy();
+    instance.$unmount();
   });
 
   it('should join the lifecycle of a containing dialog only', async () => {
@@ -192,12 +242,12 @@ describe('MotionView component', () => {
     el.dispatchEvent(new CustomEvent('open', { bubbles: true, detail: { waitUntil } }));
     expect(waitUntil).not.toHaveBeenCalled();
 
-    await instance.$destroy();
+    instance.$unmount();
     ancestor.remove();
     sibling.remove();
   });
 
-  it('should stop listening once destroyed', async () => {
+  it('should stop listening once unmounted', async () => {
     const child = h('div');
     const { el, instance } = await mountView({}, [child]);
     const ancestor = h('div', {}, [el]);
@@ -205,7 +255,7 @@ describe('MotionView component', () => {
     const wrap = vi.fn();
     const waitUntil = vi.fn();
 
-    await instance.$destroy();
+    instance.$unmount();
 
     child.dispatchEvent(new CustomEvent('dom-update', { bubbles: true, detail: { wrap } }));
     ancestor.dispatchEvent(new CustomEvent('open', { bubbles: true, detail: { waitUntil } }));

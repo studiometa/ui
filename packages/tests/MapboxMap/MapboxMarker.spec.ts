@@ -1,47 +1,36 @@
-import { describe, it, expect, vi } from 'vitest';
-import { h } from '#test-utils';
-import { MockMap, MockMarker } from './mock-mapbox-gl.js';
-import { MapboxMarker } from '@studiometa/ui-mapbox';
+import { describe, it, expect } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { settle } from '@studiometa/js-toolkit/test';
+import { MockMarker, MockPopup } from './mock-mapbox-gl.js';
+import { MapboxMap, MapboxMarker, MapboxPopup } from '@studiometa/ui-mapbox';
+import { mountMap } from './harness.js';
 
-function createMarker(attrs: Record<string, string> = {}) {
-  const mockMap = new MockMap();
-  const el = h('div', {
-    'data-component': 'MapboxMarker',
-    'data-option-lng-lat': '[2.35, 48.85]',
-    ...attrs,
-  });
+registerComponents(MapboxMap, MapboxMarker, MapboxPopup);
 
-  const instance = new MapboxMarker(el);
-  // Mock $closest since async component resolution doesn't set it up
-  instance.$closest = vi.fn((query: string) => {
-    if (query === 'MapboxMap') {
-      return { map: mockMap, isLoaded: true, $options: { accessToken: 'token' } } as any;
-    }
-    return undefined;
-  });
+/**
+ * Mount a loaded `MapboxMap` holding one `MapboxMarker`, and return both the
+ * marker instance and the map double it injected itself into.
+ */
+async function createMarker(attrs = 'data-option-lng-lat="[2.35, 48.85]"', children = '') {
+  const context = await mountMap(`<div data-component="MapboxMarker" ${attrs}>${children}</div>`);
+  await context.load();
+  const el = context.mapEl.querySelector<HTMLElement>('[data-component="MapboxMarker"]')!;
 
-  return { instance, mockMap };
+  return {
+    instance: getInstance<MapboxMarker>(el, 'MapboxMarker')!,
+    mockMap: context.mockMap,
+  };
 }
 
 describe('MapboxMarker component', () => {
   it('should mount and create a marker', async () => {
-    const { instance } = createMarker();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance } = await createMarker();
 
     expect(instance.marker).toBeInstanceOf(MockMarker);
   });
 
   it('should set lngLat and add to map', async () => {
-    const { instance, mockMap } = createMarker();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance, mockMap } = await createMarker();
 
     const mockMarker = instance.marker as unknown as MockMarker;
     expect(mockMarker.setLngLat).toHaveBeenCalledWith([2.35, 48.85]);
@@ -49,115 +38,82 @@ describe('MapboxMarker component', () => {
   });
 
   it('should default lngLat to [0, 0]', async () => {
-    const mockMap = new MockMap();
-    const el = h('div', { 'data-component': 'MapboxMarker' });
-    const instance = new MapboxMarker(el);
-    instance.$closest = vi.fn((query: string) => {
-      if (query === 'MapboxMap') {
-        return { map: mockMap, isLoaded: true, $options: {} } as any;
-      }
-      return undefined;
-    });
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance } = await createMarker('');
 
     expect(instance.$options.lngLat).toEqual([0, 0]);
   });
 
   it('should default markerOptions to an empty object', async () => {
-    const { instance } = createMarker();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance } = await createMarker();
 
     expect(instance.$options.markerOptions).toEqual({});
   });
 
   it('should attach a child popup that is present at mount (H8 pull side)', async () => {
-    const { instance } = createMarker();
-    const fakePopup = { popup: { id: 'popup-instance' } };
-    Object.defineProperty(instance, 'popup', { get: () => fakePopup, configurable: true });
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    // The popup is in the markup from the start, so it mounts with the marker
+    // and the marker resolves it through `$query` on ready.
+    const { instance } = await createMarker(
+      'data-option-lng-lat="[2.35, 48.85]"',
+      '<div data-component="MapboxPopup" data-option-lng-lat="[2.35, 48.85]"></div>',
+    );
 
     const marker = instance.marker as unknown as MockMarker;
-    expect(marker.setPopup).toHaveBeenCalledWith(fakePopup.popup);
+    expect(instance.popup).toBeInstanceOf(MapboxPopup);
+    expect(marker.setPopup).toHaveBeenCalledWith(instance.popup.popup);
+    // The popup handed itself to the marker rather than adding itself to the map.
+    expect((instance.popup.popup as unknown as MockPopup).addTo).not.toHaveBeenCalled();
   });
 
   it('should attach a child popup pushed after mount via setChildPopup (H8 push side)', async () => {
-    const { instance } = createMarker();
     // No popup present when the marker mounts (dynamic append: the popup mounts
     // later and pushes itself).
-    Object.defineProperty(instance, 'popup', { get: () => undefined, configurable: true });
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance } = await createMarker();
 
     const marker = instance.marker as unknown as MockMarker;
+    expect(instance.popup).toBeUndefined();
     expect(marker.setPopup).not.toHaveBeenCalled();
 
     // The popup mounts afterwards and pushes itself onto the marker.
-    const fakePopup = { popup: { id: 'late-popup' } } as any;
-    instance.setChildPopup(fakePopup);
-    expect(marker.setPopup).toHaveBeenCalledWith(fakePopup.popup);
+    instance.$el.insertAdjacentHTML(
+      'beforeend',
+      '<div data-component="MapboxPopup" data-option-lng-lat="[1, 2]"></div>',
+    );
+    await settle();
+
+    expect(marker.setPopup).toHaveBeenCalledWith(instance.popup.popup);
   });
 
-  it('should remove marker on destroy', async () => {
-    const { instance } = createMarker();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
+  it('should remove marker on unmount', async () => {
+    const { instance } = await createMarker();
 
     const mockMarker = instance.marker as unknown as MockMarker;
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    instance.$unmount();
+    await settle();
 
     expect(mockMarker.remove).toHaveBeenCalled();
   });
 
-  it('should not construct a marker on destroy when the marker was never created', async () => {
-    const { instance } = createMarker();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
+  it('should not construct a marker on unmount when the marker was never created', async () => {
+    const { instance } = await createMarker();
 
     // Simulate a teardown where the lazy `get marker()` getter has never
-    // populated the backing field (e.g. `$destroy()` called before the marker
-    // is used, or a second `$destroy()`): the marker does not exist at teardown
-    // time, while the component stays mounted so `destroyed()` still runs.
-    (instance as any).__marker = undefined;
-    const instanceCountBeforeDestroy = MockMarker.instanceCount;
+    // populated the backing field (e.g. `$unmount()` called before the marker
+    // is used, or a second `$unmount()`): the marker does not exist at teardown
+    // time, while the component stays mounted so `__onDestroyed()` still runs.
+    (instance as unknown as { __marker: unknown }).__marker = undefined;
+    const instanceCountBeforeUnmount = MockMarker.instanceCount;
 
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    instance.$unmount();
+    await settle();
 
     // Teardown must be side-effect free: it must not go through the lazy getter
     // and construct a brand-new marker just to remove it.
-    expect(MockMarker.instanceCount).toBe(instanceCountBeforeDestroy);
-    expect((instance as any).__marker).toBeUndefined();
+    expect(MockMarker.instanceCount).toBe(instanceCountBeforeUnmount);
+    expect((instance as unknown as { __marker: unknown }).__marker).toBeUndefined();
   });
 
   it('should reuse the same marker instance', async () => {
-    const { instance } = createMarker();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance } = await createMarker();
 
     expect(instance.marker).toBe(instance.marker);
   });

@@ -32,6 +32,9 @@ const FORWARDED_MAP_EVENTS = [
   'error',
 ] as const;
 
+/** One forwarded mapbox event name, prefixed the way the component re-emits it. */
+type ForwardedMapEvent = `map-${(typeof FORWARDED_MAP_EVENTS)[number]}`;
+
 export interface MapboxMapProps extends BaseProps {
   $refs: {
     container: HTMLElement;
@@ -42,6 +45,16 @@ export interface MapboxMapProps extends BaseProps {
     center: [number, number];
     mapOptions: Partial<Omit<MapOptions, 'container'>>;
   };
+  /**
+   * The map lifecycle, declared in the props type now that v4 removed the
+   * runtime `config.emits` list — which also means the forwarded set is now
+   * derived from `FORWARDED_MAP_EVENTS` at the type level rather than mapped
+   * into an array at runtime.
+   *
+   * v3 emitted the bare value; a v4 payload is one named object, so the map
+   * arrives as `detail.map` and a forwarded mapbox event as `detail.event`.
+   */
+  $emits: { 'map-load': { map: Map } } & Record<ForwardedMapEvent, { event: unknown }>;
 }
 
 /**
@@ -54,7 +67,6 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
    */
   static config: BaseConfig = {
     name: 'MapboxMap',
-    emits: ['map-load', ...FORWARDED_MAP_EVENTS.map((event) => `map-${event}`)],
     refs: ['container'],
     options: {
       accessToken: String,
@@ -138,14 +150,14 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
 
     const onLoad = () => {
       this.isLoaded = true;
-      this.$emit('map-load', map);
+      this.$emit('map-load', { map });
     };
     map.on('load', onLoad);
     this.__offMapListeners.push(() => this.__map?.off('load', onLoad));
 
     for (const event of FORWARDED_MAP_EVENTS) {
       const handler = (e: unknown) => {
-        this.$emit(`map-${event}`, e);
+        this.$emit(`map-${event}`, { event: e });
       };
       map.on(event, handler);
       this.__offMapListeners.push(() => this.__map?.off(event, handler));
@@ -158,9 +170,9 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
   }
 
   /**
-   * Destroyed hook.
+   * Unmounted hook.
    */
-  destroyed() {
+  unmounted() {
     // Flush the forwarding listeners before removing the map so neither the map
     // nor this component leaks through a retained `Map` reference.
     for (const off of this.__offMapListeners) {

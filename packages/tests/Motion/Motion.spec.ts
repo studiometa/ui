@@ -46,7 +46,6 @@ describe('Motion component', () => {
 
   it('should have the correct config', () => {
     expect(Motion.config.name).toBe('Motion');
-    expect(Motion.config.emits).toEqual(EVENTS);
   });
 
   it('should apply the initial styles on mount without playing', async () => {
@@ -70,12 +69,7 @@ describe('Motion component', () => {
     // The `initial` styles are applied first, then folded into the keyframes
     // as the starting point of the declared animation.
     expect(mockAnimate).toHaveBeenNthCalledWith(1, el, { opacity: 0, y: 24 }, { duration: 0 });
-    expect(mockAnimate).toHaveBeenNthCalledWith(
-      2,
-      el,
-      { opacity: [0, 1], y: [24, 0] },
-      {},
-    );
+    expect(mockAnimate).toHaveBeenNthCalledWith(2, el, { opacity: [0, 1], y: [24, 0] }, {});
   });
 
   it('should keep explicit keyframe arrays and properties absent from initial', async () => {
@@ -329,13 +323,15 @@ describe('Motion component', () => {
     expect(bubbled).toBe(1);
   });
 
-  it('should stop the current animation on destroy without completing', async () => {
+  it('should stop the current animation on unmount without completing', async () => {
     const { instance, calls } = await mountMotion({
       dataOptionAnimate: '{ "x": 100 }',
       dataOptionAutoplay: '',
     });
 
-    await instance.$destroy();
+    // v4 renamed the inverse of `$mount()`: `$destroy()` is `$unmount()`, and
+    // the same instance can mount again afterwards.
+    instance.$unmount();
     expect(animations[0].state).toBe('stopped');
     expect(instance.controls).toBeNull();
 

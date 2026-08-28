@@ -27,7 +27,6 @@ function freshDependencies(): Promise<typeof import('@studiometa/ui-mapbox/depen
 }
 
 describe('ui-mapbox dependency injection', () => {
-
   it('throws from getMapboxGl before mapbox-gl is resolved', async () => {
     const { getMapboxGl } = await freshDependencies();
     expect(() => getMapboxGl()).toThrow(/has not been resolved/);

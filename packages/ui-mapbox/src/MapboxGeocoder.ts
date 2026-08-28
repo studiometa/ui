@@ -4,11 +4,7 @@ import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
 } from './AbstractMapboxMapChild.js';
-import {
-  getMapboxGl,
-  resolveMapboxGeocoder,
-  type MapboxGeocoderControl,
-} from './dependencies.js';
+import { getMapboxGl, resolveMapboxGeocoder, type MapboxGeocoderControl } from './dependencies.js';
 
 export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
   $options: {
@@ -24,6 +20,13 @@ export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
      * package documentation (API.md#parameters) for the accepted options.
      */
     options: Record<string, unknown>;
+  };
+  /**
+   * The geocoder's own event, declared in the props type. The geocoded result
+   * travels as `detail.result`.
+   */
+  $emits: AbstractMapboxMapChildProps['$emits'] & {
+    'map-result': { result: unknown };
   };
 }
 
@@ -44,7 +47,6 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
    */
   static config: BaseConfig = {
     name: 'MapboxGeocoder',
-    emits: ['map-result'],
     options: {
       addToMap: Boolean,
       options: Object,
@@ -83,7 +85,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
 
     // The component may have been destroyed while the dynamic import was still
     // resolving. Bail out before creating and adding the control, otherwise it
-    // would be attached after `destroyed()` already ran (and saw `__control`
+    // would be attached after `__onDestroyed()` already ran (and saw `__control`
     // undefined), leaking an orphan control.
     if (!this.$isMounted) {
       return;
@@ -114,7 +116,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
       );
       // Re-emit the control's `result` event as a prefixed component event so
       // consumers (e.g. a `StoreLocator`) can react to a geocoded address.
-      this.__control.on?.('result', (event) => this.$emit('map-result', event.result));
+      this.__control.on?.('result', (event) => this.$emit('map-result', { result: event.result }));
       this.__control.addTo(this.target);
     });
   }

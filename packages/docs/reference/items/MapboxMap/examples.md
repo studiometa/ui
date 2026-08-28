@@ -140,7 +140,7 @@ The cluster reports a click on an unclustered point through its `map-item-click`
 The `MapboxMap` component re-emits the Mapbox map events with a `map-` prefix to avoid conflicts with native events. Listen to them from a parent component by defining `on<ComponentName><EventName>` methods — for example `onMapboxMapMapClick` or `onMapboxMapMapLoad`.
 
 ```js
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import { MapboxMap } from '@studiometa/ui-mapbox';
 
 class App extends Base {
@@ -149,14 +149,14 @@ class App extends Base {
     components: { MapboxMap },
   };
 
-  onMapboxMapMapLoad({ args: [map] }) {
+  onMapboxMapMapLoad({ payload: { map } }) {
     console.log('Map loaded', map);
   }
 
-  onMapboxMapMapClick({ args: [event] }) {
+  onMapboxMapMapClick({ payload: { event } }) {
     console.log('Clicked at', event.lngLat);
   }
 }
 
-createApp(App);
+registerComponent(App);
 ```

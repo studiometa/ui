@@ -1,12 +1,10 @@
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import { whenDOMSettled } from '@studiometa/js-toolkit/whenDOMSettled';
+import type { BaseProps, BaseConfig, ChildrenCollection } from '@studiometa/js-toolkit';
 import type { AnimationPlaybackControlsWithThen, AnimationSequence, SequenceOptions } from 'motion';
 import { Motion } from './Motion.js';
 import { getMotion } from './dependencies.js';
 
 export interface MotionSequenceProps extends BaseProps {
-  $children: {
-    Motion: Motion[];
-  };
   $options: {
     stagger: number;
   };
@@ -57,6 +55,38 @@ export class MotionSequence<T extends BaseProps = BaseProps> extends Motion<
   };
 
   /**
+   * The mounted `Motion` descendants, live and in DOM order.
+   *
+   * v4 removed `$children`, and its replacement is not the same object: the
+   * collection is built at construction, updates itself as children mount and
+   * unmount, and never needs a `$update()`. A child appended to the sequence
+   * after mount is part of the next animation it builds.
+   * @private
+   */
+  __children: ChildrenCollection<Motion> = this.$watchChildren<Motion>('Motion');
+
+  /**
+   * Wait for the children before letting `Motion.mounted()` decide whether
+   * there is anything to autoplay.
+   *
+   * v4 guarantees no mount ordering, and `$watchChildren()` seeds its
+   * collection in a microtask, so the sequence can reach `mounted()` with an
+   * empty collection and skip its own autoplay. `whenDOMSettled()` waits for
+   * the mutation batch that brought this subtree in to finish mounting
+   * everything eager in it — which is what v3 got for free by having the
+   * parent construct its children.
+   */
+  async mounted(): Promise<void> {
+    await whenDOMSettled();
+
+    if (!this.$isMounted) {
+      return;
+    }
+
+    await super.mounted();
+  }
+
+  /**
    * The sequence has an animation to autoplay as soon as it has children
    * declaring keyframes.
    * @protected
@@ -70,8 +100,7 @@ export class MotionSequence<T extends BaseProps = BaseProps> extends Motion<
    * @private
    */
   get __sequencedChildren(): Motion[] {
-    const { Motion: children = [] } = this.$children;
-    return children.filter((child) => Object.keys(child.$options.animate).length > 0);
+    return this.__children.items.filter((child) => Object.keys(child.$options.animate).length > 0);
   }
 
   /**

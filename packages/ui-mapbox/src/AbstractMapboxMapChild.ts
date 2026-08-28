@@ -3,7 +3,18 @@ import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import type { Map } from 'mapbox-gl';
 import type { MapboxMap } from './MapboxMap.js';
 
-export interface AbstractMapboxMapChildProps extends BaseProps {}
+export interface AbstractMapboxMapChildProps extends BaseProps {
+  /**
+   * The one event every map child can emit, declared in the props type now
+   * that v4 removed the runtime `config.emits` list.
+   *
+   * v3 emitted the bare error value; v4 carries one named payload object per
+   * event, so the cause travels as `detail.error`.
+   */
+  $emits: {
+    'map-error': { error: unknown };
+  };
+}
 
 /**
  * Document-level event a `MapboxMap` dispatches when its instance mounts, so a
@@ -35,7 +46,7 @@ export const MAPBOX_MAP_CONNECTED = 'mapbox-map:connected';
  *    global queue runs lifecycle hooks with no try/catch: a single synchronous
  *    throw wedges the queue and freezes every mount/destroy on the page. The
  *    ready callback and the subclass teardown (`__onDestroyed`) are both run
- *    inside a try/catch that routes to `$warn` + a `map-error` event and never
+ *    inside a try/catch that routes to `$error` + a `map-error` event and never
  *    rethrows.
  * 2. **Dead-map safety** — once ready, the child subscribes to the map's own
  *    `remove` event; when it fires the cached map reference is dropped so no
@@ -63,13 +74,12 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    */
   static config: BaseConfig = {
     name: 'AbstractMapboxMapChild',
-    emits: ['map-error'],
   };
 
   /**
    * The parent `MapboxMap` resolved at ready-time.
    *
-   * `destroyed()` runs *after* the element has been detached from the DOM (e.g.
+   * `unmounted()` runs *after* the element has been detached from the DOM (e.g.
    * a `Fetch` list swap, or the parent map itself being removed), and a
    * `$closest` lookup on a disconnected node returns nothing — a real bug that
    * would leave the child's contribution stuck on the map. Caching the resolved
@@ -93,7 +103,7 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    *
    * The callback may be synchronous or `async`: a returned promise is awaited
    * inside the same containment as a synchronous body, so a rejection routes to
-   * `$warn` + the `map-error` event instead of surfacing as an unhandled rejection.
+   * `$error` + the `map-error` event instead of surfacing as an unhandled rejection.
    * @private
    */
   __readyCallback?: (map: Map) => void | Promise<void>;
@@ -131,6 +141,7 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
 
     if (!mapboxMap) {
       this.$warn(
+        'mapbox-map-child.orphan',
         'Can not find the parent map, does this component has a parent MapboxMap component?',
       );
     }
@@ -271,7 +282,7 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
    * Run the ready callback inside a uniform containment for both synchronous
    * throws and rejected promises: a synchronous body is wrapped in `try/catch`,
    * and an `async` body's returned promise is awaited so its rejection routes to
-   * `$warn` + the `map-error` event instead of becoming an unhandled rejection.
+   * `$error` + the `map-error` event instead of becoming an unhandled rejection.
    * Neither path ever rethrows into the global lifecycle queue.
    * @private
    * @param {Map} map
@@ -387,14 +398,16 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
   }
 
   /**
-   * Contain an error raised by a guarded injection or teardown: warn and emit an
-   * `map-error` event, but never rethrow into the global queue.
+   * Contain an error raised by a guarded injection or teardown: report it on the
+   * diagnostic channel — `$error()`, which carries the cause a warning has
+   * nowhere to put — and emit a `map-error` event, but never rethrow into the
+   * global queue.
    * @private
    * @param {unknown} err
    */
   __handleError(err: unknown): void {
-    this.$warn(err);
-    this.$emit('map-error', err);
+    this.$error('mapbox-map-child.failed', 'A guarded map injection or teardown threw.', err);
+    this.$emit('map-error', { error: err });
   }
 
   /**
@@ -412,9 +425,9 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
   __onMapRemove(_map: Map) {}
 
   /**
-   * Teardown hook implemented by subclasses instead of `destroyed()`.
+   * Teardown hook implemented by subclasses instead of `unmounted()`.
    *
-   * It runs inside the base's guard (see `destroyed`) so a throwing teardown — a
+   * It runs inside the base's guard (see `unmounted`) so a throwing teardown — a
    * style-touching mapbox call, most often — can never wedge the global queue.
    * Implementations read the cached `__readyMap`, which is already `undefined`
    * when the map has been removed, and must not call `super`.
@@ -423,13 +436,21 @@ export class AbstractMapboxMapChild<T extends BaseProps = BaseProps> extends Bas
   __onDestroyed() {}
 
   /**
-   * Destroyed hook.
+   * Unmounted hook.
    *
    * Runs the guarded subclass teardown, then flushes every base subscription
    * (`map-load`, the map's `remove`, the connected retry). Subclasses override
    * `__onDestroyed` rather than this method.
+   *
+   * **`__readyMap` and `__readyMapboxMap` are deliberately kept.** An
+   * asynchronous injection still in flight — `MapboxImage` awaiting
+   * `loadImage`, `MapboxImages` awaiting its batch — resolves after this runs
+   * and undoes itself by checking `this.__readyMap === map`. Clearing them here
+   * would read like an obvious cleanup and would strand every sprite those
+   * paths add after teardown. The map reference is dropped by the map's own
+   * `remove` handler instead, which is the event that actually invalidates it.
    */
-  destroyed() {
+  unmounted() {
     try {
       this.__onDestroyed();
     } catch (err) {

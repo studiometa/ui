@@ -37,13 +37,13 @@ export default defineConfig({
         resolve: {
           conditions: [sourceCondition, 'browser', 'import', 'module', 'default'],
         },
-        // `ui-motion`, `ui-mapbox` and `Tabs` are still v3 sources reaching for
-        // subpaths v4 removed (`./withExtraConfig`, `./utils/addClass`,
-        // `./utils/nextTick`…). The dependency scanner crawls every spec's
-        // import graph up front, so one dead subpath aborts the whole run
-        // before a single test collects. Skipping discovery defers each import
-        // to the request that needs it, which keeps the failure inside the spec
-        // that owns it.
+        // Kept from the round where `ui-motion` and `ui-mapbox` were still v3
+        // sources reaching for subpaths v4 removed: the dependency scanner
+        // crawls every spec's import graph up front, so one dead subpath
+        // aborted the whole run before a single test collected. Both packages
+        // are ported and no dead subpath remains, but skipping discovery still
+        // keeps any future resolve failure inside the spec that owns it rather
+        // than taking down collection for the suite.
         optimizeDeps: { noDiscovery: true, include: [] },
         server: {
           // The sources under test live in sibling packages, outside the Vite root.
