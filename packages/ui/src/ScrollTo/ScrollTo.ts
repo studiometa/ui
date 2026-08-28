@@ -1,4 +1,4 @@
-import { Base, component, type BaseProps } from '@studiometa/js-toolkit';
+import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { scrollTo } from '@studiometa/js-toolkit/utils';
 
 export type ScrollToProps = BaseProps & { $el: HTMLAnchorElement };
@@ -9,8 +9,9 @@ export type ScrollToProps = BaseProps & { $el: HTMLAnchorElement };
  *
  * @link https://ui.studiometa.dev/reference/items/ScrollTo/
  */
-@component({ name: 'ScrollTo' })
 export class ScrollTo<T extends BaseProps = BaseProps> extends Base<ScrollToProps & T> {
+  static config: BaseConfig = { name: 'ScrollTo' };
+
   /** The target selector, read from the link's hash. */
   get targetSelector(): string {
     return this.$el.hash;

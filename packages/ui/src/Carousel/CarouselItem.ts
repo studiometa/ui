@@ -1,4 +1,4 @@
-import { component, type BaseProps } from '@studiometa/js-toolkit';
+import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { AbstractCarouselChild } from './AbstractCarouselChild.js';
 import type { CarouselState } from './context.js';
 
@@ -11,10 +11,11 @@ import type { CarouselState } from './context.js';
  * both, so it moved to `Carousel.positions()` — one cache instead of one per
  * slide, invalidated in one place.
  */
-@component({
-  name: 'CarouselItem',
-})
 export class CarouselItem<T extends BaseProps = BaseProps> extends AbstractCarouselChild<T> {
+  static config: BaseConfig = {
+    name: 'CarouselItem',
+  };
+
   /** This item's position among its siblings, or `-1` outside a carousel. */
   get index(): number {
     return this.carousel?.indexOf(this.$el) ?? -1;

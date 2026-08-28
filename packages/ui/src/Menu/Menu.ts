@@ -1,7 +1,7 @@
 import {
   Base,
-  component,
   withKey,
+  type BaseConfig,
   type BaseProps,
   type ChildrenCollection,
   type DelegatedEvent,
@@ -37,12 +37,13 @@ export type MenuProps = BaseProps & {
  *
  * @link https://ui.studiometa.dev/reference/items/Menu/
  */
-@component({
-  name: 'Menu',
-  components: { MenuBtn, MenuList },
-  options: { mode: { type: String, default: 'click' } },
-})
 export class Menu<T extends BaseProps = BaseProps> extends withKey(Base)<MenuProps & T> {
+  static config: BaseConfig = {
+    name: 'Menu',
+    components: { MenuBtn, MenuList },
+    options: { mode: { type: String, default: 'click' } },
+  };
+
   menuBtns: ChildrenCollection<MenuBtn> = this.$watchChildren<MenuBtn>('MenuBtn', {
     added: (btn) => {
       if (btn.$closest('Menu') === this) {

@@ -1,4 +1,4 @@
-import { component } from '@studiometa/js-toolkit';
+import { type BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractPrefetch } from './AbstractPrefetch.js';
 
 /**
@@ -12,8 +12,9 @@ import { AbstractPrefetch } from './AbstractPrefetch.js';
  *
  * @link https://ui.studiometa.dev/reference/items/Prefetch/
  */
-@component({ name: 'PrefetchWhenVisible', mountStrategy: 'visible' })
 export class PrefetchWhenVisible extends AbstractPrefetch {
+  static config: BaseConfig = { name: 'PrefetchWhenVisible', mountStrategy: 'visible' };
+
   mounted(): void {
     this.prefetch();
   }

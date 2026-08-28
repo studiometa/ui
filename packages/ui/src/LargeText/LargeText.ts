@@ -1,9 +1,9 @@
 import {
   Base,
-  component,
   withRaf,
   withResize,
   withScroll,
+  type BaseConfig,
   type BaseProps,
   type RafProps,
   type ScrollProps,
@@ -40,19 +40,20 @@ export type LargeTextProps = BaseProps & {
  *
  * @link https://ui.studiometa.dev/reference/items/LargeText/
  */
-@component({
-  name: 'LargeText',
-  refs: ['target'],
-  mountStrategy: 'in-view:50%',
-  options: {
-    skew: Boolean,
-    sensitivity: { type: Number, default: 1 },
-    skewSensitivity: { type: Number, default: 1 },
-  },
-})
 export class LargeText<T extends BaseProps = BaseProps> extends withRaf(
   withResize(withScroll(Base)),
 )<LargeTextProps & T> {
+  static config: BaseConfig = {
+    name: 'LargeText',
+    refs: ['target'],
+    mountStrategy: 'in-view:50%',
+    options: {
+      skew: Boolean,
+      sensitivity: { type: Number, default: 1 },
+      skewSensitivity: { type: Number, default: 1 },
+    },
+  };
+
   /** The undamped travel, in pixels, which the loop resets. */
   x = 0;
 

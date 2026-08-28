@@ -1,7 +1,7 @@
 import {
-  component,
   DRAG_MODES,
   withDrag,
+  type BaseConfig,
   type BaseProps,
   type DragProps,
 } from '@studiometa/js-toolkit';
@@ -16,13 +16,14 @@ import { getClosestIndex } from './utils.js';
  * `mountStrategy: 'media:(pointer: fine)'` — the fourth decorator in this
  * exercise that turns out to be a string in a config object.
  */
-@component({
-  name: 'CarouselDrag',
-  mountStrategy: 'media:(pointer: fine)',
-})
 export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
   AbstractCarouselComponent,
 )<T> {
+  static config: BaseConfig = {
+    name: 'CarouselDrag',
+    mountStrategy: 'media:(pointer: fine)',
+  };
+
   dragged(props: DragProps): void {
     if (props.mode === DRAG_MODES.INERTIA || props.mode === DRAG_MODES.STOP) {
       return;

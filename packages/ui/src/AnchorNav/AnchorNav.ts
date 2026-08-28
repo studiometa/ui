@@ -1,4 +1,9 @@
-import { Base, component, type BaseProps, type ChildrenCollection } from '@studiometa/js-toolkit';
+import {
+  Base,
+  type BaseConfig,
+  type BaseProps,
+  type ChildrenCollection,
+} from '@studiometa/js-toolkit';
 import { AnchorNavLink } from './AnchorNavLink.js';
 import { AnchorNavTarget } from './AnchorNavTarget.js';
 
@@ -15,11 +20,12 @@ export type AnchorNavProps = BaseProps;
  *
  * @link https://ui.studiometa.dev/reference/items/AnchorNav/
  */
-@component({
-  name: 'AnchorNav',
-  components: { AnchorNavLink, AnchorNavTarget },
-})
 export class AnchorNav<T extends BaseProps = BaseProps> extends Base<AnchorNavProps & T> {
+  static config: BaseConfig = {
+    name: 'AnchorNav',
+    components: { AnchorNavLink, AnchorNavTarget },
+  };
+
   links: ChildrenCollection<AnchorNavLink> = this.$watchChildren<AnchorNavLink>('AnchorNavLink');
 
   targets: ChildrenCollection<AnchorNavTarget> = this.$watchChildren<AnchorNavTarget>(

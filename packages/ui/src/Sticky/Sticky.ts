@@ -1,10 +1,9 @@
 import {
   Base,
-  component,
   getMountedInstances,
   withResize,
   withScroll,
-  write,
+  type BaseConfig,
   type BaseProps,
   type ChildrenCollection,
   type DelegatedEvent,
@@ -30,19 +29,20 @@ export type StickyProps = BaseProps & {
  *
  * @link https://ui.studiometa.dev/reference/items/Sticky/
  */
-@component({
-  name: 'Sticky',
-  refs: ['inner'],
-  components: { Sentinel },
-  options: {
-    zIndex: { type: Number, default: 100 },
-    hideWhenUp: Boolean,
-    hideWhenDown: Boolean,
-  },
-})
 export class Sticky<T extends BaseProps = BaseProps> extends withResize(withScroll(Base))<
   StickyProps & T
 > {
+  static config: BaseConfig = {
+    name: 'Sticky',
+    refs: ['inner'],
+    components: { Sentinel },
+    options: {
+      zIndex: { type: Number, default: 100 },
+      hideWhenUp: Boolean,
+      hideWhenDown: Boolean,
+    },
+  };
+
   isSticky = false;
 
   isVisible = true;
@@ -122,18 +122,19 @@ export class Sticky<T extends BaseProps = BaseProps> extends withResize(withScro
   /**
    * Write the visibility class and restack every instance.
    *
-   * Split out of `hide()`/`show()` and marked `@write` because their caller is
-   * `scrolled()`, and the scroll service emits from inside
+   * Split out of `hide()`/`show()` and deferred to `$write()` because their
+   * caller is `scrolled()`, and the scroll service emits from inside
    * `defaultScheduler.read()` — so writing `classList` straight from there
    * interleaves a write into the read phase, which is gap 43's silent-cost
    * bug rather than a visible one. The split is what keeps `isVisible`
    * synchronous: it is logical state that `setPosition()` reads on every
    * instance, and only the DOM work belongs in a later phase.
    */
-  @write
   applyVisibility(): void {
-    this.$el.classList.toggle('pointer-events-none', !this.isVisible);
-    this.instances.forEach((instance, index) => instance.setPosition(index));
+    this.$write(() => {
+      this.$el.classList.toggle('pointer-events-none', !this.isVisible);
+      this.instances.forEach((instance, index) => instance.setPosition(index));
+    });
   }
 
   /** Set the sentinel height based on the previous instances. */

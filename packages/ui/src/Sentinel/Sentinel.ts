@@ -1,7 +1,7 @@
 import {
   Base,
-  component,
   withInView,
+  type BaseConfig,
   type BaseProps,
   type InViewProps,
 } from '@studiometa/js-toolkit';
@@ -19,10 +19,11 @@ export type SentinelProps = BaseProps & {
  *
  * @link https://ui.studiometa.dev/reference/items/Sentinel/
  */
-@component({ name: 'Sentinel' })
 export class Sentinel<T extends BaseProps = BaseProps> extends withInView(Base, {
   threshold: [0, 1],
 })<SentinelProps & T> {
+  static config: BaseConfig = { name: 'Sentinel' };
+
   intersected(props: InViewProps): void {
     this.$emit('intersected', props);
   }

@@ -1,4 +1,4 @@
-import { component, type BaseProps } from '@studiometa/js-toolkit';
+import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { AbstractPrefetch } from './AbstractPrefetch.js';
 
 /**
@@ -19,8 +19,9 @@ import { AbstractPrefetch } from './AbstractPrefetch.js';
  *
  * @link https://ui.studiometa.dev/reference/items/Prefetch/
  */
-@component({ name: 'PrefetchOnInteraction', mountStrategy: 'interaction' })
 export class PrefetchOnInteraction<T extends BaseProps = BaseProps> extends AbstractPrefetch<T> {
+  static config: BaseConfig = { name: 'PrefetchOnInteraction', mountStrategy: 'interaction' };
+
   mounted(): void {
     this.prefetch();
   }

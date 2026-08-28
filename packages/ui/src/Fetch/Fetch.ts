@@ -1,12 +1,11 @@
 import {
   Base,
-  component,
   domUpdate,
   EVENTS,
-  on,
   swap,
   SWAP_MODES,
   viewTransition,
+  type BaseConfig,
   type BaseProps,
   type DomUpdateDetail,
   type SwapMode,
@@ -135,40 +134,41 @@ export type FetchProps = BaseProps & {
  *
  * @link https://ui.studiometa.dev/reference/items/Fetch/
  */
-@component({
-  name: 'Fetch',
-  refs: ['headers[]'],
-  options: {
-    history: Boolean,
-    mode: {
-      type: String,
-      default: SWAP_MODES.REPLACE,
-    },
-    requestInit: {
-      type: Object,
-      // Each instance requires its own mutable default object.
-      default: () => ({}),
-    },
-    headers: {
-      type: Object,
-      default: () => ({}),
-    },
-    selector: {
-      type: String,
-      default: '[id]',
-    },
-    response: {
-      type: String,
-      default: 'response.text()',
-    },
-    viewTransition: {
-      type: Boolean,
-      default: true,
-    },
-    src: String,
-  },
-})
 export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T> {
+  static config: BaseConfig = {
+    name: 'Fetch',
+    refs: ['headers[]'],
+    options: {
+      history: Boolean,
+      mode: {
+        type: String,
+        default: SWAP_MODES.REPLACE,
+      },
+      requestInit: {
+        type: Object,
+        // Each instance requires its own mutable default object.
+        default: () => ({}),
+      },
+      headers: {
+        type: Object,
+        default: () => ({}),
+      },
+      selector: {
+        type: String,
+        default: '[id]',
+      },
+      response: {
+        type: String,
+        default: 'response.text()',
+      },
+      viewTransition: {
+        type: Boolean,
+        default: true,
+      },
+      src: String,
+    },
+  };
+
   /** Aborts the request in flight when a new one starts. */
   __abortController = new AbortController();
 
@@ -256,8 +256,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   }
 
   /** A plain left click on a link fetches its destination instead of navigating. */
-  @on('click')
-  navigate(event: MouseEvent): void {
+  onClick(event: MouseEvent): void {
     if (!this.isLink) {
       return;
     }
@@ -276,8 +275,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   }
 
   /** A form submission fetches its action with the form's own data. */
-  @on('submit')
-  send(event: SubmitEvent): void {
+  onSubmit(event: SubmitEvent): void {
     if (!this.isForm) {
       return;
     }
@@ -289,8 +287,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   }
 
   /** Update the content on history back/forward navigation. */
-  @on(window, 'popstate')
-  restore(): void {
+  onWindowPopstate(): void {
     if (!this.$options.history) {
       return;
     }

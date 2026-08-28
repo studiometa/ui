@@ -1,8 +1,7 @@
 import {
   Base,
-  component,
   withPointer,
-  write,
+  type BaseConfig,
   type BaseProps,
   type MountedReturn,
   type PointerProps,
@@ -38,26 +37,27 @@ export type CursorProps = BaseProps & {
  *
  * @link https://ui.studiometa.dev/reference/items/Cursor/
  */
-@component({
-  name: 'Cursor',
-  options: {
-    growSelectors: {
-      type: String,
-      default: 'a, a *, button, button *, [data-cursor-grow], [data-cursor-grow] *',
-    },
-    shrinkSelectors: {
-      type: String,
-      default: '[data-cursor-shrink], [data-cursor-shrink] *',
-    },
-    scale: { type: Number, default: 1 },
-    growTo: { type: Number, default: 2 },
-    shrinkTo: { type: Number, default: 0.5 },
-    translateDampFactor: { type: Number, default: 0.25 },
-    growDampFactor: { type: Number, default: 0.25 },
-    shrinkDampFactor: { type: Number, default: 0.25 },
-  },
-})
 export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<CursorProps & T> {
+  static config: BaseConfig = {
+    name: 'Cursor',
+    options: {
+      growSelectors: {
+        type: String,
+        default: 'a, a *, button, button *, [data-cursor-grow], [data-cursor-grow] *',
+      },
+      shrinkSelectors: {
+        type: String,
+        default: '[data-cursor-shrink], [data-cursor-shrink] *',
+      },
+      scale: { type: Number, default: 1 },
+      growTo: { type: Number, default: 2 },
+      shrinkTo: { type: Number, default: 0.5 },
+      translateDampFactor: { type: Number, default: 0.25 },
+      growDampFactor: { type: Number, default: 0.25 },
+      shrinkDampFactor: { type: Number, default: 0.25 },
+    },
+  };
+
   /**
    * The three smoothed channels. `scale` damps at its own rate **and** by the
    * direction it travels, which is why the factor is a function rather than a
@@ -131,7 +131,6 @@ export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<C
    * and a write scheduled from a read runs in the same frame: no latency, and
    * no style write landing between two components' measurements.
    */
-  @write
   render({
     x,
     y,
@@ -141,12 +140,14 @@ export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<C
     readonly y: number;
     readonly scale: number;
   }): void {
-    this.$el.style.transform = `translateZ(0) ${matrix({
-      translateX: x,
-      translateY: y,
-      scaleX: scale,
-      scaleY: scale,
-    })}`;
+    this.$write(() => {
+      this.$el.style.transform = `translateZ(0) ${matrix({
+        translateX: x,
+        translateY: y,
+        scaleX: scale,
+        scaleY: scale,
+      })}`;
+    });
   }
 }
 

@@ -1,7 +1,6 @@
 import {
-  component,
-  on,
   withResize,
+  type BaseConfig,
   type BaseProps,
   type MountedReturn,
 } from '@studiometa/js-toolkit';
@@ -18,12 +17,13 @@ import { getClosestIndex } from './utils.js';
  * `onScroll` never scrolls, the feedback loop that would hijack a smooth
  * scroll cannot form and no synchronising guard is needed.
  */
-@component({
-  name: 'CarouselWrapper',
-})
 export class CarouselWrapper<T extends BaseProps = BaseProps> extends withResize(
   AbstractCarouselComponent,
 )<T> {
+  static config: BaseConfig = {
+    name: 'CarouselWrapper',
+  };
+
   /**
    * `scrollWidth - clientWidth` and its vertical twin. `progress` runs every
    * frame, so these layout reads are cached and cleared with the mount cycle,
@@ -89,8 +89,7 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends withResize
    * settles: without it the `progress` event and `--carousel-progress` would
    * freeze during any scroll `goTo()` did not start, touch scrolling included.
    */
-  @on('scroll')
-  reportScroll(): void {
+  onScroll(): void {
     const { carousel, isHorizontal, $el } = this;
     if (!carousel) {
       return;

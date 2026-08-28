@@ -1,4 +1,4 @@
-import { component, on, type BaseProps } from '@studiometa/js-toolkit';
+import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { AbstractCarouselChild } from './AbstractCarouselChild.js';
 import type { CarouselState } from './context.js';
 
@@ -10,15 +10,15 @@ export type CarouselBtnProps = BaseProps & {
 };
 
 /** A `next`, `prev` or numeric navigation button. */
-@component({
-  name: 'CarouselBtn',
-  options: { action: String },
-})
 export class CarouselBtn<T extends BaseProps = BaseProps> extends AbstractCarouselChild<
   CarouselBtnProps & T
 > {
-  @on('click')
-  navigate(): void {
+  static config: BaseConfig = {
+    name: 'CarouselBtn',
+    options: { action: String },
+  };
+
+  onClick(): void {
     const { carousel } = this;
     if (!carousel) {
       return;

@@ -1,4 +1,4 @@
-import { component, type BaseProps } from '@studiometa/js-toolkit';
+import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { historyPush } from '@studiometa/js-toolkit/utils';
 import {
   FETCH_EVENTS,
@@ -41,15 +41,16 @@ export type FetchShopifyPartialProps = FetchProps & {
  *
  * @link https://ui.studiometa.dev/reference/items/Fetch/
  */
-@component({
-  name: 'FetchShopifyPartial',
-  options: {
-    partials: String,
-  },
-})
 export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
   FetchShopifyPartialProps & T
 > {
+  static config: BaseConfig = {
+    name: 'FetchShopifyPartial',
+    options: {
+      partials: String,
+    },
+  };
+
   /**
    * Module specifier for the Shopify partial rendering package. A static
    * field, not a module constant like {@link FETCH_EVENTS}: this one exists

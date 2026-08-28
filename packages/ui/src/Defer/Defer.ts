@@ -1,4 +1,10 @@
-import { Base, component, on, swap, type BaseProps } from '@studiometa/js-toolkit';
+import {
+  Base,
+  swap,
+  type BaseConfig,
+  type BaseProps,
+  type MountedReturn,
+} from '@studiometa/js-toolkit';
 
 export type DeferProps = BaseProps & {
   $refs: {
@@ -23,15 +29,16 @@ export type DeferProps = BaseProps & {
  *
  * @link https://ui.studiometa.dev/reference/items/Defer/
  */
-@component({
-  name: 'Defer',
-  refs: ['loading', 'error'],
-  options: {
-    src: String,
-    terminateOnLoad: Boolean,
-  },
-})
 export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T> {
+  static config: BaseConfig = {
+    name: 'Defer',
+    refs: ['loading', 'error'],
+    options: {
+      src: String,
+      terminateOnLoad: Boolean,
+    },
+  };
+
   /** The content injection in flight, so `defer-always` can wait for it. */
   injection: Promise<void> = Promise.resolve();
 
@@ -48,10 +55,31 @@ export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T>
    */
   hasLoaded = false;
 
-  /** Load the lazy content on mount, once per element when asked. */
-  mounted(): void {
+  /**
+   * Bind the component's own announcements, then load the lazy content once
+   * per element when asked.
+   *
+   * The three handlers listen for this component's own events, whose names are
+   * hyphenated and therefore outside what the `on<Event>` naming convention
+   * can spell. They are subscribed here so the mount cycle owns their release,
+   * and in declaration order, which is what keeps `inject()` publishing
+   * `this.injection` before `rememberLoad()` reads the option.
+   */
+  mounted(): MountedReturn {
+    const releases = [
+      this.$on('defer-content', (event) => {
+        this.inject(event as CustomEvent<{ content: string }>);
+      }),
+      this.$on('defer-error', () => {
+        this.showError();
+      }),
+      this.$on('defer-content', () => {
+        this.rememberLoad();
+      }),
+    ];
+
     if (this.hasLoaded) {
-      return;
+      return releases;
     }
 
     if (!this.$options.src) {
@@ -59,7 +87,7 @@ export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T>
         'defer.missing-src',
         'The `src` option is missing. Define it with the `data-option-src` attribute.',
       );
-      return;
+      return releases;
     }
 
     fetch(this.$options.src)
@@ -79,6 +107,8 @@ export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T>
       .finally(() => {
         this.$emit('defer-always');
       });
+
+    return releases;
   }
 
   /**
@@ -93,7 +123,6 @@ export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T>
    * listener's return value goes nowhere, so the emitter has no other way to
    * know that its own handler is still working.
    */
-  @on('defer-content')
   inject(event: CustomEvent<{ content: string }>): void {
     const { loading } = this.$refs;
     if (loading) {
@@ -103,7 +132,6 @@ export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T>
   }
 
   /** Reveal the error ref. */
-  @on('defer-error')
   showError(): void {
     const { error } = this.$refs;
     if (error) {
@@ -120,7 +148,6 @@ export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T>
    * place the port departs from it: a request that failed is exactly the one
    * worth retrying when the element mounts again.
    */
-  @on('defer-content')
   rememberLoad(): void {
     this.hasLoaded = this.$options.terminateOnLoad;
   }

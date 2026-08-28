@@ -1,8 +1,8 @@
 import {
   Base,
-  component,
   withPointer,
   withRaf,
+  type BaseConfig,
   type BaseProps,
   type ElementPointerProps,
   type RafProps,
@@ -38,18 +38,19 @@ export type HoverableProps = BaseProps & {
  *
  * @link https://ui.studiometa.dev/reference/items/Hoverable/
  */
-@component({
-  name: 'Hoverable',
-  refs: ['target'],
-  options: {
-    sensitivity: { type: Number, default: 0.1 },
-    reversed: Boolean,
-    contained: Boolean,
-  },
-})
 export class Hoverable<T extends BaseProps = BaseProps> extends withRaf(withPointer(Base))<
   HoverableProps & T
 > {
+  static config: BaseConfig = {
+    name: 'Hoverable',
+    refs: ['target'],
+    options: {
+      sensitivity: { type: Number, default: 0.1 },
+      reversed: Boolean,
+      contained: Boolean,
+    },
+  };
+
   props = {
     x: 0,
     y: 0,

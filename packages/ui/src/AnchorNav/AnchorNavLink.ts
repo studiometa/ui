@@ -1,4 +1,4 @@
-import { component, type BaseProps } from '@studiometa/js-toolkit';
+import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
 import { ScrollTo } from '../ScrollTo/index.js';
 import { withTransition, type TransitionProps } from '../decorators/withTransition.js';
 
@@ -16,12 +16,13 @@ export type AnchorNavLinkProps = BaseProps & TransitionProps;
  *
  * @link https://ui.studiometa.dev/reference/items/AnchorNav/
  */
-@component({
-  name: 'AnchorNavLink',
-})
 export class AnchorNavLink<T extends BaseProps = BaseProps> extends withTransition(ScrollTo)<
   AnchorNavLinkProps & T
 > {
+  static config: BaseConfig = {
+    name: 'AnchorNavLink',
+  };
+
   /** The target section id, read from the link's hash. */
   get targetId(): string {
     return this.$el.hash.replace(/^#/, '');
