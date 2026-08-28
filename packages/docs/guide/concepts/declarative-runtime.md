@@ -40,7 +40,7 @@ registerComponent(SiteDialog);
 
 Registration is the default application boundary. It keeps feature imports explicit and avoids an application class when components do not need to coordinate with one another.
 
-Some `@studiometa/ui` classes register themselves as soon as their module is imported, because they carry js-toolkit's `@component()` decorator. Registering them again changes nothing, so keeping one explicit list of every component a page uses stays the clearest form.
+No `@studiometa/ui` class registers itself when its module is imported: importing defines the class, registering is what makes it mount. The rule holds for every component in the package, so one explicit list of what a page uses is the whole picture — or hand the job to the [autoloader](/guide/autoloading/), which registers the catalog and imports each component on demand.
 
 ## Compose behavior on an element
 

@@ -35,8 +35,8 @@ class SmoothAnchor extends ScrollTo {
 registerComponent(SmoothAnchor);
 ```
 
-::: tip Some components register themselves
-Importing a component whose class carries the `@component()` decorator registers it, so a bare `import` is enough for it to mount. Registering it again is harmless, and calling `registerComponent()` for every component you use keeps one readable list whichever form a component takes.
+::: tip Importing a component does not register it
+No `@studiometa/ui` component registers itself: importing a module only defines the class, and the class mounts on nothing until you register it. Every component a page uses needs its `registerComponent()` call, which keeps one readable list of what the page runs. The [autoloader](/guide/autoloading/) is the other way to get there: it registers the whole catalog for you and imports each component the first time the DOM asks for it.
 :::
 
 See [Declarative runtime](/guide/concepts/declarative-runtime) for options, refs, events, lifecycle and multiple components on one element.
