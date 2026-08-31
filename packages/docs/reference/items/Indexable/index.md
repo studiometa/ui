@@ -10,7 +10,14 @@ The Indexable primitive provides index management for components that need to na
 
 ### Standalone
 
-For simple cases, the `Indexable` component can be used directly in your HTML by setting the number of items with the [`total`](./js-api#total) option. Its index can then be driven from other components such as [`Action`](../Action/):
+For simple cases, the `Indexable` component can be used directly in your HTML by setting the number of items with the [`total`](./js-api#total) option. Its index can then be driven from other components such as [`Action`](../Action/). Register both — importing a module only defines the class:
+
+```js
+import { registerComponents } from '@studiometa/js-toolkit';
+import { Action, Indexable } from '@studiometa/ui';
+
+registerComponents(Action, Indexable);
+```
 
 ```html
 <div data-component="Indexable" data-option-total="3" data-option-boundary="loop">

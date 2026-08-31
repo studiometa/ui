@@ -10,7 +10,9 @@ title: Slider anatomy
 
 ```
 Slider                                 data-component="Slider"
-├─ SliderDrag       [data-ref="wrapper"]   the draggable track      (required)
+├─ wrapper          [data-ref="wrapper"]   the track, origin of every
+│                                          measurement              (required)
+│  ├─ SliderDrag                           adds pointer dragging    (optional)
 │  └─ SliderItem    (× n)                  a single slide           (required)
 ├─ SliderBtn        (× 2, prev / next)     navigation buttons       (optional)
 ├─ SliderCount                             current / total index    (optional)
@@ -18,17 +20,20 @@ Slider                                 data-component="Slider"
 └─ SliderProgress                          progress bar             (optional)
 ```
 
+The nesting above is the conventional layout, not a constraint: `Slider` collects its slides and its controls from anywhere in its subtree, by their `data-component` token.
+
 ## Parts
 
-| Part     | Selector                          | Required  | Role                                                               |
-| -------- | --------------------------------- | --------- | ------------------------------------------------------------------ |
-| Root     | `data-component="Slider"`         | Yes       | Owns the index and drives every child.                             |
-| Track    | `data-component="SliderDrag"`     | Yes       | The `data-ref="wrapper"` element holding the slides; enables drag. |
-| Item     | `data-component="SliderItem"`     | Yes (× n) | One slide.                                                         |
-| Button   | `data-component="SliderBtn"`      | Optional  | Previous / next control.                                           |
-| Count    | `data-component="SliderCount"`    | Optional  | Displays the current index.                                        |
-| Dots     | `data-component="SliderDots"`     | Optional  | Secondary dot navigation.                                          |
-| Progress | `data-component="SliderProgress"` | Optional  | Progress indicator.                                                |
+| Part     | Selector                          | Required  | Role                                                                                                      |
+| -------- | --------------------------------- | --------- | --------------------------------------------------------------------------------------------------------- |
+| Root     | `data-component="Slider"`         | Yes       | Owns the index and drives every child.                                                                    |
+| Track    | `[data-ref="wrapper"]`            | Yes       | The element holding the slides. Every position is measured from it, and it carries the arrow-key handler. |
+| Drag     | `data-component="SliderDrag"`     | Optional  | Added on the `wrapper` element to enable pointer dragging.                                                |
+| Item     | `data-component="SliderItem"`     | Yes (× n) | One slide.                                                                                                |
+| Button   | `data-component="SliderBtn"`      | Optional  | Previous / next control.                                                                                  |
+| Count    | `data-component="SliderCount"`    | Optional  | Displays the current index.                                                                               |
+| Dots     | `data-component="SliderDots"`     | Optional  | Secondary dot navigation.                                                                                 |
+| Progress | `data-component="SliderProgress"` | Optional  | Progress indicator.                                                                                       |
 
 ## Registering the parts
 
@@ -58,3 +63,7 @@ registerComponents(
 ```
 
 See the [JavaScript API](./js-api/) for the options exposed by each part.
+
+## Accessibility
+
+Mounting sets `role="group"` and `aria-roledescription="carousel"` on the root, and `role="group"`, `aria-roledescription="slide"` and an `aria-label` on each slide. Give the `wrapper` a `tabindex="0"` so its arrow-key navigation is reachable.

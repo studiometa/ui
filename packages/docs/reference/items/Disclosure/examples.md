@@ -59,6 +59,6 @@ A disclosure automatically calls `enter()` and `leave()` on its own descendant [
 
 ## Relationship to the DataScope accordion recipe
 
-The low-level [DataScope accordion recipe](../DataScope/examples.md#accordion) demonstrates the principles behind a single-open collapsible interface: isolated state, one active value, and trigger/panel ARIA relationships. Use that recipe when you intentionally need to compose disclosure state from the generic Data components. Use `Disclosure` for the dedicated behavior, including focus restoration, disabled and non-collapsible constraints, dynamic registration, and transition orchestration.
+The low-level [DataScope accordion recipe](../DataScope/examples.md#accordion) demonstrates the principles behind a single-open collapsible interface: isolated state, one active value, and trigger/panel ARIA relationships. Use that recipe when you intentionally need to compose disclosure state from the generic Data components. Use `Disclosure` for the dedicated behavior, including focus restoration, disabled and non-collapsible constraints, dynamic group membership, and transition orchestration.
 
 Do not add `DataBind`, `DataModel`, or another Data component that binds `aria-expanded` or `hidden` to `Disclosure` markup. `Disclosure` owns those states, as well as temporary `inert` during closing transitions; competing bindings can leave accessibility state out of sync. Data components can still manage unrelated content or attributes.

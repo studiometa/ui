@@ -2,13 +2,13 @@
 
 <div class="max-w-md mx-auto grid gap-4">
   {# Indexable owns the index. The co-located Action forwards its `index`
-     event (event.detail[0]) to every DataBind/DataComputed renderer. #}
+     event (event.detail.index) to every DataBind/DataComputed renderer. #}
   <span
     hidden
     data-component="Indexable Action"
     data-option-total="{{ total }}"
     data-option-boundary="loop"
-    data-on:index="DataBind DataComputed -> target.set(event.detail[0], false)"></span>
+    data-on:index="DataBind DataComputed -> target.set(event.detail.index, false)"></span>
 
   <div class="overflow-hidden rounded-lg ring">
     <div

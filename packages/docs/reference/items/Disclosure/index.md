@@ -8,13 +8,13 @@ badges: [JS, Twig]
 
 ## Usage
 
-After you install the [package](/guide/installation/), register both components independently. `DisclosureGroup` coordinates registered children but does not instantiate them.
+After you install the [package](/guide/installation/), register `DisclosureGroup`. It declares `Disclosure` as a family member, so both are registered by the one call. The group coordinates the disclosures it claims but does not own their construction or lifecycle.
 
 ```js
-import { registerComponents } from '@studiometa/js-toolkit';
-import { Disclosure, DisclosureGroup } from '@studiometa/ui';
+import { registerComponent } from '@studiometa/js-toolkit';
+import { DisclosureGroup } from '@studiometa/ui';
 
-registerComponents(Disclosure, DisclosureGroup);
+registerComponent(DisclosureGroup);
 ```
 
 ```twig
