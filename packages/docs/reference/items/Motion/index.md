@@ -12,6 +12,24 @@ The `motion` peer dependency is resolved with a lazy `import()` the first time a
 
 `Motion` is the playback primitive of `@studiometa/ui-motion`, which also ships [`MotionScrollTimeline`](/reference/items/MotionScrollTimeline/) to drive a group of `Motion` children with the scroll, [`MotionSequence`](/reference/items/MotionSequence/) to compose them into one staggered timeline, and [`MotionView`](/reference/items/MotionView/) to play DOM updates as view transitions.
 
+## Installation
+
+`Motion` ships in the separate `@studiometa/ui-motion` package, with [`motion`](https://motion.dev) as a peer dependency:
+
+```bash
+npm install @studiometa/ui-motion motion
+```
+
+Importing a module only defines the class: no component registers itself. Register the ones a page uses, or reach for the package's lazy [manifest](/guide/autoloading/):
+
+```js
+import { registerComponents } from '@studiometa/js-toolkit';
+import { Motion } from '@studiometa/ui-motion';
+import { Action } from '@studiometa/ui';
+
+registerComponents(Motion, Action);
+```
+
 ## Usage
 
 Option values are parsed as JSON, so object keys must be quoted. The animation below plays once on mount, which a preview finishes booting before you look at it — hence the replay button, which calls `play()` to restart it:

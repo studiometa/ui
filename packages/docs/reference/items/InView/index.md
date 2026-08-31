@@ -36,6 +36,15 @@ export default class Component extends Base {
 }
 ```
 
+Importing a module only defines the class: no `@studiometa/ui` component registers itself. Registering `Component` also registers the `InView` it declares in `config.components`.
+
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
+import Component from './Component.js';
+
+registerComponent(Component);
+```
+
 ```html
 <div data-component="Component">
   <div data-component="InView">...</div>
@@ -54,6 +63,8 @@ The [`Action` component](/reference/items/Action/) can react to the `in-view` / 
   ...
 </div>
 ```
+
+Both `Action` and `InView` need their own `registerComponent()` call.
 
 ::: info
 `$emit()` dispatches a native `CustomEvent` on the component's root element, which is what lets `Action` react to these events.
