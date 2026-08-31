@@ -1,4 +1,5 @@
 import { Base } from '@studiometa/js-toolkit/Base';
+import { EVENTS } from '@studiometa/js-toolkit/EVENTS';
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import type { animateView, DOMKeyframesDefinition } from 'motion';
 import { resolveMotion } from './dependencies.js';
@@ -50,9 +51,9 @@ export interface MotionViewProps extends BaseProps {
  * component then warns and applies updates directly.
  *
  * Containment is the wiring: with the `auto` option (on by default), the
- * component wraps any `dom-update` announced by a mutating component inside
- * its subtree, and joins the open/close lifecycle of a containing `Dialog`
- * through the extendable events' `waitUntil()`. Explicit `Action` wiring
+ * component wraps any DOM update announced by a mutating component inside its
+ * subtree, and joins the open/close lifecycle of a containing `Dialog` through
+ * the extendable events' `waitUntil()`. Explicit `Action` wiring
  * (`event.detail.wrap(target)`) remains for cross-subtree topologies.
  *
  * @example
@@ -95,9 +96,11 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
   state: 'entering' | 'leaving' | null = null;
 
   /**
-   * Wrap a `dom-update` announced by a mutating component inside the subtree:
-   * the bubbling event reaches the root element, and passing the instance to
-   * `detail.wrap()` lets the emitter run its mutation through `update()`.
+   * Wrap an `EVENTS.dom.update` announced by a mutating component inside the
+   * subtree: the bubbling event reaches the root element, and passing the
+   * instance to `detail.wrap()` lets the emitter run its mutation through
+   * `update()` — the duck-typed method `domUpdate()` looks for is `update`,
+   * which this component already owns.
    * @private
    */
   __onDomUpdate = (event: Event) => {
@@ -109,9 +112,16 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
 
   /**
    * Join the open/close lifecycle of a containing `Dialog`: its extendable
-   * events bubble up past the root element to the document, and handing the
-   * instance to `detail.waitUntil()` lets the dialog call `enter()` on open
-   * and `leave()` on close.
+   * events bubble up past the root element to the document, and registering
+   * with `detail.waitUntil()` holds the dialog's choreography open until this
+   * component's transition settles.
+   *
+   * Registered as a **function**, not as `this`. `emitExtendable()` duck-types
+   * an object registration on the name of the event — it would look for
+   * `open()` and `close()`, which a transition component has no business
+   * owning. The function form is what the primitive documents for a pair of
+   * method names that differ from the event names, and it maps `open` onto
+   * `enter()` and `close` onto `leave()` explicitly.
    * @private
    */
   __onDialogPhase = (event: Event) => {
@@ -123,7 +133,7 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
       target.contains(this.$el) &&
       typeof waitUntil === 'function'
     ) {
-      waitUntil(this);
+      waitUntil(event.type === 'open' ? () => this.enter() : () => this.leave());
     }
   };
 
@@ -136,9 +146,9 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
 
   /**
    * Assign the configured `view-transition-name` to the target element and,
-   * with the `auto` option, listen for ambient wiring events: `dom-update`
-   * from descendant mutators on the root element, and the extendable
-   * `open`/`close` events of a containing `Dialog` on the document.
+   * with the `auto` option, listen for ambient wiring events:
+   * `EVENTS.dom.update` from descendant mutators on the root element, and the
+   * extendable `open`/`close` events of a containing `Dialog` on the document.
    */
   mounted() {
     const { viewTransitionName, auto } = this.$options;
@@ -150,14 +160,14 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
       return;
     }
 
-    this.$el.addEventListener('dom-update', this.__onDomUpdate);
+    this.$el.addEventListener(EVENTS.dom.update, this.__onDomUpdate);
     document.addEventListener('open', this.__onDialogPhase);
     document.addEventListener('close', this.__onDialogPhase);
 
     // v4 has no `destroyed()`: the teardown is the closure `mounted()` returns,
     // which also keeps it paired with the `auto` branch that installed it.
     return () => {
-      this.$el.removeEventListener('dom-update', this.__onDomUpdate);
+      this.$el.removeEventListener(EVENTS.dom.update, this.__onDomUpdate);
       document.removeEventListener('open', this.__onDialogPhase);
       document.removeEventListener('close', this.__onDialogPhase);
     };
