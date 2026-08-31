@@ -1,4 +1,11 @@
-import { Base, withKey, type ChildrenCollection, type KeyProps } from '@studiometa/js-toolkit';
+import {
+  Base,
+  emitExtendable,
+  withKey,
+  type ChildrenCollection,
+  type ExtendableDetail,
+  type KeyProps,
+} from '@studiometa/js-toolkit';
 import { Transition, type Transitionable } from '../Transition/Transition.js';
 import { ViewTransition } from '../ViewTransition/ViewTransition.js';
 import { saveActiveElement, trapFocus, untrapFocus } from '@studiometa/js-toolkit/utils';
@@ -17,12 +24,32 @@ export interface DialogProps {
     /** Lock the document scroll while open. */
     scrollLock: boolean;
   };
-  $emits: { open: void; close: void };
+  /**
+   * Both lifecycle events are **extendable**: they bubble, and their `detail`
+   * carries the `waitUntil()` of core's {@link emitExtendable}. They are
+   * dispatched by that helper rather than by `$emit()`, so they are declared
+   * here for their payload rather than to widen what `$emit()` accepts.
+   */
+  $emits: { open: ExtendableDetail; close: ExtendableDetail };
 }
 
 /**
  * Headless native dialog with optional modality, focus trapping, scroll lock,
  * and child transitions.
+ *
+ * ## The two things that hold the dialog open
+ *
+ * 1. **Declared children.** Every `Transition` and `ViewTransition` inside the
+ *    dialog gets `enter()` on open and `leave()` on close.
+ * 2. **The extendable `open`/`close` events.** Any listener can register work
+ *    with `event.detail.waitUntil()`, which is how a component that is not a
+ *    declared child — or plain JavaScript — joins the choreography.
+ *
+ * The two never overlap. The events are dispatched on the dialog element and
+ * **bubble upwards**, so a declared child never receives them and cannot
+ * register itself twice. Both mechanisms start in the same tick and are
+ * awaited by a single `Promise.all`, so they run concurrently rather than in
+ * sequence, and neither can outrun the other.
  */
 export class Dialog extends withKey(Base)<DialogProps> {
   static config = {
@@ -45,6 +72,18 @@ export class Dialog extends withKey(Base)<DialogProps> {
    * used to leak its lock for the life of the page.
    */
   __releaseScroll: (() => void) | null = null;
+
+  /**
+   * The in-flight `close()` run, so concurrent calls await the same
+   * choreography instead of racing it.
+   *
+   * The window is wide now that an extension can hold the close open for as
+   * long as it likes: without this, a second `close()` — the Escape key while
+   * a button click is still animating out — would emit `close` again, run
+   * every `leave()` again and release the scroll twice.
+   * @private
+   */
+  __closing: Promise<void> | null = null;
 
   transitionChildren: ChildrenCollection<Transition> =
     this.$watchChildren<Transition>('Transition');
@@ -92,8 +131,12 @@ export class Dialog extends withKey(Base)<DialogProps> {
       this.__releaseScroll = lockScroll();
     }
 
-    this.$emit('open');
-    await Promise.all(this.transitions.map((transition) => transition.enter()));
+    // The native dialog is already painted: only this promise waits. The
+    // helper dispatches synchronously, so both mechanisms start in this tick.
+    await Promise.all([
+      emitExtendable(this.$el, 'open'),
+      ...this.transitions.map((transition) => transition.enter()),
+    ]);
   }
 
   async close(): Promise<void> {
@@ -101,9 +144,24 @@ export class Dialog extends withKey(Base)<DialogProps> {
       return;
     }
 
-    this.$emit('close');
-    // Keep the dialog painted until leave transitions finish.
-    await Promise.all(this.transitions.map((transition) => transition.leave()));
+    this.__closing ??= this.__close().finally(() => {
+      this.__closing = null;
+    });
+
+    return this.__closing;
+  }
+
+  /**
+   * Run the closing choreography: announce the extendable `close` event and
+   * run every transition child's `leave()`, await both — the dialog stays
+   * painted while they play — then hide the native dialog and clean up.
+   * @private
+   */
+  async __close(): Promise<void> {
+    await Promise.all([
+      emitExtendable(this.$el, 'close'),
+      ...this.transitions.map((transition) => transition.leave()),
+    ]);
     this.$el.close();
 
     if (!this.$options.modal && this.$options.trapFocus) {
