@@ -17,6 +17,8 @@ Orchestrate the [`Motion`](/reference/items/Motion/) children as one animation s
 
 ## Options
 
+`MotionSequence` extends [`Motion`](/reference/items/Motion/), so it also accepts every `Motion` option — `initial`, `animate`, `transition` and `autoplay` among them — and inherits the whole playback surface (`play()`, `reverse()`, `pause()`, `seek()`, `stop()`, `cancel()`, `complete()`) and the `motion-*` events.
+
 ### `stagger`
 
 - Type: `number`

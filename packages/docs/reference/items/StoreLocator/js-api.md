@@ -93,7 +93,7 @@ The optional child `MapboxGeocoder`.
 
 #### `items`
 
-- Type: `MapboxClusterItem[]`
+- Type: `readonly MapboxClusterItem[]`
 
 The registered items, read from the cluster (their single source of truth).
 

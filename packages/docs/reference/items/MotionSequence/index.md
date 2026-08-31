@@ -8,7 +8,7 @@ The `MotionSequence` component orchestrates its [`Motion`](/reference/items/Moti
 
 The whole playback surface applies to the sequence: an [`Action`](/reference/items/Action/) can `play()`, `reverse()` or `seek()` the entire choreography, and a [`MotionScrollTimeline`](/reference/items/MotionScrollTimeline/) can scrub it. The sequence owns the children's playback — leave their `autoplay` off (its default) and enable it on the sequence itself with `data-option-autoplay` to play on mount.
 
-`MotionSequence` is part of `@studiometa/ui-motion`, alongside [`Motion`](/reference/items/Motion/), [`MotionScrollTimeline`](/reference/items/MotionScrollTimeline/) and [`MotionView`](/reference/items/MotionView/).
+`MotionSequence` declares `Motion` in `config.components`, so `registerComponent(MotionSequence)` registers both — see [installation](/reference/items/Motion/#installation). It is part of `@studiometa/ui-motion`, alongside [`Motion`](/reference/items/Motion/), [`MotionScrollTimeline`](/reference/items/MotionScrollTimeline/) and [`MotionView`](/reference/items/MotionView/).
 
 ## Usage
 

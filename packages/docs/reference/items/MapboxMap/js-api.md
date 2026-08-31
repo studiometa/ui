@@ -5,7 +5,7 @@ outline: deep
 
 # JS API
 
-This page documents thirteen components — a single root component, `MapboxMap`, which owns the Mapbox `Map` instance, plus the twelve children below — built on the `AbstractMapboxMapChild` (and, for controls, `AbstractMapboxControl`) base classes. The [`StoreLocator`](/reference/items/StoreLocator/) orchestrator completes the family on its own page. Every child resolves the closest parent `MapboxMap` on its own and registers itself against its map once it is loaded.
+This page documents thirteen components — a single root component, `MapboxMap`, which owns the Mapbox `Map` instance, plus the twelve children below — built on the `AbstractMapboxMapChild` (and, for controls, `AbstractMapboxControl`) base classes. The [`StoreLocator`](/reference/items/StoreLocator/) orchestrator completes the family on its own page. Every map child resolves the closest parent `MapboxMap` on its own and registers itself against its map once it is loaded. `MapboxClusterItem` is the one exception: it is a rendered list element that extends `Base` directly, and resolves the closest `MapboxCluster` instead of a map.
 
 [Register](/guide/usage/#registering-components) each component you use — ideally through a lazy [manifest](/guide/autoloading/) entry so the heavy `mapbox-gl` dependency stays out of your main bundle (see [Lazy loading](/reference/items/MapboxMap/#lazy-loading)).
 
@@ -112,15 +112,15 @@ The element used as the map container. Falls back to the root element when omitt
 
 ##### `map`
 
-- Type: `mapboxgl.Map`
+- Type: `mapboxgl.Map | undefined`
 
-The underlying Mapbox GL map instance.
+The underlying Mapbox GL map instance, or `undefined` until it has been built. The map is created in `mounted()`, after `mapbox-gl` resolves — it may be injected or lazily imported — so a caller should either wait for the `map-load` event or go through [`whenMapReady()`](#whenmapready-callback).
 
 ##### `isLoaded`
 
 - Type: `boolean`
 
-Whether the map has finished loading.
+Whether the map has finished loading (a public field, not a getter).
 
 #### Events
 
@@ -150,7 +150,7 @@ The map is removed.
 
 ##### `map-error`
 
-An error occurred.
+An error occurred, carrying the Mapbox error event as `{ event }`. Not to be confused with the map children's own `map-error`, which carries `{ error }` — both bubble, so an ancestor listening for `map-error` should read the payload by component.
 
 ##### `map-click`
 
@@ -295,6 +295,14 @@ The underlying Marker instance.
 - Type: `MapboxPopup`
 
 The first nested `MapboxPopup` child, if any.
+
+#### Methods
+
+##### `setChildPopup(popup)`
+
+- Arguments: `MapboxPopup`
+
+Attach a child `MapboxPopup`'s popup to this marker. It is called automatically by whichever of the two mounts last — the marker pulls its child popup once the map is ready, and a popup that mounts after its marker (a dynamic append) pushes itself here. Setting the same popup twice is idempotent.
 
 ### MapboxPopup
 
@@ -458,13 +466,13 @@ The `accessToken` is inherited from the parent `MapboxMap` when it is not set in
 
 ##### `control`
 
-- Type: `MapboxGeocoder`
+- Type: `MapboxGeocoderControl | undefined`
 
-The underlying `mapbox-gl-geocoder` control instance.
+The underlying `mapbox-gl-geocoder` control instance. It is created once the lazily imported geocoder module resolves, so it is `undefined` until then.
 
 ##### `target`
 
-- Type: `Map | HTMLElement`
+- Type: `Map | HTMLElement | string`
 
 Where the control is mounted, depending on `add-to-map`.
 
@@ -751,13 +759,13 @@ The point coordinates as `[longitude, latitude]`.
 
 Extra feature properties merged into the item's GeoJSON feature.
 
-#### Refs
+#### Markup
 
-##### `popup`
+##### `[data-ref="popup"]`
 
 - Type: `HTMLElement`
 
-Optional. Its inner HTML is used as the popup content on selection; otherwise the item's whole inner HTML is used as a fallback.
+Optional descendant. It is resolved with a plain query rather than declared as a js-toolkit ref, so it works at any depth: its inner HTML is used as the popup content on selection; otherwise the item's whole inner HTML is used as a fallback.
 
 #### Getters
 
@@ -819,9 +827,17 @@ The closest parent `MapboxMap` component instance.
 
 ##### `map`
 
-- Type: `mapboxgl.Map`
+- Type: `mapboxgl.Map | undefined`
 
-The Mapbox `Map` instance of the parent map.
+The Mapbox `Map` instance of the parent map, or `undefined` while the parent is still resolving `mapbox-gl`. Use `whenMapReady()` rather than reading it directly in `mounted()`.
+
+#### Methods
+
+##### `whenMapReady(callback)`
+
+- Arguments: `(map: mapboxgl.Map) => void | Promise<void>`
+
+Run the callback once the parent map is ready — now, on the next `map-load`, or once a `MapboxMap` connects if none exists yet. This is the entry point every child uses. The callback is stored so it can be re-run against a fresh map after a destroy and remount, it never fires after the child is destroyed, and a throw — or a rejected promise, for an `async` callback — is contained rather than rethrown, reported through `$error()` and emitted as a `map-error` event. An `async` callback must re-check that the map it was handed is still the current one after every `await`, since the map can be removed or replaced while the promise is in flight.
 
 #### Events
 
@@ -840,11 +856,20 @@ export class MyMapChild extends AbstractMapboxMapChild {
   };
 
   mounted() {
-    // `this.map` is the fully loaded Mapbox `Map` instance.
-    this.map.addLayer(/* … */);
+    this.whenMapReady((map) => {
+      // `map` is the fully loaded Mapbox `Map` instance.
+      map.addLayer(/* … */);
+    });
   }
 }
 ```
+
+#### Document-level connection events
+
+Two constants are exported for integrators building their own children:
+
+- `MAPBOX_MAP_CONNECTED` (`'mapbox-map:connected'`) — dispatched on `document` by a `MapboxMap` once its Mapbox instance exists, with the component instance in `detail`. A child that mounted before its map uses it to retry resolving its parent.
+- `MAPBOX_CLUSTER_CONNECTED` (`'mapbox-cluster:connected'`) — the same handshake between a `MapboxCluster` and a `MapboxClusterItem` that mounted first.
 
 ## AbstractMapboxControl
 

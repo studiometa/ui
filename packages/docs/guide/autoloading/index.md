@@ -160,7 +160,7 @@ Declare an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Elemen
 </script>
 ```
 
-Load the Mapbox stylesheet yourself, and the geocoder stylesheet only when you use `MapboxGeocoder`. Give each map a valid access token through its `data-option-map-options`. Mapbox components default to the `visible` mount strategy, so the map code loads when a map crosses into the viewport.
+Load the Mapbox stylesheet yourself, and the geocoder stylesheet only when you use `MapboxGeocoder`. Give each map a valid access token through its `data-option-access-token`, and any other Mapbox `Map` option through `data-option-map-options`. Mapbox components default to the `visible` mount strategy, so the map code loads when a map crosses into the viewport.
 
 You own the `mapbox-gl` module, so its Web Worker is same-origin and a strict Content Security Policy works. When you load `mapbox-gl` from a CDN that builds its worker from a `blob:` URL, allow it: `Content-Security-Policy: worker-src blob:;`.
 
