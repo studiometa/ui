@@ -48,7 +48,11 @@ title: MotionView examples
 
 ## Ambient view transitions in a `Dialog`
 
-The same containment story with [`Dialog`](/reference/items/Dialog/): nested inside it, a `MotionView` joins the bubbling `open`/`close` lifecycle by itself — the dialog calls its `enter()`/`leave()` through `waitUntil()` and stays painted until the view transition settles. Two instances share the same lifecycle here, the backdrop fading and the box springing in, because `waitUntil()` is additive: every transitioner that registers on the event is awaited, so any number of them can animate one dialog without ever knowing about each other. Compare with the [explicit `Motion` wiring](/reference/items/Motion/examples#spring-entrance-and-exit-for-a-dialog): same result, zero attributes.
+The same containment story with [`Dialog`](/reference/items/Dialog/): nested inside it, a `MotionView` listens for an extendable `open`/`close` lifecycle by itself, with no wiring attribute at all. Two instances share it here, the backdrop fading and the box springing in, because the extension is additive: every transitioner that registers on the event is awaited, so any number of them can animate one host without ever knowing about each other.
+
+::: warning Not wired to `Dialog` in v2
+`Dialog` emits `open` and `close` with no payload in v2, so the ambient wiring below never fires and the example does not animate. See [ambient wiring](./js-api#ambient-wiring). The [explicit `Motion` wiring](/reference/items/Motion/examples#spring-entrance-and-exit-for-a-dialog) is the pattern that works today.
+:::
 
 <llm-exclude>
   <PreviewPlayground

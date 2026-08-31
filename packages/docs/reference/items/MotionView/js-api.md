@@ -79,6 +79,20 @@ Enable the layout morph on each subject (the builder's `layout()`), so position 
 
 Enable [ambient wiring](#ambient-wiring): the component wraps any `dom-update` announced inside its subtree and joins the lifecycle of a containing `Dialog`. Opt out with `data-option-no-auto`.
 
+## Properties
+
+### `state`
+
+- Type: `'entering' | 'leaving' | null`
+
+The current state of the transition: `'entering'` while entering, `'leaving'` while leaving, or `null` before any transition has run. `toggle()` reads it to decide which direction to run.
+
+### `target`
+
+- Type: `HTMLElement`
+
+The element the `view-transition-name` and the enter and leave classes are applied to — the component's root element.
+
 ## Events
 
 The same events as [`ViewTransition`](/reference/items/ViewTransition/js-api#events), in the same order: `enter`, `enter-start`, `enter-end` around the enter transition and `leave`, `leave-start`, `leave-end` around the leave transition.
@@ -110,7 +124,11 @@ Containment is the wiring: with the `auto` option (on by default), a mounted `Mo
 ```
 <!-- prettier-ignore-end -->
 
-A `MotionView` placed inside a [`Dialog`](/reference/items/Dialog/) also joins its lifecycle: the dialog's extendable `open` and `close` events bubble past the component, which hands itself to `detail.waitUntil()` — the dialog then awaits `enter()` on open and `leave()` on close.
+A `MotionView` also joins the lifecycle of an ancestor that emits **extendable** `open` and `close` events — those built with the toolkit's [`emitExtendable()`](https://js-toolkit-v4.studiometa.dev/api/dom/emitExtendable.html), whose `detail` carries a `waitUntil()` function. The component hands itself to `detail.waitUntil()`, and the host then awaits `enter()` on open and `leave()` on close.
+
+::: warning Not wired to `Dialog` in v2
+`@studiometa/ui`'s [`Dialog`](/reference/items/Dialog/) emitted such events in v1 but emits `open` and `close` with no payload in v2, so this ambient wiring never fires with it. Nest a `Transition` or `ViewTransition` inside the dialog instead, or call `enter()`/`leave()` from an [`Action`](/reference/items/Action/).
+:::
 
 Opt out with `data-option-no-auto`. Explicit wiring through [`Action`](/reference/items/Action/) remains for cross-subtree topologies, where the mutator and the animated subtree are not nested:
 

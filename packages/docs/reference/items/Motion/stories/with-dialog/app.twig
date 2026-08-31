@@ -7,15 +7,15 @@
 </button>
 
 {# The <dialog> host carries NO display utility, so its native open/closed
-   display (block / none) is preserved. Both lifecycle events expose
-   `event.detail.waitUntil(promise)`: the `open` event plays the box's spring
-   entrance, and the `close` event plays it in reverse — the dialog stays
-   painted until the registered promise settles. #}
+   display (block / none) is preserved. The `open` event plays the box's spring
+   entrance, and the `close` event plays it in reverse. The dialog does NOT wait
+   for either: it only awaits its Transition and ViewTransition children, so the
+   exit is cut short when the native dialog closes. #}
 <dialog
   id="motion-modal"
   data-component="Action Dialog"
-  data-on:open="Motion(#motion-modal-box)->event.detail.waitUntil(target.play())"
-  data-on:close="Motion(#motion-modal-box)->event.detail.waitUntil(target.reverse())"
+  data-on:open="Motion(#motion-modal-box)->target.play()"
+  data-on:close="Motion(#motion-modal-box)->target.reverse()"
   data-on:cancel.prevent="Dialog.close()"
   class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent overflow-y-auto">
   <div
