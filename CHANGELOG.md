@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- **Dialog:** make the `open` and `close` events bubble and extendable with `event.detail.waitUntil()`, which also accepts a transitioner ([#627](https://github.com/studiometa/ui/pull/627), [#635](https://github.com/studiometa/ui/pull/635))
+- **Dialog:** make the `open` and `close` events bubble and extendable with `event.detail.waitUntil()`, built on js-toolkit v4's `emitExtendable()`; a duck-typed object extension is now looked up by the event's own name (`open()`, `close()`) instead of v1's `enter()`/`leave()` pair ([#627](https://github.com/studiometa/ui/pull/627), [#635](https://github.com/studiometa/ui/pull/635), [#642](https://github.com/studiometa/ui/pull/642))
 - **Fetch:** announce content updates with the bubbling `dom-update` protocol event and route the default view transition through the shared `viewTransition` scheduler ([#632](https://github.com/studiometa/ui/pull/632))
 
 ## [v1.10.0](https://github.com/studiometa/ui/compare/1.9.0..1.10.0) (2026-08-11)

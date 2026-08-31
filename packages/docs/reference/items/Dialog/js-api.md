@@ -67,13 +67,13 @@ A getter returning every [`Transition`](/reference/items/Transition/) and [`View
 
 - Returns `Promise<void>`
 
-Open the dialog: call `showModal()` (or `show()` when `modal` is `false`), lock the scroll, emit `open`, then run every transition child's `enter()`. A no-op if the dialog is already open. Resolves once every enter transition has finished.
+Open the dialog: call `showModal()` (or `show()` when `modal` is `false`), lock the scroll, emit the extendable `open` event and run every transition child's `enter()`. A no-op if the dialog is already open. Resolves once every enter transition **and** every registered extension has finished — the dialog itself is painted before any of that.
 
 ### `close`
 
 - Returns `Promise<void>`
 
-Close the dialog: emit `close`, run every transition child's `leave()`, **then** call `dialog.close()`, release the focus trap (non-modal path) and unlock the scroll. A no-op if the dialog is already closed. Resolves once closed.
+Close the dialog: emit the extendable `close` event and run every transition child's `leave()`, await both, **then** call `dialog.close()`, release the focus trap (non-modal path) and unlock the scroll. A no-op if the dialog is already closed. Two overlapping calls share one run rather than closing twice. Resolves once closed.
 
 ### `toggle`
 
@@ -83,21 +83,74 @@ Call `close()` if the dialog is open, `open()` otherwise.
 
 ## Events
 
-Both lifecycle events bubble up the DOM tree, so ancestors can route them. Neither carries a `detail`.
+Both lifecycle events are **extendable**: they bubble up the DOM tree, so ancestors can route them, and their `detail` carries a `waitUntil()` function any listener can call to hold the dialog's choreography open. They are dispatched with the toolkit's [`emitExtendable()`](https://js-toolkit-v4.studiometa.dev/api/dom/emitExtendable.html), modelled on the Service Worker [`ExtendableEvent`](https://developer.mozilla.org/en-US/docs/Web/API/ExtendableEvent/waitUntil).
 
 ### `open`
 
-Emitted when the dialog starts opening, before the enter transitions run.
+- Detail: `{ waitUntil(extension) }`
+
+Emitted when the dialog starts opening, after the native dialog is painted and before the enter transitions run.
 
 ### `close`
 
-Emitted when the dialog starts closing, before the leave transitions run.
+- Detail: `{ waitUntil(extension) }`
+
+Emitted when the dialog starts closing, before the leave transitions run and before the native dialog hides.
+
+::: warning A `<dialog>` also fires a native `close`
+The platform fires its own `close` event on the element once it has hidden, with no `detail`. It shares the name of the extendable one and arrives **after** the choreography. A listener that reads `detail.waitUntil` has to check it is there — a plain `event.detail?.waitUntil` guard is enough.
+:::
+
+## Extending the lifecycle with `waitUntil`
+
+`waitUntil()` registers work the dialog must wait for. It is what lets a component that is **not** a declared child — or plain JavaScript — join the choreography:
+
+```js
+dialog.$on('close', (event) => {
+  event.detail?.waitUntil(fadeOut(panel));
+});
+```
+
+On `open` the registration holds `open()`'s promise pending; the native dialog is painted first, so nothing delays the dialog appearing. On `close` the dialog stays **painted and scroll-locked** until every registration settles, and only then hides.
+
+### What it accepts
+
+| Shape                     | Example                         |
+| ------------------------- | ------------------------------- |
+| a thenable                | `waitUntil(view.leave())`       |
+| a function                | `waitUntil(() => view.leave())` |
+| an object with the method | `waitUntil({ close() { … } })`  |
+
+The duck-typed method has the name of **the event** — `open()` on open, `close()` on close.
+
+::: warning Changed from v1
+v1 duck-typed a _transitioner_: an object with `enter()` and `leave()`, `enter()` awaited on `open` and `leave()` on `close`. v2 delegates to the shared `emitExtendable()` primitive, whose lookup keys on the event name instead. A component implementing [`Transitionable`](/reference/items/Transition/) joins with the function form:
+
+```js
+// v1
+event.detail.waitUntil(view);
+// v2
+event.detail.waitUntil(event.type === 'open' ? () => view.enter() : () => view.leave());
+```
+
+:::
+
+### The rules
+
+- **A registration is only valid while the event dispatches.** Keeping `waitUntil` and calling it later is refused and reported as `protocol.late-registration`.
+- **Every registration is awaited**, not just the last: any number of components can animate one dialog without knowing about each other.
+- **The step happens anyway.** An extension that rejects is reported as `callback.extendable-event-extension-failed` and swallowed — a failing extension must never leave the dialog painted and the page locked.
 
 ## What the dialog waits for
 
-`open()` and `close()` await the `enter()` and `leave()` of the dialog's [`Transition`](/reference/items/Transition/) and [`ViewTransition`](/reference/items/ViewTransition/) children, and nothing else. On `close`, the native dialog stays painted until every one of them settles.
+Two mechanisms hold the dialog open, and they never overlap:
 
-A listener's own effect is **not** awaited. An [`Action`](/reference/items/Action/) bound to `open` or `close` runs while the dialog carries on:
+1. **The declared children.** `open()` and `close()` fan `enter()` and `leave()` out to every [`Transition`](/reference/items/Transition/) and [`ViewTransition`](/reference/items/ViewTransition/) child.
+2. **The extendable events.** Anything registered with `waitUntil()`, from anywhere.
+
+The events are dispatched on the dialog element and bubble **upwards**, so a declared child never receives them and cannot register itself a second time. Both start in the same tick and are awaited by a single `Promise.all`, so they run concurrently: a slow extension does not delay the children, and the children do not delay it. On `close`, the native dialog stays painted until the last of them settles.
+
+A listener's own effect is not awaited **unless it registers**. An [`Action`](/reference/items/Action/) bound to `open` or `close` runs while the dialog carries on:
 
 <!-- prettier-ignore-start -->
 ```html {3,4}
@@ -111,8 +164,4 @@ A listener's own effect is **not** awaited. An [`Action`](/reference/items/Actio
 ```
 <!-- prettier-ignore-end -->
 
-The entrance plays as expected. The exit is cut off, because `dialog.close()` fires as soon as the transition children settle — and a `Motion` is not one of them. Put the animation on a `Transition` or `ViewTransition` child of the dialog whenever the dialog has to wait for it.
-
-::: warning `waitUntil` is gone in v2
-v1's `Dialog` dispatched `open` and `close` with a `detail.waitUntil()` function, modelled on the Service Worker [`ExtendableEvent`](https://developer.mozilla.org/en-US/docs/Web/API/ExtendableEvent/waitUntil), which let any listener register an extension the dialog would await. v2 emits both events with no payload. See the [v1 → v2 migration guide](/migration-guides/1.0-2.0/#dialog-no-longer-exposes-waituntil).
-:::
+The entrance plays as expected. The exit is cut off, because `dialog.close()` fires as soon as the transition children settle — and a `Motion` is not one of them. Put the animation on a `Transition` or `ViewTransition` child of the dialog, or register it with `waitUntil()`, whenever the dialog has to wait for it.

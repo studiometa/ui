@@ -426,20 +426,25 @@ class Reveal extends withTransition(Base) {
 }
 ```
 
-### `Dialog` no longer exposes `waitUntil`
+### `Dialog`'s `waitUntil` takes a different transitioner
 
-v1's `Dialog` dispatched its `open` and `close` events with a `detail.waitUntil()` function, modelled on the Service Worker `ExtendableEvent`, which let any listener register an extension the dialog would await. **v2 emits both events with no payload and awaits only its declared `Transition` and `ViewTransition` children.**
+`Dialog`'s `open` and `close` events are still extendable — they bubble, and `detail.waitUntil()` still holds the choreography open. The attribute wiring is unchanged:
 
-```diff
-  <dialog
-    data-component="Dialog"
--   data-on:open="Motion(#box)->event.detail.waitUntil(target.play())"
--   data-on:close="Motion(#box)->event.detail.waitUntil(target.reverse())">
-+   data-on:open="Motion(#box)->target.play()"
-+   data-on:close="Motion(#box)->target.reverse()">
+```html
+<dialog
+  data-component="Dialog"
+  data-on:open="Motion(#box)->event.detail.waitUntil(target.play())"
+  data-on:close="Motion(#box)->event.detail.waitUntil(target.reverse())"></dialog>
 ```
 
-The effect still runs, but the dialog no longer waits for it: a close animation driven this way is cut off when `dialog.close()` fires. Put the animation on a `Transition` or `ViewTransition` child of the dialog when the dialog must wait for it.
+What changed is the **duck-typed object** form. v1 accepted a transitioner with `enter()` and `leave()`, calling `enter()` on `open` and `leave()` on `close`. v2 delegates to js-toolkit v4's [`emitExtendable()`](https://js-toolkit-v4.studiometa.dev/api/dom/emitExtendable.html), which looks up a method named after **the event** instead. Pass a function for any other pair of names:
+
+```diff
+- event.detail.waitUntil(view);
++ event.detail.waitUntil(event.type === 'open' ? () => view.enter() : () => view.leave());
+```
+
+Thenables are unaffected. See [extending the lifecycle](/reference/items/Dialog/js-api#extending-the-lifecycle-with-waituntil).
 
 ### `viewTransition` moved to `@studiometa/js-toolkit`
 

@@ -7,12 +7,9 @@
 </button>
 
 {# Two MotionView instances, zero wiring attributes: the backdrop and the box
-   both live inside the Dialog and both listen for an extendable `open`/`close`
-   event on the document.
-
-   NOTE: `@studiometa/ui` v2's `Dialog` emits `open` and `close` with no
-   payload, so this ambient wiring does not fire with it today. It works with
-   any host that emits those events through the toolkit's `emitExtendable()`. #}
+   both live inside the Dialog and both listen for its extendable `open`/`close`
+   events on the document. Each registers with `detail.waitUntil()`, so the
+   dialog awaits both before it hides. #}
 <dialog
   id="ambient-modal"
   data-component="Action Dialog"

@@ -27,7 +27,7 @@ title: MotionView examples
 
 ## Zero-wiring exit animation for `data-bind:if`
 
-[Ambient wiring](./js-api#ambient-wiring) in action: the `MotionView` has no wiring attribute at all — it wraps the `dom-update` event that [`data-bind:if`](/reference/items/DataBind/js-api#conditional-rendering-with-data-bind-if) announces before changing the DOM, so the template content animates in **and out**, even though the removed nodes are already gone when the exit plays. The `layout` option morphs the container's size with a spring. Because the event bubbles, the `MotionView` only needs to sit just outside the `<template>` instead of around the whole widget: the morph then hugs the panel region alone and leaves the checkbox above it out of the transition.
+[Ambient wiring](./js-api#ambient-wiring) in action: the `MotionView` has no wiring attribute at all — it wraps the `js-toolkit:dom:update` event that [`data-bind:if`](/reference/items/DataBind/js-api#conditional-rendering-with-data-bind-if) announces before changing the DOM, so the template content animates in **and out**, even though the removed nodes are already gone when the exit plays. The `layout` option morphs the container's size with a spring. Because the event bubbles, the `MotionView` only needs to sit just outside the `<template>` instead of around the whole widget: the morph then hugs the panel region alone and leaves the checkbox above it out of the transition.
 
 <llm-exclude>
   <PreviewPlayground
@@ -48,11 +48,7 @@ title: MotionView examples
 
 ## Ambient view transitions in a `Dialog`
 
-The same containment story with [`Dialog`](/reference/items/Dialog/): nested inside it, a `MotionView` listens for an extendable `open`/`close` lifecycle by itself, with no wiring attribute at all. Two instances share it here, the backdrop fading and the box springing in, because the extension is additive: every transitioner that registers on the event is awaited, so any number of them can animate one host without ever knowing about each other.
-
-::: warning Not wired to `Dialog` in v2
-`Dialog` emits `open` and `close` with no payload in v2, so the ambient wiring below never fires and the example does not animate. See [ambient wiring](./js-api#ambient-wiring). The [explicit `Motion` wiring](/reference/items/Motion/examples#spring-entrance-and-exit-for-a-dialog) is the pattern that works today.
-:::
+The same containment story with [`Dialog`](/reference/items/Dialog/): nested inside it, a `MotionView` listens for the dialog's [extendable `open`/`close` events](/reference/items/Dialog/js-api#extending-the-lifecycle-with-waituntil) by itself, with no wiring attribute at all. Two instances share it here, the backdrop fading and the box springing in, because the extension is additive: every registration on the event is awaited, so any number of them can animate one host without ever knowing about each other. The exit plays in full — the dialog stays painted until both have settled.
 
 <llm-exclude>
   <PreviewPlayground
