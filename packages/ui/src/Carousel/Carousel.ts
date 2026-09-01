@@ -72,12 +72,22 @@ export class Carousel extends withResize(withRaf(Indexable, { manual: true }))<C
   });
 
   /**
+   * The scroll-derived progress, republished from the frame hook.
+   *
+   * Declared before `api`, which reads it: class fields initialise in source
+   * order, so a signal declared after the provider would be `undefined` on the
+   * object every control receives.
+   */
+  scrollProgress = signal(0);
+
+  /**
    * The exposed surface. Provided from a field initializer, so it answers a
    * child's `$injectSync` from the moment the instance exists — which is what
    * replaces v3's `connectChildren()` handshake entirely.
    */
   api: CarouselApi = this.$provide(CarouselContext, {
     state: this.state,
+    progress: this.scrollProgress,
     el: this.$el,
     slideLabel: (index, total) => this.slideLabel(index, total),
     goTo: (indexOrInstruction) => {
@@ -408,6 +418,7 @@ export class Carousel extends withResize(withRaf(Indexable, { manual: true }))<C
     }
 
     this.previousProgress = progress;
+    this.scrollProgress.value = progress;
     this.$emit('progress', { progress });
 
     return () => {
