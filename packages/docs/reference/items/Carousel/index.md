@@ -66,11 +66,7 @@ A carousel does not rotate on its own. Add a [`CarouselPlay`](./js-api#carouselp
 </div>
 ```
 
-`CarouselPlay` is registered separately from `Carousel`, since a carousel that does not rotate should not pay for it:
-
-```js
-registerComponents(Carousel, CarouselPlay);
-```
+A carousel without this element never rotates. `Carousel` registers the control itself, so nothing else is needed in the JavaScript.
 
 ### Dots, thumbnails, a count and a progress bar
 

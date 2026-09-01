@@ -77,8 +77,14 @@ export function headerValue(headers: HeadersInit | undefined, name: string): str
   return headerEntries(headers).find(([candidate]) => candidate === wanted)?.[1];
 }
 
-/** One parser for every instance: it holds no state between calls. */
-const domParser = new DOMParser();
+/**
+ * One parser for every instance: it holds no state between calls.
+ *
+ * Built on first use rather than at module scope, so importing this module
+ * outside a browser — an SSR pass, a build step, a Node script reading the
+ * barrel — does not throw before anything is rendered.
+ */
+let domParser: DOMParser;
 
 /** `response` expression argument names, in `parseResponse()`'s call order. */
 const RESPONSE_ARGUMENTS = ['response', 'url', 'requestInit', 'self'] as const;
@@ -452,6 +458,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
 
     this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { instance: this, url, requestInit, content });
 
+    domParser ??= new DOMParser();
     const fragment = domParser.parseFromString(content, 'text/html');
 
     if (history) {

@@ -71,6 +71,19 @@ Two defects in `CarouselDrag` are load-bearing for this and must be fixed with i
 
 The full proposal, with the evidence and the measurements behind each decision, is at <https://claude.ai/code/artifact/9648743e-7bb4-4962-8e33-ebcb91ee70f7>.
 
+## Review decisions (round 8)
+
+**Round 7 is built.** The four missing controls are added and the seven `Slider` classes are removed. The tree holds 927 tests across 86 files — the baseline 907, plus 49 for the new controls, minus the 29 in the four deleted `Slider` specs.
+
+- **Four controls added**, each on its own element, each optional, none importing `Carousel`: `CarouselDots`, `CarouselThumbnails`, `CarouselCount`, `CarouselProgress`. The pickers read a live `$watchChildren` collection, so a slide added after mount needs no `$update()`. `CarouselProgress` reads a new `progress` signal on the shared context. A new `hasAccessibleName()` helper in `Carousel/utils.ts` backs the `carousel.unnamed` diagnostic, and reads the computed accessible name rather than `textContent`, so an icon-only control with `aria-label` passes.
+- **`CarouselPlay` is registered by `Carousel`.** Round 7 planned it as a separate registration, "since a carousel that does not rotate should not pay for it". That reasoning was wrong: `config.components` entries are resolved per element, so a carousel with no play button never constructs one. Registration is now uniform across all eight children, and the docs that claimed otherwise are corrected.
+- **The two `CarouselDrag` defects round 7 flagged are fixed**: `__snap()` clamps a flick to one slide (with a `skipSnaps` option to lift the clamp), and `__restoreSnappingAfterSettle()` races `scrollend` against a 1000 ms timeout, so snapping comes back even when the position never changed and no `scrollend` fires.
+
+Two round-7 claims were overstated, and both leave real work open.
+
+- **`Slider`'s `mode: left|center|right` does not map onto scroll alignment.** Round 7 treated the two as equivalent. `Carousel.ts:163` hardcodes `align: SCROLL_ALIGNMENTS.center`, so a v1 slider that aligned to the left or the right has nothing to migrate to. This is a genuine capability loss, not a rename. The fix is an `align` option threaded to the scroll call and to `scroll-snap-align` on the items; it is not in this PR.
+- **`fitBounds: false` is only half restored.** Round 7 said the freeform settle "is a CSS option, not a reason to keep a transform engine". `scroll-snap-type: none` does give a freeform _scroll_, but `CarouselDrag.__snap()` snaps to the nearest slide on every drop regardless — and `skipSnaps` only lets the throw travel further before it snaps, it does not stop it snapping. So a freeform mouse release today means dropping `CarouselDrag` and living with the native scrollbar. Either `__snap()` learns to respect a non-snapping track, or the option is documented as touch-only.
+
 ## @studiometa/ui — components (80)
 
 ### accordion
@@ -100,6 +113,11 @@ The full proposal, with the evidence and the measurements behind each decision, 
 - CarouselDrag
 - CarouselItem
 - CarouselWrapper
+- CarouselCount — **new in v2**, replaces `SliderCount`
+- CarouselDots — **new in v2**, replaces `SliderDots`
+- CarouselPlay — **new in v2**, autoplay on the `TimerProgress` primitive
+- CarouselProgress — **new in v2**, replaces `SliderProgress`
+- CarouselThumbnails — **new in v2**, no v1 equivalent
 
 ### circular-marquee
 

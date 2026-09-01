@@ -395,13 +395,13 @@ The rotation control of an auto-rotating carousel: a `<button>` that advances th
 
 It extends [`TimerProgress`](/reference/items/Timer/js-api), so the countdown, its `delay`, `repeat` and `autostart` options, its `pause()` / `resume()` methods, its six `timer-*` events and its per-frame `timer-progress` ratio are the `Timer` primitives, unchanged. Nothing about the timing is re-implemented here.
 
-It is not registered by its parent — register it alongside the carousel, or use [the autoloader](/guide/autoloading/):
+It is registered by `Carousel`, so registering the carousel is enough:
 
 ```js twoslash [app.js]
-import { registerComponents } from '@studiometa/js-toolkit';
-import { Carousel, CarouselPlay } from '@studiometa/ui';
+import { registerComponent } from '@studiometa/js-toolkit';
+import { Carousel } from '@studiometa/ui';
 
-registerComponents(Carousel, CarouselPlay);
+registerComponent(Carousel);
 ```
 
 ```html
