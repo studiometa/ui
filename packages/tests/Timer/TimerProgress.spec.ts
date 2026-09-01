@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { getInstance, registerComponents } from '@studiometa/js-toolkit';
-import { recordEvents, resetDom, settle } from '@studiometa/js-toolkit/test';
+import { recordEvents, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
 import { TimerProgress } from '#private/Timer/TimerProgress.js';
 
 registerComponents(TimerProgress);
@@ -21,6 +21,19 @@ async function render(attributes = ''): Promise<{ el: HTMLElement; instance: Tim
 }
 
 /** {@link recordEvents}, projected to the ratio each `timer-progress` carried. */
+/**
+ * Insert the element without mounting it, so a recorder can be attached before
+ * the countdown arms. `render()` awaits `settle()`, and a short delay can
+ * elapse entirely inside that wait on a slow machine — the listener then
+ * attaches after the timer has already finished and sees nothing.
+ */
+function renderUnmounted(attributes = ''): HTMLElement {
+  const root = document.createElement('div');
+  root.innerHTML = `<div data-component="TimerProgress" ${attributes}></div>`;
+  document.body.append(root);
+  return root.firstElementChild as HTMLElement;
+}
+
 function recordProgress(el: HTMLElement): () => number[] {
   const log = recordEvents(el, 'timer-progress');
   return () => log.events.map(({ detail }) => (detail as { ratio: number }).ratio);
@@ -37,10 +50,11 @@ describe('TimerProgress', () => {
   });
 
   it('reports increasing progress while armed, ending at 1', async () => {
-    const { el } = await render('data-option-delay="0.08"');
+    const el = renderUnmounted('data-option-delay="0.08"');
     const ratios = recordProgress(el);
+    await settle();
 
-    await wait(150);
+    await waitFor(() => ratios().at(-1) === 1);
 
     expect(ratios().length).toBeGreaterThan(1);
     expect(ratios().at(-1)).toBe(1);
