@@ -133,6 +133,96 @@ describe('The Fetch class', () => {
       expect(fetch.url.href).toBe('https://example.com/submit?foo=bar');
     });
 
+    it('should keep every value of a repeated GET form field', async () => {
+      // A checkbox group is repeated names by design. Setting each field on top of the
+      // last left one value, so ticking a second box changed nothing.
+      const one = h('input', { type: 'checkbox', name: 'genre[]', value: 'rock', checked: true });
+      const two = h('input', { type: 'checkbox', name: 'genre[]', value: 'jazz', checked: true });
+      const form = h('form', { action: 'https://example.com/search', method: 'get' }, [one, two]);
+      const fetch = new Fetch(form);
+      await mount(fetch);
+
+      expect(fetch.url.searchParams.getAll('genre[]')).toEqual(['rock', 'jazz']);
+    });
+
+    it('should keep every value of a repeated field that has no brackets', async () => {
+      // The bracket suffix is a PHP convention, not an HTML one: a repeated name is
+      // repeated whether or not it ends in `[]`, so the fold cannot key on its shape.
+      // `<select multiple>` is the other everyday case and is not covered here, because
+      // happy-dom puts only the first selected option in FormData.
+      const one = h('input', { name: 'genre', value: 'rock' });
+      const two = h('input', { name: 'genre', value: 'jazz' });
+      const form = h('form', { action: 'https://example.com/search', method: 'get' }, [one, two]);
+      const fetch = new Fetch(form);
+      await mount(fetch);
+
+      expect(fetch.url.searchParams.getAll('genre')).toEqual(['rock', 'jazz']);
+    });
+
+    it('should let repeated GET form fields replace a conflicting query in `src`', async () => {
+      // Both halves at once: the base's stale value goes, and both live values stay.
+      (window as any).happyDOM.setURL('https://example.com/');
+      const one = h('input', { type: 'checkbox', name: 'genre[]', value: 'rock', checked: true });
+      const two = h('input', { type: 'checkbox', name: 'genre[]', value: 'jazz', checked: true });
+      const form = h(
+        'form',
+        {
+          action: 'https://example.com/search',
+          method: 'get',
+          dataOptionSrc: '/search/suggest?genre[]=stale&section=keep',
+        },
+        [one, two],
+      );
+      const fetch = new Fetch(form);
+      await mount(fetch);
+
+      expect(fetch.url.searchParams.getAll('genre[]')).toEqual(['rock', 'jazz']);
+      expect(fetch.url.searchParams.get('section')).toBe('keep');
+    });
+
+    it('should have a `historyUrl` getter following the link `href` rather than `src`', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const anchor = h('a', {
+        href: 'https://example.com/projects/page/2?orderby=title',
+        dataOptionSrc: '/projects/page/2?orderby=title&sections=listing',
+      });
+      const fetch = new Fetch(anchor);
+      await mount(fetch);
+
+      expect(fetch.url.searchParams.get('sections')).toBe('listing');
+      expect(fetch.historyUrl.href).toBe('https://example.com/projects/page/2?orderby=title');
+    });
+
+    it('should fold GET form data onto the `action` for `historyUrl`', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const input = h('input', { name: 'q', value: 'live' });
+      const form = h(
+        'form',
+        {
+          action: 'https://example.com/search',
+          method: 'get',
+          dataOptionSrc: '/search/suggest?sections=results',
+        },
+        [input],
+      );
+      const fetch = new Fetch(form);
+      await mount(fetch);
+
+      // The address bar has to show what the no-JS submit would have produced, filters
+      // included — the bare action would drop them.
+      expect(fetch.historyUrl.href).toBe('https://example.com/search?q=live');
+      expect(fetch.url.searchParams.get('sections')).toBe('results');
+    });
+
+    it('should have a `historyUrl` equal to `url` when there is no `src`', async () => {
+      const input = h('input', { name: 'foo', value: 'bar' });
+      const form = h('form', { action: 'https://example.com/submit', method: 'get' }, [input]);
+      const fetch = new Fetch(form);
+      await mount(fetch);
+
+      expect(fetch.historyUrl.href).toBe(fetch.url.href);
+    });
+
     it('should have a `requestInit` getter', async () => {
       const headers = { 'x-foo': 'bar' };
       const init = { method: 'post' };
@@ -662,6 +752,49 @@ describe('The Fetch class', () => {
 
       expect(historySpy).toHaveBeenCalledOnce();
       expect(historySpy).toHaveBeenCalledWith({}, '', '/?foo=bar');
+      historySpy.mockRestore();
+    });
+
+    it('should push the element destination rather than the fetched `src`', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const anchor = h('a', {
+        href: 'https://example.com/projects/page/2?orderby=title',
+        dataOptionSrc: '/projects/page/2?orderby=title&sections=listing',
+        dataOptionHistory: true,
+      });
+      const fetch = new Fetch(anchor);
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('<div id="test">content</div>')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+      const historySpy = vi.spyOn(window.history, 'pushState');
+      historySpy.mockImplementation(() => undefined);
+
+      await mount(fetch);
+      await fetch.fetch();
+
+      // Requested the lighter endpoint…
+      expect(clientSpy).toHaveBeenCalledWith(
+        new URL('https://example.com/projects/page/2?orderby=title&sections=listing'),
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
+      // …and left a URL somebody can copy.
+      expect(historySpy).toHaveBeenCalledWith({}, '', '/projects/page/2?orderby=title');
+      historySpy.mockRestore();
+    });
+
+    it('should push a URL given to `fetch()` rather than the element destination', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const anchor = h('a', { href: 'https://example.com/from-href', dataOptionHistory: true });
+      const fetch = new Fetch(anchor);
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('<div id="test">content</div>')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+      const historySpy = vi.spyOn(window.history, 'pushState');
+      historySpy.mockImplementation(() => undefined);
+
+      await mount(fetch);
+      await fetch.fetch('/called-explicitly');
+
+      // A caller that named a URL meant that URL, in the address bar as well.
+      expect(historySpy).toHaveBeenCalledWith({}, '', '/called-explicitly');
       historySpy.mockRestore();
     });
 
