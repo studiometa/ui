@@ -100,3 +100,17 @@ You can now add a counter component in your HTML and define the boundary behavio
 ::: tip Example
 Checkout the [result of this example](./examples#counter) for a better understanding.
 :::
+
+### As a decorator
+
+`Indexable` is `withIndex(Base)` and the component name, nothing more. When your component already extends something else, mix the same behaviour in with the [`withIndex`](../withIndex/) decorator instead of extending this class.
+
+```js
+import { Transition, withIndex } from '@studiometa/ui';
+
+export default class Gallery extends withIndex(Transition) {
+  static config = {
+    name: 'Gallery',
+  };
+}
+```

@@ -215,25 +215,45 @@ These four Twig templates carried presentation opinions rather than behaviour, a
 
 Copy the template you were using into your own project if you still need it. Every other Twig template is unchanged in v2, parameters included.
 
-### `withIndex` → `Indexable`
+## `withIndex` and `Indexable`
 
-The `withIndex` decorator is removed. Its whole body is now the [`Indexable`](/reference/items/Indexable/) class, which v1 already shipped alongside it.
+Both are kept, and both keep their import paths. v1 shipped the [`withIndex`](/reference/items/withIndex/) decorator and the [`Indexable`](/reference/items/Indexable/) class side by side; v2 keeps the pair and makes the relationship explicit — `Indexable` is `withIndex(Base)` and the component name, nothing more, so the two forms can no longer drift apart.
 
-```diff
-- import { Base } from '@studiometa/js-toolkit';
-- import { withIndex } from '@studiometa/ui';
--
-- class Gallery extends withIndex(Base) {
-+ import { Indexable } from '@studiometa/ui';
-+
-+ class Gallery extends Indexable {
-    static config = {
-      name: 'Gallery',
-    };
-  }
+Reach for the class when your component extends nothing else:
+
+```js
+import { Indexable } from '@studiometa/ui';
+
+class Gallery extends Indexable {
+  static config = {
+    name: 'Gallery',
+  };
+}
 ```
 
-`Indexable` keeps the decorator's whole surface — the `boundary`, `reverse` and `total` options, and the navigation methods. Its `index` event now carries `{ index }` rather than the bare number: see [Event payloads](#every-event-payload-is-one-object).
+Reach for the decorator when it already extends something else — that is the case the class cannot serve:
+
+```js
+import { Transition } from '@studiometa/ui';
+import { withIndex } from '@studiometa/ui';
+
+class Gallery extends withIndex(Transition) {
+  static config = {
+    name: 'Gallery',
+  };
+}
+```
+
+Two things changed inside them.
+
+The `index` event now carries `{ index }` rather than the bare number: see [Event payloads](#every-event-payload-is-one-object).
+
+`isReverse` and `boundary` are no longer stored in `$options`. v1 wrote back to `$options.reverse` and `$options.boundary`; `$options` is a read-only view over the attributes in js-toolkit v4, so both are private state seeded from the option instead. Reading and assigning `instance.isReverse` and `instance.boundary` is unchanged — only writing through `$options` is gone.
+
+```diff
+- this.$options.reverse = true;
++ this.isReverse = true;
+```
 
 ## Renamed components
 

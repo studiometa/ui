@@ -471,6 +471,14 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'IndexableInterface',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/withIndex/',
+    status: 'stable',
+  },
+  {
     name: 'IndexableProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',

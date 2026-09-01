@@ -122,5 +122,5 @@ INDEXABLE_INSTRUCTIONS; // { NEXT: 'next', PREVIOUS: 'previous', FIRST: 'first',
 Both are frozen objects; use them instead of string literals when you want the compiler to check the value. The matching types are `IndexableBoundary` and `IndexableInstruction`, and `IndexableProps` types the component's options and events.
 
 ::: tip Coming from v1
-`withIndex(Base)` is gone. The decorator took no options and every consumer extended the `Indexable` wrapper anyway, so the two collapsed into this one class — extend `Indexable` directly.
+[`withIndex(Base)`](/reference/items/withIndex/) is still there, and it is where this behaviour lives: `Indexable` is `withIndex(Base)` and the component name, nothing more. Extend the class when your component extends nothing else, mix the decorator in when it already does.
 :::
