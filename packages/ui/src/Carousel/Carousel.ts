@@ -10,9 +10,13 @@ import {
 } from '@studiometa/js-toolkit';
 import { SCROLL_ALIGNMENTS, SCROLL_AXES, scrollPosition } from '@studiometa/js-toolkit/utils';
 import { CarouselBtn } from './CarouselBtn.js';
+import { CarouselCount } from './CarouselCount.js';
+import { CarouselDots } from './CarouselDots.js';
 import { CarouselDrag } from './CarouselDrag.js';
 import { CarouselItem } from './CarouselItem.js';
 import { CarouselPlay } from './CarouselPlay.js';
+import { CarouselProgress } from './CarouselProgress.js';
+import { CarouselThumbnails } from './CarouselThumbnails.js';
 import { CarouselWrapper } from './CarouselWrapper.js';
 import { CarouselContext, type CarouselApi, type CarouselState } from './context.js';
 import {
@@ -56,7 +60,17 @@ const DEFAULT_SLIDE_LABEL = '{index} of {total}';
 export class Carousel extends withResize(withRaf(Indexable, { manual: true }))<CarouselProps> {
   static config: BaseConfig = {
     name: 'Carousel',
-    components: { CarouselBtn, CarouselDrag, CarouselItem, CarouselPlay, CarouselWrapper },
+    components: {
+      CarouselBtn,
+      CarouselCount,
+      CarouselDots,
+      CarouselDrag,
+      CarouselItem,
+      CarouselPlay,
+      CarouselProgress,
+      CarouselThumbnails,
+      CarouselWrapper,
+    },
     options: {
       axis: { type: String, default: 'x' },
       slideLabel: { type: String, default: DEFAULT_SLIDE_LABEL },

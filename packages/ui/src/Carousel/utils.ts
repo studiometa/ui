@@ -68,6 +68,67 @@ export function hasTabbableDescendant(root: Element): boolean {
   return false;
 }
 
+/**
+ * Whether a control already carries a name of the author's.
+ *
+ * The question the two pickers ask before writing a positional `aria-label`:
+ * an author's own name always wins, and a generated one must never overwrite
+ * a real caption.
+ *
+ * It walks the subtree rather than reading `textContent`, because the two
+ * shapes a picker actually ships in are exactly the ones `textContent` gets
+ * wrong. A dot is `<button><span aria-hidden="true">●</span></button>`, whose
+ * `textContent` is a bullet and whose accessible name is empty — the
+ * accessible-name algorithm skips an `aria-hidden` subtree, so reading the raw
+ * text would leave that dot unnamed. A thumbnail is `<button><img alt="Red
+ * dress, front"></button>`, whose `textContent` is empty and whose accessible
+ * name is the `alt` — reading the raw text would overwrite a real caption with
+ * "3 of 5".
+ *
+ * `svg > title` is not counted: its contribution to the name is inconsistent
+ * across engines, so a `<title>`-only control gets the positional fallback as
+ * well, which is the safe direction to be wrong in.
+ */
+export function hasAccessibleName(el: Element): boolean {
+  if (el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby')) {
+    return true;
+  }
+
+  return hasNameableContent(el);
+}
+
+/**
+ * Whether anything inside contributes to the accessible name.
+ */
+function hasNameableContent(el: Element): boolean {
+  for (const node of el.childNodes) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (node.textContent?.trim()) {
+        return true;
+      }
+      continue;
+    }
+
+    if (!(node instanceof Element) || node.getAttribute('aria-hidden') === 'true') {
+      continue;
+    }
+
+    if (node.hasAttribute('aria-label') || node.hasAttribute('aria-labelledby')) {
+      return true;
+    }
+
+    if (node instanceof HTMLImageElement && node.alt.trim()) {
+      return true;
+    }
+
+    if (hasNameableContent(node)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /** The index of the number closest to the target. */
 export function getClosestIndex(numbers: number[], target: number): number {
   let index = 0;
