@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **@studiometa/ui-motion:** add a new `@studiometa/ui-motion` package with the `Motion`, `MotionScrollTimeline`, `MotionSequence` and `MotionView` components to animate elements declaratively with [Motion](https://motion.dev) ([#628](https://github.com/studiometa/ui/pull/628), [#629](https://github.com/studiometa/ui/pull/629), [#630](https://github.com/studiometa/ui/pull/630), [#633](https://github.com/studiometa/ui/pull/633), [#636](https://github.com/studiometa/ui/pull/636), [#637](https://github.com/studiometa/ui/pull/637), [#638](https://github.com/studiometa/ui/pull/638), [#640](https://github.com/studiometa/ui/pull/640), [#641](https://github.com/studiometa/ui/pull/641))
 - **DataBind:** add the `data-bind:if` virtual binding to render `<template>` content conditionally, announcing each change with the bubbling `dom-update` protocol event ([#626](https://github.com/studiometa/ui/pull/626), [#634](https://github.com/studiometa/ui/pull/634))
 
+### Fixed
+
+- **Fetch:** send every value of a repeated GET form field instead of the last one, so a checkbox group or a `<select multiple>` no longer reaches the server with one of its values
+- **Fetch:** push the element's own destination in history rather than the fetched URL, so a `src` pointing at a lighter endpoint no longer leaks into the address bar — see the new `historyUrl` getter
+
 ### Changed
 
 - **Dialog:** make the `open` and `close` events bubble and extendable with `event.detail.waitUntil()`, which also accepts a transitioner ([#627](https://github.com/studiometa/ui/pull/627), [#635](https://github.com/studiometa/ui/pull/635))
