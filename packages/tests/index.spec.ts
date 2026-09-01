@@ -73,6 +73,7 @@ test("components exports", () => {
       "SliderItem",
       "SliderProgress",
       "Sticky",
+      "TABS_ACTIVATIONS",
       "TRACK_PSEUDO_EVENTS",
       "Tabs",
       "Target",
