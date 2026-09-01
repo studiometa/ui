@@ -1,7 +1,6 @@
-import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { damp } from '@studiometa/js-toolkit/utils/damp';
-import { transform } from '@studiometa/js-toolkit/utils/transform';
+import { Base, withRaf, withScroll } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps, RafProps, ScrollProps } from '@studiometa/js-toolkit';
+import { damp, transform } from '@studiometa/js-toolkit/utils';
 
 export interface CircularMarqueeProps extends BaseProps {
   $options: {
@@ -20,7 +19,7 @@ export interface CircularMarqueeProps extends BaseProps {
  *
  * @link https://ui.studiometa.dev/reference/items/CircularMarquee/
  */
-export class CircularMarquee extends Base<CircularMarqueeProps> {
+export class CircularMarquee extends withScroll(withRaf(Base))<CircularMarqueeProps> {
   /**
    * CircularMarquee Configuration
    */
@@ -54,17 +53,25 @@ export class CircularMarquee extends Base<CircularMarqueeProps> {
     rotate: 0,
   };
 
-  scrolled(props) {
-    this.deltaY = props.delta.y;
+  /** Feed the vertical scroll delta into the rotation speed. */
+  scrolled(props: ScrollProps) {
+    this.deltaY = props.deltaY;
   }
 
-  ticked() {
+  /**
+   * Advance and damp the rotation, then write it in the frame's write phase.
+   *
+   * `damp()` takes the frame's elapsed time in v4, which is what makes the
+   * easing frame-rate independent: the same gesture settles over the same
+   * duration whether the page runs at 60 or 120 frames per second.
+   */
+  ticked({ delta }: RafProps) {
     this.rotate -= (Math.abs(this.deltaY) + 1) * this.$options.sensitivity;
 
-    this.transform.rotate = damp(this.rotate, this.transform.rotate, 0.25);
+    this.transform.rotate = damp(this.rotate, this.transform.rotate, 0.25, delta);
 
     return () => {
-      transform(this.$el, this.transform);
+      this.$el.style.transform = transform(this.transform);
     };
   }
 }
