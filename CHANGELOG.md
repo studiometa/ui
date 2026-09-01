@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fetch:** apply the `historyUrl` separation to a link click and a form submit, not only to a bare `fetch()` call — the declarative handlers passed the resolved URL on, which read as a caller naming a destination and kept a `src` in the address bar ([#646](https://github.com/studiometa/ui/pull/646))
+
 ## [v1.11.0](https://github.com/studiometa/ui/compare/1.10.0..1.11.0) (2026-09-01)
 
 This release is led by `@studiometa/ui-motion`, a new package for declarative animation with [Motion](https://motion.dev), and by the `dom-update` protocol event — a shared announcement that lets a component substitute how an imminent DOM change is applied, which `DataBind`, `Dialog` and `Fetch` all now speak.

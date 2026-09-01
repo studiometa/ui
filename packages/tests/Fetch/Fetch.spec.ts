@@ -300,7 +300,9 @@ describe('The Fetch class', () => {
       anchor.dispatchEvent(new MouseEvent('click', { button: 0 }));
 
       expect(fetchSpy).toHaveBeenCalledOnce();
-      expect(fetchSpy).toHaveBeenCalledWith(fetch.url, fetch.requestInit);
+      // No URL: the handler defers to the element, which is what lets `historyUrl`
+      // differ from the requested one.
+      expect(fetchSpy).toHaveBeenCalledWith(undefined, fetch.requestInit);
     });
 
     it('should not trigger fetch on link click with meta key', async () => {
@@ -778,6 +780,61 @@ describe('The Fetch class', () => {
       );
       // …and left a URL somebody can copy.
       expect(historySpy).toHaveBeenCalledWith({}, '', '/projects/page/2?orderby=title');
+      historySpy.mockRestore();
+    });
+
+    it('should push the destination when a link is clicked, not only on a bare fetch()', async () => {
+      // The declarative path is the one people use, and it was the one the first version
+      // of this missed: `onClick` passed `this.url` on, which reads as a caller naming a
+      // destination and put the `src` back in the address bar.
+      (window as any).happyDOM.setURL('https://example.com/');
+      const anchor = h('a', {
+        href: 'https://example.com/projects/page/2?orderby=title',
+        dataOptionSrc: '/projects/page/2?orderby=title&sections=listing',
+        dataOptionHistory: true,
+      });
+      const fetch = new Fetch(anchor);
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('<div id="test">content</div>')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+      const historySpy = vi.spyOn(window.history, 'pushState');
+      historySpy.mockImplementation(() => undefined);
+
+      await mount(fetch);
+      anchor.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      await wait(50);
+
+      expect(clientSpy).toHaveBeenCalledWith(
+        new URL('https://example.com/projects/page/2?orderby=title&sections=listing'),
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
+      expect(historySpy).toHaveBeenCalledWith({}, '', '/projects/page/2?orderby=title');
+      historySpy.mockRestore();
+    });
+
+    it('should push the destination when a GET form is submitted', async () => {
+      (window as any).happyDOM.setURL('https://example.com/');
+      const input = h('input', { name: 'q', value: 'live' });
+      const form = h(
+        'form',
+        {
+          action: 'https://example.com/search',
+          method: 'get',
+          dataOptionSrc: '/search/suggest?sections=results',
+          dataOptionHistory: true,
+        },
+        [input],
+      );
+      const fetch = new Fetch(form);
+      const clientSpy = vi.fn(() => Promise.resolve(new Response('<div id="test">content</div>')));
+      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+      const historySpy = vi.spyOn(window.history, 'pushState');
+      historySpy.mockImplementation(() => undefined);
+
+      await mount(fetch);
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      await wait(50);
+
+      expect(historySpy).toHaveBeenCalledWith({}, '', '/search?q=live');
       historySpy.mockRestore();
     });
 
