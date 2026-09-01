@@ -46,6 +46,10 @@ Answers to the round-1 comments, verified against source:
 - **StyledModal** (Twig) — **dropped.**
 - **StyledPanel** (Twig) — **dropped.**
 
+## Review decisions (round 5)
+
+- **withIndex** — the port folded the decorator into the concrete `Indexable` class and deleted it, which contradicted the "decorators (4)" list below, where `withIndex` is kept. **Resolution: the review wins, and the decorator is restored.** The behaviour lives in `withIndex()` at `packages/ui/src/decorators/withIndex.ts` and `Indexable` is `withIndex(Base)` plus the component name — one implementation, the same split `withTransition()`/`Transition` already uses. The class alone could not serve a component that already extends something else, which is what a mixin is for.
+
 ## @studiometa/ui — components (80)
 
 ### accordion
