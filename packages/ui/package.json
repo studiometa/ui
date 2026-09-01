@@ -282,41 +282,6 @@
       "types": "./dist/Sentinel/Sentinel.d.ts",
       "import": "./dist/Sentinel/Sentinel.js"
     },
-    "./Slider": {
-      "typescript": "./src/Slider/Slider.ts",
-      "types": "./dist/Slider/Slider.d.ts",
-      "import": "./dist/Slider/Slider.js"
-    },
-    "./SliderBtn": {
-      "typescript": "./src/Slider/SliderBtn.ts",
-      "types": "./dist/Slider/SliderBtn.d.ts",
-      "import": "./dist/Slider/SliderBtn.js"
-    },
-    "./SliderCount": {
-      "typescript": "./src/Slider/SliderCount.ts",
-      "types": "./dist/Slider/SliderCount.d.ts",
-      "import": "./dist/Slider/SliderCount.js"
-    },
-    "./SliderDots": {
-      "typescript": "./src/Slider/SliderDots.ts",
-      "types": "./dist/Slider/SliderDots.d.ts",
-      "import": "./dist/Slider/SliderDots.js"
-    },
-    "./SliderDrag": {
-      "typescript": "./src/Slider/SliderDrag.ts",
-      "types": "./dist/Slider/SliderDrag.d.ts",
-      "import": "./dist/Slider/SliderDrag.js"
-    },
-    "./SliderItem": {
-      "typescript": "./src/Slider/SliderItem.ts",
-      "types": "./dist/Slider/SliderItem.d.ts",
-      "import": "./dist/Slider/SliderItem.js"
-    },
-    "./SliderProgress": {
-      "typescript": "./src/Slider/SliderProgress.ts",
-      "types": "./dist/Slider/SliderProgress.d.ts",
-      "import": "./dist/Slider/SliderProgress.js"
-    },
     "./Sticky": {
       "typescript": "./src/Sticky/Sticky.ts",
       "types": "./dist/Sticky/Sticky.d.ts",

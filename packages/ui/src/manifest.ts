@@ -197,34 +197,6 @@ export const manifest: ComponentManifest = {
     mountStrategy: 'eager',
     load: () => import('./Sentinel/Sentinel.js').then(({ Sentinel }) => Sentinel),
   },
-  Slider: {
-    mountStrategy: 'eager',
-    load: () => import('./Slider/Slider.js').then(({ Slider }) => Slider),
-  },
-  SliderBtn: {
-    mountStrategy: 'eager',
-    load: () => import('./Slider/SliderBtn.js').then(({ SliderBtn }) => SliderBtn),
-  },
-  SliderCount: {
-    mountStrategy: 'eager',
-    load: () => import('./Slider/SliderCount.js').then(({ SliderCount }) => SliderCount),
-  },
-  SliderDots: {
-    mountStrategy: 'eager',
-    load: () => import('./Slider/SliderDots.js').then(({ SliderDots }) => SliderDots),
-  },
-  SliderDrag: {
-    mountStrategy: 'eager',
-    load: () => import('./Slider/SliderDrag.js').then(({ SliderDrag }) => SliderDrag),
-  },
-  SliderItem: {
-    mountStrategy: 'eager',
-    load: () => import('./Slider/SliderItem.js').then(({ SliderItem }) => SliderItem),
-  },
-  SliderProgress: {
-    mountStrategy: 'eager',
-    load: () => import('./Slider/SliderProgress.js').then(({ SliderProgress }) => SliderProgress),
-  },
   Sticky: {
     mountStrategy: 'eager',
     load: () => import('./Sticky/Sticky.js').then(({ Sticky }) => Sticky),
