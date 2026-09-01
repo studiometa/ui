@@ -195,7 +195,7 @@ Copy the template into your project if you still need it. Every Twig template ot
 | ------------------------------- | -------------- |
 | a hand-rolled carousel autoplay | `CarouselPlay` |
 
-`CarouselPlay` is a `<button>` inside the carousel, off unless the element is there. It extends `TimerProgress`, so `delay`, `repeat`, `autostart` and the `timer-*` events are the ones you already know. Register it yourself — `Carousel` does not: `registerComponents(Carousel, CarouselPlay)`.
+`CarouselPlay` is a `<button>` inside the carousel, off unless the element is there. It extends `TimerProgress`, so `delay`, `repeat`, `autostart` and the `timer-*` events are the ones you already know. `Carousel` declares it, so `registerComponent(Carousel)` is enough.
 
 Put it first inside the carousel: it must be the first focusable element. Turning the automatic start off is `data-option-no-autostart`, never `data-option-autostart="false"`.
 
@@ -308,6 +308,25 @@ Steps:
 5. Remove any `role`, `aria-label` or `aria-roledescription` you were writing by hand only if you want the defaults; an attribute already in the markup is never overwritten.
 
 `aria-roledescription` is not written. `Slider` emitted `carousel` and `slide` untranslated; nothing translates the attribute. Write it yourself if you want it.
+
+### `CarouselDrag`
+
+A hard flick now advances **one slide**. v1 projected the throw and jumped to whichever slide was nearest the predicted resting point, so a fast gesture could cross several.
+
+| v1.x                                    | v2.x                                                  |
+| --------------------------------------- | ----------------------------------------------------- |
+| a flick lands on the nearest projection | a flick past the threshold advances exactly one slide |
+| —                                       | `skip-snaps` option, restoring the v1 behaviour       |
+
+The threshold is `clamp(20% of the track, 50, 225)` px of projected travel. Below it the throw still coasts to the nearest slide.
+
+`skip-snaps` is a `CarouselDrag` option, so it goes on the wrapper, not on the carousel root:
+
+```html
+<div data-component="Carousel" aria-label="Featured products">
+  <div data-component="CarouselWrapper CarouselDrag" data-option-skip-snaps>…</div>
+</div>
+```
 
 ## Event payloads
 
