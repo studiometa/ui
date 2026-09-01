@@ -87,6 +87,16 @@
       "types": "./dist/Carousel/CarouselBtn.d.ts",
       "import": "./dist/Carousel/CarouselBtn.js"
     },
+    "./CarouselCount": {
+      "typescript": "./src/Carousel/CarouselCount.ts",
+      "types": "./dist/Carousel/CarouselCount.d.ts",
+      "import": "./dist/Carousel/CarouselCount.js"
+    },
+    "./CarouselDots": {
+      "typescript": "./src/Carousel/CarouselDots.ts",
+      "types": "./dist/Carousel/CarouselDots.d.ts",
+      "import": "./dist/Carousel/CarouselDots.js"
+    },
     "./CarouselDrag": {
       "typescript": "./src/Carousel/CarouselDrag.ts",
       "types": "./dist/Carousel/CarouselDrag.d.ts",
@@ -101,6 +111,16 @@
       "typescript": "./src/Carousel/CarouselPlay.ts",
       "types": "./dist/Carousel/CarouselPlay.d.ts",
       "import": "./dist/Carousel/CarouselPlay.js"
+    },
+    "./CarouselProgress": {
+      "typescript": "./src/Carousel/CarouselProgress.ts",
+      "types": "./dist/Carousel/CarouselProgress.d.ts",
+      "import": "./dist/Carousel/CarouselProgress.js"
+    },
+    "./CarouselThumbnails": {
+      "typescript": "./src/Carousel/CarouselThumbnails.ts",
+      "types": "./dist/Carousel/CarouselThumbnails.d.ts",
+      "import": "./dist/Carousel/CarouselThumbnails.js"
     },
     "./CarouselWrapper": {
       "typescript": "./src/Carousel/CarouselWrapper.ts",
