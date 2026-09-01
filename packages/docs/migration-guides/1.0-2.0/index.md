@@ -1,6 +1,6 @@
 # v1.x → v2.x
 
-v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/). It removes six component families, renames three components, rewrites `Tabs`, gives `Carousel` an accessibility contract, and changes every event payload. There is no compatibility layer.
+v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/). It removes seven component families, renames three components, rewrites `Tabs`, gives `Carousel` an accessibility contract, and changes every event payload. There is no compatibility layer.
 
 [[toc]]
 
@@ -62,6 +62,7 @@ Two changes around it:
 | `Frame` family, `AbstractFrameTrigger`                   | `Fetch`                                             |
 | `Modal`, `ModalWithTransition`, `Panel`                  | `Dialog`                                            |
 | `ScrollAnimation` family, `animationScrollWithEase`      | [`@studiometa/ui-motion`](/reference/items/Motion/) |
+| `Slider` family, `AbstractSliderChild`                   | `Carousel` family                                   |
 | `withScrollAnimationDebug`                               | removed                                             |
 | `ImageGrid`, `Reinsurance`, `StyledModal`, `StyledPanel` | removed                                             |
 
@@ -177,6 +178,138 @@ The trigger and panel both need an `id`: `Disclosure` wires `aria-controls` and 
 
 - `from` and `to` become `initial` and `animate`.
 - `playRange`, `easing` and `dampFactor` have no equivalent. Use `Motion`'s `transition` option and `MotionScrollTimeline`'s `offset`.
+
+### `Slider` → `Carousel`
+
+`Carousel` replaces the whole family. It moves the slides with native scrolling and `scroll-snap` instead of a transform. **[The CSS moves with it](#the-css-change).** Read that section before anything else: it is the one change no consumer can skip.
+
+| v1.x                                             | v2.x                                                                 |
+| ------------------------------------------------ | -------------------------------------------------------------------- |
+| `Slider`                                         | `Carousel`                                                           |
+| `wrapper` ref                                    | `CarouselWrapper` — a component, not a ref, and the scroll container |
+| `SliderItem`                                     | `CarouselItem`                                                       |
+| `SliderDrag`                                     | `CarouselDrag`, on the `CarouselWrapper` element                     |
+| `SliderBtn`                                      | `CarouselBtn`                                                        |
+| `SliderCount`                                    | `CarouselCount`                                                      |
+| `SliderDots`                                     | `CarouselDots`                                                       |
+| `SliderProgress`                                 | `CarouselProgress`                                                   |
+| `AbstractSliderChild`                            | `AbstractCarouselChild`                                              |
+| `SliderContext`                                  | `CarouselContext`                                                    |
+| `SliderState`, `SliderApi`                       | `CarouselState`, `CarouselApi`                                       |
+| `dots[]`, `current`, `total` and `progress` refs | unchanged names, on the control that owns each                       |
+
+`Slider` declared only `SliderItem` and `SliderDrag`, so every control had to be registered by hand. `Carousel` declares its whole family: `registerComponent(Carousel)` is enough.
+
+#### The CSS change
+
+`Slider` moved the slides with `transform`, so nothing scrolled: the **root** clipped and the wrapper had no overflow of its own. `Carousel` scrolls, so the **wrapper** is the scroll container and needs `overflow` and `scroll-snap` of its own. Every documented v1 example has to be restyled.
+
+```diff
+- <div data-component="Slider" data-option-fit-bounds class="overflow-hidden">
+-   <div data-component="SliderDrag" data-ref="wrapper" tabindex="0" class="flex gap-4">
+-     <div data-component="SliderItem" class="shrink-0">…</div>
+-   </div>
+- </div>
++ <div data-component="Carousel" aria-label="Featured products">
++   <div data-component="CarouselWrapper CarouselDrag" class="flex gap-4 overflow-x-auto snap-x snap-mandatory">
++     <div data-component="CarouselItem" class="shrink-0 snap-center">…</div>
++   </div>
++ </div>
+```
+
+```css
+/* v1 — the root clips, the track never scrolls */
+[data-component~='Slider'] {
+  overflow: hidden;
+}
+[data-ref='wrapper'] {
+  display: flex;
+}
+[data-component~='SliderItem'] {
+  flex: none;
+}
+```
+
+```css
+/* v2 — the track scrolls, the root clips nothing */
+[data-component~='CarouselWrapper'] {
+  display: flex;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none; /* optional */
+}
+[data-component~='CarouselItem'] {
+  flex: none;
+  scroll-snap-align: center;
+}
+```
+
+- Take `overflow: hidden` off the root. On the root it clips the scrollbar and the focus ring, and it cannot clip a scroll it no longer owns.
+- Use `overflow-x: auto`, never `overflow-x: hidden`: `hidden` leaves the element scrollable programmatically but takes away every user gesture, keyboard and touch alike.
+- Padding on the track is mirrored into its `scroll-padding` for you. Do not add `scroll-padding` unless you want to override it.
+- `data-option-axis="y"` needs `overflow-y: auto` and `scroll-snap-type: y mandatory` instead.
+
+#### Options
+
+| v1.x               | v2.x                                                                    |
+| ------------------ | ----------------------------------------------------------------------- |
+| `mode="center"`    | `scroll-snap-align: center` on the slide — where `goTo()` already lands |
+| `mode="left"`      | no equivalent — `goTo()` always centres the slide                       |
+| `mode="right"`     | no equivalent — `goTo()` always centres the slide                       |
+| `contain`          | removed — a scroll container cannot scroll past its own range           |
+| `fit-bounds`       | `scroll-snap-type: x mandatory` on the track                            |
+| no `fit-bounds`    | `scroll-snap-type: none`, for a scroll or touch release only            |
+| `sensitivity`      | no equivalent                                                           |
+| `drop-sensitivity` | no equivalent                                                           |
+| —                  | `axis`, `slide-label`, and `boundary` / `reverse` from `Indexable`      |
+| —                  | `skip-snaps`, on `CarouselDrag`                                         |
+
+- `mode="left"` and `mode="right"` cannot be restored with `scroll-snap-align`. The alignment decides where a **native** snap lands; `Carousel` measures its own scroll targets centred, so `goTo()` and the index it reports back both stay centred. The two agree only where a slide fills the track.
+- `sensitivity` scaled the pointer travel. `drop-sensitivity` multiplied the projected throw. The drag service projects the settle per device now, so neither has a value to scale.
+- `scroll-snap-type: none` frees a scroll or touch release, not a mouse drag: `CarouselDrag` scrolls to a slide on every drop. Drop `CarouselDrag` for a freeform mouse release too.
+
+#### Events
+
+| v1.x                                        | v2.x                                                     |
+| ------------------------------------------- | -------------------------------------------------------- |
+| `goto`, on every `goTo()` call              | no equivalent                                            |
+| `index`, on every `goTo()` and every resize | `index`, on a change of index only                       |
+| `SliderDrag` `start`, `drag`, `drop`, …     | no equivalent — `CarouselDrag` emits nothing             |
+| —                                           | `progress`, plus a `--carousel-progress` custom property |
+
+v1 re-ran `goTo()` from `refresh()`, and `refresh()` ran on every resize, so `index` fired with an unchanged value. A listener written to filter that out can be simplified.
+
+#### API
+
+| v1.x                   | v2.x                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------ |
+| `goTo(index)`          | `goTo(index)` — asynchronous, also takes `'next'`, `'previous'`, `'first'`, `'last'`, `'random'` |
+| `goNext()`, `goPrev()` | unchanged names, asynchronous                                                                    |
+| `refresh()`            | `resized()`                                                                                      |
+| `indexMax`             | `maxIndex`                                                                                       |
+| `currentSliderItem`    | `items.items[currentIndex]`                                                                      |
+| `states`, `origins`    | `positions`, the centred scroll offset of every slide                                            |
+
+#### Behaviour with no equivalent
+
+- **Arrow keys.** `Slider` bound <kbd>←</kbd> and <kbd>→</kbd> on the `wrapper` ref. `Carousel` binds nothing to them on purpose — a snap track ignores them, and a text field inside a slide needs them. Ship `CarouselBtn` controls.
+- **`tabindex="0"` on the track.** Yours to write in v1. `CarouselWrapper` writes it, and only when nothing inside the track is focusable. Remove yours.
+- **`.is-active` on the current slide.** `CarouselItem` sets a `--carousel-item-active` custom property, `1` on the current slide and `0` on the others. Select on the property, not on a class.
+- **Mouse drag on a touch screen.** `SliderDrag` mounted everywhere. `CarouselDrag` mounts on `(pointer: fine)` only; a touch screen scrolls natively.
+- **Looping.** No `Slider` option looped, and `Carousel`'s `boundary="loop"` wraps the index while the scroller clamps. Leave it at `clamp`.
+
+#### Migration steps
+
+1. Rename every `data-component` token, every import and every subpath.
+2. Move the overflow: root to wrapper, plus `scroll-snap-type` and `scroll-snap-align`. See [the CSS change](#the-css-change).
+3. Add `data-component="CarouselWrapper"` to the element that was `data-ref="wrapper"`, and drop the ref.
+4. Delete `data-option-mode`, `data-option-contain`, `data-option-fit-bounds`, `data-option-sensitivity` and `data-option-drop-sensitivity`.
+5. Replace `data-option-prev` / `data-option-next` on each button with `data-option-action="prev"` / `data-option-action="next"`.
+6. Give the root an `aria-label` and every button a name. See [the `Carousel` accessibility contract](#carousel).
+7. Replace `goto` listeners with `index`.
+8. Replace `.is-active` selectors with `--carousel-item-active`.
+9. Delete `registerComponents(Slider, SliderBtn, …)` down to `registerComponent(Carousel)`.
 
 ### Removed templates
 
@@ -355,8 +488,6 @@ This includes components whose payload was already an object: `Fetch` and `Dragg
 | `Indexable`       | `index`                            | `[index]`                | `{ index }`                |
 | `Prefetch`        | `prefetched`                       | `[url]`                  | `{ url }`                  |
 | `Sentinel`        | `intersected`                      | `[entries]`              | `{ isInView, entry }`      |
-| `Slider`          | `index`, `goto`                    | `[index]`                | `{ index }`                |
-| `SliderDrag`      | `start`, `drag`, `drop`, …         | `[props]`                | `props`                    |
 | `Tabs`            | `tabs-enable` / `tabs-disable`     | `[item]`                 | `{ index, btn, content }`  |
 | `Timer`           | `timer-*`                          | `[]`                     | `null`                     |
 | `TimerProgress`   | `timer-progress`                   | `[ratio]`                | `{ ratio }`                |
@@ -449,19 +580,19 @@ class Reveal extends withTransition(Base) {
 | ------------------------------------ | ------------------------------- |
 | `@studiometa/ui/scheduler`           | `@studiometa/js-toolkit`        |
 | `@studiometa/ui/types`               | removed with the `Frame` family |
-| `@studiometa/ui/AbstractSliderChild` | `SliderContext`                 |
+| `@studiometa/ui/AbstractSliderChild` | `AbstractCarouselChild`         |
 
 Every dropped or renamed component takes its subpath with it. New subpaths: `/AbstractFigure`, `/AbstractFigureDynamic`, `/AbstractTrack`, `/ActionEvent`, `/TrackEvent`, `/DataRegistry`.
 
 ### Removed types
 
-| v1.x                                                                                                                                                               | v2.x                                             |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
-| `CarouselStore`                                                                                                                                                    | `CarouselState`, `CarouselApi`                   |
-| `SliderStore`                                                                                                                                                      | `SliderState`, `SliderApi`                       |
-| `IndexableInstructions`                                                                                                                                            | `IndexableInstruction`                           |
-| `TransitionConstructor`, `FetchConstructor`, `FetchShopifyPartialConstructor`, `FetchShopifySectionConstructor`                                                    | removed                                          |
-| `ClickOutsideProps`, `TargetProps`, `CarouselItemProps`, `CarouselWrapperProps`, `AbstractCarouselChildProps`, `AbstractCarouselComponentProps`, `SliderItemProps` | removed — those components declare no props type |
+| v1.x                                                                                                                                            | v2.x                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `CarouselStore`                                                                                                                                 | `CarouselState`, `CarouselApi`                   |
+| `SliderStore`                                                                                                                                   | `CarouselState`, `CarouselApi`                   |
+| `IndexableInstructions`                                                                                                                         | `IndexableInstruction`                           |
+| `TransitionConstructor`, `FetchConstructor`, `FetchShopifyPartialConstructor`, `FetchShopifySectionConstructor`                                 | removed                                          |
+| `ClickOutsideProps`, `TargetProps`, `CarouselItemProps`, `CarouselWrapperProps`, `AbstractCarouselChildProps`, `AbstractCarouselComponentProps` | removed — those components declare no props type |
 
 `Disclosure` and `DisclosureGroup` lose their props type parameter: `Disclosure<MyProps>` no longer compiles. Extend the class and declare your own fields.
 
