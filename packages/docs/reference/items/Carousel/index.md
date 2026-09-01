@@ -22,7 +22,10 @@ A carousel is authored from a few nested components:
 - a `CarouselWrapper` holding the track, which is also the scroll container — add `CarouselDrag` on the same element to enable pointer dragging;
 - one `CarouselItem` per slide;
 - optional `CarouselBtn` controls to move to the previous, next or a specific item, each with a name of its own;
-- an optional `CarouselPlay` button to rotate the carousel on a timer.
+- an optional `CarouselPlay` button to rotate the carousel on a timer;
+- optional `CarouselDots`, `CarouselThumbnails`, `CarouselCount` and `CarouselProgress` controls, each on its own element.
+
+Every control finds the carousel through the shared context, so none of them takes a selector and none of them has to be written in a particular order — a control declared before the track waits for it, and one declared outside a carousel does nothing.
 
 ::: code-group
 
@@ -69,6 +72,40 @@ A carousel does not rotate on its own. Add a [`CarouselPlay`](./js-api#carouselp
 registerComponents(Carousel, CarouselPlay);
 ```
 
+### Dots, thumbnails, a count and a progress bar
+
+Four more controls, each on its own element, each optional:
+
+```twig
+<div data-component="Carousel" aria-label="Product images">
+  <div data-component="CarouselWrapper">…</div>
+
+  <div data-component="CarouselThumbnails">
+    {% for image in images %}
+      <button type="button" data-ref="thumbs[]">
+        <img src="{{ image.thumb }}" alt="{{ image.alt }}">
+      </button>
+    {% endfor %}
+  </div>
+
+  <div data-component="CarouselDots">
+    {% for image in images %}
+      <button type="button" data-ref="dots[]"></button>
+    {% endfor %}
+  </div>
+
+  <p data-component="CarouselCount">
+    <span data-ref="current"></span> / <span data-ref="total"></span>
+  </p>
+
+  <div data-component="CarouselProgress" aria-hidden="true" class="overflow-hidden">
+    <span data-ref="progress"></span>
+  </div>
+</div>
+```
+
+`Carousel` declares all four, so `registerComponent(Carousel)` is enough. See the [controls example](./examples#controls) and the [JS API](./js-api#carouseldots).
+
 ### Vertical carousel
 
 Set the [`axis`](./js-api#axis) option to `y` to scroll vertically instead of horizontally:
@@ -101,14 +138,16 @@ The component implements the [WAI-ARIA carousel pattern](https://www.w3.org/WAI/
 
 ### What the component does
 
-| Element           | Written                                                                                      |
-| ----------------- | -------------------------------------------------------------------------------------------- |
-| `Carousel`        | `role="group"`, unless the markup already has a role                                         |
-| `CarouselItem`    | `role="group"`, plus an `aria-label` of `1 of 4` when the slide has no name of its own       |
-| `CarouselItem`    | `inert`, on every slide that does not intersect the track                                    |
-| `CarouselWrapper` | `tabindex="0"`, a `role` and a name — only when nothing inside the track is focusable        |
-| `CarouselWrapper` | `scroll-padding`, mirroring the track's own padding                                          |
-| `CarouselBtn`     | `disabled` on a `prev`/`next` at its end, `aria-disabled` on the picker of the current slide |
+| Element              | Written                                                                                      |
+| -------------------- | -------------------------------------------------------------------------------------------- |
+| `Carousel`           | `role="group"`, unless the markup already has a role                                         |
+| `CarouselItem`       | `role="group"`, plus an `aria-label` of `1 of 4` when the slide has no name of its own       |
+| `CarouselItem`       | `inert`, on every slide that does not intersect the track                                    |
+| `CarouselWrapper`    | `tabindex="0"`, a `role` and a name — only when nothing inside the track is focusable        |
+| `CarouselWrapper`    | `scroll-padding`, mirroring the track's own padding                                          |
+| `CarouselBtn`        | `disabled` on a `prev`/`next` at its end, `aria-disabled` on the picker of the current slide |
+| `CarouselDots`       | `aria-current="true"` on the current dot, plus an `aria-label` on every unnamed dot          |
+| `CarouselThumbnails` | `aria-current="true"` on the open thumbnail, plus an `aria-label` on every unnamed one       |
 
 **Keyboard navigation is the buttons, not the arrow keys.** A `scroll-snap` track does not respond usefully to <kbd>ArrowRight</kbd> — measured in Chromium 151 and Firefox 153, one press scrolls about 40 pixels and snaps straight back, and <kbd>Home</kbd>, <kbd>End</kbd>, <kbd>PageUp</kbd> and <kbd>PageDown</kbd> do nothing at all on the horizontal axis. So ship `CarouselBtn` controls: they are native buttons, they are in the tab order, and the APG's contract for a non-tabbed carousel is <kbd>Tab</kbd> plus the buttons. No handler is bound to the arrow keys, deliberately — a text input inside a slide needs them.
 
@@ -116,7 +155,11 @@ The component implements the [WAI-ARIA carousel pattern](https://www.w3.org/WAI/
 
 **No `aria-roledescription`.** Neither `carousel` on the root nor `slide` on an item. The attribute is not translated by the browser or the screen reader, so an English string is read out verbatim in a French or German page — NVDA spells an unknown word letter by letter. Write it yourself, in your own language, if you want it; the component gives the root the `role` the attribute needs to be honoured, and never overwrites an attribute you wrote.
 
-**No `aria-live` on the track**, in any form, and no `tablist`/`tab` semantics on the pickers. Both are noisy in practice; see the [JS API notes](./js-api#carouselbtn).
+**No `aria-live` on the track**, in any form, and no `tablist`/`tab` semantics on the pickers — not on a numeric `CarouselBtn`, not on `CarouselDots`, not on `CarouselThumbnails`. Both are noisy in practice; see the [JS API notes](./js-api#carouselbtn).
+
+**The pickers mark the current entry with `aria-current`, never `disabled`.** A `disabled` button leaves the accessibility tree, so a set of dots would lose one every time the carousel moved. `[aria-current="true"]` is also the CSS selector to style the active dot or thumbnail with.
+
+**A picker names the slide it opens.** A dot with no name of its own gets the carousel's own `slide-label`, so the dots and the slides read the same and translate through the same option. A thumbnail whose image already carries a real `alt` keeps it, because the caption is always a better name than the position.
 
 **Reduced motion is observed at runtime.** `prefers-reduced-motion: reduce` turns the programmatic smooth scroll into an instant one. The setting is watched, not sampled at startup, so toggling it mid-session takes effect.
 

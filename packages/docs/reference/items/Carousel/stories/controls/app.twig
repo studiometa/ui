@@ -1,0 +1,57 @@
+{% set count = 5 %}
+
+{# Every control resolves the carousel through the context, so none of them
+   names a selector and none of them has to be ordered against the others. #}
+<div data-component="Carousel" aria-label="Product images" class="grid gap-6 p-10">
+  <div data-component="CarouselWrapper CarouselDrag"
+    class="flex items-center gap-4 w-full overflow-x-auto snap-x snap-mandatory"
+    style="scrollbar-width: none;">
+    {% for i in 1..count %}
+      <div data-component="CarouselItem"
+        class="snap-center shrink-0 w-2/3 aspect-video rounded-xl overflow-hidden">
+        <img src="https://picsum.photos/640/360?rand={{ i }}"
+          alt="View {{ i }} of the product"
+          class="w-full h-full object-cover">
+      </div>
+    {% endfor %}
+  </div>
+
+  {# Continuous: it follows the drag, not the index. #}
+  <div data-component="CarouselProgress"
+    aria-hidden="true"
+    class="relative w-full h-1 rounded-full bg-gray-200 overflow-hidden">
+    <span data-ref="progress" class="absolute inset-0 bg-black rounded-full"></span>
+  </div>
+
+  {# The thumbnails name themselves from each image's `alt`. #}
+  <div data-component="CarouselThumbnails" class="flex items-center justify-center gap-2">
+    {% for i in 1..count %}
+      <button type="button" data-ref="thumbs[]"
+        class="
+          w-16 aspect-video rounded overflow-hidden ring-2 ring-transparent
+          aria-[current=true]:ring-black
+        ">
+        <img src="https://picsum.photos/160/90?rand={{ i }}"
+          alt="View {{ i }}"
+          class="w-full h-full object-cover">
+      </button>
+    {% endfor %}
+  </div>
+
+  <div class="flex items-center justify-center gap-4">
+    {# The dots take their names from the carousel's `slide-label` option. #}
+    <div data-component="CarouselDots" class="flex items-center gap-2">
+      {% for i in 1..count %}
+        <button type="button" data-ref="dots[]"
+          class="
+            w-2 h-2 rounded-full bg-gray-300 transition
+            aria-[current=true]:bg-black aria-[current=true]:scale-150
+          "></button>
+      {% endfor %}
+    </div>
+
+    <p data-component="CarouselCount" class="text-sm tabular-nums">
+      <span data-ref="current"></span> / <span data-ref="total"></span>
+    </p>
+  </div>
+</div>

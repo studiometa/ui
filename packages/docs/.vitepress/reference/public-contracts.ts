@@ -95,6 +95,22 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'CarouselCountProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Carousel/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'CarouselDotsProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Carousel/js-api',
+    status: 'stable',
+  },
+  {
     name: 'CarouselDragProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',
@@ -104,6 +120,14 @@ export const publicContractSymbols = [
   },
   {
     name: 'CarouselPlayProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Carousel/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'CarouselProgressProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',
     importPath: '@studiometa/ui',
@@ -128,6 +152,14 @@ export const publicContractSymbols = [
   },
   {
     name: 'CarouselState',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Carousel/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'CarouselThumbnailsProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',
     importPath: '@studiometa/ui',

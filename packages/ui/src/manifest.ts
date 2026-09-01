@@ -27,6 +27,14 @@ export const manifest: ComponentManifest = {
     mountStrategy: 'eager',
     load: () => import('./Carousel/CarouselBtn.js').then(({ CarouselBtn }) => CarouselBtn),
   },
+  CarouselCount: {
+    mountStrategy: 'eager',
+    load: () => import('./Carousel/CarouselCount.js').then(({ CarouselCount }) => CarouselCount),
+  },
+  CarouselDots: {
+    mountStrategy: 'eager',
+    load: () => import('./Carousel/CarouselDots.js').then(({ CarouselDots }) => CarouselDots),
+  },
   CarouselDrag: {
     mountStrategy: 'eager',
     load: () => import('./Carousel/CarouselDrag.js').then(({ CarouselDrag }) => CarouselDrag),
@@ -38,6 +46,18 @@ export const manifest: ComponentManifest = {
   CarouselPlay: {
     mountStrategy: 'eager',
     load: () => import('./Carousel/CarouselPlay.js').then(({ CarouselPlay }) => CarouselPlay),
+  },
+  CarouselProgress: {
+    mountStrategy: 'eager',
+    load: () =>
+      import('./Carousel/CarouselProgress.js').then(({ CarouselProgress }) => CarouselProgress),
+  },
+  CarouselThumbnails: {
+    mountStrategy: 'eager',
+    load: () =>
+      import('./Carousel/CarouselThumbnails.js').then(
+        ({ CarouselThumbnails }) => CarouselThumbnails,
+      ),
   },
   CarouselWrapper: {
     mountStrategy: 'eager',

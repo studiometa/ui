@@ -22,6 +22,19 @@ export interface CarouselState {
 export interface CarouselApi {
   state: Signal<CarouselState>;
   /**
+   * The continuous scroll progress of the track, from `0` to `1`.
+   *
+   * A signal of its own rather than a field on {@link CarouselState}: the index
+   * changes once per slide, this changes once per frame while the track moves,
+   * and folding them together would re-run every index-driven control — each of
+   * which writes attributes — sixty times a second.
+   *
+   * It is the scroll position, not `index / (total - 1)`. The two agree only at
+   * rest and only in a one-slide-at-a-time layout, and the scroll-derived one is
+   * the value `animation-timeline: scroll()` replaces natively.
+   */
+  progress: Signal<number>;
+  /**
    * The carousel's own element.
    *
    * Exposed for one job: the scroll track has to mirror the carousel's
