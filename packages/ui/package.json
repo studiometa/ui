@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "description": "Accessible and composable JavaScript behaviors and templates",
   "publishConfig": {
     "access": "public"
