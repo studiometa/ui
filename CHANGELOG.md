@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.11.1](https://github.com/studiometa/ui/compare/1.11.0..1.11.1) (2026-09-01)
+
+This patch extends the `historyUrl` separation introduced in `1.11.0` to the declarative link and form handlers, which still bypassed it.
+
 ### Fixed
 
 - **Fetch:** apply the `historyUrl` separation to a link click and a form submit, not only to a bare `fetch()` call — the declarative handlers passed the resolved URL on, which read as a caller naming a destination and kept a `src` in the address bar ([#646](https://github.com/studiometa/ui/pull/646))
