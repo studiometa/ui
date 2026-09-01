@@ -97,8 +97,12 @@ function inertFlags(items: HTMLElement[]): boolean[] {
  * rather than a stub standing in for it.
  */
 async function emulateReducedMotion(reduce: boolean): Promise<void> {
+  // Both states are pinned. An empty `features` array clears the override and
+  // falls back to whatever the host prefers, which is not the same thing as
+  // `no-preference`: CI runners with reduce-motion enabled then failed the
+  // "back to smooth" assertion while a laptop passed it.
   await cdp().send('Emulation.setEmulatedMedia', {
-    features: reduce ? [{ name: 'prefers-reduced-motion', value: 'reduce' }] : [],
+    features: [{ name: 'prefers-reduced-motion', value: reduce ? 'reduce' : 'no-preference' }],
   });
 }
 

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { getInstance, registerComponents } from '@studiometa/js-toolkit';
-import { recordEvents, resetDom, settle } from '@studiometa/js-toolkit/test';
+import { recordEvents, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
 import { Timer } from '#private/Timer/Timer.js';
 
 registerComponents(Timer);
@@ -116,16 +116,17 @@ describe('Timer', () => {
   });
 
   it('re-arms itself and emits timer-tick when repeat is set', async () => {
-    // `settle()` itself takes real time (its own polling waits), so the delay
-    // must be comfortably longer than that to observe exactly one full cycle
-    // rather than however many `settle()`'s own wait already consumed.
+    // Assert the shape of one cycle, not how many fit in a fixed wait. A timer
+    // set to repeat keeps going, so counting on a wall-clock window means the
+    // result depends on machine speed: this asserted an exact four events and
+    // saw seven on a CI runner roughly eight times slower than a laptop.
     const el = renderUnmounted('data-option-delay="0.15" data-option-repeat="true"');
     const events = record(el, 'timer-start', 'timer-end', 'timer-tick');
     await settle();
 
-    await wait(150);
+    await waitFor(() => events().length >= 4);
 
-    expect(events()).toEqual(['timer-start', 'timer-end', 'timer-tick', 'timer-start']);
+    expect(events().slice(0, 4)).toEqual(['timer-start', 'timer-end', 'timer-tick', 'timer-start']);
   });
 
   it('cancels the pending countdown when unmounted', async () => {
