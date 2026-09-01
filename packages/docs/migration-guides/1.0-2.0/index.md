@@ -191,13 +191,84 @@ Copy the template into your project if you still need it. Every Twig template ot
 
 ## New components
 
-| v1.x                            | v2.x           |
-| ------------------------------- | -------------- |
-| a hand-rolled carousel autoplay | `CarouselPlay` |
+| v1.x                            | v2.x                 |
+| ------------------------------- | -------------------- |
+| a hand-rolled carousel autoplay | `CarouselPlay`       |
+| `SliderDots`                    | `CarouselDots`       |
+| `SliderCount`                   | `CarouselCount`      |
+| `SliderProgress`                | `CarouselProgress`   |
+| —                               | `CarouselThumbnails` |
 
-`CarouselPlay` is a `<button>` inside the carousel, off unless the element is there. It extends `TimerProgress`, so `delay`, `repeat`, `autostart` and the `timer-*` events are the ones you already know. `Carousel` declares it, so `registerComponent(Carousel)` is enough.
+`Carousel` declares all five, so `registerComponent(Carousel)` is enough.
+
+`CarouselPlay` is a `<button>` inside the carousel, off unless the element is there. It extends `TimerProgress`, so `delay`, `repeat`, `autostart` and the `timer-*` events are the ones you already know.
 
 Put it first inside the carousel: it must be the first focusable element. Turning the automatic start off is `data-option-no-autostart`, never `data-option-autostart="false"`.
+
+### `SliderDots` → `CarouselDots`
+
+```diff
+- <div data-component="SliderDots" data-option-enter-to="is-active" data-option-enter-keep>
++ <div data-component="CarouselDots" data-option-enter-to="is-active" data-option-enter-keep>
+    <button type="button" data-ref="dots[]"></button>
+  </div>
+```
+
+| v1.x               | v2.x                                                       |
+| ------------------ | ---------------------------------------------------------- |
+| `dots[]` ref       | `dots[]` ref — unchanged                                   |
+| transition options | unchanged                                                  |
+| —                  | `aria-current="true"` on the current dot                   |
+| —                  | `aria-label` on every dot with no name, from `slide-label` |
+
+Style the active dot with `[aria-current="true"]`; the transition classes still work.
+
+### `SliderCount` → `CarouselCount`
+
+```diff
+- <p data-component="SliderCount">
++ <p data-component="CarouselCount">
+    <span data-ref="current"></span> / <span data-ref="total"></span>
+  </p>
+```
+
+| v1.x                                | v2.x                                        |
+| ----------------------------------- | ------------------------------------------- |
+| `current` ref, required — it throws | `current` ref, optional                     |
+| `total` ref, optional               | `total` ref, optional                       |
+| —                                   | `carousel-count.no-refs` warning when empty |
+
+### `SliderProgress` → `CarouselProgress`
+
+```diff
+- <div data-component="SliderProgress">
++ <div data-component="CarouselProgress" aria-hidden="true">
+    <span data-ref="progress"></span>
+  </div>
+```
+
+| v1.x                                         | v2.x                                          |
+| -------------------------------------------- | --------------------------------------------- |
+| `progress` ref                               | `progress` ref — unchanged                    |
+| index-derived, one step per slide            | continuous, following the scroll offset       |
+| `translate3d(<px>, 0, 0)` from `clientWidth` | `translate3d(<%>, <%>, 0)`, axis-aware        |
+| —                                            | `carousel-progress.no-ref` warning when empty |
+
+Give the container `overflow: hidden` and the bar `width: 100%`. Nothing else changes.
+
+### `CarouselThumbnails`
+
+New. One image button per slide:
+
+```html
+<div data-component="CarouselThumbnails">
+  <button type="button" data-ref="thumbs[]">
+    <img src="/front.jpg" alt="Red dress, front view" />
+  </button>
+</div>
+```
+
+The image's `alt` names the button. A thumbnail with no name gets `slide-label` instead. The open one carries `aria-current="true"`.
 
 ## Renamed components
 

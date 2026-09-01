@@ -15,6 +15,12 @@ A carousel is composed of several components working together:
 - `CarouselBtn` — a previous, next or go-to control
 - `CarouselDrag` — optional pointer-drag behavior, mounted only on fine-pointer devices
 - `CarouselPlay` — optional rotation control, which rotates the carousel on a timer
+- `CarouselDots` — optional pagination dots, one button per slide
+- `CarouselThumbnails` — optional thumbnail picker, one image button per slide
+- `CarouselCount` — optional "3 / 5" readout
+- `CarouselProgress` — optional progress bar, following the scroll offset
+
+Every control resolves the carousel through the shared `CarouselContext`, so none of them names a selector, imports the `Carousel` class or has to be ordered against the others. A control mounted before its carousel waits for it; a control mounted outside a carousel does nothing at all.
 
 ## Options
 
@@ -133,12 +139,15 @@ Rebuild the observer that decides which slides are presented, and re-apply `iner
 
 ## Diagnostics
 
-Both are development-only warnings on the [toolkit diagnostic channel](https://js-toolkit-v4.studiometa.dev/).
+Every one is a development-only warning on the [toolkit diagnostic channel](https://js-toolkit-v4.studiometa.dev/).
 
-| Code                   | Meaning                                                                |
-| ---------------------- | ---------------------------------------------------------------------- |
-| `carousel.unnamed`     | The root has neither an `aria-label` nor an `aria-labelledby`.         |
-| `carousel.unnamed-btn` | A `CarouselBtn` has no text, no `aria-label` and no `aria-labelledby`. |
+| Code                                | Meaning                                                                |
+| ----------------------------------- | ---------------------------------------------------------------------- |
+| `carousel.unnamed`                  | The root has neither an `aria-label` nor an `aria-labelledby`.         |
+| `carousel.unnamed-btn`              | A `CarouselBtn` has no text, no `aria-label` and no `aria-labelledby`. |
+| `carousel-count.no-refs`            | A `CarouselCount` has neither a `current` nor a `total` ref.           |
+| `carousel-progress.no-ref`          | A `CarouselProgress` has no `progress` ref.                            |
+| `carousel-play.not-first-focusable` | A `CarouselPlay` is not the first focusable element in the carousel.   |
 
 ## Events
 
@@ -188,6 +197,141 @@ Pickers stay plain buttons — no `role="tab"`, no `role="tablist"`, no `aria-se
 </button>
 ```
 <!-- prettier-ignore-end -->
+
+## CarouselDots
+
+Pagination dots: one `<button>` per slide, marking the one showing. One component over the whole list rather than one per dot, so adding a slide means adding a dot and nothing has to be renumbered.
+
+```html
+<div data-component="CarouselDots">
+  <button type="button" data-ref="dots[]"></button>
+  <button type="button" data-ref="dots[]"></button>
+  <button type="button" data-ref="dots[]"></button>
+</div>
+```
+
+### `dots[]`
+
+- Type: `HTMLButtonElement[]`
+
+One button per slide, in slide order. The dot at position _n_ goes to slide _n_. Dots added after mount are picked up with no `$update()`.
+
+### What it writes
+
+| Attribute             | On                                | Meaning                                                              |
+| --------------------- | --------------------------------- | -------------------------------------------------------------------- |
+| `aria-current="true"` | the dot for the current slide     | The marker, and the CSS hook: style `[aria-current="true"]`.         |
+| `aria-label`          | every dot with no name of its own | The carousel's [`slide-label`](#slide-label), so `1 of 5`, `2 of 5`… |
+
+**No tab semantics.** No `role="tablist"`, no `role="tab"`, no `aria-selected`. The APG prescribes them for a "tabbed carousel" and every piece of user testing published since contradicts it — the objection has been open on the APG repository, unanswered, for eight years. Tab semantics also promise arrow-key navigation and a roving `tabindex`, which this widget does not implement; a set of dots that announces arrow keys and ignores them is worse than one that never claimed them.
+
+**Never `disabled`.** The dot for the current slide keeps its place in the tab order. `disabled` would take it out of the accessibility tree, so the set would silently lose one every time the carousel moved. Same reason [`CarouselBtn`](#carouselbtn) uses `aria-disabled` for a numeric action.
+
+**Naming.** A dot the author named — text, `aria-label`, `aria-labelledby`, or an `<img alt>` inside it — keeps its name. Every other one gets the positional fallback, including the common case of a dot whose only content is an `aria-hidden` bullet: its `textContent` is not empty but its accessible name is, so it is named anyway.
+
+It composes [`withTransition`](/reference/items/Transition/), so the [transition options](/reference/items/Transition/js-api) apply to the dots: the outgoing dot leaves while the incoming one enters.
+
+<!-- prettier-ignore-start -->
+```html {2,3}
+<div data-component="CarouselDots"
+  data-option-enter-to="scale-150"
+  data-option-enter-keep>
+  …
+</div>
+```
+<!-- prettier-ignore-end -->
+
+## CarouselThumbnails
+
+A thumbnail picker: one image button per slide, marking the one open. The control the interaction research asks for — thumbnails are the measured winner at 55% of visitors, more than the arrows and the swipe gesture together, and the fix for the finding that 50% of desktop users could not find a product's additional images when only indicators were shown.
+
+```html
+<div data-component="CarouselThumbnails">
+  <button type="button" data-ref="thumbs[]">
+    <img src="/product-front.jpg" alt="Red dress, front view" />
+  </button>
+  <button type="button" data-ref="thumbs[]">
+    <img src="/product-back.jpg" alt="Red dress, back view" />
+  </button>
+</div>
+```
+
+### `thumbs[]`
+
+- Type: `HTMLButtonElement[]`
+
+One button per slide, in slide order. The thumbnail at position _n_ opens slide _n_.
+
+### What it writes
+
+| Attribute             | On                                      | Meaning                                       |
+| --------------------- | --------------------------------------- | --------------------------------------------- |
+| `aria-current="true"` | the thumbnail for the open slide        | The marker, and the CSS hook.                 |
+| `aria-label`          | every thumbnail with no name of its own | The carousel's [`slide-label`](#slide-label). |
+
+The semantics are [`CarouselDots`](#carouseldots)' semantics, for the same reasons: plain buttons, no tab roles, never `disabled`.
+
+**Naming is the part to get right.** `<button><img alt="Red dress, front"></button>` already has an accessible name — the image's `alt` — and it is a far better name than a position, so it is left alone. The positional fallback is written only when the button would otherwise be nameless, which is the `alt=""` decorative-image case an author reaches for without realising the button goes with it.
+
+::: tip
+Write a real `alt` on every thumbnail image. `3 of 5` says how many slides there are; `Red dress, back view` says which one this button opens, which is the reason the control exists.
+:::
+
+## CarouselCount
+
+The `3 / 5` readout.
+
+```html
+<p data-component="CarouselCount">
+  <span data-ref="current"></span>
+  /
+  <span data-ref="total"></span>
+</p>
+```
+
+### `current`
+
+- Type: `HTMLElement`
+- Optional
+
+Receives the **one-based** position of the current slide. `index` is zero-based everywhere else in the API; a person counting slides starts at one.
+
+### `total`
+
+- Type: `HTMLElement`
+- Optional
+
+Receives the live slide count. Appending a slide rewrites it.
+
+Both refs are optional and both are guarded, so a count that shows only the total is valid markup. A `CarouselCount` with neither reports `carousel-count.no-refs` and does nothing.
+
+**No `aria-live`.** The count repeats something the user has just done — pressed a button, or scrolled — and announcing "3 of 5" over the slide a screen reader is already reading is noise. The slides carry their own names, which is where the position is announced from.
+
+## CarouselProgress
+
+A progress bar following the carousel's scroll offset.
+
+```html
+<div data-component="CarouselProgress" aria-hidden="true" style="overflow: hidden">
+  <span data-ref="progress"></span>
+</div>
+```
+
+### `progress`
+
+- Type: `HTMLElement`
+
+The bar. It is translated from fully out of view at `0` to fully in place at `1`, so put it in a container with `overflow: hidden` and it is revealed rather than stretched — a bar with a gradient, a border radius or an icon on its end keeps its proportions. A `CarouselProgress` without this ref reports `carousel-progress.no-ref`.
+
+**Continuous, not index-derived.** It reads the carousel's scroll progress, so it moves with the finger during a drag instead of teleporting one step per slide. Under a peek or a multi-slide layout, `index / (total - 1)` is simply a different quantity from how far the track has scrolled; this is the second one, and it is the value [`animation-timeline: scroll()`](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline/scroll) replaces natively.
+
+It measures nothing: the offset is a percentage of the bar's own width, so there is no layout read per frame, and the vertical axis is the same expression with the components swapped. The axis is read per update, so a carousel that turns vertical at a breakpoint unwinds the horizontal transform on its own.
+
+::: tip
+There is a version of this with no JavaScript at all. `Carousel` already sets [`--carousel-progress`](#carousel-progress) on its root and custom properties inherit, so any descendant can write `transform: scaleX(var(--carousel-progress))`. Use `CarouselProgress` when you want the bar driven for you on either axis; use the custom property when you want to drive something else with it.
+:::
+
+The bar is decorative — it repeats the scroll position, which is not information a screen reader user is missing. Put `aria-hidden="true"` on the element that holds it. The component does not write it, because that element may hold content of yours that is not decorative.
 
 ## CarouselWrapper
 
