@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v1.11.0](https://github.com/studiometa/ui/compare/1.10.0..1.11.0) (2026-09-01)
+
+This release is led by `@studiometa/ui-motion`, a new package for declarative animation with [Motion](https://motion.dev), and by the `dom-update` protocol event — a shared announcement that lets a component substitute how an imminent DOM change is applied, which `DataBind`, `Dialog` and `Fetch` all now speak.
+
 ### Added
 
 - **@studiometa/ui-motion:** add a new `@studiometa/ui-motion` package with the `Motion`, `MotionScrollTimeline`, `MotionSequence` and `MotionView` components to animate elements declaratively with [Motion](https://motion.dev) ([#628](https://github.com/studiometa/ui/pull/628), [#629](https://github.com/studiometa/ui/pull/629), [#630](https://github.com/studiometa/ui/pull/630), [#633](https://github.com/studiometa/ui/pull/633), [#636](https://github.com/studiometa/ui/pull/636), [#637](https://github.com/studiometa/ui/pull/637), [#638](https://github.com/studiometa/ui/pull/638), [#640](https://github.com/studiometa/ui/pull/640), [#641](https://github.com/studiometa/ui/pull/641))
@@ -13,8 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
-- **Fetch:** send every value of a repeated GET form field instead of the last one, so a checkbox group or a `<select multiple>` no longer reaches the server with one of its values
-- **Fetch:** push the element's own destination in history rather than the fetched URL, so a `src` pointing at a lighter endpoint no longer leaks into the address bar — see the new `historyUrl` getter
+- **Fetch:** send every value of a repeated GET form field instead of the last one, so a checkbox group or a `<select multiple>` no longer reaches the server with one of its values ([#643](https://github.com/studiometa/ui/pull/643))
+- **Fetch:** push the element's own destination in history rather than the fetched URL, so a `src` pointing at a lighter endpoint no longer leaks into the address bar — see the new `historyUrl` getter ([#643](https://github.com/studiometa/ui/pull/643))
 
 ### Changed
 
