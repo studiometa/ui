@@ -316,7 +316,10 @@ export class Fetch<T extends BaseProps = BaseProps>
       this.$el.target !== '_blank'
     ) {
       event.preventDefault();
-      this.fetch(this.url, this.requestInit);
+      // No URL: this is the element's own navigation, so `historyUrl` decides what the
+      // address bar gets. Passing `this.url` here would look identical and read as a
+      // caller naming a destination, which keeps a `src` in history.
+      this.fetch(undefined, this.requestInit);
     }
   }
 
@@ -329,7 +332,10 @@ export class Fetch<T extends BaseProps = BaseProps>
 
     if (this.$el.target !== '_blank') {
       event.preventDefault();
-      this.fetch(this.url, this.requestInit);
+      // No URL: this is the element's own navigation, so `historyUrl` decides what the
+      // address bar gets. Passing `this.url` here would look identical and read as a
+      // caller naming a destination, which keeps a `src` in history.
+      this.fetch(undefined, this.requestInit);
     }
   }
 
