@@ -1,22 +1,4 @@
 import { registerComponents } from '@studiometa/js-toolkit';
-import {
-  Figure,
-  Slider,
-  SliderBtn,
-  SliderCount,
-  SliderDots,
-  SliderDrag,
-  SliderItem,
-  SliderProgress,
-} from '@studiometa/ui';
+import { Carousel, Figure } from '@studiometa/ui';
 
-registerComponents(
-  Figure,
-  Slider,
-  SliderBtn,
-  SliderCount,
-  SliderDots,
-  SliderDrag,
-  SliderItem,
-  SliderProgress,
-);
+registerComponents(Carousel, Figure);

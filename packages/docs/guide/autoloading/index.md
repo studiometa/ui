@@ -96,7 +96,7 @@ The runtime scans the document at startup and then observes it with a `MutationO
 - **Added subtrees** — elements inserted after startup.
 - **Multiple tokens** — space-separated values such as `data-component="Action Timer"`.
 
-The runtime imports and registers each token once for the whole document. When a component registers, it also registers the child components it exposes. For example, `Slider` brings in `SliderItem` and `SliderDrag`, so nested families work without a list of every child.
+The runtime imports and registers each token once for the whole document. When a component registers, it also registers the child components it exposes. For example, `Carousel` brings in `CarouselWrapper`, `CarouselItem`, `CarouselBtn`, `CarouselDrag` and `CarouselPlay`, so nested families work without a list of every child.
 
 The runtime cleans up observers and listeners when an element leaves the DOM. Discovery follows node insertion and removal, so the runtime does not observe a change to the `data-component` attribute of an element already in the DOM. Add or replace the element instead.
 

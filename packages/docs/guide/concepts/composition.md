@@ -6,7 +6,7 @@ The library separates ready-to-use solutions from reusable building blocks. Clas
 
 | Need                                         | Prefer                | Example                                                                                                      |
 | -------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------ |
-| A complete interaction or interface solution | Component             | [`Dialog`](/reference/items/Dialog/), [`Slider`](/reference/items/Slider/)                                   |
+| A complete interaction or interface solution | Component             | [`Dialog`](/reference/items/Dialog/), [`Carousel`](/reference/items/Carousel/)                               |
 | Lower-level behavior to compose or extend    | Primitive             | [`Transition`](/reference/items/Transition/), [`Indexable`](/reference/items/Indexable/)                     |
 | Reusable behavior applied to a class         | Decorator             | [`withTransition`](/reference/items/withTransition/), [`withDeprecation`](/reference/items/withDeprecation/) |
 | Local behavior expressed in markup           | Declarative component | [`Action`](/reference/items/Action/), the [Data family](./index.md#the-data-family)                          |
@@ -27,7 +27,7 @@ A compound component divides one feature into a root orchestrator and focused ch
 </div>
 ```
 
-The `Disclosure` family includes its group behavior and public contracts. Other examples include Slider, Carousel, Menu, Track and MapboxMap. A family's canonical Reference page documents related symbols together even when consumers can import those symbols independently.
+The `Disclosure` family includes its group behavior and public contracts. Other examples include Carousel, Menu, Track and MapboxMap. A family's canonical Reference page documents related symbols together even when consumers can import those symbols independently.
 
 Use an item's **Anatomy** page when its child hierarchy, matching refs or required structure forms part of the contract.
 

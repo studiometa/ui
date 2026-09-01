@@ -6,7 +6,7 @@
 ] %}
 
 <style type="text/css">
-  .is-active { box-shadow: 0 0 0 3px var(--vp-c-brand); }
+  [data-component~="CarouselBtn"][aria-disabled="true"] { box-shadow: 0 0 0 3px var(--vp-c-brand); }
 </style>
 
 <div class="w-full h-full relative overflow-hidden">
@@ -20,21 +20,19 @@
       description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Facilisi tempor, dignissim diam egestas habitant aliquet. Etiam ac a at mattis pellentesque felis, in phasellus.',
       actions: actions,
       attr: {
-        data_component: 'Slider',
-        data_option_mode: 'left',
-        data_option_fit_bounds: true,
-        data_option_contain: true,
+        data_component: 'Carousel',
+        aria_label: 'Hero slides',
         class: 'p-12'
       }
     }
   %}
     {% block background %}
-      <div data-ref="wrapper"
-        tabindex="0"
-        class="absolute top-0 left-0 h-full w-full flex">
+      <div data-component="CarouselWrapper CarouselDrag"
+        class="absolute top-0 left-0 h-full w-full flex overflow-x-auto snap-x snap-mandatory"
+        style="scrollbar-width: none;">
         {% for slide in slides %}
-          <div class="h-full min-w-full hero__gradient"
-            data-component="SliderItem">
+          <div class="h-full min-w-full snap-center hero__gradient"
+            data-component="CarouselItem">
             {% include '@ui/Figure/Figure.twig' with {
               src: 'https://picsum.photos/1200/900?rand=' ~ slide,
               width: 1200,
@@ -53,12 +51,11 @@
       </div>
     {% endblock %}
     {% block actions %}
-      <div data-component="SliderDots"
-        class="absolute bottom-12 space-x-4 flex w-full">
-        {% for slides in slides %}
+      <div class="absolute bottom-12 space-x-4 flex w-full">
+        {% for slide in slides %}
           <button type="button"
-            data-ref="dots[]"
-            data-option-enter-to="is-active"
+            data-component="CarouselBtn"
+            data-option-action="{{ loop.index0 }}"
             class="relative w-3 flex-wrap h-3 bg-white rounded-full">
             <span class="sr-only">Go to slide #{{ loop.index }}</span>
           </button>
