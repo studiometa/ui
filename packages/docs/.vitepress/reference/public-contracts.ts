@@ -95,6 +95,22 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'CarouselDragProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Carousel/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'CarouselPlayProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Carousel/js-api',
+    status: 'stable',
+  },
+  {
     name: 'CarouselProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',

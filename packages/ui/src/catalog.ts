@@ -16,11 +16,15 @@ const components: readonly CuratedComponentMetadata[] = [
   {
     token: 'Carousel',
     group: 'carousel',
+    // `CarouselPlay` is deliberately absent: this list mirrors
+    // `Carousel.config.components`, and the rotation control is registered by
+    // the consumer, or by the autoload manifest, rather than by its parent.
     children: ['CarouselBtn', 'CarouselDrag', 'CarouselItem', 'CarouselWrapper'],
   },
   { token: 'CarouselBtn', group: 'carousel' },
   { token: 'CarouselDrag', group: 'carousel' },
   { token: 'CarouselItem', group: 'carousel' },
+  { token: 'CarouselPlay', group: 'carousel' },
   { token: 'CarouselWrapper', group: 'carousel' },
   { token: 'CircularMarquee', group: 'circular-marquee' },
   { token: 'ClickOutside', group: 'click-outside' },

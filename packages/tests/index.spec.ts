@@ -20,6 +20,7 @@ test("components exports", () => {
       "CarouselContext",
       "CarouselDrag",
       "CarouselItem",
+      "CarouselPlay",
       "CarouselWrapper",
       "CircularMarquee",
       "ClickOutside",
