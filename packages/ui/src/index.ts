@@ -154,7 +154,13 @@ export {
   type SliderState,
 } from "./Slider/index.js";
 export { Sticky, type StickyProps } from "./Sticky/index.js";
-export { Tabs, type TabsProps } from "./Tabs/index.js";
+export {
+  Tabs,
+  TABS_ACTIVATIONS,
+  type TabsActivation,
+  type TabsEventPayload,
+  type TabsProps,
+} from "./Tabs/index.js";
 export { Timer, TimerProgress, type TimerProgressProps, type TimerProps } from "./Timer/index.js";
 export {
   Toast,

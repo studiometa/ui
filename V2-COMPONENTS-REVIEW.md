@@ -50,6 +50,10 @@ Answers to the round-1 comments, verified against source:
 
 - **withIndex** — the port folded the decorator into the concrete `Indexable` class and deleted it, which contradicted the "decorators (4)" list below, where `withIndex` is kept. **Resolution: the review wins, and the decorator is restored.** The behaviour lives in `withIndex()` at `packages/ui/src/decorators/withIndex.ts` and `Indexable` is `withIndex(Base)` plus the component name — one implementation, the same split `withTransition()`/`Transition` already uses. The class alone could not serve a component that already extends something else, which is what a mixin is for.
 
+## Review decisions (round 6)
+
+- **Tabs** — the rewrite the review asked for is **done**. Scope, as built: the WAI-ARIA Tabs pattern in full (`tablist`/`tab`/`tabpanel` roles, `aria-selected`, `aria-controls`/`aria-labelledby`, roving `tabindex`, arrow/`Home`/`End` keys, `aria-orientation`), a new required `list` ref carrying the `tablist` role, the `styles` option **dropped** — with it the last consumer of `config.options[…].merge`, which js-toolkit v4 removed by decision (REPORT.md gap 9) — visibility moved onto the `hidden` property and animation onto nested `Transition`/`ViewTransition` children the way `Dialog` and `Disclosure` already ask for, the `enable`/`disable` events namespaced to `tabs-enable`/`tabs-disable` with a `{ index, btn, content }` payload, and `enableItem()`/`disableItem()` replaced by `goTo()`/`goNext()`/`goPrev()`. **Not** built on `Indexable`/`withIndex`: the mixin's index setter emits its own `index` event and hands back no hook for the DOM work a tab switch needs, so a Tabs on it would have had two overlapping event surfaces and two inert options (`reverse`, `total`) for three lines of modulo arithmetic.
+
 ## @studiometa/ui — components (80)
 
 ### accordion

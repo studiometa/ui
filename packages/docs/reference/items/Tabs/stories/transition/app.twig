@@ -1,0 +1,62 @@
+{% set items = [
+  { id: 'brief', title: 'Brief', content: 'The panel that opens enters its Transition children.' },
+  { id: 'scope', title: 'Scope', content: 'The panel that closes leaves its own, and is hidden once they resolve.' },
+  { id: 'budget', title: 'Budget', content: 'A nested Transition replaces the styles option of v1.' }
+] %}
+
+<style>
+  .story-tab {
+    border-bottom-color: transparent;
+    font-weight: 700;
+    margin-bottom: -1px;
+    margin-left: -1px;
+    padding: 1rem;
+  }
+
+  .story-tab[aria-selected='true'] {
+    border-bottom-color: var(--vp-c-bg);
+  }
+</style>
+
+<div class="max-w-2xl mx-auto">
+  <div data-component="Tabs" data-option-activation="manual">
+    <div
+      data-ref="list"
+      role="tablist"
+      aria-label="Project sections"
+      class="relative flex px-10">
+      {% for item in items %}
+        <button
+          id="transition-tabs-{{ item.id }}-tab"
+          type="button"
+          role="tab"
+          data-ref="btn[]"
+          aria-controls="transition-tabs-{{ item.id }}-panel"
+          aria-selected="{{ loop.first ? 'true' : 'false' }}"
+          tabindex="{{ loop.first ? '0' : '-1' }}"
+          class="story-tab bg-vp-bg border border-vp-c-divider-light">
+          {{ item.title }}
+        </button>
+      {% endfor %}
+    </div>
+    {% for item in items %}
+      <div
+        id="transition-tabs-{{ item.id }}-panel"
+        role="tabpanel"
+        data-ref="content[]"
+        aria-labelledby="transition-tabs-{{ item.id }}-tab"
+        tabindex="0"
+        class="p-10 bg-vp-bg border border-vp-c-divider-light"
+        {{ loop.first ? '' : 'hidden' }}>
+        <div
+          data-component="Transition"
+          data-option-enter-active="transition duration-300 ease-out"
+          data-option-enter-from="translate-y-2 opacity-0"
+          data-option-leave-active="transition duration-200 ease-in"
+          data-option-leave-to="-translate-y-2 opacity-0">
+          {{ item.content }}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>

@@ -1,6 +1,6 @@
 # v1.x → v2.x
 
-v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/). It removes six component families, renames three components, and changes every event payload. There is no compatibility layer.
+v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/). It removes six component families, renames three components, rewrites `Tabs`, and changes every event payload. There is no compatibility layer.
 
 [[toc]]
 
@@ -20,9 +20,10 @@ v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/).
 2. Read [the js-toolkit v3 → v4 guide](https://js-toolkit-v4.studiometa.dev/guide/migration/v3-to-v4.html). It is the larger half of this migration. [Summary below](#js-toolkit-v4-changes-that-reach-your-code).
 3. Replace the [removed components](#removed-components).
 4. Rename the [renamed components](#renamed-components).
-5. Rewrite every `event.detail[0]` as a [named read](#event-payloads).
-6. Rename the [renamed events](#renamed-events).
-7. Check the [removed options, APIs, subpaths and types](#removed-options-and-apis).
+5. Rewrite the markup of the [rewritten components](#rewritten-components).
+6. Rewrite every `event.detail[0]` as a [named read](#event-payloads).
+7. Rename the [renamed events](#renamed-events).
+8. Check the [removed options, APIs, subpaths and types](#removed-options-and-apis).
 
 ## Registering components
 
@@ -186,7 +187,7 @@ The trigger and panel both need an `id`: `Disclosure` wires `aria-controls` and 
 - {% include '@ui/Panel/StyledPanel.twig' with { … } %}
 ```
 
-Copy the template into your project if you still need it. Every other Twig template is unchanged, parameters included.
+Copy the template into your project if you still need it. Every Twig template other than `Tabs.twig` is unchanged, parameters included.
 
 ## Renamed components
 
@@ -217,6 +218,53 @@ Notes:
 - `PrefetchOnInteraction` prefetches on the first of `pointerenter`, `pointerdown` or `focusin`. v1 bound `mouseenter` only, which never fired for touch or keyboard.
 - The `/reference/items/LazyInclude/` and `/reference/items/AnchorScrollTo/` URLs now return 404.
 
+## Rewritten components
+
+### `Tabs`
+
+Same job, new contract: the [WAI-ARIA Tabs pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/) in full.
+
+```html
+<!-- v1 -->
+<div
+  data-component="Tabs"
+  data-option-styles='{ "btn": { "open": { "borderBottomColor": "#fff" } } }'>
+  <button data-ref="btn[]">Tab 1</button>
+  <button data-ref="btn[]">Tab 2</button>
+  <div data-ref="content[]" aria-hidden="false">Panel 1</div>
+  <div data-ref="content[]" aria-hidden="true">Panel 2</div>
+</div>
+
+<!-- v2 -->
+<div data-component="Tabs">
+  <div data-ref="list" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" data-ref="btn[]" aria-selected="true" tabindex="0">
+      Tab 1
+    </button>
+    <button type="button" role="tab" data-ref="btn[]" aria-selected="false" tabindex="-1">
+      Tab 2
+    </button>
+  </div>
+  <div role="tabpanel" data-ref="content[]" tabindex="0">Panel 1</div>
+  <div role="tabpanel" data-ref="content[]" tabindex="0" hidden>Panel 2</div>
+</div>
+```
+
+| v1.x                                     | v2.x                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------- |
+| —                                        | `list` ref, required, carries `role="tablist"` and its name         |
+| `btn[]` ref                              | `btn[]` ref — unchanged, must be a native `<button>`                |
+| `content[]` ref                          | `content[]` ref — unchanged                                         |
+| `data-option-styles`                     | removed — CSS on `[aria-selected="true"]`, or a nested `Transition` |
+| `aria-hidden` on the closed panel        | the `hidden` property                                               |
+| `enableItem(item)` / `disableItem(item)` | `goTo(index)`, `goNext()`, `goPrev()`, `focusTab(index)`            |
+| `items`                                  | `currentIndex`, `length`, `orientation`                             |
+| the first tab, always                    | the first `btn` carrying `aria-selected="true"`                     |
+| —                                        | `activation` option, `automatic` or `manual`                        |
+| —                                        | arrow, <kbd>Home</kbd> and <kbd>End</kbd> keys, roving `tabindex`   |
+
+`Tabs.twig` follows: `label` and `list_attr` are new parameters, `id` is optional, `items[].selected` marks the open tab, and the `title_wrapper` block now renders inside the `role="tablist"` element.
+
 ## Event payloads
 
 In v1 every `detail` was an array of the positional arguments. In v2 it is the payload object, or `null` when there is none.
@@ -246,6 +294,7 @@ This includes components whose payload was already an object: `Fetch` and `Dragg
 | `Sentinel`        | `intersected`                      | `[entries]`              | `{ isInView, entry }`      |
 | `Slider`          | `index`, `goto`                    | `[index]`                | `{ index }`                |
 | `SliderDrag`      | `start`, `drag`, `drop`, …         | `[props]`                | `props`                    |
+| `Tabs`            | `tabs-enable` / `tabs-disable`     | `[item]`                 | `{ index, btn, content }`  |
 | `Timer`           | `timer-*`                          | `[]`                     | `null`                     |
 | `TimerProgress`   | `timer-progress`                   | `[ratio]`                | `{ ratio }`                |
 | `Toast`           | `dismiss`                          | `[element]`              | `{ el }`                   |
@@ -284,6 +333,8 @@ This includes components whose payload was already an object: `Fetch` and `Dragg
 | `DisclosureGroup` | `open`        | `disclosure-group-open`   |
 | `DisclosureGroup` | `close`       | `disclosure-group-close`  |
 | `DisclosureGroup` | `change`      | `disclosure-group-change` |
+| `Tabs`            | `enable`      | `tabs-enable`             |
+| `Tabs`            | `disable`     | `tabs-disable`            |
 
 ```diff
 - <div data-component="Action Disclosure" data-on:after-open="…">
@@ -297,12 +348,14 @@ Removed events:
 
 ## Removed options and APIs
 
-| v1.x                                   | v2.x                                           |
-| -------------------------------------- | ---------------------------------------------- |
-| `Transition` `group` option            | removed — one component drives the others      |
-| `this.$options.reverse = true`         | `this.isReverse = true`                        |
-| `this.$options.boundary = …`           | `this.boundary = …`                            |
-| `viewTransition` from `@studiometa/ui` | `viewTransition` from `@studiometa/js-toolkit` |
+| v1.x                                    | v2.x                                           |
+| --------------------------------------- | ---------------------------------------------- |
+| `Tabs` `styles` option                  | removed — CSS, or a nested `Transition`        |
+| `Tabs` `enableItem()` / `disableItem()` | `goTo(index)`                                  |
+| `Transition` `group` option             | removed — one component drives the others      |
+| `this.$options.reverse = true`          | `this.isReverse = true`                        |
+| `this.$options.boundary = …`            | `this.boundary = …`                            |
+| `viewTransition` from `@studiometa/ui`  | `viewTransition` from `@studiometa/js-toolkit` |
 
 **`Disclosure` no longer writes its open state back to the DOM.** `data-option-open` is still an input option. A stylesheet selecting `[data-option-open]` after the first render must select `[aria-expanded="true"]` instead.
 

@@ -1,1 +1,7 @@
-export { Tabs, type TabsProps } from './Tabs.js';
+export {
+  Tabs,
+  TABS_ACTIVATIONS,
+  type TabsActivation,
+  type TabsEventPayload,
+  type TabsProps,
+} from './Tabs.js';

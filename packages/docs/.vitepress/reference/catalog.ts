@@ -1079,8 +1079,8 @@ export const referenceCatalog = [
       uiSymbol('Tabs', '/reference/items/Tabs/js-api'),
       twigSymbol('Tabs.twig', '/reference/items/Tabs/twig-api', '@ui/Tabs/Tabs.twig'),
     ],
-    capabilities: ['keyboard navigation', 'panels'],
-    related: ['disclosure', 'indexable'],
+    capabilities: ['keyboard navigation', 'roving focus', 'panels'],
+    related: ['disclosure', 'transition'],
   },
   {
     id: 'timer',
