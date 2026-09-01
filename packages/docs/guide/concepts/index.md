@@ -24,7 +24,7 @@ The documentation uses a small, consistent vocabulary:
 
 - **Reference item** — a documented public concept with one canonical page, such as `Dialog`, `Transition` or `withTransition`.
 - **Symbol** — a named public export documented by a Reference item, such as a class, function, type, constant or template.
-- **Component** — a ready-to-use interface or behavior solution, such as [`Dialog`](/reference/items/Dialog/) or [`Slider`](/reference/items/Slider/). It can be visual or headless.
+- **Component** — a ready-to-use interface or behavior solution, such as [`Dialog`](/reference/items/Dialog/) or [`Carousel`](/reference/items/Carousel/). It can be visual or headless.
 - **Primitive** — a low-level, usually headless building block intended primarily for composition, such as [`Transition`](/reference/items/Transition/) or [`Sentinel`](/reference/items/Sentinel/).
 - **Decorator** — a higher-order function that adds reusable behavior to a js-toolkit component class, such as [`withTransition`](/reference/items/withTransition/).
 - **Helper** — a supported plain function that operates independently of a component class. The v2 surface exposes none of its own: standalone helpers such as `viewTransition` and `scrollTo` now come from [`@studiometa/js-toolkit`](https://js-toolkit-v4.studiometa.dev).

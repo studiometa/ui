@@ -8,9 +8,9 @@ Use [`registerComponent`](https://js-toolkit-v4.studiometa.dev/api/registry/regi
 
 ```js
 import { registerComponents } from '@studiometa/js-toolkit';
-import { Disclosure, Dialog, Slider } from '@studiometa/ui';
+import { Disclosure, Dialog, Carousel } from '@studiometa/ui';
 
-registerComponents(Disclosure, Dialog, Slider);
+registerComponents(Disclosure, Dialog, Carousel);
 ```
 
 By default, each class mounts on elements whose `data-component` value contains its configured name:

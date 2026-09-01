@@ -218,13 +218,15 @@ The full proposal, with the evidence and the measurements behind each decision, 
 
 ### slider
 
-- Slider — **rewrite**, onto the `Indexable` foundation `Carousel` already uses
-- SliderBtn
-- SliderCount
-- SliderDots
-- SliderDrag
-- SliderItem
-- SliderProgress
+All seven are **dropped**, superseded by the `Carousel` family, per round 7. Round 3's "rewrite" and round 2's "port the physics onto `Indexable`" are both withdrawn.
+
+- Slider — **dropped**, replaced by `Carousel`
+- SliderBtn — **dropped**, replaced by `CarouselBtn`
+- SliderCount — **dropped**, replaced by `CarouselCount`
+- SliderDots — **dropped**, replaced by `CarouselDots`
+- SliderDrag — **dropped**, replaced by `CarouselDrag`
+- SliderItem — **dropped**, replaced by `CarouselItem`
+- SliderProgress — **dropped**, replaced by `CarouselProgress`
 
 ### sticky
 

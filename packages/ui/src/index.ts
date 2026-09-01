@@ -144,26 +144,6 @@ export {
 export { ScrollReveal, type ScrollRevealProps } from "./ScrollReveal/index.js";
 export { ScrollTo, type ScrollToProps } from "./ScrollTo/index.js";
 export { Sentinel, type SentinelProps } from "./Sentinel/index.js";
-export {
-  Slider,
-  SliderBtn,
-  SliderContext,
-  SliderCount,
-  SliderDots,
-  SliderDrag,
-  SliderItem,
-  SliderProgress,
-  type SliderApi,
-  type SliderBtnProps,
-  type SliderCountProps,
-  type SliderDotsProps,
-  type SliderDragProps,
-  type SliderItemRect,
-  type SliderModes,
-  type SliderProgressProps,
-  type SliderProps,
-  type SliderState,
-} from "./Slider/index.js";
 export { Sticky, type StickyProps } from "./Sticky/index.js";
 export {
   Tabs,
