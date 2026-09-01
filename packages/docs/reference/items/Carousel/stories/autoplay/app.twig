@@ -1,0 +1,60 @@
+{% set colors = ['red', 'green', 'blue', 'purple'] %}
+{% set count = 4 %}
+
+{# The rotation control comes first inside the carousel, which is what puts it
+   first in the tab order — a keyboard user reaches the stop button before the
+   moving content. `timer-progress` is inherited from TimerProgress and drives
+   the ring around the button. #}
+<div data-component="Carousel" class="grid gap-10 p-10">
+  <button type="button"
+    data-component="Action CarouselPlay"
+    data-option-delay="3"
+    data-on:timer-progress="this.style.setProperty('--progress', event.detail.ratio)"
+    class="
+      justify-self-start flex items-center gap-3 rounded-full
+      px-4 py-2 ring ring-current/20 hover:ring-current/50
+    ">
+    <span class="block w-4 h-4 rounded-full bg-current/10"
+      style="background: conic-gradient(currentColor calc(var(--progress, 0) * 360deg), transparent 0)"></span>
+    <span data-ref="label" class="text-sm"></span>
+  </button>
+
+  <div data-component="CarouselWrapper CarouselDrag"
+    class="flex items-center gap-8 w-full overflow-x-auto snap-x snap-mandatory"
+    style="scrollbar-width: none;">
+    {% for i in 1..count %}
+      {% set color = colors[loop.index0 % (colors|length)] %}
+      <div data-component="CarouselItem"
+        class="
+          snap-center shrink-0 flex items-center justify-center
+          w-1/2 h-48 bg-{{
+        color
+        }}-400 ring-inset ring-{{
+        color
+        }}-600
+          ring
+          text-white font-bold rounded-xl
+        "
+        style="--tw-ring-opacity: var(--carousel-item-active, 0)">
+        N°{{ i }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <nav class="flex items-center justify-center gap-2">
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: '← Prev',
+      attr: {
+        data_component: 'CarouselBtn',
+        data_option_action: 'prev'
+      }
+    } %}
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: 'Next →',
+      attr: {
+        data_component: 'CarouselBtn',
+        data_option_action: 'next'
+      }
+    } %}
+  </nav>
+</div>
