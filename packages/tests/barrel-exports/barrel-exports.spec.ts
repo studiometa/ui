@@ -155,6 +155,7 @@ test("@studiometa/ui barrel export surface", () => {
       "Indexable [value]",
       "IndexableBoundary [type]",
       "IndexableInstruction [type]",
+      "IndexableInterface [type]",
       "IndexableProps [type]",
       "LargeText [value]",
       "LargeTextProps [type]",
@@ -223,6 +224,7 @@ test("@studiometa/ui barrel export surface", () => {
       "ViewTransition [value]",
       "ViewTransitionProps [type]",
       "withDeprecation [value]",
+      "withIndex [value]",
       "withTransition [value]",
     ]
   `);

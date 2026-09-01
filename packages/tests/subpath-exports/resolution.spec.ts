@@ -21,6 +21,7 @@ test.each([
   // Family members resolve to their own module at a flat top-level subpath.
   ['@studiometa/ui/DataBind', '/dist/Data/DataBind.js'],
   ['@studiometa/ui/DisclosureGroup', '/dist/Disclosure/DisclosureGroup.js'],
+  ['@studiometa/ui/withIndex', '/dist/decorators/withIndex.js'],
   ['@studiometa/ui/withTransition', '/dist/decorators/withTransition.js'],
   ['@studiometa/ui/PrefetchWhenVisible', '/dist/Prefetch/PrefetchWhenVisible.js'],
   // Sub-components resolve to their own module at a flat top-level subpath too,

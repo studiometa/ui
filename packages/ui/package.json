@@ -382,6 +382,11 @@
       "types": "./dist/decorators/withDeprecation.d.ts",
       "import": "./dist/decorators/withDeprecation.js"
     },
+    "./withIndex": {
+      "typescript": "./src/decorators/withIndex.ts",
+      "types": "./dist/decorators/withIndex.d.ts",
+      "import": "./dist/decorators/withIndex.js"
+    },
     "./withTransition": {
       "typescript": "./src/decorators/withTransition.ts",
       "types": "./dist/decorators/withTransition.d.ts",

@@ -87,6 +87,7 @@ test("components exports", () => {
       "Transition",
       "ViewTransition",
       "withDeprecation",
+      "withIndex",
       "withTransition",
     ]
   `);

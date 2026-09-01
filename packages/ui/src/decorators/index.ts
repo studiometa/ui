@@ -9,3 +9,4 @@ export {
   type DeprecationInterface,
   type DeprecationProps,
 } from './withDeprecation.js';
+export { withIndex, type IndexableInterface } from './withIndex.js';
