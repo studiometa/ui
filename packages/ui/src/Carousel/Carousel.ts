@@ -12,6 +12,7 @@ import { SCROLL_ALIGNMENTS, SCROLL_AXES, scrollPosition } from '@studiometa/js-t
 import { CarouselBtn } from './CarouselBtn.js';
 import { CarouselDrag } from './CarouselDrag.js';
 import { CarouselItem } from './CarouselItem.js';
+import { CarouselPlay } from './CarouselPlay.js';
 import { CarouselWrapper } from './CarouselWrapper.js';
 import { CarouselContext, type CarouselApi, type CarouselState } from './context.js';
 import {
@@ -55,7 +56,7 @@ const DEFAULT_SLIDE_LABEL = '{index} of {total}';
 export class Carousel extends withResize(withRaf(Indexable, { manual: true }))<CarouselProps> {
   static config: BaseConfig = {
     name: 'Carousel',
-    components: { CarouselBtn, CarouselDrag, CarouselItem, CarouselWrapper },
+    components: { CarouselBtn, CarouselDrag, CarouselItem, CarouselPlay, CarouselWrapper },
     options: {
       axis: { type: String, default: 'x' },
       slideLabel: { type: String, default: DEFAULT_SLIDE_LABEL },
