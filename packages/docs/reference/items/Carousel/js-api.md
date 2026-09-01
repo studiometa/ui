@@ -34,6 +34,23 @@ Defines the scroll direction of the carousel: `'x'` for horizontal, `'y'` for ve
 ```
 <!-- prettier-ignore-end -->
 
+### `slide-label`
+
+- Type: `string`
+- Default: `'{index} of {total}'`
+
+The template for the accessible name a slide falls back to when it has no `aria-label` or `aria-labelledby` of its own. `{index}` is the slide's one-based position, `{total}` the live slide count — appending a slide rewrites every name.
+
+<!-- prettier-ignore-start -->
+```html {3}
+<div
+  data-component="Carousel"
+  data-option-slide-label="Diapositive {index} sur {total}">
+  ...
+</div>
+```
+<!-- prettier-ignore-end -->
+
 ### `boundary`
 
 - Type: `'clamp' | 'loop' | 'bounce'`
@@ -100,6 +117,28 @@ The current scroll progress, between `0` and `1`.
 
 Scroll to the given item. Accepts an index or one of the [`Indexable` instructions](/reference/items/Indexable/js-api). The `goNext()` and `goPrev()` shortcuts are inherited from the primitive.
 
+### `slideLabel(index, total)`
+
+- Arguments: `number`, `number`
+- Returns: `string`
+
+The accessible name of the slide at a zero-based `index`, built from the [`slide-label`](#slide-label) option. `CarouselItem` calls it; it is on the API so a control never has to reach back for the option.
+
+### `syncPresence()`
+
+- Returns: `void`
+
+Rebuild the observer that decides which slides are presented, and re-apply `inert` to the ones that do not intersect the track. Called on mount and whenever a slide or the track arrives or leaves. Call it yourself only if you resize the track without a `ResizeObserver` noticing.
+
+## Diagnostics
+
+Both are development-only warnings on the [toolkit diagnostic channel](https://js-toolkit-v4.studiometa.dev/).
+
+| Code                   | Meaning                                                                |
+| ---------------------- | ---------------------------------------------------------------------- |
+| `carousel.unnamed`     | The root has neither an `aria-label` nor an `aria-labelledby`.         |
+| `carousel.unnamed-btn` | A `CarouselBtn` has no text, no `aria-label` and no `aria-labelledby`. |
+
 ## Events
 
 ### `progress`
@@ -132,7 +171,11 @@ A control button, delegating to the parent carousel on click.
 
 - Type: `'next' | 'prev' | string`
 
-Use `next` or `prev` to step through the items, or a numeric string (e.g. `"2"`) to jump to a specific index. The button disables itself automatically when its action is unavailable, e.g. `prev` on the first item or `next` on the last one.
+Use `next` or `prev` to step through the items, or a numeric string (e.g. `"2"`) to jump to a specific index. The button marks itself unavailable when its action would not move the index — `prev` on the first item, `next` on the last one, a picker for the slide already showing.
+
+**How it does so depends on which button it is.** A `prev`/`next` button gets the native `disabled` property. A picker gets `aria-disabled="true"` instead and stays focusable, which is what the APG's grouped-buttons variant asks for: the picker for the current slide is the one a screen reader user looks for, and `disabled` would take it out of the accessibility tree every time the carousel moves. Clicking an `aria-disabled` picker does nothing.
+
+Pickers stay plain buttons — no `role="tab"`, no `role="tablist"`, no `aria-selected`. The APG prescribes tab semantics for them and every piece of user testing published since contradicts it; the objection has been open on the APG repository, unanswered, for eight years.
 
 <!-- prettier-ignore-start -->
 ```html {3}
@@ -144,6 +187,30 @@ Use `next` or `prev` to step through the items, or a numeric string (e.g. `"2"`)
 </button>
 ```
 <!-- prettier-ignore-end -->
+
+## CarouselWrapper
+
+The scroll track. It scrolls to a slide on demand and reports the closest one back; it also owns the two accessibility properties that belong to a scroll container.
+
+### `scrollBehavior`
+
+- Type: `'smooth' | 'instant'`
+
+How a programmatic scroll animates. `instant` under `prefers-reduced-motion: reduce`, `smooth` otherwise. The media query is watched, not sampled once, so changing the system setting takes effect on the next `goTo()`.
+
+### `syncAccessibility()`
+
+- Returns: `void`
+
+Probe the track for focusable content and add or remove its own tab stop accordingly. A scroll container the keyboard cannot reach fails WCAG 2.1.1, and the platform only half fixes it: Chrome makes a scroller focusable only when it has no focusable children, Firefox makes every scroller a tab stop, Safari has not implemented it. When the probe finds nothing focusable the track gets `tabindex="0"`, a `role` and the carousel's name; when a slide brings a link, all three are given back. `tabindex="-1"` is never written.
+
+Called on mount, on a resize and whenever the slide list changes.
+
+### `syncScrollPadding()`
+
+- Returns: `void`
+
+Mirror the track's own `padding` into its `scroll-padding`, on the sides the author left at `auto`. The scrollport of a scroll container is its padding box, so without this a focused item lands flush against the border edge, under whatever the padding was reserving — the case WCAG 2.2 SC 2.4.11 Focus Not Obscured covers, and `scroll-padding` is its sufficient technique.
 
 ## CarouselDrag
 

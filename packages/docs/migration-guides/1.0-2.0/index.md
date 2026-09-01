@@ -1,6 +1,6 @@
 # v1.x → v2.x
 
-v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/). It removes six component families, renames three components, rewrites `Tabs`, and changes every event payload. There is no compatibility layer.
+v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/). It removes six component families, renames three components, rewrites `Tabs`, gives `Carousel` an accessibility contract, and changes every event payload. There is no compatibility layer.
 
 [[toc]]
 
@@ -264,6 +264,40 @@ Same job, new contract: the [WAI-ARIA Tabs pattern](https://www.w3.org/WAI/ARIA/
 | —                                        | arrow, <kbd>Home</kbd> and <kbd>End</kbd> keys, roving `tabindex`   |
 
 `Tabs.twig` follows: `label` and `list_attr` are new parameters, `id` is optional, `items[].selected` marks the open tab, and the `title_wrapper` block now renders inside the `role="tablist"` element.
+
+### `Carousel`
+
+The API is unchanged. The accessibility contract is new, and two things it needs are yours to write.
+
+```diff
+- <div data-component="Carousel">
++ <div data-component="Carousel" aria-label="Featured products">
+    <div data-component="CarouselWrapper">…</div>
+-   <button data-component="CarouselBtn" data-option-action="prev"></button>
++   <button type="button" data-component="CarouselBtn" data-option-action="prev" aria-label="Previous slide"></button>
+  </div>
+```
+
+| v1.x                             | v2.x                                                                |
+| -------------------------------- | ------------------------------------------------------------------- |
+| —                                | `aria-label` or `aria-labelledby` on the root, required             |
+| —                                | a name on every `CarouselBtn`, required                             |
+| —                                | `slide-label` option, `{index} of {total}` by default               |
+| —                                | `role="group"` written on the root and on every `CarouselItem`      |
+| —                                | `inert` on every slide that does not intersect the track            |
+| —                                | `tabindex="0"` on the track when no slide holds a focusable element |
+| —                                | `scroll-padding` on the track, mirroring its own padding            |
+| `disabled` on the current picker | `aria-disabled="true"` — a numeric `CarouselBtn` stays focusable    |
+
+Steps:
+
+1. Add an `aria-label` or an `aria-labelledby` to every `Carousel` root. Missing ones log `carousel.unnamed`.
+2. Add a name to every icon-only or empty `CarouselBtn`. Missing ones log `carousel.unnamed-btn`.
+3. Replace any CSS selecting `[data-component~="CarouselBtn"]:disabled` for a numeric action with `[aria-disabled="true"]`.
+4. Translate the slide name with `data-option-slide-label` on a non-English page.
+5. Remove any `role`, `aria-label` or `aria-roledescription` you were writing by hand only if you want the defaults; an attribute already in the markup is never overwritten.
+
+`aria-roledescription` is not written. `Slider` emitted `carousel` and `slide` untranslated; nothing translates the attribute. Write it yourself if you want it.
 
 ## Event payloads
 

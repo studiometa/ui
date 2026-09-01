@@ -37,8 +37,10 @@ async function render({
   buttons = '',
 }: { count?: number; attributes?: string; buttons?: string } = {}): Promise<Rendered> {
   const root = document.createElement('div');
+  // Named, because an unnamed carousel is a warning now — and the warning is
+  // asserted where it belongs, in `CarouselA11y.spec.ts`.
   root.innerHTML = `
-    <div data-component="Carousel" ${attributes}>
+    <div data-component="Carousel" aria-label="Carousel" ${attributes}>
       <div data-component="CarouselWrapper" style="${WRAPPER_STYLE}">${slides(count)}</div>
       ${buttons}
     </div>`;
@@ -300,6 +302,13 @@ describe('Carousel — live slides', () => {
     const { carousel, wrapper } = await render({ count: 3 });
     await carousel.goTo(2);
     await waitFor(() => carousel.currentIndex === 2);
+    // The smooth scroll `goTo()` started is still in flight here. Removing the
+    // slide it is heading for shrinks the scroll range under it, Chromium
+    // abandons the animation where it stands, and the `onScroll` that follows
+    // reports whatever offset it was abandoned at — which is how this test
+    // failed roughly two runs in three, all four retries included. Waiting for
+    // the scroll to land first asserts strictly more, and removes the race.
+    await waitFor(() => wrapper.scrollLeft === 400, { timeout: 2000 });
     expect(carousel.currentIndex).toBe(2);
 
     wrapper.lastElementChild?.remove();

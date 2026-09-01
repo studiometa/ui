@@ -21,11 +21,26 @@ export interface CarouselState {
  */
 export interface CarouselApi {
   state: Signal<CarouselState>;
+  /**
+   * The carousel's own element.
+   *
+   * Exposed for one job: the scroll track has to mirror the carousel's
+   * accessible name when it becomes a tab stop of its own, and a name cannot
+   * be invented. It is the element, not the instance, so this stays a data
+   * surface rather than a back door onto the class.
+   */
+  el: HTMLElement;
   goTo(indexOrInstruction: number | IndexableInstruction): void;
   goNext(): void;
   goPrev(): void;
   /** The item's position among its siblings, or `-1`. */
   indexOf(element: Element): number;
+  /**
+   * The accessible name for the slide at `index`, built from the carousel's
+   * `slide-label` option. Both arguments are zero-based counts the caller
+   * already holds, so no control has to reach back for the total.
+   */
+  slideLabel(index: number, total: number): string;
   /** The centred scroll offset of every item, in DOM order. */
   positions(): ScrollPosition[];
   /** Report an index reached by scrolling. Never scrolls back. */

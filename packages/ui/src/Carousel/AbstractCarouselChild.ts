@@ -1,4 +1,4 @@
-import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
+import { type BaseConfig, type BaseProps, type MountedReturn } from '@studiometa/js-toolkit';
 import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import { CarouselContext, type CarouselState } from './context.js';
 
@@ -23,13 +23,20 @@ export class AbstractCarouselChild<
     name: 'AbstractCarouselChild',
   };
 
-  async mounted() {
-    const { state } = await this.$inject(CarouselContext);
-    return state.subscribe(
-      (value) => {
-        this.$write(() => this.update(value));
-      },
-      { immediate: true },
+  /**
+   * Declared as `MountedReturn` rather than left to inference: a subclass adds
+   * a teardown of its own — a slide clearing its `inert`, for one — and the
+   * inferred `Promise<Unsubscribe>` is too narrow for the array form the
+   * lifecycle accepts.
+   */
+  mounted(): MountedReturn {
+    return this.$inject(CarouselContext).then(({ state }) =>
+      state.subscribe(
+        (value) => {
+          this.$write(() => this.update(value));
+        },
+        { immediate: true },
+      ),
     );
   }
 
