@@ -141,7 +141,43 @@ Returns the global `fetch` function.
 
 - Return: `URL`
 
-Resolves the request URL. The base is the [`src` option](#src) when it is set, otherwise the element's own destination: a link's `href`, a form's `action`, or the current location as a last resort. For a form with `method="get"`, the form data is then folded onto that base as URL parameters (fields set on top, so a fixed query in `src` is preserved).
+Resolves the request URL. The base is the [`src` option](#src) when it is set, otherwise the element's own destination: a link's `href`, a form's `action`, or the current location as a last resort. For a form with `method="get"`, the form data is then folded onto that base as URL parameters.
+
+Folding replaces what the base URL carried under the same name, and keeps every value a name carries. So a fixed query in `src` survives alongside the live fields, a field of the same name overrides it, and a control with several values — a checkbox group, a `<select multiple>` — sends all of them:
+
+```html
+<!-- ?genre=rock&genre=jazz&section=results -->
+<form action="/search" method="get" data-component="Fetch" data-option-src="/search/suggest?genre=stale&section=results">
+  <input type="checkbox" name="genre" value="rock" checked />
+  <input type="checkbox" name="genre" value="jazz" checked />
+</form>
+```
+
+### `historyUrl`
+
+- Return: `URL`
+
+Resolves the URL the address bar should show, which is not always the one that was requested. The [`src` option](#src) says *what to request*; this says *what the navigation is*.
+
+Without `src` the two are identical. With it, history follows the element's own destination — a link's `href`, a form's `action` folded with its form data — so a lighter endpoint can serve the request without leaking into the URL a visitor copies:
+
+```html
+<a
+  href="/projects/page/2?orderby=title"
+  data-component="Fetch"
+  data-option-history
+  data-option-src="/projects/page/2?orderby=title&sections=listing">
+  2
+</a>
+```
+
+Clicking that requests the `sections=listing` URL and pushes `/projects/page/2?orderby=title`.
+
+A URL passed explicitly to [`fetch(url)`](#fetch-url-url-string-requestinit-requestinit) is pushed as given: a caller that named a URL meant that URL.
+
+::: tip
+On a back or forward navigation the component re-fetches `window.location.href`, which is now the pushed URL rather than the `src` one. Keep the [`selector`](#selector) matching elements that exist in **both** responses — the full page and the lighter endpoint — or the two directions will not update the same regions.
+:::
 
 ### `requestInit`
 

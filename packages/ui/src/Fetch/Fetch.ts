@@ -144,33 +144,102 @@ export class Fetch<T extends BaseProps = BaseProps>
   }
 
   /**
-   * The URL to use for the request.
+   * The URL history should be given for the request in flight.
    *
-   * The base URL is the `src` option when it is set, otherwise the element's own destination:
-   * a form's `action`, a link's `href`, or the current location as a last resort. For a GET
-   * form, the form data is then folded onto that base with each field `set` on top — so an
-   * explicit `src` can carry a fixed query (e.g. `?section_id=…`) that survives alongside the
-   * live form fields, with form fields winning on conflict.
+   * Set by `fetch()`, which is the only place that knows whether the URL came from the
+   * element or from a caller. `update()` may also be called directly, so it falls back to
+   * the URL it was given.
+   *
+   * @private
    */
-  get url(): URL {
-    const { $el, isForm, isLink, $options } = this;
+  __historyUrl: URL | undefined;
 
-    const url = $options.src
-      ? new URL($options.src, window.location.href)
-      : isForm
-        ? new URL(($el as HTMLFormElement).action)
-        : isLink
-          ? new URL(($el as HTMLAnchorElement).href)
-          : new URL(window.location.href);
+  /**
+   * The element's own destination: a form's `action`, a link's `href`, or the current
+   * location as a last resort.
+   *
+   * @private
+   */
+  get __destination(): string {
+    const { $el, isForm, isLink } = this;
 
-    if (isForm && ($el as HTMLFormElement).method.toLowerCase() === 'get') {
-      // @ts-expect-error URLSearchParams accepts FormData as parameter in the browser.
-      for (const [key, value] of new URLSearchParams(new FormData($el))) {
-        url.searchParams.set(key, value);
+    if (isForm) {
+      return ($el as HTMLFormElement).action;
+    }
+
+    if (isLink) {
+      return ($el as HTMLAnchorElement).href;
+    }
+
+    return window.location.href;
+  }
+
+  /**
+   * Resolve a base URL and fold a GET form's fields onto it.
+   *
+   * Fields replace what the base URL carried for the same name, and several values under
+   * one name are all kept: the first field of a given name deletes the base's values, and
+   * every field then appends. A single `set` per field would have done the first half and
+   * silently dropped the second, so a checkbox group or a `<select multiple>` — whose whole
+   * purpose is repeated names — reached the server with one of its values.
+   *
+   * @private
+   */
+  __resolveUrl(base: string): URL {
+    const { $el, isForm } = this;
+    const url = new URL(base, window.location.href);
+
+    if (!isForm || ($el as HTMLFormElement).method.toLowerCase() !== 'get') {
+      return url;
+    }
+
+    const overridden = new Set<string>();
+
+    // @ts-expect-error URLSearchParams accepts FormData as parameter in the browser.
+    for (const [key, value] of new URLSearchParams(new FormData($el))) {
+      if (!overridden.has(key)) {
+        url.searchParams.delete(key);
+        overridden.add(key);
       }
+
+      url.searchParams.append(key, value);
     }
 
     return url;
+  }
+
+  /**
+   * The URL to use for the request.
+   *
+   * The base URL is the `src` option when it is set, otherwise the element's own
+   * destination. For a GET form, the form data is then folded onto that base — so an
+   * explicit `src` can carry a fixed query (e.g. `?section_id=…`) that survives alongside
+   * the live form fields, with form fields winning on conflict.
+   */
+  get url(): URL {
+    return this.__resolveUrl(this.$options.src || this.__destination);
+  }
+
+  /**
+   * The URL the address bar should show, which is not always the one that was requested.
+   *
+   * The `src` option answers "what to request"; this answers "what this navigation is". A
+   * link may point at a page and fetch a lighter endpoint that renders the same regions:
+   *
+   * ```html
+   * <a href="/projects/page/2?orderby=title"
+   *   data-component="Fetch"
+   *   data-option-history
+   *   data-option-src="/projects/page/2?orderby=title&sections=listing">2</a>
+   * ```
+   *
+   * Pushing the requested URL there would put `sections=listing` in the address bar and in
+   * anything a visitor copies out of it. So history follows the element's own destination,
+   * folded with the same form data, and falls back to the requested URL whenever there is
+   * no `src` to diverge from — which is every element that does not set one.
+   */
+  get historyUrl(): URL {
+    return this.__resolveUrl(this.__destination);
   }
 
   /**
@@ -285,8 +354,19 @@ export class Fetch<T extends BaseProps = BaseProps>
    * `URL` object resolved against the current location so the history and view-transition
    * paths — which rely on `url.pathname` and `url.searchParams` — stay safe.
    */
-  async fetch(url: URL | string = this.url, requestInit: RequestInit = {}) {
-    const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
+  async fetch(url?: URL | string, requestInit: RequestInit = {}) {
+    // Whether the URL came from the element or from the caller, which is what decides
+    // where history goes: an explicit `fetch('/somewhere')` is a navigation the caller
+    // named, and substituting the element's own destination for it would be a surprise.
+    const fromElement = url === undefined;
+    const normalizedUrl = fromElement
+      ? this.url
+      : url instanceof URL
+        ? url
+        : new URL(url, window.location.href);
+
+    this.__historyUrl = fromElement ? this.historyUrl : normalizedUrl;
+
     const { FETCH_EVENTS } = this.constructor;
     this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url: normalizedUrl, requestInit });
 
@@ -425,7 +505,8 @@ export class Fetch<T extends BaseProps = BaseProps>
 
     if (history) {
       if (requestInit?.headers?.[this.__headerNames.X_TRIGGERED_BY] !== 'popstate') {
-        historyPush({ path: url.pathname, search: url.searchParams });
+        const target = this.__historyUrl ?? url;
+        historyPush({ path: target.pathname, search: target.searchParams });
       }
       domScheduler.write(() => {
         if (fragment.title) {
