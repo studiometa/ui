@@ -35,6 +35,10 @@ export const manifest: ComponentManifest = {
     mountStrategy: 'eager',
     load: () => import('./Carousel/CarouselItem.js').then(({ CarouselItem }) => CarouselItem),
   },
+  CarouselPlay: {
+    mountStrategy: 'eager',
+    load: () => import('./Carousel/CarouselPlay.js').then(({ CarouselPlay }) => CarouselPlay),
+  },
   CarouselWrapper: {
     mountStrategy: 'eager',
     load: () =>

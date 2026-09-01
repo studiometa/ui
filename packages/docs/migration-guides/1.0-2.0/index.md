@@ -189,6 +189,16 @@ The trigger and panel both need an `id`: `Disclosure` wires `aria-controls` and 
 
 Copy the template into your project if you still need it. Every Twig template other than `Tabs.twig` is unchanged, parameters included.
 
+## New components
+
+| v1.x                            | v2.x           |
+| ------------------------------- | -------------- |
+| a hand-rolled carousel autoplay | `CarouselPlay` |
+
+`CarouselPlay` is a `<button>` inside the carousel, off unless the element is there. It extends `TimerProgress`, so `delay`, `repeat`, `autostart` and the `timer-*` events are the ones you already know. Register it yourself — `Carousel` does not: `registerComponents(Carousel, CarouselPlay)`.
+
+Put it first inside the carousel: it must be the first focusable element. Turning the automatic start off is `data-option-no-autostart`, never `data-option-autostart="false"`.
+
 ## Renamed components
 
 The API of each is unchanged.
@@ -426,13 +436,13 @@ Every dropped or renamed component takes its subpath with it. New subpaths: `/Ab
 
 ### Removed types
 
-| v1.x                                                                                                                                                                                    | v2.x                                             |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `CarouselStore`                                                                                                                                                                         | `CarouselState`, `CarouselApi`                   |
-| `SliderStore`                                                                                                                                                                           | `SliderState`, `SliderApi`                       |
-| `IndexableInstructions`                                                                                                                                                                 | `IndexableInstruction`                           |
-| `TransitionConstructor`, `FetchConstructor`, `FetchShopifyPartialConstructor`, `FetchShopifySectionConstructor`                                                                         | removed                                          |
-| `ClickOutsideProps`, `TargetProps`, `CarouselItemProps`, `CarouselWrapperProps`, `CarouselDragProps`, `AbstractCarouselChildProps`, `AbstractCarouselComponentProps`, `SliderItemProps` | removed — those components declare no props type |
+| v1.x                                                                                                                                                               | v2.x                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| `CarouselStore`                                                                                                                                                    | `CarouselState`, `CarouselApi`                   |
+| `SliderStore`                                                                                                                                                      | `SliderState`, `SliderApi`                       |
+| `IndexableInstructions`                                                                                                                                            | `IndexableInstruction`                           |
+| `TransitionConstructor`, `FetchConstructor`, `FetchShopifyPartialConstructor`, `FetchShopifySectionConstructor`                                                    | removed                                          |
+| `ClickOutsideProps`, `TargetProps`, `CarouselItemProps`, `CarouselWrapperProps`, `AbstractCarouselChildProps`, `AbstractCarouselComponentProps`, `SliderItemProps` | removed — those components declare no props type |
 
 `Disclosure` and `DisclosureGroup` lose their props type parameter: `Disclosure<MyProps>` no longer compiles. Extend the class and declare your own fields.
 

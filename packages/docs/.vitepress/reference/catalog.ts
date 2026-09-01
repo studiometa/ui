@@ -198,6 +198,7 @@ export const referenceCatalog = [
       uiSymbol('CarouselBtn', '/reference/items/Carousel/js-api'),
       uiSymbol('CarouselDrag', '/reference/items/Carousel/js-api'),
       uiSymbol('CarouselItem', '/reference/items/Carousel/js-api'),
+      uiSymbol('CarouselPlay', '/reference/items/Carousel/js-api'),
       uiSymbol('CarouselWrapper', '/reference/items/Carousel/js-api'),
       uiSymbol(
         'AbstractCarouselComponent',

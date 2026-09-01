@@ -21,7 +21,8 @@ A carousel is authored from a few nested components:
 - a root `Carousel` element, carrying an `aria-label` or an `aria-labelledby`;
 - a `CarouselWrapper` holding the track, which is also the scroll container — add `CarouselDrag` on the same element to enable pointer dragging;
 - one `CarouselItem` per slide;
-- optional `CarouselBtn` controls to move to the previous, next or a specific item, each with a name of its own.
+- optional `CarouselBtn` controls to move to the previous, next or a specific item, each with a name of its own;
+- an optional `CarouselPlay` button to rotate the carousel on a timer.
 
 ::: code-group
 
@@ -48,6 +49,25 @@ registerComponent(Carousel);
 ```
 
 :::
+
+### Automatic rotation
+
+A carousel does not rotate on its own. Add a [`CarouselPlay`](./js-api#carouselplay) button — first in the tab order, inside the carousel — and it rotates on a timer that the user can stop, that hovering or focusing the carousel pauses, and that `prefers-reduced-motion` suppresses:
+
+```twig
+<div data-component="Carousel">
+  <button type="button" data-component="CarouselPlay" data-option-delay="5">
+    <span data-ref="label"></span>
+  </button>
+  ...
+</div>
+```
+
+`CarouselPlay` is registered separately from `Carousel`, since a carousel that does not rotate should not pay for it:
+
+```js
+registerComponents(Carousel, CarouselPlay);
+```
 
 ### Vertical carousel
 

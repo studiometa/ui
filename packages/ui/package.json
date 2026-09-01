@@ -97,6 +97,11 @@
       "types": "./dist/Carousel/CarouselItem.d.ts",
       "import": "./dist/Carousel/CarouselItem.js"
     },
+    "./CarouselPlay": {
+      "typescript": "./src/Carousel/CarouselPlay.ts",
+      "types": "./dist/Carousel/CarouselPlay.d.ts",
+      "import": "./dist/Carousel/CarouselPlay.js"
+    },
     "./CarouselWrapper": {
       "typescript": "./src/Carousel/CarouselWrapper.ts",
       "types": "./dist/Carousel/CarouselWrapper.d.ts",
