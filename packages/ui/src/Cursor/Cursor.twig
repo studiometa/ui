@@ -3,6 +3,21 @@
  * @file
  *   Cursor component.
  *
+ *   The component publishes `--cursor-x`, `--cursor-y`, `data-cursor-state`
+ *   and `data-cursor-down` on the root element; the stylesheet below turns
+ *   them into the default black dot. Every rule is wrapped in `:where()`, so
+ *   it has zero specificity and any declaration of yours wins without
+ *   `!important` and without an opt-out flag.
+ *
+ * @param array $states
+ *   Map of CSS selector to state name, published as `data-cursor-state`.
+ *   Defaults to `grow` over links and buttons, `shrink` over
+ *   `[data-cursor-shrink]`.
+ *
+ * @param number $damping
+ *   Damping factor of the position, between `0` and `1`. Defaults to the
+ *   component's own `0.25`.
+ *
  * @param array $attr
  *   Custom attributes for the root element.
  *
@@ -11,16 +26,62 @@
  */
 #}
 
+{% set states =
+  states|default({
+    'a, button, [data-cursor-grow]': 'grow',
+    '[data-cursor-shrink]': 'shrink'
+  })
+%}
+
 {% set attributes =
   merge_html_attributes(
     attr ?? null,
     {
-      data_component: 'Cursor',
-      class: 'fixed top-0 left-0 w-12 h-12 -mt-6 -ml-6 rounded-full bg-black'
+      data_option_damping: damping ?? null
     },
-    { class: 'pointer-events-none' }
+    {
+      class: 'ui-cursor',
+      data_component: 'Cursor',
+      data_option_states: states|json_encode
+    }
   )
 %}
+
+<style>
+  :where(.ui-cursor) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 3rem;
+    height: 3rem;
+    margin: -1.5rem 0 0 -1.5rem;
+    border-radius: 9999px;
+    background-color: #000;
+    pointer-events: none;
+    /* The component writes `translate`; `scale` is free for the states below. */
+    will-change: translate, scale;
+    transition: scale 300ms cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  :where(.ui-cursor[data-cursor-state='grow']) {
+    scale: 2;
+  }
+
+  :where(.ui-cursor[data-cursor-state='shrink']) {
+    scale: 0.5;
+  }
+
+  /* Independent of the state, so a press over a link keeps its `grow`. */
+  :where(.ui-cursor[data-cursor-down]) {
+    scale: 0.75;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :where(.ui-cursor) {
+      transition: none;
+    }
+  }
+</style>
 
 <div {{ html_attributes(attributes) }}>
   {% block content %}
