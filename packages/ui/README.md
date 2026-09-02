@@ -28,9 +28,9 @@ Import the components from the package as needed:
 
 ```js
 import { registerComponents } from '@studiometa/js-toolkit';
-import { Action, Carousel, Dialog, Frame, ScrollAnimation, ScrollReveal } from '@studiometa/ui';
+import { Action, Carousel, Dialog, Fetch, ScrollReveal } from '@studiometa/ui';
 
-registerComponents(Action, Carousel, Dialog, Frame, ScrollAnimation, ScrollReveal);
+registerComponents(Action, Carousel, Dialog, Fetch, ScrollReveal);
 ```
 
 Heads up to [ui.studiometa.dev](https://ui.studiometa.dev) for more informations.
