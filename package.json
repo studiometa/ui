@@ -16,7 +16,7 @@
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
     "lint:static": "oxlint --tsconfig ./tsconfig.json --type-aware",
     "lint:types": "tsgo --build tsconfig.lint.json",
-    "lint:prettier": "prettier --check --cache packages/docs/**/*.md",
+    "lint:prettier": "prettier --check --cache \"packages/docs/**/*.md\"",
     "docs:dev": "npm run dev -w @studiometa/ui-docs",
     "docs:build": "npm run build -w @studiometa/ui-docs",
     "play:dev": "npm run dev -w @studiometa/ui-playground",
