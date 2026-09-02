@@ -45,6 +45,11 @@ export default defineConfig({
           compilerOptions: {
             moduleResolution: ts.ModuleResolutionKind.Bundler,
             customConditions: ['typescript'],
+            // Twoslash compiles every block as `index.js`. TypeScript emits no diagnostic at all
+            // for a `.js` file unless both of these are on, so without them the `js twoslash`
+            // samples build clean whatever they contain and every hover renders empty.
+            allowJs: true,
+            checkJs: true,
           },
         },
       }),
