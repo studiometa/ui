@@ -43,11 +43,15 @@ interface Rendered {
   wrapper: HTMLElement;
 }
 
-async function render({ count = 6, attributes = '' } = {}): Promise<Rendered> {
+async function render({
+  count = 6,
+  attributes = '',
+  style = WRAPPER_STYLE,
+} = {}): Promise<Rendered> {
   const root = document.createElement('div');
   root.innerHTML = `
     <div data-component="Carousel">
-      <div data-component="CarouselWrapper EagerCarouselDrag" style="${WRAPPER_STYLE}" ${attributes}>
+      <div data-component="CarouselWrapper EagerCarouselDrag" style="${style}" ${attributes}>
         ${Array.from(
           { length: count },
           () => `<div data-component="CarouselItem" style="${ITEM_STYLE}"></div>`,
@@ -187,6 +191,75 @@ describe('CarouselDrag — the throw', () => {
   });
 });
 
+describe('CarouselDrag — a track that does not snap', () => {
+  /** The same carousel, with the track's `scroll-snap-type` set to `none`. */
+  async function renderFree(): Promise<Rendered> {
+    return render({
+      count: 6,
+      style: WRAPPER_STYLE.replace('scroll-snap-type:x mandatory', 'scroll-snap-type:none'),
+    });
+  }
+
+  it('coasts to the projection instead of snapping to a slide', async () => {
+    const { drag, wrapper } = await renderFree();
+
+    // A real gesture first: the track's own `scroll-snap-type` is read on the
+    // first drag frame, before the component overwrites it. The two moves drag
+    // the track 40px, so a 340px throw is heading for 380 — between slides,
+    // which is exactly the point. A snapping track rounds that to 400.
+    grab(wrapper, 500);
+    move(480);
+    move(460);
+    drag.__snap(wrapper, drop(500, 340));
+    await waitFor(() => wrapper.scrollLeft === 380, { timeout: 2000 });
+
+    expect(wrapper.scrollLeft).toBe(380);
+  });
+
+  it('still cannot be thrown past the end of the track', async () => {
+    const { drag, wrapper } = await renderFree();
+
+    grab(wrapper, 500);
+    move(480);
+    move(460);
+    drag.__snap(wrapper, drop(500, 5000));
+    await waitFor(() => wrapper.scrollLeft === 5 * SLIDE, { timeout: 2000 });
+
+    // 6 slides of 200px in a 200px scroller: 1000px of content, 800px of
+    // scroll. `scrollTo` clamps, so the projection cannot overshoot it.
+    expect(wrapper.scrollLeft).toBe(5 * SLIDE);
+  });
+
+  it('leaves a freescroll track free after the gesture', async () => {
+    const { wrapper } = await renderFree();
+
+    grab(wrapper, 500);
+    move(480);
+    move(460);
+    release();
+    await quiet();
+
+    // The component puts back what it found, not an empty string. Clearing the
+    // declaration would leave this track at its stylesheet value — and on a
+    // track declared `x mandatory` inline, it would turn snapping off for good.
+    expect(wrapper.style.scrollSnapType).toBe('none');
+  });
+
+  it('snaps again when the track says it snaps', async () => {
+    const { drag, wrapper } = await render({ count: 6 });
+
+    // A real move first: the track's own `scroll-snap-type` is read on the
+    // first drag frame, before the component overwrites it.
+    grab(wrapper, 500);
+    move(490);
+    await settle();
+    drag.__snap(wrapper, drop(500, 340));
+    await waitFor(() => wrapper.scrollLeft === 2 * SLIDE, { timeout: 2000 });
+
+    expect(wrapper.scrollLeft).toBe(2 * SLIDE);
+  });
+});
+
 describe('CarouselDrag — the snapping restore', () => {
   it('leaves snapping enabled when the drag ends where it started', async () => {
     const { wrapper } = await render({ count: 6 });
@@ -202,7 +275,7 @@ describe('CarouselDrag — the snapping restore', () => {
     await quiet();
 
     expect(wrapper.scrollLeft).toBe(0);
-    expect(wrapper.style.scrollSnapType).toBe('');
+    expect(wrapper.style.scrollSnapType).toBe('x mandatory');
   });
 
   it('leaves snapping enabled once a settle has finished', async () => {
@@ -215,18 +288,25 @@ describe('CarouselDrag — the snapping restore', () => {
 
     release();
     await waitFor(() => wrapper.scrollLeft === 2 * SLIDE, { timeout: 2000 });
-    await waitFor(() => wrapper.style.scrollSnapType === '', { timeout: 2000 });
+    await waitFor(() => wrapper.style.scrollSnapType === 'x mandatory', { timeout: 2000 });
 
-    expect(wrapper.style.scrollSnapType).toBe('');
+    expect(wrapper.style.scrollSnapType).toBe('x mandatory');
   });
 
   it('leaves snapping enabled when the carousel has no slide to snap to', async () => {
-    const { drag, wrapper } = await render({ count: 0 });
+    const { wrapper } = await render({ count: 0 });
 
-    wrapper.style.scrollSnapType = 'none';
-    drag.__snap(wrapper, drop(500, 2000));
+    // A real gesture, so the component actually owns the track's value: it
+    // only puts back what it took, and here there is no slide to settle on.
+    grab(wrapper, 500);
+    move(480);
+    move(460);
+    expect(wrapper.style.scrollSnapType).toBe('none');
 
-    expect(wrapper.style.scrollSnapType).toBe('');
+    release();
+    await quiet();
+
+    expect(wrapper.style.scrollSnapType).toBe('x mandatory');
   });
 
   it('leaves snapping enabled when the track unmounts mid-gesture', async () => {
@@ -239,6 +319,6 @@ describe('CarouselDrag — the snapping restore', () => {
     drag.$unmount();
     await settle();
 
-    expect(wrapper.style.scrollSnapType).toBe('');
+    expect(wrapper.style.scrollSnapType).toBe('x mandatory');
   });
 });

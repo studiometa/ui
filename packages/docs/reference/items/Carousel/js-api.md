@@ -369,6 +369,20 @@ The drag service reports the position the throw was heading for, so the track ne
 
 Every release settles the same way. A slow one projects barely past the pointer and lands on the slide the gesture is sitting over; a hard flick projects far ahead and crosses as many slides as its momentum carries it. There is no per-gesture limit — a long carousel is meant to be crossed with one throw.
 
+A track whose `scroll-snap-type` is `none` is not snapped at all: the throw coasts to its projected position and stops between slides, which is free scrolling with momentum. The track's own declaration decides this, so there is no option for it — a component that snapped a drop on a track the browser does not snap would be contradicting the CSS.
+
+```css
+/* Snaps to a slide on release. */
+[data-component~='CarouselWrapper'] {
+  scroll-snap-type: x mandatory;
+}
+
+/* Coasts and stops wherever the throw ends. */
+[data-component~='CarouselWrapper'] {
+  scroll-snap-type: none;
+}
+```
+
 ## CarouselPlay
 
 The rotation control of an auto-rotating carousel: a `<button>` that advances the carousel on a timer and lets the user stop it. **A carousel never rotates unless this element is in the markup.**

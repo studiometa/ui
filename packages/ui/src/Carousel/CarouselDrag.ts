@@ -42,6 +42,40 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
    */
   __pendingRestore: (() => void) | null = null;
 
+  /**
+   * Whether this component currently owns the track's `scroll-snap-type`.
+   *
+   * Everything below is captured once per gesture and only while this is
+   * false, so the values are the author's and never this component's own
+   * `none` read back.
+   * @private
+   */
+  __ownsSnapType = false;
+
+  /**
+   * The track's effective `scroll-snap-type` before the gesture started, which
+   * is what decides whether the throw snaps.
+   *
+   * It cannot be read at drop time: the drag branch has written `none` by
+   * then, so every gesture would look like a freescroll track. It is re-read
+   * per gesture rather than cached for the component's life, so a value that
+   * changes between gestures — a breakpoint, a class toggle — is picked up.
+   * @private
+   */
+  __authorSnapType = '';
+
+  /**
+   * The track's inline `scroll-snap-type` before the gesture started, which is
+   * what gets put back afterwards.
+   *
+   * Restoring the empty string instead would be right only for a track styled
+   * from a stylesheet. On one styled inline — `style="scroll-snap-type: x
+   * mandatory"` — it deletes the author's declaration, so the first drag would
+   * silently turn snapping off for the life of the page.
+   * @private
+   */
+  __inlineSnapType = '';
+
   dragged(props: DragProps): void {
     if (props.mode === DRAG_MODES.INERTIA || props.mode === DRAG_MODES.STOP) {
       return;
@@ -57,6 +91,14 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
     const wrapper = this.$el;
 
     if (props.mode === DRAG_MODES.DRAG) {
+      // The first move of the gesture, and the last moment the author's own
+      // values are still readable.
+      if (!this.__ownsSnapType) {
+        this.__ownsSnapType = true;
+        this.__inlineSnapType = wrapper.style.scrollSnapType;
+        this.__authorSnapType = window.getComputedStyle(wrapper).scrollSnapType;
+      }
+
       // Scroll snapping has to come off, otherwise the track cannot be moved
       // to a position that is not a snap point.
       wrapper.style.scrollSnapType = 'none';
@@ -92,12 +134,31 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
    * The same branch handles a slow release, which projects barely past the
    * pointer and so lands on the slide the gesture is sitting over, and a drag
    * that barely moved, which projects onto the current slide.
+   *
+   * A track whose `scroll-snap-type` is `none` is not snapped at all: the
+   * throw coasts to its projected position and stops wherever that is. This is
+   * what `Slider`'s `fitBounds: false` was, and it is the track's declaration
+   * rather than an option here, because a component that snapped a drop on a
+   * track the browser does not snap would be contradicting the CSS.
    * @protected
    */
   __snap(wrapper: HTMLElement, props: DragProps): void {
     const { carousel, isHorizontal } = this;
 
     if (!carousel) {
+      return;
+    }
+
+    const current = isHorizontal ? wrapper.scrollLeft : wrapper.scrollTop;
+    // The track travels against the pointer, so the projected scroll offset is
+    // the pointer's remaining projected travel, mirrored.
+    const projected = isHorizontal ? props.x - props.finalX : props.y - props.finalY;
+
+    // Freescroll: coast to the projection, snapping to nothing. `scrollTo`
+    // clamps to the scroll range, so the track still cannot be thrown past its
+    // own end.
+    if (this.__authorSnapType === 'none') {
+      this.__settle(wrapper, current + projected, current);
       return;
     }
 
@@ -112,11 +173,15 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
       return;
     }
 
-    const current = isHorizontal ? wrapper.scrollLeft : wrapper.scrollTop;
-    // The track travels against the pointer, so the projected scroll offset is
-    // the pointer's remaining projected travel, mirrored.
-    const projected = isHorizontal ? props.x - props.finalX : props.y - props.finalY;
-    const target = offsets[getClosestIndex(offsets, current + projected)];
+    this.__settle(wrapper, offsets[getClosestIndex(offsets, current + projected)], current);
+  }
+
+  /**
+   * Scroll to where the throw ended up, and put snapping back once it lands.
+   * @private
+   */
+  __settle(wrapper: HTMLElement, target: number, current: number): void {
+    const { isHorizontal } = this;
 
     // A settle that does not move fires no `scroll`, so per CSSOM View it fires
     // no `scrollend` either — which is how a drag that ended where it started
@@ -139,7 +204,16 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
    */
   __restoreSnapping(wrapper: HTMLElement): void {
     this.__cancelRestore();
-    wrapper.style.scrollSnapType = '';
+
+    // Nothing to put back if no gesture ever took it off — and putting the
+    // captured value back regardless would write this component's idea of the
+    // track onto a track it never touched.
+    if (!this.__ownsSnapType) {
+      return;
+    }
+
+    this.__ownsSnapType = false;
+    wrapper.style.scrollSnapType = this.__inlineSnapType;
   }
 
   /**

@@ -259,14 +259,14 @@ The trigger and panel both need an `id`: `Disclosure` wires `aria-controls` and 
 | `mode="right"`     | `scroll-snap-align: end` on the slide                              |
 | `contain`          | removed — a scroll container cannot scroll past its own range      |
 | `fit-bounds`       | `scroll-snap-type: x mandatory` on the track                       |
-| no `fit-bounds`    | `scroll-snap-type: none`, for a scroll or touch release only       |
+| no `fit-bounds`    | `scroll-snap-type: none` on the track                              |
 | `sensitivity`      | no equivalent                                                      |
 | `drop-sensitivity` | no equivalent                                                      |
 | —                  | `axis`, `slide-label`, and `boundary` / `reverse` from `Indexable` |
 
 - `mode` becomes CSS. `goTo()` reads each slide's own `scroll-snap-align` and scrolls to the offset that alignment names, so a programmatic move lands exactly where a native snap would. One keyword applies to both axes; with two, the block axis comes first (`scroll-snap-align: <block> <inline>`), so a horizontal carousel reads the second. A slide set to `none` is centred.
 - `sensitivity` scaled the pointer travel. `drop-sensitivity` multiplied the projected throw. The drag service projects the settle per device now, so neither has a value to scale.
-- `scroll-snap-type: none` frees a scroll or touch release, not a mouse drag: `CarouselDrag` scrolls to a slide on every drop. Drop `CarouselDrag` for a freeform mouse release too.
+- `scroll-snap-type: none` frees every release, mouse drag included: `CarouselDrag` reads the track's declaration and coasts to the projection instead of snapping. `CarouselDrag` stays on the element.
 
 #### Events
 
