@@ -417,12 +417,6 @@
     "url": "https://github.com/studiometa/ui/issues"
   },
   "homepage": "https://github.com/studiometa/ui#readme",
-  "dependencies": {
-    "alien-signals": "^3.2.1",
-    "compute-scroll-into-view": "^3.1.0",
-    "deepmerge": "^4.3.1",
-    "morphdom": "^2.7.8"
-  },
   "devDependencies": {
     "@studiometa/js-toolkit": "^4.0.0-alpha.1"
   },
