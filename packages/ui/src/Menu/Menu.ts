@@ -1,14 +1,14 @@
-import {
-  Base,
-  withKey,
-  type BaseConfig,
-  type BaseProps,
-  type ChildrenCollection,
-  type DelegatedEvent,
-  type GlobalEvent,
-  type KeyProps,
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withKey } from '@studiometa/js-toolkit/withKey';
+import type {
+  BaseConfig,
+  BaseProps,
+  ChildrenCollection,
+  DelegatedEvent,
+  GlobalEvent,
+  KeyProps,
 } from '@studiometa/js-toolkit';
-import { defaultScheduler } from '@studiometa/js-toolkit';
+import { defaultScheduler } from '@studiometa/js-toolkit/defaultScheduler';
 import { MenuBtn } from './MenuBtn.js';
 import { MenuList } from './MenuList.js';
 

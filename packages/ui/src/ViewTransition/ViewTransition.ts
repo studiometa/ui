@@ -1,4 +1,6 @@
-import { Base, viewTransition, type BaseProps } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { viewTransition } from '@studiometa/js-toolkit/viewTransition';
+import type { BaseProps } from '@studiometa/js-toolkit';
 import type { Transitionable } from '../decorators/withTransition.js';
 
 export interface ViewTransitionProps {

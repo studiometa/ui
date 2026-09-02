@@ -1,9 +1,6 @@
-import {
-  Base,
-  defaultScheduler,
-  type ChildrenCollection,
-  type MountedReturn,
-} from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { defaultScheduler } from '@studiometa/js-toolkit/defaultScheduler';
+import type { ChildrenCollection, MountedReturn } from '@studiometa/js-toolkit';
 import { Disclosure } from './Disclosure.js';
 
 export type DisclosureGroupProps = {

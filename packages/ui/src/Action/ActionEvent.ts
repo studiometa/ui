@@ -1,4 +1,5 @@
-import { getMountedInstances, type Base } from '@studiometa/js-toolkit';
+import { getMountedInstances } from '@studiometa/js-toolkit/getMountedInstances';
+import type { Base } from '@studiometa/js-toolkit';
 import { MODIFIERS, parseEventDefinition, type Modifier } from '../utils/event-modifiers.js';
 import { getEffect, type EffectFunction } from './expression.js';
 

@@ -1,9 +1,7 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import {
-  withLeadingSlash,
-  withoutLeadingSlash,
-  withoutTrailingSlash,
-} from '@studiometa/js-toolkit/utils';
+import { withLeadingSlash } from '@studiometa/js-toolkit/utils/withLeadingSlash';
+import { withoutLeadingSlash } from '@studiometa/js-toolkit/utils/withoutLeadingSlash';
+import { withoutTrailingSlash } from '@studiometa/js-toolkit/utils/withoutTrailingSlash';
 import { AbstractFigureDynamic, type AbstractFigureDynamicProps } from './AbstractFigureDynamic.js';
 import { normalizeSize } from './utils.js';
 

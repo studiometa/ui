@@ -1,4 +1,4 @@
-import { type BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseConfig } from '@studiometa/js-toolkit';
 import { InView } from './InView.js';
 
 /** One-shot variant of {@link InView}; emits only `in-view`. */

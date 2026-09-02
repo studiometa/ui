@@ -1,4 +1,4 @@
-import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import type { SourceSpecification, GeoJSONSourceSpecification, GeoJSONSource } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,

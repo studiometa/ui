@@ -1,4 +1,5 @@
-import { SCROLL_ALIGNMENTS, type ScrollAlign } from '@studiometa/js-toolkit/utils';
+import { SCROLL_ALIGNMENTS } from '@studiometa/js-toolkit/utils/SCROLL_ALIGNMENTS';
+import type { ScrollAlign } from '@studiometa/js-toolkit/utils';
 
 export type { ScrollPosition } from '@studiometa/js-toolkit/utils';
 

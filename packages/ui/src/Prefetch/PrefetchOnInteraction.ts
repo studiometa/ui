@@ -1,4 +1,4 @@
-import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { AbstractPrefetch } from './AbstractPrefetch.js';
 
 /**

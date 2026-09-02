@@ -1,4 +1,4 @@
-import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { Fetch, type FetchProps } from './Fetch.js';
 
 /** The Section Rendering API query parameter name. */

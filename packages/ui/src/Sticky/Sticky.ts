@@ -1,13 +1,13 @@
-import {
-  Base,
-  getMountedInstances,
-  withResize,
-  withScroll,
-  type BaseConfig,
-  type BaseProps,
-  type ChildrenCollection,
-  type DelegatedEvent,
-  type ScrollProps,
+import { Base } from '@studiometa/js-toolkit/Base';
+import { getMountedInstances } from '@studiometa/js-toolkit/getMountedInstances';
+import { withResize } from '@studiometa/js-toolkit/withResize';
+import { withScroll } from '@studiometa/js-toolkit/withScroll';
+import type {
+  BaseConfig,
+  BaseProps,
+  ChildrenCollection,
+  DelegatedEvent,
+  ScrollProps,
 } from '@studiometa/js-toolkit';
 import { Sentinel } from '../Sentinel/index.js';
 

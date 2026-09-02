@@ -1,4 +1,4 @@
-import { type BaseConfig, type BaseProps, type MountedReturn } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolkit';
 import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import { CarouselContext, type CarouselState } from './context.js';
 

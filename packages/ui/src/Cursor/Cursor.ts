@@ -1,12 +1,9 @@
-import {
-  Base,
-  withPointer,
-  type BaseConfig,
-  type BaseProps,
-  type MountedReturn,
-  type PointerProps,
-} from '@studiometa/js-toolkit';
-import { matrix, smoothTo, type SmoothToRecord } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withPointer } from '@studiometa/js-toolkit/withPointer';
+import type { BaseConfig, BaseProps, MountedReturn, PointerProps } from '@studiometa/js-toolkit';
+import { matrix } from '@studiometa/js-toolkit/utils/matrix';
+import { smoothTo } from '@studiometa/js-toolkit/utils/smoothTo';
+import type { SmoothToRecord } from '@studiometa/js-toolkit/utils';
 
 export type CursorProps = BaseProps & {
   $options: {

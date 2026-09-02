@@ -1,16 +1,11 @@
-import {
-  Base,
-  domUpdate,
-  EVENTS,
-  swap,
-  SWAP_MODES,
-  viewTransition,
-  type BaseConfig,
-  type BaseProps,
-  type DomUpdateDetail,
-  type SwapMode,
-} from '@studiometa/js-toolkit';
-import { historyPush } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { domUpdate } from '@studiometa/js-toolkit/domUpdate';
+import { EVENTS } from '@studiometa/js-toolkit/EVENTS';
+import { swap } from '@studiometa/js-toolkit/swap';
+import { SWAP_MODES } from '@studiometa/js-toolkit/SWAP_MODES';
+import { viewTransition } from '@studiometa/js-toolkit/viewTransition';
+import type { BaseConfig, BaseProps, DomUpdateDetail, SwapMode } from '@studiometa/js-toolkit';
+import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
 import { compileExpression } from '../utils/expression.js';
 
 /**

@@ -1,4 +1,5 @@
-import { withRaf, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
+import { withRaf } from '@studiometa/js-toolkit/withRaf';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { Timer, type TimerProps } from './Timer.js';
 
 export type TimerProgressProps = TimerProps & {

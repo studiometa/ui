@@ -1,4 +1,5 @@
-import { Base, type BaseConfig } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseConfig } from '@studiometa/js-toolkit';
 
 /**
  * Marks a section `AnchorNav` tracks: mounts once scrolled into view and

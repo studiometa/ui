@@ -1,4 +1,5 @@
-import { viewTransition, type BaseConfig } from '@studiometa/js-toolkit';
+import { viewTransition } from '@studiometa/js-toolkit/viewTransition';
+import type { BaseConfig } from '@studiometa/js-toolkit';
 import { Timer, type TimerProps } from '../Timer/index.js';
 
 export type ToastProps = TimerProps & {

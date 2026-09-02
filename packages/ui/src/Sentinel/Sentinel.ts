@@ -1,10 +1,6 @@
-import {
-  Base,
-  withInView,
-  type BaseConfig,
-  type BaseProps,
-  type InViewProps,
-} from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withInView } from '@studiometa/js-toolkit/withInView';
+import type { BaseConfig, BaseProps, InViewProps } from '@studiometa/js-toolkit';
 
 export type SentinelProps = BaseProps & {
   $emits: { intersected: InViewProps };

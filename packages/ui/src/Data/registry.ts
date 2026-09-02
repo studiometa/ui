@@ -1,11 +1,9 @@
-import {
-  signal,
-  type Signal,
-  createContext,
-  defaultScheduler,
-  injectContextSync,
-  provideRootContext,
-} from '@studiometa/js-toolkit';
+import { signal } from '@studiometa/js-toolkit/signal';
+import { createContext } from '@studiometa/js-toolkit/createContext';
+import { defaultScheduler } from '@studiometa/js-toolkit/defaultScheduler';
+import { injectContextSync } from '@studiometa/js-toolkit/injectContextSync';
+import { provideRootContext } from '@studiometa/js-toolkit/provideRootContext';
+import type { Signal } from '@studiometa/js-toolkit';
 
 /** Stores named data groups, values, sources, membership, and hydration state. */
 

@@ -1,10 +1,7 @@
-import {
-  Base,
-  useInView,
-  useWindowScroll,
-  type MountedReturn,
-  type ScrollDirection,
-} from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { useInView } from '@studiometa/js-toolkit/useInView';
+import { useWindowScroll } from '@studiometa/js-toolkit/useWindowScroll';
+import type { MountedReturn, ScrollDirection } from '@studiometa/js-toolkit';
 import { withTransition, type TransitionProps } from '../decorators/withTransition.js';
 
 export type ScrollRevealProps = TransitionProps & {

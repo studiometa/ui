@@ -15,7 +15,7 @@
  * wrote and leaves the fallback to the caller.
  */
 
-import { warn } from '@studiometa/js-toolkit';
+import { warn } from '@studiometa/js-toolkit/warn';
 
 /** Every modifier a declaration may carry. */
 export const MODIFIERS = Object.freeze({

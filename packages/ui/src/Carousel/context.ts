@@ -1,4 +1,5 @@
-import { createContext, type Signal } from '@studiometa/js-toolkit';
+import { createContext } from '@studiometa/js-toolkit/createContext';
+import type { Signal } from '@studiometa/js-toolkit';
 import type { IndexableInstruction } from '../Indexable/Indexable.js';
 import type { ScrollPosition } from './utils.js';
 

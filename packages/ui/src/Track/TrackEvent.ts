@@ -1,6 +1,6 @@
-import { useInView } from '@studiometa/js-toolkit';
+import { useInView } from '@studiometa/js-toolkit/useInView';
 import type { Unsubscribe } from '@studiometa/js-toolkit';
-import { throttle } from '@studiometa/js-toolkit/utils';
+import { throttle } from '@studiometa/js-toolkit/utils/throttle';
 import { MODIFIERS, parseEventDefinition, type Modifier } from '../utils/event-modifiers.js';
 import type { AbstractTrack } from './AbstractTrack.js';
 

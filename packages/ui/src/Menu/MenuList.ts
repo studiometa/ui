@@ -1,10 +1,6 @@
-import {
-  Base,
-  getInstances,
-  type BaseConfig,
-  type BaseProps,
-  type ChildrenCollection,
-} from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { getInstances } from '@studiometa/js-toolkit/getInstances';
+import type { BaseConfig, BaseProps, ChildrenCollection } from '@studiometa/js-toolkit';
 import type { TransitionOptions } from '@studiometa/js-toolkit/utils';
 import { withTransition, type TransitionProps } from '../decorators/withTransition.js';
 
