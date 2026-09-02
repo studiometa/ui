@@ -17,12 +17,12 @@ TrackContext                           data-component="TrackContext"   shared, i
 
 ## Parts
 
-| Part | Selector | Required | Role |
-| --- | --- | --- | --- |
-| Tracker | `data-component="Track"` | Yes | Resolves each `data-track:<event>` payload and pushes it to `window.dataLayer`. |
-| Tracker (Shopify) | `data-component="TrackShopify"` | Yes* | Same as `Track`, but publishes through `window.Shopify.analytics.publish`. |
-| Context | `data-component="TrackContext"` | Optional | Provides data inherited by every descendant tracker, deep-merged up the ancestor chain. |
-| Payload | `data-ref="payload"` | Optional | A `<script>` (or `data-option-payload`) holding data shared by every event on the element. |
+| Part              | Selector                        | Required | Role                                                                                       |
+| ----------------- | ------------------------------- | -------- | ------------------------------------------------------------------------------------------ |
+| Tracker           | `data-component="Track"`        | Yes      | Resolves each `data-track:<event>` payload and pushes it to `window.dataLayer`.            |
+| Tracker (Shopify) | `data-component="TrackShopify"` | Yes\*    | Same as `Track`, but publishes through `window.Shopify.analytics.publish`.                 |
+| Context           | `data-component="TrackContext"` | Optional | Provides data inherited by every descendant tracker, deep-merged up the ancestor chain.    |
+| Payload           | `data-ref="payload"`            | Optional | A `<script>` (or `data-option-payload`) holding data shared by every event on the element. |
 
 <small>\* `Track` and `TrackShopify` are alternative providers — pick the one matching your destination. The provider is chosen by the component name, so switching is a one-token change in the markup.</small>
 

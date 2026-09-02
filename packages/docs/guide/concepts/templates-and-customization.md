@@ -41,12 +41,12 @@ The exact merge behavior is documented by each Twig API when it differs from thi
 
 The Composer extension registers four namespaces:
 
-| Namespace | Lookup | Use |
-| --- | --- | --- |
-| `@ui` | Project templates first, package templates second | Normal includes and embeds; enables project overrides |
-| `@ui-pkg` | Package templates only | Extending the package implementation from an override |
-| `@svg` | Project SVGs first, package SVGs second | Normal SVG lookup with project overrides |
-| `@svg-pkg` | Package SVGs only | Accessing the package SVG implementation explicitly |
+| Namespace  | Lookup                                            | Use                                                   |
+| ---------- | ------------------------------------------------- | ----------------------------------------------------- |
+| `@ui`      | Project templates first, package templates second | Normal includes and embeds; enables project overrides |
+| `@ui-pkg`  | Package templates only                            | Extending the package implementation from an override |
+| `@svg`     | Project SVGs first, package SVGs second           | Normal SVG lookup with project overrides              |
+| `@svg-pkg` | Package SVGs only                                 | Accessing the package SVG implementation explicitly   |
 
 Prefer `@ui` and `@svg` in application code. The `-pkg` namespaces deliberately bypass project overrides and should be used only when that is the intended behavior.
 

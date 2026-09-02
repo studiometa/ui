@@ -27,10 +27,7 @@ The `<dialog>` becomes a transparent, full-viewport host. Inside it live an opti
 
 ```html
 <!-- The trigger lives anywhere on the page. -->
-<button
-  type="button"
-  data-component="Action"
-  data-on:click="Dialog(#my-dialog)->target.open()">
+<button type="button" data-component="Action" data-on:click="Dialog(#my-dialog)->target.open()">
   Open dialog
 </button>
 
@@ -126,6 +123,7 @@ Because the modal `<dialog>` promotes its children to the top layer, two browser
 
 - **Hide the panel with `opacity-0`, not just a transform.** A panel that is only `translate-x-full` is offscreen but still fully painted, so Safari/WebKit captures it into `::view-transition-old()` and the slide-out keyframes drag a ghost copy across the screen on open. Adding `opacity-0` to the hidden state makes that snapshot empty. (Chromium/Firefox clip the offscreen content, so they don't show the ghost — but the `opacity-0` is harmless there.)
 - **Pin the group stacking with `z-index`.** Some Chromium versions mis-order the snapshots of top-layer content, painting the semi-transparent backdrop over the panel and greying it out mid-transition. `::view-transition-group(panel) { z-index: 2 }` above the backdrop keeps the panel on top everywhere.
+
 :::
 
 See the [drawer example](./examples.md#drawer) for a complete right-side drawer sliding in via `ViewTransition`.

@@ -87,13 +87,13 @@ All events are dispatched as bubbling `CustomEvent`s on the component's element,
 
 ### Methods
 
-| Method      | Description                                                        |
-| ----------- | ----------------------------------------------------------------- |
-| `start()`   | Start — or restart — the countdown from the beginning.            |
-| `restart()` | Alias for `start()`.                                              |
-| `stop()`    | Stop the countdown without completing it.                         |
-| `pause()`   | Pause the countdown, preserving the remaining time.               |
-| `resume()`  | Resume a paused countdown from where it left off.                 |
+| Method      | Description                                            |
+| ----------- | ------------------------------------------------------ |
+| `start()`   | Start — or restart — the countdown from the beginning. |
+| `restart()` | Alias for `start()`.                                   |
+| `stop()`    | Stop the countdown without completing it.              |
+| `pause()`   | Pause the countdown, preserving the remaining time.    |
+| `resume()`  | Resume a paused countdown from where it left off.      |
 
 Methods are callable from an `Action` effect when the `Timer` is mounted on the same element:
 
@@ -114,9 +114,9 @@ Extends `Timer` with a continuous progress signal. It inherits every option, eve
 
 ### Events
 
-| Event            | Detail        | Fired when                                                    |
-| ---------------- | ------------- | ------------------------------------------------------------- |
-| `timer-progress` | `[ratio]`     | on every animation frame while running — `ratio` goes `0 → 1`, reaches `1` on completion and resets to `0` on `stop()`. |
+| Event            | Detail    | Fired when                                                                                                              |
+| ---------------- | --------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `timer-progress` | `[ratio]` | on every animation frame while running — `ratio` goes `0 → 1`, reaches `1` on completion and resets to `0` on `stop()`. |
 
 The ratio is read from `event.detail[0]`:
 
