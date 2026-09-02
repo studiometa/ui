@@ -14,8 +14,8 @@ describe('prefer-transition', () => {
          }`,
 
         // Has open/close but extends a UI component — fine
-        `import { Modal } from '@studiometa/ui';
-         class Search extends Modal {
+        `import { Dialog } from '@studiometa/ui';
+         class Search extends Dialog {
            open() {}
            close() {}
          }`,
