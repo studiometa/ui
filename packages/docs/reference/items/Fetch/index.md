@@ -62,10 +62,7 @@ The `Fetch` component is not limited to `<a>` and `<form>` elements. Set the [`s
 ::: code-group
 
 ```html [index.html]
-<div
-  data-component="Action Fetch"
-  data-option-src="/some-content"
-  data-on:click="Fetch.fetch()">
+<div data-component="Action Fetch" data-option-src="/some-content" data-on:click="Fetch.fetch()">
   Click me
 </div>
 

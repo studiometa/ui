@@ -4,14 +4,14 @@
 
 The following components have been updated:
 
-| Component                           | Previous version                  | New version            | Changed                             |
-| ----------------------------------- | --------------------------------- | ---------------------- | ----------------------------------- |
-| [Button](/reference/items/Button/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| [Cursor](/reference/items/Cursor/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| [Figure](/reference/items/Figure/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| Accordion <Badge type="warning" text="removed in v2" />                                | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| Modal <Badge type="warning" text="removed in v2" />                                    | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
-| [Sticky](/reference/items/Sticky/)       | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| Component                                               | Previous version                  | New version            | Changed                             |
+| ------------------------------------------------------- | --------------------------------- | ---------------------- | ----------------------------------- |
+| [Button](/reference/items/Button/)                      | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Cursor](/reference/items/Cursor/)                      | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Figure](/reference/items/Figure/)                      | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| Accordion <Badge type="warning" text="removed in v2" /> | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| Modal <Badge type="warning" text="removed in v2" />     | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
+| [Sticky](/reference/items/Sticky/)                      | <Badge type="grey" text="0.0.0"/> | <Badge text="0.1.0" /> | • Twig Template API standardization |
 
 ## Install the Twig extension
 

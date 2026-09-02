@@ -134,16 +134,16 @@ The component implements the [WAI-ARIA carousel pattern](https://www.w3.org/WAI/
 
 ### What the component does
 
-| Element              | Written                                                                                      |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| `Carousel`           | `role="group"`, unless the markup already has a role                                         |
-| `CarouselItem`       | `role="group"`, plus an `aria-label` of `1 of 4` when the slide has no name of its own       |
-| `CarouselItem`       | `inert`, on every slide that does not intersect the track                                    |
-| `CarouselWrapper`    | `tabindex="0"`, a `role` and a name — only when nothing inside the track is focusable        |
-| `CarouselWrapper`    | `scroll-padding`, mirroring the track's own padding                                          |
-| `CarouselBtn`        | `disabled` on a `prev`/`next` at its end, `aria-current` on the picker of the current slide  |
-| `CarouselDots`       | `aria-current="true"` on the current dot, plus an `aria-label` on every unnamed dot          |
-| `CarouselThumbnails` | `aria-current="true"` on the open thumbnail, plus an `aria-label` on every unnamed one       |
+| Element              | Written                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| `Carousel`           | `role="group"`, unless the markup already has a role                                        |
+| `CarouselItem`       | `role="group"`, plus an `aria-label` of `1 of 4` when the slide has no name of its own      |
+| `CarouselItem`       | `inert`, on every slide that does not intersect the track                                   |
+| `CarouselWrapper`    | `tabindex="0"`, a `role` and a name — only when nothing inside the track is focusable       |
+| `CarouselWrapper`    | `scroll-padding`, mirroring the track's own padding                                         |
+| `CarouselBtn`        | `disabled` on a `prev`/`next` at its end, `aria-current` on the picker of the current slide |
+| `CarouselDots`       | `aria-current="true"` on the current dot, plus an `aria-label` on every unnamed dot         |
+| `CarouselThumbnails` | `aria-current="true"` on the open thumbnail, plus an `aria-label` on every unnamed one      |
 
 **Keyboard navigation is the buttons, not the arrow keys.** A `scroll-snap` track does not respond usefully to <kbd>ArrowRight</kbd> — measured in Chromium 151 and Firefox 153, one press scrolls about 40 pixels and snaps straight back, and <kbd>Home</kbd>, <kbd>End</kbd>, <kbd>PageUp</kbd> and <kbd>PageDown</kbd> do nothing at all on the horizontal axis. So ship `CarouselBtn` controls: they are native buttons, they are in the tab order, and the APG's contract for a non-tabbed carousel is <kbd>Tab</kbd> plus the buttons. No handler is bound to the arrow keys, deliberately — a text input inside a slide needs them.
 
