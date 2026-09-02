@@ -173,11 +173,45 @@ describe('CarouselDots — the current marker', () => {
     const { carousel, buttons } = await render({ count: 3 });
 
     await carousel.goTo(2);
-    // Polled, not asserted after one frame: the smooth scroll reports the
-    // slide it is passing on the way, so the marker settles rather than jumps.
     await waitFor(() => currentFlags(buttons)[2], { timeout: 2000 });
 
     expect(currentFlags(buttons)).toEqual([false, false, true]);
+  });
+
+  it('holds the marker on the destination for the whole scroll', async () => {
+    const { carousel, buttons } = await render({ count: 5 });
+
+    // Three slides away, so a smooth scroll passes two on the way. Reporting
+    // the slide under the animation would light each one up in turn and leave
+    // the destination unmarked until the scroll landed — the marker would
+    // flicker off and back on for every click of a dot.
+    await carousel.goTo(3);
+    // One frame for the state to reach the dots, then the scroll is still
+    // running: it takes about eight more to cover the 600px.
+    await settle();
+
+    const samples: boolean[][] = [];
+    for (let index = 0; index < 30; index += 1) {
+      samples.push(currentFlags(buttons));
+      await settle();
+    }
+
+    expect(samples.every((flags) => flags[3])).toBe(true);
+    expect(samples.every((flags) => flags.filter(Boolean).length === 1)).toBe(true);
+  });
+
+  it('reports again once a gesture takes the scroll back', async () => {
+    const { el, carousel, buttons } = await render({ count: 5 });
+    const wrapper = el.querySelector('[data-component="CarouselWrapper"]') as HTMLElement;
+
+    await carousel.goTo(4);
+    // A pointer on the track ends the programmatic scroll, so the index has to
+    // follow the wrapper again rather than wait out the settle.
+    wrapper.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    wrapper.scrollTo({ left: 0, behavior: 'instant' });
+
+    await waitFor(() => currentFlags(buttons)[0], { timeout: 2000 });
+    expect(currentFlags(buttons)).toEqual([true, false, false, false, false]);
   });
 
   it('never takes a dot out of the tab order', async () => {

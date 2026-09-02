@@ -13,13 +13,28 @@ import { getClosestIndex, hasTabbableDescendant } from './utils.js';
 const SIDES = ['top', 'right', 'bottom', 'left'] as const;
 
 /**
+ * How long a programmatic scroll may hold index reporting when no `scrollend`
+ * arrives. Long enough for a slow smooth scroll across a wide track, short
+ * enough that a scroll the browser drops cannot freeze reporting for long.
+ */
+const SETTLE_TIMEOUT = 1000;
+
+/**
  * The scrollable track.
  *
  * It scrolls to an item on demand through `scrollToIndex()`, which the
  * coordinator calls, and on a native or touch scroll it only **reports** the
  * closest item back. Because a scroll is only ever started by `goTo()` and
  * `onScroll` never scrolls, the feedback loop that would hijack a smooth
- * scroll cannot form and no synchronising guard is needed.
+ * scroll cannot form.
+ *
+ * Reporting is still held for the duration of a programmatic scroll. The
+ * closest item during a smooth scroll is whichever one the animation is
+ * passing, so reporting it would walk the index across every slide in between
+ * — a control that marks the current item, `CarouselDots` above all, would
+ * light up each slide on the way and leave the destination unmarked until the
+ * scroll lands. The destination is already known when the scroll starts, so
+ * there is nothing to learn from the positions it travels through.
  */
 export class CarouselWrapper<T extends BaseProps = BaseProps> extends withResize(
   AbstractCarouselComponent,
@@ -59,6 +74,16 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends withResize
    */
   __ownedAttributes = new Set<string>();
 
+  /**
+   * Drops the hold armed for the programmatic scroll in flight, or `null` when
+   * none is. Holding is a plain flag rather than a target index compared
+   * against the closest one: a smooth scroll passes through the destination's
+   * neighbourhood before it settles, so "close enough to the target" would
+   * release the hold early, which is the flicker again.
+   * @private
+   */
+  __pendingSettle: (() => void) | null = null;
+
   mounted(): MountedReturn {
     const unsubscribe = usePrefersReducedMotion().subscribe(
       ({ matches }) => {
@@ -74,6 +99,7 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends withResize
       unsubscribe,
       () => {
         this.__scrollDistance = null;
+        this.__releaseSettle();
         this.__releaseTabStop();
 
         for (const side of this.__ownedScrollPadding) {
@@ -136,8 +162,45 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends withResize
   scrollToIndex(index: number): void {
     const position = this.carousel?.positions()[index];
     if (position) {
+      this.__holdReportingUntilSettled();
       this.$el.scrollTo({ left: position.left, top: position.top, behavior: this.scrollBehavior });
     }
+  }
+
+  /**
+   * Stop reporting the scroll-synced index until the scroll about to start has
+   * finished.
+   *
+   * `scrollend` is the event for it and a timeout is the fallback, not
+   * belt-and-braces: the event only reached Safari in 18.2, and a scroll that
+   * moves nowhere — `goTo()` on the index already shown, which `mounted()`
+   * always does — ends without one in any engine. Whichever fires first
+   * cancels the other.
+   * @private
+   */
+  __holdReportingUntilSettled(): void {
+    this.__releaseSettle();
+
+    const release = () => this.__releaseSettle();
+    const timer = window.setTimeout(release, SETTLE_TIMEOUT);
+    this.$el.addEventListener('scrollend', release, { once: true });
+
+    this.__pendingSettle = () => {
+      window.clearTimeout(timer);
+      this.$el.removeEventListener('scrollend', release);
+    };
+  }
+
+  /**
+   * Report again, and drop whatever was armed to do it.
+   *
+   * Cleared before it runs, so a release that cancels itself does not recurse.
+   * @private
+   */
+  __releaseSettle(): void {
+    const cancel = this.__pendingSettle;
+    this.__pendingSettle = null;
+    cancel?.();
   }
 
   /**
@@ -261,6 +324,15 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends withResize
       return;
     }
 
+    // Progress is a position, so it stays live through a programmatic scroll —
+    // a progress bar that jumped from end to end would be worse than the
+    // flicker this holds back. Only the index waits.
+    carousel.keepTicking();
+
+    if (this.__pendingSettle) {
+      return;
+    }
+
     const positions = carousel.positions();
     const index = getClosestIndex(
       positions.map((position) => (isHorizontal ? position.left : position.top)),
@@ -268,6 +340,20 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends withResize
     );
 
     carousel.reportIndex(index);
-    carousel.keepTicking();
+  }
+
+  /**
+   * A gesture on the track takes the scroll back, so reporting resumes at
+   * once rather than waiting out a settle that is no longer happening.
+   *
+   * `pointerdown` covers touch and mouse; `wheel` is the one scroll gesture
+   * that never sends one.
+   */
+  onPointerdown(): void {
+    this.__releaseSettle();
+  }
+
+  onWheel(): void {
+    this.__releaseSettle();
   }
 }
