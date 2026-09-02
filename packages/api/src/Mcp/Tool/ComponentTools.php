@@ -53,7 +53,7 @@ final class ComponentTools
      * Get the API documentation of a Reference item. For items without a
      * dedicated API page, return the canonical overview and usage documentation.
      *
-     * @param string $name The item name, e.g. "Accordion" or "withTransition" (case-insensitive when unambiguous)
+     * @param string $name The item name, e.g. "Disclosure" or "withTransition" (case-insensitive when unambiguous)
      */
     #[McpTool(name: 'get_reference_item')]
     public function getReferenceItem(string $name): string
@@ -80,7 +80,7 @@ final class ComponentTools
      * Get examples for a Reference item as ready-to-use Twig and JavaScript
      * snippets. When no examples page exists, return its canonical usage page.
      *
-     * @param string $name The item name, e.g. "Accordion" or "withTransition" (case-insensitive when unambiguous)
+     * @param string $name The item name, e.g. "Disclosure" or "withTransition" (case-insensitive when unambiguous)
      */
     #[McpTool(name: 'get_reference_item_examples')]
     public function getReferenceItemExamples(string $name): string

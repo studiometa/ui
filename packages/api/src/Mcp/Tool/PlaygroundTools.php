@@ -22,7 +22,7 @@ final class PlaygroundTools
      * The whole playground state is encoded in the returned URL, so no data is
      * stored server-side. Open the URL to see the components rendered live and
      * editable. The HTML field accepts Twig using the `@ui/` namespace, e.g.
-     * `{% include '@ui/Accordion/Accordion.twig' with { items: items } %}`.
+     * `{% include '@ui/Disclosure/Disclosure.twig' with { id: 'faq', items: items } %}`.
      *
      * @param string      $html   The Twig/HTML markup rendered in the playground
      * @param string|null $script Optional JavaScript, typically a js-toolkit app bootstrapping the components
