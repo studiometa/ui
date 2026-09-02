@@ -1,6 +1,6 @@
 # v1.x → v2.x
 
-v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/). It removes seven component families, renames three components, rewrites `Tabs`, gives `Carousel` an accessibility contract, and changes every event payload. There is no compatibility layer.
+v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/). It removes seven component families, renames three components, rewrites `Tabs`, redesigns `Cursor` around published CSS hooks, gives `Carousel` an accessibility contract, and changes every event payload. There is no compatibility layer.
 
 [[toc]]
 
@@ -511,6 +511,55 @@ Steps:
 5. Remove any `role`, `aria-label` or `aria-roledescription` you were writing by hand only if you want the defaults; an attribute already in the markup is never overwritten.
 
 `aria-roledescription` is not written. `Slider` emitted `carousel` and `slide` untranslated; nothing translates the attribute. Write it yourself if you want it.
+
+### `Cursor`
+
+Eight options become two. v1 hardcoded one visual — a dot that translates and scales, over two fixed states, with two fixed scale factors and three damp factors. v2 publishes the position and the state on the root element and leaves the visual to CSS.
+
+```diff
+- <div
+-   data-component="Cursor"
+-   data-option-grow-selectors="a, a *, button, button *"
+-   data-option-shrink-selectors="[data-cursor-shrink], [data-cursor-shrink] *"
+-   data-option-grow-to="2"
+-   data-option-shrink-to="0.5"></div>
++ <div
++   data-component="Cursor"
++   data-option-states='{"a, button": "grow", "[data-cursor-shrink]": "shrink"}'></div>
+```
+
+```css
+[data-component='Cursor'][data-cursor-state='grow'] {
+  scale: 2;
+}
+[data-component='Cursor'][data-cursor-state='shrink'] {
+  scale: 0.5;
+}
+```
+
+| v1.x                                                             | v2.x                                                           |
+| ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| `data-option-grow-selectors`                                     | an entry of `data-option-states`                               |
+| `data-option-shrink-selectors`                                   | an entry of `data-option-states`                               |
+| `data-option-scale`                                              | removed — the element's own CSS                                |
+| `data-option-grow-to`                                            | `[data-cursor-state='grow'] { scale: … }`                      |
+| `data-option-shrink-to`                                          | `[data-cursor-state='shrink'] { scale: … }`                    |
+| `data-option-translate-damp-factor`                              | `data-option-damping`                                          |
+| `data-option-grow-damp-factor`, `data-option-shrink-damp-factor` | removed — `transition: scale …`                                |
+| the forced shrink while the pointer is down                      | `data-cursor-down`, published apart from the state             |
+| `transform: matrix(…)` on the element                            | `translate` on the element, plus `--cursor-x` and `--cursor-y` |
+| `motion` with an `x`, `y` and `scale` channel                    | `motion` with an `x` and `y` channel                           |
+
+Steps:
+
+1. Fold the two selector options into one `data-option-states` map. It is JSON, and the value of an entry is the state name you will style. The default is empty: a `Cursor` with no map publishes no state.
+2. Drop the `a *` and `button *` companions. Selectors are matched with `closest()`, so `"a"` already means "over a link, or anything inside it".
+3. Move `scale`, `grow-to` and `shrink-to` into CSS, as `scale` on `[data-cursor-state='<name>']`.
+4. Move `grow-damp-factor` and `shrink-damp-factor` into a `transition` on the same rule. `translate-damp-factor` becomes `data-option-damping`.
+5. Replace any CSS or JS reading the element's `transform` with `translate`, `--cursor-x` or `--cursor-y`. **Write your scale into `scale`, not into `transform`**: the individual transform properties compose with `translate` outermost, so a `transform: scale(2)` would multiply the position the component just wrote.
+6. Style the press with `[data-cursor-down]`. It is not a state, so a press over a growing element keeps its `grow` and the cascade decides what that looks like.
+
+`Cursor.twig` gains a `states` and a `damping` parameter and ships the default stylesheet, wrapped in `:where()` so any rule of yours wins. Its Tailwind classes are gone.
 
 ### `CarouselDrag`
 

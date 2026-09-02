@@ -1,34 +1,56 @@
 import { Base } from '@studiometa/js-toolkit/Base';
 import { withPointer } from '@studiometa/js-toolkit/withPointer';
 import type { BaseConfig, BaseProps, MountedReturn, PointerProps } from '@studiometa/js-toolkit';
-import { matrix } from '@studiometa/js-toolkit/utils/matrix';
 import { smoothTo } from '@studiometa/js-toolkit/utils/smoothTo';
 import type { SmoothToRecord } from '@studiometa/js-toolkit/utils';
 
 export type CursorProps = BaseProps & {
   $options: {
-    growSelectors: string;
-    shrinkSelectors: string;
-    scale: number;
-    growTo: number;
-    shrinkTo: number;
-    translateDampFactor: number;
-    growDampFactor: number;
-    shrinkDampFactor: number;
+    damping: number;
+    states: Record<string, string>;
   };
 };
 
 /**
- * A custom cursor that follows the pointer, damping its position each frame
- * for a smooth trail. It grows over elements matching `growSelectors` and
- * shrinks over `shrinkSelectors` or while the pointer is down, interpolating
- * between the `scale`, `growTo` and `shrinkTo` factors.
+ * A custom cursor that follows the pointer, damping its position each frame for
+ * a smooth trail, and publishes what it knows so a stylesheet can draw it.
+ *
+ * **It publishes three things on its own element**, the way `Carousel`
+ * publishes `--carousel-progress` and `aria-current`:
+ *
+ * - `--cursor-x` and `--cursor-y`, the damped position in pixels;
+ * - `data-cursor-state`, the name the `states` map gives to whatever the
+ *   pointer is over, or the empty string;
+ * - `data-cursor-down`, present while the pointer button is down.
+ *
+ * v1 spent eight options hardcoding one visual — a dot that translates and
+ * scales — with two fixed state names, two fixed scale factors and three damp
+ * factors. Every one of those is a CSS declaration in disguise:
+ * `[data-cursor-state='grow'] { scale: 2 }` says the same thing, in the
+ * author's own easing, on a compositable property, for any number of states
+ * the author names. What is left is the one thing CSS cannot do — read the
+ * pointer — and the two options that configure it.
+ *
+ * **The position is written as `translate`, not `transform`.** The individual
+ * transform properties compose in a fixed order — `translate`, `rotate`,
+ * `scale`, `transform` — with `translate` outermost, so a `scale` from a
+ * stylesheet grows the cursor around the point it sits on instead of
+ * multiplying the coordinates the component just wrote. Writing the position
+ * into `transform` would have put it *inside* the scale, and a cursor at scale
+ * 2 would have chased the pointer at twice its speed. `rotate`, `scale` and
+ * `transform` are all left untouched, so a state can claim any of them.
+ *
+ * The component writes that translation itself rather than leaving the element
+ * inert until a stylesheet reads `--cursor-x`: measured over 300 frames, a
+ * custom-property write was neither faster nor slower than a transform write
+ * beyond the run-to-run noise, so publishing alone buys nothing and costs the
+ * out-of-the-box default.
  *
  * v3 declares neither service: `moved()` and `ticked()` are enough for its
  * `$services` to bind the pointer and the frame loop. This port declares only
- * the pointer, because `smoothTo()` owns the other half: three named channels
- * on one frame subscription, each with its own rate, started when the pointer
- * moves and released the moment the cursor has caught up. v3 spells that
+ * the pointer, because `smoothTo()` owns the other half: two named channels on
+ * one frame subscription, started when the pointer moves and released the
+ * moment the cursor has caught up. v3 spells that
  * `$services.enable`/`disable('ticked')`, and this port used to spell it
  * `withRaf(..., { manual: true })` plus a hand-written `ticked()`.
  *
@@ -38,40 +60,42 @@ export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<C
   static config: BaseConfig = {
     name: 'Cursor',
     options: {
-      growSelectors: {
-        type: String,
-        default: 'a, a *, button, button *, [data-cursor-grow], [data-cursor-grow] *',
-      },
-      shrinkSelectors: {
-        type: String,
-        default: '[data-cursor-shrink], [data-cursor-shrink] *',
-      },
-      scale: { type: Number, default: 1 },
-      growTo: { type: Number, default: 2 },
-      shrinkTo: { type: Number, default: 0.5 },
-      translateDampFactor: { type: Number, default: 0.25 },
-      growDampFactor: { type: Number, default: 0.25 },
-      shrinkDampFactor: { type: Number, default: 0.25 },
+      damping: { type: Number, default: 0.25 },
+      // An `Object` default is a factory in v4, so that two instances never
+      // share one map.
+      states: { type: Object, default: () => ({}) },
     },
   };
 
   /**
-   * The three smoothed channels. `scale` damps at its own rate **and** by the
-   * direction it travels, which is why the factor is a function rather than a
-   * number: it is read per frame, per channel.
+   * The damped position, on one frame subscription.
+   *
+   * The factor is a function rather than a number because `$options` is a live
+   * view over the attributes: a value captured at construction would freeze a
+   * `data-option-damping` the framework keeps updating.
    */
-  motion: SmoothToRecord<'x' | 'y' | 'scale'> = smoothTo(
-    { x: 0, y: 0, scale: 0 },
-    {
-      damping: (key): number => {
-        const { translateDampFactor, growDampFactor, shrinkDampFactor } = this.$options;
-        if (key !== 'scale') {
-          return translateDampFactor;
-        }
-        return this.motion.raw().scale < this.motion().scale ? shrinkDampFactor : growDampFactor;
-      },
-    },
+  motion: SmoothToRecord<'x' | 'y'> = smoothTo(
+    { x: 0, y: 0 },
+    { damping: (): number => this.$options.damping },
   );
+
+  /**
+   * The published state name, `''` when the pointer is over nothing the map
+   * names.
+   *
+   * **The attribute is always present.** A channel that disappears is one an
+   * author has to test for existence before styling around it, and it makes
+   * `[data-cursor-state]` silently select the resting cursor too. Empty is the
+   * same choice `CarouselItem` makes when it writes `--carousel-item-active: 0`
+   * rather than removing the property.
+   */
+  state = '';
+
+  /** Whether the pointer button is down, published as `data-cursor-down`. */
+  isDown = false;
+
+  /** Selectors already reported as invalid, so one typo warns once. */
+  invalidSelectors: Set<string> = new Set();
 
   /**
    * A mixin binds its subscription from `mounted()` and returns the release,
@@ -82,43 +106,103 @@ export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<C
   mounted(): MountedReturn {
     // A remount starts from rest: `jump()` moves the value and its target
     // together, so nothing animates back from where the last cycle left it.
-    this.render(this.motion.jump({ x: 0, y: 0, scale: 0 }));
+    this.state = '';
+    this.isDown = false;
+    this.invalidSelectors.clear();
+    this.render(this.motion.jump({ x: 0, y: 0 }));
+    this.publish();
 
     return [
       super.mounted(),
-      this.motion.subscribe((values: Record<'x' | 'y' | 'scale', number>) => this.render(values)),
+      this.motion.subscribe((values: Record<'x' | 'y', number>) => this.render(values)),
       // The frame belongs to the mount cycle: a cursor unmounted mid-travel
       // must not keep asking for frames to finish a journey nobody watches.
       () => this.motion.destroy(),
     ];
   }
 
-  /** Follow the pointer and decide the scale it is heading to. */
+  /** Follow the pointer, and resolve the state it is over. */
   moved({ event, x, y, isDown }: PointerProps): void {
-    // Annotated rather than inferred: this class is generic in its props, so
-    // each option reads as a deferred indexed access and two of them do not
-    // measure as one type.
-    let scale: number = this.$options.scale;
+    this.motion({ x, y });
 
-    if (!event) {
-      this.motion({ x, y, scale });
-      return;
+    // No event means the service has not observed a pointer yet, or has
+    // released it: there is no target to resolve a state from, so the last
+    // resolved one stands.
+    const state = event ? this.resolve(event.target) : this.state;
+
+    if (state !== this.state || isDown !== this.isDown) {
+      this.state = state;
+      this.isDown = isDown;
+      this.publish();
+    }
+  }
+
+  /**
+   * The name the `states` map gives to what the pointer is over.
+   *
+   * `closest()`, not `matches()`: the target of a pointer event is the deepest
+   * element under it, so `"a"` has to mean "over a link" and not "over the
+   * link's own box but none of its children" — which is why v1's defaults had
+   * to spell `a, a *, button, button *`.
+   *
+   * Entries are tried in the order the map declares them and the first match
+   * wins, so declaration order is the precedence, not proximity in the tree.
+   */
+  resolve(target: EventTarget | null): string {
+    if (!(target instanceof Element)) {
+      return '';
     }
 
-    const { target } = event;
-    const shouldGrow = target instanceof Element && target.matches(this.$options.growSelectors);
-    const shouldReduce =
-      isDown || (target instanceof Element && target.matches(this.$options.shrinkSelectors));
-
-    if (shouldGrow) {
-      scale = this.$options.growTo;
+    for (const [selector, name] of Object.entries(this.$options.states)) {
+      try {
+        if (target.closest(selector)) {
+          return String(name);
+        }
+      } catch (error) {
+        // One malformed selector in a JSON attribute would otherwise throw on
+        // every pointer move and take the whole cursor down with it.
+        if (!this.invalidSelectors.has(selector)) {
+          this.invalidSelectors.add(selector);
+          this.$error(
+            'cursor.invalid-selector',
+            `The states map has an invalid selector: "${selector}". Its state is never applied.`,
+            error,
+          );
+        }
+      }
     }
 
-    if (shouldReduce) {
-      scale = this.$options.shrinkTo;
-    }
+    return '';
+  }
 
-    this.motion({ x, y, scale });
+  /**
+   * Publish the state and the button, as two independent attributes.
+   *
+   * **`data-cursor-down` is not a state.** v1 forced the shrink scale while the
+   * button was down, which meant a press over a growing element silently lost
+   * its grow, and no author could change that precedence. Where the pointer is
+   * and whether the button is down are two facts, so they get two hooks and
+   * the cascade arbitrates:
+   *
+   * ```css
+   * [data-cursor-state='grow'] { scale: 2 }
+   * [data-cursor-down] { scale: 0.8 }
+   * [data-cursor-state='grow'][data-cursor-down] { scale: 1.6 }
+   * ```
+   *
+   * It also leaves the state names entirely to the author: nothing is
+   * reserved, so a map is free to call one of its states `down`.
+   */
+  publish(): void {
+    this.$write(() => {
+      this.$el.dataset.cursorState = this.state;
+
+      if (this.isDown) {
+        this.$el.dataset.cursorDown = '';
+      } else {
+        delete this.$el.dataset.cursorDown;
+      }
+    });
   }
 
   /**
@@ -128,22 +212,17 @@ export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<C
    * and a write scheduled from a read runs in the same frame: no latency, and
    * no style write landing between two components' measurements.
    */
-  render({
-    x,
-    y,
-    scale,
-  }: {
-    readonly x: number;
-    readonly y: number;
-    readonly scale: number;
-  }): void {
+  render({ x, y }: { readonly x: number; readonly y: number }): void {
     this.$write(() => {
-      this.$el.style.transform = `translateZ(0) ${matrix({
-        translateX: x,
-        translateY: y,
-        scaleX: scale,
-        scaleY: scale,
-      })}`;
+      const { style } = this.$el;
+      style.setProperty('--cursor-x', `${x}px`);
+      style.setProperty('--cursor-y', `${y}px`);
+      // Two values, not three: a `translate` whose z is `0` serialises back to
+      // the 2D form, so v1's `translateZ(0)` cannot be spelled here. The
+      // compositor hint is `will-change: translate`, which the template ships
+      // and an author can drop — it is a stylesheet's decision, not a
+      // component's.
+      style.translate = `${x}px ${y}px`;
     });
   }
 }
