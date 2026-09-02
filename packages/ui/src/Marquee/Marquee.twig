@@ -1,0 +1,58 @@
+{#
+/**
+ * @file
+ *   Marquee component.
+ *
+ *   The component publishes `--marquee-progress` on the root element; the
+ *   `transform` below is what turns it into horizontal travel. It is a default
+ *   attribute, so passing a `style` in `track_attr` replaces it — which is how
+ *   an effect such as a skew is added, by writing the whole transform.
+ *
+ * @param string $content
+ *   The text content.
+ * @param number $repeat
+ *   The number of times the content should be repeated, defaults to 2.
+ * @param array $attr
+ *   Custom attributes for the root element.
+ * @param array $track_attr
+ *   Custom attributes for the track element.
+ */
+#}
+
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    { data_component: 'Marquee' },
+    { class: 'overflow-x-hidden pointer-events-none', style: { contain: 'content' } }
+  )
+%}
+
+{% set track_attributes =
+  merge_html_attributes(
+    track_attr ?? null,
+    {
+      class: 'text-9xl font-bold',
+      style: { transform: 'translateX(calc(var(--marquee-progress, 0) * -100%))' }
+    },
+    { class: 'relative inline-block whitespace-nowrap' }
+  )
+%}
+
+<div {{ html_attributes(attributes) }}>
+  {#
+    The track is as wide as one copy: every copy after the first is taken out
+    of the flow and offset by a multiple of that width, so `-100%` of the track
+    is exactly one loop. The copies always sit to the right, whatever the sign
+    of the sensitivity, because a wrapped progress only ever travels from 0 to
+    -100%.
+  #}
+  <span {{ html_attributes(track_attributes) }}>
+    {% for count in 1..repeat ?? 2 %}
+      {% set content_attributes = {
+        style: { left: loop.first ? '' : loop.index0 * 100 ~ '%' },
+        class: { 'absolute top-0': not loop.first }
+      } %}
+      <span {{ html_attributes(content_attributes) }}>&nbsp;{{ content }}</span>
+    {% endfor %}
+  </span>
+</div>

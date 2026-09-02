@@ -72,7 +72,7 @@ See [Templates and customization](/guide/concepts/templates-and-customization) f
 For an item with Twig and JavaScript surfaces, render its template and register its class:
 
 ```twig
-{% include '@ui/CircularMarquee/CircularMarquee.twig' with {
+{% include '@ui/Marquee/CircularMarquee.twig' with {
   id: 'services',
   content: 'Our services',
 } %}
@@ -80,9 +80,9 @@ For an item with Twig and JavaScript surfaces, render its template and register 
 
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
-import { CircularMarquee } from '@studiometa/ui';
+import { Marquee } from '@studiometa/ui';
 
-registerComponent(CircularMarquee);
+registerComponent(Marquee);
 ```
 
 The badges and API links on each Reference item show which surfaces it supports.

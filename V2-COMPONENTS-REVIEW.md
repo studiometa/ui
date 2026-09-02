@@ -90,6 +90,20 @@ Three round-7 claims did not survive contact with the built component.
 
 Reading the track's own value turned up a defect of its own: `__restoreSnapping()` put snapping back by clearing the inline `scroll-snap-type`. That is right only for a track styled from a stylesheet — on one styled inline, it deleted the author's declaration, so the first drag turned snapping off for the life of the page. The component now captures what it found at the start of a gesture and puts exactly that back, and only when it was the one that took it. The existing specs asserted the cleared value and called it "restored"; they assert the author's value now.
 
+## Review decisions (round 9)
+
+**`LargeText` and `CircularMarquee` are one component, `Marquee`.** The generic redesign round 2 and round 4 left open for both is done, and it is one redesign because they were one component: both accumulated the scroll delta, damped it at a hardcoded `0.25` and wrote a transform. Only the transform property differed. "Circular" was the SVG `textPath` in `CircularMarquee.twig` and nothing else — zero JavaScript. And `LargeText` never made text large; it was a scroll-driven marquee that had inherited a name from a component which once scaled text to fill a width.
+
+- **The component publishes, CSS paints.** `Marquee` writes `--marquee-progress` (0→1, wrapping), `--marquee-offset` (the same travel unwrapped and signed) and `--marquee-velocity` (the damped rate, in loops per second) on its own element, and nothing else — the convention `Carousel` set with `--carousel-progress`. A horizontal marquee is `translateX(calc(var(--marquee-progress) * -100%))`, a circular one is `rotate(…360deg)`, a skew reads `--marquee-velocity`. One class covers both, and any third reading of the same number.
+- **The loop no longer measures anything.** With a normalised progress, `-100%` **is** the content width by definition. Gone with the measurement: `clientWidth`, `resized()`, the `withResize` mixin, the `target` ref and the `width` property. `LargeText` re-measured on every resize to know where its loop ended; there is no end to know.
+- **Three options, in units that say what they mean.** `speed` is the idle travel in loops per second, `sensitivity` the scroll boost in loops per pixel scrolled (negative reverses, as v1's did), `damping` the smoothing that both components hardcoded at `0.25`. v1 hid the idle speed inside the magic `+ 1` of `(Math.abs(deltaY) + 1) * sensitivity`, so one number set the idle speed and the scroll boost at once, and the frame rate set the real value of both.
+- **Reduced motion is honoured, and the line is drawn at who moves it.** Under `prefers-reduced-motion: reduce` the idle `speed` stops and the scroll-driven travel continues: continuous idle motion is decorative motion nobody asked for, which is what WCAG 2.2 SC 2.2.2 is about, while travel tied to the scroll is the user's own gesture and stops when they stop. The query is read through `usePrefersReducedMotion()` and stays subscribed, so turning the setting on mid-session stops a marquee that is already mounted. Neither v1 component honoured it at all.
+- **Two v1 defects fall out of the rewrite.** The scroll delta was latched, never consumed, so a marquee ran on for ever at the speed of a scroll that had finished; each frame now consumes the distance actually scrolled since the previous one. And `CircularMarquee` had no test of any kind — the specs read the element's published values rather than the instance's fields, so an inert component writes nothing and fails.
+- **`CircularMarquee.twig` is kept**, moved under `Marquee/`, as a Twig-only helper: its radius/perimeter geometry is genuinely useful and needs no JavaScript of its own. It renders `data-component="Marquee"` plus the rotation. `Marquee.twig` keeps `LargeText.twig`'s repeat-the-content mechanism, which is what makes the loop seamless, and drops the `position_factor` it computed from the sign of the sensitivity: a wrapped progress only ever travels from 0 to -100%, whichever way it is going, so the copies always sit to the right.
+- **One deviation from the brief, recorded.** `--marquee-offset` counts loops, not pixels. A pixel figure would need the element measured, which is the read the redesign exists to remove.
+
+The tree holds 947 tests across 86 files — the baseline 940, plus 13 for `Marquee`, minus the 6 in the deleted `LargeText` spec.
+
 ## @studiometa/ui — components (80)
 
 ### accordion
@@ -127,7 +141,7 @@ Reading the track's own value turned up a defect of its own: `__restoreSnapping(
 
 ### circular-marquee
 
-- CircularMarquee `[ts+twig]`
+- CircularMarquee `[ts+twig]` — **merged into `Marquee`** per round 9. The class is removed; `CircularMarquee.twig` survives at `@ui/Marquee/CircularMarquee.twig` as a Twig-only helper.
 
 ### click-outside
 
@@ -197,9 +211,9 @@ Reading the track's own value turned up a defect of its own: `__restoreSnapping(
 - InView
 - InViewOnce
 
-### large-text
+### marquee
 
-- LargeText `[ts+twig]`
+- LargeText `[ts+twig]` — **renamed to `Marquee`** per round 9, absorbing `CircularMarquee`, with a published-custom-property API in place of the transform it used to write.
 
 ### defer
 

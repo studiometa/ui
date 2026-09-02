@@ -1,6 +1,12 @@
+---
+title: Marquee examples
+---
+
 # Examples
 
-## Default
+## Horizontal
+
+The default direction, and the same marquee with a negative `sensitivity`, which reverses it.
 
 <llm-exclude>
 <PreviewPlayground
@@ -19,7 +25,9 @@
 
 </llm-only>
 
-## Higher sensitivity
+## Skewed by the velocity
+
+The skew is CSS: the track's `transform` reads `--marquee-velocity` and clamps it. The component knows nothing about it.
 
 <llm-exclude>
 <PreviewPlayground
@@ -38,7 +46,9 @@
 
 </llm-only>
 
-## Negative sensitivity
+## Circular
+
+The same class, a different `transform`.
 
 <llm-exclude>
 <PreviewPlayground
@@ -57,12 +67,12 @@
 
 </llm-only>
 
-## Exemple with same `outer_radius` and `radius`
+## Circular, faster and reversed
 
-:::tip Why is there two radius parameters ?
+:::tip Why are there two radius parameters?
 
-- `outer_radius` set the size of the **svg viewbox**. `radius` set the size of the `<path>` on which the circular text will be written.
-- `outer_radius` needs to be greater in order to **avoid cutting** the text since the `<svg>` will always hide the overflowing content.
+- `outer_radius` sets the size of the **svg viewBox**. `radius` sets the size of the `<path>` the circular text is written on.
+- `outer_radius` needs to be greater in order to **avoid cutting** the text, since the `<svg>` always hides the overflowing content.
 
 :::
 

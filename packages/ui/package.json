@@ -127,11 +127,6 @@
       "types": "./dist/Carousel/CarouselWrapper.d.ts",
       "import": "./dist/Carousel/CarouselWrapper.js"
     },
-    "./CircularMarquee": {
-      "typescript": "./src/CircularMarquee/CircularMarquee.ts",
-      "types": "./dist/CircularMarquee/CircularMarquee.d.ts",
-      "import": "./dist/CircularMarquee/CircularMarquee.js"
-    },
     "./ClickOutside": {
       "typescript": "./src/ClickOutside/ClickOutside.ts",
       "types": "./dist/ClickOutside/ClickOutside.d.ts",
@@ -257,10 +252,10 @@
       "types": "./dist/Indexable/Indexable.d.ts",
       "import": "./dist/Indexable/Indexable.js"
     },
-    "./LargeText": {
-      "typescript": "./src/LargeText/LargeText.ts",
-      "types": "./dist/LargeText/LargeText.d.ts",
-      "import": "./dist/LargeText/LargeText.js"
+    "./Marquee": {
+      "typescript": "./src/Marquee/Marquee.ts",
+      "types": "./dist/Marquee/Marquee.d.ts",
+      "import": "./dist/Marquee/Marquee.js"
     },
     "./Menu": {
       "typescript": "./src/Menu/Menu.ts",

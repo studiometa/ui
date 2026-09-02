@@ -39,7 +39,6 @@ export {
   type CarouselState,
   type CarouselThumbnailsProps,
 } from './Carousel/index.js';
-export { CircularMarquee, type CircularMarqueeProps } from './CircularMarquee/index.js';
 export { ClickOutside } from './ClickOutside/index.js';
 export { Cursor, type CursorProps } from './Cursor/index.js';
 export {
@@ -122,7 +121,7 @@ export {
   type IndexableProps,
 } from './Indexable/index.js';
 export { InView, InViewOnce } from './InView/index.js';
-export { LargeText, type LargeTextProps } from './LargeText/index.js';
+export { Marquee, type MarqueeProps } from './Marquee/index.js';
 export {
   Menu,
   MenuBtn,
