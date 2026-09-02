@@ -8,7 +8,7 @@ import {
   type MountedReturn,
   type RafRender,
 } from '@studiometa/js-toolkit';
-import { SCROLL_ALIGNMENTS, SCROLL_AXES, scrollPosition } from '@studiometa/js-toolkit/utils';
+import { SCROLL_AXES, scrollPosition } from '@studiometa/js-toolkit/utils';
 import { CarouselBtn } from './CarouselBtn.js';
 import { CarouselCount } from './CarouselCount.js';
 import { CarouselDots } from './CarouselDots.js';
@@ -24,7 +24,7 @@ import {
   type IndexableInstruction,
   type IndexableProps,
 } from '../Indexable/Indexable.js';
-import { type ScrollPosition } from './utils.js';
+import { snapAlignment, type ScrollPosition } from './utils.js';
 
 export type CarouselProps = IndexableProps & {
   $options: IndexableProps['$options'] & {
@@ -135,7 +135,10 @@ export class Carousel extends withResize(withRaf(Indexable, { manual: true }))<C
 
   previousProgress = -1;
 
-  /** The centred scroll offset of every slide, measured once per change. */
+  /**
+   * The scroll offset of every slide, at the alignment its own
+   * `scroll-snap-align` asks for, measured once per change.
+   */
   __positions: ScrollPosition[] | null = null;
 
   /**
@@ -180,11 +183,14 @@ export class Carousel extends withResize(withRaf(Indexable, { manual: true }))<C
       return [];
     }
 
+    // Per item, not once for the track: `scroll-snap-align` is declared on the
+    // slide, so a carousel is free to align one slide differently from the
+    // next, and reading it here costs nothing the layout read did not already.
     this.__positions ??= this.items.items.map((item) =>
       scrollPosition(item.$el, {
         rootElement: scroller,
         axis: SCROLL_AXES.both,
-        align: SCROLL_ALIGNMENTS.center,
+        align: snapAlignment(item.$el),
       }),
     );
 

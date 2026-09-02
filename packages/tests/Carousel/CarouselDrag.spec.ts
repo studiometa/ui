@@ -127,66 +127,63 @@ function drop(x: number, projectedTravel: number): DragProps {
   };
 }
 
-describe('CarouselDrag — the flick clamp', () => {
-  it('lands one snap away however far the throw was heading', async () => {
+describe('CarouselDrag — the throw', () => {
+  it('runs the throw as far as its projection says', async () => {
     const { drag, wrapper } = await render({ count: 6 });
 
-    // 2000px of projected travel is ten slides. Before the clamp, `__snap`
-    // took the closest snap to the projection and went to the last slide.
-    drag.__snap(wrapper, drop(500, 2000));
-    await waitFor(() => wrapper.scrollLeft === SLIDE, { timeout: 2000 });
-
-    expect(wrapper.scrollLeft).toBe(SLIDE);
-  });
-
-  it('clamps backwards the same way', async () => {
-    const { carousel, drag, wrapper } = await render({ count: 6 });
-    await carousel.goTo(4);
-    await waitFor(() => wrapper.scrollLeft === 4 * SLIDE, { timeout: 2000 });
-
-    drag.__snap(wrapper, drop(500, -2000));
-    await waitFor(() => wrapper.scrollLeft === 3 * SLIDE, { timeout: 2000 });
-
-    expect(wrapper.scrollLeft).toBe(3 * SLIDE);
-  });
-
-  it('lets the throw run to its projection with `skipSnaps`', async () => {
-    const { drag, wrapper } = await render({ count: 6, attributes: 'data-option-skip-snaps' });
-
+    // 2000px of projected travel is ten slides, so the throw runs to the end
+    // of the track. Crossing many slides on one hard flick is the inertia the
+    // component is meant to have, not a defect to clamp away.
     drag.__snap(wrapper, drop(500, 2000));
     await waitFor(() => wrapper.scrollLeft === 5 * SLIDE, { timeout: 2000 });
 
     expect(wrapper.scrollLeft).toBe(5 * SLIDE);
   });
 
-  it('stays ballistic below the flick threshold', async () => {
+  it('runs backwards the same way', async () => {
+    const { carousel, drag, wrapper } = await render({ count: 6 });
+    await carousel.goTo(4);
+    await waitFor(() => wrapper.scrollLeft === 4 * SLIDE, { timeout: 2000 });
+
+    drag.__snap(wrapper, drop(500, -2000));
+    await waitFor(() => wrapper.scrollLeft === 0, { timeout: 2000 });
+
+    expect(wrapper.scrollLeft).toBe(0);
+  });
+
+  it('lands on the slide it is over when the throw barely moves', async () => {
     const { carousel, drag, wrapper } = await render({ count: 6 });
     await carousel.goTo(2);
     await waitFor(() => wrapper.scrollLeft === 2 * SLIDE, { timeout: 2000 });
 
-    // 40px of projection is under the 50px floor of the threshold, so the
-    // closest snap to where it was heading wins — which is the one it is on.
+    // 40px of projection does not reach the next slide, so the closest snap to
+    // where it was heading is the one it is already on.
     drag.__snap(wrapper, drop(500, 40));
     await quiet();
 
     expect(wrapper.scrollLeft).toBe(2 * SLIDE);
   });
 
-  it('does not cross more than one snap on a real flick', async () => {
+  it('advances on a real flick, through the whole pointer path', async () => {
     const { carousel, wrapper } = await render({ count: 6 });
 
     // A short, fast gesture: 96px of travel, most of it in the last event, so
-    // the service's velocity smoothing projects far past the slide it is on.
+    // the service's velocity smoothing projects past the slide it is on. This
+    // is the seam the synthetic `drop()` cases above skip — the pointer, the
+    // drag service and `__snap()` end to end.
     grab(wrapper, 300);
     move(280);
     move(204);
     release();
 
-    await waitFor(() => wrapper.scrollLeft === SLIDE, { timeout: 2000 });
-    await waitFor(() => carousel.currentIndex === 1);
+    // Two slides, not one: 96px of drag projects about 400px of scroll, and
+    // the throw is allowed to run there. A clamp would stop it at one and turn
+    // the gesture into a step.
+    await waitFor(() => wrapper.scrollLeft === 2 * SLIDE, { timeout: 2000 });
+    await waitFor(() => carousel.currentIndex === 2);
 
-    expect(wrapper.scrollLeft).toBe(SLIDE);
-    expect(carousel.currentIndex).toBe(1);
+    expect(wrapper.scrollLeft).toBe(2 * SLIDE);
+    expect(carousel.currentIndex).toBe(2);
   });
 });
 
@@ -217,7 +214,7 @@ describe('CarouselDrag — the snapping restore', () => {
     expect(wrapper.style.scrollSnapType).toBe('none');
 
     release();
-    await waitFor(() => wrapper.scrollLeft === SLIDE, { timeout: 2000 });
+    await waitFor(() => wrapper.scrollLeft === 2 * SLIDE, { timeout: 2000 });
     await waitFor(() => wrapper.style.scrollSnapType === '', { timeout: 2000 });
 
     expect(wrapper.style.scrollSnapType).toBe('');

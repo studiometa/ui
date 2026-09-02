@@ -1,4 +1,47 @@
+import { SCROLL_ALIGNMENTS, type ScrollAlign } from '@studiometa/js-toolkit/utils';
+
 export type { ScrollPosition } from '@studiometa/js-toolkit/utils';
+
+/**
+ * The three `scroll-snap-align` keywords that name a position, mapped onto the
+ * scroll alignment that lands on the same place. The fourth, `none`, names no
+ * position and so has no entry.
+ */
+const SNAP_ALIGNMENTS: Record<string, ScrollAlign> = {
+  start: SCROLL_ALIGNMENTS.start,
+  center: SCROLL_ALIGNMENTS.center,
+  end: SCROLL_ALIGNMENTS.end,
+};
+
+/**
+ * Where a slide should come to rest, read from its own `scroll-snap-align`.
+ *
+ * The alignment is the author's, declared in CSS, so a programmatic `goTo()`
+ * lands exactly where a native snap would and the two never disagree. Reading
+ * it is what keeps the scroll target and the CSS one decision instead of two.
+ *
+ * `scroll-snap-align` takes one or two keywords, block axis first, and the
+ * computed value serialises the same way in every engine. One keyword applies
+ * to both axes. `none` opts a slide out of snapping and names no position, so
+ * it falls back to `center` — the alignment this carousel used before it read
+ * the CSS at all, and the one that behaves best for a track of slides narrower
+ * than their scrollport.
+ *
+ * Block and inline are mapped to y and x, which holds for `horizontal-tb`. A
+ * vertical writing mode would swap them; no carousel in the wild is built that
+ * way, and guessing at it would cost a `writing-mode` read per slide.
+ */
+export function snapAlignment(element: HTMLElement): { x: ScrollAlign; y: ScrollAlign } {
+  const [block, inline = block] = window
+    .getComputedStyle(element)
+    .scrollSnapAlign.trim()
+    .split(/\s+/);
+
+  return {
+    x: SNAP_ALIGNMENTS[inline] ?? SCROLL_ALIGNMENTS.center,
+    y: SNAP_ALIGNMENTS[block] ?? SCROLL_ALIGNMENTS.center,
+  };
+}
 
 /**
  * Everything the platform can focus without an author saying so, plus the two

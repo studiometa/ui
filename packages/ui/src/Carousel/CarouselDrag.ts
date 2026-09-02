@@ -5,29 +5,8 @@ import {
   type BaseProps,
   type DragProps,
 } from '@studiometa/js-toolkit';
-import { clamp } from '@studiometa/js-toolkit/utils';
 import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import { getClosestIndex } from './utils.js';
-
-export type CarouselDragProps = BaseProps & {
-  $options: {
-    /** Let a throw travel as far as its projection says, over any number of slides. */
-    skipSnaps: boolean;
-  };
-};
-
-/**
- * Where a throw stops being a settle and becomes a flick, as a share of the
- * scroller and in pixels.
- *
- * The shape is Embla's: a fraction of the viewport so the same gesture means
- * the same thing on a phone and on a desktop track, bounded at both ends so a
- * tiny scroller does not fire on a twitch and a full-width one does not need a
- * throw across half the screen.
- */
-const FLICK_THRESHOLD_RATIO = 0.2;
-const FLICK_THRESHOLD_MIN = 50;
-const FLICK_THRESHOLD_MAX = 225;
 
 /**
  * How long to wait for `scrollend` before restoring snapping anyway, in
@@ -51,13 +30,10 @@ const SCROLL_EPSILON = 1;
  */
 export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
   AbstractCarouselComponent,
-)<CarouselDragProps & T> {
+)<T> {
   static config: BaseConfig = {
     name: 'CarouselDrag',
     mountStrategy: 'media:(pointer: fine)',
-    options: {
-      skipSnaps: Boolean,
-    },
   };
 
   /**
@@ -106,30 +82,16 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
    * settle position at `drop` now, so the projected scroll offset is the
    * pointer's own projected travel, mirrored.
    *
-   * That projection alone is what let a hard flick cross the whole carousel:
-   * the closest snap to a settle point 900px away is eight slides on, and
-   * nothing said otherwise. Two branches now share it, split at the flick
-   * threshold above:
+   * Every throw is ballistic: the snap closest to where the throw was heading,
+   * however many slides that crosses. A hard flick travelling eight slides is
+   * the intended result, not a defect — it is v1's inertia, and it is what
+   * makes a long carousel usable with one gesture. A "one slide per flick"
+   * clamp was tried here and dropped: it turns a throw into a step and takes
+   * the momentum out of the component.
    *
-   * - **Below it**, the throw is ballistic — the closest snap to where it was
-   *   heading, which is the settle a slow release asks for and the branch that
-   *   lands back on the current slide when the drag barely moved.
-   * - **Above it**, the throw is a flick and lands on exactly one snap from
-   *   where the pointer let go, in the direction it was going. `skipSnaps`
-   *   opts out and keeps every throw ballistic.
-   *
-   * The clamp is measured from the release position rather than from the slide
-   * the gesture started on: the drag itself already moved the track 1:1 with
-   * the pointer, and undoing that travel to honour a "one slide per gesture"
-   * rule would scroll backwards under the user's finger. One snap is the
-   * ceiling on the **throw**, not on the gesture.
-   *
-   * Flickity pairs its own clamp with a flick-boost window, so that a fast but
-   * short flick still advances. There is nothing left for it to do here: the
-   * threshold is on the **projected** travel and not on the travelled distance,
-   * and velocity is what drives a projection — so a flick over a few pixels
-   * projects past the threshold and takes the clamped branch, which advances
-   * one snap. The boost is what the clamped branch already is.
+   * The same branch handles a slow release, which projects barely past the
+   * pointer and so lands on the slide the gesture is sitting over, and a drag
+   * that barely moved, which projects onto the current slide.
    * @protected
    */
   __snap(wrapper: HTMLElement, props: DragProps): void {
@@ -154,19 +116,7 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
     // The track travels against the pointer, so the projected scroll offset is
     // the pointer's remaining projected travel, mirrored.
     const projected = isHorizontal ? props.x - props.finalX : props.y - props.finalY;
-    const viewport = isHorizontal ? wrapper.clientWidth : wrapper.clientHeight;
-    const threshold = clamp(
-      viewport * FLICK_THRESHOLD_RATIO,
-      FLICK_THRESHOLD_MIN,
-      FLICK_THRESHOLD_MAX,
-    );
-
-    const index =
-      this.$options.skipSnaps || Math.abs(projected) < threshold
-        ? getClosestIndex(offsets, current + projected)
-        : clamp(getClosestIndex(offsets, current) + Math.sign(projected), 0, offsets.length - 1);
-
-    const target = offsets[index];
+    const target = offsets[getClosestIndex(offsets, current + projected)];
 
     // A settle that does not move fires no `scroll`, so per CSSOM View it fires
     // no `scrollend` either — which is how a drag that ended where it started

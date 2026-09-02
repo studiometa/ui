@@ -252,20 +252,19 @@ The trigger and panel both need an `id`: `Disclosure` wires `aria-controls` and 
 
 #### Options
 
-| v1.x               | v2.x                                                                    |
-| ------------------ | ----------------------------------------------------------------------- |
-| `mode="center"`    | `scroll-snap-align: center` on the slide — where `goTo()` already lands |
-| `mode="left"`      | no equivalent — `goTo()` always centres the slide                       |
-| `mode="right"`     | no equivalent — `goTo()` always centres the slide                       |
-| `contain`          | removed — a scroll container cannot scroll past its own range           |
-| `fit-bounds`       | `scroll-snap-type: x mandatory` on the track                            |
-| no `fit-bounds`    | `scroll-snap-type: none`, for a scroll or touch release only            |
-| `sensitivity`      | no equivalent                                                           |
-| `drop-sensitivity` | no equivalent                                                           |
-| —                  | `axis`, `slide-label`, and `boundary` / `reverse` from `Indexable`      |
-| —                  | `skip-snaps`, on `CarouselDrag`                                         |
+| v1.x               | v2.x                                                               |
+| ------------------ | ------------------------------------------------------------------ |
+| `mode="center"`    | `scroll-snap-align: center` on the slide                           |
+| `mode="left"`      | `scroll-snap-align: start` on the slide                            |
+| `mode="right"`     | `scroll-snap-align: end` on the slide                              |
+| `contain`          | removed — a scroll container cannot scroll past its own range      |
+| `fit-bounds`       | `scroll-snap-type: x mandatory` on the track                       |
+| no `fit-bounds`    | `scroll-snap-type: none`, for a scroll or touch release only       |
+| `sensitivity`      | no equivalent                                                      |
+| `drop-sensitivity` | no equivalent                                                      |
+| —                  | `axis`, `slide-label`, and `boundary` / `reverse` from `Indexable` |
 
-- `mode="left"` and `mode="right"` cannot be restored with `scroll-snap-align`. The alignment decides where a **native** snap lands; `Carousel` measures its own scroll targets centred, so `goTo()` and the index it reports back both stay centred. The two agree only where a slide fills the track.
+- `mode` becomes CSS. `goTo()` reads each slide's own `scroll-snap-align` and scrolls to the offset that alignment names, so a programmatic move lands exactly where a native snap would. One keyword applies to both axes; with two, the block axis comes first (`scroll-snap-align: <block> <inline>`), so a horizontal carousel reads the second. A slide set to `none` is centred.
 - `sensitivity` scaled the pointer travel. `drop-sensitivity` multiplied the projected throw. The drag service projects the settle per device now, so neither has a value to scale.
 - `scroll-snap-type: none` frees a scroll or touch release, not a mouse drag: `CarouselDrag` scrolls to a slide on every drop. Drop `CarouselDrag` for a freeform mouse release too.
 
@@ -515,22 +514,9 @@ Steps:
 
 ### `CarouselDrag`
 
-A hard flick now advances **one slide**. v1 projected the throw and jumped to whichever slide was nearest the predicted resting point, so a fast gesture could cross several.
+The throw settles the same way as v1: the slide nearest the projected resting point, however many slides that crosses. Nothing to migrate.
 
-| v1.x                                    | v2.x                                                  |
-| --------------------------------------- | ----------------------------------------------------- |
-| a flick lands on the nearest projection | a flick past the threshold advances exactly one slide |
-| —                                       | `skip-snaps` option, restoring the v1 behaviour       |
-
-The threshold is `clamp(20% of the track, 50, 225)` px of projected travel. Below it the throw still coasts to the nearest slide.
-
-`skip-snaps` is a `CarouselDrag` option, so it goes on the wrapper, not on the carousel root:
-
-```html
-<div data-component="Carousel" aria-label="Featured products">
-  <div data-component="CarouselWrapper CarouselDrag" data-option-skip-snaps>…</div>
-</div>
-```
+What changed is how the projection is measured. v1 multiplied the last event's delta by `-2.5`, a per-device quantity, so the same flick threw differently on a 1000 Hz mouse and a 125 Hz trackpad. The drag service reports its own settle position now, so the throw is the same gesture on every device.
 
 ## Event payloads
 

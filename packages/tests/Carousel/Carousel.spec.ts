@@ -97,6 +97,79 @@ describe('slide positions', () => {
   });
 });
 
+describe('slide positions — the alignment is the slide’s own CSS', () => {
+  /**
+   * Slides half the width of the scroller, so the three alignments land on
+   * three different offsets. With slides that fill it, they all collapse onto
+   * the same number and prove nothing.
+   */
+  async function renderAligned(snapAlign: string): Promise<Carousel> {
+    const root = document.createElement('div');
+    const items = Array.from(
+      { length: 5 },
+      () =>
+        `<div data-component="CarouselItem" style="flex:0 0 100px;width:100px;height:100px;scroll-snap-align:${snapAlign}"></div>`,
+    ).join('');
+    root.innerHTML = `
+      <div data-component="Carousel" aria-label="Carousel">
+        <div data-component="CarouselWrapper" style="${WRAPPER_STYLE}">${items}</div>
+      </div>`;
+    document.body.append(root);
+    await settle();
+
+    return getInstance<Carousel>(root.firstElementChild as HTMLElement, 'Carousel')!;
+  }
+
+  // 5 slides of 100px in a 200px scroller: 500px of content, 300px of scroll.
+  it.each([
+    // Slide `i` starts at `i * 100`, and the last two cannot be reached.
+    ['start', [0, 100, 200, 300, 300]],
+    // Half a slide short of that, and the first cannot be centred at all.
+    ['center', [0, 50, 150, 250, 300]],
+    // A slide's width further back, so the first two share the same offset.
+    ['end', [0, 0, 100, 200, 300]],
+  ])('lands a slide where `scroll-snap-align: %s` says', async (snapAlign, expected) => {
+    const carousel = await renderAligned(snapAlign);
+
+    expect(carousel.positions.map((position) => position.left)).toEqual(expected);
+  });
+
+  it('falls back to centring when the slide opts out of snapping', async () => {
+    const carousel = await renderAligned('none');
+
+    // `none` names no position, so the carousel keeps the alignment it used
+    // before it read the CSS at all.
+    expect(carousel.positions.map((position) => position.left)).toEqual([0, 50, 150, 250, 300]);
+  });
+
+  it('reads the inline axis from a two-keyword value', async () => {
+    // `scroll-snap-align: <block> <inline>`, so a horizontal carousel takes
+    // the second keyword and ignores the first.
+    const carousel = await renderAligned('center start');
+
+    expect(carousel.positions.map((position) => position.left)).toEqual([0, 100, 200, 300, 300]);
+  });
+
+  it('lets one slide align differently from the next', async () => {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <div data-component="Carousel" aria-label="Carousel">
+        <div data-component="CarouselWrapper" style="${WRAPPER_STYLE}">
+          <div data-component="CarouselItem" style="flex:0 0 100px;width:100px;height:100px;scroll-snap-align:start"></div>
+          <div data-component="CarouselItem" style="flex:0 0 100px;width:100px;height:100px;scroll-snap-align:end"></div>
+          <div data-component="CarouselItem" style="flex:0 0 100px;width:100px;height:100px;scroll-snap-align:start"></div>
+        </div>
+      </div>`;
+    document.body.append(root);
+    await settle();
+    const carousel = getInstance<Carousel>(root.firstElementChild as HTMLElement, 'Carousel')!;
+
+    // The alignment is per slide because the CSS property is, so the middle
+    // one ends where its own declaration puts it: 100px back from `start`.
+    expect(carousel.positions.map((position) => position.left)).toEqual([0, 0, 100]);
+  });
+});
+
 describe('Carousel — the index', () => {
   it('derives its length from the live slide collection', async () => {
     const { carousel } = await render({ count: 4 });

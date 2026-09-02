@@ -365,29 +365,9 @@ While a gesture is running, the track's `scroll-snap-type` is set to `none` — 
 
 ### How a release settles
 
-The drag service reports the position the throw was heading for, so the track never needs a sensitivity multiplier to guess it. What happens at that projected point depends on how hard the throw was, measured against a threshold of **20% of the scroller, clamped between 50px and 225px**:
+The drag service reports the position the throw was heading for, so the track never needs a sensitivity multiplier to guess it. The carousel goes to the snap point closest to that projected position, however many slides away it is.
 
-- below the threshold, the throw is a **settle**: the carousel goes to the snap point closest to where the throw was heading, which is the current slide when the drag barely moved;
-- at or above it, the throw is a **flick**: the carousel goes to **exactly one snap point** from where the pointer let go, in the direction it was travelling.
-
-The one-snap clamp is what keeps a hard flick from crossing the whole track. It is measured from the release position, not from the slide the gesture started on: the drag itself already moved the track pixel for pixel with the pointer, so only the throw is clamped.
-
-### `skipSnaps`
-
-- Type: `boolean`
-- Default: `false`
-
-Removes the one-snap clamp: every release settles at the snap point closest to its projected end, however many slides away that is.
-
-<!-- prettier-ignore-start -->
-```html {3}
-<div
-  data-component="CarouselWrapper CarouselDrag"
-  data-option-skip-snaps>
-  …
-</div>
-```
-<!-- prettier-ignore-end -->
+Every release settles the same way. A slow one projects barely past the pointer and lands on the slide the gesture is sitting over; a hard flick projects far ahead and crosses as many slides as its momentum carries it. There is no per-gesture limit — a long carousel is meant to be crossed with one throw.
 
 ## CarouselPlay
 
