@@ -500,13 +500,13 @@ The API is unchanged. The accessibility contract is new, and two things it needs
 | —                                | `inert` on every slide that does not intersect the track            |
 | —                                | `tabindex="0"` on the track when no slide holds a focusable element |
 | —                                | `scroll-padding` on the track, mirroring its own padding            |
-| `disabled` on the current picker | `aria-disabled="true"` — a numeric `CarouselBtn` stays focusable    |
+| `disabled` on the current picker | `aria-current="true"` — a numeric `CarouselBtn` stays focusable     |
 
 Steps:
 
 1. Add an `aria-label` or an `aria-labelledby` to every `Carousel` root. Missing ones log `carousel.unnamed`.
 2. Add a name to every icon-only or empty `CarouselBtn`. Missing ones log `carousel.unnamed-btn`.
-3. Replace any CSS selecting `[data-component~="CarouselBtn"]:disabled` for a numeric action with `[aria-disabled="true"]`.
+3. Replace any CSS selecting `[data-component~="CarouselBtn"]:disabled` for a numeric action with `[aria-current="true"]`, the same selector the dots and thumbnails use.
 4. Translate the slide name with `data-option-slide-label` on a non-English page.
 5. Remove any `role`, `aria-label` or `aria-roledescription` you were writing by hand only if you want the defaults; an attribute already in the markup is never overwritten.
 

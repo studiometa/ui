@@ -141,7 +141,7 @@ The component implements the [WAI-ARIA carousel pattern](https://www.w3.org/WAI/
 | `CarouselItem`       | `inert`, on every slide that does not intersect the track                                    |
 | `CarouselWrapper`    | `tabindex="0"`, a `role` and a name — only when nothing inside the track is focusable        |
 | `CarouselWrapper`    | `scroll-padding`, mirroring the track's own padding                                          |
-| `CarouselBtn`        | `disabled` on a `prev`/`next` at its end, `aria-disabled` on the picker of the current slide |
+| `CarouselBtn`        | `disabled` on a `prev`/`next` at its end, `aria-current` on the picker of the current slide  |
 | `CarouselDots`       | `aria-current="true"` on the current dot, plus an `aria-label` on every unnamed dot          |
 | `CarouselThumbnails` | `aria-current="true"` on the open thumbnail, plus an `aria-label` on every unnamed one       |
 

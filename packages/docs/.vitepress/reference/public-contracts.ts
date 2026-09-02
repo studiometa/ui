@@ -303,22 +303,6 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
-    name: 'DeprecationInterface',
-    kind: 'type',
-    package: 'npm:@studiometa/ui',
-    importPath: '@studiometa/ui',
-    href: '/reference/items/withDeprecation/',
-    status: 'stable',
-  },
-  {
-    name: 'DeprecationProps',
-    kind: 'type',
-    package: 'npm:@studiometa/ui',
-    importPath: '@studiometa/ui',
-    href: '/reference/items/withDeprecation/',
-    status: 'stable',
-  },
-  {
     name: 'DialogProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',

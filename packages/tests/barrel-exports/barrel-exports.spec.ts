@@ -122,8 +122,6 @@ test('@studiometa/ui barrel export surface', () => {
       "DataValue [type]",
       "Defer [value]",
       "DeferProps [type]",
-      "DeprecationInterface [type]",
-      "DeprecationProps [type]",
       "Dialog [value]",
       "DialogProps [type]",
       "Disclosure [value]",
@@ -218,7 +216,6 @@ test('@studiometa/ui barrel export surface', () => {
       "Transitionable [type]",
       "ViewTransition [value]",
       "ViewTransitionProps [type]",
-      "withDeprecation [value]",
       "withIndex [value]",
       "withTransition [value]",
     ]

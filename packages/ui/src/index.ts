@@ -65,11 +65,8 @@ export {
   type DataValue,
 } from './Data/index.js';
 export {
-  withDeprecation,
   withIndex,
   withTransition,
-  type DeprecationInterface,
-  type DeprecationProps,
   type IndexableInterface,
   type Transitionable,
   type TransitionInterface,

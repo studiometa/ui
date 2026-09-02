@@ -33,10 +33,11 @@ export type CarouselDotsProps = TransitionProps & {
  *
  * **The marker is `aria-current`, never `disabled`.** `disabled` takes a
  * control out of the tab order and the accessibility tree, so the set of dots
- * would silently lose one every time the carousel moved — the reason
- * {@link CarouselBtn} already reaches for `aria-disabled` on a numeric action.
- * `aria-current="true"` says "this is the one you are on" without removing
- * anything, and it is the CSS hook as well: style `[aria-current='true']`.
+ * would silently lose one every time the carousel moved. `aria-current="true"`
+ * says "this is the one you are on" without removing anything, and it is the
+ * CSS hook as well: style `[aria-current='true']`. Every picker carries it —
+ * {@link CarouselThumbnails} and a numeric {@link CarouselBtn} included — so
+ * one selector styles the current control whichever kind it is.
  *
  * **Every dot is named.** A dot with nothing but a background colour is a tab
  * stop with no name — the single most common carousel defect an audit finds.

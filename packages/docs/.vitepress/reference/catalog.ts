@@ -1197,26 +1197,6 @@ export const referenceCatalog = [
     symbols: [uiSymbol('withIndex', '/reference/items/withIndex/', 'withIndex', 'decorator')],
     related: ['indexable'],
   },
-  {
-    id: 'with-deprecation',
-    title: 'withDeprecation',
-    summary: 'Decorate a component to emit a development-time deprecation notice.',
-    kind: 'decorator',
-    path: '/reference/items/withDeprecation/',
-    family: 'development',
-    tags: ['decorator', 'deprecation', 'migration', 'development'],
-    surfaces: ['js'],
-    packages: [uiPackage],
-    status: 'stable',
-    symbols: [
-      uiSymbol(
-        'withDeprecation',
-        '/reference/items/withDeprecation/',
-        'withDeprecation',
-        'decorator',
-      ),
-    ],
-  },
 ] satisfies ReferenceCatalogEntry[];
 
 function includesAny<T>(values: T[], selected?: T[]): boolean {

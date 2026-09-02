@@ -1,6 +1,7 @@
 import { type BaseConfig, type BaseProps, type MountedReturn } from '@studiometa/js-toolkit';
 import { AbstractCarouselChild } from './AbstractCarouselChild.js';
 import type { CarouselState } from './context.js';
+import { hasAccessibleName } from './utils.js';
 
 export type CarouselBtnProps = BaseProps & {
   $el: HTMLButtonElement;
@@ -39,11 +40,7 @@ export class CarouselBtn<T extends BaseProps = BaseProps> extends AbstractCarous
    * an audit finds.
    */
   mounted(): MountedReturn {
-    if (
-      !this.$el.hasAttribute('aria-label') &&
-      !this.$el.hasAttribute('aria-labelledby') &&
-      !this.$el.textContent?.trim()
-    ) {
+    if (!hasAccessibleName(this.$el)) {
       this.$warn(
         'carousel.unnamed-btn',
         `The \`${this.$options.action}\` button has no accessible name. Give it text, an \`aria-label\` or an \`aria-labelledby\`.`,
@@ -53,15 +50,10 @@ export class CarouselBtn<T extends BaseProps = BaseProps> extends AbstractCarous
     return super.mounted();
   }
 
-  /**
-   * Navigate, unless the action would not move.
-   *
-   * A picker marked `aria-disabled` still receives the click — that is the
-   * whole point of the attribute — so the no-op is this method's job.
-   */
+  /** Navigate. */
   onClick(): void {
     const { carousel } = this;
-    if (!carousel || this.$el.getAttribute('aria-disabled') === 'true') {
+    if (!carousel) {
       return;
     }
 
@@ -80,22 +72,27 @@ export class CarouselBtn<T extends BaseProps = BaseProps> extends AbstractCarous
   }
 
   /**
-   * Disable the button when its action would not move the index.
+   * Reflect what the button can do, which depends on which button it is.
    *
-   * `prevIndex`/`nextIndex` already encode the `boundary` and `reverse`
-   * options, so `loop` and `bounce` never disable an end and `reverse` flips
-   * which end is terminal. They travel on the state rather than being read off
-   * the coordinator, which is the whole reason no control imports its class.
+   * A `prev`/`next` button names an action, so at the end of the track the
+   * action genuinely cannot be performed and the native `disabled` property
+   * says so. The tab order stays stable because the two ends are never
+   * terminal at once. `prevIndex`/`nextIndex` already encode the `boundary`
+   * and `reverse` options, so `loop` and `bounce` never disable an end and
+   * `reverse` flips which end is terminal — and they travel on the state
+   * rather than being read off the coordinator, which is the whole reason no
+   * control imports its class.
    *
-   * **How it is disabled depends on which button it is.** A picker uses
-   * `aria-disabled`, as the APG's grouped-buttons variant requires: the button
-   * for the slide already showing is the one a screen reader user is most
-   * likely to look for, and the native `disabled` attribute takes it out of
-   * the tab order and the accessibility tree entirely, so the set of dots
-   * silently loses one every time the carousel moves. A `prev`/`next` button
-   * keeps `disabled`: it names an action that genuinely cannot be performed,
-   * the APG prescribes nothing for it, and the tab order stays stable because
-   * the two ends are never disabled at the same time.
+   * A numeric button names a slide rather than an action, which makes it a
+   * picker: the same job as a dot or a thumbnail, so it carries the same
+   * marker, `aria-current="true"`. One marker across the four pickers means
+   * one CSS hook — style `[aria-current='true']` — and `aria-current` is the
+   * attribute for "the current item within a set", which is exactly the claim.
+   * It is never `disabled` in either form: the picker for the slide on screen
+   * is the one a screen reader user looks for, so removing it from the
+   * accessibility tree, or announcing it as unavailable, both lose more than
+   * they say. Clicking it re-runs `goTo()` on the index already shown, which
+   * moves nothing.
    */
   update({ index, prevIndex, nextIndex }: CarouselState): void {
     const { action } = this.$options;
@@ -104,8 +101,10 @@ export class CarouselBtn<T extends BaseProps = BaseProps> extends AbstractCarous
       this.$el.disabled = nextIndex === index;
     } else if (action === STEP_ACTIONS.PREVIOUS) {
       this.$el.disabled = prevIndex === index;
+    } else if (Number(action) === index) {
+      this.$el.setAttribute('aria-current', 'true');
     } else {
-      this.$el.setAttribute('aria-disabled', String(Number(action) === index));
+      this.$el.removeAttribute('aria-current');
     }
   }
 }

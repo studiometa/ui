@@ -367,11 +367,6 @@
       "types": "./dist/ViewTransition/ViewTransition.d.ts",
       "import": "./dist/ViewTransition/ViewTransition.js"
     },
-    "./withDeprecation": {
-      "typescript": "./src/decorators/withDeprecation.ts",
-      "types": "./dist/decorators/withDeprecation.d.ts",
-      "import": "./dist/decorators/withDeprecation.js"
-    },
     "./withIndex": {
       "typescript": "./src/decorators/withIndex.ts",
       "types": "./dist/decorators/withIndex.d.ts",

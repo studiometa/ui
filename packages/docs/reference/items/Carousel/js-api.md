@@ -183,7 +183,7 @@ A control button, delegating to the parent carousel on click.
 
 Use `next` or `prev` to step through the items, or a numeric string (e.g. `"2"`) to jump to a specific index. The button marks itself unavailable when its action would not move the index — `prev` on the first item, `next` on the last one, a picker for the slide already showing.
 
-**How it does so depends on which button it is.** A `prev`/`next` button gets the native `disabled` property. A picker gets `aria-disabled="true"` instead and stays focusable, which is what the APG's grouped-buttons variant asks for: the picker for the current slide is the one a screen reader user looks for, and `disabled` would take it out of the accessibility tree every time the carousel moves. Clicking an `aria-disabled` picker does nothing.
+**How it does so depends on which button it is.** A `prev`/`next` button names an action, so at the end of the track it gets the native `disabled` property. A numeric button names a slide, which makes it a picker: it gets `aria-current="true"`, the same marker [`CarouselDots`](#carouseldots) and [`CarouselThumbnails`](#carouselthumbnails) use, so one selector — `[aria-current="true"]` — styles the current control whichever kind it is. It is never disabled in either form: the picker for the slide on screen is the one a screen reader user looks for. Clicking it moves nothing.
 
 Pickers stay plain buttons — no `role="tab"`, no `role="tablist"`, no `aria-selected`. The APG prescribes tab semantics for them and every piece of user testing published since contradicts it; the objection has been open on the APG repository, unanswered, for eight years.
 
@@ -225,7 +225,7 @@ One button per slide, in slide order. The dot at position _n_ goes to slide _n_.
 
 **No tab semantics.** No `role="tablist"`, no `role="tab"`, no `aria-selected`. The APG prescribes them for a "tabbed carousel" and every piece of user testing published since contradicts it — the objection has been open on the APG repository, unanswered, for eight years. Tab semantics also promise arrow-key navigation and a roving `tabindex`, which this widget does not implement; a set of dots that announces arrow keys and ignores them is worse than one that never claimed them.
 
-**Never `disabled`.** The dot for the current slide keeps its place in the tab order. `disabled` would take it out of the accessibility tree, so the set would silently lose one every time the carousel moved. Same reason [`CarouselBtn`](#carouselbtn) uses `aria-disabled` for a numeric action.
+**Never `disabled`.** The dot for the current slide keeps its place in the tab order. `disabled` would take it out of the accessibility tree, so the set would silently lose one every time the carousel moved. Every picker carries `aria-current` — [`CarouselThumbnails`](#carouselthumbnails) and a numeric [`CarouselBtn`](#carouselbtn) included.
 
 **Naming.** A dot the author named — text, `aria-label`, `aria-labelledby`, or an `<img alt>` inside it — keeps its name. Every other one gets the positional fallback, including the common case of a dot whose only content is an `aria-hidden` bullet: its `textContent` is not empty but its accessible name is, so it is named anyway.
 

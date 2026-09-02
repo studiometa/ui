@@ -473,29 +473,41 @@ describe('Carousel a11y — the controls', () => {
   });
 
   /**
-   * The APG's grouped-buttons variant asks for `aria-disabled` rather than the
-   * native attribute: the picker for the slide already showing is the one a
-   * screen reader user looks for, and `disabled` takes it out of the tree.
+   * A numeric button names a slide, not an action, which makes it a picker —
+   * the same job as a dot or a thumbnail, so it carries the same marker. One
+   * marker across the four means one CSS hook, and the picker for the slide
+   * already showing is the one a screen reader user looks for, so it is never
+   * removed from the tree or announced as unavailable.
    */
-  it('marks the current slide picker `aria-disabled`, keeping it focusable', async () => {
+  it('marks the current slide picker `aria-current`, keeping it focusable', async () => {
     const { el } = await render({ count: 2, controls: PICKER });
     const [first, second] = [
       ...el.querySelectorAll<HTMLButtonElement>('[data-component="CarouselBtn"]'),
     ];
-    await waitFor(() => first.getAttribute('aria-disabled') === 'true');
+    await waitFor(() => first.getAttribute('aria-current') === 'true');
 
-    expect(first.getAttribute('aria-disabled')).toBe('true');
-    expect(second.getAttribute('aria-disabled')).toBe('false');
+    expect(first.getAttribute('aria-current')).toBe('true');
+    expect(second.hasAttribute('aria-current')).toBe(false);
     expect(first.disabled).toBe(false);
+    expect(first.hasAttribute('aria-disabled')).toBe(false);
 
     first.focus();
     expect(document.activeElement).toBe(first);
   });
 
-  it('does nothing when an `aria-disabled` picker is clicked', async () => {
+  it('marks the picker the same way a dot and a thumbnail are marked', async () => {
+    const { el } = await render({ count: 2, controls: PICKER });
+    await waitFor(() => el.querySelector('[aria-current="true"]'));
+
+    // The contract authors style against: one selector, whichever control it
+    // is. A picker that used its own attribute would need its own rule.
+    expect(el.querySelectorAll('[aria-current="true"]')).toHaveLength(1);
+  });
+
+  it('moves nothing when the picker for the current slide is clicked', async () => {
     const { el, carousel } = await render({ count: 2, controls: PICKER });
     const first = el.querySelector<HTMLButtonElement>('[data-option-action="0"]')!;
-    await waitFor(() => first.getAttribute('aria-disabled') === 'true');
+    await waitFor(() => first.getAttribute('aria-current') === 'true');
 
     first.click();
     await quiet();

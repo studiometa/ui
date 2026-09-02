@@ -84,7 +84,6 @@ test("components exports", () => {
       "TrackShopify",
       "Transition",
       "ViewTransition",
-      "withDeprecation",
       "withIndex",
       "withTransition",
     ]
