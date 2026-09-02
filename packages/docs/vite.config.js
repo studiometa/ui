@@ -83,7 +83,6 @@ const config = defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['deepmerge'],
     exclude: ['@studiometa/ui', '@studiometa/js-toolkit'],
   },
 });

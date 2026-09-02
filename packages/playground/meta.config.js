@@ -51,13 +51,11 @@ export default defineWebpackConfig({
       // avoids the `export *`-from-externalized-module name-drop bug (also fixed at source in
       // js-toolkit 3.8.1). The singleton holds because js-toolkit's mutable state (the component
       // registry `registerComponent()` writes to) lives in its main entry (one resolved URL), and
-      // `/utils` is stateless. The remaining entries are ui/ui-mapbox runtime peers the script
-      // editor needs.
+      // `/utils` is stateless. Its own `morphdom` dependency needs no entry here: esm.sh rewrites it
+      // to an absolute esm.sh URL, so the import map is never consulted for it. The remaining
+      // entries are the declared runtime peers of ui-mapbox and ui-motion the script editor needs —
+      // `@studiometa/ui` declares none beyond js-toolkit.
       dependencies: [
-        '@motionone/easing',
-        'compute-scroll-into-view',
-        'deepmerge',
-        'morphdom',
         { specifier: 'mapbox-gl', esmSh: { bundle: true } },
         { specifier: '@mapbox/mapbox-gl-geocoder', esmSh: { bundle: true } },
         { specifier: 'motion', esmSh: { bundle: true } },
