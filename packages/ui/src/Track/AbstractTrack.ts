@@ -1,14 +1,9 @@
-import {
-  Base,
-  defaultScheduler,
-  namespaceQualifier,
-  watchAttributeNamespace,
-  type BaseConfig,
-  type BaseProps,
-  type MountedReturn,
-  type ScheduledTask,
-} from '@studiometa/js-toolkit';
-import { deepmerge } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { defaultScheduler } from '@studiometa/js-toolkit/defaultScheduler';
+import { namespaceQualifier } from '@studiometa/js-toolkit/namespaceQualifier';
+import { watchAttributeNamespace } from '@studiometa/js-toolkit/watchAttributeNamespace';
+import type { BaseConfig, BaseProps, MountedReturn, ScheduledTask } from '@studiometa/js-toolkit';
+import { deepmerge } from '@studiometa/js-toolkit/utils/deepmerge';
 import { TrackContext } from './TrackContext.js';
 import { TRACK_PSEUDO_EVENTS, TrackEvent } from './TrackEvent.js';
 

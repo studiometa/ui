@@ -1,5 +1,6 @@
-import { withResize, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
-import { loadImage } from '@studiometa/js-toolkit/utils';
+import { withResize } from '@studiometa/js-toolkit/withResize';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { loadImage } from '@studiometa/js-toolkit/utils/loadImage';
 import { AbstractFigure, type AbstractFigureProps } from './AbstractFigure.js';
 
 export type AbstractFigureDynamicProps = AbstractFigureProps & {

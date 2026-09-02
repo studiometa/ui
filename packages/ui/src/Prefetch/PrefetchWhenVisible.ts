@@ -1,4 +1,4 @@
-import { type BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractPrefetch } from './AbstractPrefetch.js';
 
 /**

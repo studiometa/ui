@@ -1,10 +1,8 @@
 import type { BaseConfig, BaseConstructor, MixedClass } from '@studiometa/js-toolkit';
-import {
-  enterTransition,
-  leaveTransition,
-  TRANSITION_OPTIONS,
-  type TransitionOptions,
-} from '@studiometa/js-toolkit/utils';
+import { enterTransition } from '@studiometa/js-toolkit/utils/enterTransition';
+import { leaveTransition } from '@studiometa/js-toolkit/utils/leaveTransition';
+import { TRANSITION_OPTIONS } from '@studiometa/js-toolkit/utils/TRANSITION_OPTIONS';
+import type { TransitionOptions } from '@studiometa/js-toolkit/utils';
 
 /** The option and event surface `withTransition` adds to its host. */
 export interface TransitionProps {

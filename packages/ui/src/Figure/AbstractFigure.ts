@@ -1,5 +1,6 @@
-import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
-import { loadImage } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { loadImage } from '@studiometa/js-toolkit/utils/loadImage';
 import { withTransition, type TransitionProps } from '../decorators/withTransition.js';
 
 export type AbstractFigureProps = BaseProps &

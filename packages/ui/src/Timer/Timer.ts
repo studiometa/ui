@@ -1,4 +1,5 @@
-import { Base, type BaseConfig, type BaseProps, type MountedReturn } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolkit';
 
 export type TimerProps = BaseProps & {
   $options: {

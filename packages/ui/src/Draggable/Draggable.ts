@@ -1,18 +1,21 @@
-import {
-  Base,
-  DRAG_MODES,
-  withDrag,
-  withRaf,
-  withResize,
-  type BaseConfig,
-  type BaseProps,
-  type DragProps,
-  type MountedReturn,
-  type RafProps,
+import { Base } from '@studiometa/js-toolkit/Base';
+import { DRAG_MODES } from '@studiometa/js-toolkit/DRAG_MODES';
+import { withDrag } from '@studiometa/js-toolkit/withDrag';
+import { withRaf } from '@studiometa/js-toolkit/withRaf';
+import { withResize } from '@studiometa/js-toolkit/withResize';
+import type {
+  BaseConfig,
+  BaseProps,
+  DragProps,
+  MountedReturn,
+  RafProps,
 } from '@studiometa/js-toolkit';
-import { getOffsetSizes } from '@studiometa/js-toolkit/utils';
-import { clamp, damp, INERTIA_FRAME, map } from '@studiometa/js-toolkit/utils';
-import { transform } from '@studiometa/js-toolkit/utils';
+import { getOffsetSizes } from '@studiometa/js-toolkit/utils/getOffsetSizes';
+import { clamp } from '@studiometa/js-toolkit/utils/clamp';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { INERTIA_FRAME } from '@studiometa/js-toolkit/utils/INERTIA_FRAME';
+import { map } from '@studiometa/js-toolkit/utils/map';
+import { transform } from '@studiometa/js-toolkit/utils/transform';
 
 /** The position the component publishes on every event it emits. */
 export interface DraggablePosition {

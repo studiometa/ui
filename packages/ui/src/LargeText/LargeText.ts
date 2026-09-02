@@ -1,14 +1,11 @@
-import {
-  Base,
-  withRaf,
-  withResize,
-  withScroll,
-  type BaseConfig,
-  type BaseProps,
-  type RafProps,
-  type ScrollProps,
-} from '@studiometa/js-toolkit';
-import { clamp, damp, transform } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withRaf } from '@studiometa/js-toolkit/withRaf';
+import { withResize } from '@studiometa/js-toolkit/withResize';
+import { withScroll } from '@studiometa/js-toolkit/withScroll';
+import type { BaseConfig, BaseProps, RafProps, ScrollProps } from '@studiometa/js-toolkit';
+import { clamp } from '@studiometa/js-toolkit/utils/clamp';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { transform } from '@studiometa/js-toolkit/utils/transform';
 
 export type LargeTextProps = BaseProps & {
   $refs: {

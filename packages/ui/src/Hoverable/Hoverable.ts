@@ -1,15 +1,12 @@
-import {
-  Base,
-  withPointer,
-  withRaf,
-  type BaseConfig,
-  type BaseProps,
-  type ElementPointerProps,
-  type RafProps,
-} from '@studiometa/js-toolkit';
-import { getOffsetSizes } from '@studiometa/js-toolkit/utils';
-import { clamp01, damp, map } from '@studiometa/js-toolkit/utils';
-import { transform } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withPointer } from '@studiometa/js-toolkit/withPointer';
+import { withRaf } from '@studiometa/js-toolkit/withRaf';
+import type { BaseConfig, BaseProps, ElementPointerProps, RafProps } from '@studiometa/js-toolkit';
+import { getOffsetSizes } from '@studiometa/js-toolkit/utils/getOffsetSizes';
+import { clamp01 } from '@studiometa/js-toolkit/utils/clamp01';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { map } from '@studiometa/js-toolkit/utils/map';
+import { transform } from '@studiometa/js-toolkit/utils/transform';
 
 export interface HoverableBounds {
   xMin: number;

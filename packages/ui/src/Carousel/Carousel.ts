@@ -1,14 +1,15 @@
-import {
-  nextFrame,
-  signal,
-  withRaf,
-  withResize,
-  type BaseConfig,
-  type ChildrenCollection,
-  type MountedReturn,
-  type RafRender,
+import { nextFrame } from '@studiometa/js-toolkit/nextFrame';
+import { signal } from '@studiometa/js-toolkit/signal';
+import { withRaf } from '@studiometa/js-toolkit/withRaf';
+import { withResize } from '@studiometa/js-toolkit/withResize';
+import type {
+  BaseConfig,
+  ChildrenCollection,
+  MountedReturn,
+  RafRender,
 } from '@studiometa/js-toolkit';
-import { SCROLL_AXES, scrollPosition } from '@studiometa/js-toolkit/utils';
+import { SCROLL_AXES } from '@studiometa/js-toolkit/utils/SCROLL_AXES';
+import { scrollPosition } from '@studiometa/js-toolkit/utils/scrollPosition';
 import { CarouselBtn } from './CarouselBtn.js';
 import { CarouselCount } from './CarouselCount.js';
 import { CarouselDots } from './CarouselDots.js';

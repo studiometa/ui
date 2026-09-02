@@ -1,9 +1,5 @@
-import {
-  usePrefersReducedMotion,
-  type BaseConfig,
-  type BaseProps,
-  type MountedReturn,
-} from '@studiometa/js-toolkit';
+import { usePrefersReducedMotion } from '@studiometa/js-toolkit/usePrefersReducedMotion';
+import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolkit';
 import { TimerProgress, type TimerProgressProps } from '../Timer/TimerProgress.js';
 import { INDEXABLE_INSTRUCTIONS } from '../Indexable/Indexable.js';
 import { CarouselContext, type CarouselApi } from './context.js';

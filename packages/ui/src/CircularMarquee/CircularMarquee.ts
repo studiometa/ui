@@ -1,6 +1,9 @@
-import { Base, withRaf, withScroll } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { withRaf } from '@studiometa/js-toolkit/withRaf';
+import { withScroll } from '@studiometa/js-toolkit/withScroll';
 import type { BaseConfig, BaseProps, RafProps, ScrollProps } from '@studiometa/js-toolkit';
-import { damp, transform } from '@studiometa/js-toolkit/utils';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { transform } from '@studiometa/js-toolkit/utils/transform';
 
 export interface CircularMarqueeProps extends BaseProps {
   $options: {

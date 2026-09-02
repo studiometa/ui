@@ -1,4 +1,5 @@
-import { Base, type BaseConfig, type GlobalEvent } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseConfig, GlobalEvent } from '@studiometa/js-toolkit';
 
 /** Emits `click-outside` when a document click lands outside its element. */
 export class ClickOutside extends Base<{

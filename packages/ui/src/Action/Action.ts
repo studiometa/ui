@@ -1,11 +1,7 @@
-import {
-  Base,
-  namespaceQualifier,
-  watchAttributeNamespace,
-  type BaseConfig,
-  type BaseProps,
-  type MountedReturn,
-} from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { namespaceQualifier } from '@studiometa/js-toolkit/namespaceQualifier';
+import { watchAttributeNamespace } from '@studiometa/js-toolkit/watchAttributeNamespace';
+import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolkit';
 import { ActionEvent } from './ActionEvent.js';
 
 /**

@@ -5,7 +5,10 @@ import type {
   MixedClass,
   OptionDefinition,
 } from '@studiometa/js-toolkit';
-import { clamp, fold, randomInt, wrap } from '@studiometa/js-toolkit/utils';
+import { clamp } from '@studiometa/js-toolkit/utils/clamp';
+import { fold } from '@studiometa/js-toolkit/utils/fold';
+import { randomInt } from '@studiometa/js-toolkit/utils/randomInt';
+import { wrap } from '@studiometa/js-toolkit/utils/wrap';
 
 /** How the index behaves when a move would leave the `0…length - 1` range. */
 export const INDEXABLE_BOUNDARIES = Object.freeze({

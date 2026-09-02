@@ -1,4 +1,4 @@
-import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import type { Map, IControl } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,

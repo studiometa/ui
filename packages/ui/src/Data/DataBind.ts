@@ -1,12 +1,9 @@
-import {
-  Base,
-  defaultScheduler,
-  domUpdate,
-  subscribeContext,
-  watchAttributeNamespace,
-  type BaseConfig,
-  type BaseProps,
-} from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { defaultScheduler } from '@studiometa/js-toolkit/defaultScheduler';
+import { domUpdate } from '@studiometa/js-toolkit/domUpdate';
+import { subscribeContext } from '@studiometa/js-toolkit/subscribeContext';
+import { watchAttributeNamespace } from '@studiometa/js-toolkit/watchAttributeNamespace';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { getCallback } from './expression.js';
 import {
   isCheckbox,

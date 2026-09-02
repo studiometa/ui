@@ -1,15 +1,13 @@
-import {
-  Base,
-  emitExtendable,
-  withKey,
-  type ChildrenCollection,
-  type ExtendableDetail,
-  type KeyProps,
-} from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { emitExtendable } from '@studiometa/js-toolkit/emitExtendable';
+import { withKey } from '@studiometa/js-toolkit/withKey';
+import type { ChildrenCollection, ExtendableDetail, KeyProps } from '@studiometa/js-toolkit';
 import { Transition, type Transitionable } from '../Transition/Transition.js';
 import { ViewTransition } from '../ViewTransition/ViewTransition.js';
-import { saveActiveElement, trapFocus, untrapFocus } from '@studiometa/js-toolkit/utils';
-import { lockScroll } from '@studiometa/js-toolkit/utils';
+import { saveActiveElement } from '@studiometa/js-toolkit/utils/saveActiveElement';
+import { trapFocus } from '@studiometa/js-toolkit/utils/trapFocus';
+import { untrapFocus } from '@studiometa/js-toolkit/utils/untrapFocus';
+import { lockScroll } from '@studiometa/js-toolkit/utils/lockScroll';
 
 export interface DialogProps {
   $el: HTMLDialogElement;

@@ -1,10 +1,9 @@
-import { withResize, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
-import { loadImage } from '@studiometa/js-toolkit/utils';
-import {
-  withLeadingSlash,
-  withoutLeadingSlash,
-  withoutTrailingSlash,
-} from '@studiometa/js-toolkit/utils';
+import { withResize } from '@studiometa/js-toolkit/withResize';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { loadImage } from '@studiometa/js-toolkit/utils/loadImage';
+import { withLeadingSlash } from '@studiometa/js-toolkit/utils/withLeadingSlash';
+import { withoutLeadingSlash } from '@studiometa/js-toolkit/utils/withoutLeadingSlash';
+import { withoutTrailingSlash } from '@studiometa/js-toolkit/utils/withoutTrailingSlash';
 import { normalizeSize } from '../Figure/utils.js';
 import { FigureVideo, type FigureVideoProps } from './FigureVideo.js';
 

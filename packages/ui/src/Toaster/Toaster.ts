@@ -1,4 +1,6 @@
-import { Base, viewTransition, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { viewTransition } from '@studiometa/js-toolkit/viewTransition';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { Toast } from './Toast.js';
 
 export interface ToasterShowOptions {

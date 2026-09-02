@@ -1,5 +1,5 @@
-import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
-import { historyPush } from '@studiometa/js-toolkit/utils';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
 import {
   FETCH_EVENTS,
   Fetch,

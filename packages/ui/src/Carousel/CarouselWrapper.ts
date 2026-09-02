@@ -1,11 +1,7 @@
-import {
-  usePrefersReducedMotion,
-  withResize,
-  type BaseConfig,
-  type BaseProps,
-  type MountedReturn,
-} from '@studiometa/js-toolkit';
-import { clamp } from '@studiometa/js-toolkit/utils';
+import { usePrefersReducedMotion } from '@studiometa/js-toolkit/usePrefersReducedMotion';
+import { withResize } from '@studiometa/js-toolkit/withResize';
+import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolkit';
+import { clamp } from '@studiometa/js-toolkit/utils/clamp';
 import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import { getClosestIndex, hasTabbableDescendant } from './utils.js';
 

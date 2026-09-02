@@ -1,5 +1,6 @@
-import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
-import { loadLink } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { loadLink } from '@studiometa/js-toolkit/utils/loadLink';
 
 export type AbstractPrefetchProps = BaseProps & {
   $el: HTMLAnchorElement;

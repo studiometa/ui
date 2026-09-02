@@ -1,4 +1,5 @@
-import { Base, type MountedReturn, type OptionChange } from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { MountedReturn, OptionChange } from '@studiometa/js-toolkit';
 import { Transition } from '../Transition/Transition.js';
 import { ViewTransition } from '../ViewTransition/ViewTransition.js';
 import type { Transitionable } from '../decorators/withTransition.js';

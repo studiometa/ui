@@ -1,14 +1,10 @@
-import {
-  DRAG_MODES,
-  withDrag,
-  withRaf,
-  type BaseConfig,
-  type BaseProps,
-  type DragProps,
-  type RafProps,
-  type RafRender,
-} from '@studiometa/js-toolkit';
-import { clamp, damp, DEFAULT_DAMP_FACTOR } from '@studiometa/js-toolkit/utils';
+import { DRAG_MODES } from '@studiometa/js-toolkit/DRAG_MODES';
+import { withDrag } from '@studiometa/js-toolkit/withDrag';
+import { withRaf } from '@studiometa/js-toolkit/withRaf';
+import type { BaseConfig, BaseProps, DragProps, RafProps, RafRender } from '@studiometa/js-toolkit';
+import { clamp } from '@studiometa/js-toolkit/utils/clamp';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { DEFAULT_DAMP_FACTOR } from '@studiometa/js-toolkit/utils/DEFAULT_DAMP_FACTOR';
 import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import { getClosestIndex } from './utils.js';
 

@@ -1,10 +1,6 @@
-import {
-  Base,
-  swap,
-  type BaseConfig,
-  type BaseProps,
-  type MountedReturn,
-} from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { swap } from '@studiometa/js-toolkit/swap';
+import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolkit';
 
 export type DeferProps = BaseProps & {
   $refs: {

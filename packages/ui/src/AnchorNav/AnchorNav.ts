@@ -1,9 +1,5 @@
-import {
-  Base,
-  type BaseConfig,
-  type BaseProps,
-  type ChildrenCollection,
-} from '@studiometa/js-toolkit';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseConfig, BaseProps, ChildrenCollection } from '@studiometa/js-toolkit';
 import { AnchorNavLink } from './AnchorNavLink.js';
 import { AnchorNavTarget } from './AnchorNavTarget.js';
 

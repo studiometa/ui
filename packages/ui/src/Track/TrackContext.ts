@@ -1,5 +1,6 @@
-import { Base, type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
-import { deepmerge } from '@studiometa/js-toolkit/utils';
+import { Base } from '@studiometa/js-toolkit/Base';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { deepmerge } from '@studiometa/js-toolkit/utils/deepmerge';
 
 export type TrackContextProps = BaseProps & {
   $refs: {
