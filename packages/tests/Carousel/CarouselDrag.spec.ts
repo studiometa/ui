@@ -168,6 +168,28 @@ describe('CarouselDrag — the throw', () => {
     expect(wrapper.scrollLeft).toBe(2 * SLIDE);
   });
 
+  it('leaves the pointer at speed instead of easing in', async () => {
+    const { drag, wrapper } = await render({ count: 6 });
+
+    drag.__snap(wrapper, drop(500, 2000));
+
+    const steps: number[] = [];
+    let previous = wrapper.scrollLeft;
+    for (let index = 0; index < 6; index += 1) {
+      await settle();
+      steps.push(wrapper.scrollLeft - previous);
+      previous = wrapper.scrollLeft;
+    }
+
+    // The throw carries the pointer's velocity into the settle and decays from
+    // there, so the first frame is the fastest. `behavior: 'smooth'` eases in
+    // from a standstill instead, which measured as the track stopping dead for
+    // a frame and taking five more to reach the speed the hand already had.
+    expect(steps[0]).toBeGreaterThan(0);
+    expect(steps[0]).toBe(Math.max(...steps));
+    expect(steps.at(-1)).toBeLessThan(steps[0]);
+  });
+
   it('advances on a real flick, through the whole pointer path', async () => {
     const { carousel, wrapper } = await render({ count: 6 });
 

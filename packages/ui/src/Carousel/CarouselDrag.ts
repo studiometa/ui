@@ -1,19 +1,29 @@
 import {
   DRAG_MODES,
   withDrag,
+  withRaf,
   type BaseConfig,
   type BaseProps,
   type DragProps,
+  type RafProps,
+  type RafRender,
 } from '@studiometa/js-toolkit';
+import { clamp, damp, DEFAULT_DAMP_FACTOR } from '@studiometa/js-toolkit/utils';
 import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import { getClosestIndex } from './utils.js';
 
 /**
- * How long to wait for `scrollend` before restoring snapping anyway, in
- * milliseconds. Longer than any browser's smooth-scroll animation, since
- * restoring early would re-snap a scroll still in flight.
+ * How much of the gap to the target the settle closes per 60 Hz frame.
+ *
+ * `damp()` takes the fraction that moves and the drag service decays what
+ * *survives*, so this is the complement of the service's own factor. Matching
+ * it is the point: the service projected the throw with that decay, so
+ * replaying it means the track leaves the pointer at the speed the pointer
+ * had and slows on the same curve. `behavior: 'smooth'` cannot — it eases in
+ * from zero, which measures as the track stopping dead for a frame and taking
+ * five more to get back up to the speed the hand was already moving at.
  */
-const SNAP_RESTORE_TIMEOUT = 1000;
+const SETTLE_FACTOR = 1 - DEFAULT_DAMP_FACTOR;
 
 /** Scroll offsets closer than this are the same offset: browsers report fractions. */
 const SCROLL_EPSILON = 1;
@@ -29,7 +39,7 @@ const SCROLL_EPSILON = 1;
  * @link https://ui.studiometa.dev/reference/items/Carousel/js-api#carouseldrag
  */
 export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
-  AbstractCarouselComponent,
+  withRaf(AbstractCarouselComponent, { manual: true }),
 )<T> {
   static config: BaseConfig = {
     name: 'CarouselDrag',
@@ -37,10 +47,23 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
   };
 
   /**
-   * Cancels the restore armed for the settle in flight, or `null` when none is.
+   * Where the settle in flight is heading, or `null` when none is.
    * @private
    */
-  __pendingRestore: (() => void) | null = null;
+  __settleTarget: number | null = null;
+
+  /**
+   * The settle's own position, carried between frames instead of read back
+   * from the scroller.
+   *
+   * A scroller reports `scrollLeft` rounded, so the last frames of a decay —
+   * where each step is a fraction of a pixel — would read back the position
+   * they started from and the animation would stall a few pixels short of the
+   * target, for ever. Keeping the exact position here means the decay always
+   * progresses and lands on the target.
+   * @private
+   */
+  __settlePosition = 0;
 
   /**
    * Whether this component currently owns the track's `scroll-snap-type`.
@@ -91,17 +114,10 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
     const wrapper = this.$el;
 
     if (props.mode === DRAG_MODES.DRAG) {
-      // The first move of the gesture, and the last moment the author's own
-      // values are still readable.
-      if (!this.__ownsSnapType) {
-        this.__ownsSnapType = true;
-        this.__inlineSnapType = wrapper.style.scrollSnapType;
-        this.__authorSnapType = window.getComputedStyle(wrapper).scrollSnapType;
-      }
-
-      // Scroll snapping has to come off, otherwise the track cannot be moved
-      // to a position that is not a snap point.
-      wrapper.style.scrollSnapType = 'none';
+      // A hand back on the track owns the scroll again, so whatever the last
+      // throw was still coasting towards is abandoned here.
+      this.__stopSettle();
+      this.__takeSnapType(wrapper);
       wrapper.scrollTo({
         left: wrapper.scrollLeft - props.deltaX,
         top: wrapper.scrollTop - props.deltaY,
@@ -113,6 +129,30 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
     if (props.mode === DRAG_MODES.DROP) {
       this.__snap(wrapper, props);
     }
+  }
+
+  /**
+   * Take the track's `scroll-snap-type`, remembering what was there.
+   *
+   * Snapping has to come off for the whole gesture *and* the settle after it:
+   * a snapping track pulls every intermediate position back to the nearest
+   * snap point, so a track left snapping would drag in steps and freeze an
+   * animated settle at the first snap it reached.
+   *
+   * The values are read before the write, and only when this component does
+   * not already own them, so they are the author's and never its own `none`
+   * read back. The effective value decides whether the throw snaps; the inline
+   * one is what gets put back.
+   * @private
+   */
+  __takeSnapType(wrapper: HTMLElement): void {
+    if (!this.__ownsSnapType) {
+      this.__ownsSnapType = true;
+      this.__inlineSnapType = wrapper.style.scrollSnapType;
+      this.__authorSnapType = window.getComputedStyle(wrapper).scrollSnapType;
+    }
+
+    wrapper.style.scrollSnapType = 'none';
   }
 
   /**
@@ -149,6 +189,11 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
       return;
     }
 
+    // Ordinarily the drag branch already took it, but a gesture short enough
+    // to drop without a single drag frame would land here first — and the
+    // decision below reads the value this captures.
+    this.__takeSnapType(wrapper);
+
     const current = isHorizontal ? wrapper.scrollLeft : wrapper.scrollTop;
     // The track travels against the pointer, so the projected scroll offset is
     // the pointer's remaining projected travel, mirrored.
@@ -183,28 +228,70 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
   __settle(wrapper: HTMLElement, target: number, current: number): void {
     const { isHorizontal } = this;
 
-    // A settle that does not move fires no `scroll`, so per CSSOM View it fires
-    // no `scrollend` either — which is how a drag that ended where it started
-    // used to leave the track with snapping off for good. There is nothing to
-    // wait for, so restore now and skip the scroll.
+    // A settle with nowhere to go: restore now and animate nothing.
     if (Math.abs(target - current) < SCROLL_EPSILON) {
       this.__restoreSnapping(wrapper);
       return;
     }
 
-    this.__restoreSnappingAfterSettle(wrapper);
-    wrapper.scrollTo(
-      isHorizontal ? { left: target, behavior: 'smooth' } : { top: target, behavior: 'smooth' },
-    );
+    // Clamped, because a freescroll throw can project past the end of the
+    // track. `scrollTo` would clamp it too, but the animation compares against
+    // this target to know when it has arrived — and an unreachable target is
+    // one it would chase for ever.
+    const distance = isHorizontal
+      ? wrapper.scrollWidth - wrapper.clientWidth
+      : wrapper.scrollHeight - wrapper.clientHeight;
+
+    this.__settleTarget = clamp(target, 0, distance);
+    this.__settlePosition = current;
+    this.$services.ticked.start();
   }
 
   /**
-   * Put scroll snapping back and drop whatever was armed to do it.
+   * Advance the settle by one frame, and put snapping back when it lands.
+   *
+   * Nothing is read from the DOM here — the position is this component's own —
+   * so the hook is pure arithmetic and the scroll is the frame's write.
+   */
+  ticked({ delta }: RafProps): void | RafRender {
+    const target = this.__settleTarget;
+
+    if (target === null) {
+      this.$services.ticked.stop();
+      return;
+    }
+
+    const wrapper = this.$el;
+    const { isHorizontal } = this;
+    const next = damp(target, this.__settlePosition, SETTLE_FACTOR, delta, SCROLL_EPSILON);
+    this.__settlePosition = next;
+
+    return () => {
+      wrapper.scrollTo(
+        isHorizontal ? { left: next, behavior: 'instant' } : { top: next, behavior: 'instant' },
+      );
+
+      if (next === target) {
+        this.__stopSettle();
+        this.__restoreSnapping(wrapper);
+      }
+    };
+  }
+
+  /**
+   * Drop the settle in flight, leaving the track wherever it got to.
+   * @private
+   */
+  __stopSettle(): void {
+    this.__settleTarget = null;
+    this.$services.ticked.stop();
+  }
+
+  /**
+   * Put scroll snapping back.
    * @protected
    */
   __restoreSnapping(wrapper: HTMLElement): void {
-    this.__cancelRestore();
-
     // Nothing to put back if no gesture ever took it off — and putting the
     // captured value back regardless would write this component's idea of the
     // track onto a track it never touched.
@@ -217,40 +304,6 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
   }
 
   /**
-   * Restore snapping once the settle scroll has finished.
-   *
-   * `scrollend` is the event for it and a timeout is the fallback, not
-   * belt-and-braces: the event only reached Safari in 18.2, and a scroll the
-   * browser interrupts — a second gesture, a `scrollTo()` from elsewhere — can
-   * end without it in any engine. Whichever fires first cancels the other.
-   * @protected
-   */
-  __restoreSnappingAfterSettle(wrapper: HTMLElement): void {
-    this.__cancelRestore();
-
-    const restore = () => this.__restoreSnapping(wrapper);
-    const timer = window.setTimeout(restore, SNAP_RESTORE_TIMEOUT);
-    wrapper.addEventListener('scrollend', restore, { once: true });
-
-    this.__pendingRestore = () => {
-      window.clearTimeout(timer);
-      wrapper.removeEventListener('scrollend', restore);
-    };
-  }
-
-  /**
-   * Drop the armed restore without touching the style, so the caller decides
-   * what the track ends up with. Cleared before it runs, so a restore that
-   * cancels itself does not recurse.
-   * @private
-   */
-  __cancelRestore(): void {
-    const cancel = this.__pendingRestore;
-    this.__pendingRestore = null;
-    cancel?.();
-  }
-
-  /**
    * Leave the track snapping, whatever the gesture was doing.
    *
    * The media query this component mounts on can stop matching mid-drag, and
@@ -259,6 +312,7 @@ export class CarouselDrag<T extends BaseProps = BaseProps> extends withDrag(
    */
   unmounted(): void {
     super.unmounted();
+    this.__stopSettle();
     this.__restoreSnapping(this.$el);
   }
 }

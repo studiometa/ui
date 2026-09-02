@@ -361,7 +361,9 @@ Mirror the track's own `padding` into its `scroll-padding`, on the sides the aut
 
 Adds pointer-drag navigation to the wrapper, built with the [`withDrag` mixin](https://js-toolkit-v4.studiometa.dev) and the `media:(pointer: fine)` [mount strategy](/guide/autoloading/#mount-strategies). It only mounts on fine-pointer devices, leaving native CSS scroll-snap to handle touch devices. Apply it to the same element as `CarouselWrapper`.
 
-While a gesture is running, the track's `scroll-snap-type` is set to `none` — a snapping track cannot be moved to a position that is not a snap point — and restored once the settle scroll has finished.
+While a gesture is running, and for the settle that follows it, the track's `scroll-snap-type` is set to `none` — a snapping track cannot be moved to a position that is not a snap point — and whatever the author declared is restored once the settle has finished.
+
+The settle is animated by the component, decaying at the same rate the drag service used to project the throw. The track therefore leaves the pointer at roughly the speed the pointer had and slows from there. `scrollTo({ behavior: 'smooth' })` cannot do this: it eases in from a standstill, which measures as the track stopping dead for a frame and taking five more to reach the speed the hand was already moving at.
 
 ### How a release settles
 
