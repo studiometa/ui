@@ -3,6 +3,11 @@
  * @file
  * Circular Marquee
  *
+ * A Twig-only helper: it lays text out along a circular SVG `textPath` and
+ * renders a `Marquee` around it. "Circular" is entirely this geometry — the
+ * rotation is the `--marquee-progress` the `Marquee` class publishes, read by
+ * the `transform` below, so this template needs no JavaScript of its own.
+ *
  * @param {string} id - *required
  * @param {number} outer_radius
  * @param {number} radius
@@ -10,6 +15,7 @@
  * @param {number} cy
  * @param {string} content
  * @param {array} content_attr
+ * @param {number} speed
  * @param {number} sensitivity
  * @param array $attr
  */
@@ -35,7 +41,8 @@
   merge_html_attributes(
     attr ?? null,
     {
-      data_component: 'CircularMarquee',
+      data_component: 'Marquee',
+      data_option_speed: speed ?? null,
       data_option_sensitivity: sensitivity ?? null
     },
     {}
@@ -60,8 +67,18 @@
     height="{{ outer_diameter }}"
     class="z-default relative left-1/2 -translate-x-1/2">
     <defs><path d="{{ d }}" id="{{ id }}" /></defs>
-    <text dy="0" textLength="{{ perimeter }}">
-      <textPath {{ html_attributes(content_attributes) }}>{{ content|raw }}</textPath>
-    </text>
+    {#
+      The rotation sits on a group rather than on the `<svg>`, whose own
+      `-translate-x-1/2` already owns the element's `transform`. `view-box`
+      makes the origin the centre of the viewBox rather than the text's own
+      bounding box, so the ring turns around the circle it is written on.
+      A whole turn is one loop, negative so that a positive sensitivity spins
+      the ring the way v1 did.
+    #}
+    <g style="transform: rotate(calc(var(--marquee-progress, 0) * -360deg)); transform-box: view-box; transform-origin: 50% 50%">
+      <text dy="0" textLength="{{ perimeter }}">
+        <textPath {{ html_attributes(content_attributes) }}>{{ content|raw }}</textPath>
+      </text>
+    </g>
   </svg>
 </div>

@@ -64,11 +64,6 @@ export const manifest: ComponentManifest = {
     load: () =>
       import('./Carousel/CarouselWrapper.js').then(({ CarouselWrapper }) => CarouselWrapper),
   },
-  CircularMarquee: {
-    mountStrategy: 'eager',
-    load: () =>
-      import('./CircularMarquee/CircularMarquee.js').then(({ CircularMarquee }) => CircularMarquee),
-  },
   ClickOutside: {
     mountStrategy: 'eager',
     load: () => import('./ClickOutside/ClickOutside.js').then(({ ClickOutside }) => ClickOutside),
@@ -175,9 +170,9 @@ export const manifest: ComponentManifest = {
     mountStrategy: 'eager',
     load: () => import('./InView/InViewOnce.js').then(({ InViewOnce }) => InViewOnce),
   },
-  LargeText: {
+  Marquee: {
     mountStrategy: 'eager',
-    load: () => import('./LargeText/LargeText.js').then(({ LargeText }) => LargeText),
+    load: () => import('./Marquee/Marquee.js').then(({ Marquee }) => Marquee),
   },
   Menu: {
     mountStrategy: 'eager',

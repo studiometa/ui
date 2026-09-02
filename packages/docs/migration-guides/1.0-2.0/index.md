@@ -20,10 +20,11 @@ v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/).
 2. Read [the js-toolkit v3 → v4 guide](https://js-toolkit-v4.studiometa.dev/guide/migration/v3-to-v4.html). It is the larger half of this migration. [Summary below](#js-toolkit-v4-changes-that-reach-your-code).
 3. Replace the [removed components](#removed-components).
 4. Rename the [renamed components](#renamed-components).
-5. Rewrite the markup of the [rewritten components](#rewritten-components).
-6. Rewrite every `event.detail[0]` as a [named read](#event-payloads).
-7. Rename the [renamed events](#renamed-events).
-8. Check the [removed options, APIs, subpaths and types](#removed-options-and-apis).
+5. Replace `LargeText` and `CircularMarquee` with the [merged `Marquee`](#merged-components).
+6. Rewrite the markup of the [rewritten components](#rewritten-components).
+7. Rewrite every `event.detail[0]` as a [named read](#event-payloads).
+8. Rename the [renamed events](#renamed-events).
+9. Check the [removed options, APIs, subpaths and types](#removed-options-and-apis).
 
 ## Registering components
 
@@ -430,6 +431,69 @@ Notes:
 - `AnchorNavLink` extends `ScrollTo` and follows the rename with no change of its own.
 - `PrefetchOnInteraction` prefetches on the first of `pointerenter`, `pointerdown` or `focusin`. v1 bound `mouseenter` only, which never fired for touch or keyboard.
 - The `/reference/items/LazyInclude/` and `/reference/items/AnchorScrollTo/` URLs now return 404.
+
+## Merged components
+
+| v1.x                                       | v2.x                               |
+| ------------------------------------------ | ---------------------------------- |
+| `LargeText`                                | `Marquee`                          |
+| `CircularMarquee`                          | `Marquee`                          |
+| `@ui/LargeText/LargeText.twig`             | `@ui/Marquee/Marquee.twig`         |
+| `@ui/CircularMarquee/CircularMarquee.twig` | `@ui/Marquee/CircularMarquee.twig` |
+| `LargeTextProps`, `CircularMarqueeProps`   | `MarqueeProps`                     |
+
+### `LargeText` and `CircularMarquee` → `Marquee`
+
+The two were one component. Both accumulated the scroll delta, damped it at a hardcoded `0.25` and wrote a transform; only the transform property differed, and "circular" was an SVG `textPath` with no JavaScript of its own. `Marquee` computes the travel once and publishes it as `--marquee-progress`, `--marquee-offset` and `--marquee-velocity`; the stylesheet decides whether the travel is a translation, a rotation or a skew. Both templates ship that CSS, so they move as soon as the class is registered.
+
+`CircularMarquee.twig` survives, under the `Marquee` directory. There is no `CircularMarquee` class.
+
+Rename the import, the subpath, the template path and the `data-component` value:
+
+```diff
+- import { LargeText } from '@studiometa/ui/LargeText';
+- import { CircularMarquee } from '@studiometa/ui/CircularMarquee';
++ import { Marquee } from '@studiometa/ui/Marquee';
+```
+
+```diff
+- <div data-component="LargeText">
+-   <span data-ref="target">…</span>
+- </div>
++ <div data-component="Marquee">
++   <span style="transform: translateX(calc(var(--marquee-progress, 0) * -100%))">…</span>
++ </div>
+```
+
+The options changed units, so the v1 numbers do not carry over.
+
+| v1.x                              | v2.x                                                                    |
+| --------------------------------- | ----------------------------------------------------------------------- |
+| `sensitivity` (pixels per frame)  | `speed` (loops per second) and `sensitivity` (loops per pixel scrolled) |
+| `skew`, `skewSensitivity`         | CSS reading `--marquee-velocity`                                        |
+| `target` ref                      | removed                                                                 |
+| `width`, `measure()`, `resized()` | removed                                                                 |
+| `x`, `transform`, `rotate`        | `offset`, `dampedOffset`, `velocity`                                    |
+
+Steps:
+
+1. Split the old `sensitivity` in two. v1 multiplied `Math.abs(deltaY) + 1` by it, so one number set both the idle speed and the scroll boost. `speed` is now the idle travel in loops per second (default `0.1`) and `sensitivity` the boost in loops per pixel scrolled (default `0.001`). A negative `sensitivity` still reverses the whole marquee.
+2. Move `skew` and `skewSensitivity` into the track's `transform`. The component publishes the damped rate; CSS reads and clamps it.
+
+   ```css
+   transform: translateX(calc(var(--marquee-progress) * -100%))
+     skewX(clamp(-15deg, calc(var(--marquee-velocity) * 3deg), 15deg));
+   ```
+
+3. Drop the `target` ref. `Marquee` reads no geometry: `-100%` is the content width by definition, so there is nothing to measure and nothing to re-measure on a resize.
+4. Set `damping` if `0.25` was not the right smoothing. It was hardcoded in v1 and is an option now.
+
+Two behaviour changes worth knowing:
+
+- **The idle travel stops under `prefers-reduced-motion: reduce`, the scroll-driven travel does not.** Neither v1 component honoured the setting.
+- **A scroll no longer runs for ever.** v1 kept the last scroll delta after the page stopped, so the marquee stayed at the speed of a scroll that had finished. Each frame now consumes the distance actually scrolled since the previous one.
+
+The `/reference/items/LargeText/` and `/reference/items/CircularMarquee/` URLs redirect to `/reference/items/Marquee/`.
 
 ## Rewritten components
 

@@ -167,14 +167,6 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
-    name: 'CircularMarqueeProps',
-    kind: 'type',
-    package: 'npm:@studiometa/ui',
-    importPath: '@studiometa/ui',
-    href: '/reference/items/CircularMarquee/',
-    status: 'stable',
-  },
-  {
     name: 'CursorProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',
@@ -519,11 +511,11 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
-    name: 'LargeTextProps',
+    name: 'MarqueeProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',
     importPath: '@studiometa/ui',
-    href: '/reference/items/LargeText/js-api',
+    href: '/reference/items/Marquee/js-api',
     status: 'stable',
   },
   {
