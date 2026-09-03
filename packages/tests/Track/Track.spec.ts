@@ -351,11 +351,11 @@ describe('Track — the `view` pseudo-event', () => {
 
   it('applies timing modifiers to the view event', async () => {
     // The window is deliberately far longer than the two `quiet()` waits below.
-    // It used to be 1000ms, which the local machine cleared comfortably and a
-    // loaded CI runner did not: twelve `settle()` calls took over a second
-    // there, the throttle expired mid-test, and the second view was counted.
-    // The assertion is "a second view inside the window is suppressed", so the
-    // window only has to outlast the test.
+    // 1000ms is not enough: a local machine clears it comfortably, but on a
+    // loaded CI runner twelve `settle()` calls took over a second, the throttle
+    // expired mid-test, and the second view was counted. The assertion is "a
+    // second view inside the window is suppressed", so the window only has to
+    // outlast the test.
     const root = await mount(
       `<div data-component="Track" style="${ONSCREEN}" data-track:view.throttle60000='{"event": "impression"}'></div>`,
     );

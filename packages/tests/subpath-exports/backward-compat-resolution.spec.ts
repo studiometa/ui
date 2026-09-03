@@ -5,11 +5,11 @@ import { fileURLToPath } from 'node:url';
 // The `exports`-map half of `backward-compat.spec.ts`. It imports no component,
 // so it runs under Node next to the identity assertions that need a browser.
 
-// The former `@studiometa/ui/Data` family-aggregate subpath was removed in
-// favour of flat per-member subpaths. With no explicit key, it now falls through
-// to the greedy `./*` wildcard, which points at a nonexistent `dist/Data.js` — so
-// it no longer resolves to the family `Data/index` barrel and no importable
-// module lives at that path.
+// The `Data` family is published as flat per-member subpaths, so the aggregate
+// `@studiometa/ui/Data` has no explicit key in the `exports` map. It falls
+// through to the greedy `./*` wildcard, which points at a nonexistent
+// `dist/Data.js`: the specifier resolves neither to the family `Data/index`
+// barrel nor to any importable module.
 test('the removed family-aggregate subpath no longer resolves to a real module', () => {
   // @ts-expect-error import.meta.resolve is available under Node's ESM loader.
   const url: string = import.meta.resolve('@studiometa/ui/Data');
@@ -25,7 +25,7 @@ test('the removed family-aggregate subpath no longer resolves to a real module',
 // templates, whose literal suffix beats `./*`). These assertions use strict Node
 // resolution (`import.meta.resolve`, which honours the `exports` map without
 // loading the target) to prove those paths resolve to the asset, not a `.js`
-// sibling. SVG assets and `.ts` sources are no longer exported subpaths (SVG is
+// sibling. SVG assets and `.ts` sources are not exported subpaths (SVG is
 // in-repo only via the `@svg` Twig namespace; the published tree ships no `.ts`).
 test.each([
   ['@studiometa/ui/package.json', '/package.json'],

@@ -90,8 +90,8 @@ describe('Fetch — headers across every HeadersInit form', () => {
       `<a data-component="Fetch" href="/page"><div id="fetch-h">old</div></a>`,
     );
 
-    // Spreading a `Headers` yields no keys, so this used to reach `fetch()` as
-    // an empty header set.
+    // Spreading a `Headers` yields no keys, so a spread would reach `fetch()`
+    // with an empty header set.
     await instance.fetch(instance.url, { headers: new Headers({ 'x-custom': '1' }) });
     await settle();
 
