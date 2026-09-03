@@ -15,6 +15,7 @@ mcp:
     allowed_hosts:
       - 'api.ui.studiometa.dev'
       - 'ui.studiometa.dev'
+      - 'ui-v2.studiometa.dev'
       - 'studiometa-ui.fly.dev'
       - 'ui.ddev.site'
       - 'localhost'

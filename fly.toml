@@ -10,7 +10,7 @@ primary_region = 'cdg'
   # Origins the Symfony app answers cross-origin requests for. The playground
   # calls the API from the same origin, so this only widens the few routes that
   # are reachable from elsewhere.
-  CORS_ALLOW_ORIGIN = '^https://(studiometa-ui\.fly\.dev|ui\.studiometa\.dev)$'
+  CORS_ALLOW_ORIGIN = '^https://(studiometa-ui\.fly\.dev|ui-v2\.studiometa\.dev|ui\.studiometa\.dev)$'
 
 [http_service]
   internal_port = 8080
