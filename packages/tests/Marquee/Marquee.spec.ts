@@ -86,8 +86,7 @@ describe('Marquee', () => {
 
     expect(marquee).toBeDefined();
     expect(marquee.$isMounted).toBe(true);
-    // v3 passed `{ rootMargin: '50%' }` to `withMountWhenInView`; v4 carries the
-    // same margin on the strategy name.
+    // The 50% root margin travels on the strategy name itself.
     expect(Marquee.config.mountStrategy).toBe('in-view:50%');
   });
 
@@ -113,10 +112,9 @@ describe('Marquee', () => {
   });
 
   /**
-   * The v1 `CircularMarquee` shipped with `scrolled()` and `ticked()` that were
-   * never called, and no test caught it because there was no test. Reading the
-   * element's own published values rather than the instance fields is what
-   * makes that failure impossible to miss: an inert component writes nothing.
+   * The specs read the element's published values rather than the instance
+   * fields, so an inert component — one whose `scrolled()` and `ticked()` hooks
+   * are never called — writes nothing and fails here.
    */
   it('writes to the element, not only to its own fields', async () => {
     const marquee = await render();
@@ -177,8 +175,8 @@ describe('Marquee', () => {
 
     await frames(6);
 
-    // v1 kept the last delta for ever, so the marquee ran on at the speed of a
-    // scroll that had already stopped.
+    // A latched delta would keep the marquee running at the speed of a scroll
+    // that had already stopped.
     expect(marquee.offset).toBe(afterScroll);
   });
 

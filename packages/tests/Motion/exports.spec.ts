@@ -33,14 +33,13 @@ test('@studiometa/ui-motion exports', () => {
 });
 
 /**
- * v4 removed the runtime `config.emits` list — the names live in each
- * component's `$emits` props type, which is erased — so the prefix rule is
- * asserted against what a component actually dispatches.
+ * Event names live in each component's `$emits` props type, which is erased at
+ * runtime, so the prefix rule is asserted against what a component actually
+ * dispatches.
  *
- * That is a stronger check than reading the declaration ever was: it fails both
- * on an event renamed away from the prefix and on one dispatched without being
- * declared at all. The unprefixed names are recorded alongside the prefixed
- * ones precisely so the assertion has a way to fail.
+ * That fails both on an event renamed away from the prefix and on one
+ * dispatched without being declared at all. The unprefixed names are recorded
+ * alongside the prefixed ones precisely so the assertion has a way to fail.
  */
 test('@studiometa/ui-motion public events use the motion- prefix', async () => {
   const el = h('div', { dataComponent: 'Motion', dataOptionAnimate: '{ "x": 100 }' });

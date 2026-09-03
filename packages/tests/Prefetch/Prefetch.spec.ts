@@ -109,8 +109,8 @@ describe('AbstractPrefetch — is the URL prefetchable', () => {
   });
 
   /**
-   * v3 reads `url.href` before asking whether the URL exists, so this throws
-   * there. Found by running the port rather than by reading it.
+   * An anchor with no `href` has no URL at all: reading `url.href` before
+   * asking whether the URL exists is what makes this case throw.
    */
   it('answers for an anchor with no href instead of throwing', async () => {
     const root = await mount(`<a data-component="AbstractPrefetch"></a>`);
@@ -175,8 +175,8 @@ describe('AbstractPrefetch — the hint', () => {
   });
 
   /**
-   * `loadLink()` deduplicates by resolved URL and `rel`, which is what v3's
-   * `static prefetchedUrls` set did — one link element for two components.
+   * `loadLink()` deduplicates by resolved URL and `rel`: one link element for
+   * two components.
    */
   it('appends one link for two components pointing at the same URL', async () => {
     const href = uniqueHref();
@@ -196,9 +196,9 @@ describe('AbstractPrefetch — the hint', () => {
   });
 
   /**
-   * And where v3 differs: its set makes the *second* component silent, since
-   * the early return happens before anything is emitted. Sharing the link is
-   * not a reason to swallow the second component's announcement.
+   * Sharing the link is not a reason to swallow the second component's
+   * announcement: an early return taken before the emit would leave that
+   * component silent.
    */
   it('still announces to the second component sharing the link', async () => {
     const href = uniqueHref();
@@ -323,9 +323,8 @@ describe('PrefetchWhenVisible', () => {
   });
 
   /**
-   * `visible` is the one-shot strategy, so the component keeps running after
-   * the link scrolls away instead of being unmounted and rebuilt as v3's
-   * `withMountWhenInView` does.
+   * `visible` is the one-shot mount strategy, so the component keeps running
+   * after the link scrolls away instead of being unmounted and rebuilt.
    */
   it('stays mounted after the link leaves the viewport', async () => {
     const href = uniqueHref();

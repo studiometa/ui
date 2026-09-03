@@ -28,12 +28,11 @@ registerComponents(MapboxMap, MapboxCluster, MapboxClusterItem, MapboxGeocoder, 
 const REBUILD_DELAY = 150;
 
 /**
- * v3 built the whole family out of hand-written doubles injected through
- * overridden `mapboxMap` / `cluster` / `geocoder` getters. v4 resolves its
- * children through `$watchChildren()` and `$query()`, which no getter override
- * can stand in for, so these specs mount the real components and drive them
- * through the same seams a page would: the map's `load` and `moveend` events,
- * the cluster's own emits, and DOM insertions/removals for a `Fetch` swap.
+ * `StoreLocator` resolves its children through `$watchChildren()` and
+ * `$query()`, which no getter override can stand in for, so these specs mount
+ * the real components and drive them through the same seams a page would: the
+ * map's `load` and `moveend` events, the cluster's own emits, and DOM
+ * insertions/removals for a `Fetch` swap.
  */
 interface ItemSpec {
   id: string;
@@ -179,7 +178,7 @@ describe('StoreLocator orchestrator', () => {
       // The popup was opened from the item's popup content.
       expect((ctx.instance as unknown as { __popup?: unknown }).__popup).toBeDefined();
       expect(log.events).toHaveLength(1);
-      // v4 payloads are one named object: the item travels as `detail.item`.
+      // The payload is one named object: the item travels as `detail.item`.
       expect((log.events[0].detail as { item: unknown }).item).toBe(itemA);
       log.stop();
     });
@@ -292,7 +291,7 @@ describe('StoreLocator orchestrator', () => {
       expect(ctx.item('c').$el.hasAttribute('data-in-bounds')).toBe(true);
 
       expect(log.events.length).toBeGreaterThan(0);
-      // v4 payloads are one named object: the in-view set is `detail.items`.
+      // The payload is one named object: the in-view set is `detail.items`.
       const { items } = log.events.at(-1)!.detail as { items: MapboxClusterItem[] };
       expect(items.map((entry) => entry.id).sort()).toEqual(['a', 'c']);
       log.stop();
@@ -491,11 +490,10 @@ describe('StoreLocator orchestrator', () => {
     });
 
     it('re-wires onto a replacement cluster picked up by $watchChildren (D1)', async () => {
-      // v3 waited for a `MAPBOX_CLUSTER_CONNECTED` document event here. v4 keeps
-      // that event for `MapboxClusterItem` only: the orchestrator watches its
-      // `MapboxCluster` descendants with `$watchChildren()`, so a cluster that
-      // replaces the wired one arrives through the `removed`/`added` callbacks
-      // with nothing to announce and nothing to poll.
+      // The orchestrator watches its `MapboxCluster` descendants with
+      // `$watchChildren()`, so a cluster that replaces the wired one arrives
+      // through the `removed`/`added` callbacks: there is nothing to announce
+      // and nothing to poll.
       const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
       const firstCluster = ctx.cluster;
 
@@ -526,9 +524,7 @@ describe('StoreLocator orchestrator', () => {
   // --- 7. Deferred cluster wiring -----------------------------------------
   describe('deferred cluster wiring', () => {
     it('does not wire a cluster until one turns up, then wires it', async () => {
-      // v3 polled with a bounded `nextTick` retry loop and exposed the state as a
-      // `__clusterWired` flag. v4 watches the `MapboxCluster` descendants with
-      // `$watchChildren()`, so the assertion is on the collection's effect —
+      // `$watchChildren()` does the wiring, so the assertion is on its effect:
       // there is no wiring until a cluster mounts, and it wires itself the
       // moment one does.
       const ctx = await createStoreLocator([], { cluster: false });
@@ -625,9 +621,9 @@ describe('StoreLocator orchestrator', () => {
       ctx.instance.$unmount();
       await settle();
 
-      // v3 asserted `expect(() => $destroy()).not.toThrow()`. v4 contains a
-      // throwing `unmounted()` and reports it as `component.lifecycle-failed`,
-      // so the absence of that diagnostic is what says teardown ran clean.
+      // A throwing `unmounted()` is contained and reported as
+      // `component.lifecycle-failed`, so `not.toThrow()` would pass either way.
+      // The absence of that diagnostic is what says teardown ran clean.
       expect(diagnostics.codes).not.toContain('component.lifecycle-failed');
     });
 

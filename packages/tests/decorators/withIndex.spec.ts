@@ -206,9 +206,8 @@ describe('withIndex behaviour', () => {
   });
 
   /**
-   * v1 flips `isReverse` by writing `$options.reverse`; `$options` is read-only
-   * in v4, so the flag is private state seeded from the option instead. The
-   * observable behaviour is unchanged, which is what this asserts.
+   * `isReverse` is private state seeded from the `boundary` option: `$options`
+   * is a read-only view over the attributes and cannot be written.
    */
   it('reflects the travel direction at a bound with the `bounce` boundary', async () => {
     const probe = await instanceOf<IndexProbe>(

@@ -10,10 +10,10 @@ registerComponents(Track, TrackContext, TrackShopify);
 /**
  * Record diagnostics and cancel their default sink.
  *
- * A malformed declaration is reported with `$error`, because v3 passed the
- * caught `SyntaxError` too and its position info is the useful part — so the
- * default sink is `reportError()`, not `console.warn`, and the assertion goes
- * to the channel rather than to the console.
+ * A malformed declaration is reported with `$error`, which carries the caught
+ * `SyntaxError` and the position info that makes it useful. Its default sink is
+ * `reportError()`, not `console.warn`, so the assertion goes to the channel
+ * rather than to the console.
  */
 const OFFSCREEN = 'position:absolute;top:300vh;left:0;width:50px;height:50px';
 const ONSCREEN = 'position:absolute;top:0;left:0;width:50px;height:50px';

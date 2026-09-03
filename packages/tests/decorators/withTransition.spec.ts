@@ -108,7 +108,6 @@ describe('withTransition behaviour', () => {
     expect(el.classList.contains('gone')).toBe(true);
   });
 
-  /** v3's `target` getter returned `HTMLElement | HTMLElement[]`. */
   it('transitions every element when the target getter returns a list', async () => {
     const root = document.createElement('div');
     root.innerHTML = `
@@ -129,7 +128,6 @@ describe('withTransition behaviour', () => {
     expect(el.classList.contains('on')).toBe(false);
   });
 
-  /** v3's `enter(target?)`/`leave(target?)` took an explicit override. */
   it('lets one call name its own target, replacing the getter', async () => {
     const el = await render(
       'TransitionProbe',
@@ -163,10 +161,7 @@ describe('withTransition behaviour', () => {
     expect(el.classList.contains('off')).toBe(false);
   });
 
-  /**
-   * `transitionOptions` is the override point that replaces v3's `$options`
-   * getter override, whose only two uses in ui were exactly this.
-   */
+  /** `transitionOptions` is the only supported way to force a transition option. */
   it('lets a consumer force an option the markup did not ask for', async () => {
     const el = await render('ForcedProbe', 'data-option-enter-to="visible"');
     const instance = getInstance<ForcedProbe>(el, 'ForcedProbe')!;

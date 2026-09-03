@@ -17,10 +17,9 @@ import { h } from '#test-utils';
 /**
  * The transition lifecycle both components run, in order.
  *
- * v4 removed the runtime `config.emits` list — the names live in each
- * component's `$emits` props type and are erased at runtime — so "MotionView
- * mirrors ViewTransition" is asserted against what the two actually emit
- * rather than against two arrays neither class carries any more.
+ * Event names live in each component's `$emits` props type and are erased at
+ * runtime, so "MotionView mirrors ViewTransition" is asserted against what the
+ * two actually emit rather than against a declaration.
  */
 const TRANSITION_EVENTS = [
   'enter',
@@ -137,8 +136,8 @@ describe('MotionView component', () => {
 
     const el = h('div', { dataComponent: 'MotionView' });
     const instance = new MotionView(el);
-    // `$warn()` reports on the diagnostic channel in v4, so the capture reads
-    // the channel rather than stubbing the method or spying on the console.
+    // `$warn()` reports on the diagnostic channel, so the capture reads the
+    // channel rather than stubbing the method or spying on the console.
     const log = captureDiagnostics();
     await instance.$mount();
 

@@ -34,10 +34,9 @@ export interface MountedMap {
 /**
  * Mount a `MapboxMap` wrapping the given markup, unloaded.
  *
- * v3's child specs stubbed `$closest` with a hand-built `MapboxMap` stand-in
- * because nothing mounted the family for them. v4 mounts through the registry,
- * so a child resolves its real parent by itself: the markup below is the whole
- * setup, and the map it resolves is the one the component built.
+ * A child resolves its real parent through the registry, so the markup below is
+ * the whole setup: no `$closest` stub, and the map a child resolves is the one
+ * the component built.
  *
  * The component's own `mounted()` resolves `mapbox-gl` asynchronously before
  * building the map, so the returned `mockMap` is only available once `mount()`

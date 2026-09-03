@@ -18,8 +18,7 @@ function itemHtml(id = '1', lngLat = '[2.35, 48.85]', attrs = '', content = '') 
  * Mount a loaded `MapboxMap` holding one `MapboxCluster`.
  *
  * Items live inside the cluster element, which is where `$closest` resolves
- * them from — v3 wired both ends with a stubbed `$closest`, v4 lets the real
- * markup do it.
+ * them from, so the real markup wires both ends and no stub is needed.
  */
 async function createCluster(attrs = '', items = '') {
   const context = await mountMap(`<div data-component="MapboxCluster" ${attrs}>${items}</div>`);
@@ -130,7 +129,7 @@ describe('MapboxCluster component', () => {
     });
 
     expect(log.events).toHaveLength(1);
-    // v4 payloads are one named object: the cluster id is read by name.
+    // The payload is one named object: the cluster id is read by name.
     expect((log.events[0].detail as { clusterId: number }).clusterId).toBe(42);
     expect(mockMap.easeTo).toHaveBeenCalledWith({ center: [1, 2], zoom: 5 });
     log.stop();

@@ -42,7 +42,7 @@ describe('MapboxImages component', () => {
     await context.load();
 
     expect(log.events).toHaveLength(1);
-    // v4 payloads are one named object: the batch travels as `detail.images`.
+    // The payload is one named object: the batch travels as `detail.images`.
     const { images } = log.events[0].detail as { images: unknown[] };
     expect(images).toHaveLength(2);
     log.stop();
@@ -99,9 +99,9 @@ describe('MapboxImages component', () => {
         cb(null, {});
       }
     });
-    // v3 asserted on a `console.warn` spy; v4 reports a recovered failure on the
-    // diagnostic channel, so the assertion reads the namespaced code instead of
-    // the sink the default handler happens to write to.
+    // A recovered failure is reported on the diagnostic channel, so the
+    // assertion reads the namespaced code instead of the sink the default
+    // handler happens to write to.
     const diagnostics = captureDiagnostics();
     const log = recordEvents(instance.$el, 'map-error');
 

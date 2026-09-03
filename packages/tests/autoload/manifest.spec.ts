@@ -11,13 +11,11 @@ function isBaseConstructor(value: unknown): value is BaseConstructor {
   return typeof value === 'function' && value.prototype instanceof Base;
 }
 
-// js-toolkit v4 narrowed a manifest entry to what the registry reads before the
-// module is loaded: `{ load, mountStrategy }`. v3's `token`, `packageName`,
-// `subpath` and `exportName` fields had no runtime consumer and are gone from
-// the generated output — they stay in the authoring catalog, which is where the
-// generator reads them from. So the token is no longer restated inside the
-// entry: it *is* the key, which is why the assertions below read the key and
-// then check that the loaded class agrees with it.
+// A generated manifest entry holds only what the registry reads before the
+// module is loaded: `{ load, mountStrategy }`. Everything else stays in the
+// authoring catalog the generator reads from. The token is not restated inside
+// the entry — it *is* the key — which is why the assertions below read the key
+// and then check that the loaded class agrees with it.
 describe.each([
   ['@studiometa/ui', uiManifest, uiExports as Record<string, unknown>, 'eager'],
   ['@studiometa/ui-mapbox', mapboxManifest, mapboxExports as Record<string, unknown>, 'visible'],

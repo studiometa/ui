@@ -181,8 +181,8 @@ describe('Carousel a11y — slide names', () => {
       '2 of 3',
       '3 of 3',
     ]);
-    // The name is the slide's position, never the internal identifier v1's
-    // `SliderItem` used — "SliderItem-12" was an accessible name.
+    // The accessible name must never be the instance identifier: an id like
+    // "CarouselItem-12" tells a screen reader user nothing.
     expect(items[0].getAttribute('aria-label')).not.toBe(carousel.items.items[0].$id);
   });
 

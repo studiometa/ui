@@ -51,7 +51,7 @@ describe('MapboxImage component', () => {
     await context.load();
 
     expect(log.events).toHaveLength(1);
-    // v4 payloads are one named object: the sprite name is read by name.
+    // The payload is one named object: the sprite name is read by name.
     expect(log.events[0].detail).toMatchObject({ name: 'my-image' });
     log.stop();
   });

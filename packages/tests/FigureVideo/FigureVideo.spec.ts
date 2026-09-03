@@ -103,8 +103,8 @@ describe('FigureVideo', () => {
     const log = captureDiagnostics();
 
     await settle();
-    // v3 waits on `loadeddata` alone, so this never settled and `mounted()`
-    // never returned.
+    // Waiting on `loadeddata` alone would never settle here and would leave
+    // `mounted()` pending for ever, so `error` has to end the wait too.
     video.dispatchEvent(new Event('error'));
     await waitFor(() => log.codes.includes('figure-video.load-failed'));
 

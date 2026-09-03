@@ -329,8 +329,6 @@ describe('Motion component', () => {
       dataOptionAutoplay: '',
     });
 
-    // v4 renamed the inverse of `$mount()`: `$destroy()` is `$unmount()`, and
-    // the same instance can mount again afterwards.
     instance.$unmount();
     expect(animations[0].state).toBe('stopped');
     expect(instance.controls).toBeNull();

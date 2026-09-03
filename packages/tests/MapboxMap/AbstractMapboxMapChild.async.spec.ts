@@ -12,9 +12,8 @@ import { append, mountMap } from './harness.js';
 
 interface AsyncChildProps extends AbstractMapboxMapChildProps {
   /**
-   * `done` joins the inherited `map-error`. v3 listed both in
-   * `static config.emits`; v4 declares them in the props type, and the payload
-   * is one named object instead of a spread `detail` array.
+   * `done` joins the inherited `map-error`. Both are declared in the props
+   * type, and each payload is one named object.
    */
   $emits: AbstractMapboxMapChildProps['$emits'] & {
     done: { map: unknown };
@@ -80,8 +79,8 @@ async function createAsyncChild() {
 describe('AbstractMapboxMapChild — async ready callbacks (F-async)', () => {
   it('should contain a rejected async callback: no unhandled rejection, reports + emits map-error', async () => {
     const { instance } = await createAsyncChild();
-    // v3 asserted on a `console.warn` spy; v4 reports a recovered failure on the
-    // diagnostic channel, so the assertion reads the namespaced code.
+    // A recovered failure is reported on the diagnostic channel, so the
+    // assertion reads the namespaced code.
     const diagnostics = captureDiagnostics();
     const log = recordEvents(instance.$el, 'map-error');
     const boom = new Error('async boom');
@@ -101,7 +100,7 @@ describe('AbstractMapboxMapChild — async ready callbacks (F-async)', () => {
     expect(instance.ran).toBe(1);
     expect(diagnostics.codes).toContain('mapbox-map-child.failed');
     expect(log.events).toHaveLength(1);
-    // v4 payloads are one named object: the cause travels as `detail.error`.
+    // The payload is one named object: the cause travels as `detail.error`.
     expect((log.events[0].detail as { error: unknown }).error).toBe(boom);
     expect(onUnhandled).not.toHaveBeenCalled();
 
