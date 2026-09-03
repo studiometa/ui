@@ -1,0 +1,30 @@
+# Everything the image builds for itself, plus anything that only slows the
+# context upload down. The build stages install the dependencies and produce
+# the documentation and the playground bundles from source.
+#
+# `.git` stays in the context: VitePress reads the last-updated date of every
+# page from the commit history.
+.github
+.gitpod.Dockerfile
+.gitpod.yml
+.netlify
+.idea
+.phpunit.cache
+
+**/node_modules
+**/.DS_Store
+**/*.tsbuildinfo
+
+vendor/
+packages/api/vendor/
+packages/api/var/
+packages/*/dist/
+packages/docs/.vitepress/dist/
+packages/docs/.vitepress/cache/
+packages/docs/.vitepress/.temp/
+packages/docs/public/play/
+packages/cdn/.test-dist/
+packages/cdn/.playwright/
+
+Dockerfile
+fly.toml

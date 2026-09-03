@@ -1,0 +1,36 @@
+app = 'studiometa-ui'
+primary_region = 'cdg'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  APP_ENV = 'prod'
+  APP_DEBUG = '0'
+  # Origins the Symfony app answers cross-origin requests for. The playground
+  # calls the API from the same origin, so this only widens the few routes that
+  # are reachable from elsewhere.
+  CORS_ALLOW_ORIGIN = '^https://(studiometa-ui\.fly\.dev|ui\.studiometa\.dev)$'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  # Documentation traffic is bursty; the machine sleeps between visits and the
+  # proxy starts it again on the next request.
+  min_machines_running = 0
+  processes = ['app']
+
+  # `/api/` goes through nginx, PHP-FPM and the Symfony front controller, so a
+  # 200 here means the whole stack answers, not just the static files.
+  [[http_service.checks]]
+    method = 'GET'
+    path = '/api/'
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '15s'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '512mb'
