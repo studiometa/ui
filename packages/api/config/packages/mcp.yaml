@@ -1,6 +1,7 @@
 mcp:
   app: '@studiometa/ui'
-  version: '1.0.0'
+  # Read from `package.json` — see `config/packages/version.php`.
+  version: '%app.version%'
   description: 'Discover the @studiometa/ui Reference and generate playgrounds.'
   instructions: |
     This server exposes the @studiometa/ui architecture and every documented component, primitive, decorator and helper so you can understand the public API and build playgrounds.
