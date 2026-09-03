@@ -9,10 +9,11 @@ mcp:
     http: true
   http:
     path: '/mcp'
-    # Served behind the `api.` host; allow the public documentation host to
-    # reach it. Adjust when the deployment host changes.
+    # The transport rejects any Host header not listed here, so every hostname
+    # the endpoint is reachable on has to appear.
     allowed_hosts:
       - 'api.ui.studiometa.dev'
       - 'ui.studiometa.dev'
+      - 'studiometa-ui.fly.dev'
       - 'ui.ddev.site'
       - 'localhost'
