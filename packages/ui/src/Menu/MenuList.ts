@@ -47,9 +47,8 @@ function closestMenuList(el: Element | null): MenuList | null {
  * `items-open`/`items-close`.
  *
  * A menu left open must stay visible, so `enterKeep`/`leaveKeep` are forced
- * rather than read from the markup. v3 forced them by overriding the
- * `$options` getter, which v4 refuses — `$options` is a read-only view over
- * attributes with no override point — so the override lands on
+ * rather than read from the markup. `$options` is a read-only view over
+ * attributes with no override point, so the override lands on
  * `transitionOptions`, the declaration the mixin reads.
  *
  * @link https://ui.studiometa.dev/reference/items/Menu/

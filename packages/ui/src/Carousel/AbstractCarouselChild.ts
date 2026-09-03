@@ -5,16 +5,9 @@ import { CarouselContext, type CarouselState } from './context.js';
 /**
  * The shared base for the controls that must reflect the active index.
  *
- * This is the class the exercise exists to measure. v3 spends 139 lines on it:
- * an `__connect()` retried from `mounted()`, `resized()` **and** `updated()`
- * because none of the three is reliable alone, an `__unsubscribe` guard to make
- * the retries idempotent, a `store.has('index')` check so the callback never
- * runs against an unseeded carousel, and a `domScheduler.read`/`write` wrapper
- * around a subclass method that may or may not return a second callback.
- *
- * All of it is one awaited `$inject`: the context protocol replays to a pending
- * consumer when the provider mounts later, so there is no ordering to retry
- * against and no seeding to check.
+ * Connecting is one awaited `$inject`, with no ordering to retry against: the
+ * context protocol replays to a pending consumer when the provider mounts
+ * later, and the subscription is seeded by `immediate: true`.
  */
 export class AbstractCarouselChild<
   T extends BaseProps = BaseProps,

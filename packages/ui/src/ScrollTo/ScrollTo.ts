@@ -19,10 +19,10 @@ export class ScrollTo<T extends BaseProps = BaseProps> extends Base<ScrollToProp
   }
 
   /**
-   * v1 let `scrollTo()` throw for a missing target and left the click alone
-   * in that case. v4's `scrollTo()` is a no-op on a target the document does
-   * not contain rather than throwing, so the existence check moves here:
-   * `preventDefault()` only once a target is confirmed.
+   * `scrollTo()` is a silent no-op on a target the document does not contain,
+   * so the existence check has to happen here: `preventDefault()` runs only
+   * once a target is confirmed, and the link keeps its native behaviour
+   * otherwise.
    */
   onClick(event: MouseEvent): void {
     const { targetSelector } = this;

@@ -48,10 +48,9 @@ export class Sticky<T extends BaseProps = BaseProps> extends withResize(withScro
   isVisible = true;
 
   /**
-   * Live collection rather than a constructed reference: a v4 mount carries
-   * no ordering guarantee, so the sentinel this reads may not exist yet on
-   * the first `mounted()` cycle. Measuring on `added` instead of on mount
-   * covers the case a v3 `$children` read could not.
+   * Live collection rather than a constructed reference: a mount carries no
+   * ordering guarantee, so the sentinel may not exist yet on the first
+   * `mounted()` cycle. Measuring from `added` covers both orders.
    */
   sentinels: ChildrenCollection<Sentinel> = this.$watchChildren<Sentinel>('Sentinel', {
     added: () => this.setSentinelSize(),
@@ -62,9 +61,8 @@ export class Sticky<T extends BaseProps = BaseProps> extends withResize(withScro
   }
 
   /**
-   * Every mounted `Sticky` on the page, in DOM order. Replaces v3's
-   * `static instances: Set<Sticky>` manually kept in sync from `mounted()`
-   * and `unmounted()` — core's registry already answers this live.
+   * Every mounted `Sticky` on the page, in DOM order. Read from core's
+   * registry, which answers live, rather than from a set kept in sync by hand.
    */
   get instances(): Sticky[] {
     return getMountedInstances<Sticky>('Sticky');
@@ -125,10 +123,10 @@ export class Sticky<T extends BaseProps = BaseProps> extends withResize(withScro
    * Split out of `hide()`/`show()` and deferred to `$write()` because their
    * caller is `scrolled()`, and the scroll service emits from inside
    * `defaultScheduler.read()` — so writing `classList` straight from there
-   * interleaves a write into the read phase, which is gap 43's silent-cost
-   * bug rather than a visible one. The split is what keeps `isVisible`
-   * synchronous: it is logical state that `setPosition()` reads on every
-   * instance, and only the DOM work belongs in a later phase.
+   * would interleave a write into the read phase and force a layout every
+   * other component in that phase then pays for. The split is what keeps
+   * `isVisible` synchronous: it is logical state that `setPosition()` reads on
+   * every instance, and only the DOM work belongs in a later phase.
    */
   applyVisibility(): void {
     this.$write(() => {

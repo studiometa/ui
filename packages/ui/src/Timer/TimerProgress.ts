@@ -15,12 +15,8 @@ export type TimerProgressProps = TimerProps & {
  * cost: mount `TimerProgress` only where a continuous indicator (e.g. a
  * progress bar) is needed.
  *
- * v3 mounted `ticked` on the shared `RafService` unconditionally (any class
- * declaring the method got it) and had to `$services.disable('ticked')` in
- * `mounted()` to neutralize that, since progress must only run while a
- * countdown is armed. `withRaf(Timer, { manual: true })` never auto-starts
- * in the first place — `arm()`/`clear()` own the toggle from there on, and
- * there is nothing left to neutralize.
+ * The frame loop is `manual`, so it never starts on its own: progress must
+ * only run while a countdown is armed, and `arm()`/`clear()` own the toggle.
  *
  * @link https://ui.studiometa.dev/reference/items/Timer/
  */

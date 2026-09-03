@@ -31,8 +31,8 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
   FetchShopifySectionProps & T
 > {
   /**
-   * The config no longer spreads `Fetch.config`: configs merge along the
-   * prototype chain (#627), so only what this class adds is restated.
+   * The config does not spread `Fetch.config`: configs merge along the
+   * prototype chain (#627), so only what this class adds is stated.
    */
   static config: BaseConfig = {
     name: 'FetchShopifySection',

@@ -9,10 +9,9 @@ export type AnchorNavLinkProps = BaseProps & TransitionProps;
  * driven by `AnchorNav` as its matching `AnchorNavTarget` mounts and
  * unmounts.
  *
- * `withTransition(ScrollTo)` is v3's own declaration restored — it mixed the
- * same decorator onto `AnchorScrollTo` — and it is the case that shows why
- * the mixin has to exist rather than the utilities being called directly:
- * the transition belongs on a class that already extends something else.
+ * `withTransition(ScrollTo)` is why the behaviour is a mixin rather than a
+ * component: the transition belongs on a class that already extends something
+ * else.
  *
  * @link https://ui.studiometa.dev/reference/items/AnchorNav/
  */

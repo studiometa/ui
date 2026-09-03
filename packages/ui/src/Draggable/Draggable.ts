@@ -79,9 +79,9 @@ export class Draggable<T extends BaseProps = BaseProps> extends withResize(
   withRaf(
     withDrag(Base, {
       // The mixin is applied before this class exists, so the host is `Base`
-      // and the resolver names the shape it needs rather than the class. v3
-      // spells the same thing `@ts-expect-error`. It is an assertion, not a
-      // check — core reports a resolver which comes back with nothing.
+      // and the resolver names the shape it needs rather than the class. It is
+      // an assertion, not a check — core reports a resolver which comes back
+      // with nothing.
       target: (instance) => (instance as Base & { readonly target: HTMLElement }).target,
     }),
     { manual: true },
@@ -224,8 +224,6 @@ export class Draggable<T extends BaseProps = BaseProps> extends withResize(
       props.mode === DRAG_MODES.DRAG ||
       (props.mode === DRAG_MODES.INERTIA && !fitBounds)
     ) {
-      // v3 spells this `props.x - props.origin.x`; the service publishes the
-      // subtraction itself now.
       this.props.x = this.props.originX + props.distanceX;
       this.props.y = this.props.originY + props.distanceY;
 
@@ -236,8 +234,8 @@ export class Draggable<T extends BaseProps = BaseProps> extends withResize(
 
       this.render();
     } else if (props.mode === DRAG_MODES.DROP && fitBounds) {
-      // The service announces its exact settle position at `drop`; v3 has to
-      // read `props.final.x` against the same origin.
+      // The service announces its exact settle position at `drop`, so the
+      // clamp acts on where the throw was actually heading.
       this.props.x = clamp(
         this.props.originX + (props.finalX - props.originX),
         bounds.xMin,
@@ -264,9 +262,9 @@ export class Draggable<T extends BaseProps = BaseProps> extends withResize(
   }
 
   /**
-   * v3's `damp()` is per frame and v4's is per elapsed millisecond, so a call
-   * made outside the frame loop has to name the frame it stands in. One
-   * nominal frame is exactly what v3 assumed everywhere.
+   * `damp()` takes the frame's elapsed milliseconds, so the same factor means
+   * the same speed on every display. A call made outside the frame loop has no
+   * elapsed time to hand it, and names one nominal frame instead.
    */
   render(elapsed: number = INERTIA_FRAME): void {
     const { props } = this;

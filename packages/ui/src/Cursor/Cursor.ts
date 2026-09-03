@@ -23,13 +23,11 @@ export type CursorProps = BaseProps & {
  *   pointer is over, or the empty string;
  * - `data-cursor-down`, present while the pointer button is down.
  *
- * v1 spent eight options hardcoding one visual — a dot that translates and
- * scales — with two fixed state names, two fixed scale factors and three damp
- * factors. Every one of those is a CSS declaration in disguise:
- * `[data-cursor-state='grow'] { scale: 2 }` says the same thing, in the
- * author's own easing, on a compositable property, for any number of states
- * the author names. What is left is the one thing CSS cannot do — read the
- * pointer — and the two options that configure it.
+ * **The visual is not configurable, on purpose.** A scale, a colour or a
+ * timing is a CSS declaration — `[data-cursor-state='grow'] { scale: 2 }` —
+ * written in the author's own easing, on a compositable property, for any
+ * number of states the author names. What is left for the component is the one
+ * thing CSS cannot do: read the pointer.
  *
  * **The position is written as `translate`, not `transform`.** The individual
  * transform properties compose in a fixed order — `translate`, `rotate`,
@@ -46,13 +44,10 @@ export type CursorProps = BaseProps & {
  * beyond the run-to-run noise, so publishing alone buys nothing and costs the
  * out-of-the-box default.
  *
- * v3 declares neither service: `moved()` and `ticked()` are enough for its
- * `$services` to bind the pointer and the frame loop. This port declares only
- * the pointer, because `smoothTo()` owns the other half: two named channels on
- * one frame subscription, started when the pointer moves and released the
- * moment the cursor has caught up. v3 spells that
- * `$services.enable`/`disable('ticked')`, and this port used to spell it
- * `withRaf(..., { manual: true })` plus a hand-written `ticked()`.
+ * Only the pointer service is declared. `smoothTo()` owns the other half: two
+ * named channels on one frame subscription, started when the pointer moves and
+ * released the moment the cursor has caught up, so no frame is requested while
+ * the cursor rests.
  *
  * @link https://ui.studiometa.dev/reference/items/Cursor/
  */
@@ -61,8 +56,7 @@ export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<C
     name: 'Cursor',
     options: {
       damping: { type: Number, default: 0.25 },
-      // An `Object` default is a factory in v4, so that two instances never
-      // share one map.
+      // An `Object` default is a factory, so two instances never share one map.
       states: { type: Object, default: () => ({}) },
     },
   };
@@ -99,9 +93,8 @@ export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<C
 
   /**
    * A mixin binds its subscription from `mounted()` and returns the release,
-   * so a component that mixes one in **must** chain `super.mounted()`. v3's
-   * `$services` sits outside the hook and forgives the omission; v4 silently
-   * subscribes to nothing.
+   * so a component that mixes one in **must** chain `super.mounted()`. Omitting
+   * it subscribes to nothing, silently.
    */
   mounted(): MountedReturn {
     // A remount starts from rest: `jump()` moves the value and its target
@@ -142,8 +135,7 @@ export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<C
    *
    * `closest()`, not `matches()`: the target of a pointer event is the deepest
    * element under it, so `"a"` has to mean "over a link" and not "over the
-   * link's own box but none of its children" — which is why v1's defaults had
-   * to spell `a, a *, button, button *`.
+   * link's own box but none of its children".
    *
    * Entries are tried in the order the map declares them and the first match
    * wins, so declaration order is the precedence, not proximity in the tree.
@@ -178,11 +170,11 @@ export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<C
   /**
    * Publish the state and the button, as two independent attributes.
    *
-   * **`data-cursor-down` is not a state.** v1 forced the shrink scale while the
-   * button was down, which meant a press over a growing element silently lost
-   * its grow, and no author could change that precedence. Where the pointer is
-   * and whether the button is down are two facts, so they get two hooks and
-   * the cascade arbitrates:
+   * **`data-cursor-down` is not a state.** Folding the button into the state
+   * name would make a press over a growing element lose its grow, with no way
+   * for an author to change that precedence. Where the pointer is and whether
+   * the button is down are two facts, so they get two hooks and the cascade
+   * arbitrates:
    *
    * ```css
    * [data-cursor-state='grow'] { scale: 2 }
@@ -218,8 +210,8 @@ export class Cursor<T extends BaseProps = BaseProps> extends withPointer(Base)<C
       style.setProperty('--cursor-x', `${x}px`);
       style.setProperty('--cursor-y', `${y}px`);
       // Two values, not three: a `translate` whose z is `0` serialises back to
-      // the 2D form, so v1's `translateZ(0)` cannot be spelled here. The
-      // compositor hint is `will-change: translate`, which the template ships
+      // the 2D form, so the `translateZ(0)` compositing trick cannot be spelled
+      // here. The hint is `will-change: translate`, which the template ships
       // and an author can drop — it is a stylesheet's decision, not a
       // component's.
       style.translate = `${x}px ${y}px`;

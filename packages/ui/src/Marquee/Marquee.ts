@@ -44,12 +44,11 @@ const SECOND = 1000;
  * .skewed     { transform: skewX(calc(var(--marquee-velocity) * 1deg)); }
  * ```
  *
- * Publishing rather than painting is what removes the measurement the v1
- * `LargeText` needed: `-100%` **is** the content width, by definition, so
- * there is no `clientWidth` to read, nothing to re-measure on a resize and no
- * `target` ref to read it from. It is also what makes one class enough for
- * both the horizontal and the circular marquee v1 shipped as two components:
- * "circular" was never anything but an SVG `textPath` and a `rotate()`.
+ * Publishing rather than painting is what removes the measurement: `-100%`
+ * **is** the content width, by definition, so there is no `clientWidth` to
+ * read, nothing to re-measure on a resize and no `target` ref to read it from.
+ * It is also what makes one class enough for a circular marquee as well as a
+ * horizontal one — "circular" is an SVG `textPath` and a `rotate()`.
  *
  * @link https://ui.studiometa.dev/reference/items/Marquee/
  */
@@ -116,8 +115,8 @@ export class Marquee<T extends BaseProps = BaseProps> extends withRaf(withScroll
    *
    * Several scroll events can land between two frames, and the frame that
    * reads this one consumes it — so the boost is the distance actually
-   * scrolled, and it returns to zero on its own when the page stops. v1 kept
-   * the last delta for ever, which left the marquee running at the speed of a
+   * scrolled, and it returns to zero on its own when the page stops. Latching
+   * the last delta instead would keep the marquee running at the speed of a
    * scroll that had long finished.
    */
   scrolled({ deltaY }: ScrollProps): void {

@@ -56,8 +56,8 @@ export class CarouselDots<T extends BaseProps = BaseProps> extends withTransitio
 
   /**
    * The index the transition last ran for. `-1` until the first update, which
-   * is why the enter/leave pair below is guarded — v1 hands the resulting
-   * `undefined` to its transition util, which throws.
+   * is why the enter/leave pair below is guarded: there is no previous dot to
+   * leave on the first one.
    */
   currentIndex = -1;
 

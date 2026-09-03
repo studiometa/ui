@@ -23,24 +23,17 @@ export type ScrollRevealProps = TransitionProps & {
  * the `repeat` option, skipping the entries that happen while the page is
  * scrolling back up.
  *
- * **v3 built this on `withMountWhenInView`, and v4 does not.** The decorator is
- * gone, and its two v4 successors each answer half of what this component
- * needs: `mountStrategy: 'visible'` mounts once and never unmounts, while
- * `'in-view'` mounts and unmounts on every crossing. `repeat` chooses between
- * exactly those two behaviours *at runtime*, from an attribute, and a mount
- * strategy is a static declaration — so the strategy cannot express this
- * option, and reaching for one would have meant deleting the option. The
- * component therefore mounts normally and subscribes to `useInView()`, the
- * core service the strategies are themselves built on, which also keeps the
+ * **No mount strategy, on purpose.** `mountStrategy: 'visible'` mounts once
+ * and never unmounts, while `'in-view'` mounts and unmounts on every crossing;
+ * `repeat` chooses between exactly those two behaviours *at runtime*, from an
+ * attribute, and a mount strategy is a static declaration. The component
+ * therefore mounts normally and subscribes to `useInView()`, the core service
+ * the strategies are themselves built on, which also keeps the
  * `intersectionObserver` option meaningful: it is the observer's init, not a
  * `rootMargin` smuggled into a `data-mount` suffix.
  *
  * `data-mount="visible"` still composes on top for markup that wants the
  * instance itself deferred.
- *
- * v3's `$terminate()` after the one-shot reveal has no v4 equivalent either,
- * and needs none: the guard that made it necessary is a field, and it survives
- * the unmount/mount pair a DOM move now is.
  *
  * @link https://ui.studiometa.dev/reference/items/ScrollReveal/
  */
@@ -65,12 +58,9 @@ export class ScrollReveal extends withTransition(Base)<ScrollRevealProps> {
    * The page's latest vertical scroll direction, tracked only when `repeat` is
    * set.
    *
-   * v3 kept this in a `static` field fed by one `useScroll()` callback
-   * registered under a fixed key and never removed, because a terminated
-   * instance could not hold a subscription. A v4 service is shared and lazy —
-   * one observer, one listener, however many subscribers — and this instance
-   * lives for as long as its element, so the subscription is the component's
-   * and is released with it.
+   * The subscription is the instance's own and is released with it: the
+   * service behind it is shared and lazy, so a page of a thousand reveals
+   * still costs one listener.
    * @private
    */
   __directionY: ScrollDirection = 0;
@@ -106,8 +96,8 @@ export class ScrollReveal extends withTransition(Base)<ScrollRevealProps> {
    * Run the enter transition, unless this entry should be ignored.
    *
    * The first entry always reveals. Later ones only do so with `repeat`, and
-   * not while the page is scrolling up — re-playing a reveal on the way back
-   * up is the behaviour v3 spent its shared scroll subscription avoiding.
+   * not while the page is scrolling up: an element re-entering from below has
+   * already been seen, so replaying its reveal reads as a glitch.
    */
   reveal(): void {
     if (this.__hasRevealed && (!this.$options.repeat || this.__directionY < 0)) {

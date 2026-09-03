@@ -94,8 +94,8 @@ export function parseEventDefinition(definition: string): ParsedEventDefinition 
     }
 
     if (!MODIFIER_NAMES.includes(part)) {
-      // Unknown modifiers used to be pushed through as if they were real, so a
-      // typo silently did nothing on a listener that still bound.
+      // An unknown modifier is a typo: pushing it through would bind a
+      // listener that silently does nothing the author asked for.
       warn(
         'event-modifiers.unknown-modifier',
         `\`${part}\` in \`${definition}\` names no modifier — known names: ${MODIFIER_NAMES.join(', ')}.`,

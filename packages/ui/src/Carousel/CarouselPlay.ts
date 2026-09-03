@@ -79,8 +79,8 @@ const FOCUSABLE_SELECTOR = [
  *
  * ::: warning
  * Turning the automatic start off is `data-option-no-autostart`.
- * `data-option-autostart="false"` reads as **true** under v4's presence
- * semantics for booleans.
+ * A boolean option is true when its attribute is present, so
+ * `data-option-autostart="false"` reads as **true**.
  * :::
  *
  * @link https://ui.studiometa.dev/reference/items/Carousel/js-api#carouselplay

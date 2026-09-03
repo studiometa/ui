@@ -4,12 +4,11 @@
  * so it requires a Content Security Policy that permits `unsafe-eval`; that
  * is why the boundary is one file, not a helper each family reinvents.
  *
- * `Action` and `Data` used to cache under a `cacheKey` the caller built by
- * hand — `Data`'s was `code + name`, under which `('bc', 'return "A"')` and
- * `('c', 'return "A"b')` land in the same entry. There is no `cacheKey`
- * parameter here: the key is the argument list and the body, kept apart in
- * two map levels rather than joined into one string, so nothing a caller
- * writes can collide with it.
+ * There is no `cacheKey` parameter: a key a caller joins by hand collides —
+ * under `code + name`, `('bc', 'return "A"')` and `('c', 'return "A"b')` land
+ * in the same entry. The key here is the argument list and the body, kept
+ * apart in two map levels rather than joined into one string, so nothing a
+ * caller writes can collide with it.
  */
 
 export type CompiledExpression = (...args: unknown[]) => unknown;
