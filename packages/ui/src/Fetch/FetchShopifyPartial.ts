@@ -145,15 +145,25 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
   }
 
   /** Fetch via Shopify partial rendering when configured, otherwise fall back to the base behaviour. */
-  async fetch(url: URL | string = this.url, requestInit: RequestInit = {}): Promise<void> {
-    const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
+  async fetch(url?: URL | string, requestInit: RequestInit = {}): Promise<void> {
+    // Same reading as the base: an absent URL is the element's own
+    // navigation, which is what lets `historyUrl` differ from the requested
+    // one. The fallback path is handed the same absence, not a resolved URL.
+    const fromElement = url === undefined;
+    const normalizedUrl = fromElement
+      ? this.url
+      : url instanceof URL
+        ? url
+        : new URL(url, window.location.href);
     const names = this.partialNames;
     const partials =
       names.length && this.canUsePartials(requestInit) ? await this.resolvePartials() : null;
 
     if (!partials) {
-      return super.fetch(normalizedUrl, requestInit);
+      return super.fetch(fromElement ? undefined : normalizedUrl, requestInit);
     }
+
+    this.__historyUrl = fromElement ? this.historyUrl : undefined;
 
     this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url: normalizedUrl, requestInit });
 
@@ -223,7 +233,8 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
 
     if (history) {
       if (headerValue(requestInit.headers, HEADER_NAMES.X_TRIGGERED_BY) !== 'popstate') {
-        historyPush({ path: url.pathname, search: url.searchParams });
+        const target = this.__historyUrl ?? url;
+        historyPush({ path: target.pathname, search: target.searchParams });
       }
     }
 
