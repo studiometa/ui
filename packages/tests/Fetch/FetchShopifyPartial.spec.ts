@@ -156,7 +156,8 @@ describe('FetchShopifyPartial', () => {
       `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"><div id="a">old</div></a>`,
     );
 
-    // Spreading a `Headers` yields no keys, so this used to pass the check.
+    // Spreading a `Headers` yields no keys, so a spread would let this pass the
+    // check.
     await instance.fetch(instance.url, { headers: new Headers({ 'X-Custom': '1' }) });
     await settle();
 

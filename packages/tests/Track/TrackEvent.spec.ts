@@ -60,9 +60,9 @@ describe('parseEventDefinition', () => {
   });
 
   it('rejects a malformed timed delay instead of parsing it to NaN', () => {
-    // `debounceoops` used to match on the `debounce` prefix alone, so its
-    // suffix went through `Number.parseInt` and produced `NaN` — a timeout
-    // browsers run immediately rather than warn about.
+    // Matching `debounceoops` on the `debounce` prefix alone would send its
+    // suffix through `Number.parseInt` and produce `NaN` — a timeout browsers
+    // run immediately rather than warn about.
     const log = captureDiagnostics();
     const { modifiers, delay } = parseEventDefinition('click.debounceoops');
     expect([...modifiers]).toEqual([]);

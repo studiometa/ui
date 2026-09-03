@@ -236,9 +236,10 @@ describe('DataBind — the element half', () => {
     bind.set('one');
     expect(el(root, '#d').textContent).toBe('was: one');
 
-    // The bindings used to be memoised on first read, so an attribute a morph
-    // or a `data-bind:if` template rewrote kept its first parse forever. The
-    // rewrite now applies the value already in force, with no `set()` needed.
+    // A rewritten attribute is parsed again, so a morph or a `data-bind:if`
+    // template that changes the expression takes effect against the value
+    // already in force, with no `set()` needed. Memoising the parse on first
+    // read would freeze the binding on its first expression.
     el(root, '#d').setAttribute('data-bind:text', '`now: ${value}`');
     await settle();
     expect(el(root, '#d').textContent).toBe('now: one');
@@ -281,7 +282,8 @@ describe('DataBind — the element half', () => {
         data-bind:txet="value"></div>
     `);
 
-    // The typo used to be an attribute that silently did nothing at all.
+    // A typo in the qualifier names no binding target, and silence would leave
+    // it indistinguishable from a binding that works.
     expect(log.codes).toContain('attribute.unknown-qualifier');
     expect(at<DataBind>(root, '#d', 'DataBind').hasVirtualBindings).toBe(false);
 
