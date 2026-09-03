@@ -72,8 +72,8 @@
       `-translate-x-1/2` already owns the element's `transform`. `view-box`
       makes the origin the centre of the viewBox rather than the text's own
       bounding box, so the ring turns around the circle it is written on.
-      A whole turn is one loop, negative so that a positive sensitivity spins
-      the ring the way v1 did.
+      A whole turn is one loop; the negative sign is what makes a positive
+      sensitivity spin the ring in the direction its text is read.
     #}
     <g style="transform: rotate(calc(var(--marquee-progress, 0) * -360deg)); transform-box: view-box; transform-origin: 50% 50%">
       <text dy="0" textLength="{{ perimeter }}">

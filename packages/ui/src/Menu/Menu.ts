@@ -23,17 +23,14 @@ export type MenuProps = BaseProps & {
  * (Enter/Escape), click-outside dismissal and mutual closing of sibling
  * submenus.
  *
- * `menuBtn`/`menuList` filter their `$watchChildren` collections down to
- * the child whose nearest `Menu` ancestor is this one — `$closest('Menu')`
- * replaces v3's `getClosestParent(target, this.constructor)`, since a
- * nested submenu's own button/list would otherwise match too.
+ * `menuBtn`/`menuList` filter their `$watchChildren` collections down to the
+ * child whose nearest `Menu` ancestor is this one, because a nested submenu's
+ * own button and list would otherwise match too.
  *
- * v3 called `$destroy()` on itself in `mounted()` when either child was
- * missing; v4
- * gives no ordering guarantee for when a child mounts relative to its
- * parent, so `$watchChildren`'s `added` callback — not `mounted()` — is
- * where the button and list are wired up, and a `Menu` with no list is
- * simply inert rather than a hard failure.
+ * A child carries no ordering guarantee relative to its parent, so
+ * `$watchChildren`'s `added` callback — not `mounted()` — is where the button
+ * and the list are wired up, and a `Menu` with no list is inert rather than a
+ * hard failure.
  *
  * @link https://ui.studiometa.dev/reference/items/Menu/
  */

@@ -201,10 +201,9 @@ function applyIndex(BaseClass: BaseConstructor) {
     }
 
     /**
-     * v3 kept the travel direction and the boundary in `$options` and **wrote
-     * to them**. `$options` is a read-only view over attributes in v4, so both
-     * become private state seeded from the option — the same move
-     * `AccordionItem.isOpen` had to make.
+     * The travel direction and the boundary are both writable at runtime, so
+     * they are private state seeded from the option: `$options` is a read-only
+     * view over attributes and cannot hold them.
      */
     get isReverse(): boolean {
       return this.__isReverse ?? this.__indexOptions.reverse === true;

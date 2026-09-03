@@ -14,12 +14,10 @@ export interface CarouselCountProps {
 /**
  * The "3 / 5" readout: the position of the current slide, and the total.
  *
- * **Both refs are optional and both are guarded.** v1's `SliderCount` writes
- * `this.$refs.current.textContent` with no check, so a markup that shows only
- * the total — or one whose `current` element has not arrived yet — throws on
- * the first state delivery and takes the mount with it. The count is the one
- * control whose whole job is to be optional decoration, so it must never be
- * the thing that breaks the carousel.
+ * **Both refs are optional and both are guarded**, so a markup that shows only
+ * the total — or one whose `current` element has not arrived yet — still
+ * mounts. The count is the one control whose whole job is optional decoration,
+ * so it must never be the thing that breaks the carousel.
  *
  * **The numbers it writes are one-based.** `index` is a zero-based array
  * position everywhere else in the family; a person counting slides starts at

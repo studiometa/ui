@@ -11,10 +11,8 @@ export type DisclosureGroupProps = {
   /**
    * The group's own events, namespaced `disclosure-group-`.
    *
-   * v4's `$emit()` bubbles, so a listener bound on the group's element also
-   * hears the events its children emit. Under v1's names both arrived as a
-   * plain `open`, and telling them apart meant reading `event.target` or the
-   * shape of the payload. The two namespaces make them distinguishable by name
+   * `$emit()` bubbles, so a listener bound on the group's element also hears
+   * the events its children emit. The two namespaces keep them apart by name
    * on a single listener, which is what `on<Child><Event>` handler resolution
    * needs to work at all.
    */
@@ -32,14 +30,11 @@ export type DisclosureGroupProps = {
  * accessibility state and transitions, and is claimed by its closest group
  * rather than being instantiated by it.
  *
- * **Membership is a live collection, not a registry.** v3 kept a `Set` fed by
- * `register()`/`unregister()` calls that a document `CustomEvent` handshake
- * triggered, and sorted it by `compareDocumentPosition` on every read.
- * `$watchChildren()` is both: live and DOM-ordered. What it is *not* is
- * nesting-aware — it collects every mounted `Disclosure` in the subtree,
- * including those belonging to a nested group — so the group claims each one
- * and the disclosure arbitrates, and `items` reads back only the disclosures
- * that ended up with this group.
+ * **Membership is a live collection, not a registry.** `$watchChildren()` is
+ * live and DOM-ordered. What it is *not* is nesting-aware — it collects every
+ * mounted `Disclosure` in the subtree, including those belonging to a nested
+ * group — so the group claims each one and the disclosure arbitrates, and
+ * `items` reads back only the disclosures that ended up with this group.
  *
  * @link https://ui.studiometa.dev/reference/items/Disclosure/
  */
@@ -218,9 +213,9 @@ export class DisclosureGroup extends Base<DisclosureGroupProps> {
   /**
    * Normalize initial state once the current turn's mounts have all landed.
    *
-   * v3 used `nextTick()`. The background lane is the stronger guarantee: it is
-   * the lane the framework drains its own deferred mount work on, so "after
-   * everything mounted" stops being a hope about microtask ordering.
+   * The background lane is the lane the framework drains its own deferred
+   * mount work on, so "after everything mounted" is a guarantee rather than a
+   * hope about microtask ordering.
    * @internal
    * @private
    */

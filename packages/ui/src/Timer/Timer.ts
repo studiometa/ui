@@ -24,10 +24,9 @@ export type TimerProps = BaseProps & {
  * methods) and the `Data*` family (to turn those events into reactive
  * state).
  *
- * The timing fields below are regular fields rather than `#private`: v3
- * declared them `@protected` because `TimerProgress` reads them directly,
- * and a JS private field is invisible to a subclass entirely, not merely
- * hidden from the outside — there is no v4 equivalent of "protected".
+ * The timing fields below are regular fields rather than `#private`, because
+ * `TimerProgress` reads them directly and a JS private field is invisible to a
+ * subclass entirely, not merely hidden from the outside.
  *
  * @link https://ui.studiometa.dev/reference/items/Timer/
  */

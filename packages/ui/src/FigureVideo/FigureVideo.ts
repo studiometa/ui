@@ -33,13 +33,10 @@ export class FigureVideo<T extends BaseProps = BaseProps> extends withTransition
   };
 
   /**
-   * Whether the sources have already been loaded, so a later mount (the
-   * `in-view` strategy can trigger one) does not repeat it. v3 called
-   * `$terminate()` from `onLoad()` for this; v4 has no termination (the
-   * `Figure` and `LazyInclude` ports hit the same gap), and unlike `Figure`
-   * this component has no naturally idempotent check to fall back on —
-   * `load()` always reassigns every source — so the flag is load-bearing
-   * here, not just documentation.
+   * Whether the sources have already been loaded, so a later mount — the
+   * `in-view` strategy can trigger one — does not repeat it. The flag is
+   * load-bearing: `load()` reassigns every source unconditionally, so there is
+   * no idempotent check to fall back on.
    */
   hasLoaded = false;
 
@@ -84,10 +81,10 @@ export class FigureVideo<T extends BaseProps = BaseProps> extends withTransition
     /**
      * Settled by either outcome, deliberately.
      *
-     * v3 waits on `loadeddata` alone, so a video whose sources all fail never
-     * settles at all — and because `mounted()` awaits it, the component then
-     * never reaches its enter transition, its `load` event or `hasLoaded`. A
-     * media error is a real outcome and has to end the wait.
+     * Waiting on `loadeddata` alone would leave a video whose sources all fail
+     * hanging for ever — and because `mounted()` awaits this, the component
+     * would never reach its enter transition, its `load` event or `hasLoaded`.
+     * A media error is a real outcome and has to end the wait.
      */
     return new Promise<void>((resolve, reject) => {
       const settle = (handler: () => void) => {

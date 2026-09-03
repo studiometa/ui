@@ -17,9 +17,8 @@ export type AbstractFigureProps = BaseProps &
  * enters the viewport when the `lazy` option is set, running the enter
  * transition and emitting `load` once the image is ready.
  *
- * v3 mixed `withMountWhenInView` onto `Transition`, whose transition half is
- * now `withTransition` here. The `target` override is the whole reason the
- * mixin has one: the transition runs on the image, not on the root.
+ * The `target` override is the whole reason the mixin has one: the transition
+ * runs on the image, not on the root.
  */
 export class AbstractFigure<T extends BaseProps = BaseProps> extends withTransition(Base)<
   AbstractFigureProps & T

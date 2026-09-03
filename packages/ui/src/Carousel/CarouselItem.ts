@@ -5,15 +5,10 @@ import type { CarouselState } from './context.js';
 /**
  * One slide.
  *
- * v3 also owns its scroll target here, as a cached `compute-scroll-into-view`
- * call invalidated from `resized()` and `updated()`. That measurement needs the
- * scroller **and** the item, and the coordinator is the only place that has
- * both, so it moved to `Carousel.positions()` — one cache instead of one per
- * slide, invalidated in one place.
- *
- * The slide's `inert` state is not here either, for the same reason: whether a
- * slide is presented is a question about the scroller, and the coordinator is
- * the only place that has one observer over the whole list.
+ * A slide owns neither its scroll target nor its `inert` state. Both are
+ * questions about the scroller as much as about the item, and `Carousel` is
+ * the only place holding both — one cache and one observer over the whole
+ * list, invalidated in one place.
  */
 export class CarouselItem<T extends BaseProps = BaseProps> extends AbstractCarouselChild<T> {
   static config: BaseConfig = {

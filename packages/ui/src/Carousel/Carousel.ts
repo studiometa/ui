@@ -97,8 +97,8 @@ export class Carousel extends withResize(withRaf(Indexable, { manual: true }))<C
 
   /**
    * The exposed surface. Provided from a field initializer, so it answers a
-   * child's `$injectSync` from the moment the instance exists — which is what
-   * replaces v3's `connectChildren()` handshake entirely.
+   * child's `$injectSync` from the moment the instance exists, with no
+   * handshake to arrange.
    */
   api: CarouselApi = this.$provide(CarouselContext, {
     state: this.state,
@@ -239,10 +239,9 @@ export class Carousel extends withResize(withRaf(Indexable, { manual: true }))<C
   /**
    * Re-measure and re-snap after a viewport change.
    *
-   * v3 defers by one frame so the children invalidate their own geometry
-   * caches first — they each held one, and the parent's resize callback ran
-   * before theirs. There is one cache now and it belongs here, so the frame is
-   * only still needed for the layout the resize itself is about to produce.
+   * The frame is deferred because the layout the resize is about to produce
+   * has not landed yet; the geometry cache is invalidated straight away, since
+   * it lives here and nowhere else.
    */
   resized(): void {
     this.__positions = null;
@@ -257,10 +256,10 @@ export class Carousel extends withResize(withRaf(Indexable, { manual: true }))<C
   /**
    * A slide arrived or left.
    *
-   * v3 does this from `updated()`, which a consumer had to call. Re-assigning
-   * the index re-normalises it against the new count — removing slides can
-   * leave `currentIndex` past the end with no slide active — and the progress
-   * denominator changed, so the loop is restarted to republish it.
+   * Re-assigning the index re-normalises it against the new count — removing
+   * slides can leave `currentIndex` past the end with no slide active — and
+   * the progress denominator changed, so the loop is restarted to republish
+   * it.
    */
   itemsChanged(): void {
     this.__positions = null;
@@ -391,10 +390,9 @@ export class Carousel extends withResize(withRaf(Indexable, { manual: true }))<C
    * author who wants the landmark writes `role="region"` and keeps it: the
    * role is only ever written when the element has none.
    *
-   * **No `aria-roledescription`.** v1's `Slider` emitted the English string
-   * `carousel` unconditionally. It is not translated by anything — not the
+   * **No `aria-roledescription`.** Nothing translates the string — not the
    * browser, not the screen reader — and NVDA spells an unknown word out
-   * letter by letter in a German locale, so the untranslated string is worse
+   * letter by letter in a German locale, so an English `carousel` is worse
    * than none. Chrome's own reference gallery omits it for the same reason.
    * An author who wants it writes it in their own language, and this method
    * has already given it the role it needs to be honoured.

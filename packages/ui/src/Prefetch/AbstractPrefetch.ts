@@ -73,13 +73,12 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   /**
    * Hint the URL.
    *
-   * `loadLink()` owns the whole of v3's body: it builds the element, appends
-   * it to `<head>`, settles on the load event and deduplicates by resolved URL
-   * **and** `rel`, which is what v3's `static prefetchedUrls` set was for.
+   * `loadLink()` owns all of it: it builds the element, appends it to
+   * `<head>`, settles on the load event and deduplicates by resolved URL
+   * **and** `rel`, so nothing here has to track what was already hinted.
    *
-   * The guard order is reversed against v3, which reads `url.href` before
-   * asking whether the URL exists and therefore throws on an `<a>` with no
-   * `href` — a real v3 defect, and the spec below is the one that found it.
+   * `isPrefetchable` is asked before `url.href` is read, because an `<a>` with
+   * no `href` has no URL to read one from.
    */
   prefetch(): void {
     if (!this.isPrefetchable) {

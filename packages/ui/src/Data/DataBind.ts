@@ -93,9 +93,9 @@ export class DataBind<T extends BaseProps = DataBindProps>
 
   /**
    * Live bindings by the attribute that declared them. Kept in step with the
-   * element rather than memoised: a `data-bind:*` rewritten in place used to
-   * keep its first parse forever, which is the bug `watchAttributeNamespace()`
-   * exists to remove.
+   * element rather than memoised: a `data-bind:*` rewritten in place would
+   * otherwise keep its first parse forever, which is what
+   * `watchAttributeNamespace()` exists to prevent.
    */
   __virtualBindings = new Map<string, VirtualBinding>();
 

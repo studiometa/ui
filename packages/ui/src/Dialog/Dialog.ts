@@ -67,7 +67,7 @@ export class Dialog extends withKey(Base)<DialogProps> {
    * dialog opened from inside a drawer must not put the scroll back when it
    * closes while the drawer is still open. It is released on close and again
    * on unmount — the release is idempotent, and a dialog unmounted while open
-   * used to leak its lock for the life of the page.
+   * would otherwise leak its lock for the life of the page.
    */
   __releaseScroll: (() => void) | null = null;
 

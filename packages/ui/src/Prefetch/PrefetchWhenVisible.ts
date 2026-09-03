@@ -4,11 +4,9 @@ import { AbstractPrefetch } from './AbstractPrefetch.js';
 /**
  * Prefetches the link's URL the first time it enters the viewport.
  *
- * v3 wraps the class in `withMountWhenInView` and relies on the shared
- * `prefetchedUrls` set to make the repeated mounts harmless. The intent is
- * one-shot, so this is `visible` rather than `in-view` — the third component
- * in this exercise where v4's one-shot strategy replaces a decorator plus a
- * guard against its own repetition.
+ * The strategy is `visible` and not `in-view`, because the intent is one-shot:
+ * `in-view` would unmount and remount on every crossing and re-hint a URL the
+ * browser already holds.
  *
  * @link https://ui.studiometa.dev/reference/items/Prefetch/
  */

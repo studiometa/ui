@@ -45,9 +45,7 @@ export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T>
    * `$unmount()` leaves the instance on its element, so this field survives
    * every move, re-insertion and `swap()` which preserves the element — and
    * an element that is genuinely replaced gets a new instance, which is
-   * exactly when the content should be fetched again. The option keeps v3's
-   * name, but v4 has no termination to honour: what it records is that the
-   * content has been loaded.
+   * exactly when the content should be fetched again.
    */
   hasLoaded = false;
 
@@ -93,8 +91,7 @@ export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T>
         // `$emit()` dispatches synchronously and returns before an async
         // listener has finished, so the injection is awaited here: `defer-always`,
         // and the `terminateOnLoad` which listens for it, must not arrive on
-        // an element whose content has not landed. v3 needs nothing — its
-        // handler assigns `innerHTML` inside the dispatch.
+        // an element whose content has not landed.
         await this.injection;
       })
       .catch((error: unknown) => {
@@ -110,10 +107,10 @@ export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T>
   /**
    * Inject the content.
    *
-   * v3 assigns `innerHTML`, which leaves a `<script>` in the fragment inert
-   * and returns before anything inside it has mounted. `swap()` is this
-   * element's exact shape — the children change, the element does not — so it
-   * owns both, and the awaited settle is what makes `defer-always` meaningful.
+   * `swap()` rather than `innerHTML`: it runs the `<script>` elements the
+   * fragment carries and settles once everything inside has mounted, which is
+   * what makes `defer-always` meaningful. Its shape is this element's exact
+   * shape — the children change, the element does not.
    *
    * The promise is kept because the announcement cannot carry it: an event
    * listener's return value goes nowhere, so the emitter has no other way to
@@ -138,10 +135,9 @@ export class Defer<T extends BaseProps = BaseProps> extends Base<DeferProps & T>
   /**
    * Remember a **successful** load, so a later mount does not repeat it.
    *
-   * `defer-always` fires from the `finally` of the request, so a failed fetch would
-   * mark the element as loaded and never try again. v3 has the same defect for
-   * the same reason — it terminates from `onAlways()` — and this is the one
-   * place the port departs from it: a request that failed is exactly the one
+   * The flag is set from `defer-content` and not from `defer-always`, which
+   * fires from the request's `finally`: marking a failed fetch as loaded would
+   * mean never trying again, and a request that failed is exactly the one
    * worth retrying when the element mounts again.
    */
   rememberLoad(): void {

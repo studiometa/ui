@@ -20,9 +20,8 @@ export interface TransitionProps {
 /**
  * What a transition runs on: one element, or several transitioning together.
  *
- * The list form is v3's and it is load-bearing — a component whose visible
- * part is a set of refs rather than its own root transitions all of them as
- * one gesture.
+ * The list form is load-bearing: a component whose visible part is a set of
+ * refs rather than its own root transitions all of them as one gesture.
  */
 export type TransitionTarget = HTMLElement | HTMLElement[];
 
@@ -55,17 +54,11 @@ export interface TransitionInterface extends Transitionable {
 /**
  * Add enter/leave CSS transitions to a component.
  *
- * **v4's first mixin that is not a service mixin**, and the reason it is a
- * mixin at all is consumer count rather than shape. The earlier port
- * collapsed v3's `withTransition` decorator and its `Transition` component
- * into the component alone, on the finding that the decorator's body used
- * `this` for nothing but reading two options — so the shared half became
- * `enterTransition()`/`leaveTransition()` in core, and the one consumer that
- * needed it elsewhere (`SliderDots`) called those directly. Five consumers
- * later that no longer holds: `MenuList`, `AbstractFigure`, `FigureVideo` and
- * `AnchorNavLink` each reimplemented the same `state`/`target`/`enter`/
- * `leave`/`toggle` block around those two calls, which is the duplication
- * this restores v3's structure to remove.
+ * A mixin because of consumer count rather than shape: `Transition`,
+ * `MenuList`, `AbstractFigure`, `FigureVideo` and `AnchorNavLink` all need the
+ * same `state`/`target`/`enter`/`leave`/`toggle` block around
+ * `enterTransition()`/`leaveTransition()`, and writing it once is what keeps
+ * the five in step.
  *
  * It is not built on `createServiceMixin()` because there is no service and
  * no subscription: nothing to start on mount, nothing to release on unmount.
@@ -128,10 +121,9 @@ const applyTransition = (BaseClass: BaseConstructor) => {
      * Its own hook, rather than a direct `$options` read, because a component
      * can need a value the markup is not allowed to choose: `MenuList` forces
      * `enterKeep`/`leaveKeep` to `true`, since a menu left open must stay
-     * visible. v3 did that by overriding the `$options` getter, which v4
-     * refuses — `$options` is a read-only view over attributes with no
-     * override point — so the override moves one level down, onto the
-     * declaration this mixin reads instead of onto the options themselves.
+     * visible. `$options` is a read-only view over attributes with no override
+     * point, so the override lands here instead, on the declaration this mixin
+     * reads rather than on the options themselves.
      */
     get transitionOptions(): TransitionOptions {
       // Through `unknown`, not a direct assertion: the host is a loose
@@ -144,10 +136,10 @@ const applyTransition = (BaseClass: BaseConstructor) => {
     /**
      * The elements one call acts on: what it was handed, else the getter.
      *
-     * An explicit argument **replaces** `target` rather than adding to it,
-     * which is v3's rule — the caller who names an element is the one who
-     * knows, so a component that transitions its own root by default can
-     * still be told to transition something else for one call.
+     * An explicit argument **replaces** `target` rather than adding to it: the
+     * caller who names an element is the one who knows, so a component that
+     * transitions its own root by default can still be told to transition
+     * something else for one call.
      * @private
      */
     __elements(target?: TransitionTarget): HTMLElement[] {
@@ -180,8 +172,7 @@ const applyTransition = (BaseClass: BaseConstructor) => {
      * `Promise.all` over a synchronous `map` is what makes them one gesture:
      * each `enterTransition()` applies its `from` state and clears the other
      * direction's `to` before it first awaits, so every element is staged
-     * before any of them reaches the next frame — which is the ordering v3
-     * got by passing the whole list to a single `transition()` call.
+     * before any of them reaches the next frame.
      * @private
      */
     __run(

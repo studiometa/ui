@@ -41,9 +41,9 @@ export type TabsProps = BaseProps & {
   /**
    * The `tabs-` prefix is the family namespace the package settled on with
    * `Defer` (`defer-*`), `Fetch` (`fetch-*`) and `Disclosure`
-   * (`disclosure-*`). v4's `$emit()` bubbles, so v1's bare `enable`/`disable`
-   * reached every ancestor listener under names generic enough to collide
-   * with anything.
+   * (`disclosure-*`). `$emit()` bubbles, so a bare `enable`/`disable` would
+   * reach every ancestor listener under a name generic enough to collide with
+   * anything.
    */
   $emits: {
     'tabs-enable': TabsEventPayload;
@@ -61,23 +61,14 @@ const KEY_PREVIOUS = { horizontal: 'ArrowLeft', vertical: 'ArrowUp' } as const;
  * An accessible tab set: one `tablist`, n `tab` buttons and n `tabpanel`
  * panels, paired by position.
  *
- * **This is a rewrite, not a port.** v1 paired the refs the same way and
- * emitted the same two events, and everything else changed:
+ * The whole APG contract lives here: the three roles, `aria-selected`,
+ * `aria-controls`, `aria-labelledby`, a roving `tabindex` and the keyboard
+ * interaction. The `list` ref exists to carry the `tablist` role.
  *
- * - **The ARIA contract is implemented.** v1 wrote an `id`, an
- *   `aria-labelledby` and an `aria-hidden` and stopped there: no `tablist`,
- *   no `tab`, no `tabpanel`, no `aria-selected`, no `aria-controls`, no
- *   roving `tabindex` and no keyboard interaction at all, which left a set of
- *   buttons that a screen reader could not tell was a tab set and that a
- *   keyboard user had to `Tab` through one by one. All of it is here now, and
- *   the `list` ref exists to carry the `tablist` role.
- * - **The `styles` option is gone**, and with it the only remaining consumer
- *   of `config.options[…].merge`, which v4 removed by decision. Visibility is
- *   the platform's `hidden` property, the way `Disclosure` does it, and
- *   appearance is CSS keyed on `[aria-selected="true"]` — a state this
- *   component now sets and v1 did not. Animation is a nested `Transition` or
- *   `ViewTransition`, which is what `Dialog` and `Disclosure` already ask for
- *   and what the migration guide points every removed `styles` option at.
+ * **Appearance is left to CSS.** Visibility is the platform's `hidden`
+ * property, the way `Disclosure` does it, and styling keys on
+ * `[aria-selected="true"]`. Animation is a nested `Transition` or
+ * `ViewTransition`, which is what `Dialog` and `Disclosure` already ask for.
  *
  * The initially selected tab is the first button carrying
  * `aria-selected="true"`, or the first button. That is a convention rather
@@ -103,7 +94,7 @@ export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {
    * The selected index.
    *
    * A field and not an option: `$options` is a read-only view over the
-   * attributes in v4, and the markup states the initial selection through
+   * attributes, and the markup states the initial selection through
    * `aria-selected` instead.
    * @private
    */
@@ -389,8 +380,8 @@ export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {
    * Create the `tablist` / `tab` / `tabpanel` relationships.
    *
    * The ids are only written when the markup has none (`||=`), so an author's
-   * own ids survive — v1 overwrote the button's `id` unconditionally, which
-   * broke any `aria-describedby` or fragment link pointing at it.
+   * own ids survive: overwriting one would break any `aria-describedby` or
+   * fragment link pointing at it.
    * @private
    */
   __initializeAccessibility(): void {

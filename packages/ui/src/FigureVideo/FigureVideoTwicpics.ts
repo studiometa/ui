@@ -21,11 +21,6 @@ export type FigureVideoTwicpicsProps = FigureVideoProps & {
  * Dynamic video figure that rewrites its poster and source URLs into
  * TwicPics URLs sized to the rendered element, and reloads them on resize.
  *
- * v3 overrode `onLoad()` as an empty no-op to cancel `FigureVideo`'s
- * termination, since it still needs to reload on resize after the first
- * load. v4 has no termination to cancel — there is simply nothing to
- * override.
- *
  * @link https://ui.studiometa.dev/reference/items/FigureVideoTwicpics/
  */
 export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends withResize(FigureVideo)<

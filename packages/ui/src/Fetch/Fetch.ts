@@ -11,10 +11,8 @@ import { compileExpression } from '../utils/expression.js';
 /**
  * The lifecycle events a `Fetch` announces.
  *
- * A module constant rather than a static: v3 reads it through
- * `this.constructor.FETCH_EVENTS`, which only pays for itself if a subclass
- * replaces the map, and nothing in ui does. Reading it here deletes the
- * `FetchConstructor` type and the `declare ['constructor']` workaround with it.
+ * A module constant rather than a static, because a static only pays for
+ * itself if a subclass replaces the map, and nothing here does.
  */
 export const FETCH_EVENTS = Object.freeze({
   BEFORE_FETCH: 'fetch-before',
@@ -91,11 +89,7 @@ export interface FetchEventBase {
   requestInit: RequestInit;
 }
 
-/**
- * The declared event surface. v3 spells the same list twice — once in
- * `config.emits` for the runtime check and once in prose — and neither
- * describes a payload.
- */
+/** The declared event surface, with the payload each event carries. */
 export type FetchEmits = {
   'fetch-before': FetchEventBase;
   'fetch-fetch': FetchEventBase;
@@ -369,8 +363,8 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   mergeRequestInit(requestInit: RequestInit, signal: AbortSignal): RequestInit {
     // Merged through `headerEntries()` rather than spread: spreading a
     // `Headers` instance or a tuple array yields nothing, so a caller's
-    // `fetch(url, { headers: new Headers(…) })` used to be dropped on the
-    // floor before the request was ever built.
+    // `fetch(url, { headers: new Headers(…) })` would be dropped on the floor
+    // before the request was ever built.
     const headers: Record<string, string> = {};
     for (const [name, value] of headerEntries(this.requestInit.headers)) {
       headers[name] = value;
@@ -408,15 +402,13 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   /**
    * Swap every element of the response whose id matches one on the page.
    *
-   * `swap()` does all four modes now that it can replace its target: this
-   * family matches an element by id and puts the response's element in its
-   * place, attributes included, which is what `self` asks for. The additive
-   * modes are the ones that keep the page element and add to its children, so
-   * they are exactly `swap()`'s default.
+   * `swap()` covers all four modes: this family matches an element by id and
+   * puts the response's element in its place, attributes included, which is
+   * what `self` asks for. The additive modes keep the page element and add to
+   * its children, which is exactly `swap()`'s default.
    *
    * Every swap is started before any is awaited, so the whole update is one
-   * synchronous DOM pass — v3's ordering — and the settling of all of them is
-   * awaited once.
+   * synchronous DOM pass and the settling of all of them is awaited once.
    *
    * @protected
    */

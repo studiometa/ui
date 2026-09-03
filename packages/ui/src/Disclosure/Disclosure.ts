@@ -16,16 +16,14 @@ export type DisclosureProps = {
   };
   /**
    * Every event carries its emitter as the event target, so none of them needs
-   * a payload. v3 passed the instance as the detail; a delegated
-   * `onDisclosureDisclosureOpen({ target })` handler now receives the same
-   * thing typed.
+   * a payload: a delegated `onDisclosureDisclosureOpen({ target })` handler
+   * receives the instance, typed.
    *
    * The `disclosure-` prefix is the family's namespace, the convention `Defer`
    * (`defer-content`, `defer-error`, `defer-always`) and `Fetch` (`fetch-*`)
    * already set. It is what keeps these apart from `DisclosureGroup`'s own
-   * `disclosure-group-*` events: v4's `$emit()` bubbles, so a listener on the
-   * group's element hears its children too, and under the v1 names both sides
-   * arrived as plain `open`.
+   * `disclosure-group-*` events: `$emit()` bubbles, so a listener on the
+   * group's element hears its children too.
    */
   $emits: {
     'disclosure-open': void;
@@ -42,17 +40,13 @@ export type DisclosureProps = {
  * `DisclosureGroup` when one exists. The group is therefore optional and does
  * not own the child's construction or lifecycle.
  *
- * **How the group is found changed completely in v4.** v3 asked
- * `$closest('DisclosureGroup:mounted')` and, because nothing announced a
- * mount, backed it with a two-way document `CustomEvent` handshake
- * (`disclosure:connected` / `disclosure-group:connected`) plus a document-wide
- * `MutationObserver` re-running the lookup after any DOM change. All of it is
- * gone: the group holds a live `$watchChildren()` collection and claims the
- * disclosures below it, `__claim()` refuses a claim from a group that is
- * further away than the current one, and `__release()` falls back to the
- * nearest *mounted* group when the current one unmounts. Nesting, late
- * mounting in either order, DOM moves and group teardown all fall out of that,
- * with no listener on `document` and no observer.
+ * **The group claims the child, not the reverse.** The group holds a live
+ * `$watchChildren()` collection and claims the disclosures below it,
+ * `__claim()` refuses a claim from a group that is further away than the
+ * current one, and `__release()` falls back to the nearest *mounted* group
+ * when the current one unmounts. Nesting, late mounting in either order, DOM
+ * moves and group teardown all fall out of that, with no listener on
+ * `document` and no observer.
  *
  * @link https://ui.studiometa.dev/reference/items/Disclosure/
  */
@@ -97,7 +91,7 @@ export class Disclosure extends Base<DisclosureProps> {
   /**
    * Current open state.
    *
-   * A field, not `$options.open`: v4's `$options` is a read-only view over the
+   * A field, not `$options.open`: `$options` is a read-only view over the
    * attributes, so the option is the *initial* state and this is the state.
    */
   isOpen = false;
@@ -160,8 +154,7 @@ export class Disclosure extends Base<DisclosureProps> {
    * Re-apply the trigger state when the option changes, whether it was written
    * by `enable()`/`disable()` or by the markup.
    *
-   * This is v3's `updated()`, narrowed to the one option that had a reason to
-   * be re-read. The initial run is skipped on purpose: option effects run
+   * The initial run is skipped on purpose: option effects run
    * **before** `mounted()`, so syncing here would clear an authored
    * `aria-disabled` before `__initializeAccessibility()` had a chance to
    * record it.
@@ -216,10 +209,8 @@ export class Disclosure extends Base<DisclosureProps> {
   /**
    * Enable user interaction.
    *
-   * v3 assigned `this.$options.disabled = false`. v4's `$options` is a
-   * read-only view over the attributes, and this pair is the one genuine
-   * reconfiguration in the whole of `@studiometa/ui`, so it writes the
-   * attribute the option reads — the same statement the markup makes. The
+   * `$options` is a read-only view over the attributes, so this pair writes
+   * the attribute the option reads — the same statement the markup makes. The
    * option getter re-reads the DOM on every access, so the new value is
    * visible on the next line rather than on the next mutation record.
    *
@@ -279,8 +270,7 @@ export class Disclosure extends Base<DisclosureProps> {
     }
 
     // The releasing group has already cleared `$isMounted`, so `$closest()`
-    // skips it and answers with the next mounted group above, which is v3's
-    // `$closest('DisclosureGroup:mounted')` rule with none of its plumbing.
+    // skips it and answers with the next mounted group above.
     this.__group = this.$closest<DisclosureGroup>('DisclosureGroup') ?? undefined;
     this.__group?.__scheduleReconcile();
     this.__syncDisabledState();
