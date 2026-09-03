@@ -246,6 +246,28 @@ describe('FetchShopifyPartial', () => {
     expect(window.history.length).toBe(before + 1);
   });
 
+  it('pushes the element destination rather than the fetched `src`', async () => {
+    const partialsFetch = vi.fn(async () => ({}));
+    stubPartials({ fetch: partialsFetch, apply: vi.fn() });
+    const { root } = await mountWithInstance(
+      `<a data-component="FetchShopifyPartial" href="/projects/page/2?orderby=title"
+        data-option-src="/projects/page/2?orderby=title&amp;sections=listing"
+        data-option-partials="main" data-option-history></a>`,
+    );
+
+    root.querySelector('a')?.click();
+    await settle();
+
+    expect(partialsFetch).toHaveBeenCalledWith(
+      'main',
+      expect.objectContaining({
+        url: new URL('/projects/page/2?orderby=title&sections=listing', window.location.href).href,
+      }),
+    );
+    expect(window.location.pathname).toBe('/projects/page/2');
+    expect(window.location.search).toBe('?orderby=title');
+  });
+
   it('memoises the resolved partials module across calls', async () => {
     const loadSpy = vi.fn(async () => ({
       partials: { fetch: vi.fn(async () => ({})), apply: vi.fn() },

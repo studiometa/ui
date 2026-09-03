@@ -70,7 +70,15 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
    * already-clean one the inherited `onWindowPopstate()` replays — which
    * bypasses the `url` getter and would otherwise ask for HTML.
    */
-  fetch(url: URL | string = this.url, requestInit: RequestInit = {}): Promise<void> {
+  fetch(url?: URL | string, requestInit: RequestInit = {}): Promise<void> {
+    // An absent URL is forwarded as absent, so the base still reads this as
+    // the element's own navigation and pushes `historyUrl` rather than the
+    // requested URL. That path resolves through the `url` getter above, which
+    // appends the sections already.
+    if (url === undefined) {
+      return super.fetch(undefined, requestInit);
+    }
+
     const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
     return super.fetch(this.__appendSections(normalizedUrl), requestInit);
   }

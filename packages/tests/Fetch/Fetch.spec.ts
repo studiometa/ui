@@ -172,6 +172,88 @@ describe('Fetch — request resolution', () => {
     expect(instance.url.searchParams.get('foo')).toBe('from-form');
   });
 
+  it('keeps every value of a repeated GET form field', async () => {
+    // A checkbox group is repeated names by design. Setting each field on top
+    // of the last leaves one value, so ticking a second box changes nothing.
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <input type="checkbox" name="genre[]" value="rock" checked>
+        <input type="checkbox" name="genre[]" value="jazz" checked>
+      </form>`,
+    );
+    expect(instance.url.searchParams.getAll('genre[]')).toEqual(['rock', 'jazz']);
+  });
+
+  it('keeps every value of a repeated field that has no brackets', async () => {
+    // The bracket suffix is a PHP convention, not an HTML one: a repeated name
+    // is repeated whether or not it ends in `[]`, so the fold cannot key on
+    // its shape.
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <input name="genre" value="rock">
+        <input name="genre" value="jazz">
+      </form>`,
+    );
+    expect(instance.url.searchParams.getAll('genre')).toEqual(['rock', 'jazz']);
+  });
+
+  it('keeps every selected option of a `select multiple`', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <select name="genre" multiple>
+          <option value="rock" selected>Rock</option>
+          <option value="jazz" selected>Jazz</option>
+          <option value="folk">Folk</option>
+        </select>
+      </form>`,
+    );
+    expect(instance.url.searchParams.getAll('genre')).toEqual(['rock', 'jazz']);
+  });
+
+  it('lets repeated GET form fields replace a conflicting query in `src`', async () => {
+    // Both halves at once: the base's stale value goes, and both live values stay.
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get"
+        data-option-src="/search/suggest?genre[]=stale&amp;section=keep">
+        <input type="checkbox" name="genre[]" value="rock" checked>
+        <input type="checkbox" name="genre[]" value="jazz" checked>
+      </form>`,
+    );
+    expect(instance.url.searchParams.getAll('genre[]')).toEqual(['rock', 'jazz']);
+    expect(instance.url.searchParams.get('section')).toBe('keep');
+  });
+
+  it('resolves `historyUrl` from the link href rather than the `src`', async () => {
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/projects/page/2?orderby=title"
+        data-option-src="/projects/page/2?orderby=title&amp;sections=listing"></a>`,
+    );
+    expect(instance.url.searchParams.get('sections')).toBe('listing');
+    expect(instance.historyUrl.href).toBe('https://example.com/projects/page/2?orderby=title');
+  });
+
+  it('folds the GET form data onto the action for `historyUrl`', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get"
+        data-option-src="/search/suggest?sections=results">
+        <input name="q" value="live">
+      </form>`,
+    );
+    // The address bar has to show what the no-JS submit would have produced,
+    // filters included — the bare action would drop them.
+    expect(instance.historyUrl.href).toBe('https://example.com/search?q=live');
+    expect(instance.url.searchParams.get('sections')).toBe('results');
+  });
+
+  it('resolves `historyUrl` to the request url when there is no `src`', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/submit" method="get">
+        <input name="foo" value="bar">
+      </form>`,
+    );
+    expect(instance.historyUrl.href).toBe(instance.url.href);
+  });
+
   it('merges the `headers` option, the `requestInit` option and the header refs', async () => {
     const { instance } = await mountFetch(
       `<a data-component="Fetch" href="https://example.com"
@@ -624,6 +706,77 @@ describe('Fetch — the DOM update', () => {
     expect(window.location.href).toBe(before);
   });
 
+  it('pushes the element destination rather than the fetched `src`', async () => {
+    const client = stubClient();
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/projects/page/2?orderby=title"
+        data-option-src="/projects/page/2?orderby=title&amp;sections=listing"
+        data-option-history></a>`,
+    );
+
+    await instance.fetch();
+    await settle();
+
+    // Requested the lighter endpoint…
+    expect(String(client.mock.calls[0][0])).toBe(
+      new URL('/projects/page/2?orderby=title&sections=listing', window.location.href).href,
+    );
+    // …and left a URL somebody can copy.
+    expect(window.location.pathname).toBe('/projects/page/2');
+    expect(window.location.search).toBe('?orderby=title');
+  });
+
+  it('pushes the destination when a link is clicked, not only on a bare `fetch()`', async () => {
+    // The declarative path is the one people use, and it is the one a `fetch()`
+    // spec alone leaves uncovered: an `onClick` passing `this.url` on reads as a
+    // caller naming a destination and puts the `src` back in the address bar.
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/projects/page/2?orderby=title"
+        data-option-src="/projects/page/2?orderby=title&amp;sections=listing"
+        data-option-history></a>`,
+    );
+
+    root.querySelector('a')?.click();
+    await settle();
+
+    expect(String(client.mock.calls[0][0])).toBe(
+      new URL('/projects/page/2?orderby=title&sections=listing', window.location.href).href,
+    );
+    expect(window.location.pathname).toBe('/projects/page/2');
+    expect(window.location.search).toBe('?orderby=title');
+  });
+
+  it('pushes the destination when a GET form is submitted', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get"
+        data-option-src="/search/suggest?sections=results" data-option-history>
+        <input name="q" value="live">
+      </form>`,
+    );
+
+    root.querySelector('form')?.dispatchEvent(new SubmitEvent('submit', { cancelable: true }));
+    await settle();
+
+    expect(String(client.mock.calls[0][0])).toContain('sections=results');
+    expect(window.location.pathname).toBe('/search');
+    expect(window.location.search).toBe('?q=live');
+  });
+
+  it('pushes a url given to `fetch()` rather than the element destination', async () => {
+    stubClient();
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/from-href" data-option-history></a>`,
+    );
+
+    // A caller that named a URL meant that URL, in the address bar as well.
+    await instance.fetch('/called-explicitly');
+    await settle();
+
+    expect(window.location.pathname).toBe('/called-explicitly');
+  });
+
   it('mounts a component that arrives in the fetched content, with no `$update()`', async () => {
     await mount(`<div id="target"></div>`);
     const { instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
@@ -908,5 +1061,26 @@ describe('FetchShopifySection', () => {
     );
 
     expect(window.location.search).toBe('?q=1');
+  });
+
+  it('pushes the destination on a click, neither the `src` nor the sections', async () => {
+    // The `fetch()` override here supplies its own URL, which would read as a
+    // caller naming a destination and take the element back out of the
+    // `historyUrl` path the base opened.
+    const client = stubClient(async () => new Response(JSON.stringify({})));
+    const { root } = await mountFetch<FetchShopifySection>(
+      `<a data-component="FetchShopifySection" href="/projects/page/2?orderby=title"
+        data-option-src="/projects/page/2?orderby=title&amp;view=compact"
+        data-option-sections="header" data-option-history></a>`,
+      'FetchShopifySection',
+    );
+
+    root.querySelector('a')?.click();
+    await settle();
+
+    expect(String(client.mock.calls[0][0])).toContain('sections=header');
+    expect(String(client.mock.calls[0][0])).toContain('view=compact');
+    expect(window.location.pathname).toBe('/projects/page/2');
+    expect(window.location.search).toBe('?orderby=title');
   });
 });

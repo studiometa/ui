@@ -16,6 +16,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Dialog:** make the `open` and `close` events bubble and extendable with `event.detail.waitUntil()`, built on js-toolkit v4's `emitExtendable()`; a duck-typed object extension is now looked up by the event's own name (`open()`, `close()`) instead of v1's `enter()`/`leave()` pair ([#627](https://github.com/studiometa/ui/pull/627), [#635](https://github.com/studiometa/ui/pull/635), [#642](https://github.com/studiometa/ui/pull/642))
 - **Fetch:** announce content updates with the bubbling `dom-update` protocol event and route the default view transition through the shared `viewTransition` scheduler ([#632](https://github.com/studiometa/ui/pull/632))
 
+## [v1.11.1](https://github.com/studiometa/ui/compare/1.11.0..1.11.1) (2026-09-01)
+
+This patch extends the `historyUrl` separation introduced in `1.11.0` to the declarative link and form handlers, which still bypassed it.
+
+### Fixed
+
+- **Fetch:** apply the `historyUrl` separation to a link click and a form submit, not only to a bare `fetch()` call — the declarative handlers passed the resolved URL on, which read as a caller naming a destination and kept a `src` in the address bar ([#646](https://github.com/studiometa/ui/pull/646))
+
+## [v1.11.0](https://github.com/studiometa/ui/compare/1.10.0..1.11.0) (2026-09-01)
+
+This release is led by `@studiometa/ui-motion`, a new package for declarative animation with [Motion](https://motion.dev), and by the `dom-update` protocol event — a shared announcement that lets a component substitute how an imminent DOM change is applied, which `DataBind`, `Dialog` and `Fetch` all now speak.
+
+### Added
+
+- **@studiometa/ui-motion:** add a new `@studiometa/ui-motion` package with the `Motion`, `MotionScrollTimeline`, `MotionSequence` and `MotionView` components to animate elements declaratively with [Motion](https://motion.dev) ([#628](https://github.com/studiometa/ui/pull/628), [#629](https://github.com/studiometa/ui/pull/629), [#630](https://github.com/studiometa/ui/pull/630), [#633](https://github.com/studiometa/ui/pull/633), [#636](https://github.com/studiometa/ui/pull/636), [#637](https://github.com/studiometa/ui/pull/637), [#638](https://github.com/studiometa/ui/pull/638), [#640](https://github.com/studiometa/ui/pull/640), [#641](https://github.com/studiometa/ui/pull/641))
+- **DataBind:** add the `data-bind:if` virtual binding to render `<template>` content conditionally, announcing each change with the bubbling `dom-update` protocol event ([#626](https://github.com/studiometa/ui/pull/626), [#634](https://github.com/studiometa/ui/pull/634))
+
+### Fixed
+
+- **Fetch:** send every value of a repeated GET form field instead of the last one, so a checkbox group or a `<select multiple>` no longer reaches the server with one of its values ([#643](https://github.com/studiometa/ui/pull/643))
+- **Fetch:** push the element's own destination in history rather than the fetched URL, so a `src` pointing at a lighter endpoint no longer leaks into the address bar — see the new `historyUrl` getter ([#643](https://github.com/studiometa/ui/pull/643))
+
+### Changed
+
+- **Dialog:** make the `open` and `close` events bubble and extendable with `event.detail.waitUntil()`, which also accepts a transitioner ([#627](https://github.com/studiometa/ui/pull/627), [#635](https://github.com/studiometa/ui/pull/635))
+- **Fetch:** announce content updates with the bubbling `dom-update` protocol event and route the default view transition through the shared `viewTransition` scheduler ([#632](https://github.com/studiometa/ui/pull/632))
+
 ## [v1.10.0](https://github.com/studiometa/ui/compare/1.9.0..1.10.0) (2026-08-11)
 
 This release promotes the `1.10.0` beta line to stable. It bundles every change published across `1.10.0-beta.0` through `1.10.0-beta.6`, see the sections below for the per-beta breakdown and pull request references. The bespoke browser CDN and the `@studiometa/ui-autoload` package explored during the beta line were both superseded before stable: load the packages from an ESM CDN such as [esm.sh](https://esm.sh) with the built-in `/autoload` entries instead, see the [Autoloading guide](https://ui.studiometa.dev/guide/autoloading/).
