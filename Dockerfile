@@ -53,6 +53,12 @@ COPY packages/api ./packages/api
 
 WORKDIR /app/packages/api
 
+# Composer disables plugins when it runs as root, and the build runs as root on
+# a remote builder. Without the plugins, `symfony/flex` never registers the
+# `symfony-cmd` script the `post-install-cmd` auto-scripts call, so the install
+# fails at `symfony-cmd: not found` and the container is never compiled.
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 # `APP_SECRET` is a placeholder for the console commands Composer runs: Symfony
 # stores `%env(APP_SECRET)%` as a placeholder in the compiled container and
 # reads the real value from the environment on the first request.
