@@ -72,8 +72,7 @@ export class MotionScrollTimeline<T extends BaseProps = BaseProps> extends Base<
   __stops: VoidFunction[] = [];
 
   /**
-   * The mounted `Motion` descendants, live and in DOM order — v4's replacement
-   * for `$children.Motion`.
+   * The mounted `Motion` descendants, live and in DOM order.
    * @private
    */
   __children: ChildrenCollection<Motion> = this.$watchChildren<Motion>('Motion');
@@ -83,11 +82,10 @@ export class MotionScrollTimeline<T extends BaseProps = BaseProps> extends Base<
    * every link when the mount cycle ends.
    */
   async mounted() {
-    // v4 guarantees no mount ordering, and `$watchChildren()` seeds its
-    // collection in a microtask, so the timeline can reach `mounted()` before a
-    // single child exists. `whenDOMSettled()` waits for the mutation batch that
-    // brought this subtree in to finish mounting everything eager in it, which
-    // is what v3 got for free by having the parent construct its children.
+    // Mount order is not guaranteed and `$watchChildren()` seeds its collection
+    // in a microtask, so the timeline can reach `mounted()` before a single
+    // child exists. `whenDOMSettled()` waits for the mutation batch that brought
+    // this subtree in to finish mounting everything eager in it.
     const [motion] = await Promise.all([resolveMotion(), whenDOMSettled()]);
 
     if (!this.$isMounted) {

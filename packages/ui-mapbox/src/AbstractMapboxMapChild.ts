@@ -5,11 +5,8 @@ import type { MapboxMap } from './MapboxMap.js';
 
 export interface AbstractMapboxMapChildProps extends BaseProps {
   /**
-   * The one event every map child can emit, declared in the props type now
-   * that v4 removed the runtime `config.emits` list.
-   *
-   * v3 emitted the bare error value; v4 carries one named payload object per
-   * event, so the cause travels as `detail.error`.
+   * The one event every map child can emit, dispatched whenever its injection
+   * or its teardown throws.
    */
   $emits: {
     'map-error': { error: unknown };

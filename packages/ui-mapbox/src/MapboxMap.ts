@@ -46,13 +46,9 @@ export interface MapboxMapProps extends BaseProps {
     mapOptions: Partial<Omit<MapOptions, 'container'>>;
   };
   /**
-   * The map lifecycle, declared in the props type now that v4 removed the
-   * runtime `config.emits` list — which also means the forwarded set is now
-   * derived from `FORWARDED_MAP_EVENTS` at the type level rather than mapped
-   * into an array at runtime.
-   *
-   * v3 emitted the bare value; a v4 payload is one named object, so the map
-   * arrives as `detail.map` and a forwarded mapbox event as `detail.event`.
+   * The map lifecycle: `map-load` once the Mapbox instance is ready, plus one
+   * `map-*` event per entry of `FORWARDED_MAP_EVENTS` carrying the original
+   * mapbox event.
    */
   $emits: { 'map-load': { map: Map } } & Record<ForwardedMapEvent, { event: unknown }>;
 }
@@ -84,7 +80,7 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
         default: () => ({}),
       },
     },
-    // `MapboxMap` no longer declares its children. Each child component
+    // `MapboxMap` declares no child components. Each child component
     // (markers, popups, controls, sources, layers, clusters, ...) is registered
     // globally and resolves this map on its own via `$closest('MapboxMap')`,
     // then waits for readiness through `AbstractMapboxMapChild.whenMapReady`.

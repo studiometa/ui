@@ -14,10 +14,6 @@ export interface MapboxNavigationControlProps extends AbstractMapboxControlProps
 /**
  * Add a navigation control to the map.
  *
- * A plain subclass with its own `static config`: v4 merges config along the
- * prototype chain, so the three options below join the `position` option
- * `AbstractMapboxControl` declares without `withExtraConfig()` in between.
- *
  * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class MapboxNavigationControl<T extends BaseProps = BaseProps> extends AbstractMapboxControl<

@@ -55,12 +55,9 @@ export class MotionSequence<T extends BaseProps = BaseProps> extends Motion<
   };
 
   /**
-   * The mounted `Motion` descendants, live and in DOM order.
-   *
-   * v4 removed `$children`, and its replacement is not the same object: the
-   * collection is built at construction, updates itself as children mount and
-   * unmount, and never needs a `$update()`. A child appended to the sequence
-   * after mount is part of the next animation it builds.
+   * The mounted `Motion` descendants, live and in DOM order. The collection
+   * updates itself as children mount and unmount, so a child appended to the
+   * sequence after mount is part of the next animation it builds.
    * @private
    */
   __children: ChildrenCollection<Motion> = this.$watchChildren<Motion>('Motion');
@@ -69,12 +66,11 @@ export class MotionSequence<T extends BaseProps = BaseProps> extends Motion<
    * Wait for the children before letting `Motion.mounted()` decide whether
    * there is anything to autoplay.
    *
-   * v4 guarantees no mount ordering, and `$watchChildren()` seeds its
-   * collection in a microtask, so the sequence can reach `mounted()` with an
-   * empty collection and skip its own autoplay. `whenDOMSettled()` waits for
-   * the mutation batch that brought this subtree in to finish mounting
-   * everything eager in it — which is what v3 got for free by having the
-   * parent construct its children.
+   * Mount order is not guaranteed and `$watchChildren()` seeds its collection
+   * in a microtask, so the sequence can reach `mounted()` with an empty
+   * collection and skip its own autoplay. `whenDOMSettled()` waits for the
+   * mutation batch that brought this subtree in to finish mounting everything
+   * eager in it.
    */
   async mounted(): Promise<void> {
     await whenDOMSettled();

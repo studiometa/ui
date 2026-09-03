@@ -56,11 +56,7 @@ export interface MapboxClusterProps extends AbstractMapboxMapChildProps {
     unclusteredPointPaint: Record<string, unknown>;
   };
   /**
-   * The cluster's own events, declared in the props type now that v4 removed
-   * the runtime `config.emits` list.
-   *
-   * v3 spread several values across the `detail` array; a v4 payload is a
-   * single named object, so each value is read by name instead of by position.
+   * The cluster's own events, on top of the inherited `map-error`.
    */
   $emits: AbstractMapboxMapChildProps['$emits'] & {
     'map-cluster-click': { clusterId: number; event: MapMouseEvent };
