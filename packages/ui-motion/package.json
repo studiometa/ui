@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-motion",
-  "version": "1.11.1",
+  "version": "2.0.0-alpha.0",
   "description": "Vanilla js-toolkit components to animate elements declaratively with Motion",
   "publishConfig": {
     "access": "public"
