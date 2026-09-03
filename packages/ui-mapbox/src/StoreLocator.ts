@@ -16,11 +16,6 @@ export interface StoreLocatorProps extends BaseProps {
     fitOnUpdate: boolean;
     popupOptions: Record<string, unknown>;
   };
-  /**
-   * The orchestrator's own events, declared in the props type now that v4
-   * removed the runtime `config.emits` list. Each payload is one named object
-   * rather than v3's positional `detail` array.
-   */
   $emits: {
     'map-select': { item: MapboxClusterItem };
     'map-deselect': void;
@@ -61,9 +56,8 @@ export interface StoreLocatorProps extends BaseProps {
  * collection cannot report; and it subscribes to the map's own `remove` event
  * so a removed map is never called into. Register each component independently
  * with `registerComponent`: `StoreLocator`, `MapboxMap`, `MapboxCluster` and
- * `MapboxClusterItem`. Registration and mount order do not matter — v4
- * guarantees neither — and the orchestrator declares no child components so
- * nothing is ever double-mounted.
+ * `MapboxClusterItem`. Registration and mount order do not matter, and the
+ * orchestrator declares no child components so nothing is ever double-mounted.
  *
  * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
@@ -74,8 +68,8 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    * No child components are declared: `MapboxMap`, `MapboxCluster`,
    * `MapboxClusterItem` and `MapboxGeocoder` are each registered independently
    * with `registerComponent` and mount on their own. The orchestrator discovers
-   * them through `$watchChildren()` — declaring them here would double-mount
-   * them, since v4 mounts a declared element through the registry either way.
+   * them through `$watchChildren()`; declaring them here would double-mount
+   * them, since the registry already mounts a declared element.
    */
   static config: BaseConfig = {
     name: 'StoreLocator',
@@ -173,15 +167,11 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   /**
    * The mounted `MapboxCluster` descendants, live and in DOM order.
    *
-   * This replaces v3's bounded `nextTick` retry loop **and** the
-   * `MAPBOX_CLUSTER_CONNECTED` document event the orchestrator used to listen
-   * for. Both existed to answer one question v3 could not: "has the cluster
-   * mounted yet?" — v4 answers it with a live collection, so a cluster that
-   * mounts late, or one that replaces the wired one, is picked up by the
-   * `added`/`removed` callbacks with nothing to poll. The cluster keeps
-   * dispatching `MAPBOX_CLUSTER_CONNECTED` for `MapboxClusterItem`: an item
-   * looks *up* for its cluster, and v4 has no watching counterpart to
-   * `$closest()`.
+   * The collection answers "has the cluster mounted yet?" on its own: a cluster
+   * that mounts late, or one that replaces the wired one, reaches the
+   * `added`/`removed` callbacks with nothing to poll. The cluster still
+   * dispatches `MAPBOX_CLUSTER_CONNECTED` for `MapboxClusterItem`, which looks
+   * *up* for its cluster and has no watching counterpart to `$closest()`.
    * @private
    */
   __clusters: ChildrenCollection<MapboxCluster> = this.$watchChildren<MapboxCluster>(
@@ -219,11 +209,10 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
   /**
    * The child `MapboxMap` component, once it has mounted.
    *
-   * The getter does not warn when there is none. v4 mounts a wrapper before the
-   * elements inside it and guarantees no mount ordering, so "no map yet" is the
-   * normal state on every healthy locator — v3's warning here fired on every
-   * page load and recovered silently a moment later. A locator with genuinely
-   * no map in its markup is reported once instead, from
+   * The getter does not warn when there is none: a wrapper mounts before the
+   * elements inside it and mount order is not guaranteed, so "no map yet" is
+   * the normal state on every healthy locator. A locator with genuinely no map
+   * in its markup is reported once instead, from
    * {@link __warnWhenMapIsMissing}.
    */
   get mapboxMap(): MapboxMap | undefined {
@@ -628,9 +617,9 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    * Report a locator with no `MapboxMap` in its markup, once.
    *
    * The check reads the **element**, not the mounted instance: DOM ancestry is
-   * a fact that exists before anything mounts, so it is immune both to v4's
-   * lack of mount ordering and to the map's mount strategy — a `data-mount`
-   * that has not fired yet is not a missing map. `whenDOMSettled()` waits for
+   * a fact that exists before anything mounts, so it is immune both to mount
+   * ordering and to the map's mount strategy — a `data-mount` that has not
+   * fired yet is not a missing map. `whenDOMSettled()` waits for
    * the mutation batch that brought the locator in, which is the earliest
    * moment the markup can be judged complete.
    * @private

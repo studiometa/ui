@@ -9,8 +9,7 @@ export interface MapboxClusterItemProps extends BaseProps {
     properties: Record<string, unknown>;
   };
   /**
-   * The item shares the map family's error channel; the cause travels as
-   * `detail.error` since v4 payloads are named objects.
+   * The item shares the map family's error channel.
    */
   $emits: {
     'map-error': { error: unknown };

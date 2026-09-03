@@ -23,10 +23,8 @@ export interface MotionProps extends BaseProps {
     once: boolean;
   };
   /**
-   * The playback lifecycle, declared in the props type: v4 removed the runtime
-   * `config.emits` list, so the event names live where they can be checked.
-   * None of them carries a payload — a listener that needs the animation reads
-   * it from the component.
+   * The playback lifecycle. None of these events carries a payload — a listener
+   * that needs the animation reads it from the component.
    */
   $emits: {
     'motion-play': void;

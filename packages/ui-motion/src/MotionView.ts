@@ -21,9 +21,8 @@ export interface MotionViewProps extends BaseProps {
     auto: boolean;
   };
   /**
-   * The transition lifecycle, declared in the props type now that v4 removed
-   * the runtime `config.emits` list. The names mirror `ViewTransition`'s, which
-   * is what makes the two interchangeable.
+   * The transition lifecycle. The names mirror `ViewTransition`'s, which is
+   * what makes the two interchangeable.
    */
   $emits: {
     enter: void;
@@ -164,8 +163,8 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
     document.addEventListener('open', this.__onDialogPhase);
     document.addEventListener('close', this.__onDialogPhase);
 
-    // v4 has no `destroyed()`: the teardown is the closure `mounted()` returns,
-    // which also keeps it paired with the `auto` branch that installed it.
+    // Returning the teardown keeps it paired with the `auto` branch that
+    // installed it.
     return () => {
       this.$el.removeEventListener(EVENTS.dom.update, this.__onDomUpdate);
       document.removeEventListener('open', this.__onDialogPhase);
@@ -273,11 +272,8 @@ export class MotionView<T extends BaseProps = BaseProps> extends Base<MotionView
   }
 
   /**
-   * Swap one space separated class list for another on the target.
-   *
-   * v4 ships no `addClass`/`removeClass`: both were one-line wrappers over
-   * `classList`, and the only thing they added — splitting a space separated
-   * option value — is what this does, exactly as `ViewTransition` does it.
+   * Swap one space separated class list for another on the target, the way
+   * `ViewTransition` does it.
    * @private
    */
   __toggleClasses(remove: string, add: string): void {
