@@ -86,11 +86,11 @@ describe('MapboxGeocoder component', () => {
   it('should not throw when unmounted before the control is created', async () => {
     const { instance, mockMap } = await createGeocoder();
 
-    // v3 asserted this by calling `$destroy()` on a never-mounted instance; v4's
-    // `$unmount()` returns early when the instance is not mounted, so nothing
-    // would run at all. Clear the backing field instead: that is the state the
-    // guard protects — the dynamic import never resolved, so no control exists
-    // and teardown must be a no-op rather than throwing.
+    // `$unmount()` returns early on an instance that is not mounted, so driving
+    // this through a never-mounted instance would run nothing at all. Clear the
+    // backing field instead: that is the state the guard protects — the dynamic
+    // import never resolved, so no control exists and teardown must be a no-op
+    // rather than throwing.
     (instance as unknown as { __control: unknown }).__control = undefined;
 
     expect(() => instance.$unmount()).not.toThrow();
@@ -134,7 +134,7 @@ describe('MapboxGeocoder component', () => {
     (instance.control as unknown as MockGeocoderControl).fire('result', { result: payload });
 
     expect(log.events).toHaveLength(1);
-    // v4 payloads are one named object: the geocoded result travels as
+    // The payload is one named object: the geocoded result travels as
     // `detail.result`.
     expect((log.events[0].detail as { result: unknown }).result).toBe(payload);
     log.stop();

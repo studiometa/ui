@@ -115,9 +115,9 @@ describe('Draggable — geometry', () => {
   });
 
   /**
-   * `resized()` is bound to the **viewport**, exactly as v3's is: its
-   * `$services` resize hook is the window one, so a change to the element's
-   * own box was never what invalidated these bounds.
+   * `resized()` is bound to the **viewport**: the `$services` resize hook is
+   * the window one, so a change to the element's own box is not what
+   * invalidates these bounds.
    */
   it('subscribes `resized()` for the mount cycle', async () => {
     const { instance } = await render();
@@ -135,10 +135,10 @@ describe('Draggable — geometry', () => {
   });
 
   /**
-   * The bounds are a per-mount-cycle memo, not a per-instance one: a v4 move
-   * is an unmount plus a mount, and the geometry it lands in is a different
-   * one. v3 memoises for the instance's whole life, and no resize event
-   * describes a target that changed size on its own.
+   * The bounds are a per-mount-cycle memo, not a per-instance one: a move is an
+   * unmount plus a mount, and the geometry it lands in is a different one. No
+   * resize event describes a target that changed size on its own, so the memo
+   * has to expire with the mount cycle.
    */
   it('measures again after the component is moved', async () => {
     const { el, target, instance } = await render();

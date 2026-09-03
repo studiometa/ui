@@ -13,10 +13,10 @@ import { captureDiagnostics, resetDom, settle } from '@studiometa/js-toolkit/tes
 import { Motion, MotionScrollTimeline } from '@studiometa/ui-motion';
 import { h, wait } from '#test-utils';
 
-// v4 does not mount a component's children for it: `config.components` declares
-// the family, but every element is mounted by the registry. So the children have
-// to be registered, and the whole subtree has to be in the document, for the
-// timeline to have anything to bind.
+// The registry mounts every element itself: `config.components` declares the
+// family but does not mount it. So the children have to be registered, and the
+// whole subtree has to be in the document, for the timeline to have anything to
+// bind.
 registerComponents(Motion, MotionScrollTimeline);
 
 afterEach(resetDom);
@@ -96,8 +96,8 @@ describe('MotionScrollTimeline component', () => {
   it('should release every scroll link on unmount', async () => {
     const { instance } = await mountTimeline();
 
-    // v4 renamed the inverse of `$mount()`, and the release is now the cleanup
-    // the `mounted()` hook returns rather than a `destroyed()` body.
+    // The release is the cleanup the `mounted()` hook returns, so ending the
+    // mount cycle is what runs it.
     instance.$unmount();
     expect(scrollLinks.every((link) => link.stopped)).toBe(true);
   });
@@ -106,8 +106,8 @@ describe('MotionScrollTimeline component', () => {
     // Simulate a `motion/mini` build: the injected module has no `scroll`.
     mockMotionModule.scroll = undefined as never;
 
-    // `$warn()` reports on the diagnostic channel in v4, so the capture reads
-    // the channel rather than stubbing the method or spying on the console.
+    // `$warn()` reports on the diagnostic channel, so the capture reads the
+    // channel rather than stubbing the method or spying on the console.
     const log = captureDiagnostics();
     await mountTimeline({}, 1);
 

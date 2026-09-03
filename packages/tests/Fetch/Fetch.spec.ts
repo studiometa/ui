@@ -380,10 +380,7 @@ describe('Fetch — the request', () => {
     ]);
   });
 
-  /**
-   * v3 overrides `$emit()` to rebuild every event as a bubbling `CustomEvent`.
-   * v4's `$emit()` already bubbles, so the override is deleted outright.
-   */
+  /** `$emit()` already bubbles, so the component carries no `$emit` override. */
   it('bubbles its events to an ancestor with no `$emit` override', async () => {
     stubClient();
     const { instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);

@@ -7,10 +7,10 @@ import { resetDom, settle } from '@studiometa/js-toolkit/test';
 import { Motion, MotionSequence } from '@studiometa/ui-motion';
 import { h, wait } from '#test-utils';
 
-// v4 does not mount a component's children for it: `config.components` declares
-// the family, but every element is mounted by the registry. So the children have
-// to be registered, and the whole subtree has to be in the document, for the
-// sequence to have anything to sequence.
+// The registry mounts every element itself: `config.components` declares the
+// family but does not mount it. So the children have to be registered, and the
+// whole subtree has to be in the document, for the sequence to have anything to
+// sequence.
 registerComponents(Motion, MotionSequence);
 
 afterEach(resetDom);

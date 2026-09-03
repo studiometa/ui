@@ -70,12 +70,11 @@ function eventsOf<P extends BaseProps>(names: Record<EmitNames<P>, true>): strin
  * consumer can tell a component event of this package from anything else on the
  * page — and so nothing collides with a platform event name.
  *
- * v3 read the runtime `config.emits` array. v4 has no such array: events are
- * declared in the props type, which is erased before the test runs. The
- * assertion is therefore made against the enumerations above, whose keys the
- * compiler pins to the very `$emits` maps the components declare — the check is
- * split between the type system (the set matches the source) and this test (the
- * shape of each name).
+ * Events are declared in the props type, which is erased before the test runs.
+ * The assertion is therefore made against the enumerations above, whose keys
+ * the compiler pins to the very `$emits` maps the components declare — the
+ * check is split between the type system (the set matches the source) and this
+ * test (the shape of each name).
  *
  * The type half is enforced by an editor and by the type-aware `lint:static`
  * pass, which both load the root `tsconfig.json` — it includes this directory.

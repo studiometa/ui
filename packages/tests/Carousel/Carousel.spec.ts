@@ -198,9 +198,8 @@ describe('Carousel — the index', () => {
   });
 
   /**
-   * Gap 2, hit again: v3 flips `isReverse` by writing `$options.reverse`, and
-   * `$options` is a read-only view over attributes in v4. It is private state
-   * seeded from the option here.
+   * `isReverse` is private state seeded from the `boundary` option: `$options`
+   * is a read-only view over the attributes and cannot be written.
    */
   it('reflects the travel direction at a bound with the `bounce` boundary', async () => {
     const { carousel } = await render({ count: 3, attributes: 'data-option-boundary="bounce"' });
@@ -310,9 +309,9 @@ describe('Carousel — the controls', () => {
   });
 
   /**
-   * The whole of v3's `AbstractCarouselChild.__connect()` — retried from three
-   * hooks — exists for this case. The context protocol replays to a pending
-   * consumer, so the control simply waits.
+   * The context protocol replays to a consumer that asked before the provider
+   * existed, so a control that mounts ahead of its carousel simply waits
+   * instead of retrying the connection.
    */
   it('connects a control that mounts before its carousel', async () => {
     const root = document.createElement('div');

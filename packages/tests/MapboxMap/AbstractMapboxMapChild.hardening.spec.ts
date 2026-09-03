@@ -16,8 +16,8 @@ import { append, mountMap } from './harness.js';
  * A concrete child whose ready callback and teardown can be made to throw, used
  * to exercise the guards centralized in `AbstractMapboxMapChild`.
  *
- * v3 declared its events in `static config.emits`; v4 has no runtime emit list,
- * so `map-error` comes from the props type this class inherits.
+ * There is no runtime emit list: `map-error` comes from the props type this
+ * class inherits.
  */
 class ThrowingChild extends AbstractMapboxMapChild {
   static config: BaseConfig = {
@@ -64,9 +64,9 @@ describe('AbstractMapboxMapChild — B1: guarded lifecycle', () => {
   it('should contain a throwing ready callback: no rethrow, reports + emits map-error', async () => {
     const { instance } = await createChild();
 
-    // v3 asserted on a `console.warn` spy; v4 reports a recovered failure on the
-    // diagnostic channel, so the assertion reads the namespaced code rather than
-    // whichever sink the default handler writes to.
+    // A recovered failure is reported on the diagnostic channel, so the
+    // assertion reads the namespaced code rather than whichever sink the
+    // default handler writes to.
     const diagnostics = captureDiagnostics();
     const log = recordEvents(instance.$el, 'map-error');
     const boom = new Error('ready boom');
@@ -80,7 +80,7 @@ describe('AbstractMapboxMapChild — B1: guarded lifecycle', () => {
 
     expect(diagnostics.codes).toContain('mapbox-map-child.failed');
     expect(log.events).toHaveLength(1);
-    // v4 payloads are one named object: the cause travels as `detail.error`.
+    // The payload is one named object: the cause travels as `detail.error`.
     expect((log.events[0].detail as { error: unknown }).error).toBe(boom);
 
     log.stop();

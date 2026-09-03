@@ -214,8 +214,8 @@ describe('Defer', () => {
   });
 
   /**
-   * `swap()` runs the injected scripts and awaits the lifecycle. v3 assigns
-   * `innerHTML`, which does neither.
+   * `swap()` runs the injected scripts and awaits the lifecycle; assigning
+   * `innerHTML` would do neither.
    */
   it('runs a script that arrives with the included content', async () => {
     stubFetch('<script>window.__lazyScriptRuns = (window.__lazyScriptRuns ?? 0) + 1;</script>');
@@ -236,9 +236,9 @@ describe('Defer', () => {
   });
 
   /**
-   * A v4 move is an unmount plus a mount, and `mounted()` is where the request
-   * lives, so the one-shot side effect repeats. v3 mounts once per instance
-   * and does not. This is the cost, asserted rather than hidden.
+   * A move is an unmount plus a mount, and `mounted()` is where the request
+   * lives, so the one-shot side effect repeats. That cost is asserted rather
+   * than hidden.
    */
   it('fetches again when the element is moved, because a move remounts', async () => {
     const client = stubFetch('<p>remote</p>');
@@ -255,9 +255,9 @@ describe('Defer', () => {
   });
 
   /**
-   * Gap 35, closed by recording the load in a field. The instance stays on its
-   * element across a move, so "already loaded" survives with it — where v3's
-   * termination detached the instance and lost the memory it was made of.
+   * The load is recorded in a field, and the instance stays on its element
+   * across a move, so "already loaded" travels with it. A failed load never
+   * sets that field, so the next mount cycle tries again.
    */
   it('fetches again after a failed load, whatever `terminateOnLoad` says', async () => {
     const client = vi.fn().mockRejectedValue(new Error('offline'));

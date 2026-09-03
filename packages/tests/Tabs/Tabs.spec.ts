@@ -74,9 +74,8 @@ describe('The Tabs component', () => {
 
     await tabs.goTo(0);
     expect(enabled).toHaveBeenCalledTimes(2);
-    // v1 emitted the positional `TabItem`, read back as `detail[0]`. v4's
-    // `$emit()` takes one payload object, and the mutable `isEnabled` flag the
-    // item carried is the name of the event now.
+    // `$emit()` takes one payload object, and the enabled/disabled state is the
+    // name of the event rather than a flag inside that payload.
     expect(enabled.mock.calls[1][0].detail).toEqual({
       index: 0,
       btn: tabs.$refs.btn[0],
@@ -117,10 +116,9 @@ describe('The Tabs component', () => {
 
     btn[1].click();
 
-    // v1 asserted `aria-hidden` on the panels. `hidden` both hides the panel
-    // and removes it from the accessibility tree and the tab order, which is
-    // what the pattern asks for; `aria-hidden` beside it would be redundant
-    // and is not written any more.
+    // `hidden` both hides the panel and removes it from the accessibility tree
+    // and the tab order, which is what the pattern asks for. `aria-hidden`
+    // beside it would be redundant, so none is written.
     expect(btn.map((tab) => tab.getAttribute('aria-selected'))).toEqual(['false', 'true', 'false']);
     expect(btn.map((tab) => tab.tabIndex)).toEqual([-1, 0, -1]);
     expect(content.map((panel) => panel.hidden)).toEqual([true, false, true]);
@@ -201,8 +199,7 @@ describe('The Tabs component', () => {
     await done;
     expect(tabs.$refs.content[1].hidden).toBe(false);
 
-    // The leaving panel stays visible until its transition resolves, which is
-    // what v1 bought with `styles.content.closed` and a `transition()` call.
+    // The leaving panel stays visible until its transition resolves.
     const leaving = tabs.goTo(0);
     expect(tabs.$refs.content[1].hidden).toBe(false);
     expect(tabs.$refs.content[1].inert).toBe(true);
@@ -219,8 +216,6 @@ describe('The Tabs component', () => {
     tabs.$refs.btn[1].click();
     expect(enabled).toHaveBeenCalledTimes(1);
 
-    // v1's spec called `$destroy()`, which v4 removed: `$unmount()` ends the
-    // mount cycle and the same instance can mount again.
     tabs.$unmount();
     tabs.$refs.btn[0].click();
     expect(enabled).toHaveBeenCalledTimes(1);

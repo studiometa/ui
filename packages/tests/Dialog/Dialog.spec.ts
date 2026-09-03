@@ -261,7 +261,7 @@ describe('Dialog — the extendable open and close events', () => {
       called.push('function');
     });
     // The duck-typed method has the name of the *event*, which is what
-    // `emitExtendable()` looks up — not the `enter()`/`leave()` pair v1 used.
+    // `emitExtendable()` looks up.
     const extension = {
       open: vi.fn(async () => {
         called.push('open');

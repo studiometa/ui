@@ -29,8 +29,7 @@ describe('MapboxGeolocateControl component', () => {
     const { instance } = await createControl();
 
     // `position` is declared by `AbstractMapboxControl` and reaches this
-    // subclass through v4's prototype-chain config merge — the job
-    // `withExtraConfig()` used to do in v3.
+    // subclass through the prototype-chain config merge.
     expect(instance.$options.position).toBe('top-right');
   });
 

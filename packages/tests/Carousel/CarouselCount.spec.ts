@@ -96,9 +96,9 @@ describe('CarouselCount', () => {
   });
 
   it('works with only a `total` ref', async () => {
-    // The regression this component exists to not have: v1 writes
-    // `this.$refs.current.textContent` unguarded, so this markup throws on the
-    // first state delivery and takes the mount down with it.
+    // The `current` ref is optional. Writing to it unguarded would throw on the
+    // first state delivery and take the mount down with it, which is why the
+    // mount flag is asserted next to the text.
     const { count, total } = await render({
       slideCount: 3,
       content: '<span data-ref="total"></span> slides',

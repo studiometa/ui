@@ -73,7 +73,7 @@ describe('MapboxMap component', () => {
     await settle();
 
     expect(log.events).toHaveLength(1);
-    // v4 payloads are one named object: the map travels as `detail.map`.
+    // The payload is one named object: the map travels as `detail.map`.
     expect((log.events[0].detail as { map: unknown }).map).toBe(mockMap);
     log.stop();
   });
@@ -153,9 +153,8 @@ describe('MapboxMap component', () => {
     // The convenience options are kept and `container` stays explicit.
     expect(mockMap._options.zoom).toBe(10);
     expect(mockMap._options.container).toBe(el.querySelector('[data-ref="container"]'));
-    // No framework option leaks into the Map constructor. v3 had to filter
-    // `name`, `debug` and `log` out; v4 no longer defines them at all, so the
-    // assertion now records that they are absent rather than filtered.
+    // No framework option leaks into the Map constructor: `name`, `debug` and
+    // `log` are not defined at all, so the assertion records their absence.
     expect(mockMap._options.name).toBeUndefined();
     expect(mockMap._options.debug).toBeUndefined();
     expect(mockMap._options.log).toBeUndefined();

@@ -25,9 +25,8 @@ test.each([
   (_name, def, named, fromBarrel) => {
     // Ensure the `mapbox-gl` mock is registered before the package is imported.
     expect(MockMap).toBeDefined();
-    // The default export is a js-toolkit `Base` subclass. v3's `$isBase` static
-    // is gone in v4 — the brand is a symbol, and it is not public — so the
-    // prototype chain is what the assertion reads.
+    // The default export is a js-toolkit `Base` subclass. The class brand is a
+    // private symbol, so the prototype chain is what the assertion reads.
     expect(def.prototype instanceof Base).toBe(true);
     // The default, named and barrel exports all reference the exact same class.
     expect(def).toBe(named);

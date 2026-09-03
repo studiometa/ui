@@ -37,7 +37,7 @@ describe('Menu', () => {
     const btn = root.querySelector('#btn') as HTMLElement;
 
     expect(btn.getAttribute('aria-controls')).toBe(menu.$id);
-    // Menu overwrites the list's own id with its own, same as v3 did.
+    // Menu overwrites the list's own id with its own.
     expect(menu.menuList?.$el.getAttribute('id')).toBe(menu.$id);
   });
 
