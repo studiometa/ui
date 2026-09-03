@@ -1,11 +1,17 @@
-import { registerComponent } from '@studiometa/js-toolkit';
-import { Draggable as DraggableCore, Action } from '@studiometa/ui';
+import { registerComponents } from '@studiometa/js-toolkit';
+import { Draggable, Action } from '@studiometa/ui';
 
-class Draggable extends DraggableCore {
+// `Draggable` bounds its drag to the `parent` getter. Overriding it needs a distinct component
+// name: the registry holds one class per name, so a subclass reusing `Draggable` would collide
+// with the class registered below.
+class RingDraggable extends Draggable {
+  static config = {
+    name: 'RingDraggable',
+  };
+
   get parent() {
     return document.querySelector('.ring') ?? this.$el;
   }
 }
 
-registerComponent(Draggable);
-registerComponent(Action);
+registerComponents(RingDraggable, Action);

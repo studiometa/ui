@@ -1,14 +1,49 @@
 import { Base } from '@studiometa/js-toolkit/Base';
+import { DRAG_MODES } from '@studiometa/js-toolkit/DRAG_MODES';
 import { withDrag } from '@studiometa/js-toolkit/withDrag';
-import type { BaseProps, BaseConfig, DragServiceProps } from '@studiometa/js-toolkit';
+import { withRaf } from '@studiometa/js-toolkit/withRaf';
+import { withResize } from '@studiometa/js-toolkit/withResize';
+import type {
+  BaseConfig,
+  BaseProps,
+  DragProps,
+  MountedReturn,
+  RafProps,
+} from '@studiometa/js-toolkit';
+import { getOffsetSizes } from '@studiometa/js-toolkit/utils/getOffsetSizes';
 import { clamp } from '@studiometa/js-toolkit/utils/clamp';
 import { damp } from '@studiometa/js-toolkit/utils/damp';
-import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
-import { getOffsetSizes } from '@studiometa/js-toolkit/utils/getOffsetSizes';
+import { INERTIA_FRAME } from '@studiometa/js-toolkit/utils/INERTIA_FRAME';
 import { map } from '@studiometa/js-toolkit/utils/map';
 import { transform } from '@studiometa/js-toolkit/utils/transform';
 
-export interface DraggableProps extends BaseProps {
+/** The position the component publishes on every event it emits. */
+export interface DraggablePosition {
+  x: number;
+  y: number;
+  progressX: number;
+  progressY: number;
+  originX: number;
+  originY: number;
+  dampedX: number;
+  dampedY: number;
+}
+
+interface Bounds {
+  yMin: number;
+  yMax: number;
+  xMin: number;
+  xMax: number;
+}
+
+interface Margin {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+export type DraggableProps = BaseProps & {
   $refs: {
     target: HTMLElement;
   };
@@ -21,49 +56,43 @@ export interface DraggableProps extends BaseProps {
     dropSensitivity: number;
     margin: string;
   };
-}
+  $emits: {
+    'drag-start': DraggablePosition;
+    'drag-drag': DraggablePosition;
+    'drag-drop': DraggablePosition;
+    'drag-inertia': DraggablePosition;
+    'drag-stop': DraggablePosition;
+    'drag-fit': DraggablePosition;
+    'drag-render': DraggablePosition;
+  };
+};
 
 /**
- * Draggable class.
- *
- * Makes a `target` ref draggable within its parent element using the `withDrag`
- * decorator. Dragging can be constrained to the `x` and/or `y` axes, is damped
- * via the `sensitivity` and `dropSensitivity` options, and the target can be
- * kept inside the parent bounds (plus a configurable `margin`) with `fitBounds`
- * or `strictFitBounds`. It emits `drag-start`, `drag-drag`, `drag-drop`,
- * `drag-inertia`, `drag-stop`, `drag-fit` and `drag-render` events across the
- * drag lifecycle.
+ * Makes a `target` ref draggable within its parent element. Dragging can be
+ * constrained to the `x` and/or `y` axes, is damped through `sensitivity` and
+ * `dropSensitivity`, and the target can be kept inside the parent bounds plus
+ * a configurable `margin`.
  *
  * @link https://ui.studiometa.dev/reference/items/Draggable/
  */
-export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
-  // @ts-expect-error draggable is instance of Draggable.
-  target: (draggable) => draggable.target,
-})<T & DraggableProps> {
-  /**
-   * Config.
-   */
+export class Draggable<T extends BaseProps = BaseProps> extends withResize(
+  withRaf(
+    withDrag(Base, {
+      // The mixin is applied before this class exists, so the host is `Base`
+      // and the resolver names the shape it needs rather than the class. It is
+      // an assertion, not a check — core reports a resolver which comes back
+      // with nothing.
+      target: (instance) => (instance as Base & { readonly target: HTMLElement }).target,
+    }),
+    { manual: true },
+  ),
+)<DraggableProps & T> {
   static config: BaseConfig = {
     name: 'Draggable',
     refs: ['target'],
-    emits: [
-      'drag-start',
-      'drag-drag',
-      'drag-drop',
-      'drag-inertia',
-      'drag-stop',
-      'drag-fit',
-      'drag-render',
-    ],
     options: {
-      x: {
-        type: Boolean,
-        default: true,
-      },
-      y: {
-        type: Boolean,
-        default: true,
-      },
+      x: { type: Boolean, default: true },
+      y: { type: Boolean, default: true },
       fitBounds: Boolean,
       strictFitBounds: Boolean,
       sensitivity: { type: Number, default: 0.5 },
@@ -72,10 +101,8 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
     },
   };
 
-  /**
-   * Props for the target position.
-   */
-  props = {
+  /** The target position, shared as the payload of every event. */
+  props: DraggablePosition = {
     x: 0,
     y: 0,
     progressX: 0,
@@ -86,52 +113,27 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
     dampedY: 0,
   };
 
-  /**
-   * Smooth factor.
-   */
   dampFactor = 0.5;
 
-  /**
-   * The draggable element, defaults to `this.$refs.target`.
-   */
+  /** Resolved lazily and cleared with the mount cycle, because a move changes the geometry. */
+  __bounds: Bounds | null = null;
+
+  __margin: Margin | null = null;
+
+  __marginOption: string | null = null;
+
+  /** The draggable element. */
   get target(): HTMLElement {
     return this.$refs.target;
   }
 
-  /**
-   * The bouding element, defaults to `this.$el`.
-   */
+  /** The bounding element. */
   get parent(): HTMLElement {
     return this.$el;
   }
 
-  /**
-   * Draggable area bounds.
-   * @private Use the `bounds` getter instead.
-   */
-  __bounds: {
-    yMin: number;
-    yMax: number;
-    xMin: number;
-    xMax: number;
-  };
-
-  /**
-   * Cached margin values.
-   * @private
-   */
-  __margin: { top: number; right: number; bottom: number; left: number };
-
-  /**
-   * Cached margin option for invalidation.
-   * @private
-   */
-  __marginOption: string;
-
-  /**
-   * Offset from the bounds.
-   */
-  get margin() {
+  /** The offset from the bounds, in CSS shorthand order. */
+  get margin(): Margin {
     const marginOption = this.$options.margin;
 
     if (this.__margin && this.__marginOption === marginOption) {
@@ -165,10 +167,8 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
     return this.__margin;
   }
 
-  /**
-   * Draggable area bounds.
-   */
-  get bounds() {
+  /** How far the target may travel inside its parent. */
+  get bounds(): Bounds {
     if (!this.__bounds) {
       const { target, parent, margin } = this;
       const targetSizes = getOffsetSizes(target);
@@ -189,33 +189,43 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
     return this.__bounds;
   }
 
-  /**
-   * Resized hook.
-   * Reset bounds on resize.
-   */
-  resized() {
+  mounted(): MountedReturn {
+    return [
+      super.mounted(),
+      () => {
+        this.__bounds = null;
+        this.__margin = null;
+        this.__marginOption = null;
+      },
+    ];
+  }
+
+  /** Measure again after a resize. */
+  resized(): void {
     this.__bounds = null;
   }
 
-  /**
-   * Drag service hook.
-   */
-  dragged(props: DragServiceProps) {
+  dragged(props: DragProps): void {
+    if (props.mode === DRAG_MODES.IDLE) {
+      return;
+    }
+
     this.$emit(`drag-${props.mode}`, this.props);
+
     const { fitBounds, strictFitBounds, sensitivity, dropSensitivity } = this.$options;
     const { bounds } = this;
 
-    if (props.mode === props.MODES.START) {
+    if (props.mode === DRAG_MODES.START) {
       this.props.originX = this.props.x;
       this.props.originY = this.props.y;
       this.dampFactor = sensitivity;
       this.render();
     } else if (
-      props.mode === props.MODES.DRAG ||
-      (props.mode === props.MODES.INERTIA && !fitBounds)
+      props.mode === DRAG_MODES.DRAG ||
+      (props.mode === DRAG_MODES.INERTIA && !fitBounds)
     ) {
-      this.props.x = this.props.originX + props.x - props.origin.x;
-      this.props.y = this.props.originY + props.y - props.origin.y;
+      this.props.x = this.props.originX + props.distanceX;
+      this.props.y = this.props.originY + props.distanceY;
 
       if (strictFitBounds) {
         this.props.x = clamp(this.props.x, bounds.xMin, bounds.xMax);
@@ -223,45 +233,53 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
       }
 
       this.render();
-    } else if (props.mode === props.MODES.DROP && fitBounds) {
+    } else if (props.mode === DRAG_MODES.DROP && fitBounds) {
+      // The service announces its exact settle position at `drop`, so the
+      // clamp acts on where the throw was actually heading.
       this.props.x = clamp(
-        this.props.originX + props.final.x - props.origin.x,
+        this.props.originX + (props.finalX - props.originX),
         bounds.xMin,
         bounds.xMax,
       );
       this.props.y = clamp(
-        this.props.originY + props.final.y - props.origin.y,
+        this.props.originY + (props.finalY - props.originY),
         bounds.yMin,
         bounds.yMax,
       );
       this.dampFactor = dropSensitivity;
-      this.$services.enable('ticked');
+      this.$services.ticked.start();
     }
   }
 
-  ticked() {
-    this.$emit(`drag-inertia`, this.props);
-    this.render();
+  /** Coast to the clamped destination, then announce the fit and stop. */
+  ticked({ delta }: RafProps): void {
+    this.$emit('drag-inertia', this.props);
+    this.render(delta);
     if (this.props.dampedX === this.props.x && this.props.dampedY === this.props.y) {
-      this.$services.disable('ticked');
+      this.$services.ticked.stop();
       this.$emit('drag-fit', this.props);
     }
   }
 
-  render() {
+  /**
+   * `damp()` takes the frame's elapsed milliseconds, so the same factor means
+   * the same speed on every display. A call made outside the frame loop has no
+   * elapsed time to hand it, and names one nominal frame instead.
+   */
+  render(elapsed: number = INERTIA_FRAME): void {
     const { props } = this;
-    props.dampedX = damp(props.x, props.dampedX, this.dampFactor);
-    props.dampedY = damp(props.y, props.dampedY, this.dampFactor);
+    props.dampedX = damp(props.x, props.dampedX, this.dampFactor, elapsed);
+    props.dampedY = damp(props.y, props.dampedY, this.dampFactor, elapsed);
 
-    domScheduler.read(() => {
+    this.$read(() => {
       const { bounds } = this;
       const { x, y } = this.$options;
 
-      domScheduler.write(() => {
+      this.$write(() => {
         props.progressX = map(props.x, bounds.xMin, bounds.xMax, 0, 1);
         props.progressY = map(props.y, bounds.yMin, bounds.yMax, 0, 1);
 
-        transform(this.target, {
+        this.target.style.transform = transform({
           x: x ? props.dampedX : 0,
           y: y ? props.dampedY : 0,
         });
@@ -272,4 +290,9 @@ export class Draggable<T extends BaseProps = BaseProps> extends withDrag(Base, {
   }
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Draggable`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default Draggable;

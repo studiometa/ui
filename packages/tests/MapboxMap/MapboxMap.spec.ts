@@ -1,41 +1,41 @@
-import { describe, it, expect, vi } from 'vitest';
-import { h } from '#test-utils';
+import { describe, it, expect } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { mount, recordEvents, settle } from '@studiometa/js-toolkit/test';
 import { MockMap } from './mock-mapbox-gl.js';
 import { MapboxMap } from '@studiometa/ui-mapbox';
 
-function createMapboxMap(attrs: Record<string, string> = {}) {
-  return h('div', {
-    'data-component': 'MapboxMap',
-    'data-option-access-token': 'test-token',
-    'data-option-zoom': '10',
-    'data-option-center': '[2.35, 48.85]',
-    ...attrs,
-  }, [
-    h('div', { 'data-ref': 'container' }),
-  ]);
+registerComponents(MapboxMap);
+
+/**
+ * Mount a `MapboxMap` and hand back the component plus the `MockMap` its
+ * `mounted()` hook built once `mapbox-gl` resolved.
+ */
+async function createMapboxMap(attrs = '', container = '<div data-ref="container"></div>') {
+  const root = await mount(`
+    <div
+      data-component="MapboxMap"
+      data-option-access-token="test-token"
+      data-option-zoom="10"
+      data-option-center="[2.35, 48.85]"
+      ${attrs}>
+      ${container}
+    </div>
+  `);
+  const el = root.querySelector<HTMLElement>('[data-component="MapboxMap"]')!;
+  const instance = getInstance<MapboxMap>(el, 'MapboxMap')!;
+
+  return { root, el, instance, mockMap: instance.map as unknown as MockMap };
 }
 
 describe('MapboxMap component', () => {
   it('should mount and create a map instance', async () => {
-    const root = createMapboxMap();
-    const instance = new MapboxMap(root);
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance } = await createMapboxMap();
 
     expect(instance.map).toBeInstanceOf(MockMap);
   });
 
   it('should parse options from data attributes', async () => {
-    const root = createMapboxMap();
-    const instance = new MapboxMap(root);
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance } = await createMapboxMap();
 
     expect(instance.$options.accessToken).toBe('test-token');
     expect(instance.$options.zoom).toBe(10);
@@ -43,117 +43,76 @@ describe('MapboxMap component', () => {
   });
 
   it('should default center to [0, 0]', async () => {
-    const el = h('div', {
-      'data-component': 'MapboxMap',
-      'data-option-access-token': 'token',
-    }, [h('div', { 'data-ref': 'container' })]);
-    const instance = new MapboxMap(el);
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const root = await mount(`
+      <div data-component="MapboxMap" data-option-access-token="token">
+        <div data-ref="container"></div>
+      </div>
+    `);
+    const instance = getInstance<MapboxMap>(
+      root.querySelector<HTMLElement>('[data-component="MapboxMap"]')!,
+      'MapboxMap',
+    )!;
 
     expect(instance.$options.center).toEqual([0, 0]);
   });
 
   it('should set isLoaded after load event', async () => {
-    const root = createMapboxMap();
-    const instance = new MapboxMap(root);
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
+    const { instance, mockMap } = await createMapboxMap();
 
     expect(instance.isLoaded).toBe(false);
-    (instance.map as unknown as MockMap).fire('load');
-    await vi.advanceTimersByTimeAsync(100);
+    mockMap.fire('load');
+    await settle();
     expect(instance.isLoaded).toBe(true);
-
-    vi.useRealTimers();
   });
 
   it('should emit map-load event on load', async () => {
-    const root = createMapboxMap();
-    const instance = new MapboxMap(root);
-    const handler = vi.fn();
+    const { instance, mockMap } = await createMapboxMap();
+    const log = recordEvents(instance.$el, 'map-load');
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
+    mockMap.fire('load');
+    await settle();
 
-    instance.$on('map-load', handler);
-    (instance.map as unknown as MockMap).fire('load');
-    await vi.advanceTimersByTimeAsync(100);
-
-    expect(handler).toHaveBeenCalledOnce();
-    vi.useRealTimers();
+    expect(log.events).toHaveLength(1);
+    // The payload is one named object: the map travels as `detail.map`.
+    expect((log.events[0].detail as { map: unknown }).map).toBe(mockMap);
+    log.stop();
   });
 
   it('should forward map events with a map- prefix', async () => {
-    const root = createMapboxMap();
-    const instance = new MapboxMap(root);
-    const clickHandler = vi.fn();
-    const zoomHandler = vi.fn();
-    const dragHandler = vi.fn();
-    const unprefixedClickHandler = vi.fn();
+    const { instance, mockMap } = await createMapboxMap();
+    const log = recordEvents(instance.$el, 'map-click', 'map-zoom', 'map-drag', 'click');
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-
-    instance.$on('map-click', clickHandler);
-    instance.$on('map-zoom', zoomHandler);
-    instance.$on('map-drag', dragHandler);
-    instance.$on('click', unprefixedClickHandler);
-
-    const mockMap = instance.map as unknown as MockMap;
     const clickEvent = { type: 'click' };
     mockMap.fire('click', clickEvent);
     mockMap.fire('zoom', { type: 'zoom' });
     mockMap.fire('drag', { type: 'drag' });
-    await vi.advanceTimersByTimeAsync(100);
+    await settle();
 
-    const [emittedClickEvent] = clickHandler.mock.calls[0] as [CustomEvent];
-    expect(emittedClickEvent.detail[0]).toEqual(clickEvent);
-    expect(zoomHandler).toHaveBeenCalled();
-    expect(dragHandler).toHaveBeenCalled();
-    expect(unprefixedClickHandler).not.toHaveBeenCalled();
-    vi.useRealTimers();
+    // Every forwarded mapbox event carries the original under `detail.event`,
+    // and none of them is re-emitted under its unprefixed name.
+    expect(log.events.map((entry) => entry.type)).toEqual(['map-click', 'map-zoom', 'map-drag']);
+    expect((log.events[0].detail as { event: unknown }).event).toEqual(clickEvent);
+    log.stop();
   });
 
-  it('should remove map on destroy', async () => {
-    const root = createMapboxMap();
-    const instance = new MapboxMap(root);
+  it('should remove map on unmount', async () => {
+    const { instance, mockMap } = await createMapboxMap();
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-
-    const mockMap = instance.map as unknown as MockMap;
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
+    instance.$unmount();
+    await settle();
 
     expect(mockMap.remove).toHaveBeenCalled();
-    vi.useRealTimers();
   });
 
-  it('should detach every forwarding listener from the map on destroy (H3)', async () => {
-    const root = createMapboxMap();
-    const instance = new MapboxMap(root);
+  it('should detach every forwarding listener from the map on unmount (H3)', async () => {
+    const { instance, mockMap } = await createMapboxMap();
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-
-    const mockMap = instance.map as unknown as MockMap;
     // Forwarding listeners are registered for `load` and every forwarded event.
     expect((mockMap._listeners['click'] ?? []).length).toBeGreaterThan(0);
     expect((mockMap._listeners['load'] ?? []).length).toBeGreaterThan(0);
 
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    instance.$unmount();
+    await settle();
 
     // A retained reference to the removed map keeps no forwarding closures — and
     // therefore does not keep this component alive.
@@ -162,27 +121,21 @@ describe('MapboxMap component', () => {
     expect(mockMap._listeners['moveend'] ?? []).toHaveLength(0);
   });
 
-  it('should not construct a map on destroy when the map was never created', async () => {
-    const root = createMapboxMap();
-    const instance = new MapboxMap(root);
+  it('should not construct a map on unmount when the map was never created', async () => {
+    const { instance } = await createMapboxMap();
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
+    // Simulate a teardown where the backing field was never populated (e.g.
+    // `$unmount()` called before `mapbox-gl` resolved, or a second
+    // `$unmount()`): the map instance does not exist at teardown time.
+    instance.__map = undefined;
+    const instanceCountBeforeUnmount = MockMap.instanceCount;
 
-    // Simulate a teardown where the lazy `get map()` getter has never populated
-    // the backing field (e.g. `$destroy()` called before the map is used, or a
-    // second `$destroy()`): the map instance does not exist at teardown time.
-    instance.__map = undefined as unknown as (typeof instance)['__map'];
-    const instanceCountBeforeDestroy = MockMap.instanceCount;
+    instance.$unmount();
+    await settle();
 
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-
-    // Teardown must be side-effect free: it must not go through the lazy getter
-    // and construct a brand-new map just to remove it.
-    expect(MockMap.instanceCount).toBe(instanceCountBeforeDestroy);
-    vi.useRealTimers();
+    // Teardown must be side-effect free: it must not build a brand-new map just
+    // to remove it.
+    expect(MockMap.instanceCount).toBe(instanceCountBeforeUnmount);
   });
 
   it('should forward mapOptions to the Map constructor', async () => {
@@ -191,39 +144,25 @@ describe('MapboxMap component', () => {
       sources: {},
       layers: [],
     };
-    const root = createMapboxMap({
-      'data-option-map-options': JSON.stringify({ style, pitch: 45 }),
-    });
-    const instance = new MapboxMap(root);
+    const { el, mockMap } = await createMapboxMap(
+      `data-option-map-options='${JSON.stringify({ style, pitch: 45 })}'`,
+    );
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
-
-    const mockMap = instance.map as unknown as MockMap;
     expect(mockMap._options.style).toEqual(style);
     expect(mockMap._options.pitch).toBe(45);
     // The convenience options are kept and `container` stays explicit.
     expect(mockMap._options.zoom).toBe(10);
-    expect(mockMap._options.container).toBe(root.querySelector('[data-ref="container"]'));
-    // Framework options must not leak into the Map constructor.
+    expect(mockMap._options.container).toBe(el.querySelector('[data-ref="container"]'));
+    // No framework option leaks into the Map constructor: `name`, `debug` and
+    // `log` are not defined at all, so the assertion records their absence.
     expect(mockMap._options.name).toBeUndefined();
     expect(mockMap._options.debug).toBeUndefined();
     expect(mockMap._options.log).toBeUndefined();
   });
 
   it('should reuse the same map instance', async () => {
-    const root = createMapboxMap();
-    const instance = new MapboxMap(root);
+    const { instance } = await createMapboxMap();
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
-
-    const map1 = instance.map;
-    const map2 = instance.map;
-    expect(map1).toBe(map2);
+    expect(instance.map).toBe(instance.map);
   });
 });

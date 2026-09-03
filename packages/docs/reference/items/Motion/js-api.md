@@ -87,6 +87,13 @@ Whether the `animate` keyframes play automatically on mount. Enable it with the 
 ```
 <!-- prettier-ignore-end -->
 
+### `at`
+
+- Type: `string`
+- Default: `''`
+
+Only meaningful inside a [`MotionSequence`](/reference/items/MotionSequence/): this component's explicit position in the parent sequence, taking precedence over the sequence's `stagger`. A time in seconds (`"2"`), a relative offset (`"-0.2"`), or `"<"` for "with the previous segment". Ignored when the component animates on its own. See [`at` on the children](/reference/items/MotionSequence/js-api#at-on-the-children).
+
 ### `hover`
 
 - Type: `DOMKeyframesDefinition`

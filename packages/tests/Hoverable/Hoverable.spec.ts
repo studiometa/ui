@@ -1,154 +1,101 @@
-import { describe, it, expect, vi } from 'vitest';
-import type { PointerServiceProps } from '@studiometa/js-toolkit';
-import { Hoverable } from '@studiometa/ui';
-import { h, mount } from '#test-utils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  getInstance,
+  registerComponents,
+  type ElementPointerProps,
+  type RafProps,
+} from '@studiometa/js-toolkit';
+import { resetDom, settle } from '@studiometa/js-toolkit/test';
+import { Hoverable } from '#private/Hoverable/Hoverable.js';
 
-function pointerProgress(x: number, y: number) {
-  return {
-    progress: { x, y },
-  } as PointerServiceProps;
+registerComponents(Hoverable);
+
+afterEach(resetDom);
+
+const PARENT = 'position:absolute;top:0;left:0;width:100px;height:100px';
+const TARGET = 'position:absolute;top:10px;left:10px;width:20px;height:20px';
+
+async function render(attributes = ''): Promise<{ el: HTMLElement; instance: Hoverable }> {
+  const root = document.createElement('div');
+  root.innerHTML = `
+    <div data-component="Hoverable" style="${PARENT}" ${attributes}>
+      <div data-ref="target" style="${TARGET}"></div>
+    </div>`;
+  document.body.append(root);
+  await settle();
+  const el = root.firstElementChild as HTMLElement;
+  return { el, instance: getInstance<Hoverable>(el, 'Hoverable')! };
 }
 
-describe('The Hoverable component', () => {
-  it('should have target and parent getters', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', [target]);
-    const hoverable = new Hoverable(div);
-    await mount(hoverable);
-    expect(hoverable.target).toBe(target);
-    expect(hoverable.parent).toBe(div);
+function progress(x: number, y: number): ElementPointerProps {
+  return { relativeProgressX: x, relativeProgressY: y } as ElementPointerProps;
+}
+
+function stubBounds(instance: Hoverable): void {
+  vi.spyOn(instance, 'bounds', 'get').mockReturnValue({ xMin: 0, xMax: 100, yMin: 0, yMax: 100 });
+}
+
+describe('Hoverable', () => {
+  it('exposes `target` and `parent` getters', async () => {
+    const { el, instance } = await render();
+    expect(instance.target).toBe(el.querySelector('[data-ref="target"]'));
+    expect(instance.parent).toBe(el);
   });
 
-  it('should keep x and y in bounds', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', [target]);
-    const hoverable = new Hoverable(div);
-    const spy = vi.spyOn(hoverable, 'bounds', 'get');
-    spy.mockImplementation(() => ({
-      xMin: 0,
-      xMax: 100,
-      yMin: 0,
-      yMax: 100,
-    }));
-    await mount(hoverable);
-
-    hoverable.movedrelative(pointerProgress(0, 0));
-    expect(hoverable.props.x).toBe(0);
-    expect(hoverable.props.y).toBe(0);
-    hoverable.movedrelative(pointerProgress(0.5, 0.5));
-    expect(hoverable.props.x).toBe(50);
-    expect(hoverable.props.y).toBe(50);
-    hoverable.movedrelative(pointerProgress(1, 1));
-    expect(hoverable.props.x).toBe(100);
-    expect(hoverable.props.y).toBe(100);
-    hoverable.movedrelative(pointerProgress(1.5, 1.5));
-    expect(hoverable.props.x).toBe(100);
-    expect(hoverable.props.y).toBe(100);
+  it('computes bounds from the real target and parent boxes', async () => {
+    const { instance } = await render();
+    expect(instance.bounds).toEqual({ xMin: -10, yMin: -10, xMax: 70, yMax: 70 });
   });
 
-  it('should reverse x and y position when reversed option is used', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', { dataOptionReversed: true }, [target]);
-    const hoverable = new Hoverable(div);
-    const spy = vi.spyOn(hoverable, 'bounds', 'get');
-    spy.mockImplementation(() => ({
-      xMin: 0,
-      xMax: 100,
-      yMin: 0,
-      yMax: 100,
-    }));
-    await mount(hoverable);
+  it('maps pointer progress into bounds, clamped to 0–1', async () => {
+    const { instance } = await render();
+    stubBounds(instance);
 
-    hoverable.movedrelative(pointerProgress(0, 0));
-    expect(hoverable.props.x).toBe(100);
-    expect(hoverable.props.y).toBe(100);
-    hoverable.movedrelative(pointerProgress(0.5, 0.5));
-    expect(hoverable.props.x).toBe(50);
-    expect(hoverable.props.y).toBe(50);
-    hoverable.movedrelative(pointerProgress(1, 1));
-    expect(hoverable.props.x).toBe(0);
-    expect(hoverable.props.y).toBe(0);
-    hoverable.movedrelative(pointerProgress(1.5, 1.5));
-    expect(hoverable.props.x).toBe(0);
-    expect(hoverable.props.y).toBe(0);
+    instance.moved(progress(0, 0));
+    expect(instance.props).toMatchObject({ x: 0, y: 0 });
+
+    instance.moved(progress(0.5, 0.5));
+    expect(instance.props).toMatchObject({ x: 50, y: 50 });
+
+    instance.moved(progress(1, 1));
+    expect(instance.props).toMatchObject({ x: 100, y: 100 });
+
+    // Past the box, progress is clamped rather than extrapolated.
+    instance.moved(progress(1.5, 1.5));
+    expect(instance.props).toMatchObject({ x: 100, y: 100 });
   });
 
-  it('should stop update x and y position when contained option is used and mouse position is out of bounds', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', { dataOptionContained: true }, [target]);
-    const hoverable = new Hoverable(div);
-    const spy = vi.spyOn(hoverable, 'bounds', 'get');
-    spy.mockImplementation(() => ({
-      xMin: 0,
-      xMax: 100,
-      yMin: 0,
-      yMax: 100,
-    }));
-    await mount(hoverable);
+  it('reverses direction when `reversed` is set', async () => {
+    const { instance } = await render('data-option-reversed="true"');
+    stubBounds(instance);
 
-    hoverable.movedrelative(pointerProgress(0, 0));
-    expect(hoverable.props.x).toBe(0);
-    expect(hoverable.props.y).toBe(0);
-    hoverable.movedrelative(pointerProgress(0.5, 1.5));
-    expect(hoverable.props.x).toBe(0);
-    expect(hoverable.props.y).toBe(0);
+    instance.moved(progress(0, 0));
+    expect(instance.props).toMatchObject({ x: 100, y: 100 });
+
+    instance.moved(progress(1, 1));
+    expect(instance.props).toMatchObject({ x: 0, y: 0 });
   });
 
-  it('should correctly calculate bounds', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', [target]);
+  it('stops updating once the pointer leaves the box when `contained` is set', async () => {
+    const { instance } = await render('data-option-contained="true"');
+    stubBounds(instance);
 
-    const hoverable = new Hoverable(div);
-    await mount(hoverable);
+    instance.moved(progress(0, 0));
+    expect(instance.props).toMatchObject({ x: 0, y: 0 });
 
-    const parentSpies = {};
-    const parentOffsets = {
-      offsetTop: 0,
-      offsetLeft: 0,
-      offsetHeight: 100,
-      offsetWidth: 100,
-    };
+    instance.moved(progress(0.5, 1.5));
+    expect(instance.props).toMatchObject({ x: 0, y: 0 });
+  });
 
-    for (const [name, value] of Object.entries(parentOffsets) as [
-      keyof typeof parentOffsets,
-      number,
-    ][]) {
-      const mock = vi.spyOn(hoverable.parent, name, 'get');
-      mock.mockImplementation(() => value);
-      parentSpies[name] = mock;
-    }
+  it('damps toward the target position each frame and writes the transform', async () => {
+    const { instance } = await render();
+    stubBounds(instance);
+    instance.moved(progress(0.5, 0.5));
 
-    const targetSpies = {};
-    const targetOffsets = {
-      offsetTop: 10,
-      offsetHeight: 10,
-      offsetLeft: 10,
-      offsetWidth: 10,
-    };
+    // A large elapsed time closes the gap past `damp()`'s snap precision.
+    instance.ticked({ time: 0, delta: 5000 } as RafProps);
+    await settle();
 
-    for (const [name, value] of Object.entries(targetOffsets) as [
-      keyof typeof targetOffsets,
-      number,
-    ][]) {
-      const mock = vi.spyOn(hoverable.target, name, 'get');
-      mock.mockImplementation(() => value);
-      targetSpies[name] = mock;
-    }
-
-    // @ts-expect-error
-    hoverable.target.offsetParent = div;
-
-    expect(hoverable.bounds.xMin).toBe(-10);
-    expect(hoverable.bounds.yMin).toBe(-10);
-    expect(hoverable.bounds.xMax).toBe(80);
-    expect(hoverable.bounds.yMax).toBe(80);
-
-    // @ts-expect-error
-    hoverable.target.offsetParent = document.body;
-
-    expect(hoverable.bounds.xMin).toBe(-10);
-    expect(hoverable.bounds.yMin).toBe(-10);
-    expect(hoverable.bounds.xMax).toBe(80);
-    expect(hoverable.bounds.yMax).toBe(80);
+    expect(instance.target.style.transform).toBe('translate3d(50px, 50px, 0px)');
   });
 });

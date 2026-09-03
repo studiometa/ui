@@ -24,8 +24,23 @@ export default class Component extends Base {
     },
   };
 
-  onSentinelIntersected(entries) {
-    // do something with `entries`
+  onSentinelIntersected({ payload }) {
+    // `payload` is `{ isInView, entry }`
   }
 }
+```
+
+Importing a module only defines the class: no `@studiometa/ui` component registers itself. Registering `Component` also registers the `Sentinel` it declares in `config.components`.
+
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
+import Component from './Component.js';
+
+registerComponent(Component);
+```
+
+```html
+<div data-component="Component">
+  <div data-component="Sentinel"></div>
+</div>
 ```

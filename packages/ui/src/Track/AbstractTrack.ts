@@ -1,13 +1,19 @@
-import deepmerge from 'deepmerge';
 import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { memo } from '@studiometa/js-toolkit/utils/memo';
-import { nextFrame } from '@studiometa/js-toolkit/utils/nextFrame';
+import { defaultScheduler } from '@studiometa/js-toolkit/defaultScheduler';
+import { namespaceQualifier } from '@studiometa/js-toolkit/namespaceQualifier';
+import { watchAttributeNamespace } from '@studiometa/js-toolkit/watchAttributeNamespace';
+import type { BaseConfig, BaseProps, MountedReturn, ScheduledTask } from '@studiometa/js-toolkit';
+import { deepmerge } from '@studiometa/js-toolkit/utils/deepmerge';
 import { TrackContext } from './TrackContext.js';
-import { TrackEvent } from './TrackEvent.js';
-import { arrayMerge } from './utils.js';
+import { TRACK_PSEUDO_EVENTS, TrackEvent } from './TrackEvent.js';
 
-export interface AbstractTrackProps extends BaseProps {
+/**
+ * The namespace one `TrackEvent` is declared by. Its qualifiers are any DOM
+ * event plus the two pseudo-events, so the set of names is open.
+ */
+const TRACK_NAMESPACE = 'data-track';
+
+export type AbstractTrackProps = BaseProps & {
   $refs: {
     payload?: HTMLScriptElement;
   };
@@ -15,17 +21,11 @@ export interface AbstractTrackProps extends BaseProps {
     threshold: number;
     payload: Record<string, unknown>;
   };
-}
+};
 
 /**
- * Parse the value of a `data-track:<event>` attribute.
- *
- * - An empty value carries no data (the payload comes from the context, the
- *   `payload` ref and/or the `payload` option).
- * - A value starting with `{` is parsed as a JSON payload (escape hatch for
- *   per-event structured data). May throw on malformed JSON.
- * - Any other value is a bare token used as the event name, so
- *   `data-track:click="add_to_cart"` is shorthand for `{ "event": "add_to_cart" }`.
+ * Parse a `data-track:<event>` value. Empty values carry no data, JSON values
+ * carry a payload, and other values define the event name.
  */
 function parseEventValue(value: string): Record<string, unknown> {
   const trimmed = value.trim();
@@ -38,29 +38,14 @@ function parseEventValue(value: string): Record<string, unknown> {
     return { event: trimmed };
   }
 
-  return JSON.parse(trimmed) ?? {};
+  return (JSON.parse(trimmed) as Record<string, unknown> | null) ?? {};
 }
 
 /**
- * AbstractTrack class.
- *
- * Core of the declarative analytics tracking components. It parses the
- * `data-track:*` attributes into {@link TrackEvent} instances, resolves the
- * context provided by ancestor {@link TrackContext} components, merges every
- * payload layer and hands the result to the {@link AbstractTrack.dispatch}
- * seam.
- *
- * Concrete implementations (`Track`, `TrackShopify`, …) override `dispatch()`
- * to send the resolved payload to their destination. They MUST declare their
- * own `static config` with a unique `name`, otherwise they inherit the
- * `AbstractTrack` name and cannot be resolved.
- *
- * @link https://ui.studiometa.dev/reference/items/Track/
+ * Parses declarative tracking events, merges context and payload data, and
+ * forwards each result to the concrete `dispatch()` implementation.
  */
 export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<AbstractTrackProps & T> {
-  /**
-   * Config.
-   */
   static config: BaseConfig = {
     name: 'AbstractTrack',
     refs: ['payload'],
@@ -69,44 +54,38 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
         type: Number,
         default: 0,
       },
-      payload: Object,
+      payload: {
+        type: Object,
+        // Each instance requires its own mutable default object.
+        default: () => ({}),
+      },
     },
   };
 
-  /**
-   * @private
-   */
-  __trackEvents?: Set<TrackEvent>;
+  /** The deferred `mounted` dispatches, cancelled if the cycle ends first. */
+  __deferred = new Set<ScheduledTask<unknown>>();
 
-  /**
-   * Get all TrackEvent instances parsed from `data-track:*` attributes.
-   */
-  get trackEvents(): Set<TrackEvent> {
-    if (this.__trackEvents) {
-      return this.__trackEvents;
-    }
+  /** Resolved once per mount cycle. */
+  __payload: Record<string, unknown> | null = null;
 
-    this.__trackEvents = new Set();
+  __context: Record<string, unknown> | null = null;
 
-    // Parse data-track:* attributes
-    for (let i = 0; i < this.$el.attributes.length; i++) {
-      const attr = this.$el.attributes[i];
-      if (attr.name.startsWith('data-track:')) {
-        const eventDefinition = attr.name.slice(11); // Remove 'data-track:'
-        try {
-          const data = parseEventValue(attr.value);
-          this.__trackEvents.add(new TrackEvent(this, eventDefinition, data));
-        } catch (err) {
-          this.$warn(`Invalid JSON in ${attr.name}:`, err);
-        }
+  /** Every current `data-track:*` declaration on the element. */
+  get trackEvents(): TrackEvent[] {
+    const trackEvents: TrackEvent[] = [];
+
+    for (const { name, value } of Array.from(this.$el.attributes)) {
+      const trackEvent = this.__parseAttribute(name, value);
+      if (trackEvent) {
+        trackEvents.push(trackEvent);
       }
     }
 
-    return this.__trackEvents;
+    return trackEvents;
   }
 
   /**
-   * Get the component's base payload from the optional `payload` ref, a
+   * The base payload from the optional `payload` ref, a
    * `<script data-ref="payload" type="application/json">` element.
    */
   get scriptPayload(): Record<string, unknown> {
@@ -117,124 +96,120 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
     }
 
     try {
-      return JSON.parse(script.textContent || '{}') ?? {};
-    } catch (err) {
-      this.$warn('Invalid JSON in the `payload` ref:', err);
+      return (JSON.parse(script.textContent || '{}') as Record<string, unknown> | null) ?? {};
+    } catch (error) {
+      this.$error('track.invalid-json', 'Invalid JSON in the `payload` ref.', error);
       return {};
     }
   }
 
   /**
-   * Get the component's base payload from the optional `data-option-payload`
-   * attribute.
+   * The base payload from the optional `data-option-payload` attribute.
    */
   get optionPayload(): Record<string, unknown> {
     try {
-      // OptionsManager parses Object options with `JSON.parse`, which throws
-      // uncaught on malformed values; guard it here.
       return this.$options.payload ?? {};
-    } catch (err) {
-      this.$warn('Invalid JSON in the `payload` option:', err);
+    } catch (error) {
+      this.$error('track.invalid-json', 'Invalid JSON in the `payload` option.', error);
       return {};
     }
   }
 
   /**
-   * Resolve the component's base payload once per instance.
-   *
-   * Sourced from both the `payload` ref and the `payload` option (the option
-   * overrides the ref, mirroring `TrackContext`). Memoized so a high-frequency
-   * event (e.g. `scroll.throttle16`) does not re-parse the `<script>` payload
-   * on every dispatch.
-   * @private
-   */
-  __resolvePayload = memo(() => deepmerge(this.scriptPayload, this.optionPayload, { arrayMerge }));
-
-  /**
-   * Resolve the merged ancestor context once per instance.
-   *
-   * The closest TrackContext already exposes the whole ancestor chain merged
-   * through its own recursive `context` getter, so reading it here is enough.
-   * Memoized to avoid re-walking the ancestor chain on every dispatch.
-   * @private
-   */
-  __resolveContext = memo(() => this.$closest<TrackContext>('TrackContext')?.context ?? {});
-
-  /**
-   * Get the component's base payload, shared by every event on the element.
+   * The component's own payload, shared by every event on the element. The
+   * option overrides the ref, mirroring `TrackContext`.
    */
   get payload(): Record<string, unknown> {
-    return this.__resolvePayload();
+    this.__payload ??= deepmerge(this.scriptPayload, this.optionPayload);
+    return this.__payload;
   }
 
-  /**
-   * Get the merged context from the closest ancestor TrackContext.
-   */
+  /** The merged context of the ancestor chain. */
   get context(): Record<string, unknown> {
-    return this.__resolveContext();
+    this.__context ??= this.$closest<TrackContext>('TrackContext')?.context ?? {};
+    return this.__context;
   }
 
   /**
-   * Merge every payload layer and hand the result to the dispatch seam.
+   * Merge every layer and hand the result to the dispatch seam.
    *
-   * Merge priority (lowest → highest): ancestor context chain, the
-   * component's own payload, then the event's inline data.
-   *
-   * @param data - The event specific tracking data.
-   * @param event - The optional DOM event that triggered the dispatch.
+   * Lowest to highest: the ancestor context chain, this component's payload,
+   * then the event's own data.
    */
   send(data: Record<string, unknown>, event?: Event): void {
-    const payload = deepmerge.all([this.context, this.payload ?? {}, data ?? {}], {
-      arrayMerge,
-    }) as Record<string, unknown>;
-
-    this.dispatch(payload, event);
+    this.dispatch(deepmerge(this.context, this.payload ?? {}, data ?? {}), event);
   }
 
   /**
-   * Dispatch seam.
-   *
-   * The base implementation is a no-op; concrete components override it to
-   * push the resolved payload to their analytics destination.
-   *
-   * @param payload - The fully merged tracking payload.
-   * @param event - The optional DOM event that triggered the dispatch.
+   * The dispatch seam. A no-op here; concrete components override it.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   dispatch(payload: Record<string, unknown>, event?: Event): void {}
 
-  /**
-   * Mounted lifecycle hook.
-   */
-  mounted() {
-    for (const trackEvent of this.trackEvents) {
-      if (trackEvent.event === 'mounted') {
-        // Resolve the context on the next frame so an ancestor TrackContext
-        // mounted just after this component is still taken into account. Guard
-        // against a same-frame destroy (e.g. an SPA route change) so we never
-        // dispatch for an unmounted component. Route through the TrackEvent
-        // handler so timing modifiers apply consistently with other events.
-        nextFrame(() => {
-          if (this.$isMounted) {
-            trackEvent.trigger();
-          }
-        });
-      } else if (trackEvent.event === 'view') {
-        // IntersectionObserver for impression tracking
-        trackEvent.attachViewEvent();
-      } else {
-        // Standard DOM event
-        trackEvent.attachEvent();
+  mounted(): MountedReturn {
+    const stopWatchingNamespace = watchAttributeNamespace(
+      this.$el,
+      TRACK_NAMESPACE,
+      ({ value, attribute }) => this.__bind(attribute, value),
+    );
+
+    return () => {
+      stopWatchingNamespace();
+      for (const task of this.__deferred) {
+        task.cancel();
       }
+      this.__deferred.clear();
+      this.__payload = null;
+      this.__context = null;
+    };
+  }
+
+  /** One `data-track:<event>` attribute, or `null` for anything else. */
+  /** @private */
+  __parseAttribute(name: string, value: string | null): TrackEvent | null {
+    const qualifier = namespaceQualifier(TRACK_NAMESPACE, name);
+    if (qualifier === null || value === null) {
+      return null;
+    }
+
+    try {
+      return new TrackEvent(this, qualifier, parseEventValue(value));
+    } catch (error) {
+      this.$error('track.invalid-json', `Invalid JSON in ${name}.`, error);
+      return null;
     }
   }
 
-  /**
-   * Destroyed lifecycle hook.
-   */
-  destroyed() {
-    for (const trackEvent of this.trackEvents) {
-      trackEvent.detachEvent();
+  /** Attach one declaration and return its release, or nothing if it is malformed. */
+  /** @private */
+  __bind(attribute: string, value: string): (() => void) | undefined {
+    const trackEvent = this.__parseAttribute(attribute, value);
+
+    if (!trackEvent) {
+      return undefined;
     }
+
+    const release = trackEvent.attach();
+
+    if (trackEvent.event !== TRACK_PSEUDO_EVENTS.MOUNTED) {
+      return release;
+    }
+
+    // Run after queued mounts and cancel if this mount cycle ends first — or if
+    // the declaration is rewritten before the task runs, which is why the
+    // cancel belongs to this binding's release rather than to the mount's.
+    const task = defaultScheduler.background(() => {
+      this.__deferred.delete(task);
+      if (this.$isMounted) {
+        trackEvent.trigger();
+      }
+    });
+    this.__deferred.add(task);
+
+    return () => {
+      this.__deferred.delete(task);
+      task.cancel();
+      release();
+    };
   }
 }

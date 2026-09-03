@@ -1,115 +1,101 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { Base } from '@studiometa/js-toolkit';
-import { ClickOutside, Action } from '@studiometa/ui';
-import { h, mount, destroy } from '#test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  Base,
+  getInstance,
+  registerComponents,
+  type BaseConfig,
+  type DelegatedEvent,
+} from '@studiometa/js-toolkit';
+import { resetDom, settle } from '@studiometa/js-toolkit/test';
+import { ClickOutside } from '#private/ClickOutside/ClickOutside.js';
 
-function click(target: EventTarget) {
-  target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+/** Parent probe for delegated `click-outside` events. */
+class Dropdown extends Base {
+  static config: BaseConfig = { name: 'Dropdown', components: { ClickOutside } };
+
+  closed: Array<DelegatedEvent<ClickOutside, 'click-outside'>> = [];
+
+  onClickOutsideClickOutside(payload: DelegatedEvent<ClickOutside, 'click-outside'>): void {
+    this.closed.push(payload);
+  }
 }
 
-afterEach(() => {
-  document.body.innerHTML = '';
-});
+registerComponents(ClickOutside, Dropdown);
 
-describe('The ClickOutside component', () => {
-  it('should dispatch a `click-outside` event when clicking outside the element', async () => {
-    const el = h('div');
-    const outside = h('div');
-    document.body.append(el, outside);
-    const clickOutside = new ClickOutside(el);
-    await mount(clickOutside);
+afterEach(resetDom);
 
-    const handler = vi.fn();
-    el.addEventListener('click-outside', handler);
+async function render(): Promise<{
+  root: HTMLElement;
+  outside: HTMLElement;
+  inside: HTMLElement;
+  instance: ClickOutside;
+  events: CustomEvent[];
+}> {
+  const root = document.createElement('div');
+  root.innerHTML = `
+    <div data-component="Dropdown">
+      <div data-component="ClickOutside"><button data-ref="inner">inside</button></div>
+    </div>
+    <button>outside</button>
+  `;
+  document.body.append(root);
+  await settle();
 
-    click(outside);
-    expect(handler).toHaveBeenCalledTimes(1);
+  const el = root.querySelector('[data-component="ClickOutside"]') as HTMLElement;
+  const events: CustomEvent[] = [];
+  el.addEventListener('click-outside', (event) => events.push(event as CustomEvent));
 
-    await destroy(clickOutside);
+  return {
+    root,
+    outside: root.querySelector('button:not([data-ref])') as HTMLElement,
+    inside: el.querySelector('[data-ref="inner"]') as HTMLElement,
+    instance: getInstance<ClickOutside>(el, 'ClickOutside')!,
+    events,
+  };
+}
+
+describe('ClickOutside', () => {
+  it('announces a click that lands outside its element', async () => {
+    const { outside, events } = await render();
+
+    outside.click();
+
+    expect(events).toHaveLength(1);
+    expect(events[0].detail.event.type).toBe('click');
   });
 
-  it('should not dispatch when clicking the element or its children', async () => {
-    const child = h('span');
-    const el = h('div', [child]);
-    document.body.append(el);
-    const clickOutside = new ClickOutside(el);
-    await mount(clickOutside);
+  it('stays quiet for a click on itself or on a descendant', async () => {
+    const { instance, inside, events } = await render();
 
-    const handler = vi.fn();
-    el.addEventListener('click-outside', handler);
+    instance.$el.click();
+    inside.click();
 
-    click(el);
-    click(child);
-    expect(handler).not.toHaveBeenCalled();
-
-    await destroy(clickOutside);
+    expect(events).toHaveLength(0);
   });
 
-  it('should forward the original event in the `detail`', async () => {
-    const el = h('div');
-    const outside = h('div');
-    document.body.append(el, outside);
-    const clickOutside = new ClickOutside(el);
-    await mount(clickOutside);
+  it('bubbles, so an ancestor hears it as a delegated child event', async () => {
+    const { root, outside } = await render();
 
-    let detail: any;
-    el.addEventListener('click-outside', (event: CustomEvent) => {
-      detail = event.detail;
-    });
+    outside.click();
 
-    click(outside);
-    expect(detail.event).toBeInstanceOf(MouseEvent);
-
-    await destroy(clickOutside);
+    const dropdown = getInstance<Dropdown>(
+      root.querySelector('[data-component="Dropdown"]'),
+      'Dropdown',
+    )!;
+    expect(dropdown.closed).toHaveLength(1);
+    expect(dropdown.closed[0].target).toBeInstanceOf(ClickOutside);
+    expect(dropdown.closed[0].payload.event.type).toBe('click');
   });
 
-  it('should trigger an `Action` effect via `data-on:click-outside`', async () => {
-    const fn = vi.fn();
-    class Foo extends Base {
-      static config = {
-        name: 'Foo',
-      };
+  it('stops listening once unmounted, and listens again on remount', async () => {
+    const { outside, instance, events } = await render();
 
-      fn() {
-        fn();
-      }
-    }
+    instance.$unmount();
+    outside.click();
+    expect(events).toHaveLength(0);
 
-    const el = h('div', {
-      dataComponent: 'ClickOutside Action',
-      'data-on:click-outside': 'Foo->target.fn()',
-    });
-    const fooEl = h('div', { class: 'foo', dataComponent: 'Foo' });
-    const outside = h('div');
-    document.body.append(el, fooEl, outside);
-
-    const clickOutside = new ClickOutside(el);
-    const action = new Action(el);
-    const foo = new Foo(fooEl);
-    await mount(clickOutside, action, foo);
-
-    click(outside);
-    expect(fn).toHaveBeenCalledTimes(1);
-
-    click(el);
-    expect(fn).toHaveBeenCalledTimes(1);
-
-    await destroy(clickOutside, action, foo);
-  });
-
-  it('should stop dispatching once destroyed', async () => {
-    const el = h('div');
-    const outside = h('div');
-    document.body.append(el, outside);
-    const clickOutside = new ClickOutside(el);
-    await mount(clickOutside);
-
-    const handler = vi.fn();
-    el.addEventListener('click-outside', handler);
-
-    await destroy(clickOutside);
-
-    click(outside);
-    expect(handler).not.toHaveBeenCalled();
+    instance.$mount();
+    outside.click();
+    expect(events).toHaveLength(1);
   });
 });

@@ -1,13 +1,108 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseConfig, BaseProps, BaseInterface } from '@studiometa/js-toolkit';
-import { domScheduler } from '@studiometa/js-toolkit/utils/domScheduler';
+import { domUpdate } from '@studiometa/js-toolkit/domUpdate';
+import { EVENTS } from '@studiometa/js-toolkit/EVENTS';
+import { swap } from '@studiometa/js-toolkit/swap';
+import { SWAP_MODES } from '@studiometa/js-toolkit/SWAP_MODES';
+import { viewTransition } from '@studiometa/js-toolkit/viewTransition';
+import type { BaseConfig, BaseProps, DomUpdateDetail, SwapMode } from '@studiometa/js-toolkit';
 import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
-import morphdom from 'morphdom';
-import { viewTransition as scheduleViewTransition } from '../ViewTransition/scheduler.js';
-import { emitDomUpdate, runWrapped } from '../utils/dom-update.js';
-import { adoptNewScripts, getScripts } from './utils.js';
+import { compileExpression } from '../utils/expression.js';
 
-export interface FetchProps extends BaseProps {
+/**
+ * The lifecycle events a `Fetch` announces.
+ *
+ * A module constant rather than a static, because a static only pays for
+ * itself if a subclass replaces the map, and nothing here does.
+ */
+export const FETCH_EVENTS = Object.freeze({
+  BEFORE_FETCH: 'fetch-before',
+  FETCH: 'fetch-fetch',
+  RESPONSE: 'fetch-response',
+  AFTER_FETCH: 'fetch-after',
+  BEFORE_UPDATE: 'fetch-update-before',
+  UPDATE: 'fetch-update',
+  AFTER_UPDATE: 'fetch-update-after',
+  ERROR: 'fetch-error',
+  ABORT: 'fetch-abort',
+} as const);
+
+/**
+ * The header names the request carries on the component's own behalf.
+ */
+export const HEADER_NAMES = Object.freeze({
+  ACCEPT: 'accept',
+  X_REQUESTED_BY: 'x-requested-by',
+  X_TRIGGERED_BY: 'x-triggered-by',
+  USER_AGENT: 'user-agent',
+} as const);
+
+/**
+ * Read a `RequestInit`'s headers without assuming which form they took.
+ *
+ * `HeadersInit` is a record, a list of tuples, or a `Headers` instance, and
+ * only the record answers to indexing or spreading — a `Headers` has no own
+ * enumerable keys at all. Everything below is built on this one reader, and it
+ * is allocation-light and, unlike `new Headers(init)`, does not throw on a
+ * malformed name: an eligibility check and a history guard must give an
+ * answer, not raise.
+ */
+export function headerEntries(headers: HeadersInit | undefined): Array<[string, string]> {
+  if (!headers) {
+    return [];
+  }
+  if (headers instanceof Headers) {
+    return [...headers.entries()];
+  }
+  if (Array.isArray(headers)) {
+    return headers.map(([name, value]) => [name.toLowerCase(), value]);
+  }
+  return Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value]);
+}
+
+/** The header names a `RequestInit` carries, lowercased. */
+export function headerNames(headers: HeadersInit | undefined): string[] {
+  return headerEntries(headers).map(([name]) => name);
+}
+
+/** One header's value, across the same three forms. Names compare case-insensitively. */
+export function headerValue(headers: HeadersInit | undefined, name: string): string | undefined {
+  const wanted = name.toLowerCase();
+  return headerEntries(headers).find(([candidate]) => candidate === wanted)?.[1];
+}
+
+/**
+ * One parser for every instance: it holds no state between calls.
+ *
+ * Built on first use rather than at module scope, so importing this module
+ * outside a browser — an SSR pass, a build step, a Node script reading the
+ * barrel — does not throw before anything is rendered.
+ */
+let domParser: DOMParser;
+
+/** `response` expression argument names, in `parseResponse()`'s call order. */
+const RESPONSE_ARGUMENTS = ['response', 'url', 'requestInit', 'self'] as const;
+
+/** The context every lifecycle event carries. */
+export interface FetchEventBase {
+  instance: Fetch;
+  url: URL;
+  requestInit: RequestInit;
+}
+
+/** The declared event surface, with the payload each event carries. */
+export type FetchEmits = {
+  'fetch-before': FetchEventBase;
+  'fetch-fetch': FetchEventBase;
+  'fetch-response': FetchEventBase & { response: Response };
+  'fetch-after': FetchEventBase & { content?: unknown; error?: unknown };
+  'fetch-update-before': FetchEventBase & { content: unknown };
+  'fetch-update': FetchEventBase & { fragment?: Document; update?: unknown };
+  'fetch-update-after': FetchEventBase & { fragment?: Document; update?: unknown };
+  'fetch-error': FetchEventBase & { error: Error };
+  'fetch-abort': FetchEventBase & { reason: unknown };
+};
+
+export type FetchProps = BaseProps & {
   $el: HTMLAnchorElement | HTMLFormElement;
   $refs: {
     headers: HTMLInputElement[];
@@ -16,81 +111,43 @@ export interface FetchProps extends BaseProps {
     history: boolean;
     requestInit: RequestInit;
     headers: Record<string, string>;
-    mode: 'replace' | 'prepend' | 'append' | 'morph';
+    mode: SwapMode;
     selector: string;
     response: string;
     viewTransition: boolean;
     src: string;
   };
-}
-
-export type FetchConstructor<T extends Fetch = Fetch> = {
-  new (...args: any[]): T;
-  prototype: Fetch;
-} & Pick<typeof Fetch, keyof typeof Fetch>;
+  $emits: FetchEmits;
+};
 
 /**
- * Fetch class.
- *
- * A self-contained AJAX navigation primitive bound to a link, a form or any element with a
- * `src` option. It resolves the request URL and `requestInit` from that element, fetches the
- * content, then updates the DOM by matching elements from the response against the current
- * page via the `selector` option and swapping them following the `mode` option (`replace`,
- * `prepend`, `append` or `morph`). It optionally pushes browser history, wraps the update in a
- * View Transition and emits a full set of lifecycle events.
+ * A self-contained AJAX navigation primitive bound to a link, a form or any
+ * element with a `src` option. It resolves the request URL and `requestInit`
+ * from that element, fetches the content, then updates the DOM by matching
+ * elements from the response against the current page through the `selector`
+ * option and swapping them following the `mode` option.
  *
  * @link https://ui.studiometa.dev/reference/items/Fetch/
  */
-export class Fetch<T extends BaseProps = BaseProps>
-  extends Base<T & FetchProps>
-  implements BaseInterface
-{
-  /**
-   * Declare the `this.constructor` type
-   * @link https://github.com/microsoft/TypeScript/issues/3841#issuecomment-2381594311
-   */
-  declare ['constructor']: FetchConstructor;
-
-  /**
-   * Fetch events enum.
-   */
-  static FETCH_EVENTS = {
-    BEFORE_FETCH: 'fetch-before',
-    FETCH: 'fetch-fetch',
-    RESPONSE: 'fetch-response',
-    AFTER_FETCH: 'fetch-after',
-    BEFORE_UPDATE: 'fetch-update-before',
-    UPDATE: 'fetch-update',
-    AFTER_UPDATE: 'fetch-update-after',
-    ERROR: 'fetch-error',
-    ABORT: 'fetch-abort',
-  } as const;
-
-  /**
-   * Fetch modes enum.
-   */
-  static FETCH_MODES = {
-    REPLACE: 'replace',
-    PREPEND: 'prepend',
-    APPEND: 'append',
-    MORPH: 'morph',
-  } as const;
-
-  /**
-   * Config.
-   */
+export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T> {
   static config: BaseConfig = {
     name: 'Fetch',
-    emits: [...Object.values(this.FETCH_EVENTS), 'dom-update'],
     refs: ['headers[]'],
     options: {
       history: Boolean,
       mode: {
         type: String,
-        default: this.FETCH_MODES.REPLACE,
+        default: SWAP_MODES.REPLACE,
       },
-      requestInit: Object,
-      headers: Object,
+      requestInit: {
+        type: Object,
+        // Each instance requires its own mutable default object.
+        default: () => ({}),
+      },
+      headers: {
+        type: Object,
+        default: () => ({}),
+      },
       selector: {
         type: String,
         default: '[id]',
@@ -107,91 +164,141 @@ export class Fetch<T extends BaseProps = BaseProps>
     },
   };
 
-  /**
-   * Header names used by the requestInit property.
-   * @internal
-   */
-  __headerNames = {
-    ACCEPT: 'accept',
-    X_REQUESTED_BY: 'x-requested-by',
-    X_TRIGGERED_BY: 'x-triggered-by',
-    USER_AGENT: 'user-agent',
-  } as const;
-
-  /**
-   * DOM Parser to parse the new content to be injected.
-   * @internal
-   */
-  __domParser = new DOMParser();
-
-  /**
-   * Abort controller to prevent multiple simultaneous fetches.
-   * @internal
-   */
+  /** Aborts the request in flight when a new one starts. */
   __abortController = new AbortController();
 
-  /**
-   * Client.
-   * @internal
-   */
-  __client: typeof fetch;
+  __client: typeof fetch | undefined;
 
-  /**
-   * The client used for the fetch request.
-   */
+  /** The client used for the request. Assignable, so a test can inject one. */
   get client(): typeof fetch {
     return (this.__client ??= window.fetch.bind(window));
   }
 
+  set client(client: typeof fetch) {
+    this.__client = client;
+  }
+
   /**
-   * The URL to use for the request.
+   * The URL history should be given for the request in flight, set only when
+   * that request is the element's own navigation.
    *
-   * The base URL is the `src` option when it is set, otherwise the element's own destination:
-   * a form's `action`, a link's `href`, or the current location as a last resort. For a GET
-   * form, the form data is then folded onto that base with each field `set` on top — so an
-   * explicit `src` can carry a fixed query (e.g. `?section_id=…`) that survives alongside the
-   * live form fields, with form fields winning on conflict.
+   * Left unset by a call that named its own URL: `update()` receives that URL
+   * and pushes it, which is what naming a destination asks for — and a
+   * subclass rewriting the URL on its way to `update()` keeps that rewrite.
+   *
+   * @private
    */
-  get url(): URL {
-    const { $el, isForm, isLink, $options } = this;
+  __historyUrl: URL | undefined;
 
-    const url = $options.src
-      ? new URL($options.src, window.location.href)
-      : isForm
-        ? new URL(($el as HTMLFormElement).action)
-        : isLink
-          ? new URL(($el as HTMLAnchorElement).href)
-          : new URL(window.location.href);
+  /**
+   * The element's own destination: a form's `action`, a link's `href`, or the
+   * current location as a last resort.
+   *
+   * @private
+   */
+  get __destination(): string {
+    const { $el, isForm, isLink } = this;
 
-    if (isForm && ($el as HTMLFormElement).method.toLowerCase() === 'get') {
-      // @ts-expect-error URLSearchParams accepts FormData as parameter in the browser.
-      for (const [key, value] of new URLSearchParams(new FormData($el))) {
-        url.searchParams.set(key, value);
+    if (isForm) {
+      return ($el as HTMLFormElement).action;
+    }
+
+    if (isLink) {
+      return ($el as HTMLAnchorElement).href;
+    }
+
+    return window.location.href;
+  }
+
+  /**
+   * Resolve a base URL and fold a GET form's fields onto it.
+   *
+   * Fields replace what the base URL carried for the same name, and several
+   * values under one name are all kept: the first field of a given name
+   * deletes the base's values, and every field then appends. A single `set`
+   * per field would do the first half and silently drop the second, so a
+   * checkbox group or a `<select multiple>` — whose whole purpose is repeated
+   * names — would reach the server with one of its values.
+   *
+   * @private
+   */
+  __resolveUrl(base: string): URL {
+    const { $el, isForm } = this;
+    const url = new URL(base, window.location.href);
+
+    if (!isForm || ($el as HTMLFormElement).method.toLowerCase() !== 'get') {
+      return url;
+    }
+
+    const overridden = new Set<string>();
+
+    for (const [key, value] of new URLSearchParams(
+      new FormData($el as HTMLFormElement) as unknown as Record<string, string>,
+    )) {
+      if (!overridden.has(key)) {
+        url.searchParams.delete(key);
+        overridden.add(key);
       }
+
+      url.searchParams.append(key, value);
     }
 
     return url;
   }
 
   /**
-   * Option for the fetch request.
+   * The URL to use for the request.
+   *
+   * The base URL is the `src` option when it is set, otherwise the element's
+   * own destination. For a GET form the form data is then folded on top of
+   * that base, so an explicit `src` can carry a fixed query that survives
+   * alongside the live form fields, with form fields winning.
    */
+  get url(): URL {
+    return this.__resolveUrl(this.$options.src || this.__destination);
+  }
+
+  /**
+   * The URL the address bar should show, which is not always the one that was
+   * requested.
+   *
+   * The `src` option answers "what to request"; this answers "what this
+   * navigation is". A link may point at a page and fetch a lighter endpoint
+   * that renders the same regions:
+   *
+   * ```html
+   * <a href="/projects/page/2?orderby=title"
+   *   data-component="Fetch"
+   *   data-option-history
+   *   data-option-src="/projects/page/2?orderby=title&sections=listing">2</a>
+   * ```
+   *
+   * Pushing the requested URL there would put `sections=listing` in the
+   * address bar and in anything a visitor copies out of it. So history follows
+   * the element's own destination, folded with the same form data, and equals
+   * the requested URL whenever there is no `src` to diverge from — which is
+   * every element that does not set one.
+   */
+  get historyUrl(): URL {
+    return this.__resolveUrl(this.__destination);
+  }
+
+  /** The options for the request, merged from the element and its refs. */
   get requestInit(): RequestInit {
-    const { __headerNames: headerNames, isForm, $el, $options, $refs } = this;
+    const { isForm, $el, $options, $refs } = this;
     const { requestInit, headers } = $options;
-    const { headers: headerRefs } = $refs;
     const requestedBy = '@studiometa/ui/Fetch';
 
-    const normalizedRequestInit = {
+    const normalizedRequestInit: RequestInit & { headers: Record<string, string> } = {
       ...requestInit,
       headers: {
-        [headerNames.USER_AGENT]: `${navigator.userAgent} ${requestedBy}`,
-        ...requestInit.headers,
+        [HEADER_NAMES.USER_AGENT]: `${navigator.userAgent} ${requestedBy}`,
+        ...(requestInit.headers as Record<string, string> | undefined),
         ...headers,
       },
     };
 
-    for (const header of headerRefs) {
+    for (const header of $refs.headers) {
       if (header.dataset.name && header.value) {
         normalizedRequestInit.headers[header.dataset.name] = header.value;
       }
@@ -209,34 +316,19 @@ export class Fetch<T extends BaseProps = BaseProps>
     return normalizedRequestInit;
   }
 
-  /**
-   * Is the root element a link?
-   */
-  get isLink() {
+  get isLink(): boolean {
     return this.$el instanceof HTMLAnchorElement;
   }
 
-  /**
-   * Is the root element a form?
-   */
-  get isForm() {
+  get isForm(): boolean {
     return this.$el instanceof HTMLFormElement;
   }
 
-  /**
-   * Emit bubbling events.
-   * @inheritdoc
-   */
-  $emit(event: string, ...args: unknown[]) {
-    const e = new CustomEvent(event, { detail: args, bubbles: true });
-    return super.$emit(e, ...args);
-  }
-
-  /**
-   * If root element is a link, prevent its default behavior and fetch its URL.
-   */
-  onClick({ event }: { event: MouseEvent }) {
-    if (!this.isLink) return;
+  /** A plain left click on a link fetches its destination instead of navigating. */
+  onClick(event: MouseEvent): void {
+    if (!this.isLink) {
+      return;
+    }
 
     if (
       !event.ctrlKey &&
@@ -247,47 +339,65 @@ export class Fetch<T extends BaseProps = BaseProps>
       this.$el.target !== '_blank'
     ) {
       event.preventDefault();
-      this.fetch(this.url, this.requestInit);
+      // No URL: this is the element's own navigation, so `historyUrl` decides
+      // what the address bar gets. Passing `this.url` here would look
+      // identical and read as a caller naming a destination, which keeps a
+      // `src` in history.
+      void this.fetch(undefined, this.requestInit);
     }
   }
 
-  /**
-   * If root element is a form, prevent its default behavior on submit and fetch its action
-   * following the `method` attribute and with the form's data.
-   */
-  onSubmit({ event }: { event: SubmitEvent }) {
-    if (!this.isForm) return;
+  /** A form submission fetches its action with the form's own data. */
+  onSubmit(event: SubmitEvent): void {
+    if (!this.isForm) {
+      return;
+    }
 
     if (this.$el.target !== '_blank') {
       event.preventDefault();
-      this.fetch(this.url, this.requestInit);
+      // No URL: this is the element's own navigation, so `historyUrl` decides
+      // what the address bar gets. Passing `this.url` here would look
+      // identical and read as a caller naming a destination, which keeps a
+      // `src` in history.
+      void this.fetch(undefined, this.requestInit);
     }
   }
 
-  /**
-   * Update content on history back/forward navigation.
-   */
-  onWindowPopstate() {
-    if (!this.$options.history) return;
+  /** Update the content on history back/forward navigation. */
+  onWindowPopstate(): void {
+    if (!this.$options.history) {
+      return;
+    }
 
-    this.fetch(new URL(window.location.href), {
+    void this.fetch(new URL(window.location.href), {
       headers: {
-        [this.__headerNames.X_TRIGGERED_BY]: 'popstate',
+        [HEADER_NAMES.X_TRIGGERED_BY]: 'popstate',
       },
     });
   }
 
   /**
-   * Fetch given url.
+   * Fetch the given url.
    *
-   * The `url` parameter is optional and defaults to the {@link url} getter, allowing a bare
-   * `fetch()` call from an event or a decorator. String or relative inputs are coerced into a
-   * `URL` object resolved against the current location so the history and view-transition
-   * paths — which rely on `url.pathname` and `url.searchParams` — stay safe.
+   * Omitting the `url` falls back to the {@link url} getter, so a bare
+   * `fetch()` works from an event handler. Strings are resolved against the
+   * current location, since the history and view-transition paths read
+   * `url.pathname` and `url.searchParams`.
    */
-  async fetch(url: URL | string = this.url, requestInit: RequestInit = {}) {
-    const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
-    const { FETCH_EVENTS } = this.constructor;
+  async fetch(url?: URL | string, requestInit: RequestInit = {}): Promise<void> {
+    // Whether the URL came from the element or from a caller is what decides
+    // where history goes: an explicit `fetch('/somewhere')` is a navigation
+    // the caller named, and substituting the element's own destination for it
+    // would be a surprise.
+    const fromElement = url === undefined;
+    const normalizedUrl = fromElement
+      ? this.url
+      : url instanceof URL
+        ? url
+        : new URL(url, window.location.href);
+
+    this.__historyUrl = fromElement ? this.historyUrl : undefined;
+
     this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url: normalizedUrl, requestInit });
 
     this.__abortController.abort();
@@ -301,17 +411,8 @@ export class Fetch<T extends BaseProps = BaseProps>
       });
     });
     this.__abortController = newController;
-    const init = {
-      ...this.requestInit,
-      ...requestInit,
-      headers: {
-        ...this.requestInit.headers,
-        ...requestInit.headers,
-      },
-      signal: newController.signal,
-    };
+    const init = this.mergeRequestInit(requestInit, newController.signal);
 
-    this.$log('fetch', normalizedUrl, init);
     this.$emit(FETCH_EVENTS.FETCH, { instance: this, url: normalizedUrl, requestInit: init });
 
     try {
@@ -327,14 +428,14 @@ export class Fetch<T extends BaseProps = BaseProps>
         throw new Error(`Fetch failed with status ${response.status}`);
       }
 
-      const content = await this.__parseResponse(response, normalizedUrl, requestInit);
+      const content = await this.parseResponse(response, normalizedUrl, requestInit);
       this.$emit(FETCH_EVENTS.AFTER_FETCH, {
         instance: this,
         url: normalizedUrl,
         requestInit: init,
         content,
       });
-      this.update(normalizedUrl, init, content);
+      void this.update(normalizedUrl, init, content);
     } catch (error) {
       this.$emit(FETCH_EVENTS.AFTER_FETCH, {
         instance: this,
@@ -342,92 +443,111 @@ export class Fetch<T extends BaseProps = BaseProps>
         requestInit: init,
         error,
       });
-      this.error(normalizedUrl, init, error);
+      this.error(normalizedUrl, init, error as Error);
     }
+  }
+
+  /**
+   * The per-call `requestInit` folded onto the element's own, with the abort
+   * signal of the request in flight. Carved out of `fetch()` because
+   * `FetchShopifyPartial` needs the same merge before it decides whether the
+   * request is expressible through its own transport.
+   * @protected
+   */
+  mergeRequestInit(requestInit: RequestInit, signal: AbortSignal): RequestInit {
+    // Merged through `headerEntries()` rather than spread: spreading a
+    // `Headers` instance or a tuple array yields nothing, so a caller's
+    // `fetch(url, { headers: new Headers(…) })` would be dropped on the floor
+    // before the request was ever built.
+    const headers: Record<string, string> = {};
+    for (const [name, value] of headerEntries(this.requestInit.headers)) {
+      headers[name] = value;
+    }
+    for (const [name, value] of headerEntries(requestInit.headers)) {
+      headers[name] = value;
+    }
+
+    return {
+      ...this.requestInit,
+      ...requestInit,
+      headers,
+      signal,
+    };
   }
 
   /**
    * Extract the string content to inject from the raw `Response`.
    *
-   * The default implementation evaluates the `response` option expression, giving it access to
-   * the `response`, `url`, `requestInit` and `self` bindings and to the component instance via
-   * `this`. Subclasses can override this to parse the response with real, typed code instead of
-   * a declarative option string.
+   * The default implementation evaluates the `response` option, giving it the
+   * `response`, `url`, `requestInit` and `self` bindings and the instance as
+   * `this`. Subclasses override this to parse with typed code instead.
    * @protected
    */
-  __parseResponse(
-    response: Response,
-    url: URL,
-    requestInit: RequestInit,
-  ): Promise<string> | string {
-    const fn = new Function(
-      'response',
-      'url',
-      'requestInit',
-      'self',
-      `return ${this.$options.response}`,
-    );
+  parseResponse(response: Response, url: URL, requestInit: RequestInit): Promise<string> | string {
+    const fn = compileExpression(RESPONSE_ARGUMENTS, `return ${this.$options.response}`) as (
+      response: Response,
+      url: URL,
+      requestInit: RequestInit,
+      self: unknown,
+    ) => string;
     return fn.call(this, response, url, requestInit, self);
   }
 
   /**
-   * Update the DOM with new content from the fetched HTML.
-   * @internal
+   * Swap every element of the response whose id matches one on the page.
+   *
+   * `swap()` covers all four modes: this family matches an element by id and
+   * puts the response's element in its place, attributes included, which is
+   * what `self` asks for. The additive modes keep the page element and add to
+   * its children, which is exactly `swap()`'s default.
+   *
+   * Every swap is started before any is awaited, so the whole update is one
+   * synchronous DOM pass and the settling of all of them is awaited once.
+   *
+   * @protected
    */
-  __updateDOM(fragment: Document) {
-    const { FETCH_MODES } = this.constructor;
+  async updateDOM(fragment: Document): Promise<void> {
     const { mode, selector } = this.$options;
+    const isAdditive = mode === SWAP_MODES.APPEND || mode === SWAP_MODES.PREPEND;
+    const swaps: Promise<void>[] = [];
 
     for (const newElement of fragment.querySelectorAll<HTMLElement>(selector)) {
-      const oldElement = newElement.id && document.getElementById(newElement.id);
+      const oldElement = newElement.id ? document.getElementById(newElement.id) : null;
 
       if (!oldElement || oldElement === newElement) {
         continue;
       }
 
-      const oldScripts = getScripts(oldElement);
-
-      switch (mode) {
-        case FETCH_MODES.APPEND:
-          oldElement.append(...newElement.childNodes);
-          adoptNewScripts(getScripts(oldElement), oldScripts);
-          break;
-        case FETCH_MODES.PREPEND:
-          oldElement.prepend(...newElement.childNodes);
-          adoptNewScripts(getScripts(oldElement), oldScripts);
-          break;
-        case FETCH_MODES.MORPH:
-          morphdom(oldElement, newElement);
-          adoptNewScripts(getScripts(oldElement), oldScripts);
-          break;
-        case FETCH_MODES.REPLACE:
-        default:
-          oldElement.replaceWith(newElement);
-          adoptNewScripts(getScripts(newElement), oldScripts);
-          break;
-      }
+      swaps.push(swap(oldElement, newElement, { mode, self: !isAdditive }));
     }
+
+    await Promise.all(swaps);
   }
 
   /**
-   * Dispatch the contents to update to their matching FrameTarget.
+   * Announce the imminent DOM change, then apply it.
    *
-   * After the `fetch-update` event, the bubbling `dom-update` protocol event announces the imminent DOM change. Its `detail.wrap()` lets a listener register a runner — a function receiving the `apply` callback, or a transitioner object exposing `update(mutate)` — that substitutes the default update path and is awaited before the `fetch-update-after` event. Registration is only valid synchronously while the event dispatches and the last `wrap` call wins. With no registered runner and the `viewTransition` option enabled, the update runs through the shared `viewTransition` scheduler — batched and serialized with every other scheduled view transition, falling back to a direct update when the API is unavailable.
+   * The change travels on core's `domUpdate()` protocol, so a listener can
+   * take it over through `detail.wrap()`. The component's own view transition
+   * is registered as the **first** claim on that same protocol rather than as
+   * an `else` branch: `wrap()` keeps the last registration, and the event
+   * starts on this element, so any listener above overrides the default
+   * without the component having to ask whether one exists.
    */
-  async update(url: URL, requestInit: RequestInit, content: string) {
-    const { FETCH_EVENTS } = this.constructor;
-    const { history, viewTransition } = this.$options;
+  async update(url: URL, requestInit: RequestInit, content: string): Promise<void> {
+    const { history, viewTransition: hasViewTransition } = this.$options;
 
-    this.$log('content', url, content);
     this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { instance: this, url, requestInit, content });
 
-    const fragment = this.__domParser.parseFromString(content, 'text/html');
+    domParser ??= new DOMParser();
+    const fragment = domParser.parseFromString(content, 'text/html');
 
     if (history) {
-      if (requestInit?.headers?.[this.__headerNames.X_TRIGGERED_BY] !== 'popstate') {
-        historyPush({ path: url.pathname, search: url.searchParams });
+      if (headerValue(requestInit.headers, HEADER_NAMES.X_TRIGGERED_BY) !== 'popstate') {
+        const target = this.__historyUrl ?? url;
+        historyPush({ path: target.pathname, search: target.searchParams });
       }
-      domScheduler.write(() => {
+      this.$write(() => {
         if (fragment.title) {
           document.title = fragment.title;
         }
@@ -436,37 +556,44 @@ export class Fetch<T extends BaseProps = BaseProps>
 
     this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, fragment });
 
-    const runner = emitDomUpdate(this);
+    const releaseDefault = hasViewTransition
+      ? this.$on(EVENTS.dom.update, (event) => {
+          (event as CustomEvent<DomUpdateDetail>).detail.wrap((apply) => viewTransition(apply));
+        })
+      : null;
 
-    if (runner) {
-      await runWrapped(this, runner, () => this.__updateDOM(fragment));
-    } else if (viewTransition) {
-      await scheduleViewTransition(() => {
-        this.__updateDOM(fragment);
+    try {
+      await domUpdate(this.$el, () => this.updateDOM(fragment), {
+        instance: this,
+        url,
+        requestInit,
+        fragment,
       });
-    } else {
-      this.__updateDOM(fragment);
+    } finally {
+      releaseDefault?.();
     }
 
     this.$emit(FETCH_EVENTS.AFTER_UPDATE, { instance: this, url, requestInit, fragment });
   }
 
-  /**
-   * Handle errors.
-   */
-  error(url: URL, requestInit: RequestInit, error: Error) {
-    if (error.name === 'AbortError') return;
+  /** Announce a failed request, ignoring the abort the component caused. */
+  error(url: URL, requestInit: RequestInit, error: Error): void {
+    if (error.name === 'AbortError') {
+      return;
+    }
 
-    this.$log('error', url, requestInit, error);
-    this.$emit(this.constructor.FETCH_EVENTS.ERROR, { instance: this, url, requestInit, error });
+    this.$emit(FETCH_EVENTS.ERROR, { instance: this, url, requestInit, error });
   }
 
-  /**
-   * Abort the current request.
-   */
-  abort(reason?: any) {
+  /** Abort the request in flight. */
+  abort(reason?: unknown): void {
     this.__abortController.abort(reason);
   }
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Fetch`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default Fetch;

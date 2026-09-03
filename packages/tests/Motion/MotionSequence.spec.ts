@@ -1,9 +1,19 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 // Importing the mock injects the `motion` module double through `provideMotion`
 // before the components resolve it below.
 import { animations, mockAnimate, resetMockMotion } from './mock-motion.js';
-import { MotionSequence } from '@studiometa/ui-motion';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { resetDom, settle } from '@studiometa/js-toolkit/test';
+import { Motion, MotionSequence } from '@studiometa/ui-motion';
 import { h, wait } from '#test-utils';
+
+// The registry mounts every element itself: `config.components` declares the
+// family but does not mount it. So the children have to be registered, and the
+// whole subtree has to be in the document, for the sequence to have anything to
+// sequence.
+registerComponents(Motion, MotionSequence);
+
+afterEach(resetDom);
 
 function motionChild(attributes: Record<string, string>) {
   return h('div', { dataComponent: 'Motion', ...attributes });
@@ -18,9 +28,11 @@ async function mountSequence(
 ) {
   const kids = children.map(motionChild);
   const el = h('div', { dataComponent: 'MotionSequence', ...attributes }, kids);
-  const instance = new MotionSequence(el);
-  await instance.$mount();
+  document.body.append(el);
+  await settle();
   await wait(0);
+
+  const instance = getInstance<MotionSequence>(el, 'MotionSequence')!;
 
   return { el, instance, kids };
 }

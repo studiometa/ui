@@ -1,371 +1,440 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { Dialog } from '@studiometa/ui';
-import { h, mount } from '#test-utils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getInstance, registerComponent, type ExtendableDetail } from '@studiometa/js-toolkit';
+import { captureDiagnostics, resetDom, settle } from '@studiometa/js-toolkit/test';
+import { Transition } from '#private/Transition/Transition.js';
+import { Dialog } from '#private/Dialog/Dialog.js';
 
-/**
- * happy-dom does not implement `HTMLDialogElement.showModal()`/`show()`/
- * `close()` nor a reactive `open` property, so we stub them: `showModal()` and
- * `show()` flip `open` to `true`, `close()` back to `false`.
- */
-function mockDialog(el: HTMLDialogElement) {
-  let isOpen = false;
-  Object.defineProperty(el, 'open', {
-    configurable: true,
-    get: () => isOpen,
-    set: (value: boolean) => {
-      isOpen = value;
-    },
+registerComponent(Dialog);
+
+/** A promise plus the handle that settles it, so a test controls the timing. */
+function deferred() {
+  let resolve!: () => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<void>((done, fail) => {
+    resolve = done;
+    reject = fail;
   });
-  el.showModal = vi.fn(() => {
-    isOpen = true;
-  });
-  el.show = vi.fn(() => {
-    isOpen = true;
-  });
-  el.close = vi.fn(() => {
-    isOpen = false;
-  });
+  return { promise, resolve, reject };
+}
+
+/** The `waitUntil()` of an extendable event, or `null` for any other event. */
+function detailOf(event: Event): ExtendableDetail | null {
+  const { detail } = event as CustomEvent<ExtendableDetail | null>;
+  // `<dialog>` fires its own native `close` event once hidden, queued as a
+  // task, so it lands after the choreography and shares the name. It carries
+  // no detail: every listener on these names has to tell the two apart.
+  return typeof detail?.waitUntil === 'function' ? detail : null;
+}
+
+/** Listeners to release after each test, since they outlive the dialog. */
+const listeners: Array<() => void> = [];
+
+/** Register an extension on one lifecycle event, for the rest of the test. */
+function extend(target: EventTarget, event: 'open' | 'close', extension: unknown): void {
+  function listener(dispatched: Event) {
+    detailOf(dispatched)?.waitUntil(extension as never);
+  }
+  target.addEventListener(event, listener);
+  listeners.push(() => target.removeEventListener(event, listener));
+}
+
+afterEach(async () => {
+  document.documentElement.style.overflow = '';
+  while (listeners.length > 0) {
+    listeners.pop()!();
+  }
+  await resetDom();
+});
+
+function render({ modal = true, withTransition = true } = {}): HTMLDialogElement {
+  const el = document.createElement('dialog');
+  el.setAttribute('data-component', 'Dialog');
+  // A boolean is presence: `String(modal)` would read `true` either way.
+  if (!modal) {
+    el.setAttribute('data-option-no-modal', '');
+  }
+  el.innerHTML = `
+    ${
+      withTransition
+        ? `<div data-component="Transition" data-option-enter-to="is-open" data-option-enter-keep="" data-option-leave-to="is-closed" data-option-leave-keep="">panel</div>`
+        : ''
+    }
+    <button type="button" id="first">first</button>
+    <button type="button" id="last">last</button>
+  `;
+  document.body.append(el);
   return el;
 }
 
-function transitionChild() {
-  return h('div', {
-    dataComponent: 'Transition',
-    dataOptionEnterFrom: 'opacity-0',
-    dataOptionLeaveTo: 'opacity-0',
-    dataOptionLeaveKeep: '',
-    class: 'opacity-0',
+describe('Dialog', () => {
+  it('opens and closes the native dialog', async () => {
+    const el = render();
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+
+    await dialog.open();
+    expect(el.open).toBe(true);
+    expect(document.documentElement.style.overflow).toBe('hidden');
+
+    await dialog.close();
+    expect(el.open).toBe(false);
+    expect(document.documentElement.style.overflow).toBe('');
   });
-}
 
-async function createDialog({ children = 0 } = {}) {
-  const kids = Array.from({ length: children }, transitionChild);
-  const el = h('dialog', { dataComponent: 'Dialog' }, kids) as HTMLDialogElement;
-  mockDialog(el);
-  document.body.append(el);
-  const dialog = new Dialog(el);
-  await mount(dialog);
-  return { dialog, el };
-}
+  it('is a no-op when already in the requested state', async () => {
+    const el = render();
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
 
-afterEach(() => {
-  document.body.innerHTML = '';
-  document.documentElement.style.overflow = '';
+    await dialog.close();
+    expect(el.open).toBe(false);
+    await dialog.open();
+    await dialog.open();
+    expect(el.open).toBe(true);
+  });
+
+  it('runs the transition children on open and close', async () => {
+    const el = render();
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const panel = el.querySelector('[data-component="Transition"]') as HTMLElement;
+
+    expect(dialog.transitions).toHaveLength(1);
+    expect(getInstance(panel, 'Transition')!).toBeInstanceOf(Transition);
+
+    await dialog.open();
+    expect(panel.classList.contains('is-open')).toBe(true);
+
+    await dialog.close();
+    expect(panel.classList.contains('is-open')).toBe(false);
+    expect(panel.classList.contains('is-closed')).toBe(true);
+  });
+
+  it('picks up a transition child inserted after mount', async () => {
+    const el = render({ withTransition: false });
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    expect(dialog.transitions).toHaveLength(0);
+
+    const added = document.createElement('div');
+    added.setAttribute('data-component', 'Transition');
+    added.setAttribute('data-option-enter-to', 'is-open');
+    added.setAttribute('data-option-enter-keep', '');
+    el.prepend(added);
+    await settle();
+
+    expect(dialog.transitions).toHaveLength(1);
+    await dialog.open();
+    expect(added.classList.contains('is-open')).toBe(true);
+  });
+
+  it('closes through the component when Escape cancels the native dialog', async () => {
+    const el = render();
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const panel = el.querySelector('[data-component="Transition"]') as HTMLElement;
+
+    await dialog.open();
+    expect(el.open).toBe(true);
+
+    const close = vi.spyOn(dialog, 'close');
+    el.dispatchEvent(new Event('cancel', { cancelable: true }));
+    expect(close).toHaveBeenCalledOnce();
+    await close.mock.results[0].value;
+
+    expect(el.open).toBe(false);
+    expect(panel.classList.contains('is-closed')).toBe(true);
+    expect(document.documentElement.style.overflow).toBe('');
+  });
+
+  it('traps the tab key on the non-modal path only', async () => {
+    const el = render({ modal: false, withTransition: false });
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    await dialog.open();
+
+    const last = el.querySelector('#last') as HTMLButtonElement;
+    const first = el.querySelector('#first') as HTMLButtonElement;
+    last.focus();
+    expect(document.activeElement).toBe(last);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', cancelable: true }));
+    expect(document.activeElement).toBe(first);
+  });
+
+  it('releases the keydown listener on unmount', async () => {
+    const el = render({ modal: false, withTransition: false });
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    await dialog.open();
+
+    const last = el.querySelector('#last') as HTMLButtonElement;
+    last.focus();
+    dialog.$unmount();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', cancelable: true }));
+    expect(document.activeElement).toBe(last);
+  });
 });
 
-describe('The Dialog component', () => {
-  it('should be closed on instantiation', async () => {
-    const { dialog } = await createDialog();
-    expect(dialog.dialog.open).toBe(false);
-  });
+describe('Dialog — the extendable open and close events', () => {
+  it('dispatches both events bubbling, with a `waitUntil()` in the detail', async () => {
+    const el = render({ withTransition: false });
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const seen: CustomEvent[] = [];
+    function listener(event: Event) {
+      if (detailOf(event)) {
+        seen.push(event as CustomEvent);
+      }
+    }
+    // On the document: the events have to bubble out of the dialog for a
+    // component that is not a declared child to hear them.
+    document.addEventListener('open', listener);
+    document.addEventListener('close', listener);
+    listeners.push(
+      () => document.removeEventListener('open', listener),
+      () => document.removeEventListener('close', listener),
+    );
 
-  it('should open with `showModal()` on the modal path', async () => {
-    const { dialog, el } = await createDialog();
-    await dialog.open();
-    expect(el.showModal).toHaveBeenCalledTimes(1);
-    expect(el.show).not.toHaveBeenCalled();
-    expect(dialog.dialog.open).toBe(true);
-  });
-
-  it('should open with `show()` on the non-modal path', async () => {
-    const { dialog, el } = await createDialog();
-    dialog.$options.modal = false;
-    await dialog.open();
-    expect(el.show).toHaveBeenCalledTimes(1);
-    expect(el.showModal).not.toHaveBeenCalled();
-  });
-
-  it('should close the native dialog', async () => {
-    const { dialog, el } = await createDialog();
     await dialog.open();
     await dialog.close();
-    expect(el.close).toHaveBeenCalledTimes(1);
-    expect(dialog.dialog.open).toBe(false);
+
+    expect(seen.map(({ type }) => type)).toEqual(['open', 'close']);
+    for (const event of seen) {
+      expect(event.target).toBe(el);
+      expect(event.bubbles).toBe(true);
+      expect(event.detail.waitUntil).toBeTypeOf('function');
+    }
   });
 
-  it('should be a no-op to open an already open dialog', async () => {
-    const { dialog, el } = await createDialog();
-    await dialog.open();
-    await dialog.open();
-    expect(el.showModal).toHaveBeenCalledTimes(1);
-  });
-
-  it('should be a no-op to close an already closed dialog', async () => {
-    const { dialog, el } = await createDialog();
-    await dialog.close();
-    expect(el.close).not.toHaveBeenCalled();
-  });
-
-  it('should toggle between open and close', async () => {
-    const { dialog, el } = await createDialog();
-    await dialog.toggle();
-    expect(el.showModal).toHaveBeenCalledTimes(1);
-    expect(dialog.dialog.open).toBe(true);
-    await dialog.toggle();
-    expect(el.close).toHaveBeenCalledTimes(1);
-    expect(dialog.dialog.open).toBe(false);
-  });
-
-  it('should emit `open` and `close` events', async () => {
-    const { dialog } = await createDialog();
-    const openFn = vi.fn();
-    const closeFn = vi.fn();
-    dialog.$on('open', openFn);
-    dialog.$on('close', closeFn);
+  it('holds the native dialog open until a `close` extension settles', async () => {
+    const el = render({ withTransition: false });
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const gate = deferred();
+    extend(el, 'close', gate.promise);
 
     await dialog.open();
-    expect(openFn).toHaveBeenCalledTimes(1);
-    await dialog.close();
-    expect(closeFn).toHaveBeenCalledTimes(1);
-  });
+    const closing = dialog.close();
 
-  it('should lock and release the scroll when the option is on', async () => {
-    const { dialog } = await createDialog();
-    expect(document.documentElement.style.overflow).toBe('');
-    await dialog.open();
+    // The extension is pending: the dialog is still painted and still owns
+    // the page scroll.
+    await Promise.resolve();
+    expect(el.open).toBe(true);
     expect(document.documentElement.style.overflow).toBe('hidden');
-    await dialog.close();
-    expect(document.documentElement.style.overflow).toBe('');
-  });
 
-  it('should not touch the scroll when the option is off', async () => {
-    const { dialog } = await createDialog();
-    dialog.$options.scrollLock = false;
-    await dialog.open();
-    expect(document.documentElement.style.overflow).toBe('');
-    await dialog.close();
-  });
-
-  it('should fan `enter()`/`leave()` out to every transition child', async () => {
-    const { dialog } = await createDialog({ children: 2 });
-    expect(dialog.transitions).toHaveLength(2);
-
-    const enters = dialog.transitions.map((transition) =>
-      vi.spyOn(transition, 'enter').mockResolvedValue(),
-    );
-    const leaves = dialog.transitions.map((transition) =>
-      vi.spyOn(transition, 'leave').mockResolvedValue(),
-    );
-
-    await dialog.open();
-    for (const enter of enters) expect(enter).toHaveBeenCalledTimes(1);
-    for (const leave of leaves) expect(leave).not.toHaveBeenCalled();
-
-    await dialog.close();
-    for (const leave of leaves) expect(leave).toHaveBeenCalledTimes(1);
-  });
-
-  it('should leave transitions BEFORE hiding the native dialog', async () => {
-    const { dialog, el } = await createDialog({ children: 1 });
-    const [transition] = dialog.transitions;
-    const order: string[] = [];
-    vi.spyOn(transition, 'leave').mockImplementation(async () => {
-      order.push('leave');
-    });
-    (el.close as ReturnType<typeof vi.fn>).mockImplementation(() => {
-      order.push('close');
-      Object.defineProperty(el, 'open', { configurable: true, value: false });
-    });
-
-    await dialog.open();
-    await dialog.close();
-    expect(order).toEqual(['leave', 'close']);
-  });
-
-  it('should await promises registered with `waitUntil` on the close event before hiding', async () => {
-    const { dialog, el } = await createDialog();
-    let release: () => void;
-    const extension = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    dialog.$on('close', (event) => {
-      (event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>).detail.waitUntil(
-        extension,
-      );
-    });
-
-    await dialog.open();
-    const closing = dialog.close();
-    // The extension is pending: the native dialog must still be open.
-    await Promise.resolve();
-    expect(el.close).not.toHaveBeenCalled();
-
-    release();
+    gate.resolve();
     await closing;
-    expect(el.close).toHaveBeenCalledTimes(1);
+    expect(el.open).toBe(false);
+    expect(document.documentElement.style.overflow).toBe('');
   });
 
-  it('should await promises registered with `waitUntil` on the open event', async () => {
-    const { dialog } = await createDialog();
-    let release: () => void;
-    const extension = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    dialog.$on('open', (event) => {
-      (event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>).detail.waitUntil(
-        extension,
-      );
-    });
+  it('keeps `open()` pending on an `open` extension without delaying the paint', async () => {
+    const el = render({ withTransition: false });
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const gate = deferred();
+    extend(el, 'open', gate.promise);
 
     let opened = false;
     const opening = dialog.open().then(() => {
       opened = true;
     });
-    // The native dialog shows immediately; only the promise resolution waits.
-    expect(dialog.dialog.open).toBe(true);
+
+    // The native dialog shows immediately; only the promise waits.
+    expect(el.open).toBe(true);
     await Promise.resolve();
     expect(opened).toBe(false);
 
-    release();
+    gate.resolve();
     await opening;
     expect(opened).toBe(true);
   });
 
-  it('should bubble the `open` and `close` events up the DOM tree', async () => {
-    // The dialog is a child of `document.body`: an ancestor listener receives
-    // the bubbling lifecycle events.
-    const { dialog } = await createDialog();
-    const openFn = vi.fn();
-    const closeFn = vi.fn();
-    document.body.addEventListener('open', openFn);
-    document.body.addEventListener('close', closeFn);
+  it('accepts a function and an object with a method named for the event', async () => {
+    const el = render({ withTransition: false });
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const called: string[] = [];
+    const fn = vi.fn(async () => {
+      called.push('function');
+    });
+    // The duck-typed method has the name of the *event*, which is what
+    // `emitExtendable()` looks up.
+    const extension = {
+      open: vi.fn(async () => {
+        called.push('open');
+      }),
+      close: vi.fn(async () => {
+        called.push('close');
+      }),
+    };
+    extend(el, 'open', fn);
+    extend(el, 'open', extension);
+    extend(el, 'close', extension);
 
     await dialog.open();
-    expect(openFn).toHaveBeenCalledTimes(1);
-    await dialog.close();
-    expect(closeFn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(extension.open).toHaveBeenCalledTimes(1);
+    expect(extension.close).not.toHaveBeenCalled();
 
-    document.body.removeEventListener('open', openFn);
-    document.body.removeEventListener('close', closeFn);
+    await dialog.close();
+    expect(extension.close).toHaveBeenCalledTimes(1);
+    expect(called).toEqual(['function', 'open', 'close']);
   });
 
-  it('should follow the lifecycle of a transitioner given to `waitUntil`', async () => {
-    const { dialog, el } = await createDialog();
-    let releaseEnter: () => void;
-    let releaseLeave: () => void;
-    const transitioner = {
-      enter: vi.fn(
-        () =>
-          new Promise<void>((resolve) => {
-            releaseEnter = resolve;
-          }),
-      ),
-      leave: vi.fn(
-        () =>
-          new Promise<void>((resolve) => {
-            releaseLeave = resolve;
-          }),
-      ),
-    };
-    dialog.$on('open', (event) => {
-      (event as CustomEvent<{ waitUntil(x: unknown): void }>).detail.waitUntil(transitioner);
-    });
-    dialog.$on('close', (event) => {
-      (event as CustomEvent<{ waitUntil(x: unknown): void }>).detail.waitUntil(transitioner);
-    });
+  it('awaits every registration, not just the last one', async () => {
+    const el = render({ withTransition: false });
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const first = deferred();
+    const second = deferred();
+    extend(el, 'close', first.promise);
+    extend(document.body, 'close', second.promise);
 
-    let opened = false;
-    const opening = dialog.open().then(() => {
-      opened = true;
-    });
-    // `enter()` was called on open and its pending promise holds `open()`.
-    expect(transitioner.enter).toHaveBeenCalledTimes(1);
-    expect(transitioner.leave).not.toHaveBeenCalled();
-    await Promise.resolve();
-    expect(opened).toBe(false);
-
-    releaseEnter();
-    await opening;
-    expect(opened).toBe(true);
-
+    await dialog.open();
     const closing = dialog.close();
-    // `leave()` was called on close and the native dialog is still open.
-    expect(transitioner.leave).toHaveBeenCalledTimes(1);
+
+    first.resolve();
     await Promise.resolve();
-    expect(el.close).not.toHaveBeenCalled();
+    // One of the two is still pending: the dialog must not hide yet.
+    expect(el.open).toBe(true);
 
-    releaseLeave();
+    second.resolve();
     await closing;
-    expect(el.close).toHaveBeenCalledTimes(1);
+    expect(el.open).toBe(false);
   });
 
-  it('should complete the choreography when a transitioner method rejects', async () => {
-    const { dialog, el } = await createDialog();
-    const warn = vi.fn();
-    Object.defineProperty(dialog, '$warn', { configurable: true, get: () => warn });
-    const error = new Error('transitioner failed');
-    const transitioner = {
-      enter: () => Promise.resolve(),
-      leave: () => Promise.reject(error),
-    };
-    dialog.$on('close', (event) => {
-      (event as CustomEvent<{ waitUntil(x: unknown): void }>).detail.waitUntil(transitioner);
-    });
+  it('runs the extensions alongside the declared transition children', async () => {
+    const el = render();
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const panel = el.querySelector('[data-component="Transition"]') as HTMLElement;
+    const gate = deferred();
+    extend(el, 'close', gate.promise);
+
+    await dialog.open();
+    const closing = dialog.close();
+
+    // The child ran without waiting for the extension — the two are
+    // concurrent, not sequential — and the dialog waits for both.
+    await settle();
+    expect(panel.classList.contains('is-closed')).toBe(true);
+    expect(el.open).toBe(true);
+
+    gate.resolve();
+    await closing;
+    expect(el.open).toBe(false);
+  });
+
+  it('never receives a registration from a declared transition child', async () => {
+    const el = render();
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const panel = el.querySelector('[data-component="Transition"]') as HTMLElement;
+    const heard = vi.fn();
+    // The events are dispatched on the dialog and bubble upwards: a child
+    // cannot hear them, so it cannot register itself a second time.
+    panel.addEventListener('open', heard);
+    panel.addEventListener('close', heard);
+
+    await dialog.open();
+    await dialog.close();
+    expect(heard).not.toHaveBeenCalled();
+  });
+
+  it('completes the choreography when an extension fails', async () => {
+    const el = render({ withTransition: false });
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const log = captureDiagnostics();
+    extend(el, 'close', Promise.reject(new Error('extension failed')));
 
     await dialog.open();
     await dialog.close();
 
-    // The rejection is reported, and the dialog still hides and cleans up.
-    expect(warn).toHaveBeenCalledWith('An extension of the `close` event rejected.', error);
-    expect(el.close).toHaveBeenCalledTimes(1);
+    expect(log.codes).toContain('callback.extendable-event-extension-failed');
+    log.stop();
+
+    // A failing extension must never leave the dialog painted and the page
+    // locked.
+    expect(el.open).toBe(false);
     expect(document.documentElement.style.overflow).toBe('');
   });
 
-  it('should ignore and warn on `waitUntil` calls after the event dispatched', async () => {
-    const { dialog, el } = await createDialog();
-    // `$warn` is a prototype getter: shadow it on the instance to observe calls.
-    const warn = vi.fn();
-    Object.defineProperty(dialog, '$warn', { configurable: true, get: () => warn });
-    let waitUntil: (promise: Promise<unknown>) => void;
-    dialog.$on('close', (event) => {
-      ({ waitUntil } = (
-        event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>
-      ).detail);
-    });
+  it('ignores and reports a registration made after the event dispatched', async () => {
+    const el = render({ withTransition: false });
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const log = captureDiagnostics();
+    const gate = deferred();
+    let waitUntil: ExtendableDetail['waitUntil'] | undefined;
+    function listener(event: Event) {
+      waitUntil = detailOf(event)?.waitUntil ?? waitUntil;
+    }
+    el.addEventListener('close', listener);
+    listeners.push(() => el.removeEventListener('close', listener));
 
     await dialog.open();
     await dialog.close();
-    expect(el.close).toHaveBeenCalledTimes(1);
 
-    // A late registration must not wedge anything and must warn.
-    waitUntil(new Promise(() => {}));
-    expect(warn).toHaveBeenCalledTimes(1);
+    // The dialog already closed; a late hold on it is refused.
+    waitUntil?.(gate.promise);
+    expect(log.codes).toContain('protocol.late-registration');
+    log.stop();
+    gate.resolve();
   });
 
-  it('should complete the closing choreography when an extension rejects', async () => {
-    const { dialog, el } = await createDialog();
-    const warn = vi.fn();
-    Object.defineProperty(dialog, '$warn', { configurable: true, get: () => warn });
-    dialog.$on('close', (event) => {
-      (event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>).detail.waitUntil(
-        Promise.reject(new Error('extension failed')),
-      );
-    });
+  it('shares one choreography between concurrent `close()` calls', async () => {
+    const el = render({ withTransition: false });
+    await settle();
+    const dialog = getInstance<Dialog>(el, 'Dialog')!;
+    const gate = deferred();
+    const extension = vi.fn(() => gate.promise);
+    extend(el, 'close', extension);
 
     await dialog.open();
-    await dialog.close();
+    const first = dialog.close();
+    const second = dialog.close();
 
-    // The rejection is reported, and the dialog still hides and cleans up.
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(el.close).toHaveBeenCalledTimes(1);
+    gate.resolve();
+    await Promise.all([first, second]);
+
+    // One `close` event, one extension run, one native close.
+    expect(extension).toHaveBeenCalledTimes(1);
+    expect(el.open).toBe(false);
+  });
+});
+
+describe('Dialog — the page scroll', () => {
+  it('keeps the page locked while a second dialog is still open', async () => {
+    const first = render({ withTransition: false });
+    const second = render({ withTransition: false });
+    await settle();
+
+    await getInstance<Dialog>(first, 'Dialog')!.open();
+    await getInstance<Dialog>(second, 'Dialog')!.open();
+    expect(document.documentElement.style.overflow).toBe('hidden');
+
+    await getInstance<Dialog>(second, 'Dialog')!.close();
+
+    // The first one is still open: the page is not its to give back.
+    expect(document.documentElement.style.overflow).toBe('hidden');
+
+    await getInstance<Dialog>(first, 'Dialog')!.close();
     expect(document.documentElement.style.overflow).toBe('');
   });
 
-  it('should let concurrent close calls await the same run', async () => {
-    const { dialog, el } = await createDialog();
-    const closeFn = vi.fn();
-    dialog.$on('close', (event) => {
-      closeFn();
-      (event as CustomEvent<{ waitUntil(promise: Promise<unknown>): void }>).detail.waitUntil(
-        Promise.resolve(),
-      );
-    });
+  it('gives the scroll back when a dialog is unmounted while open', async () => {
+    const el = render({ withTransition: false });
+    await settle();
+    await getInstance<Dialog>(el, 'Dialog')!.open();
+    expect(document.documentElement.style.overflow).toBe('hidden');
 
-    await dialog.open();
-    await Promise.all([dialog.close(), dialog.close()]);
+    el.remove();
+    await settle();
 
-    // One choreography: one close event, one native hide.
-    expect(closeFn).toHaveBeenCalledTimes(1);
-    expect(el.close).toHaveBeenCalledTimes(1);
+    expect(document.documentElement.style.overflow).toBe('');
   });
 });

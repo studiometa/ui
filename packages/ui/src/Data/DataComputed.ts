@@ -1,16 +1,14 @@
-import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { DataBind } from './DataBind.js';
-import type { DataBindProps } from './DataBind.js';
-import type { DataValue } from './DataScope.js';
-import { getCallback } from './utils.js';
+import type { BaseConfig } from '@studiometa/js-toolkit';
+import { DataBind, type DataBindOptions, type DataBindProps } from './DataBind.js';
+import { getCallback, type DataExpression } from './expression.js';
+import type { DataValue } from './registry.js';
 
-export interface DataComputedProps extends DataBindProps {
-  $options: {
-    compute: string;
-  } & DataBindProps['$options'];
-}
+export type DataComputedProps = DataBindProps & {
+  $options: DataBindOptions & { compute: string };
+};
 
-export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<DataComputedProps & T> {
+/** A read-only binding computed from its group's value and data. */
+export class DataComputed extends DataBind<DataComputedProps> {
   static config: BaseConfig = {
     name: 'DataComputed',
     options: {
@@ -18,26 +16,22 @@ export class DataComputed<T extends BaseProps = BaseProps> extends DataBind<Data
     },
   };
 
-  /**
-   * @protected
-   */
-  get __supportsMutations() {
+  /** @protected */
+  override get supportsMutations(): boolean {
     return false;
   }
 
-  get compute() {
-    const { group, compute } = this.$options;
-    return getCallback(group, `return ${compute};`);
+  get compute(): DataExpression {
+    return getCallback(`return ${this.$options.compute};`);
   }
 
-  set(value: DataValue) {
+  override set(value: DataValue): void {
     let newValue = value;
 
     try {
-      newValue = this.compute(value, this.target, this.$data);
+      newValue = this.compute(value, this.target, this.$data) as DataValue;
     } catch (error) {
-      // @todo better handling of errors?
-      console.error('Failed', error);
+      console.error('[data] Compute expression failed:', error);
     }
 
     super.set(newValue, false);

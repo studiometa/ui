@@ -1,126 +1,80 @@
-import { it, describe, vi, expect, beforeAll, afterEach, beforeEach } from 'vitest';
-import { FigureTwicpics } from '@studiometa/ui';
-import {
-  wait,
-  hConnected as h,
-  mockIsIntersecting,
-  intersectionObserverBeforeAllCallback,
-  intersectionObserverAfterEachCallback,
-  unmockImageLoad,
-  mockImageLoad,
-  mockImageLoadError,
-  resizeWindow,
-} from '#test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { resetDom, settle } from '@studiometa/js-toolkit/test';
+import { FigureTwicpics } from '#private/Figure/FigureTwicpics.js';
 
-beforeAll(() => {
-  intersectionObserverBeforeAllCallback();
-});
+registerComponents(FigureTwicpics);
 
-beforeEach(() => {
-  mockImageLoad();
-});
+afterEach(resetDom);
 
-afterEach(() => {
-  intersectionObserverAfterEachCallback();
-  unmockImageLoad();
-});
-
-async function getContext({ figureAttributes = {} } = {}) {
-  const img = h('img', {
-    dataRef: 'img',
-    src: 'data:image/svg+xml,<svg viewport="0 0 1 1" width="1" height="1"></svg>',
-    dataSrc: 'https://localhost/image.jpg',
-  });
-  const figure = h('figure', { dataOptionLazy: '', ...figureAttributes }, [img]);
-
-  const widthSpy = vi.spyOn(img, 'offsetWidth', 'get');
-  widthSpy.mockImplementation(() => 100);
-  const heightSpy = vi.spyOn(img, 'offsetHeight', 'get');
-  heightSpy.mockImplementation(() => 100);
-
-  const instance = new FigureTwicpics(figure);
-  mockIsIntersecting(figure, true);
-  await wait(100);
-
-  return {
-    img,
-    figure,
-    instance,
-    setSize({ width, height }: { width?: number; height?: number } = {}) {
-      if (width) {
-        widthSpy.mockImplementation(() => width);
-      }
-      if (height) {
-        heightSpy.mockImplementation(() => height);
-      }
-    },
-  };
+// `lazy` disabled for the same reason as the FigureShopify spec: `formatSrc`
+// is a pure function under test, and mounting must not fetch a fabricated URL.
+async function render(
+  attributes = '',
+  src = 'https://example.com/original/photo.jpg',
+): Promise<FigureTwicpics> {
+  const root = document.createElement('div');
+  root.innerHTML = `
+    <div data-component="FigureTwicpics" data-option-no-lazy ${attributes}>
+      <img data-ref="img" style="width:100px;height:200px" data-src="${src}" />
+    </div>`;
+  document.body.append(root);
+  await settle();
+  return getInstance<FigureTwicpics>(root.firstElementChild, 'FigureTwicpics')!;
 }
 
-describe('The FigureTwicpics component', () => {
-  it('should override the original image', async () => {
-    const { instance, setSize } = await getContext();
-    expect(instance.original).toBe('https://localhost/image.jpg?twic=v1/cover=100x100');
-    setSize({ width: 200, height: 200 });
-    expect(instance.original).toBe('https://localhost/image.jpg?twic=v1/cover=200x200');
+describe('FigureTwicpics', () => {
+  it('builds a twic query from the measured size and the default cover mode', async () => {
+    const instance = await render('data-option-step="50"');
+
+    const url = new URL(instance.formatSrc('https://example.com/original/photo.jpg'));
+
+    expect(url.searchParams.get('twic')).toBe(
+      `v1/cover=${100 * window.devicePixelRatio}x${200 * window.devicePixelRatio}`,
+    );
   });
 
-  it('should update the image source on resize', async () => {
-    const { instance, setSize, img } = await getContext();
-    expect(instance.original).toBe('https://localhost/image.jpg?twic=v1/cover=100x100');
-    expect(img.src).toBe('https://localhost/image.jpg?twic=v1/cover=100x100');
-    setSize({ width: 200, height: 200 });
-    await resizeWindow();
-    expect(instance.original).toBe('https://localhost/image.jpg?twic=v1/cover=200x200');
-    expect(img.src).toBe('https://localhost/image.jpg?twic=v1/cover=200x200');
+  it('includes the transform ahead of the mode when given', async () => {
+    const instance = await render('data-option-transform="my-transform" data-option-step="50"');
+
+    const url = new URL(instance.formatSrc('https://example.com/original/photo.jpg'));
+
+    expect(url.searchParams.get('twic')).toBe(
+      `v1/my-transform/cover=${100 * window.devicePixelRatio}x${200 * window.devicePixelRatio}`,
+    );
   });
 
-  it('should set the domain and path', async () => {
-    const { instance } = await getContext({
-      figureAttributes: {
-        dataOptionDomain: 'twic.pics',
-        dataOptionPath: 'path',
-      }
-    });
+  it('defaults the domain to the source host', async () => {
+    const instance = await render();
 
-    expect(instance.$options.domain).toBe('twic.pics');
-    expect(instance.domain).toBe('twic.pics');
-    expect(instance.$options.path).toBe('path');
-    expect(instance.path).toBe('path');
-    expect(instance.original).toBe('https://twic.pics/path/image.jpg?twic=v1/cover=100x100');
-
-    instance.$el.removeAttribute('data-option-domain');
-
-    expect(instance.$options.domain).toBe('');
-    expect(instance.domain).toBe('localhost');
-    expect(instance.original).toBe('https://localhost/path/image.jpg?twic=v1/cover=100x100');
+    expect(instance.domain).toBe('example.com');
   });
 
-  it('should warn and keep the source when the image fails to load on resize', async () => {
-    const { instance, setSize, img } = await getContext();
-    const src = img.src;
-    const warnSpy = vi.spyOn(instance, '$warn', 'get');
+  it('uses the domain option over the source host when given', async () => {
+    const instance = await render('data-option-domain="cdn.twic.pics"');
 
-    unmockImageLoad();
-    mockImageLoadError();
-    setSize({ width: 200, height: 200 });
-    await resizeWindow();
+    const url = new URL(instance.formatSrc('https://example.com/original/photo.jpg'));
 
-    expect(warnSpy).toHaveBeenCalledOnce();
-    expect(img.src).toBe(src);
+    expect(url.host).toBe('cdn.twic.pics');
   });
 
-  it('should take the device pixel ratio into account', async () => {
-    const { instance } = await getContext();
+  it('prefixes the pathname with the path option, without a doubled slash', async () => {
+    const instance = await render('data-option-path="/my/base/"');
 
-    window.devicePixelRatio = 2;
+    expect(instance.path).toBe('my/base');
+    const url = new URL(instance.formatSrc('https://example.com/original/photo.jpg'));
+    expect(url.pathname).toBe('/my/base/original/photo.jpg');
+  });
 
-    expect(instance.devicePixelRatio).toBe(2);
-    expect(instance.original).toBe('https://localhost/image.jpg?twic=v1/cover=200x200');
-
-    instance.$el.setAttribute('data-option-no-dpr', '');
+  it('reports device pixel ratio 1 when dpr is disabled', async () => {
+    const instance = await render('data-option-no-dpr');
 
     expect(instance.devicePixelRatio).toBe(1);
-    expect(instance.original).toBe('https://localhost/image.jpg?twic=v1/cover=100x100');
+  });
+
+  it('reports the real device pixel ratio by default', async () => {
+    const instance = await render();
+
+    expect(instance.devicePixelRatio).toBe(window.devicePixelRatio);
   });
 });

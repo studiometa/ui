@@ -17,12 +17,12 @@ Menu                     data-component="Menu"
 
 ## Parts
 
-| Part | Selector | Required | Role |
-| --- | --- | --- | --- |
-| Root | `data-component="Menu"` | Yes | Wires the button to the list, handles the `click` / `hover` mode, keyboard and click-outside. |
-| Button | `data-component="MenuBtn"` | Yes | The trigger. `aria-controls` is set automatically. |
-| List | `data-component="MenuList"` | Yes | The collapsible panel. Extends [`Transition`](../Transition/), manages focus and `aria-hidden`. |
-| Submenu | `data-component="Menu"` | Optional | A `Menu` nested inside a `MenuList` for multi-level navigation. |
+| Part    | Selector                    | Required | Role                                                                                            |
+| ------- | --------------------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| Root    | `data-component="Menu"`     | Yes      | Wires the button to the list, handles the `click` / `hover` mode, keyboard and click-outside.   |
+| Button  | `data-component="MenuBtn"`  | Yes      | The trigger. `aria-controls` is set automatically.                                              |
+| List    | `data-component="MenuList"` | Yes      | The collapsible panel. Extends [`Transition`](../Transition/), manages focus and `aria-hidden`. |
+| Submenu | `data-component="Menu"`     | Optional | A `Menu` nested inside a `MenuList` for multi-level navigation.                                 |
 
 ::: warning HTML structure
 A `Menu` must have **exactly one** direct `MenuBtn` and **one** direct `MenuList`. For deeper menus, nest additional `Menu` components inside the parent's `MenuList`.

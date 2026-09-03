@@ -65,7 +65,7 @@ Customizes each panel's content. Defaults to `item.content`. The current `item` 
 
 ## Rendered state
 
-The template renders `type="button"`, the trigger/panel IDs, `aria-controls`, `aria-expanded`, `aria-labelledby`, and initial `hidden` state. It does not add `role="region"` by default. JavaScript preserves the rendered IDs and takes ownership of `aria-expanded`, `hidden`, and temporary `inert` state after mounting.
+The template renders `type="button"`, the trigger/panel IDs, `aria-controls`, `aria-expanded`, `disabled` for disabled items, `aria-labelledby`, and initial `hidden` state. It does not add `role="region"` by default. JavaScript preserves the rendered IDs and takes ownership of `aria-expanded`, `hidden`, and temporary `inert` state after mounting.
 
 ```twig
 {% include '@ui/Disclosure/Disclosure.twig' with {

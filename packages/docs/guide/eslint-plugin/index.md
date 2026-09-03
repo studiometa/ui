@@ -64,7 +64,7 @@ Add the plugin to your `.oxlintrc.json` using the `"ui"` name to get the `ui/` r
 
 ### `ui/prefer-ui-component`
 
-Detects classes whose name matches a component exported by `@studiometa/ui` (such as `Menu`, `Accordion`, or `Modal`) that extend `Base` directly. Suggests importing and extending the existing component instead.
+Detects classes whose name matches a component exported by `@studiometa/ui` (such as `Menu`, `Disclosure`, or `Dialog`) that extend `Base` directly. Suggests importing and extending the existing component instead.
 
 ```js
 // ❌ Incorrect

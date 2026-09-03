@@ -1,0 +1,17 @@
+<div class="h-48"></div>
+
+{% include '@ui/Marquee/Marquee.twig' with {
+  content: 'Hello world !',
+  repeat: 4,
+  attr: {
+    data_option_speed: 0.05,
+    data_option_sensitivity: 0.0005
+  },
+  track_attr: {
+    style: {
+      transform: 'translateX(calc(var(--marquee-progress, 0) * -100%)) skewX(clamp(-15deg, calc(var(--marquee-velocity, 0) * 3deg), 15deg))'
+    }
+  }
+} %}
+
+<div class="h-screen"></div>

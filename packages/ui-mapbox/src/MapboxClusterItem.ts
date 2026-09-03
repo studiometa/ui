@@ -8,6 +8,12 @@ export interface MapboxClusterItemProps extends BaseProps {
     lngLat: [number, number];
     properties: Record<string, unknown>;
   };
+  /**
+   * The item shares the map family's error channel.
+   */
+  $emits: {
+    'map-error': { error: unknown };
+  };
 }
 
 /**
@@ -50,7 +56,6 @@ export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
    */
   static config: BaseConfig = {
     name: 'MapboxClusterItem',
-    emits: ['map-error'],
     options: {
       id: String,
       lngLat: {
@@ -68,7 +73,7 @@ export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
    * The parent `MapboxCluster` resolved at mount, cached so the item can still
    * reach it on destroy.
    *
-   * `destroyed()` runs *after* the element has been detached from the DOM (e.g.
+   * `unmounted()` runs *after* the element has been detached from the DOM (e.g.
    * a `Fetch` list swap), and a `$closest` lookup on a disconnected node returns
    * nothing — which would leave the removed item registered and its feature
    * stuck on the map. Caching the reference keeps the unregister path working.
@@ -177,15 +182,19 @@ export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
   }
 
   /**
-   * Destroyed hook: unregister from the cached cluster, even if the element has
+   * Unmounted hook: unregister from the cached cluster, even if the element has
    * already been detached from the DOM, and drop any pending retry subscription.
    */
-  destroyed() {
+  unmounted() {
     try {
       this.__cluster?.unregister(this);
     } catch (err) {
-      this.$warn(err);
-      this.$emit('map-error', err);
+      this.$error(
+        'mapbox-cluster-item.unregister-failed',
+        'Unregistering from the cluster threw.',
+        err,
+      );
+      this.$emit('map-error', { error: err });
     }
 
     this.__cluster = undefined;

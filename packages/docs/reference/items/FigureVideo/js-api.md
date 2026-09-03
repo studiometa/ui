@@ -5,7 +5,7 @@ outline: deep
 
 # JS API
 
-The `FigureVideo` component extends the [`Transition` primitive](/reference/items/Transition/) and implements the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html). It inherits their respective APIs. See both linked references.
+The `FigureVideo` component mixes in the [`Transition` behavior](/reference/items/Transition/) and declares the `in-view` [mount strategy](/guide/autoloading/#mount-strategies), so it mounts when it crosses into the viewport and unmounts when it leaves. It inherits the transition API; see that reference too. Adjust the margin with `data-mount="in-view:<rootMargin>"`.
 
 ## Options
 

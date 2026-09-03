@@ -1,6 +1,8 @@
-import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { getInstanceFromElement } from '@studiometa/js-toolkit/getInstanceFromElement';
-import { Transition } from '../Transition/index.js';
+import { Base } from '@studiometa/js-toolkit/Base';
+import { getInstances } from '@studiometa/js-toolkit/getInstances';
+import type { BaseConfig, BaseProps, ChildrenCollection } from '@studiometa/js-toolkit';
+import type { TransitionOptions } from '@studiometa/js-toolkit/utils';
+import { withTransition, type TransitionProps } from '../decorators/withTransition.js';
 
 const FOCUSABLE_ELEMENTS = [
   'a[href]:not([inert])',
@@ -16,83 +18,74 @@ const FOCUSABLE_ELEMENTS = [
   '[tabindex]:not([inert])',
 ].join(',');
 
-export interface MenuListProps extends BaseProps {
-  $children: {
-    // eslint-disable-next-line no-use-before-define
-    MenuList: MenuList[];
+export type MenuListProps = BaseProps &
+  TransitionProps & {
+    $emits: TransitionProps['$emits'] & {
+      'items-open': void;
+      'items-close': void;
+    };
   };
+
+/** The nearest `MenuList` instance at or above `el`, or `null`. */
+function closestMenuList(el: Element | null): MenuList | null {
+  let node = el;
+  while (node) {
+    const instance = getInstances<MenuList>(node).find((i) => i.$config.name === 'MenuList');
+    if (instance) {
+      return instance;
+    }
+    node = node.parentElement;
+  }
+  return null;
 }
 
 /**
- * MenuList class.
+ * The collapsible list child of a `Menu`. It mixes in `withTransition` to
+ * animate its reveal, exposes `open()`, `close()` and `toggle()`, keeps
+ * `aria-hidden` and the `tabindex` of its focusable elements in sync with
+ * its visibility, recursively closes nested lists, and emits
+ * `items-open`/`items-close`.
  *
- * The collapsible list child of a `Menu`, extending `Transition` to animate its
- * reveal. It exposes `open()`, `close()` and `toggle()`, keeps `aria-hidden`
- * and the `tabindex` of its focusable elements in sync with its visibility,
- * recursively closes nested lists, and emits `items-open`, `items-close` and
- * `items-mouseleave`.
+ * A menu left open must stay visible, so `enterKeep`/`leaveKeep` are forced
+ * rather than read from the markup. `$options` is a read-only view over
+ * attributes with no override point, so the override lands on
+ * `transitionOptions`, the declaration the mixin reads.
+ *
+ * @link https://ui.studiometa.dev/reference/items/Menu/
  */
-export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & MenuListProps> {
-  /**
-   * Config.
-   */
+export class MenuList<T extends BaseProps = BaseProps> extends withTransition(Base)<
+  MenuListProps & T
+> {
   static config: BaseConfig = {
-    ...Transition.config,
     name: 'MenuList',
-    emits: ['items-open', 'items-close', 'items-mouseleave'],
-    components: {
-      MenuList,
-    },
+    components: { MenuList },
   };
 
-  /**
-   * Are the menu items visible?
-   */
   isOpen = false;
 
-  /**
-   * Wether the component is hovered.
-   */
   isHover = false;
 
-  /**
-   * Override `Transition` options.
-   */
-  // @ts-ignore
-  get $options() {
-    const options = super.$options;
+  __lists: ChildrenCollection<MenuList> = this.$watchChildren<MenuList>('MenuList');
 
-    options.leaveKeep = true;
-    options.enterKeep = true;
-
-    return options;
+  /** Keep both end states, whatever the markup asked for. */
+  get transitionOptions(): TransitionOptions {
+    return { ...super.transitionOptions, enterKeep: true, leaveKeep: true };
   }
 
-  /**
-   * Update tab indexes on mount.
-   */
-  mounted() {
+  mounted(): void {
     this.__updateTabIndexes('close');
   }
 
-  /**
-   * Set hover state.
-   */
-  onMouseenter() {
+  onMouseenter(): void {
     this.isHover = true;
   }
 
-  /**
-   * Unset hover state.
-   */
-  onMouseleave() {
+  onMouseleave(): void {
     this.isHover = false;
   }
 
-  /**
-   * Display the menu items.
-   */
-  open() {
+  /** Display the menu items. */
+  open(): void {
     if (this.isOpen) {
       return;
     }
@@ -100,21 +93,18 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
     this.__updateTabIndexes('open');
     this.$el.setAttribute('aria-hidden', 'false');
     this.isOpen = true;
-    this.enter();
+    void this.enter();
     this.$emit('items-open');
   }
 
-  /**
-   * Hide the menu items.
-   */
-  close() {
+  /** Hide the menu items. */
+  close(): void {
     if (!this.isOpen) {
       return;
     }
 
-    // Close child menu items.
-    for (const menuList of this.$children.MenuList) {
-      menuList.close();
+    for (const list of this.__lists) {
+      list.close();
     }
 
     if (
@@ -127,52 +117,31 @@ export class MenuList<T extends BaseProps = BaseProps> extends Transition<T & Me
     this.$el.setAttribute('aria-hidden', 'true');
     this.__updateTabIndexes('close');
     this.isOpen = false;
-    this.leave();
+    void this.leave();
     this.$emit('items-close');
   }
 
-  /**
-   * Toggle the menu items.
-   */
-  // @ts-expect-error MenuList.toggle() must override Transition.toggle().
-  toggle() {
+  toggle(): Promise<void> {
     if (this.isOpen) {
       this.close();
     } else {
       this.open();
     }
+    return Promise.resolve();
   }
 
-  /**
-   * Update `tabindex` attribute of children focusable elements.
-   * @private
-   */
-  __updateTabIndexes(mode: 'open' | 'close' = 'open') {
-    for (const item of Array.from(this.$el.querySelectorAll(FOCUSABLE_ELEMENTS))) {
-      if (this.__isFocusableElementFromThisMenuList(item as HTMLElement)) {
-        if (mode === 'close') {
-          item.setAttribute('tabindex', '-1');
-        } else {
-          item.removeAttribute('tabindex');
-        }
+  /** Set the `tabindex` of this list's own focusable elements, nested lists excluded. */
+  /** @private */
+  __updateTabIndexes(mode: 'open' | 'close' = 'open'): void {
+    for (const item of this.$el.querySelectorAll<HTMLElement>(FOCUSABLE_ELEMENTS)) {
+      if (closestMenuList(item.parentElement) !== this) {
+        continue;
+      }
+      if (mode === 'close') {
+        item.setAttribute('tabindex', '-1');
+      } else {
+        item.removeAttribute('tabindex');
       }
     }
-  }
-
-  /**
-   * Filter out items which are inside a child `MenuList` instance.
-   * @private
-   */
-  __isFocusableElementFromThisMenuList(item: HTMLElement): boolean {
-    let ancestor = item.parentElement;
-    let maybeInstance =null
-
-    // @ts-ignore
-    while (!maybeInstance) {
-      maybeInstance = getInstanceFromElement(ancestor, this.constructor);
-      ancestor = ancestor.parentElement;
-    }
-
-    return maybeInstance === this;
   }
 }

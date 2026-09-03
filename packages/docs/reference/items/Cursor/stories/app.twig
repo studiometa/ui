@@ -1,6 +1,18 @@
 <div class="fixed inset-0 flex flex-col gap-4 items-center justify-center opacity-70">
   <span class="pointer-events-none">Move your mouse or touch your screen</span>
   <a href="#" class="underline">Try to hover this link</a>
+  <span data-cursor-shrink class="px-4 py-2 bg-gray-200 rounded">Or this one, to shrink it</span>
+  <span data-cursor-invert class="px-4 py-2 bg-black text-white rounded">
+    Or this one, for a state of your own
+  </span>
+  <span class="pointer-events-none text-sm">Hold the pointer down anywhere to see the press state</span>
 </div>
 
-{% include '@ui/Cursor/Cursor.twig' %}
+{% include '@ui/Cursor/Cursor.twig' with {
+  damping: 0.2,
+  states: {
+    'a, button': 'grow',
+    '[data-cursor-shrink]': 'shrink',
+    '[data-cursor-invert]': 'invert'
+  }
+} only %}

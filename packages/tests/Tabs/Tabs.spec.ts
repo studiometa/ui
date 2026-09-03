@@ -1,94 +1,240 @@
-import { describe, it, expect, vi } from 'vitest';
-import { Tabs } from '@studiometa/ui';
-import { h } from '#test-utils';
-import template from './Tabs.template.html.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { captureDiagnostics, mount, resetDom, waitFor } from '@studiometa/js-toolkit/test';
+import { Tabs } from '#private/Tabs/Tabs.js';
+import { Transition } from '#private/Transition/Transition.js';
 
-async function getContext() {
-  const tmp = h('div');
-  tmp.innerHTML = template;
-  const root = tmp.firstElementChild as HTMLElement;
-  const tabs = new Tabs(root);
-  await tabs.$mount();
-  return {
-    root,
-    tabs,
-  };
+registerComponents(Tabs, Transition);
+
+afterEach(resetDom);
+
+interface TabsOptions {
+  /** Extra attributes on the root element, e.g. `data-option-activation="manual"`. */
+  attributes?: string;
+  /** Extra attributes on the `list` ref, e.g. `aria-orientation="vertical"`. */
+  listAttributes?: string;
+  /** Give one panel a `Transition` child. */
+  transitionOn?: number;
+  /** Which tab the markup says is selected. */
+  selected?: number;
+  /** Drop the `aria-label` naming the tab list. */
+  unnamed?: boolean;
+  /** Drop the `list` ref entirely. */
+  withoutList?: boolean;
+}
+
+function tabsHtml({
+  attributes = '',
+  listAttributes = '',
+  transitionOn = -1,
+  selected = 0,
+  unnamed = false,
+  withoutList = false,
+}: TabsOptions = {}): string {
+  const indexes = [0, 1, 2];
+  const buttons = indexes
+    .map(
+      (index) =>
+        `<button data-ref="btn[]" aria-selected="${index === selected}">Tab ${index}</button>`,
+    )
+    .join('');
+  const panels = indexes
+    .map(
+      (index) =>
+        `<div data-ref="content[]"${index === selected ? '' : ' hidden'}>Panel ${index}${
+          index === transitionOn
+            ? '<div data-component="Transition" data-option-enter-from="opacity-0" data-option-enter-to="opacity-100" data-option-leave-to="opacity-0"></div>'
+            : ''
+        }</div>`,
+    )
+    .join('');
+  const list = withoutList
+    ? buttons
+    : `<div data-ref="list"${unnamed ? '' : ' aria-label="Sections"'}${listAttributes ? ` ${listAttributes}` : ''}>${buttons}</div>`;
+
+  return `<div data-component="Tabs"${attributes ? ` ${attributes}` : ''}>${list}${panels}</div>`;
+}
+
+async function render(options: TabsOptions = {}): Promise<Tabs> {
+  const root = await mount(tabsHtml(options));
+  return getInstance<Tabs>(root.firstElementChild as HTMLElement, 'Tabs')!;
 }
 
 describe('The Tabs component', () => {
-  it('should emit `enable` and `disable` events.', async () => {
-    const { tabs } = await getContext();
-    const enableFn = vi.fn();
-    const disableFn = vi.fn();
-    tabs.$on('enable', enableFn);
-    tabs.$on('disable', disableFn);
+  it('emits `tabs-enable` and `tabs-disable` with the tab, its panel and its index.', async () => {
+    const tabs = await render();
+    const enabled = vi.fn();
+    const disabled = vi.fn();
+    tabs.$on('tabs-enable', enabled);
+    tabs.$on('tabs-disable', disabled);
 
-    tabs.$refs.btn[1].click();
-    expect(enableFn).toHaveBeenCalledTimes(1);
-    expect(disableFn).toHaveBeenCalledTimes(1);
+    await tabs.goTo(1);
+    expect(enabled).toHaveBeenCalledTimes(1);
+    expect(disabled).toHaveBeenCalledTimes(1);
 
-    tabs.$refs.btn[0].click();
-    expect(enableFn).toHaveBeenCalledTimes(2);
-    expect(enableFn.mock.calls[1][0].detail[0]).toEqual({
+    await tabs.goTo(0);
+    expect(enabled).toHaveBeenCalledTimes(2);
+    // `$emit()` takes one payload object, and the enabled/disabled state is the
+    // name of the event rather than a flag inside that payload.
+    expect(enabled.mock.calls[1][0].detail).toEqual({
+      index: 0,
       btn: tabs.$refs.btn[0],
       content: tabs.$refs.content[0],
-      isEnabled: true,
     });
-    expect(disableFn).toHaveBeenCalledTimes(2);
-    expect(disableFn.mock.calls[1][0].detail[0]).toEqual({
+    expect(disabled.mock.calls[1][0].detail).toEqual({
+      index: 1,
       btn: tabs.$refs.btn[1],
       content: tabs.$refs.content[1],
-      isEnabled: false,
     });
-    tabs.$off('enable');
-    tabs.$off('disable');
   });
 
-  it('should update aria-attributes when opening and closing.', async () => {
-    const { tabs } = await getContext();
-    tabs.$refs.btn[0].click();
-    expect(tabs.$refs.content[1].getAttribute('aria-hidden')).toBe('true');
+  it('wires the tablist, tab and tabpanel roles and their relationships.', async () => {
+    const tabs = await render();
+    const { list, btn, content } = tabs.$refs;
+
+    expect(list.getAttribute('role')).toBe('tablist');
+
+    for (const [index, tab] of btn.entries()) {
+      const panel = content[index];
+      expect(tab.getAttribute('role')).toBe('tab');
+      expect(panel.getAttribute('role')).toBe('tabpanel');
+      expect(tab.id).not.toBe('');
+      expect(panel.id).not.toBe('');
+      expect(tab.getAttribute('aria-controls')).toBe(panel.id);
+      expect(panel.getAttribute('aria-labelledby')).toBe(tab.id);
+      expect(panel.tabIndex).toBe(0);
+    }
+  });
+
+  it('moves `aria-selected`, `hidden` and the roving tabindex on activation.', async () => {
+    const tabs = await render();
+    const { btn, content } = tabs.$refs;
+
+    expect(btn.map((tab) => tab.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false']);
+    expect(btn.map((tab) => tab.tabIndex)).toEqual([0, -1, -1]);
+    expect(content.map((panel) => panel.hidden)).toEqual([false, true, true]);
+
+    btn[1].click();
+
+    // `hidden` both hides the panel and removes it from the accessibility tree
+    // and the tab order, which is what the pattern asks for. `aria-hidden`
+    // beside it would be redundant, so none is written.
+    expect(btn.map((tab) => tab.getAttribute('aria-selected'))).toEqual(['false', 'true', 'false']);
+    expect(btn.map((tab) => tab.tabIndex)).toEqual([-1, 0, -1]);
+    expect(content.map((panel) => panel.hidden)).toEqual([true, false, true]);
+    expect(content.some((panel) => panel.hasAttribute('aria-hidden'))).toBe(false);
+  });
+
+  it('starts on the tab the markup marks selected.', async () => {
+    const tabs = await render({ selected: 2 });
+    expect(tabs.currentIndex).toBe(2);
+    expect(tabs.$refs.content.map((panel) => panel.hidden)).toEqual([true, true, false]);
+  });
+
+  it('moves the focus with the arrow keys, wrapping at both ends.', async () => {
+    const tabs = await render();
+    const { btn } = tabs.$refs;
+    btn[0].focus();
+
+    press(btn[0], 'ArrowRight');
+    expect(document.activeElement).toBe(btn[1]);
+    expect(tabs.currentIndex).toBe(1);
+
+    press(btn[1], 'ArrowRight');
+    press(btn[2], 'ArrowRight');
+    expect(document.activeElement).toBe(btn[0]);
+    expect(tabs.currentIndex).toBe(0);
+
+    press(btn[0], 'ArrowLeft');
+    expect(document.activeElement).toBe(btn[2]);
+    expect(tabs.currentIndex).toBe(2);
+  });
+
+  it('jumps to the first and last tab with Home and End.', async () => {
+    const tabs = await render();
+    const { btn } = tabs.$refs;
+
+    press(btn[0], 'End');
+    expect(tabs.currentIndex).toBe(2);
+    press(btn[2], 'Home');
+    expect(tabs.currentIndex).toBe(0);
+  });
+
+  it('follows `aria-orientation` for which arrows navigate.', async () => {
+    const tabs = await render({ listAttributes: 'aria-orientation="vertical"' });
+    const { btn } = tabs.$refs;
+
+    expect(tabs.orientation).toBe('vertical');
+
+    const horizontal = press(btn[0], 'ArrowRight');
+    expect(tabs.currentIndex).toBe(0);
+    expect(horizontal.defaultPrevented).toBe(false);
+
+    press(btn[0], 'ArrowDown');
+    expect(tabs.currentIndex).toBe(1);
+  });
+
+  it('moves the focus without selecting under manual activation.', async () => {
+    const tabs = await render({ attributes: 'data-option-activation="manual"' });
+    const { btn } = tabs.$refs;
+    btn[0].focus();
+
+    press(btn[0], 'ArrowRight');
+    expect(document.activeElement).toBe(btn[1]);
+    expect(tabs.currentIndex).toBe(0);
+    // The roving tabindex follows the focus, so tabbing back returns where the
+    // user left off even though the selection has not moved.
+    expect(btn.map((tab) => tab.tabIndex)).toEqual([-1, 0, -1]);
+
+    btn[1].click();
+    expect(tabs.currentIndex).toBe(1);
+  });
+
+  it('runs a panel’s transitions instead of the removed `styles` option.', async () => {
+    const tabs = await render({ transitionOn: 1 });
+    const [transition] = tabs.$query<Transition>('Transition');
+
+    const done = tabs.goTo(1);
+    await waitFor(() => transition.$el.classList.contains('opacity-100'));
+    await done;
+    expect(tabs.$refs.content[1].hidden).toBe(false);
+
+    // The leaving panel stays visible until its transition resolves.
+    const leaving = tabs.goTo(0);
+    expect(tabs.$refs.content[1].hidden).toBe(false);
+    expect(tabs.$refs.content[1].inert).toBe(true);
+    await leaving;
+    expect(tabs.$refs.content[1].hidden).toBe(true);
+    expect(tabs.$refs.content[1].inert).toBe(false);
+  });
+
+  it('stops reacting once unmounted.', async () => {
+    const tabs = await render();
+    const enabled = vi.fn();
+    tabs.$on('tabs-enable', enabled);
+
     tabs.$refs.btn[1].click();
-    expect(tabs.$refs.content[1].getAttribute('aria-hidden')).toBe('false');
-  });
+    expect(enabled).toHaveBeenCalledTimes(1);
 
-  it('should not be working when destroyed.', async () => {
-    const { tabs } = await getContext();
-    const fn = vi.fn();
-    tabs.$on('enable', fn);
-    tabs.$refs.btn[1].click();
-    expect(fn).toHaveBeenCalledTimes(1);
-    await tabs.$destroy();
+    tabs.$unmount();
     tabs.$refs.btn[0].click();
-    expect(fn).toHaveBeenCalledTimes(1);
+    expect(enabled).toHaveBeenCalledTimes(1);
   });
 
-  it('should add and remove classes and/or styles', async () => {
-    const { tabs } = await getContext();
+  it('reports a tab list with no accessible name, and a missing `list` ref.', async () => {
+    const diagnostics = captureDiagnostics();
+    await render({ unnamed: true });
+    expect(diagnostics.codes).toContain('tabs.unnamed-tablist');
 
-    await tabs.enableItem(tabs.items[1]);
-    await tabs.disableItem(tabs.items[0]);
-    expect(tabs.$refs.btn[1].getAttribute('style')).toBe('border-bottom-color: #fff;');
-    expect(tabs.$refs.content[1].getAttribute('style')).toBe(null);
-    await tabs.enableItem(tabs.items[2]);
-    await tabs.disableItem(tabs.items[1]);
-    expect(tabs.$refs.btn[1].getAttribute('style')).toBe(null);
-    expect(tabs.$refs.content[1].getAttribute('style')).toBe(
-      'position: absolute; opacity: 0; pointer-events: none; visibility: hidden;',
-    );
-  });
-
-  it.skip('should work without styles definition', async () => {
-    const { tabs } = await getContext();
-    tabs.$options.styles = { btn: {}, content: {} };
-    tabs.$refs.btn[1].setAttribute('style', '');
-    tabs.$refs.content[1].setAttribute('style', '');
-    await tabs.enableItem(tabs.items[1]);
-    expect(tabs.$refs.btn[1].getAttribute('style')).toBe(null);
-    expect(tabs.$refs.content[1].getAttribute('style')).toMatchInlineSnapshot(`"position: absolute; opacity: 0; pointer-events: none; visibility: hidden;"`);
-    await tabs.enableItem(tabs.items[2]);
-    await tabs.disableItem(tabs.items[1]);
-    expect(tabs.$refs.btn[1].getAttribute('style')).toBe(null);
-    expect(tabs.$refs.content[1].getAttribute('style')).toBe(null);
+    await render({ withoutList: true });
+    expect(diagnostics.codes).toContain('tabs.missing-list-ref');
+    diagnostics.stop();
   });
 });
+
+/** Dispatch a real `keydown` and hand the event back so a test can read it. */
+function press(target: HTMLElement, key: string): KeyboardEvent {
+  const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+  target.dispatchEvent(event);
+  return event;
+}

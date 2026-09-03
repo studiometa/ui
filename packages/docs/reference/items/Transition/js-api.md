@@ -135,34 +135,13 @@ Configures whether or not the `leaveTo` classes should be kept on the target ele
 ```
 <!-- prettier-ignore-end -->
 
-### `group`
-
-- Type: `string`
-- Default: `''`
-
-Defines a group to sync `enter` and `leave` transition between multiple instances.
-
-<!-- prettier-ignore-start -->
-```html {2,7}
-<div data-component="Transition"
-  data-option-group="my-group">
-  ...
-</div>
-
-<div data-component="Transition"
-  data-option-group="my-group">
-  ...
-</div>
-```
-<!-- prettier-ignore-end -->
-
 ## Properties
 
 ### `target`
 
-- Type: `HTMLElement`
+- Type: `HTMLElement | HTMLElement[]`
 
-A getter returning the target element for the transition. Defaults to the components root element `this.$el`.
+A getter returning the target of the transition: one element, or several which transition as one gesture. Defaults to the component's root element `this.$el`.
 
 ### `state`
 
@@ -175,15 +154,17 @@ The current state of the transition. Will be `'entering'` when an enter transiti
 
 ### `enter`
 
+- Signature: `enter(target?: HTMLElement | HTMLElement[]): Promise<void>`
 - Returns `Promise<void>`
 
-Trigger the enter transition.
+Trigger the enter transition. Pass a target to transition something other than the `target` getter's value.
 
 ### `leave`
 
+- Signature: `leave(target?: HTMLElement | HTMLElement[]): Promise<void>`
 - Returns `Promise<void>`
 
-Trigger the leave transition.
+Trigger the leave transition. Pass a target to transition something other than the `target` getter's value.
 
 ### `toggle`
 
@@ -201,10 +182,6 @@ await transition.toggle(); // Triggers enter again
 ```
 
 ## Events
-
-### `transition-toggle`
-
-Emitted when the toggle method is called.
 
 ### `transition-enter`
 

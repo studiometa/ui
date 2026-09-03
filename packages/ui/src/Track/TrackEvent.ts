@@ -1,101 +1,32 @@
+import { useInView } from '@studiometa/js-toolkit/useInView';
+import type { Unsubscribe } from '@studiometa/js-toolkit';
 import { throttle } from '@studiometa/js-toolkit/utils/throttle';
+import { MODIFIERS, parseEventDefinition, type Modifier } from '../utils/event-modifiers.js';
 import type { AbstractTrack } from './AbstractTrack.js';
 
-export type Modifier =
-  | 'prevent'
-  | 'stop'
-  | 'once'
-  | 'passive'
-  | 'capture'
-  | 'debounce'
-  | 'throttle'
-  | 'detail';
+/** What a bare `debounce` means here. `Action` reads the same modifier at 100. */
+const DEFAULT_DEBOUNCE_DELAY = 300;
 
-export interface ParsedEvent {
-  event: string;
-  modifiers: Modifier[];
-  debounceDelay: number;
-  throttleDelay: number;
-}
+/** What a bare `throttle` means: about one frame. */
+const DEFAULT_THROTTLE_DELAY = 16;
 
-/**
- * Parse an event definition string into its components.
- *
- * @link https://ui.studiometa.dev/reference/items/Track/js-api.html#event-modifiers
- *
- * @param eventDefinition - Event string like "click.prevent.stop" or "input.debounce300"
- * @returns Parsed event with modifiers and timing delays
- *
- * @example
- * ```ts
- * parseEventDefinition('click.prevent.stop');
- * // { event: 'click', modifiers: ['prevent', 'stop'], debounceDelay: 0, throttleDelay: 0 }
- *
- * parseEventDefinition('input.debounce500');
- * // { event: 'input', modifiers: ['debounce'], debounceDelay: 500, throttleDelay: 0 }
- * ```
- */
-export function parseEventDefinition(eventDefinition: string): ParsedEvent {
-  const [event, ...rawModifiers] = eventDefinition.split('.');
+/** Synthetic event names that do not map to DOM events. */
+export const TRACK_PSEUDO_EVENTS = {
+  /** Fires once the component and its context have settled. */
+  MOUNTED: 'mounted',
+  /** Fires when the element enters the viewport. */
+  VIEW: 'view',
+} as const;
 
-  let debounceDelay = 0;
-  let throttleDelay = 0;
-  const modifiers: Modifier[] = [];
-
-  for (const mod of rawModifiers) {
-    if (mod.startsWith('debounce')) {
-      modifiers.push('debounce');
-      debounceDelay = parseInt(mod.replace('debounce', '') || '300', 10);
-    } else if (mod.startsWith('throttle')) {
-      modifiers.push('throttle');
-      throttleDelay = parseInt(mod.replace('throttle', '') || '16', 10);
-    } else {
-      modifiers.push(mod as Modifier);
-    }
-  }
-
-  return { event, modifiers, debounceDelay, throttleDelay };
-}
-
-/**
- * Resolve `$detail.*` placeholders in tracking data with values from event.detail.
- *
- * @link https://ui.studiometa.dev/reference/items/Track/js-api.html#custom-events
- *
- * @param data - The tracking data object
- * @param detail - The event.detail object from a CustomEvent
- * @returns New object with placeholders resolved
- *
- * @example
- * ```ts
- * resolveDetailPlaceholders(
- *   { event: 'form_submit', email: '$detail.email', name: '$detail.user.name' },
- *   { email: 'test@example.com', user: { name: 'John' } }
- * );
- * // { event: 'form_submit', email: 'test@example.com', name: 'John' }
- * ```
- */
-export function resolveDetailPlaceholders(
-  data: Record<string, unknown>,
-  detail: Record<string, unknown>,
-): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(data)) {
-    result[key] = resolveDetailValue(value, detail);
-  }
-
-  return result;
-}
+export type TrackPseudoEvent = (typeof TRACK_PSEUDO_EVENTS)[keyof typeof TRACK_PSEUDO_EVENTS];
 
 /**
  * Resolve `$detail.*` placeholders in an arbitrary value, descending into both
- * objects and arrays so placeholders nested inside arrays (e.g. GA4
- * `ecommerce.items`) are resolved too.
+ * objects and arrays so nested payload placeholders are resolved too.
  */
 function resolveDetailValue(value: unknown, detail: Record<string, unknown>): unknown {
   if (typeof value === 'string' && value.startsWith('$detail.')) {
-    return getNestedValue(detail, value.slice(8)); // Remove '$detail.'
+    return getNestedValue(detail, value.slice(8));
   }
 
   if (Array.isArray(value)) {
@@ -109,9 +40,19 @@ function resolveDetailValue(value: unknown, detail: Record<string, unknown>): un
   return value;
 }
 
-/**
- * Get a nested value from an object using a dot-separated path.
- */
+export function resolveDetailPlaceholders(
+  data: Record<string, unknown>,
+  detail: Record<string, unknown>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(data)) {
+    result[key] = resolveDetailValue(value, detail);
+  }
+
+  return result;
+}
+
 function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   return path.split('.').reduce((current: unknown, key) => {
     if (current && typeof current === 'object') {
@@ -121,79 +62,69 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   }, obj);
 }
 
-/**
- * TrackEvent handles DOM event binding for the Track component.
- *
- * @link https://ui.studiometa.dev/reference/items/Track/js-api.html#events
- */
+/** One bound `data-track:<event>` declaration. */
 export class TrackEvent {
   track: AbstractTrack;
   event: string;
-  modifiers: Modifier[];
+  modifiers: ReadonlySet<Modifier>;
   data: Record<string, unknown>;
   debounceDelay: number;
   throttleDelay: number;
 
-  private handler: (event?: Event) => void;
-  private observer?: IntersectionObserver;
-  private detached = false;
-  private debounceTimer?: ReturnType<typeof setTimeout>;
+  /** The handler with its timing modifiers applied. */
+  __handler: (event?: Event) => void;
+
+  /** Cleared by the release, checked before every dispatch. */
+  __isAttached = false;
+
+  __debounceTimer?: ReturnType<typeof setTimeout>;
 
   constructor(track: AbstractTrack, eventDefinition: string, data: Record<string, unknown>) {
     this.track = track;
     this.data = data;
 
-    const { event, modifiers, debounceDelay, throttleDelay } =
-      parseEventDefinition(eventDefinition);
+    const { event, modifiers, delay } = parseEventDefinition(eventDefinition);
     this.event = event;
     this.modifiers = modifiers;
-    this.debounceDelay = debounceDelay;
-    this.throttleDelay = throttleDelay;
+    this.debounceDelay = delay(MODIFIERS.DEBOUNCE) ?? DEFAULT_DEBOUNCE_DELAY;
+    this.throttleDelay = delay(MODIFIERS.THROTTLE) ?? DEFAULT_THROTTLE_DELAY;
 
-    // Build the handler with timing modifiers. The debounce timer is owned by
-    // the instance (rather than js-toolkit's non-cancelable `debounce`) so it
-    // can be cleared on detach; otherwise a pending debounced dispatch could
-    // fire in a later lifecycle after a destroy/remount, once the `detached`
-    // guard has been reset. `throttle` schedules no deferred callback, so it
-    // needs no cancellation.
-    const dispatch = (event?: Event) => this.handleEvent(event);
+    // Own the debounce timer so release can cancel it.
+    const dispatch = (domEvent?: Event) => this.handleEvent(domEvent);
 
-    if (modifiers.includes('debounce')) {
-      this.handler = (event?: Event) => {
-        clearTimeout(this.debounceTimer);
-        this.debounceTimer = setTimeout(() => dispatch(event), debounceDelay);
+    if (modifiers.has(MODIFIERS.DEBOUNCE)) {
+      this.__handler = (domEvent?: Event) => {
+        clearTimeout(this.__debounceTimer);
+        this.__debounceTimer = setTimeout(() => dispatch(domEvent), this.debounceDelay);
       };
-    } else if (modifiers.includes('throttle')) {
-      this.handler = throttle(dispatch, throttleDelay) as (event?: Event) => void;
+    } else if (modifiers.has(MODIFIERS.THROTTLE)) {
+      this.__handler = throttle(dispatch, this.throttleDelay);
     } else {
-      this.handler = dispatch;
+      this.__handler = dispatch;
     }
   }
 
   /**
-   * Handle the DOM event and dispatch tracking data.
+   * Resolve the payload for this event and hand it to the component.
    */
-  handleEvent(event?: Event) {
+  handleEvent(event?: Event): void {
     const { modifiers, data, track } = this;
 
-    // A debounced/throttled handler — or a queued IntersectionObserver
-    // notification — can still fire after the component is destroyed; bail out
-    // so we never dispatch from a detached instance.
-    if (this.detached) {
+    // Ignore work queued before the binding was released.
+    if (!this.__isAttached) {
       return;
     }
 
-    if (event && modifiers.includes('prevent')) {
+    if (event && modifiers.has(MODIFIERS.PREVENT)) {
       event.preventDefault();
     }
 
-    if (event && modifiers.includes('stop')) {
+    if (event && modifiers.has(MODIFIERS.STOP)) {
       event.stopPropagation();
     }
 
-    // Handle CustomEvent detail merging. A non-object detail (0, false, '', …)
-    // is treated as an empty detail so placeholders resolve to `undefined`
-    // instead of leaking the literal `$detail.*` string.
+    // A non-object detail (0, false, '', …) is an empty detail, so placeholders
+    // resolve to `undefined` instead of leaking the literal `$detail.*` string.
     let finalData = data;
     if (event instanceof CustomEvent) {
       const detail =
@@ -201,83 +132,69 @@ export class TrackEvent {
           ? (event.detail as Record<string, unknown>)
           : {};
 
-      if (modifiers.includes('detail')) {
-        finalData = { ...data, ...detail };
-      } else {
-        finalData = resolveDetailPlaceholders(data, detail);
-      }
+      finalData = modifiers.has(MODIFIERS.DETAIL)
+        ? { ...data, ...detail }
+        : resolveDetailPlaceholders(data, detail);
     }
 
     track.send(finalData, event);
   }
 
   /**
-   * Trigger the handler manually, e.g. for the synthetic `mounted` event, so
-   * timing modifiers and the detached guard apply consistently.
+   * Trigger the handler with no DOM event, for the synthetic `mounted` event,
+   * so the timing modifiers and the attached guard apply to it too.
    */
-  trigger() {
-    this.handler();
+  trigger(): void {
+    this.__handler();
   }
 
-  /**
-   * Attach the event listener for standard DOM events.
-   */
-  attachEvent() {
-    const { event, modifiers, handler, track } = this;
-    this.detached = false; // re-attaching after a destroy/remount cycle
+  /** Bind this declaration and return its release. */
+  attach(): Unsubscribe {
+    this.__isAttached = true;
+    const release = this.__bind();
 
-    track.$el.addEventListener(event, handler as EventListener, {
-      capture: modifiers.includes('capture'),
-      once: modifiers.includes('once'),
-      passive: modifiers.includes('passive'),
-    });
+    return () => {
+      this.__isAttached = false;
+      clearTimeout(this.__debounceTimer);
+      release();
+    };
   }
 
-  /**
-   * Attach IntersectionObserver for the "view" event.
-   */
-  attachViewEvent() {
-    const { modifiers, track, handler } = this;
-    this.detached = false; // re-attaching after a destroy/remount cycle
-    const threshold = track.$options.threshold;
+  /** @private */
+  __bind(): Unsubscribe {
+    const { event, modifiers, track } = this;
 
-    this.observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          // Rely on `isIntersecting` (the observer's own `threshold` controls
-          // sensitivity). Comparing `intersectionRatio >= threshold` would make
-          // impressions unreachable for elements taller than the viewport,
-          // whose ratio can never approach a non-zero threshold.
-          if (entry.isIntersecting) {
-            // Dispatch through the shared handler so timing modifiers and the
-            // detached guard apply to the `view` event too.
-            handler();
+    if (event === TRACK_PSEUDO_EVENTS.MOUNTED) {
+      // Nothing to bind: `AbstractTrack` triggers it once the DOM has settled.
+      return () => {};
+    }
 
-            if (modifiers.includes('once')) {
-              this.observer?.disconnect();
-            }
+    if (event === TRACK_PSEUDO_EVENTS.VIEW) {
+      let unsubscribe: Unsubscribe | undefined;
+      unsubscribe = useInView(track.$el, { threshold: track.$options.threshold }).subscribe(
+        ({ isInView }) => {
+          if (!isInView) {
+            return;
           }
-        }
-      },
-      { threshold },
-    );
+          // `isInView` and not `ratio >= threshold`: the observer's own
+          // threshold already controls sensitivity, and comparing ratios would
+          // make an impression unreachable for an element taller than the
+          // viewport, whose ratio can never approach a non-zero threshold.
+          this.__handler();
+          if (modifiers.has(MODIFIERS.ONCE)) {
+            // Hoisted because the callback can run during `subscribe()`.
+            unsubscribe?.();
+            unsubscribe = undefined;
+          }
+        },
+      );
+      return () => unsubscribe?.();
+    }
 
-    this.observer.observe(track.$el);
-  }
-
-  /**
-   * Detach the event listener.
-   */
-  detachEvent() {
-    this.detached = true;
-    // Cancel any pending debounced dispatch so it cannot fire in a later
-    // lifecycle after a remount.
-    clearTimeout(this.debounceTimer);
-    // The `capture` flag must match the one used at registration for the
-    // listener to actually be removed.
-    this.track.$el.removeEventListener(this.event, this.handler as EventListener, {
-      capture: this.modifiers.includes('capture'),
+    return track.$on(event, this.__handler, {
+      capture: modifiers.has(MODIFIERS.CAPTURE),
+      once: modifiers.has(MODIFIERS.ONCE),
+      passive: modifiers.has(MODIFIERS.PASSIVE),
     });
-    this.observer?.disconnect();
   }
 }

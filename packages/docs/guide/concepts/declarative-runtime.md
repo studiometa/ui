@@ -4,13 +4,13 @@ JavaScript components are registered in an application entry point and mounted f
 
 ## Register components
 
-Use [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) for one component or `registerComponents` for several:
+Use [`registerComponent`](https://js-toolkit-v4.studiometa.dev/api/registry/registerComponent.html) for one component or `registerComponents` for several:
 
 ```js
 import { registerComponents } from '@studiometa/js-toolkit';
-import { Accordion, Dialog, Slider } from '@studiometa/ui';
+import { Disclosure, Dialog, Carousel } from '@studiometa/ui';
 
-registerComponents(Accordion, Dialog, Slider);
+registerComponents(Disclosure, Dialog, Carousel);
 ```
 
 By default, each class mounts on elements whose `data-component` value contains its configured name:
@@ -19,30 +19,28 @@ By default, each class mounts on elements whose `data-component` value contains 
 <div data-component="Dialog">…</div>
 ```
 
-Pass a different component name when markup needs an alias:
+`registerComponent()` takes the class and nothing else: a component mounts on its configured name, and there is no selector form. Subclass it and declare a name when the markup uses a different one:
 
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
 import { Dialog } from '@studiometa/ui';
 
-registerComponent(Dialog, 'SiteDialog');
+class SiteDialog extends Dialog {
+  static config = {
+    name: 'SiteDialog',
+  };
+}
+
+registerComponent(SiteDialog);
 ```
 
 ```html
 <div data-component="SiteDialog">…</div>
 ```
 
-A selector-like lowercase value targets matching DOM elements instead:
-
-```js
-import { AnchorScrollTo } from '@studiometa/ui';
-
-registerComponent(AnchorScrollTo, 'a[href^="#"]');
-```
-
-A name is first matched as a `data-component` token. When no matching token exists and the value starts with a lowercase character, js-toolkit treats it as a CSS selector. Prefer an explicit component name when you control the markup.
-
 Registration is the default application boundary. It keeps feature imports explicit and avoids an application class when components do not need to coordinate with one another.
+
+No `@studiometa/ui` class registers itself when its module is imported: importing defines the class, registering is what makes it mount. The rule holds for every component in the package, so one explicit list of what a page uses is the whole picture — or hand the job to the [autoloader](/guide/autoloading/), which registers the catalog and imports each component on demand.
 
 ## Compose behavior on an element
 
@@ -64,11 +62,7 @@ Each class owns its documented options and events. Use this pattern when indepen
 `data-option-<name>` attributes configure a component instance. Attribute names use kebab case while JavaScript APIs usually show camel case:
 
 ```html
-<div
-  data-component="Timer"
-  data-option-delay="3"
-  data-option-no-autostart>
-</div>
+<div data-component="Timer" data-option-delay="3" data-option-no-autostart></div>
 ```
 
 Values are parsed from the option type declared by the component:
@@ -80,9 +74,7 @@ Values are parsed from the option type declared by the component:
 - arrays and objects use JSON.
 
 ```html
-<div data-component="InView" data-option-intersection-observer='{ "rootMargin": "100px" }'>
-  …
-</div>
+<div data-component="InView" data-option-intersection-observer='{ "rootMargin": "100px" }'>…</div>
 ```
 
 Follow each item's JavaScript API for its accepted type and default. Quote JSON with valid double-quoted keys and values.
@@ -92,22 +84,23 @@ Follow each item's JavaScript API for its accepted type and default. Quote JSON 
 `data-ref` marks elements owned by a component. A singular ref names one element; a name ending in `[]` contributes to a collection:
 
 ```html
-<div data-component="Modal">
-  <button data-ref="open[]">Open</button>
-  <div data-ref="modal">
-    <button data-ref="close[]">Close</button>
+<div data-component="Menu">
+  <button data-ref="btn">Open</button>
+  <div data-ref="list">
+    <a data-ref="items[]" href="/one">One</a>
+    <a data-ref="items[]" href="/two">Two</a>
   </div>
 </div>
 ```
 
-A component reads declared refs below its root until another component boundary owns them. Co-located components can both read the same unprefixed ref when both contracts declare that name. Prefix a ref with the component name, such as `data-ref="Modal.close[]"`, when the ownership must be explicit. Item-specific anatomy pages show required structure when order or nesting matters.
+A component reads declared refs below its root until another component boundary owns them. Co-located components can both read the same unprefixed ref when both contracts declare that name. Prefix a ref with the component name, such as `data-ref="Menu.btn"`, when the ownership must be explicit. Item-specific anatomy pages show required structure when order or nesting matters.
 
 ## Events and component hooks
 
-Components emit named events such as `open`, `close`, `index` or `in-view`. Parent components and application classes can respond through js-toolkit's `on<ComponentName><EventName>` hook convention:
+Components emit named events such as `disclosure-open`, `defer-content`, `index` or `in-view`. Parent components and application classes can respond through js-toolkit's `on<ComponentName><EventName>` hook convention. The hook receives the emitting child instance as `target` and the event's detail as `payload`:
 
 ```js
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import { Dialog } from '@studiometa/ui';
 
 class App extends Base {
@@ -116,15 +109,21 @@ class App extends Base {
     components: { Dialog },
   };
 
-  onDialogOpen({ target }) {
-    console.log('Opened dialog', target);
+  onDialogOpen({ target, payload }) {
+    console.log('Opened dialog', target, payload);
   }
 }
 
-export default createApp(App, document.body);
+registerComponent(App);
 ```
 
-The Reference documents events exposed by each item. Use native DOM events for browser interactions and component events for communication between registered behaviors.
+```html
+<div data-component="App">
+  <dialog data-component="Dialog">…</dialog>
+</div>
+```
+
+Component events bubble, so a listener on an ancestor hears its descendants too. That is why each family prefixes its events with its own name — `disclosure-open` rather than `open`. The Reference documents events exposed by each item. Use native DOM events for browser interactions and component events for communication between registered behaviors.
 
 ## Lifecycle and DOM ownership
 
@@ -136,14 +135,16 @@ Registered components mount when matching elements enter the observed document a
 - clean up application-owned listeners and resources in lifecycle hooks;
 - treat server-rendered markup as the source of the initial state.
 
-Components such as [`Fetch`](/reference/items/Fetch/) and [`Frame`](/reference/items/Frame/) update parts of the DOM while cooperating with this lifecycle.
+Components such as [`Fetch`](/reference/items/Fetch/) and [`Defer`](/reference/items/Defer/) update parts of the DOM while cooperating with this lifecycle.
 
-## When to use `createApp`
+## When to use an application component
 
-Use a normal custom component for reusable or page-local behavior owned by one root element. Use [`createApp`](https://js-toolkit.studiometa.dev/api/helpers/createApp.html) only when the page itself needs root-level refs, event handlers or methods that coordinate multiple children. Do not introduce an app class only to register unrelated components.
+Use a normal custom component for reusable or page-local behavior owned by one root element. Write an application component only when the page itself needs root-level refs, event handlers or methods that coordinate several children. Do not introduce one only to register unrelated components.
+
+There is no `createApp()` in js-toolkit v4: an application component is an ordinary component. Register it and give its root element the matching `data-component`, which is also what scopes its refs.
 
 ```js
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import { Transition } from '@studiometa/ui';
 
 class App extends Base {
@@ -158,7 +159,14 @@ class App extends Base {
   }
 }
 
-export default createApp(App, document.body);
+registerComponent(App);
+```
+
+```html
+<body data-component="App">
+  <button data-ref="enterBtn">Enter</button>
+  <div data-component="Transition">…</div>
+</body>
 ```
 
 ## Progressive enhancement

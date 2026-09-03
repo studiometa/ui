@@ -1,4 +1,4 @@
-import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
@@ -9,6 +9,7 @@ import {
   claimMapboxOwnership,
   getMapboxOwner,
   releaseMapboxOwnership,
+  type MapboxImage,
   type MapboxImageDefinition,
 } from './utils.js';
 
@@ -19,6 +20,12 @@ export interface MapboxImagesProps extends AbstractMapboxMapChildProps {
      * @see ./MapboxImage.ts
      */
     sources: MapboxImageDefinition[];
+  };
+  /**
+   * Announced once every sprite in the list is registered against the map.
+   */
+  $emits: AbstractMapboxMapChildProps['$emits'] & {
+    'map-ready': { images: MapboxImage[] };
   };
 }
 
@@ -34,7 +41,6 @@ export class MapboxImages<T extends BaseProps = BaseProps> extends AbstractMapbo
    */
   static config: BaseConfig = {
     name: 'MapboxImages',
-    emits: ['map-ready'],
     options: {
       sources: {
         type: Array,
@@ -89,7 +95,7 @@ export class MapboxImages<T extends BaseProps = BaseProps> extends AbstractMapbo
         return;
       }
 
-      this.$emit('map-ready', images);
+      this.$emit('map-ready', { images });
     });
   }
 

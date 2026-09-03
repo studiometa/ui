@@ -14,4 +14,4 @@ The `AnchorNavLink` class implements the features of the [`Transition` primitive
 
 ## AnchorNavTarget
 
-The `AnchorNavTarget` class implements the features of the [`withMountWhenInView` decorator](https://js-toolkit.studiometa.dev/api/decorators/withMountWhenInView.html).
+The `AnchorNavTarget` class declares the `in-view` [mount strategy](/guide/autoloading/#mount-strategies): it mounts when its section crosses into the viewport and unmounts when it leaves. Set the margin per element with `data-mount="in-view:<rootMargin>"`.

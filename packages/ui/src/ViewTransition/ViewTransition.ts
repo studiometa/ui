@@ -1,35 +1,36 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { addClass } from '@studiometa/js-toolkit/utils/addClass';
-import { removeClass } from '@studiometa/js-toolkit/utils/removeClass';
-import { viewTransition } from './scheduler.js';
+import { viewTransition } from '@studiometa/js-toolkit/viewTransition';
+import type { BaseProps } from '@studiometa/js-toolkit';
+import type { Transitionable } from '../decorators/withTransition.js';
 
-export interface ViewTransitionProps extends BaseProps {
-  $options: {
-    viewTransitionName: string;
-    enterTo: string;
-    leaveTo: string;
+export interface ViewTransitionProps {
+  $options: { viewTransitionName: string; enterTo: string; leaveTo: string };
+  $emits: {
+    enter: void;
+    'enter-start': void;
+    'enter-end': void;
+    leave: void;
+    'leave-start': void;
+    'leave-end': void;
   };
 }
 
 /**
- * ViewTransition class.
+ * Implements `Transitionable` with the native View Transitions API.
  *
- * A drop-in alternative to the `Transition` primitive that animates state
- * changes with the native View Transitions API instead of CSS classes. It
- * exposes the same `enter`/`leave`/`toggle` interface, so it can be used
- * anywhere a `Transition` is. The animation itself is authored in CSS via the
- * `::view-transition-old()` / `::view-transition-new()` pseudo-elements.
- *
- * @link https://ui.studiometa.dev/reference/items/ViewTransition/
+ * It shares the contract with `withTransition()` and none of the
+ * implementation — the browser owns the animation, and the event names are
+ * its own (`enter`, not `transition-enter`) — so it stays a direct
+ * implementation of the interface rather than a consumer of the mixin.
+ * Generic for the same reason every other extensible class here is: a
+ * subclass has to be able to add its own props.
  */
-export class ViewTransition<T extends BaseProps = BaseProps> extends Base<T & ViewTransitionProps> {
-  /**
-   * Config.
-   */
-  static config: BaseConfig = {
+export class ViewTransition<T extends BaseProps = BaseProps>
+  extends Base<ViewTransitionProps & T>
+  implements Transitionable
+{
+  static config = {
     name: 'ViewTransition',
-    emits: ['enter', 'enter-start', 'enter-end', 'leave', 'leave-start', 'leave-end', 'toggle'],
     options: {
       viewTransitionName: String,
       enterTo: String,
@@ -37,63 +38,61 @@ export class ViewTransition<T extends BaseProps = BaseProps> extends Base<T & Vi
     },
   };
 
-  /**
-   * Current state.
-   */
   state: 'entering' | 'leaving' | null = null;
 
-  /**
-   * Get the transition target.
-   */
   get target(): HTMLElement {
     return this.$el;
   }
 
-  /**
-   * Assign the configured `view-transition-name` to the target element.
-   */
-  mounted() {
+  mounted(): void {
     const { viewTransitionName } = this.$options;
     if (viewTransitionName) {
       this.target.style.setProperty('view-transition-name', viewTransitionName);
     }
   }
 
-  /**
-   * Trigger the enter transition.
-   */
   async enter(): Promise<void> {
+    const { enterTo, leaveTo } = this.$options;
     this.state = 'entering';
     this.$emit('enter');
     this.$emit('enter-start');
     await viewTransition(() => {
-      removeClass(this.target, this.$options.leaveTo);
-      addClass(this.target, this.$options.enterTo);
+      this.__toggleClasses(leaveTo, enterTo);
     });
     this.$emit('enter-end');
   }
 
-  /**
-   * Trigger the leave transition.
-   */
   async leave(): Promise<void> {
+    const { enterTo, leaveTo } = this.$options;
     this.state = 'leaving';
     this.$emit('leave');
     this.$emit('leave-start');
     await viewTransition(() => {
-      removeClass(this.target, this.$options.enterTo);
-      addClass(this.target, this.$options.leaveTo);
+      this.__toggleClasses(enterTo, leaveTo);
     });
     this.$emit('leave-end');
   }
 
-  /**
-   * Toggle between the enter and leave transitions.
-   * Defaults to the enter transition if no transition has been triggered yet.
-   */
   toggle(): Promise<void> {
     return this.state === 'entering' ? this.leave() : this.enter();
   }
+
+  /** @private */
+  __toggleClasses(remove: string, add: string): void {
+    const removed = remove.split(' ').filter(Boolean);
+    const added = add.split(' ').filter(Boolean);
+    if (removed.length > 0) {
+      this.target.classList.remove(...removed);
+    }
+    if (added.length > 0) {
+      this.target.classList.add(...added);
+    }
+  }
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/ViewTransition`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default ViewTransition;

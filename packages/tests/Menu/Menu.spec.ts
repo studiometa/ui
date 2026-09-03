@@ -1,180 +1,146 @@
-import { describe, it, expect, vi } from 'vitest';
-import { getInstanceFromElement } from '@studiometa/js-toolkit';
-import { Menu, MenuBtn, MenuList } from '@studiometa/ui';
-import { h, mount, wait } from '#test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { resetDom, settle } from '@studiometa/js-toolkit/test';
+import { Menu } from '#private/Menu/Menu.js';
+import { MenuBtn } from '#private/Menu/MenuBtn.js';
+import { MenuList } from '#private/Menu/MenuList.js';
 
-async function getContext({ mode = 'click' } = {}) {
-  const menuBtn = h('button', { dataComponent: 'MenuBtn' }, ['Click me']);
-  const menuList = h('div', { dataComponent: 'MenuList' });
-  const root = h('div', { dataOptionMode: mode }, [menuBtn, menuList]);
-  const menu = new Menu(root);
-  await mount(menu);
-  return {
-    menuBtn,
-    menuList,
-    root,
-    menu,
-  };
+registerComponents(Menu, MenuBtn, MenuList);
+
+afterEach(resetDom);
+
+function menuMarkup(mode?: string): string {
+  return `
+    <div data-component="Menu" ${mode ? `data-option-mode="${mode}"` : ''}>
+      <button data-component="MenuBtn" id="btn">Toggle</button>
+      <ul data-component="MenuList" id="list" data-option-enter-to="open" data-option-leave-to="closed">
+        <li><a href="#">Item</a></li>
+      </ul>
+    </div>`;
 }
 
-describe('The Menu component', () => {
-  it('should not mount if no menuList or menuBtn child', async () => {
-    const menu = new Menu(h('div'));
-    await mount(menu);
-    expect(menu.menuList).toBeUndefined();
-    expect(menu.menuBtn).toBeUndefined();
-    expect(menu.$isMounted).toBe(false);
+// Off-screen: this test environment's real Chromium can deliver a genuine
+// `mouseenter` wherever the cursor happens to rest by default, and content
+// rendered at the top of `document.body` is where it lands.
+async function render(mode?: string): Promise<{ root: HTMLElement; menu: Menu }> {
+  const root = document.createElement('div');
+  root.setAttribute('style', 'position:absolute;top:300vh;left:0');
+  root.innerHTML = menuMarkup(mode);
+  document.body.append(root);
+  await settle();
+  return { root, menu: getInstance<Menu>(root.querySelector('[data-component="Menu"]'), 'Menu')! };
+}
+
+describe('Menu', () => {
+  it('wires up aria-controls on the button and the id on the list', async () => {
+    const { root, menu } = await render();
+    const btn = root.querySelector('#btn') as HTMLElement;
+
+    expect(btn.getAttribute('aria-controls')).toBe(menu.$id);
+    // Menu overwrites the list's own id with its own.
+    expect(menu.menuList?.$el.getAttribute('id')).toBe(menu.$id);
   });
 
-  it('should have a shouldReactOnClick getter based on its mode option', async () => {
-    const menu = new Menu(h('div'));
-    await mount(menu);
-    expect(menu.$options.mode).toBe('click');
-    expect(menu.shouldReactOnClick).toBe(true);
-    menu.$el.dataset.optionMode = 'hover';
-    expect(menu.$options.mode).toBe('hover');
-    expect(menu.shouldReactOnClick).toBe(false);
+  it('closes its list on mount', async () => {
+    const { menu } = await render();
+    expect(menu.menuList?.isOpen).toBe(false);
   });
 
-  it('should add aria-attributes to its menu list and menu btn', async () => {
-    const { menu, menuBtn, menuList } = await getContext();
-    expect(menu.menuBtn).toBeInstanceOf(MenuBtn);
-    expect(menu.menuList).toBeInstanceOf(MenuList);
+  it('toggles the list on button click in click mode (the default)', async () => {
+    const { root, menu } = await render();
+    const btn = root.querySelector('#btn') as HTMLElement;
 
-    expect(menuBtn.getAttribute('aria-controls')).toBe(menu.$id);
-    expect(menuList.id).toBe(menu.$id);
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(menu.menuList?.isOpen).toBe(true);
+
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(menu.menuList?.isOpen).toBe(false);
   });
 
-  it('should delegate the open, close and toggle methods to menuList', async () => {
-    const { menu } = await getContext();
-    const openSpy = vi.spyOn(menu.menuList, 'open');
-    const closeSpy = vi.spyOn(menu.menuList, 'close');
-    const toggleSpy = vi.spyOn(menu.menuList, 'toggle');
+  it('closes on a document click outside, in click mode', async () => {
+    const { menu } = await render();
     menu.open();
-    expect(openSpy).toHaveBeenCalledOnce();
-    menu.close();
-    expect(closeSpy).toHaveBeenCalledOnce();
-    menu.toggle();
-    expect(toggleSpy).toHaveBeenCalledOnce();
-  });
+    expect(menu.menuList?.isOpen).toBe(true);
 
-  it('should close on escape', async () => {
-    const { menu } = await getContext();
-    const closeSpy = vi.spyOn(menu, 'close');
-    // @ts-expect-error
-    menu.keyed({ ENTER: false, ESC: true, isUp: true });
-    expect(closeSpy).toHaveBeenCalledOnce();
-  });
-
-  it('should toggle on ENTER on the menu btn when in hover mode', async () => {
-    const { menu, menuBtn, root } = await getContext({ mode: 'hover' });
-    document.body.append(root);
-    const toggleSpy = vi.spyOn(menu, 'toggle');
-    menuBtn.focus();
-    expect(document.activeElement).toBe(menuBtn);
-    // @ts-expect-error
-    menu.keyed({ isUp: false, ENTER: true });
-    expect(toggleSpy).toHaveBeenCalledTimes(0);
-    // @ts-expect-error
-    menu.keyed({ isUp: true, ENTER: true });
-    expect(toggleSpy).toHaveBeenCalledTimes(1);
-    // @ts-expect-error
-    menu.keyed({ isUp: true, ENTER: true });
-    expect(toggleSpy).toHaveBeenCalledTimes(2);
-  });
-
-  it('should toggle on btn click when in click mode', async () => {
-    const { menu, menuBtn } = await getContext();
-    const toggleSpy = vi.spyOn(menu, 'toggle');
-    let event = new MouseEvent('click');
-    let preventDefaultSpy = vi.spyOn(event, 'preventDefault');
-    preventDefaultSpy.mockImplementation(() => null);
-    menuBtn.dispatchEvent(event);
-    expect(toggleSpy).toHaveBeenCalledTimes(1);
-    expect(preventDefaultSpy).toHaveBeenCalledTimes(1);
-    event = new MouseEvent('click', { bubbles: true });
-    preventDefaultSpy = vi.spyOn(event, 'preventDefault');
-    menuBtn.dispatchEvent(event);
-    expect(toggleSpy).toHaveBeenCalledTimes(2);
-    expect(preventDefaultSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('should NOT toggle on btn click when NOT in click mode', async () => {
-    const { menu, menuBtn } = await getContext({ mode: 'hover' });
-    const toggleSpy = vi.spyOn(menu, 'toggle');
-    let event = new MouseEvent('click');
-    let preventDefaultSpy = vi.spyOn(event, 'preventDefault');
-    preventDefaultSpy.mockImplementation(() => null);
-    menuBtn.dispatchEvent(event);
-    expect(toggleSpy).toHaveBeenCalledTimes(0);
-    expect(preventDefaultSpy).toHaveBeenCalledTimes(0);
-    event = new MouseEvent('click', { bubbles: true });
-    preventDefaultSpy = vi.spyOn(event, 'preventDefault');
-    menuBtn.dispatchEvent(event);
-    expect(toggleSpy).toHaveBeenCalledTimes(0);
-    expect(preventDefaultSpy).toHaveBeenCalledTimes(0);
-  });
-
-  it('should open on btn mouseenter when in hover mode', async () => {
-    const { menu, menuBtn } = await getContext({ mode: 'hover' });
-    const openSpy = vi.spyOn(menu, 'open');
-    let event = new MouseEvent('mouseenter');
-    menuBtn.dispatchEvent(event);
-    expect(openSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('should close on btn or list mouseleave when in hover mode', async () => {
-    const { menu, menuBtn, menuList } = await getContext({ mode: 'hover' });
-    const closeSpy = vi.spyOn(menu, 'close');
-    let event = new MouseEvent('mouseleave');
-    menuBtn.dispatchEvent(event);
-    await wait(1);
-    expect(closeSpy).toHaveBeenCalledTimes(1);
-    event = new MouseEvent('mouseleave');
-    menuList.dispatchEvent(event);
-    await wait(1);
-    expect(closeSpy).toHaveBeenCalledTimes(2);
-  });
-
-  it('should NOT close on btn or list mouseleave when NOT in hover mode', async () => {
-    const { menu, menuBtn, menuList } = await getContext();
-    const closeSpy = vi.spyOn(menu, 'close');
-    let event = new MouseEvent('mouseleave');
-    menuBtn.dispatchEvent(event);
-    await wait(1);
-    expect(closeSpy).toHaveBeenCalledTimes(0);
-    event = new MouseEvent('mouseleave');
-    menuList.dispatchEvent(event);
-    await wait(1);
-    expect(closeSpy).toHaveBeenCalledTimes(0);
-  });
-
-  it('should close when clicking outside of its elements', async () => {
-    const { menu, root } = await getContext();
-    document.body.append(root);
-    const closeSpy = vi.spyOn(menu, 'close');
-    menu.open();
     document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(closeSpy).toHaveBeenCalledOnce();
 
-    root.remove();
+    expect(menu.menuList?.isOpen).toBe(false);
   });
 
-  it('should close other MenuList instance when one is open', async () => {
-    const menuListA = h('div', { dataComponent: 'MenuList' });
-    const menuListB = h('div', { dataComponent: 'MenuList' });
-    const root = h('div', [menuListA, menuListB]);
-    const menu = new Menu(root);
-    await mount(menu);
+  it('does not close on outside click in hover mode', async () => {
+    const { menu } = await render('hover');
+    menu.open();
 
-    const menuListAInstance = getInstanceFromElement(menuListA, MenuList);
-    const menuListBInstance = getInstanceFromElement(menuListB, MenuList);
-    const closeSpyA = vi.spyOn(menuListAInstance, 'close');
-    const closeSpyB = vi.spyOn(menuListBInstance, 'close');
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-    menu.onMenuListItemsOpen({ target: menuListAInstance })
+    expect(menu.menuList?.isOpen).toBe(true);
+  });
 
-    expect(closeSpyA).toHaveBeenCalledTimes(0);
-    expect(closeSpyB).toHaveBeenCalledTimes(1);
+  it('opens on button mouseenter and closes on mouseleave, in hover mode', async () => {
+    const { root, menu } = await render('hover');
+    const btn = root.querySelector('#btn') as HTMLElement;
+
+    // Real `mouseenter`/`mouseleave` do not bubble; the framework's own
+    // delegation reaches them through the capture phase instead (they are
+    // registered in `CAPTURED_EVENTS`), which fires regardless of `.bubbles`.
+    btn.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(menu.menuList?.isOpen).toBe(true);
+
+    btn.dispatchEvent(new MouseEvent('mouseleave'));
+    await settle();
+
+    expect(menu.menuList?.isOpen).toBe(false);
+  });
+
+  it('closes on Escape', async () => {
+    const { menu } = await render();
+    menu.open();
+
+    menu.keyed({ ESC: true, ENTER: false, isUp: true } as never);
+
+    expect(menu.menuList?.isOpen).toBe(false);
+  });
+
+  it('toggles on Enter when the button has focus, in hover mode', async () => {
+    const { root, menu } = await render('hover');
+    const btn = root.querySelector('#btn') as HTMLElement;
+    btn.focus();
+
+    menu.keyed({ ENTER: true, ESC: false, isUp: true } as never);
+
+    expect(menu.menuList?.isOpen).toBe(true);
+  });
+
+  it('closes sibling submenus when one of them opens', async () => {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <div data-component="Menu">
+        <button data-component="MenuBtn"></button>
+        <ul data-component="MenuList" id="top-list">
+          <li>
+            <div data-component="Menu" id="sub-a">
+              <button data-component="MenuBtn"></button>
+              <ul data-component="MenuList" id="list-a"><li><a href="#">a</a></li></ul>
+            </div>
+          </li>
+          <li>
+            <div data-component="Menu" id="sub-b">
+              <button data-component="MenuBtn"></button>
+              <ul data-component="MenuList" id="list-b"><li><a href="#">b</a></li></ul>
+            </div>
+          </li>
+        </ul>
+      </div>`;
+    document.body.append(root);
+    await settle();
+    const subA = getInstance<Menu>(root.querySelector('#sub-a'), 'Menu')!;
+    const subB = getInstance<Menu>(root.querySelector('#sub-b'), 'Menu')!;
+
+    subA.open();
+    expect(subA.menuList?.isOpen).toBe(true);
+
+    subB.open();
+    expect(subB.menuList?.isOpen).toBe(true);
+    expect(subA.menuList?.isOpen).toBe(false);
   });
 });

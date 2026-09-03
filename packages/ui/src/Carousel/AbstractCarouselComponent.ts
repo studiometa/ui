@@ -1,64 +1,39 @@
 import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import type { Carousel } from './Carousel.js';
-
-export interface AbstractCarouselComponentProps extends BaseProps {}
+import { CarouselContext, type CarouselApi } from './context.js';
 
 /**
- * AbstractCarouselComponent class.
+ * The shared, non-subscribing base for every Carousel child.
  *
- * The shared, non-subscribing base for every Carousel child component. It
- * resolves the parent `Carousel` — either handed over by the Carousel on mount
- * or through a guarded `$closest('Carousel')` lookup, never via the deprecated
- * `$parent` accessor — and exposes the orientation getters the children rely on.
+ * The parent is resolved with one `$injectSync(CarouselContext)`, memoised for
+ * the mount cycle and cleared on unmount so a move re-resolves.
  *
- * It does not subscribe to the Carousel index store: components that only need
- * to read the carousel (the `CarouselWrapper` scroller and the `CarouselDrag`
- * track) extend this base directly, mirroring how `SliderItem`/`SliderDrag`
- * extend `Base` rather than `AbstractSliderChild`. Controls that must react to
- * index changes extend the subscribing `AbstractCarouselChild` instead.
+ * Components that only read the carousel — the wrapper and the drag track —
+ * extend this directly; controls that must react to the index extend
+ * `AbstractCarouselChild`.
  */
-export class AbstractCarouselComponent<T extends BaseProps = BaseProps> extends Base<
-  T & AbstractCarouselComponentProps
-> {
-  /**
-   * Config.
-   */
+export class AbstractCarouselComponent<T extends BaseProps = BaseProps> extends Base<T> {
   static config: BaseConfig = {
     name: 'AbstractCarouselComponent',
   };
 
-  /**
-   * The parent Carousel this component is connected to.
-   * @private
-   */
-  __carousel: Carousel | undefined;
+  __carousel: CarouselApi | undefined;
 
-  /**
-   * The parent Carousel instance, if any.
-   *
-   * Returns the Carousel that connected this component, falling back to a
-   * guarded `$closest('Carousel')` lookup. Never dereferences the deprecated
-   * `$parent` accessor; may be `undefined` before the component is connected to
-   * a Carousel.
-   */
-  get carousel(): Carousel | undefined {
-    return this.__carousel ?? this.$closest<Carousel>('Carousel');
+  /** The carousel this component belongs to, or `undefined` outside one. */
+  get carousel(): CarouselApi | undefined {
+    return (this.__carousel ??= this.$injectSync(CarouselContext));
   }
 
-  /**
-   * Is the carousel horizontal? Defaults to `true` (the `x` axis) when the
-   * parent Carousel cannot be resolved yet.
-   */
+  /** Defaults to horizontal when there is no carousel yet. */
   get isHorizontal(): boolean {
-    return this.carousel?.isHorizontal ?? true;
+    return this.carousel?.state.value.isHorizontal ?? true;
   }
 
-  /**
-   * Is the carousel vertical? Defaults to `false` when the parent Carousel
-   * cannot be resolved yet.
-   */
   get isVertical(): boolean {
-    return this.carousel?.isVertical ?? false;
+    return !this.isHorizontal;
+  }
+
+  unmounted(): void {
+    this.__carousel = undefined;
   }
 }

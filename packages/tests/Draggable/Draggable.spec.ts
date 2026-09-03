@@ -1,439 +1,305 @@
-import { describe, it, expect, vi } from 'vitest';
-import { Draggable } from '@studiometa/ui';
-import { h, mount, wait } from '#test-utils';
-import { DragService } from '@studiometa/js-toolkit';
+import { afterEach, describe, expect, it } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { recordEvents, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
+import { Draggable } from '#private/Draggable/Draggable.js';
 
-describe('The Draggable component', () => {
-  it('should move its target ref', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
-    draggable.props.x = 10;
-    draggable.props.y = 10;
-    while (draggable.props.dampedX !== draggable.props.x) {
-      draggable.render();
-    }
-    await wait(1);
-    expect(target.style.transform).toBe('translate3d(10px, 10px, 0px)');
+registerComponents(Draggable);
 
-    draggable.$options.x = false;
-    draggable.$options.y = false;
-    draggable.props.x = 20;
-    draggable.props.y = 20;
-    while (draggable.props.dampedX !== draggable.props.x) {
-      draggable.render();
-    }
-    await wait(1);
-    expect(target.style.transform).toBe('translate3d(0px, 0px, 0px)');
+const PARENT = 'position:absolute;top:0;left:0;width:400px;height:300px';
+const TARGET = 'position:absolute;top:0;left:0;width:100px;height:50px';
+
+afterEach(async () => {
+  release();
+  await resetDom();
+});
+
+async function render(attributes = ''): Promise<{
+  root: HTMLElement;
+  el: HTMLElement;
+  target: HTMLElement;
+  instance: Draggable;
+}> {
+  const root = document.createElement('div');
+  root.innerHTML = `
+    <div data-component="Draggable" style="${PARENT}" ${attributes}>
+      <div data-ref="target" style="${TARGET}"></div>
+    </div>`;
+  document.body.append(root);
+  await settle();
+  const el = root.firstElementChild as HTMLElement;
+  return {
+    root,
+    el,
+    target: el.querySelector('[data-ref="target"]') as HTMLElement,
+    instance: getInstance<Draggable>(el, 'Draggable')!,
+  };
+}
+
+function grab(el: HTMLElement, x: number, y: number): void {
+  el.dispatchEvent(
+    new PointerEvent('pointerdown', {
+      button: 0,
+      buttons: 1,
+      clientX: x,
+      clientY: y,
+      pointerType: 'mouse',
+      bubbles: true,
+    }),
+  );
+}
+
+function move(x: number, y: number): void {
+  document.dispatchEvent(
+    new PointerEvent('pointermove', {
+      buttons: 1,
+      clientX: x,
+      clientY: y,
+      pointerType: 'mouse',
+    }),
+  );
+}
+
+function release(): void {
+  window.dispatchEvent(new PointerEvent('pointerup'));
+}
+
+/** A bounded quiet period, for the states that are asserted as unchanged. */
+async function quiet(count = 12): Promise<void> {
+  for (let i = 0; i < count; i += 1) {
+    await settle();
+  }
+}
+
+/** The drag lifecycle the component emits, in no particular order. */
+const DRAG_EVENTS = [
+  'drag-start',
+  'drag-drag',
+  'drag-drop',
+  'drag-inertia',
+  'drag-stop',
+  'drag-fit',
+  'drag-render',
+];
+
+describe('Draggable — geometry', () => {
+  it('reads a single margin value into all four sides', async () => {
+    const { instance } = await render('data-option-margin="10"');
+    expect(instance.margin).toEqual({ top: 10, right: 10, bottom: 10, left: 10 });
   });
 
-  it('should respect clamp x and y to the bounding limits', async () => {
-    const target = h('div', { dataRef: 'target', style: 'width: 100px; height: 100px;' });
-    const div = h('div', { dataOptionFitBounds: true }, [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
-
-    const spy = vi.spyOn(draggable, 'bounds', 'get');
-    spy.mockImplementation(() => ({
-      xMin: -100,
-      xMax: 100,
-      yMin: -100,
-      yMax: 100,
-    }));
-
-    draggable.props.x = 200;
-    draggable.props.y = 200;
-
-    // @ts-expect-error
-    draggable.dragged({
-      mode: DragService.MODES.DROP,
-      MODES: DragService.MODES,
-      final: { x: 200, y: 200 },
-      origin: { x: 0, y: 0 },
-    });
-
-    expect(draggable.props.x).toBe(100);
-    expect(draggable.props.y).toBe(100);
+  it('reads a two-value margin as vertical then horizontal', async () => {
+    const { instance } = await render('data-option-margin="10 20"');
+    expect(instance.margin).toEqual({ top: 10, right: 20, bottom: 10, left: 20 });
   });
 
-  it('should handle drag service modes correctly', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
-
-    const fn = vi.fn();
-    for (const event of Draggable.config.emits) {
-      draggable.$on(event, ({ detail: [props] }: CustomEvent) => fn(event, props));
-    }
-
-    const dragProps = {
-      target: draggable.target,
-      MODES: DragService.MODES,
-      isGrabbing: true,
-      hasInertia: false,
-      x: 0,
-      y: 0,
-      delta: { x: 0, y: 0 },
-      origin: { x: 0, y: 0 },
-      distance: { x: 0, y: 0 },
-      final: { x: 0, y: 0 },
-    };
-
-    // Test START mode
-    draggable.dragged({ ...dragProps, mode: DragService.MODES.START });
-    expect(draggable.props.originX).toBe(draggable.props.x);
-    expect(draggable.props.originY).toBe(draggable.props.y);
-    expect(draggable.dampFactor).toBe(draggable.$options.sensitivity);
-    expect(fn).toHaveBeenLastCalledWith('drag-start', draggable.props);
-
-    // Test DRAG mode
-    draggable.dragged({ ...dragProps, mode: DragService.MODES.DRAG, x: 50, y: 50 });
-    expect(draggable.props.x).toBe(50);
-    expect(draggable.props.y).toBe(50);
-    expect(fn).toHaveBeenLastCalledWith('drag-drag', draggable.props);
-
-    // Test INERTIA mode without fitBounds
-    draggable.dragged({ ...dragProps, mode: DragService.MODES.INERTIA, x: 100, y: 100 });
-    expect(draggable.props.x).toBe(100);
-    expect(draggable.props.y).toBe(100);
-    expect(fn).toHaveBeenLastCalledWith('drag-inertia', draggable.props);
-
-    // Test DROP mode with fitBounds
-    draggable.$options.fitBounds = true;
-    draggable.dragged({ ...dragProps, mode: DragService.MODES.DROP, x: 100, y: 100 });
-    expect(draggable.dampFactor).toBe(draggable.$options.dropSensitivity);
-    expect(fn).toHaveBeenLastCalledWith('drag-drop', draggable.props);
+  it('reads a three-value margin as top, horizontal, bottom', async () => {
+    const { instance } = await render('data-option-margin="10 20 30"');
+    expect(instance.margin).toEqual({ top: 10, right: 20, bottom: 30, left: 20 });
   });
 
-  it('should handle ticked service correctly', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
-
-    // Mock services
-    const enableSpy = vi.spyOn(draggable.$services, 'enable');
-    const disableSpy = vi.spyOn(draggable.$services, 'disable');
-
-    // Initial state
-    draggable.props.x = 100;
-    draggable.props.y = 100;
-    draggable.props.dampedX = 0;
-    draggable.props.dampedY = 0;
-
-    // First tick
-    draggable.ticked();
-    expect(enableSpy).not.toHaveBeenCalled();
-    expect(disableSpy).not.toHaveBeenCalled();
-
-    // When damped values match target values
-    draggable.props.dampedX = 100;
-    draggable.props.dampedY = 100;
-    draggable.ticked();
-    expect(disableSpy).toHaveBeenCalledWith('ticked');
+  it('reads a four-value margin clockwise from the top', async () => {
+    const { instance } = await render('data-option-margin="10 20 30 40"');
+    expect(instance.margin).toEqual({ top: 10, right: 20, bottom: 30, left: 40 });
   });
 
-  it('should handle different sensitivity values', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h(
-      'div',
-      {
-        dataOptionSensitivity: 0.8,
-        dataOptionDropSensitivity: 0.2,
-      },
-      [target],
-    );
-    const draggable = new Draggable(div);
-    await mount(draggable);
-    expect(draggable.$options.sensitivity).toBe(0.8);
-    expect(draggable.$options.dropSensitivity).toBe(0.2);
+  it('derives the bounds from the target inside its parent', async () => {
+    const { instance } = await render();
+    // The target starts at the parent's origin, so it may only move right and down.
+    const { xMin, xMax, yMin, yMax } = instance.bounds;
+    expect([xMin, xMax, yMin, yMax]).toEqual([-0, 300, -0, 250]);
   });
 
-  it('should correctly calculate bounds', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', [target]);
-
-    const draggable = new Draggable(div);
-    await mount(draggable);
-
-    const parentSpies = {};
-    const parentOffsets = {
-      offsetTop: 0,
-      offsetLeft: 0,
-      offsetHeight: 100,
-      offsetWidth: 100,
-    };
-
-    for (const [name, value] of Object.entries(parentOffsets) as [
-      keyof typeof parentOffsets,
-      number,
-    ][]) {
-      const mock = vi.spyOn(draggable.parent, name, 'get');
-      mock.mockImplementation(() => value);
-      parentSpies[name] = mock;
-    }
-
-    const targetSpies = {};
-    const targetOffsets = {
-      offsetTop: 10,
-      offsetHeight: 10,
-      offsetLeft: 10,
-      offsetWidth: 10,
-    };
-
-    for (const [name, value] of Object.entries(targetOffsets) as [
-      keyof typeof targetOffsets,
-      number,
-    ][]) {
-      const mock = vi.spyOn(draggable.target, name, 'get');
-      mock.mockImplementation(() => value);
-      targetSpies[name] = mock;
-    }
-
-    // @ts-expect-error
-    draggable.target.offsetParent = div;
-
-    expect(draggable.bounds.xMin).toBe(-10);
-    expect(draggable.bounds.yMin).toBe(-10);
-    expect(draggable.bounds.xMax).toBe(80);
-    expect(draggable.bounds.yMax).toBe(80);
-
-    // @ts-expect-error
-    draggable.target.offsetParent = document.body;
-
-    expect(draggable.bounds.xMin).toBe(-10);
-    expect(draggable.bounds.yMin).toBe(-10);
-    expect(draggable.bounds.xMax).toBe(80);
-    expect(draggable.bounds.yMax).toBe(80);
+  it('widens the bounds by the margin', async () => {
+    const { instance } = await render('data-option-margin="10"');
+    expect(instance.bounds).toEqual({ xMin: 10, xMax: 290, yMin: 10, yMax: 240 });
   });
 
-  it('should initialize with x and y options', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', { dataOptionNoX: true, dataOptionNoY: true }, [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
-
-    draggable.props.x = 100;
-    draggable.props.y = 100;
-
-    // Wait for damped values to match
-    while (
-      draggable.props.dampedX !== draggable.props.x ||
-      draggable.props.dampedY !== draggable.props.y
-    ) {
-      draggable.render();
-    }
-    await wait(1);
-
-    expect(target.style.transform).toBe('translate3d(0px, 0px, 0px)');
+  /**
+   * `resized()` is bound to the **viewport**: the `$services` resize hook is
+   * the window one, so a change to the element's own box is not what
+   * invalidates these bounds.
+   */
+  it('subscribes `resized()` for the mount cycle', async () => {
+    const { instance } = await render();
+    expect(instance.$services.resized.isActive).toBe(true);
   });
 
-  it('should handle margin option with single value', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', { dataOptionMargin: '10' }, [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
+  it('measures again after a resize', async () => {
+    const { el, instance } = await render();
+    expect(instance.bounds.xMax).toBe(300);
 
-    const margin = draggable.margin;
-    expect(margin.top).toBe(10);
-    expect(margin.right).toBe(10);
-    expect(margin.bottom).toBe(10);
-    expect(margin.left).toBe(10);
+    el.style.width = '600px';
+    instance.resized();
+
+    expect(instance.bounds.xMax).toBe(500);
   });
 
-  it('should handle margin option with two values', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', { dataOptionMargin: '10 20' }, [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
+  /**
+   * The bounds are a per-mount-cycle memo, not a per-instance one: a move is an
+   * unmount plus a mount, and the geometry it lands in is a different one. No
+   * resize event describes a target that changed size on its own, so the memo
+   * has to expire with the mount cycle.
+   */
+  it('measures again after the component is moved', async () => {
+    const { el, target, instance } = await render();
+    expect(instance.bounds.xMax).toBe(300);
 
-    const margin = draggable.margin;
-    expect(margin.top).toBe(10);
-    expect(margin.right).toBe(20);
-    expect(margin.bottom).toBe(10);
-    expect(margin.left).toBe(20);
+    target.style.width = '200px';
+    const other = document.createElement('div');
+    document.body.append(other);
+    other.append(el);
+    await waitFor(() => getInstance<Draggable>(el, 'Draggable')?.bounds.xMax === 200);
+
+    expect(getInstance<Draggable>(el, 'Draggable')!.bounds.xMax).toBe(200);
+  });
+});
+
+describe('Draggable — the drag', () => {
+  it('emits the drag lifecycle, never the idle mode', async () => {
+    const { el, target } = await render();
+    const { events } = recordEvents(el, ...DRAG_EVENTS);
+
+    grab(target, 10, 10);
+    move(60, 40);
+    release();
+    await waitFor(() => events.some(({ type }) => type === 'drag-drop'));
+
+    const types = events.map(({ type }) => type);
+    expect(types).toContain('drag-start');
+    expect(types).toContain('drag-drag');
+    expect(types).toContain('drag-drop');
+    expect(types).not.toContain('drag-idle');
   });
 
-  it('should handle margin option with three values', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', { dataOptionMargin: '10 20 30' }, [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
+  it('follows the pointer by the distance the service publishes', async () => {
+    const { target, instance } = await render();
 
-    const margin = draggable.margin;
-    expect(margin.top).toBe(10);
-    expect(margin.right).toBe(20);
-    expect(margin.bottom).toBe(30);
-    expect(margin.left).toBe(20);
+    grab(target, 10, 10);
+    move(90, 60);
+    await waitFor(() => instance.props.x === 80);
+
+    expect(instance.props.x).toBe(80);
+    expect(instance.props.y).toBe(50);
+    release();
   });
 
-  it('should handle margin option with four values', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', { dataOptionMargin: '10 20 30 40' }, [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
+  it('resumes from where the previous drag left off', async () => {
+    const { target, instance } = await render();
 
-    const margin = draggable.margin;
-    expect(margin.top).toBe(10);
-    expect(margin.right).toBe(20);
-    expect(margin.bottom).toBe(30);
-    expect(margin.left).toBe(40);
+    grab(target, 10, 10);
+    move(60, 10);
+    release();
+    await waitFor(() => instance.props.x === 50);
+    const afterFirst = instance.props.x;
+
+    grab(target, 0, 0);
+    move(20, 0);
+    await waitFor(() => instance.props.x === afterFirst + 20);
+
+    expect(instance.props.x).toBe(afterFirst + 20);
+    release();
   });
 
-  it('should cache margin values when option does not change', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', { dataOptionMargin: '10' }, [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
+  it('writes the damped position onto the target', async () => {
+    const { target, instance } = await render();
 
-    const firstMargin = draggable.margin;
-    const secondMargin = draggable.margin;
-    expect(firstMargin).toBe(secondMargin);
+    grab(target, 10, 10);
+    move(110, 10);
+    // The damped value lands a lane before the DOM write it feeds, so the
+    // written transform is the state worth polling for.
+    await waitFor(() => target.style.transform.includes('translate3d('));
+
+    expect(target.style.transform).toContain('translate3d(');
+    expect(instance.props.dampedX).toBeGreaterThan(0);
+    release();
   });
 
-  it('should recalculate margin when option changes', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', { dataOptionMargin: '10' }, [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
+  it('leaves an axis alone when its option is off', async () => {
+    const { target } = await render('data-option-no-y');
 
-    const firstMargin = draggable.margin;
-    draggable.$options.margin = '20';
-    const secondMargin = draggable.margin;
-    
-    expect(firstMargin).not.toBe(secondMargin);
-    expect(secondMargin.top).toBe(20);
+    grab(target, 10, 10);
+    move(110, 110);
+    await quiet();
+
+    expect(target.style.transform).toContain('0px, 0px)');
+    release();
   });
 
-  it('should incorporate margin into bounds calculation', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', { dataOptionMargin: '10 20 30 40' }, [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
+  it('publishes the progress of each axis over the bounds', async () => {
+    const { target, instance } = await render();
 
-    const parentSpies = {};
-    const parentOffsets = {
-      offsetTop: 0,
-      offsetLeft: 0,
-      offsetHeight: 100,
-      offsetWidth: 100,
-    };
+    grab(target, 0, 0);
+    move(150, 125);
+    await waitFor(() => instance.props.progressX > 0);
 
-    for (const [name, value] of Object.entries(parentOffsets) as [
-      keyof typeof parentOffsets,
-      number,
-    ][]) {
-      const mock = vi.spyOn(draggable.parent, name, 'get');
-      mock.mockImplementation(() => value);
-      parentSpies[name] = mock;
-    }
+    expect(instance.props.progressX).toBeCloseTo(0.5, 5);
+    expect(instance.props.progressY).toBeCloseTo(0.5, 5);
+    release();
+  });
+});
 
-    const targetSpies = {};
-    const targetOffsets = {
-      offsetTop: 10,
-      offsetHeight: 10,
-      offsetLeft: 10,
-      offsetWidth: 10,
-    };
+describe('Draggable — the bounds', () => {
+  it('clamps during the drag with `strictFitBounds`', async () => {
+    const { target, instance } = await render('data-option-strict-fit-bounds');
 
-    for (const [name, value] of Object.entries(targetOffsets) as [
-      keyof typeof targetOffsets,
-      number,
-    ][]) {
-      const mock = vi.spyOn(draggable.target, name, 'get');
-      mock.mockImplementation(() => value);
-      targetSpies[name] = mock;
-    }
+    grab(target, 0, 0);
+    move(900, 900);
+    await waitFor(() => instance.props.x === 300);
 
-    // @ts-expect-error
-    draggable.target.offsetParent = div;
-
-    const bounds = draggable.bounds;
-    // Formula: xMin = (xMin - margin.left) * -1
-    // xMin = targetSizes.x - parentSizes.x = 10 - 0 = 10
-    // xMin = (10 - 40) * -1 = 30
-    expect(bounds.xMin).toBe(30); // (10 - 40) * -1
-    expect(bounds.yMin).toBe(-0); // (10 - 10) * -1
-    // xMax = xMin + targetSizes.width - parentSizes.width = 10 + 10 - 100 = -80
-    // xMax = (-80 + 20) * -1 = 60
-    expect(bounds.xMax).toBe(60); // (-80 + 20) * -1
-    expect(bounds.yMax).toBe(50); // (-80 + 30) * -1
+    expect(instance.props.x).toBe(300);
+    expect(instance.props.y).toBe(250);
+    release();
   });
 
-  it('should enforce strict bounds during drag when strictFitBounds is enabled', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', { dataOptionStrictFitBounds: true }, [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
+  it('lets the target escape without `strictFitBounds`', async () => {
+    const { target, instance } = await render();
 
-    const spy = vi.spyOn(draggable, 'bounds', 'get');
-    spy.mockImplementation(() => ({
-      xMin: -50,
-      xMax: 50,
-      yMin: -50,
-      yMax: 50,
-    }));
+    grab(target, 0, 0);
+    move(900, 0);
+    await waitFor(() => instance.props.x === 900);
 
-    draggable.props.originX = 0;
-    draggable.props.originY = 0;
-
-    // Test that values are clamped during DRAG mode
-    draggable.dragged({
-      mode: DragService.MODES.DRAG,
-      MODES: DragService.MODES,
-      x: 100,
-      y: 100,
-      origin: { x: 0, y: 0 },
-    });
-
-    expect(draggable.props.x).toBe(50);
-    expect(draggable.props.y).toBe(50);
+    expect(instance.props.x).toBe(900);
+    release();
   });
 
-  it('should not enforce strict bounds during drag when strictFitBounds is disabled', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', [target]); // strictFitBounds is false by default
-    const draggable = new Draggable(div);
-    await mount(draggable);
+  /**
+   * Gap 1 again: the fit animation is a frame loop the component owns and
+   * stops as soon as the damped position has arrived.
+   */
+  it('animates back inside the bounds on drop with `fitBounds`', async () => {
+    const { el, target, instance } = await render('data-option-fit-bounds');
+    const { events } = recordEvents(el, ...DRAG_EVENTS);
 
-    const spy = vi.spyOn(draggable, 'bounds', 'get');
-    spy.mockImplementation(() => ({
-      xMin: -50,
-      xMax: 50,
-      yMin: -50,
-      yMax: 50,
-    }));
+    grab(target, 0, 0);
+    move(900, 0);
+    release();
+    await waitFor(() => !instance.$services.ticked.isActive, { timeout: 2000 });
 
-    draggable.props.originX = 0;
-    draggable.props.originY = 0;
-
-    // Test that values are NOT clamped during DRAG mode when strictFitBounds is false
-    draggable.dragged({
-      mode: DragService.MODES.DRAG,
-      MODES: DragService.MODES,
-      x: 100,
-      y: 100,
-      origin: { x: 0, y: 0 },
-    });
-
-    expect(draggable.props.x).toBe(100);
-    expect(draggable.props.y).toBe(100);
+    expect(instance.props.x).toBe(300);
+    expect(instance.props.dampedX).toBe(300);
+    expect(events.map(({ type }) => type)).toContain('drag-fit');
+    expect(instance.$services.ticked.isActive).toBe(false);
   });
 
-  it('should reset bounds on resize', async () => {
-    const target = h('div', { dataRef: 'target' });
-    const div = h('div', [target]);
-    const draggable = new Draggable(div);
-    await mount(draggable);
+  it('holds no frame loop before a drop', async () => {
+    const { instance } = await render('data-option-fit-bounds');
 
-    // Access bounds to initialize
-    const initialBounds = draggable.bounds;
-    expect(draggable.__bounds).toBeTruthy();
+    expect(instance.$services.ticked.isActive).toBe(false);
+  });
 
-    // Call resized hook
-    draggable.resized();
-    expect(draggable.__bounds).toBeNull();
+  it('releases the frame loop when the element leaves the DOM mid-fit', async () => {
+    const { root, target, instance } = await render('data-option-fit-bounds');
+
+    grab(target, 0, 0);
+    move(900, 0);
+    // `dragged()` runs synchronously from the pointer event, so the loop is
+    // already running before the next frame.
+    release();
+    expect(instance.$services.ticked.isActive).toBe(true);
+
+    root.remove();
+    await waitFor(() => !instance.$services.ticked.isActive);
+
+    expect(instance.$services.ticked.isActive).toBe(false);
   });
 });

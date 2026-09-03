@@ -1,16 +1,14 @@
-import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { DataBind } from './DataBind.js';
-import type { DataBindProps } from './DataBind.js';
-import type { DataValue } from './DataScope.js';
-import { getCallback } from './utils.js';
+import type { BaseConfig } from '@studiometa/js-toolkit';
+import { DataBind, type DataBindOptions, type DataBindProps } from './DataBind.js';
+import { getCallback, type DataExpression } from './expression.js';
+import type { DataValue } from './registry.js';
 
-export interface DataEffectProps extends DataBindProps {
-  $options: {
-    effect: string;
-  } & DataBindProps['$options'];
-}
+export type DataEffectProps = DataBindProps & {
+  $options: DataBindOptions & { effect: string };
+};
 
-export class DataEffect<T extends BaseProps = BaseProps> extends DataBind<DataEffectProps & T> {
+/** Run an expression on each group update without writing a value back. */
+export class DataEffect extends DataBind<DataEffectProps> {
   static config: BaseConfig = {
     name: 'DataEffect',
     options: {
@@ -18,24 +16,20 @@ export class DataEffect<T extends BaseProps = BaseProps> extends DataBind<DataEf
     },
   };
 
-  /**
-   * @protected
-   */
-  get __supportsMutations() {
+  /** @protected */
+  override get supportsMutations(): boolean {
     return false;
   }
 
-  get effect() {
-    const { group, effect } = this.$options;
-    return getCallback(group, effect);
+  get effect(): DataExpression {
+    return getCallback(this.$options.effect);
   }
 
-  set(value: DataValue) {
+  override set(value: DataValue): void {
     try {
       this.effect(value, this.target, this.$data);
     } catch (error) {
-      // @todo better handling of errors?
-      console.error('Failed', error);
+      console.error('[data] Effect expression failed:', error);
     }
   }
 }

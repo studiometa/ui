@@ -1,4 +1,4 @@
-import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import type { SourceSpecification, GeoJSONSourceSpecification, GeoJSONSource } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,
@@ -62,7 +62,7 @@ export class MapboxSource<T extends BaseProps = BaseProps> extends AbstractMapbo
       const data = JSON.parse(content) as GeoJSONSourceSpecification['data'];
       return { ...source, data } as SourceSpecification;
     } catch (err) {
-      this.$warn('Invalid JSON in the `geojson` ref:', err);
+      this.$error('mapbox-source.invalid-geojson', 'Invalid JSON in the `geojson` ref.', err);
       return source;
     }
   }

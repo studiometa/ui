@@ -1,106 +1,77 @@
-import { describe, it, expect, vi } from 'vitest';
-import { h } from '#test-utils';
-import { MockMap, MockNavigationControl } from './mock-mapbox-gl.js';
-import { MapboxNavigationControl } from '@studiometa/ui-mapbox';
+import { describe, it, expect } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { settle } from '@studiometa/js-toolkit/test';
+import { MockNavigationControl } from './mock-mapbox-gl.js';
+import { MapboxMap, MapboxNavigationControl } from '@studiometa/ui-mapbox';
+import { mountMap } from './harness.js';
 
-function createControl(attrs: Record<string, string> = {}) {
-  const mockMap = new MockMap();
-  const el = h('div', {
-    'data-component': 'MapboxNavigationControl',
-    ...attrs,
-  });
+registerComponents(MapboxMap, MapboxNavigationControl);
 
-  const instance = new MapboxNavigationControl(el);
-  // Mock $closest since async component resolution doesn't set it up
-  instance.$closest = vi.fn((query: string) => {
-    if (query === 'MapboxMap') {
-      return { map: mockMap, isLoaded: true, $options: { accessToken: 'token' } } as any;
-    }
-    return undefined;
-  });
+/** Mount a loaded `MapboxMap` holding one `MapboxNavigationControl`. */
+async function createControl(attrs = '') {
+  const context = await mountMap(`<div data-component="MapboxNavigationControl" ${attrs}></div>`);
+  await context.load();
+  const el = context.mapEl.querySelector<HTMLElement>(
+    '[data-component="MapboxNavigationControl"]',
+  )!;
 
-  return { instance, mockMap };
+  return {
+    instance: getInstance<MapboxNavigationControl>(el, 'MapboxNavigationControl')!,
+    mockMap: context.mockMap,
+  };
 }
 
 describe('MapboxNavigationControl component', () => {
   it('should mount and add control to map', async () => {
-    const { instance, mockMap } = createControl();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance, mockMap } = await createControl();
 
     expect(mockMap.addControl).toHaveBeenCalledWith(instance.control, 'top-right');
   });
 
   it('should default position to top-right', async () => {
-    const { instance } = createControl();
+    const { instance } = await createControl();
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
-
+    // `position` is declared by `AbstractMapboxControl` and reaches this
+    // subclass through the prototype-chain config merge.
     expect(instance.$options.position).toBe('top-right');
   });
 
   it('should use custom position', async () => {
-    const { instance, mockMap } = createControl({ 'data-option-position': 'bottom-left' });
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance, mockMap } = await createControl('data-option-position="bottom-left"');
 
     expect(mockMap.addControl).toHaveBeenCalledWith(instance.control, 'bottom-left');
   });
 
-  it('should remove control on destroy', async () => {
-    const { instance, mockMap } = createControl();
+  it('should remove control on unmount', async () => {
+    const { instance, mockMap } = await createControl();
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    instance.$unmount();
+    await settle();
 
     expect(mockMap.removeControl).toHaveBeenCalled();
   });
 
-  it('should not construct a control on destroy when the control was never created', async () => {
-    const { instance, mockMap } = createControl();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
+  it('should not construct a control on unmount when the control was never created', async () => {
+    const { instance, mockMap } = await createControl();
 
     // Simulate a teardown where the lazy `get control()` getter has never
-    // populated the backing field (e.g. `$destroy()` called before the control
-    // is used, or a second `$destroy()`): the control does not exist at teardown
-    // time, while the component stays mounted so `destroyed()` still runs.
+    // populated the backing field (e.g. `$unmount()` called before the control
+    // is used, or a second `$unmount()`): the control does not exist at teardown
+    // time, while the component stays mounted so `__onDestroyed()` still runs.
     instance.__control = undefined as unknown as (typeof instance)['__control'];
-    const instanceCountBeforeDestroy = MockNavigationControl.instanceCount;
+    const instanceCountBeforeUnmount = MockNavigationControl.instanceCount;
 
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    instance.$unmount();
+    await settle();
 
     // Teardown must be side-effect free: it must not go through the lazy getter
     // and construct a brand-new control just to remove it.
-    expect(MockNavigationControl.instanceCount).toBe(instanceCountBeforeDestroy);
+    expect(MockNavigationControl.instanceCount).toBe(instanceCountBeforeUnmount);
     expect(mockMap.removeControl).not.toHaveBeenCalled();
   });
 
   it('should reuse the same control instance', async () => {
-    const { instance } = createControl();
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const { instance } = await createControl();
 
     expect(instance.control).toBe(instance.control);
   });

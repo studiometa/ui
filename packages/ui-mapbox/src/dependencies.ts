@@ -44,10 +44,12 @@ let geocoderProvided = false;
 /**
  * Inject the `mapbox-gl` module the components should use.
  *
- * Call once, before the components mount (e.g. right before `createApp`). Once
- * provided, `@studiometa/ui-mapbox` never imports `mapbox-gl` by specifier — it
- * uses this instance — so a host can supply its own build (a specific version, a
- * self-hosted worker for strict CSP, an import-map or CDN module).
+ * Call once, before the components mount — e.g. right before the
+ * `registerComponent()` or `registerManifest()` call that puts them on the
+ * page. Once provided, `@studiometa/ui-mapbox` never imports `mapbox-gl` by
+ * specifier — it uses this instance — so a host can supply its own build (a
+ * specific version, a self-hosted worker for strict CSP, an import-map or CDN
+ * module).
  *
  * @param {MapboxGl} instance The `mapbox-gl` default export namespace.
  */

@@ -1,81 +1,59 @@
-import { withMountWhenInView } from '@studiometa/js-toolkit/withMountWhenInView';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { loadImage } from '@studiometa/js-toolkit/utils/loadImage';
-import { Transition } from '../Transition/index.js';
+import { withTransition, type TransitionProps } from '../decorators/withTransition.js';
 
-export interface AbstractFigureProps extends BaseProps {
-  $refs: {
-    img: HTMLImageElement;
+export type AbstractFigureProps = BaseProps &
+  TransitionProps & {
+    $refs: { img: HTMLImageElement };
+    $options: TransitionProps['$options'] & { lazy: boolean };
+    $emits: TransitionProps['$emits'] & { load: void };
   };
-  $options: {
-    lazy: boolean;
-  };
-}
 
 /**
- * Figure class.
+ * Shared base for the image figure components. It implements
+ * `withTransition` around a single `img` ref and, through the `in-view`
+ * mount strategy, defers loading of the `data-src` source until the element
+ * enters the viewport when the `lazy` option is set, running the enter
+ * transition and emitting `load` once the image is ready.
  *
- * Shared base for the image figure components. It wraps a single `img` ref in a
- * `Transition` and, through the `withMountWhenInView` decorator, defers loading
- * of the `data-src` source until the element enters the viewport when the `lazy`
- * option is set, running the enter transition and emitting `load` once the image
- * is ready.
+ * The `target` override is the whole reason the mixin has one: the transition
+ * runs on the image, not on the root.
  */
-export class AbstractFigure<
-  T extends BaseProps = BaseProps,
-> extends withMountWhenInView<Transition>(Transition, {
-  threshold: [0, 1],
-})<T & AbstractFigureProps> {
-  /**
-   * Config.
-   */
+export class AbstractFigure<T extends BaseProps = BaseProps> extends withTransition(Base)<
+  AbstractFigureProps & T
+> {
   static config: BaseConfig = {
-    ...Transition.config,
     name: 'AbstractFigure',
-    emits: ['load'],
     refs: ['img'],
+    mountStrategy: 'in-view',
     options: {
-      ...Transition.config.options,
       lazy: Boolean,
     },
   };
 
-  /**
-   * Get the transition target.
-   */
-  get target() {
+  get target(): HTMLElement {
     return this.$refs.img;
   }
 
-  /**
-   * Get the image source.
-   */
-  get src() {
+  get src(): string {
     return this.$refs.img.src;
   }
 
-  /**
-   * Set the image source.
-   */
   set src(value: string) {
     this.$refs.img.src = value;
   }
 
-  /**
-   * Get the original source.
-   */
-  get original() {
-    return this.$refs.img.dataset.src;
+  get original(): string {
+    return this.$refs.img.dataset.src ?? '';
   }
 
-  /**
-   * Load on mount.
-   */
-  async mounted() {
+  /** Load on mount. */
+  async mounted(): Promise<void> {
     const { img } = this.$refs;
 
     if (!img || !(img instanceof HTMLImageElement)) {
-      this.$warn('The `img` refs is missing or not an `<img>` element.');
+      this.$warn('figure.invalid-ref', 'The `img` ref is missing or not an `<img>` element.');
       return;
     }
 
@@ -84,13 +62,13 @@ export class AbstractFigure<
     if (this.$options.lazy && src && src !== this.src) {
       try {
         await loadImage(src);
-      } catch {
-        this.$warn(`Failed to load image "${src}".`);
+      } catch (error) {
+        this.$error('figure.load-failed', `Failed to load image "${src}".`, error);
         return;
       }
 
       this.src = src;
-      this.enter();
+      void this.enter();
       this.$emit('load');
     }
   }

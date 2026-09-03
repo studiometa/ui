@@ -3,42 +3,20 @@ import type { ComponentManifest } from '@studiometa/js-toolkit';
 
 export const manifest: ComponentManifest = {
   Motion: {
-    token: 'Motion',
-    packageName: '@studiometa/ui-motion',
-    subpath: 'Motion',
-    exportName: 'Motion',
-    strategy: 'visible',
-    group: 'motion',
+    mountStrategy: 'visible',
     load: () => import('./Motion.js').then(({ Motion }) => Motion),
   },
   MotionScrollTimeline: {
-    token: 'MotionScrollTimeline',
-    packageName: '@studiometa/ui-motion',
-    subpath: 'MotionScrollTimeline',
-    exportName: 'MotionScrollTimeline',
-    strategy: 'visible',
-    group: 'motion',
-    children: ['Motion'],
+    mountStrategy: 'visible',
     load: () =>
       import('./MotionScrollTimeline.js').then(({ MotionScrollTimeline }) => MotionScrollTimeline),
   },
   MotionSequence: {
-    token: 'MotionSequence',
-    packageName: '@studiometa/ui-motion',
-    subpath: 'MotionSequence',
-    exportName: 'MotionSequence',
-    strategy: 'visible',
-    group: 'motion',
-    children: ['Motion'],
+    mountStrategy: 'visible',
     load: () => import('./MotionSequence.js').then(({ MotionSequence }) => MotionSequence),
   },
   MotionView: {
-    token: 'MotionView',
-    packageName: '@studiometa/ui-motion',
-    subpath: 'MotionView',
-    exportName: 'MotionView',
-    strategy: 'visible',
-    group: 'motion',
+    mountStrategy: 'visible',
     load: () => import('./MotionView.js').then(({ MotionView }) => MotionView),
   },
 };

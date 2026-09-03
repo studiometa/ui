@@ -2,41 +2,34 @@ import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { withLeadingSlash } from '@studiometa/js-toolkit/utils/withLeadingSlash';
 import { withoutLeadingSlash } from '@studiometa/js-toolkit/utils/withoutLeadingSlash';
 import { withoutTrailingSlash } from '@studiometa/js-toolkit/utils/withoutTrailingSlash';
-import { AbstractFigureDynamic } from './AbstractFigureDynamic.js';
+import { AbstractFigureDynamic, type AbstractFigureDynamicProps } from './AbstractFigureDynamic.js';
 import { normalizeSize } from './utils.js';
 
-export interface FigureTwicpicsProps extends BaseProps {
-  $options: {
+export type FigureTwicpicsProps = AbstractFigureDynamicProps & {
+  $options: AbstractFigureDynamicProps['$options'] & {
     transform: string;
     domain: string;
     path: string;
     mode: string;
     dpr: boolean;
   };
-}
+};
 
-/**
- * Determine if the user agent is a bot or not.
- */
+/** Whether the user agent is a bot. */
 const isBot = /bot|crawl|slurp|spider/i.test(navigator.userAgent);
 
 /**
- * FigureTwicpics class.
- *
- * Dynamic image figure that rewrites its source into a TwicPics URL sized to the
- * rendered element. Building on `AbstractFigureDynamic`, its `formatSrc` injects
- * a `twic` query built from the `domain`, `path`, `transform` and `mode` options
- * and the measured dimensions, multiplied by the device pixel ratio unless `dpr`
- * is disabled or a bot is detected.
+ * Dynamic image figure that rewrites its source into a TwicPics URL sized to
+ * the rendered element. Its `formatSrc` injects a `twic` query built from
+ * the `domain`, `path`, `transform` and `mode` options and the measured
+ * dimensions, multiplied by the device pixel ratio unless `dpr` is disabled
+ * or a bot is detected.
  *
  * @link https://ui.studiometa.dev/reference/items/FigureTwicpics/
  */
 export class FigureTwicpics<T extends BaseProps = BaseProps> extends AbstractFigureDynamic<
-  T & FigureTwicpicsProps
+  FigureTwicpicsProps & T
 > {
-  /**
-   * Config.
-   */
   static config: BaseConfig = {
     ...AbstractFigureDynamic.config,
     name: 'FigureTwicpics',
@@ -45,42 +38,26 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends AbstractFig
       transform: String,
       domain: String,
       path: String,
-      disable: Boolean,
-      step: {
-        type: Number,
-        default: 50,
-      },
-      mode: {
-        type: String,
-        default: 'cover',
-      },
-      dpr: {
-        type: Boolean,
-        default: true,
-      },
+      mode: { type: String, default: 'cover' },
+      dpr: { type: Boolean, default: true },
     },
   };
 
-  /**
-   * Get the Twicpics path.
-   */
+  /** The TwicPics path. */
   get path(): string {
     return withoutTrailingSlash(withoutLeadingSlash(this.$options.path));
   }
 
-  /**
-   * Get the Twicpics domain.
-   */
+  /** The TwicPics domain. */
   get domain(): string {
-    return this.$options.domain || new URL(this.$refs.img.dataset.src).host;
+    return this.$options.domain || new URL(this.$refs.img.dataset.src ?? '').host;
   }
 
   /**
-   * Get the current device pixel ratio
-   * Returns 1 if user agent is considered as a bot.
-   * Returns 1 if disabled by the `data-option-no-dpr` attribute.
+   * The current device pixel ratio. `1` for a bot, and `1` when `dpr` is
+   * disabled (`data-option-no-dpr`, since it defaults `true`).
    */
-  get devicePixelRatio() {
+  get devicePixelRatio(): number {
     if (!this.$options.dpr || isBot) {
       return 1;
     }
@@ -88,9 +65,7 @@ export class FigureTwicpics<T extends BaseProps = BaseProps> extends AbstractFig
     return window.devicePixelRatio;
   }
 
-  /**
-   * Format the source for Twicpics.
-   */
+  /** Format the source for TwicPics. */
   formatSrc(src: string): string {
     const { transform, mode, step } = this.$options;
 

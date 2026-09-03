@@ -1,48 +1,21 @@
-import deepmerge from 'deepmerge';
 import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
-import { arrayMerge } from './utils.js';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { deepmerge } from '@studiometa/js-toolkit/utils/deepmerge';
 
-export interface TrackContextProps extends BaseProps {
+export type TrackContextProps = BaseProps & {
   $refs: {
     context?: HTMLScriptElement;
   };
   $options: {
     context: Record<string, unknown>;
   };
-}
+};
 
 /**
- * TrackContext class.
- *
- * Provides hierarchical context data that is merged into descendant Track
- * components. The context is resolved from two sources merged together, the
- * `context` ref (a `<script data-ref="context" type="application/json">`
- * element) and the `data-option-context` attribute, and is then merged with
- * the context of every ancestor TrackContext (outermost first, innermost
- * wins).
- *
- * @link https://ui.studiometa.dev/reference/items/Track/js-api.html#trackcontext
- *
- * @example
- * ```html
- * <section
- *   data-component="TrackContext"
- *   data-option-context='{"page_type": "product", "product_id": "123"}'>
- *
- *   <button
- *     data-component="Track"
- *     data-track:click='{"event": "add_to_cart"}'>
- *     Add to Cart
- *   </button>
- *   <!-- Dispatches: { page_type: "product", product_id: "123", event: "add_to_cart" } -->
- * </section>
- * ```
+ * Hierarchical context for descendant trackers. Inner contexts override outer
+ * contexts, and attributes override script-ref data.
  */
 export class TrackContext<T extends BaseProps = BaseProps> extends Base<TrackContextProps & T> {
-  /**
-   * Config.
-   */
   static config: BaseConfig = {
     name: 'TrackContext',
     refs: ['context'],
@@ -55,7 +28,7 @@ export class TrackContext<T extends BaseProps = BaseProps> extends Base<TrackCon
   };
 
   /**
-   * Get the data from the optional `context` ref, a
+   * The data from the optional `context` ref, a
    * `<script data-ref="context" type="application/json">` element.
    */
   get scriptData(): Record<string, unknown> {
@@ -66,46 +39,39 @@ export class TrackContext<T extends BaseProps = BaseProps> extends Base<TrackCon
     }
 
     try {
-      return JSON.parse(script.textContent || '{}') ?? {};
-    } catch (err) {
-      this.$warn('Invalid JSON in the `context` ref:', err);
+      return (JSON.parse(script.textContent || '{}') as Record<string, unknown> | null) ?? {};
+    } catch (error) {
+      this.$error('track.invalid-json', 'Invalid JSON in the `context` ref.', error);
       return {};
     }
   }
 
   /**
-   * Get the data from the `data-option-context` attribute.
-   *
-   * The `OptionsManager` parses the attribute JSON lazily on access and throws
-   * on invalid JSON, hence the `try`/`catch`.
+   * The data from the `data-option-context` attribute, which is parsed on
+   * access and throws on invalid JSON.
    */
   get attrData(): Record<string, unknown> {
     try {
       return this.$options.context ?? {};
-    } catch (err) {
-      this.$warn('Invalid JSON in the `data-option-context` attribute:', err);
+    } catch (error) {
+      this.$error(
+        'track.invalid-json',
+        'Invalid JSON in the `data-option-context` attribute.',
+        error,
+      );
       return {};
     }
   }
 
-  /**
-   * Get the component's own context, the `context` ref merged with the
-   * `data-option-context` attribute (attribute wins).
-   */
+  /** This component's own context: the ref, with the attribute over it. */
   get ownData(): Record<string, unknown> {
-    return deepmerge(this.scriptData, this.attrData, { arrayMerge });
+    return deepmerge(this.scriptData, this.attrData);
   }
 
-  /**
-   * Get the full context, the own context merged on top of every ancestor
-   * TrackContext context (outermost first, innermost wins).
-   *
-   * The lookup uses `$closest` which starts from the parent element, so it is
-   * recursion-safe (a TrackContext never resolves to itself).
-   */
+  /** Full ancestor context with this component's data applied last. */
   get context(): Record<string, unknown> {
     const parent = this.$closest<TrackContext>('TrackContext');
     const { ownData } = this;
-    return parent ? deepmerge(parent.context, ownData, { arrayMerge }) : ownData;
+    return parent ? deepmerge(parent.context, ownData) : ownData;
   }
 }

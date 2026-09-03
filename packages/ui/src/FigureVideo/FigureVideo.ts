@@ -1,149 +1,145 @@
-import { withMountWhenInView } from '@studiometa/js-toolkit/withMountWhenInView';
+import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { loadImage } from '@studiometa/js-toolkit/utils/loadImage';
-import { Transition } from '../Transition/index.js';
+import { withTransition, type TransitionProps } from '../decorators/withTransition.js';
 
-export interface FigureVideoProps extends BaseProps {
-  $refs: {
-    video: HTMLVideoElement;
+export type FigureVideoProps = BaseProps &
+  TransitionProps & {
+    $refs: { video: HTMLVideoElement };
+    $options: TransitionProps['$options'] & { lazy: boolean };
+    $emits: TransitionProps['$emits'] & { load: void };
   };
-  $options: {
-    lazy: boolean;
-  };
-}
 
 /**
- * FigureVideo class.
- *
- * Lazy-loaded video counterpart to `Figure`. Built on `Transition` and the
- * `withMountWhenInView` decorator, it defers loading of the `video` ref's
- * `data-poster` and `data-src` sources until the element enters the viewport when
- * `lazy` is set, runs the enter transition, emits `load`, and then terminates
- * itself.
+ * Lazy-loaded video counterpart to `Figure`. Mixing in `withTransition`
+ * (whose `target` it overrides onto the `video` ref, as `AbstractFigure`
+ * does onto its `img`) and mounting through the `in-view` strategy, it
+ * defers loading of the `video` ref's `data-poster` and `data-src` sources
+ * until the element enters the viewport when `lazy` is set, runs the enter
+ * transition, and emits `load`.
  *
  * @link https://ui.studiometa.dev/reference/items/FigureVideo/
  */
-export class FigureVideo<T extends BaseProps = BaseProps> extends withMountWhenInView<Transition>(
-  Transition,
-  {
-    threshold: [0, 1],
-  },
-)<T & FigureVideoProps> {
-  /**
-   * Config.
-   */
+export class FigureVideo<T extends BaseProps = BaseProps> extends withTransition(Base)<
+  FigureVideoProps & T
+> {
   static config: BaseConfig = {
-    ...Transition.config,
     name: 'FigureVideo',
-    emits: ['load'],
     refs: ['video'],
+    mountStrategy: 'in-view',
     options: {
-      ...Transition.config.options,
       lazy: Boolean,
     },
   };
 
   /**
-   * Get the transition target.
+   * Whether the sources have already been loaded, so a later mount — the
+   * `in-view` strategy can trigger one — does not repeat it. The flag is
+   * load-bearing: `load()` reassigns every source unconditionally, so there is
+   * no idempotent check to fall back on.
    */
+  hasLoaded = false;
+
   get target(): HTMLVideoElement {
     return this.$refs.video;
   }
 
-  /**
-   * Get the video sources.
-   */
-  get sources(): Array<HTMLSourceElement> {
-    return Array.from(this.$refs.video.querySelectorAll('source'));
+  get sources(): HTMLSourceElement[] {
+    return [...this.$refs.video.querySelectorAll('source')];
   }
 
-  /**
-   * Load poster
-   */
-  loadPoster(): Promise<void> {
+  /** Load the poster onto the video element. */
+  async loadPoster(): Promise<void> {
     const { video } = this.$refs;
 
     if (!video.dataset.poster) {
-      return Promise.resolve();
+      return;
     }
 
-    return loadImage(video.dataset.poster)
-      .then(() => {
-        video.poster = video.dataset.poster;
-        this.$log('fresh poster loaded');
-      })
-      .catch(() => {
-        this.$warn(`Failed to load poster "${video.dataset.poster}".`);
-      });
+    try {
+      await loadImage(video.dataset.poster);
+      video.poster = video.dataset.poster;
+    } catch (error) {
+      this.$error(
+        'figure-video.poster-load-failed',
+        `Failed to load poster "${video.dataset.poster}".`,
+        error,
+      );
+    }
   }
 
-  /**
-   * Load sources
-   * @returns {Promise}
-   */
+  /** Load every `<source>`'s `data-src` and wait for the video to have data. */
   loadSources(): Promise<void> {
     const { video } = this.$refs;
 
-    this.sources.forEach((source) => {
-      if (!source.dataset.src) {
-        return;
+    for (const source of this.sources) {
+      if (source.dataset.src) {
+        source.src = source.dataset.src;
       }
-      source.src = source.dataset.src;
-    });
+    }
 
-    return new Promise<void>((resolve) => {
-      const loadHandler = () => {
-        video.removeEventListener('loadeddata', loadHandler);
-        this.$log('fresh sources loaded');
-        resolve();
+    /**
+     * Settled by either outcome, deliberately.
+     *
+     * Waiting on `loadeddata` alone would leave a video whose sources all fail
+     * hanging for ever — and because `mounted()` awaits this, the component
+     * would never reach its enter transition, its `load` event or `hasLoaded`.
+     * A media error is a real outcome and has to end the wait.
+     */
+    return new Promise<void>((resolve, reject) => {
+      const settle = (handler: () => void) => {
+        video.removeEventListener('loadeddata', onLoaded);
+        video.removeEventListener('error', onError);
+        handler();
       };
-      video.addEventListener('loadeddata', loadHandler);
+      const onLoaded = () => settle(resolve);
+      const onError = () =>
+        settle(() => reject(new Error(`Failed to load the sources of "${video.currentSrc}".`)));
+
+      video.addEventListener('loadeddata', onLoaded, { once: true });
+      video.addEventListener('error', onError, { once: true });
       video.load();
     });
   }
 
-  /**
-   * Load
-   * @returns {Promise}
-   */
-  load(): Promise<any[]> {
+  load(): Promise<[void, void]> {
     return Promise.all([this.loadPoster(), this.loadSources()]);
   }
 
-  /**
-   * Load on mount.
-   */
-  async mounted() {
-    this.$log('mounted');
+  /** Load on mount, once per element while lazy is set. */
+  async mounted(): Promise<void> {
     const { video } = this.$refs;
 
-    if (!video) {
-      throw new Error('[VideoFigure] The `video` ref is required.');
-    }
-
-    if (!(video instanceof HTMLVideoElement)) {
-      throw new Error('[VideoFigure] The `video` ref must be an `<video>` element.');
-    }
-
-    if (!this.$options.lazy) {
-      this.$log('Lazy loading disabled');
+    if (!video || !(video instanceof HTMLVideoElement)) {
+      this.$warn(
+        'figure-video.invalid-ref',
+        'The `video` ref is missing or not a `<video>` element.',
+      );
       return;
     }
 
-    this.$log('start loading');
-    await this.load();
-    this.$log('all is loaded');
-    await this.enter();
-    this.$log('transition done');
-    this.$emit('load');
-  }
+    if (!this.$options.lazy || this.hasLoaded) {
+      return;
+    }
 
-  /**
-   * Terminate the component on load.
-   */
-  onLoad() {
-    this.$terminate();
+    try {
+      await this.load();
+    } catch (error) {
+      // Reported and left un-loaded, so a later mount cycle retries rather
+      // than the component hanging on a promise that never settles.
+      this.$error('figure-video.load-failed', 'Failed to load the video.', error);
+      return;
+    }
+
+    await this.enter();
+    this.hasLoaded = true;
+    this.$emit('load');
   }
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/FigureVideo`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default FigureVideo;

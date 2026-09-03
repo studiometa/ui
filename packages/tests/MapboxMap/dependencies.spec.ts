@@ -1,10 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 /**
  * Minimal stand-ins for the injected modules. These specs exercise the
  * resolution logic itself, so they mock the peers with unique sentinels and load
- * a *fresh* copy of `dependencies.ts` per test (its resolved instance is a
- * module-level singleton) with `vi.resetModules()`.
+ * a *fresh* copy of `dependencies.ts` per test — its resolved instance is a
+ * module-level singleton, and a test that inherited the previous one would
+ * assert against the wrong sentinel.
+ *
+ * `vi.resetModules()` cannot deliver that here: the browser runner evaluates
+ * modules in the page's own registry, which no runner API can clear, so the
+ * call returns the identical namespace object. A distinct query string is a
+ * distinct module URL, which is a genuinely fresh evaluation — and it still
+ * goes through Vite's transform, so the `vi.mock()` calls above still apply.
  */
 const importedMapboxGl = { source: 'imported' };
 const importedGeocoder = class ImportedGeocoder {};
@@ -12,16 +19,14 @@ const importedGeocoder = class ImportedGeocoder {};
 vi.mock('mapbox-gl', () => ({ default: importedMapboxGl }));
 vi.mock('@mapbox/mapbox-gl-geocoder', () => ({ default: importedGeocoder }));
 
-async function freshDependencies() {
-  vi.resetModules();
-  return import('@studiometa/ui-mapbox/dependencies');
+let generation = 0;
+
+function freshDependencies(): Promise<typeof import('@studiometa/ui-mapbox/dependencies')> {
+  generation += 1;
+  return import(/* @vite-ignore */ `../../ui-mapbox/src/dependencies.ts?fresh=${generation}`);
 }
 
 describe('ui-mapbox dependency injection', () => {
-  beforeEach(() => {
-    vi.resetModules();
-  });
-
   it('throws from getMapboxGl before mapbox-gl is resolved', async () => {
     const { getMapboxGl } = await freshDependencies();
     expect(() => getMapboxGl()).toThrow(/has not been resolved/);

@@ -1,1387 +1,1086 @@
-import { describe, it, expect, vi } from 'vitest';
-import { Fetch } from '@studiometa/ui';
-import { Window } from 'happy-dom';
-import { h, mount, wait } from '#test-utils';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { mount, recordEvents, resetDom, settle } from '@studiometa/js-toolkit/test';
+import { Fetch, FETCH_EVENTS, type FetchEmits } from '#private/Fetch/Fetch.js';
+import { FetchShopifySection } from '#private/Fetch/FetchShopifySection.js';
 
-describe('The Fetch class', () => {
-  describe('getters', () => {
-    it('should have a `client` getter that returns the fetch function', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const spy = vi.spyOn(window, 'fetch');
-      spy.mockImplementation(() => Promise.resolve(new Response('hi')));
+registerComponents(Fetch, FetchShopifySection);
 
-      await fetch.client('#');
-      expect(spy).toHaveBeenCalledOnce();
-      expect(spy).toHaveBeenCalledWith('#');
-      spy.mockRestore();
-    });
+declare global {
+  interface Window {
+    __fetchScriptRuns?: number;
+  }
+}
 
-    it('should have a `url` getter for links', async () => {
-      const anchor = h('a', { href: 'https://example.com/test' });
-      const fetch = new Fetch(anchor);
-      await mount(fetch);
+const originalFetch = window.fetch;
+const originalHref = window.location.href;
 
-      expect(fetch.url).toEqual(new URL('https://example.com/test'));
-    });
+/** Real navigation would take the test runner with it. */
+function preventNavigation(event: Event): void {
+  event.preventDefault();
+}
 
-    it('should have a `url` getter for forms', async () => {
-      const form = h('form', { action: 'https://example.com/submit', method: 'post' });
-      const fetch = new Fetch(form);
-      await mount(fetch);
+beforeEach(() => {
+  document.addEventListener('click', preventNavigation, true);
+  document.addEventListener('submit', preventNavigation, true);
+});
 
-      expect(fetch.url).toEqual(new URL('https://example.com/submit'));
-    });
+afterEach(async () => {
+  document.removeEventListener('click', preventNavigation, true);
+  document.removeEventListener('submit', preventNavigation, true);
+  window.fetch = originalFetch;
+  window.history.replaceState({}, '', originalHref);
+  delete window.__fetchScriptRuns;
+  await resetDom();
+});
 
-    it('should append form data to URL for GET forms', async () => {
-      const input = h('input', { name: 'foo', value: 'bar' });
-      const form = h('form', { action: 'https://example.com/submit', method: 'get' }, [input]);
-      const fetch = new Fetch(form);
-      await mount(fetch);
+/** Mount one `Fetch` (or subclass) from markup and hand back the instance. */
+async function mountFetch<T extends Fetch = Fetch>(
+  html: string,
+  name = 'Fetch',
+): Promise<{ root: HTMLElement; instance: T }> {
+  const root = await mount(html);
+  const el = root.firstElementChild as HTMLElement;
+  return { root, instance: getInstance<T>(el, name)! };
+}
 
-      expect(fetch.url.href).toBe('https://example.com/submit?foo=bar');
-    });
+/** Replace `window.fetch` and record every call. */
+function stubClient(
+  // An id no spec renders, so a request left in flight by one spec cannot
+  // land in the next one's DOM.
+  respond: (url: string, init: RequestInit) => Response | Promise<Response> = () =>
+    new Response('<div id="fetch-default">new</div>'),
+): ReturnType<typeof vi.fn> {
+  const client = vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) =>
+    respond(String(input), init),
+  );
+  window.fetch = client as unknown as typeof fetch;
+  return client;
+}
 
-    it('should fall back to the `src` option for the `url` getter on other elements', async () => {
-      (window as any).happyDOM.setURL('https://example.com/');
-      const div = h('div', { dataOptionSrc: '/src-path' });
-      const fetch = new Fetch(div);
-      await mount(fetch);
+/** Collect every `Fetch` event dispatched under `root`, in order. */
 
-      expect(fetch.url).toEqual(new URL('https://example.com/src-path'));
-    });
+/** Take over `document.startViewTransition` and count the calls. */
+function stubViewTransition(): { spy: ReturnType<typeof vi.fn>; restore: () => void } {
+  const original = document.startViewTransition;
+  const spy = vi.fn((callback: () => void | Promise<void>) => {
+    const finished = Promise.resolve(callback()).then(() => undefined);
+    return { ready: finished, finished, updateCallbackDone: finished, skipTransition() {} };
+  });
+  Object.defineProperty(document, 'startViewTransition', { value: spy, configurable: true });
+  return {
+    spy,
+    restore() {
+      if (original) {
+        Object.defineProperty(document, 'startViewTransition', {
+          value: original,
+          configurable: true,
+        });
+      } else {
+        delete (document as { startViewTransition?: unknown }).startViewTransition;
+      }
+    },
+  };
+}
 
-    it('should let the `src` option take precedence over a link `href`', async () => {
-      (window as any).happyDOM.setURL('https://example.com/');
-      const anchor = h('a', { href: 'https://example.com/href', dataOptionSrc: '/src-path' });
-      const fetch = new Fetch(anchor);
-      await mount(fetch);
+describe('Fetch — headers across every HeadersInit form', () => {
+  it('forwards a caller Headers instance instead of dropping it', async () => {
+    const client = stubClient();
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="/page"><div id="fetch-h">old</div></a>`,
+    );
 
-      expect(fetch.url).toEqual(new URL('https://example.com/src-path'));
-    });
+    // Spreading a `Headers` yields no keys, so a spread would reach `fetch()`
+    // with an empty header set.
+    await instance.fetch(instance.url, { headers: new Headers({ 'x-custom': '1' }) });
+    await settle();
 
-    it('should let the `src` option take precedence over a form `action`', async () => {
-      (window as any).happyDOM.setURL('https://example.com/');
-      const form = h('form', {
-        action: 'https://example.com/action',
-        method: 'post',
-        dataOptionSrc: '/src-path',
-      });
-      const fetch = new Fetch(form);
-      await mount(fetch);
-
-      expect(fetch.url).toEqual(new URL('https://example.com/src-path'));
-    });
-
-    it('should still fold GET form data onto a `src` base URL', async () => {
-      (window as any).happyDOM.setURL('https://example.com/');
-      const input = h('input', { name: 'q', value: 'foo' });
-      const form = h(
-        'form',
-        { action: 'https://example.com/search', method: 'get', dataOptionSrc: '/search/suggest' },
-        [input],
-      );
-      const fetch = new Fetch(form);
-      await mount(fetch);
-
-      expect(fetch.url.href).toBe('https://example.com/search/suggest?q=foo');
-    });
-
-    it('should preserve a fixed query in `src` alongside GET form data', async () => {
-      (window as any).happyDOM.setURL('https://example.com/');
-      const input = h('input', { name: 'q', value: 'foo' });
-      const form = h(
-        'form',
-        {
-          action: 'https://example.com/search',
-          method: 'get',
-          dataOptionSrc: '/search/suggest?section_id=predictive-search',
-        },
-        [input],
-      );
-      const fetch = new Fetch(form);
-      await mount(fetch);
-
-      expect(fetch.url.searchParams.get('section_id')).toBe('predictive-search');
-      expect(fetch.url.searchParams.get('q')).toBe('foo');
-    });
-
-    it('should let GET form fields win over a conflicting query in `src`', async () => {
-      (window as any).happyDOM.setURL('https://example.com/');
-      const input = h('input', { name: 'q', value: 'live' });
-      const form = h(
-        'form',
-        {
-          action: 'https://example.com/search',
-          method: 'get',
-          dataOptionSrc: '/search/suggest?q=stale',
-        },
-        [input],
-      );
-      const fetch = new Fetch(form);
-      await mount(fetch);
-
-      expect(fetch.url.searchParams.get('q')).toBe('live');
-    });
-
-    it('should keep using the form `action` when `src` is empty', async () => {
-      const input = h('input', { name: 'foo', value: 'bar' });
-      const form = h('form', { action: 'https://example.com/submit', method: 'get' }, [input]);
-      const fetch = new Fetch(form);
-      await mount(fetch);
-
-      expect(fetch.url.href).toBe('https://example.com/submit?foo=bar');
-    });
-
-    it('should have a `requestInit` getter', async () => {
-      const headers = { 'x-foo': 'bar' };
-      const init = { method: 'post' };
-      const anchor = h('a', {
-        href: 'https://example.com',
-        dataOptionRequestInit: init,
-        dataOptionHeaders: headers,
-      });
-
-      const fetch = new Fetch(anchor);
-      await mount(fetch);
-
-      expect(fetch.requestInit).toEqual({
-        method: 'post',
-        headers: {
-          'user-agent': expect.stringContaining('@studiometa/ui/Fetch'),
-          'x-foo': 'bar',
-        },
-      });
-    });
-
-    it('should include form data in requestInit for POST forms', async () => {
-      const input = h('input', { name: 'test', value: 'value' });
-      const form = h('form', { action: 'https://example.com/submit', method: 'post' }, [input]);
-      const fetch = new Fetch(form);
-      await mount(fetch);
-
-      expect(fetch.requestInit.method).toBe('post');
-      expect(fetch.requestInit.body).toBeInstanceOf(FormData);
-    });
-
-    it('should NOT include form data in requestInit for GET forms', async () => {
-      const input = h('input', { name: 'test', value: 'value' });
-      const form = h('form', { action: 'https://example.com/submit', method: 'get' }, [input]);
-      const fetch = new Fetch(form);
-      await mount(fetch);
-
-      expect(fetch.requestInit.method).toBe('get');
-      expect(fetch.requestInit.body).toBeUndefined();
-    });
-
-    it('should have an `isLink` getter', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const form = h('form', { action: 'https://example.com' });
-      const fetchLink = new Fetch(anchor);
-      const fetchForm = new Fetch(form);
-
-      await mount(fetchLink, fetchForm);
-
-      expect(fetchLink.isLink).toBe(true);
-      expect(fetchForm.isLink).toBe(false);
-    });
-
-    it('should have an `isForm` getter', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const form = h('form', { action: 'https://example.com' });
-      const fetchLink = new Fetch(anchor);
-      const fetchForm = new Fetch(form);
-
-      await mount(fetchLink, fetchForm);
-
-      expect(fetchLink.isForm).toBe(false);
-      expect(fetchForm.isForm).toBe(true);
-    });
+    const [, init] = client.mock.calls[0] as [unknown, RequestInit];
+    expect((init.headers as Record<string, string>)['x-custom']).toBe('1');
   });
 
-  describe('event handlers', () => {
-    it('should handle click on links and trigger fetch', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+  it('forwards a caller tuple array too, with the per-call value winning', async () => {
+    const client = stubClient();
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="/page" data-option-headers='{"x-custom": "element"}'><div id="fetch-h">old</div></a>`,
+    );
 
-      await mount(fetch);
-      anchor.dispatchEvent(new MouseEvent('click', { button: 0 }));
+    await instance.fetch(instance.url, { headers: [['X-Custom', 'call']] });
+    await settle();
 
-      expect(fetchSpy).toHaveBeenCalledOnce();
-      expect(fetchSpy).toHaveBeenCalledWith(fetch.url, fetch.requestInit);
+    const [, init] = client.mock.calls[0] as [unknown, RequestInit];
+    expect((init.headers as Record<string, string>)['x-custom']).toBe('call');
+  });
+});
+
+describe('Fetch — request resolution', () => {
+  it('reads the url of a link', async () => {
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/test"></a>`,
+    );
+    expect(instance.url.href).toBe('https://example.com/test');
+  });
+
+  it('reads the action of a form', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/submit" method="post"></form>`,
+    );
+    expect(instance.url.href).toBe('https://example.com/submit');
+  });
+
+  it('folds the fields of a GET form onto the url', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/submit" method="get">
+        <input name="foo" value="bar">
+      </form>`,
+    );
+    expect(instance.url.href).toBe('https://example.com/submit?foo=bar');
+  });
+
+  it('falls back to the `src` option on an element that is neither', async () => {
+    const { instance } = await mountFetch(
+      `<div data-component="Fetch" data-option-src="/src-path"></div>`,
+    );
+    expect(instance.url.pathname).toBe('/src-path');
+  });
+
+  it('lets the `src` option win over a link href', async () => {
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/href" data-option-src="https://example.com/src"></a>`,
+    );
+    expect(instance.url.href).toBe('https://example.com/src');
+  });
+
+  it('keeps a fixed query in `src` alongside the live GET form fields', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/action" method="get"
+        data-option-src="https://example.com/base?section_id=header">
+        <input name="foo" value="bar">
+      </form>`,
+    );
+    expect(instance.url.searchParams.get('section_id')).toBe('header');
+    expect(instance.url.searchParams.get('foo')).toBe('bar');
+  });
+
+  it('lets a GET form field win over a conflicting `src` query', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/action" method="get"
+        data-option-src="https://example.com/base?foo=from-src">
+        <input name="foo" value="from-form">
+      </form>`,
+    );
+    expect(instance.url.searchParams.get('foo')).toBe('from-form');
+  });
+
+  it('keeps every value of a repeated GET form field', async () => {
+    // A checkbox group is repeated names by design. Setting each field on top
+    // of the last leaves one value, so ticking a second box changes nothing.
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <input type="checkbox" name="genre[]" value="rock" checked>
+        <input type="checkbox" name="genre[]" value="jazz" checked>
+      </form>`,
+    );
+    expect(instance.url.searchParams.getAll('genre[]')).toEqual(['rock', 'jazz']);
+  });
+
+  it('keeps every value of a repeated field that has no brackets', async () => {
+    // The bracket suffix is a PHP convention, not an HTML one: a repeated name
+    // is repeated whether or not it ends in `[]`, so the fold cannot key on
+    // its shape.
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <input name="genre" value="rock">
+        <input name="genre" value="jazz">
+      </form>`,
+    );
+    expect(instance.url.searchParams.getAll('genre')).toEqual(['rock', 'jazz']);
+  });
+
+  it('keeps every selected option of a `select multiple`', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <select name="genre" multiple>
+          <option value="rock" selected>Rock</option>
+          <option value="jazz" selected>Jazz</option>
+          <option value="folk">Folk</option>
+        </select>
+      </form>`,
+    );
+    expect(instance.url.searchParams.getAll('genre')).toEqual(['rock', 'jazz']);
+  });
+
+  it('lets repeated GET form fields replace a conflicting query in `src`', async () => {
+    // Both halves at once: the base's stale value goes, and both live values stay.
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get"
+        data-option-src="/search/suggest?genre[]=stale&amp;section=keep">
+        <input type="checkbox" name="genre[]" value="rock" checked>
+        <input type="checkbox" name="genre[]" value="jazz" checked>
+      </form>`,
+    );
+    expect(instance.url.searchParams.getAll('genre[]')).toEqual(['rock', 'jazz']);
+    expect(instance.url.searchParams.get('section')).toBe('keep');
+  });
+
+  it('resolves `historyUrl` from the link href rather than the `src`', async () => {
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/projects/page/2?orderby=title"
+        data-option-src="/projects/page/2?orderby=title&amp;sections=listing"></a>`,
+    );
+    expect(instance.url.searchParams.get('sections')).toBe('listing');
+    expect(instance.historyUrl.href).toBe('https://example.com/projects/page/2?orderby=title');
+  });
+
+  it('folds the GET form data onto the action for `historyUrl`', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get"
+        data-option-src="/search/suggest?sections=results">
+        <input name="q" value="live">
+      </form>`,
+    );
+    // The address bar has to show what the no-JS submit would have produced,
+    // filters included — the bare action would drop them.
+    expect(instance.historyUrl.href).toBe('https://example.com/search?q=live');
+    expect(instance.url.searchParams.get('sections')).toBe('results');
+  });
+
+  it('resolves `historyUrl` to the request url when there is no `src`', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/submit" method="get">
+        <input name="foo" value="bar">
+      </form>`,
+    );
+    expect(instance.historyUrl.href).toBe(instance.url.href);
+  });
+
+  it('merges the `headers` option, the `requestInit` option and the header refs', async () => {
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com"
+        data-option-request-init='{"headers":{"x-from-init":"init"},"credentials":"include"}'
+        data-option-headers='{"x-from-headers":"headers"}'>
+        <input type="hidden" data-ref="headers[]" data-name="x-from-ref" value="ref">
+        <input type="hidden" data-ref="headers[]" data-name="x-empty" value="">
+      </a>`,
+    );
+
+    const headers = instance.requestInit.headers as Record<string, string>;
+    expect(headers['x-from-init']).toBe('init');
+    expect(headers['x-from-headers']).toBe('headers');
+    expect(headers['x-from-ref']).toBe('ref');
+    expect(headers['x-empty']).toBeUndefined();
+    expect(headers['user-agent']).toContain('@studiometa/ui/Fetch');
+    expect(instance.requestInit.credentials).toBe('include');
+  });
+
+  it('sends the form data as the body of a POST form', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com" method="post">
+        <input name="foo" value="bar">
+      </form>`,
+    );
+    expect(instance.requestInit.method).toBe('post');
+    expect(instance.requestInit.body).toBeInstanceOf(FormData);
+  });
+
+  it('sends no body for a GET form', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com" method="get">
+        <input name="foo" value="bar">
+      </form>`,
+    );
+    expect(instance.requestInit.method).toBe('get');
+    expect(instance.requestInit.body).toBeUndefined();
+  });
+
+  it('answers `isLink` and `isForm` from the element itself', async () => {
+    const { instance: link } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+    const { instance: form } = await mountFetch(`<form data-component="Fetch"></form>`);
+    const { instance: div } = await mountFetch(`<div data-component="Fetch"></div>`);
+
+    expect([link.isLink, link.isForm]).toEqual([true, false]);
+    expect([form.isLink, form.isForm]).toEqual([false, true]);
+    expect([div.isLink, div.isForm]).toEqual([false, false]);
+  });
+});
+
+describe('Fetch — declarative triggers', () => {
+  it('fetches on a plain left click of a link', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(`<a data-component="Fetch" href="#target"></a>`);
+
+    root.querySelector('a')?.click();
+    await settle();
+
+    expect(client).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['ctrlKey', { ctrlKey: true }],
+    ['shiftKey', { shiftKey: true }],
+    ['altKey', { altKey: true }],
+    ['metaKey', { metaKey: true }],
+    ['a secondary button', { button: 1 }],
+  ])('does not fetch on a click with %s', async (_label, init) => {
+    const client = stubClient();
+    const { root } = await mountFetch(`<a data-component="Fetch" href="#target"></a>`);
+
+    root
+      .querySelector('a')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ...init }));
+    await settle();
+
+    expect(client).not.toHaveBeenCalled();
+  });
+
+  it('does not fetch on a link that opens a new tab', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<a data-component="Fetch" href="#target" target="_blank"></a>`,
+    );
+
+    root.querySelector('a')?.click();
+    await settle();
+
+    expect(client).not.toHaveBeenCalled();
+  });
+
+  it('does nothing on a click when the element is not a link', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(`<div data-component="Fetch"></div>`);
+
+    root.querySelector('div')?.click();
+    await settle();
+
+    expect(client).not.toHaveBeenCalled();
+  });
+
+  it('fetches on a form submission', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="#target" method="get"></form>`,
+    );
+
+    root.querySelector('form')?.dispatchEvent(new SubmitEvent('submit', { cancelable: true }));
+    await settle();
+
+    expect(client).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not fetch on a form that targets a new tab', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="#target" method="get" target="_blank"></form>`,
+    );
+
+    root.querySelector('form')?.dispatchEvent(new SubmitEvent('submit', { cancelable: true }));
+    await settle();
+
+    expect(client).not.toHaveBeenCalled();
+  });
+
+  /**
+   * `onWindowPopstate` is gap 15 consumed: `popstate` only ever fires on
+   * `window`, so no amount of delegation reaches it.
+   */
+  it('fetches the current location on popstate when history is enabled', async () => {
+    const client = stubClient();
+    await mountFetch(`<a data-component="Fetch" href="#target" data-option-history></a>`);
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    expect(client).toHaveBeenCalledTimes(1);
+    const [, init] = client.mock.calls[0] as [URL, RequestInit];
+    expect((init.headers as Record<string, string>)['x-triggered-by']).toBe('popstate');
+  });
+
+  it('ignores popstate when history is disabled', async () => {
+    const client = stubClient();
+    await mountFetch(`<a data-component="Fetch" href="#target"></a>`);
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    expect(client).not.toHaveBeenCalled();
+  });
+
+  it('stops listening to popstate once the element leaves the DOM', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<a data-component="Fetch" href="#target" data-option-history></a>`,
+    );
+
+    root.remove();
+    await settle();
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    expect(client).not.toHaveBeenCalled();
+  });
+});
+
+describe('Fetch — the request', () => {
+  it('defaults to the `url` getter when called bare', async () => {
+    const client = stubClient();
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/bare"></a>`,
+    );
+
+    await instance.fetch();
+
+    expect(String(client.mock.calls[0][0])).toBe('https://example.com/bare');
+  });
+
+  it('coerces a string url against the current location', async () => {
+    const client = stubClient();
+    const { instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+
+    await instance.fetch('/relative');
+
+    expect(String(client.mock.calls[0][0])).toBe(new URL('/relative', window.location.href).href);
+  });
+
+  it('emits the whole lifecycle in order', async () => {
+    stubClient();
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+    await settle();
+
+    expect(events.map(({ type }) => type)).toEqual([
+      FETCH_EVENTS.BEFORE_FETCH,
+      FETCH_EVENTS.FETCH,
+      FETCH_EVENTS.RESPONSE,
+      FETCH_EVENTS.AFTER_FETCH,
+      FETCH_EVENTS.BEFORE_UPDATE,
+      FETCH_EVENTS.UPDATE,
+      FETCH_EVENTS.AFTER_UPDATE,
+    ]);
+  });
+
+  /** `$emit()` already bubbles, so the component carries no `$emit` override. */
+  it('bubbles its events to an ancestor with no `$emit` override', async () => {
+    stubClient();
+    const { instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+    const seen: string[] = [];
+    document.addEventListener(FETCH_EVENTS.RESPONSE, () => seen.push('document'));
+
+    await instance.fetch();
+
+    expect(seen).toEqual(['document']);
+  });
+
+  it('carries a typed payload on its events', async () => {
+    stubClient();
+    const { root, instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+    let detail: FetchEmits['fetch-response'] | undefined;
+    root.addEventListener(FETCH_EVENTS.RESPONSE, (event) => {
+      detail = (event as CustomEvent<FetchEmits['fetch-response']>).detail;
     });
 
-    it('should not trigger fetch on link click with meta key', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+    await instance.fetch();
 
-      await mount(fetch);
-      anchor.dispatchEvent(new MouseEvent('click', { button: 0, metaKey: true }));
+    expect(detail?.instance).toBe(instance);
+    expect(detail?.response).toBeInstanceOf(Response);
+    expect(detail?.url).toBeInstanceOf(URL);
+  });
 
-      expect(fetchSpy).not.toHaveBeenCalled();
+  it('aborts the request in flight when a new one starts', async () => {
+    let release: (() => void) | undefined;
+    stubClient(
+      async () =>
+        new Promise<Response>((resolve) => {
+          release = () => resolve(new Response('<div id="fetch-default">new</div>'));
+        }),
+    );
+    const { root, instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    void instance.fetch();
+    await settle();
+    void instance.fetch();
+    release?.();
+    await settle();
+
+    expect(events.filter(({ type }) => type === FETCH_EVENTS.ABORT)).toHaveLength(1);
+  });
+
+  it('emits `fetch-abort` when `abort()` is called', async () => {
+    stubClient(async () => new Promise<Response>(() => {}));
+    const { root, instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    void instance.fetch();
+    instance.abort('because');
+    await settle();
+
+    const abort = events.find(({ type }) => type === FETCH_EVENTS.ABORT);
+    expect((abort as { detail: { reason: unknown } }).detail.reason).toBe('because');
+  });
+
+  it('evaluates the `response` option to extract the content', async () => {
+    stubClient(async () => new Response(JSON.stringify({ html: '<div id="target">json</div>' })));
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition
+        data-option-response="response.json().then((data) => data.html)"></a>`,
+    );
+
+    await instance.fetch();
+    await settle();
+
+    expect(document.getElementById('target')?.textContent).toBe('json');
+  });
+
+  it('emits `fetch-error` when the response is not ok', async () => {
+    stubClient(async () => new Response('nope', { status: 500 }));
+    const { root, instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    const error = events.find(({ type }) => type === FETCH_EVENTS.ERROR);
+    expect((error as { detail: { error: Error } }).detail.error.message).toContain('500');
+  });
+
+  it('emits `fetch-after` with the error and no content when the request fails', async () => {
+    stubClient(async () => {
+      throw new Error('network down');
     });
+    const { root, instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
 
-    it('should not trigger fetch on link click with ctrl key', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+    await instance.fetch();
 
-      await mount(fetch);
-      anchor.dispatchEvent(new MouseEvent('click', { button: 0, ctrlKey: true }));
+    const after = events.find(({ type }) => type === FETCH_EVENTS.AFTER_FETCH);
+    expect((after as { detail: { error: Error } }).detail.error.message).toBe('network down');
+  });
+});
 
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
+describe('Fetch — the DOM update', () => {
+  it('replaces the matching element and leaves the rest alone', async () => {
+    await mount(`<div id="target">old</div><div id="untouched">keep</div>`);
+    const { instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
 
-    it('should not trigger fetch on link click with shift key', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+    await instance.update(
+      new URL('https://example.com'),
+      {},
+      '<div id="target">new</div><div id="absent">nope</div>',
+    );
 
-      await mount(fetch);
-      anchor.dispatchEvent(new MouseEvent('click', { button: 0, shiftKey: true }));
+    expect(document.getElementById('target')?.textContent).toBe('new');
+    expect(document.getElementById('untouched')?.textContent).toBe('keep');
+    expect(document.getElementById('absent')).toBeNull();
+  });
 
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
+  it('honours the `selector` option', async () => {
+    await mount(`<div id="target">old</div><section id="section">old</section>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-selector="section[id]"></a>`,
+    );
 
-    it('should not trigger fetch on link click with alt key', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+    await instance.update(
+      new URL('https://example.com'),
+      {},
+      '<div id="target">new</div><section id="section">new</section>',
+    );
 
-      await mount(fetch);
-      anchor.dispatchEvent(new MouseEvent('click', { button: 0, altKey: true }));
+    expect(document.getElementById('target')?.textContent).toBe('old');
+    expect(document.getElementById('section')?.textContent).toBe('new');
+  });
 
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
+  it('appends in `append` mode', async () => {
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-mode="append"></a>`,
+    );
 
-    it('should not trigger fetch on non-primary button click', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+    await instance.update(new URL('https://example.com'), {}, '<div id="target">new</div>');
 
-      await mount(fetch);
-      anchor.dispatchEvent(new MouseEvent('click', { button: 1 }));
+    expect(document.getElementById('target')?.textContent).toBe('oldnew');
+  });
 
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
+  it('prepends in `prepend` mode', async () => {
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-mode="prepend"></a>`,
+    );
 
-    it('should not trigger fetch on link with target="_blank"', async () => {
-      const anchor = h('a', { href: 'https://example.com', target: '_blank' });
-      const fetch = new Fetch(anchor);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+    await instance.update(new URL('https://example.com'), {}, '<div id="target">new</div>');
 
-      await mount(fetch);
-      anchor.dispatchEvent(new MouseEvent('click', { button: 0 }));
+    expect(document.getElementById('target')?.textContent).toBe('newold');
+  });
 
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
+  /**
+   * `morph` keeps the node and updates its attributes. Core's `swap()` morphs
+   * with `childrenOnly`, which is why this port keeps its own update path.
+   */
+  it('keeps the node and updates its attributes in `morph` mode', async () => {
+    await mount(`<div id="target" class="old">old</div>`);
+    const before = document.getElementById('target');
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-mode="morph"></a>`,
+    );
 
-    it('should not trigger fetch on click it not a link', async () => {
-      const anchor = h('div', { href: 'https://example.com', target: '_blank' });
-      const fetch = new Fetch(anchor);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+    await instance.update(
+      new URL('https://example.com'),
+      {},
+      '<div id="target" class="new">new</div>',
+    );
 
-      await mount(fetch);
-      anchor.dispatchEvent(new MouseEvent('click', { button: 0 }));
+    expect(document.getElementById('target')).toBe(before);
+    expect(before?.className).toBe('new');
+    expect(before?.textContent).toBe('new');
+  });
 
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
+  it('replaces the element itself in `replace` mode, attributes included', async () => {
+    await mount(`<div id="target" class="old">old</div>`);
+    const before = document.getElementById('target');
+    const { instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
 
-    it('should handle form submit and trigger fetch', async () => {
-      const form = h('form', { action: 'https://example.com/submit', method: 'post' });
-      const fetch = new Fetch(form);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+    await instance.update(
+      new URL('https://example.com'),
+      {},
+      '<div id="target" class="new">new</div>',
+    );
 
-      await mount(fetch);
-      form.dispatchEvent(new SubmitEvent('submit'));
+    expect(document.getElementById('target')).not.toBe(before);
+    expect(document.getElementById('target')?.className).toBe('new');
+  });
 
-      expect(fetchSpy).toHaveBeenCalledOnce();
-    });
+  it('runs an injected script exactly once and leaves the surviving ones alone', async () => {
+    window.__fetchScriptRuns = 0;
+    await mount(
+      `<div id="target"><script id="kept">window.__fetchScriptRuns = (window.__fetchScriptRuns ?? 0) + 1;</script></div>`,
+    );
+    const runsAfterInitialParse = window.__fetchScriptRuns;
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-mode="append"></a>`,
+    );
 
-    it('should not trigger fetch on form submit with target="_blank"', async () => {
-      const form = h('form', { action: 'https://example.com', target: '_blank' });
-      const fetch = new Fetch(form);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+    await instance.update(
+      new URL('https://example.com'),
+      {},
+      '<div id="target"><script>window.__fetchScriptRuns = (window.__fetchScriptRuns ?? 0) + 1;</scr' +
+        'ipt></div>',
+    );
 
-      await mount(fetch);
-      form.dispatchEvent(new SubmitEvent('submit'));
+    expect(window.__fetchScriptRuns).toBe((runsAfterInitialParse ?? 0) + 1);
+  });
 
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
+  it('pushes history and adopts the response title when `history` is enabled', async () => {
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-history></a>`,
+    );
 
-    it('should not trigger fetch on submit if not a form', async () => {
-      const div = h('div', { action: 'https://example.com' });
-      // needed as there is a check in @studiometa/js-toolkit if `on${event}` is defined or not
-      // happy-dom keeps it undefined, so the `onSubmit` hook is never called on a div element.
-      div.onsubmit = null;
-      const fetch = new Fetch(div);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+    await instance.update(
+      new URL('https://example.com/pushed?q=1'),
+      {},
+      '<html><head><title>New title</title></head><body><div id="target">new</div></body></html>',
+    );
+    await settle();
 
-      await mount(fetch);
-      div.dispatchEvent(new SubmitEvent('submit'));
+    expect(window.location.pathname).toBe('/pushed');
+    expect(window.location.search).toBe('?q=1');
+    expect(document.title).toBe('New title');
+  });
 
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
+  it('does not push history for an update triggered by popstate', async () => {
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-history></a>`,
+    );
+    const before = window.location.href;
 
-    it('should handle window popstate event and trigger fetch', async () => {
-      const anchor = h('a', { href: 'https://example.com', dataOptionHistory: true });
-      const fetch = new Fetch(anchor);
-      const fetchSpy = vi.spyOn(fetch, 'fetch');
-      fetchSpy.mockImplementation(() => Promise.resolve());
+    await instance.update(
+      new URL('https://example.com/never-pushed'),
+      { headers: { 'x-triggered-by': 'popstate' } },
+      '<div id="target">new</div>',
+    );
 
-      await mount(fetch);
-      window.dispatchEvent(new PopStateEvent('popstate'));
+    expect(window.location.href).toBe(before);
+  });
 
-      expect(fetchSpy).toHaveBeenCalledOnce();
-      expect(fetchSpy.mock.lastCall?.[1]).toEqual({
-        headers: {
-          'x-triggered-by': 'popstate',
+  it('pushes the element destination rather than the fetched `src`', async () => {
+    const client = stubClient();
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/projects/page/2?orderby=title"
+        data-option-src="/projects/page/2?orderby=title&amp;sections=listing"
+        data-option-history></a>`,
+    );
+
+    await instance.fetch();
+    await settle();
+
+    // Requested the lighter endpoint…
+    expect(String(client.mock.calls[0][0])).toBe(
+      new URL('/projects/page/2?orderby=title&sections=listing', window.location.href).href,
+    );
+    // …and left a URL somebody can copy.
+    expect(window.location.pathname).toBe('/projects/page/2');
+    expect(window.location.search).toBe('?orderby=title');
+  });
+
+  it('pushes the destination when a link is clicked, not only on a bare `fetch()`', async () => {
+    // The declarative path is the one people use, and it is the one a `fetch()`
+    // spec alone leaves uncovered: an `onClick` passing `this.url` on reads as a
+    // caller naming a destination and puts the `src` back in the address bar.
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/projects/page/2?orderby=title"
+        data-option-src="/projects/page/2?orderby=title&amp;sections=listing"
+        data-option-history></a>`,
+    );
+
+    root.querySelector('a')?.click();
+    await settle();
+
+    expect(String(client.mock.calls[0][0])).toBe(
+      new URL('/projects/page/2?orderby=title&sections=listing', window.location.href).href,
+    );
+    expect(window.location.pathname).toBe('/projects/page/2');
+    expect(window.location.search).toBe('?orderby=title');
+  });
+
+  it('pushes the destination when a GET form is submitted', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get"
+        data-option-src="/search/suggest?sections=results" data-option-history>
+        <input name="q" value="live">
+      </form>`,
+    );
+
+    root.querySelector('form')?.dispatchEvent(new SubmitEvent('submit', { cancelable: true }));
+    await settle();
+
+    expect(String(client.mock.calls[0][0])).toContain('sections=results');
+    expect(window.location.pathname).toBe('/search');
+    expect(window.location.search).toBe('?q=live');
+  });
+
+  it('pushes a url given to `fetch()` rather than the element destination', async () => {
+    stubClient();
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/from-href" data-option-history></a>`,
+    );
+
+    // A caller that named a URL meant that URL, in the address bar as well.
+    await instance.fetch('/called-explicitly');
+    await settle();
+
+    expect(window.location.pathname).toBe('/called-explicitly');
+  });
+
+  it('mounts a component that arrives in the fetched content, with no `$update()`', async () => {
+    await mount(`<div id="target"></div>`);
+    const { instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+
+    await instance.update(
+      new URL('https://example.com'),
+      {},
+      '<div id="target"><a data-component="Fetch" href="https://example.com/inner"></a></div>',
+    );
+    await settle();
+
+    const injected = document.querySelector('#target [data-component="Fetch"]');
+    expect(getInstance<Fetch>(injected as HTMLElement, 'Fetch')?.$isMounted).toBe(true);
+  });
+});
+
+describe('Fetch — the dom-update negotiation', () => {
+  it('runs the update inside a view transition by default', async () => {
+    const { spy, restore } = stubViewTransition();
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+
+    await instance.update(new URL('https://example.com'), {}, '<div id="target">new</div>');
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(document.getElementById('target')?.textContent).toBe('new');
+    restore();
+  });
+
+  it('skips the view transition when the option is off', async () => {
+    const { spy, restore } = stubViewTransition();
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+
+    await instance.update(new URL('https://example.com'), {}, '<div id="target">new</div>');
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(document.getElementById('target')?.textContent).toBe('new');
+    restore();
+  });
+
+  it('batches two simultaneous updates into one view transition', async () => {
+    const { spy, restore } = stubViewTransition();
+    await mount(`<div id="one">old</div><div id="two">old</div>`);
+    const { instance: a } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+    const { instance: b } = await mountFetch(`<a data-component="Fetch" href="#b"></a>`);
+
+    await Promise.all([
+      a.update(new URL('https://example.com'), {}, '<div id="one">new</div>'),
+      b.update(new URL('https://example.com'), {}, '<div id="two">new</div>'),
+    ]);
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(document.getElementById('one')?.textContent).toBe('new');
+    expect(document.getElementById('two')?.textContent).toBe('new');
+    restore();
+  });
+
+  /**
+   * The component's own view transition is registered as the first `wrap()`
+   * claim, so a listener above it wins without the component asking.
+   */
+  it('lets an ancestor `wrap()` runner replace the default view transition', async () => {
+    const { spy, restore } = stubViewTransition();
+    await mount(`<div id="target">old</div>`);
+    const { root, instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
+    const order: string[] = [];
+    root.addEventListener('js-toolkit:dom:update', (event) => {
+      (event as CustomEvent<{ wrap(runner: (apply: () => void) => void): void }>).detail.wrap(
+        (apply) => {
+          order.push('runner');
+          apply();
         },
-      });
+      );
     });
+
+    await instance.update(new URL('https://example.com'), {}, '<div id="target">new</div>');
+
+    expect(order).toEqual(['runner']);
+    expect(spy).not.toHaveBeenCalled();
+    expect(document.getElementById('target')?.textContent).toBe('new');
+    restore();
   });
 
-  describe('fetch method', () => {
-    it('should default to the `url` getter when called with no argument', async () => {
-      const anchor = h('a', { href: 'https://example.com/no-arg' });
-      const fetch = new Fetch(anchor);
-      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-
-      await mount(fetch);
-      await fetch.fetch();
-
-      expect(clientSpy).toHaveBeenCalledWith(
-        new URL('https://example.com/no-arg'),
-        expect.objectContaining({ signal: expect.any(AbortSignal) }),
-      );
+  it('accepts a transitioner object exposing `update()`', async () => {
+    await mount(`<div id="target">old</div>`);
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    const transitioner = { update: vi.fn((mutate: () => void) => mutate()) };
+    root.addEventListener('js-toolkit:dom:update', (event) => {
+      (event as CustomEvent<{ wrap(runner: unknown): void }>).detail.wrap(transitioner);
     });
 
-    it('should resolve and fetch the `src` option URL when mounted on a `<div>`', async () => {
-      (window as any).happyDOM.setURL('https://example.com/');
-      const div = h('div', { dataOptionSrc: '/src-path' });
-      const fetch = new Fetch(div);
-      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+    await instance.update(new URL('https://example.com'), {}, '<div id="target">new</div>');
 
-      await mount(fetch);
-      await fetch.fetch();
-
-      expect(clientSpy).toHaveBeenCalledWith(
-        new URL('https://example.com/src-path'),
-        expect.objectContaining({ signal: expect.any(AbortSignal) }),
-      );
-    });
-
-    it('should coerce a string URL argument into a URL object', async () => {
-      (window as any).happyDOM.setURL('https://example.com/');
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-      const updateSpy = vi.spyOn(fetch, 'update');
-
-      await mount(fetch);
-      await fetch.fetch('/relative/path');
-
-      const expectedUrl = new URL('https://example.com/relative/path');
-      expect(clientSpy).toHaveBeenCalledWith(
-        expectedUrl,
-        expect.objectContaining({ signal: expect.any(AbortSignal) }),
-      );
-      // The normalized `URL` (not the raw string) is threaded through to `update`.
-      expect(updateSpy).toHaveBeenCalledWith(expectedUrl, expect.any(Object), 'content');
-    });
-
-    it('should emit before-fetch event', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-      fetch.$on('fetch-before', (event: CustomEvent) => fn(...event.detail));
-
-      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-
-      await mount(fetch);
-      await fetch.fetch(new URL('https://example.com'));
-
-      expect(fn).toHaveBeenCalled();
-    });
-
-    it('should emit fetch event', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-      fetch.$on('fetch-fetch', (event: CustomEvent) => fn(...event.detail));
-
-      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-
-      await mount(fetch);
-      await fetch.fetch(new URL('https://example.com'));
-
-      expect(fn).toHaveBeenCalled();
-    });
-
-    it('should emit fetch-response event', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-      fetch.$on('fetch-response', (event: CustomEvent) => fn(...event.detail));
-
-      const response = new Response('content');
-      const clientSpy = vi.fn(() => Promise.resolve(response));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-
-      await mount(fetch);
-      await fetch.fetch(new URL('https://example.com'));
-
-      expect(fn).toHaveBeenCalledWith({
-        response,
-        instance: expect.any(Fetch),
-        url: expect.any(URL),
-        requestInit: expect.any(Object),
-      });
-    });
-
-    it('should emit after-fetch event', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-      fetch.$on('fetch-after', (event: CustomEvent) => fn(...event.detail));
-
-      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-
-      await mount(fetch);
-      await fetch.fetch(new URL('https://example.com'));
-
-      expect(fn).toHaveBeenCalled();
-    });
-
-    it('should call the client with correct URL and options', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-
-      await mount(fetch);
-      const url = new URL('https://example.com/test');
-      await fetch.fetch(url);
-
-      expect(clientSpy).toHaveBeenCalledWith(
-        url,
-        expect.objectContaining({ signal: expect.any(AbortSignal) }),
-      );
-    });
-
-    it('should abort previous fetch when a new one is initiated', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-
-      const clientSpy = vi.fn(() => Promise.resolve(new Response('content')));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-
-      await mount(fetch);
-
-      const abortSpy = vi.spyOn(fetch['__abortController'], 'abort');
-
-      // First fetch
-      fetch.fetch(new URL('https://example.com'));
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      // Second fetch should abort the first one
-      fetch.fetch(new URL('https://example.com'));
-
-      expect(abortSpy).toHaveBeenCalled();
-    });
-
-    it('should use the response option to extract content', async () => {
-      const anchor = h('a', {
-        href: 'https://example.com',
-        dataOptionResponse: 'response.json().then((data) => data.content)',
-      });
-      const fetch = new Fetch(anchor);
-      const response = Response.json({
-        content: '<div>content</div>',
-      });
-
-      const responseSpy = vi.spyOn(response, 'json');
-      const clientSpy = vi.fn(() => Promise.resolve(response));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-      const updateSpy = vi.spyOn(fetch, 'update');
-
-      await mount(fetch);
-      const url = new URL('https://example.com');
-      await fetch.fetch(url);
-
-      expect(responseSpy).toHaveBeenCalled();
-      expect(updateSpy).toHaveBeenCalledWith(url, expect.any(Object), '<div>content</div>');
-    });
-
-    it('should catch errors from the response option callback', async () => {
-      const anchor = h('a', {
-        href: 'https://example.com',
-        dataOptionResponse: 'response.json().then(({ foo }) => foo.content)',
-      });
-      const fetch = new Fetch(anchor);
-      const response = Response.json({
-        content: '<div>content</div>',
-      });
-      const responseSpy = vi.spyOn(response, 'json');
-      const clientSpy = vi.fn(() => Promise.resolve(response));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-      const updateSpy = vi.spyOn(fetch, 'update');
-
-      const fn = vi.fn();
-      fetch.$on('fetch-error', (event: CustomEvent) => fn(...event.detail));
-
-      await mount(fetch);
-      const url = new URL('https://example.com');
-      await fetch.fetch(url);
-
-      expect(responseSpy).toHaveBeenCalled();
-      expect(updateSpy).not.toHaveBeenCalled();
-
-      expect(fn).toHaveBeenCalledWith({
-        // TypeError: Cannot read properties of undefined (reading 'content')
-        error: expect.any(TypeError),
-        instance: expect.any(Fetch),
-        url: expect.any(URL),
-        requestInit: expect.any(Object),
-      });
-    });
+    expect(transitioner.update).toHaveBeenCalledTimes(1);
+    expect(document.getElementById('target')?.textContent).toBe('new');
   });
 
-  describe('abort method', () => {
-    it('should abort the current request', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const updateSpy = vi.spyOn(fetch, 'update');
-
-      const clientSpy = vi.fn(
-        (url, { signal }) =>
-          new Promise((resolve, reject) => {
-            signal.addEventListener('abort', () => {
-              reject(new DOMException('Aborted', 'AbortError'));
-            });
-          }),
-      );
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-
-      await mount(fetch);
-      setTimeout(() => fetch.abort(), 1);
-      await fetch.fetch(new URL('https://example.com'));
-
-      expect(updateSpy).not.toHaveBeenCalled();
+  it('applies the change anyway when a runner settles without applying it', async () => {
+    await mount(`<div id="target">old</div>`);
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    root.addEventListener('js-toolkit:dom:update', (event) => {
+      (event as CustomEvent<{ wrap(runner: () => void): void }>).detail.wrap(() => {});
     });
+
+    await instance.update(new URL('https://example.com'), {}, '<div id="target">new</div>');
+
+    expect(document.getElementById('target')?.textContent).toBe('new');
   });
 
-  describe('update method', () => {
-    it('should emit before-update event', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-      fetch.$on('fetch-update-before', (event: CustomEvent) => fn(...event.detail));
+  it('stops claiming the protocol once the update has finished', async () => {
+    const { spy, restore } = stubViewTransition();
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(`<a data-component="Fetch" href="#a"></a>`);
 
-      await mount(fetch);
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">content</div>');
+    await instance.update(new URL('https://example.com'), {}, '<div id="target">new</div>');
+    const callsAfterUpdate = spy.mock.calls.length;
 
-      expect(fn).toHaveBeenCalled();
-    });
-
-    it('should emit update event', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-      fetch.$on('fetch-update', (event: CustomEvent) => fn(...event.detail));
-
-      await mount(fetch);
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">content</div>');
-
-      expect(fn).toHaveBeenCalled();
-    });
-
-    it('should emit after-update event', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-      fetch.$on('fetch-update-after', (event: CustomEvent) => fn(...event.detail));
-
-      await mount(fetch);
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">content</div>');
-
-      expect(fn).toHaveBeenCalled();
-    });
-
-    it('should update document title if history is enabled', async () => {
-      const anchor = h('a', { href: 'https://example.com', dataOptionHistory: true });
-      const fetch = new Fetch(anchor);
-      const historySpy = vi.spyOn(window.history, 'pushState');
-      historySpy.mockImplementation(() => undefined);
-
-      await mount(fetch);
-      const originalTitle = document.title;
-
-      await fetch.update(
-        new URL('https://example.com/?foo=bar'),
-        {},
-        '<head><title>New Title</title></head><body><div id="test">content</div></body>',
-      );
-
-      expect(document.title).toBe('New Title');
-      document.title = originalTitle;
-      historySpy.mockRestore();
-    });
-
-    it('should push history state if history is enabled and not from popstate', async () => {
-      const anchor = h('a', { href: 'https://example.com', dataOptionHistory: true });
-      const fetch = new Fetch(anchor);
-      const historySpy = vi.spyOn(window.history, 'pushState');
-      historySpy.mockImplementation(() => undefined);
-
-      await mount(fetch);
-      await fetch.update(
-        new URL('https://example.com/?foo=bar'),
-        {},
-        '<div id="test">content</div>',
-      );
-
-      expect(historySpy).toHaveBeenCalledOnce();
-      expect(historySpy).toHaveBeenCalledWith({}, '', '/?foo=bar');
-      historySpy.mockRestore();
-    });
-
-    it('should not push history on popstate', async () => {
-      const anchor = h('a', { href: 'https://example.com', dataOptionHistory: true });
-      const fetch = new Fetch(anchor);
-      const historySpy = vi.spyOn(window.history, 'pushState');
-      historySpy.mockImplementation(() => undefined);
-
-      await mount(fetch);
-      await fetch.update(
-        new URL('https://example.com/'),
-        {
-          headers: {
-            'x-triggered-by': 'popstate',
+    // A second, unrelated announcement on the same element must not be claimed.
+    let claimed = false;
+    instance.$el.dispatchEvent(
+      new CustomEvent('js-toolkit:dom:update', {
+        bubbles: true,
+        detail: {
+          wrap() {
+            claimed = true;
           },
         },
-        '<div id="test">content</div>',
-      );
-
-      expect(historySpy).not.toHaveBeenCalled();
-      historySpy.mockRestore();
-    });
-
-    it('should update DOM with only the given selectors', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com', dataOptionSelector: 'div' });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-      await fetch.update(
-        new URL('https://example.com'),
-        {},
-        '<div id="test">new content</div><div id="other">other content</div>',
-      );
-
-      const element = document.getElementById('test');
-      expect(element?.textContent).toBe('new content');
-
-      container.remove();
-    });
-
-    it('should not inject already injected new DOM elements', async () => {
-      const container = h('div', { id: 'container' }, [
-        'container content',
-        h('div', { id: 'test' }, ['old content']),
-      ]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-      await fetch.update(
-        new URL('https://example.com'),
-        {},
-        `
-          <div id="container" class="foo">
-            new container content
-            <div id="test">new content</div>
-            <div id="other">other content</div>
-          </div>`,
-      );
-
-      const newContainer = document.getElementById('container');
-      expect(newContainer.outerHTML).toMatchInlineSnapshot(`
-        "<div id="container" class="foo">
-                    new container content
-                    <div id="test">new content</div>
-                    <div id="other">other content</div>
-                  </div>"
-      `);
-
-      newContainer.remove();
-    });
-
-    it('should update DOM with replace mode (default)', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      const element = document.getElementById('test');
-      expect(element?.textContent).toBe('new content');
-
-      container.remove();
-    });
-
-    it('should update DOM with append mode', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', {
-        href: 'https://example.com',
-        dataOptionMode: 'append',
-      });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      const element = document.getElementById('test');
-      expect(element?.textContent).toContain('old content');
-      expect(element?.textContent).toContain('new content');
-
-      container.remove();
-    });
-
-    it('should update DOM with prepend mode', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', {
-        href: 'https://example.com',
-        dataOptionMode: 'prepend',
-      });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      const element = document.getElementById('test');
-      expect(element?.textContent).toContain('old content');
-      expect(element?.textContent).toContain('new content');
-
-      container.remove();
-    });
-
-    it('should update DOM with morph mode', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', {
-        href: 'https://example.com',
-        dataOptionMode: 'morph',
-      });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      const element = document.getElementById('test');
-      expect(element?.textContent).toBe('new content');
-
-      container.remove();
-    });
-
-    it('should inject <script> elements with an id', async () => {
-      const spy = vi.spyOn(console, 'info');
-      spy.mockImplementation(() => {});
-      const oldDocument = globalThis.document;
-      const { document } = new Window({
-        console,
-        settings: {
-          enableJavaScriptEvaluation: true,
-          suppressInsecureJavaScriptEnvironmentWarning: true,
-        },
-      });
-      globalThis.document = document;
-
-      const oldScript = h('script', { id: 'js' }, 'console.info("old");');
-      const inertScript = h('script', { id: 'js2' }, 'console.info("inert");');
-      const container = h('div', { id: 'container' }, [oldScript, inertScript]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', {
-        href: 'https://example.com',
-      });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-      await fetch.update(
-        new URL('https://example.com'),
-        {},
-        '<script id="js">console.info("new");</script>',
-      );
-
-      expect(spy.mock.calls.flat()).toEqual(['old', 'inert', 'new']);
-      expect(container.innerHTML).toMatchInlineSnapshot(
-        `"<script id="js">console.info("new");</script><script id="js2">console.info("inert");</script>"`,
-      );
-      spy.mockRestore();
-
-      container.remove();
-      globalThis.document = oldDocument;
-    });
-
-    it('should not reevaluate existing <script> elements', async () => {
-      const spy = vi.spyOn(console, 'info');
-      spy.mockImplementation(() => {});
-      const oldDocument = globalThis.document;
-      const { document } = new Window({
-        console,
-        settings: {
-          enableJavaScriptEvaluation: true,
-          suppressInsecureJavaScriptEnvironmentWarning: true,
-        },
-      });
-      globalThis.document = document;
-
-      const oldScript = h('script', 'console.info("old");');
-      const inertScript = h('script', 'console.info("inert");');
-      const container = h('div', { id: 'container' }, [oldScript, inertScript]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', {
-        href: 'https://example.com',
-        dataOptionMode: Fetch.FETCH_MODES.APPEND,
-      });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-      await fetch.update(
-        new URL('https://example.com'),
-        {},
-        '<div id="container"><script>console.info("new");</script></div>',
-      );
-
-      expect(spy.mock.calls.flat()).toEqual(['old', 'inert', 'new']);
-      spy.mockRestore();
-
-      container.remove();
-      globalThis.document = oldDocument;
-    });
-
-    it('should use View Transition API if supported', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-
-      const updateDOMSpy = vi.spyOn(fetch, '__updateDOM');
-      const transitionSpy = vi.fn((callback: () => void) => {
-        callback();
-        return {
-          ready: Promise.resolve(),
-          finished: Promise.resolve(),
-        };
-      });
-      Object.defineProperty(document, 'startViewTransition', {
-        value: transitionSpy,
-        configurable: true,
-      });
-
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      expect(transitionSpy).toHaveBeenCalled();
-      expect(updateDOMSpy).toHaveBeenCalled();
-
-      // Clean up
-      delete (document as any).startViewTransition;
-      container.remove();
-    });
-
-    it('should not use View Transition API if disabled', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com', dataOptionNoViewTransition: '' });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-
-      const updateDOMSpy = vi.spyOn(fetch, '__updateDOM');
-      const transitionSpy = vi.fn((callback: () => void) => {
-        callback();
-        return {
-          ready: Promise.resolve(),
-          finished: Promise.resolve(),
-        };
-      });
-      Object.defineProperty(document, 'startViewTransition', {
-        value: transitionSpy,
-        configurable: true,
-      });
-
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      expect(transitionSpy).not.toHaveBeenCalled();
-      expect(updateDOMSpy).toHaveBeenCalled();
-
-      // Clean up
-      delete (document as any).startViewTransition;
-      container.remove();
-    });
-
-    it('should batch simultaneous updates into a single view transition', async () => {
-      const container = h('div', { id: 'container' }, [
-        h('div', { id: 'test' }, ['old content']),
-        h('div', { id: 'other' }, ['old other']),
-      ]);
-      document.body.appendChild(container);
-
-      const fetchA = new Fetch(h('a', { href: 'https://example.com' }));
-      const fetchB = new Fetch(h('a', { href: 'https://example.com' }));
-      await mount(fetchA, fetchB);
-
-      const transitionSpy = vi.fn((callback: () => void | Promise<void>) => {
-        callback();
-        return {
-          ready: Promise.resolve(),
-          finished: Promise.resolve(),
-        };
-      });
-      Object.defineProperty(document, 'startViewTransition', {
-        value: transitionSpy,
-        configurable: true,
-      });
-
-      await Promise.all([
-        fetchA.update(new URL('https://example.com'), {}, '<div id="test">new content</div>'),
-        fetchB.update(new URL('https://example.com'), {}, '<div id="other">new other</div>'),
-      ]);
-
-      // The shared scheduler flushed both updates in ONE view transition.
-      expect(transitionSpy).toHaveBeenCalledTimes(1);
-      expect(document.getElementById('test')?.textContent).toBe('new content');
-      expect(document.getElementById('other')?.textContent).toBe('new other');
-
-      // Clean up
-      delete (document as any).startViewTransition;
-      container.remove();
-    });
-
-    it('should let a `dom-update` runner substitute the default transition runner', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-
-      const transitionSpy = vi.fn((callback: () => void) => {
-        callback();
-        return {
-          ready: Promise.resolve(),
-          finished: Promise.resolve(),
-        };
-      });
-      Object.defineProperty(document, 'startViewTransition', {
-        value: transitionSpy,
-        configurable: true,
-      });
-
-      let contentBeforeApply: string | undefined;
-      let contentAfterApply: string | undefined;
-      fetch.$on('dom-update', (event: CustomEvent) => {
-        event.detail.wrap((apply: () => void) => {
-          contentBeforeApply = document.getElementById('test')?.textContent;
-          apply();
-          contentAfterApply = document.getElementById('test')?.textContent;
-        });
-      });
-
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      expect(contentBeforeApply).toBe('old content');
-      expect(contentAfterApply).toBe('new content');
-      expect(transitionSpy).not.toHaveBeenCalled();
-
-      // Clean up
-      delete (document as any).startViewTransition;
-      container.remove();
-    });
-
-    it('should let a `dom-update` transitioner run the update through its `update` method', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-
-      let contentAfterMutate: string | undefined;
-      const update = vi.fn((mutate: () => void) => {
-        mutate();
-        contentAfterMutate = document.getElementById('test')?.textContent;
-      });
-      fetch.$on('dom-update', (event: CustomEvent) => {
-        event.detail.wrap({ update });
-      });
-
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      expect(update).toHaveBeenCalledOnce();
-      expect(update).toHaveBeenCalledWith(expect.any(Function));
-      expect(contentAfterMutate).toBe('new content');
-      expect(document.getElementById('test')?.textContent).toBe('new content');
-
-      container.remove();
-    });
-
-    it('should keep the last `wrap` runner registered during dispatch', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-
-      await mount(fetch);
-
-      const firstRunner = vi.fn((apply: () => void) => apply());
-      const lastRunner = vi.fn((apply: () => void) => apply());
-      fetch.$on('dom-update', (event: CustomEvent) => {
-        event.detail.wrap(firstRunner);
-        event.detail.wrap(lastRunner);
-      });
-
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      expect(firstRunner).not.toHaveBeenCalled();
-      expect(lastRunner).toHaveBeenCalledOnce();
-      expect(document.getElementById('test')?.textContent).toBe('new content');
-
-      container.remove();
-    });
-
-    it('should ignore and warn on `wrap` calls after the `dom-update` event dispatched', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const warnFn = vi.fn();
-      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
-
-      await mount(fetch);
-
-      let wrap: (runner: (apply: () => void) => void) => void;
-      fetch.$on('dom-update', (event: CustomEvent) => {
-        wrap = event.detail.wrap;
-      });
-
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      // The default path ran since no runner was registered during dispatch.
-      expect(document.getElementById('test')?.textContent).toBe('new content');
-
-      const lateRunner = vi.fn();
-      wrap(lateRunner);
-
-      expect(lateRunner).not.toHaveBeenCalled();
-      expect(warnFn).toHaveBeenCalledWith(
-        '`wrap` must be called synchronously while the `dom-update` event dispatches.',
-      );
-
-      container.remove();
-    });
-
-    it('should apply the content and warn when a `wrap` runner rejects', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const warnFn = vi.fn();
-      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
-      const fn = vi.fn();
-      fetch.$on('fetch-update-after', () => fn());
-
-      await mount(fetch);
-
-      const error = new Error('Runner failed');
-      fetch.$on('dom-update', (event: CustomEvent) => {
-        event.detail.wrap(() => Promise.reject(error));
-      });
-
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      expect(document.getElementById('test')?.textContent).toBe('new content');
-      expect(warnFn).toHaveBeenCalledWith('The `dom-update` runner rejected.', error);
-      expect(fn).toHaveBeenCalled();
-
-      container.remove();
-    });
-
-    it('should apply the content and warn when a `wrap` runner throws synchronously', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const warnFn = vi.fn();
-      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
-      const fn = vi.fn();
-      fetch.$on('fetch-update-after', () => fn());
-
-      await mount(fetch);
-
-      const error = new Error('Runner failed');
-      fetch.$on('dom-update', (event: CustomEvent) => {
-        event.detail.wrap(() => {
-          throw error;
-        });
-      });
-
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      expect(document.getElementById('test')?.textContent).toBe('new content');
-      expect(warnFn).toHaveBeenCalledWith('The `dom-update` runner rejected.', error);
-      expect(fn).toHaveBeenCalled();
-
-      container.remove();
-    });
-
-    it('should not apply the content twice when a `wrap` runner rejects after applying', async () => {
-      const container = h('div', { id: 'container' }, [h('div', { id: 'test' }, ['old content'])]);
-      document.body.appendChild(container);
-
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const warnFn = vi.fn();
-      Object.defineProperty(fetch, '$warn', { configurable: true, get: () => warnFn });
-      const updateDOMSpy = vi.spyOn(fetch, '__updateDOM');
-
-      await mount(fetch);
-
-      const error = new Error('Runner failed');
-      fetch.$on('dom-update', (event: CustomEvent) => {
-        event.detail.wrap((apply: () => void) => {
-          apply();
-          return Promise.reject(error);
-        });
-      });
-
-      await fetch.update(new URL('https://example.com'), {}, '<div id="test">new content</div>');
-
-      expect(document.getElementById('test')?.textContent).toBe('new content');
-      expect(updateDOMSpy).toHaveBeenCalledOnce();
-      expect(warnFn).toHaveBeenCalledWith('The `dom-update` runner rejected.', error);
-
-      container.remove();
-    });
+      }),
+    );
+
+    expect(claimed).toBe(false);
+    expect(spy.mock.calls).toHaveLength(callsAfterUpdate);
+    restore();
+  });
+});
+
+describe('FetchShopifySection', () => {
+  it('inherits the whole base config along the prototype chain', async () => {
+    const { instance } = await mountFetch<FetchShopifySection>(
+      `<a data-component="FetchShopifySection" href="#a"></a>`,
+      'FetchShopifySection',
+    );
+
+    // The static declares only `name` and `sections`; the rest is merged.
+    expect(Object.keys(FetchShopifySection.config.options ?? {})).toEqual(['sections']);
+    expect(instance.$config.name).toBe('FetchShopifySection');
+    expect(instance.$config.options).toHaveProperty('selector');
+    expect(instance.$config.options).toHaveProperty('mode');
+    expect(instance.$config.options).toHaveProperty('sections');
+    expect(instance.$config.refs).toEqual(['headers[]']);
+    expect(instance.$options.selector).toBe('[id]');
   });
 
-  describe('error handling', () => {
-    it('should emit error event on fetch failure', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-      fetch.$on('fetch-error', (event: CustomEvent) => fn(...event.detail));
+  it('appends the sections parameter without touching the href', async () => {
+    const { instance } = await mountFetch<FetchShopifySection>(
+      `<a data-component="FetchShopifySection" href="https://example.com/collections/all"
+        data-option-sections="header, footer"></a>`,
+      'FetchShopifySection',
+    );
 
-      const fetchError = new Error('Network error');
-      const clientSpy = vi.fn(() => Promise.reject(fetchError));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+    expect(instance.url.searchParams.get('sections')).toBe('header,footer');
+    expect((instance.$el as HTMLAnchorElement).href).toBe('https://example.com/collections/all');
+  });
 
-      await mount(fetch);
-      await fetch.fetch(new URL('https://example.com'));
+  it('trims the comma-separated list and drops empty entries', async () => {
+    const { instance } = await mountFetch<FetchShopifySection>(
+      `<a data-component="FetchShopifySection" href="https://example.com"
+        data-option-sections=" header , , footer "></a>`,
+      'FetchShopifySection',
+    );
 
-      expect(fn).toHaveBeenCalledWith({
-        error: fetchError,
-        instance: expect.any(Fetch),
-        url: expect.any(URL),
-        requestInit: expect.any(Object),
-      });
-    });
+    expect(instance.sectionIds).toEqual(['header', 'footer']);
+  });
 
-    it('should emit error event on response ko', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-      fetch.$on('fetch-error', (event: CustomEvent) => fn(...event.detail));
-
-      const fetchResponse = new Response('Network error', { status: 404 });
-      const clientSpy = vi.fn(() => Promise.resolve(fetchResponse));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-
-      await mount(fetch);
-      await fetch.fetch(new URL('https://example.com'));
-
-      expect(fn).toHaveBeenCalledWith({
-        error: expect.any(Error),
-        instance: expect.any(Fetch),
-        url: expect.any(URL),
-        requestInit: expect.any(Object),
-      });
-    });
-
-    it('should call error method on fetch failure', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const errorSpy = vi.spyOn(fetch, 'error');
-
-      const fetchError = new Error('Network error');
-      const clientSpy = vi.fn(() => Promise.reject(fetchError));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-
-      await mount(fetch);
-      await fetch.fetch(new URL('https://example.com'));
-
-      expect(errorSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should still emit after-fetch on error', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-      fetch.$on('fetch-after', (event: CustomEvent) => fn(...event.detail));
-
-      const fetchError = new Error('Network error');
-      const clientSpy = vi.fn(() => Promise.reject(fetchError));
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
-
-      await mount(fetch);
-      await fetch.fetch(new URL('https://example.com'));
-
-      expect(fn).toHaveBeenCalled();
-    });
-
-    it('should emit fetch-abort on abort', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-      fetch.$on('fetch-abort', (event: CustomEvent) => fn(...event.detail));
-
-      const clientSpy = vi.fn(
-        (url, { signal }) =>
-          new Promise((resolve, reject) => {
-            signal.addEventListener('abort', () => {
-              reject(new DOMException('Aborted', 'AbortError'));
-            });
+  it('unwraps the JSON response and swaps each section by id', async () => {
+    stubClient(
+      async () =>
+        new Response(
+          JSON.stringify({
+            header: '<div id="header">new header</div>',
+            footer: '<div id="footer">new footer</div>',
           }),
-      );
-      vi.spyOn(fetch, 'client', 'get').mockImplementation(() => clientSpy);
+        ),
+    );
+    await mount(`<div id="header">old header</div><div id="footer">old footer</div>`);
+    const { instance } = await mountFetch<FetchShopifySection>(
+      `<a data-component="FetchShopifySection" href="#a" data-option-sections="header,footer"
+        data-option-no-view-transition></a>`,
+      'FetchShopifySection',
+    );
 
-      await mount(fetch);
-      setTimeout(() => fetch.abort(), 1);
-      await fetch.fetch(new URL('https://example.com'));
+    await instance.fetch();
+    await settle();
 
-      expect(fn).toHaveBeenCalled();
-    });
+    expect(document.getElementById('header')?.textContent).toBe('new header');
+    expect(document.getElementById('footer')?.textContent).toBe('new footer');
   });
 
-  describe('events', () => {
-    it('should emit all expected events in order', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const eventLog: string[] = [];
+  it('drops sections returned as null', async () => {
+    stubClient(
+      async () =>
+        new Response(JSON.stringify({ header: '<div id="header">new</div>', footer: null })),
+    );
+    await mount(`<div id="header">old</div><div id="footer">old</div>`);
+    const { instance } = await mountFetch<FetchShopifySection>(
+      `<a data-component="FetchShopifySection" href="#a" data-option-sections="header,footer"
+        data-option-no-view-transition></a>`,
+      'FetchShopifySection',
+    );
 
-      for (const event of Object.values(Fetch.FETCH_EVENTS)) {
-        fetch.$on(event as string, () => eventLog.push(event));
-      }
+    await instance.fetch();
+    await settle();
 
-      const clientSpy = vi.spyOn(fetch, 'client', 'get');
-      clientSpy.mockImplementation(() => () => Promise.resolve(new Response('content')));
-
-      await mount(fetch);
-      await fetch.fetch(new URL('https://example.com'));
-      // `fetch()` does not await `update()`, and the scheduled view transition
-      // resolves in a later microtask: flush before asserting.
-      await wait(0);
-
-      expect(eventLog).toContain('fetch-before');
-      expect(eventLog).toContain('fetch-fetch');
-      expect(eventLog).toContain('fetch-after');
-      expect(eventLog).toContain('fetch-update-before');
-      expect(eventLog).toContain('fetch-update');
-      expect(eventLog).toContain('fetch-update-after');
-    });
-
-    it('should emit bubbling events', async () => {
-      const anchor = h('a', { href: 'https://example.com' });
-      const fetch = new Fetch(anchor);
-      const fn = vi.fn();
-
-      document.body.appendChild(anchor);
-      document.body.addEventListener('fetch-before', fn);
-
-      const clientSpy = vi.spyOn(fetch, 'client', 'get');
-      clientSpy.mockImplementation(() => Promise.resolve(new Response('content')));
-
-      await mount(fetch);
-      await fetch.fetch(new URL('https://example.com'));
-
-      expect(fn).toHaveBeenCalled();
-
-      document.body.removeEventListener('fetch-before', fn);
-      anchor.remove();
-    });
+    expect(document.getElementById('header')?.textContent).toBe('new');
+    expect(document.getElementById('footer')?.textContent).toBe('old');
   });
 
-  describe('header handling', () => {
-    it('should merge headers from option, requestInit, and input elements', async () => {
-      const headerInput = h('input', {
-        dataRef: 'headers[]',
-        dataName: 'x-custom',
-        value: 'custom-value',
-      });
-      const otherInput = h('input', {
-        dataRef: 'headers[]',
-        value: 'other-value',
-      });
-      const form = h(
-        'form',
-        {
-          action: 'https://example.com',
-          method: 'post',
-          dataOptionHeaders: { 'x-option': 'option-value' },
-        },
-        [headerInput, otherInput],
-      );
-      const fetch = new Fetch(form);
+  it('degrades to the base text response when no sections are configured', async () => {
+    stubClient(async () => new Response('<div id="target">plain html</div>'));
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch<FetchShopifySection>(
+      `<a data-component="FetchShopifySection" href="#a" data-option-no-view-transition></a>`,
+      'FetchShopifySection',
+    );
 
-      await mount(fetch);
-      const requestInit = fetch.requestInit;
+    await instance.fetch();
+    await settle();
 
-      expect(requestInit.headers['x-custom']).toBe('custom-value');
-      expect(requestInit.headers['x-option']).toBe('option-value');
-      expect(requestInit.headers['user-agent']).toContain('@studiometa/ui/Fetch');
-    });
+    expect(instance.url.searchParams.has('sections')).toBe(false);
+    expect(document.getElementById('target')?.textContent).toBe('plain html');
+  });
+
+  it('honours a custom `response` option instead of unwrapping the JSON', async () => {
+    stubClient(async () => new Response(JSON.stringify({ html: '<div id="target">custom</div>' })));
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch<FetchShopifySection>(
+      `<a data-component="FetchShopifySection" href="#a" data-option-sections="header"
+        data-option-no-view-transition
+        data-option-response="response.json().then((data) => data.html)"></a>`,
+      'FetchShopifySection',
+    );
+
+    await instance.fetch();
+    await settle();
+
+    expect(document.getElementById('target')?.textContent).toBe('custom');
+  });
+
+  it('re-appends the sections parameter on popstate', async () => {
+    const client = stubClient(async () => new Response(JSON.stringify({})));
+    await mountFetch<FetchShopifySection>(
+      `<a data-component="FetchShopifySection" href="#a" data-option-sections="header"
+        data-option-history></a>`,
+      'FetchShopifySection',
+    );
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    expect(String(client.mock.calls[0][0])).toContain('sections=header');
+  });
+
+  it('keeps the sections parameter out of the pushed url', async () => {
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch<FetchShopifySection>(
+      `<a data-component="FetchShopifySection" href="#a" data-option-sections="header"
+        data-option-history></a>`,
+      'FetchShopifySection',
+    );
+
+    await instance.update(
+      new URL('https://example.com/pushed?sections=header&q=1'),
+      {},
+      '<div id="target">new</div>',
+    );
+
+    expect(window.location.search).toBe('?q=1');
+  });
+
+  it('pushes the destination on a click, neither the `src` nor the sections', async () => {
+    // The `fetch()` override here supplies its own URL, which would read as a
+    // caller naming a destination and take the element back out of the
+    // `historyUrl` path the base opened.
+    const client = stubClient(async () => new Response(JSON.stringify({})));
+    const { root } = await mountFetch<FetchShopifySection>(
+      `<a data-component="FetchShopifySection" href="/projects/page/2?orderby=title"
+        data-option-src="/projects/page/2?orderby=title&amp;view=compact"
+        data-option-sections="header" data-option-history></a>`,
+      'FetchShopifySection',
+    );
+
+    root.querySelector('a')?.click();
+    await settle();
+
+    expect(String(client.mock.calls[0][0])).toContain('sections=header');
+    expect(String(client.mock.calls[0][0])).toContain('view=compact');
+    expect(window.location.pathname).toBe('/projects/page/2');
+    expect(window.location.search).toBe('?orderby=title');
   });
 });

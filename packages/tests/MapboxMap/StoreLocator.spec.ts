@@ -1,179 +1,173 @@
-import { describe, it, expect, vi } from 'vitest';
-// Importing the mock first registers the `mapbox-gl` module mock before the
-// package (and its real `mapbox-gl` dependency) is imported below.
-import { MockMap } from './mock-mapbox-gl.js';
-import { h } from '#test-utils';
-import { StoreLocator } from '@studiometa/ui-mapbox';
-import type { MapboxClusterItem } from '@studiometa/ui-mapbox';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+// `mapDouble` comes from the harness, which is also what loads the `mapbox-gl`
+// mock and injects it through `provideMapboxGl` before the package below builds
+// a map.
+import { mapDouble } from './harness.js';
+import { wait } from '#test-utils';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import type { Base } from '@studiometa/js-toolkit';
+import {
+  type DiagnosticCapture,
+  captureDiagnostics,
+  mount,
+  recordEvents,
+  settle,
+  waitFor,
+} from '@studiometa/js-toolkit/test';
+import {
+  MapboxCluster,
+  MapboxClusterItem,
+  MapboxGeocoder,
+  MapboxMap,
+  StoreLocator,
+} from '@studiometa/ui-mapbox';
+
+registerComponents(MapboxMap, MapboxCluster, MapboxClusterItem, MapboxGeocoder, StoreLocator);
+
+/** The cluster coalesces its rebuilds — and the `map-update` it emits — behind a 100ms debounce. */
+const REBUILD_DELAY = 150;
 
 /**
- * A minimal `MapboxClusterItem` stand-in exposing exactly the surface the
- * orchestrator touches: `id`, `lngLat`, an `$el` (moved around by the reorder
- * and matched by delegated clicks), `popupContent`, and the `setInBounds` /
- * `setActive` state setters (spied and reflected as data-attributes, mirroring
- * the real component so DOM assertions stay meaningful).
+ * `StoreLocator` resolves its children through `$watchChildren()` and
+ * `$query()`, which no getter override can stand in for, so these specs mount
+ * the real components and drive them through the same seams a page would: the
+ * map's `load` and `moveend` events, the cluster's own emits, and DOM
+ * insertions/removals for a `Fetch` swap.
  */
-function fakeItem(el: HTMLElement, id: string, lngLat: [number, number]) {
-  return {
-    id,
-    lngLat,
-    $el: el,
-    popupContent: `<p>${id}</p>`,
-    setInBounds: vi.fn((value: boolean) => el.toggleAttribute('data-in-bounds', value)),
-    setActive: vi.fn((value: boolean) => {
-      el.toggleAttribute('data-active', value);
-      if (value) {
-        el.setAttribute('aria-current', 'true');
-      } else {
-        el.removeAttribute('aria-current');
-      }
-    }),
-  } as unknown as MapboxClusterItem;
+interface ItemSpec {
+  id: string;
+  lngLat: [number, number];
+}
+
+function itemHtml({ id, lngLat }: ItemSpec) {
+  return `<li data-component="MapboxClusterItem" data-option-id="${id}" data-option-lng-lat="[${lngLat[0]}, ${lngLat[1]}]"><button type="button">${id}</button></li>`;
+}
+
+function clusterHtml(items: ItemSpec[]) {
+  return `<div data-component="MapboxCluster"><ul>${items.map(itemHtml).join('')}</ul></div>`;
+}
+
+const GEOCODER_HTML = `<div data-component="MapboxGeocoder" data-option-options='{"accessToken":"geo-token"}'></div>`;
+
+/**
+ * Simulate a child component emitting one of its events.
+ *
+ * The orchestrator subscribes with `child.$on(type, …)`, which listens on the
+ * child's element, so dispatching there is exactly what `$emit()` does — minus
+ * the payload types, which a test driving an arbitrary shape does not want.
+ */
+function emitFrom(child: Base, type: string, detail?: unknown) {
+  child.$el.dispatchEvent(new CustomEvent(type, { bubbles: true, cancelable: true, detail }));
 }
 
 /**
- * Build a `StoreLocator` with a sidebar list, a mocked `MapboxMap`, and a mocked
- * `MapboxCluster` (owner of the item registry) plus an optional `MapboxGeocoder`.
- *
- * Like the other `@studiometa/ui-mapbox` child specs, the map/cluster/geocoder
- * and their `map-load` / `map-item-click` / `map-update` / `map-result` events are injected
- * through the `mapboxMap`, `cluster` and `geocoder` getters, keeping the test
- * deterministic and free of the real `mapbox-gl`.
+ * Mount a `StoreLocator` wrapping a `MapboxMap`, a `MapboxCluster` of
+ * `MapboxClusterItem`s and an optional `MapboxGeocoder`, then fire the map's
+ * `load` so the orchestrator binds.
  */
-function createStoreLocator(
-  items: Array<{ id: string; lngLat: [number, number] }>,
-  options: {
-    attrs?: Record<string, string>;
-    geocoder?: boolean;
-    clusterMounted?: boolean;
-  } = {},
+async function createStoreLocator(
+  items: ItemSpec[],
+  options: { attrs?: string; geocoder?: boolean; cluster?: boolean } = {},
 ) {
-  const listItems = items.map((item) =>
-    h('li', { 'data-component': 'MapboxClusterItem', 'data-option-id': item.id }, [
-      h('button', { type: 'button' }, [item.id]),
-    ]),
-  );
+  const { attrs = '', geocoder = false, cluster = true } = options;
+  const root = await mount(`
+    <div data-component="StoreLocator" ${attrs}>
+      <div data-component="MapboxMap" data-option-access-token="test-token">
+        <div data-ref="container"></div>
+        ${geocoder ? GEOCODER_HTML : ''}
+        ${cluster ? clusterHtml(items) : ''}
+      </div>
+    </div>
+  `);
 
-  const list = h('ul', { 'data-ref': 'list' }, listItems);
-  const root = h('div', { 'data-component': 'StoreLocator', ...(options.attrs ?? {}) }, [list]);
-  const instance = new StoreLocator(root);
+  const el = root.querySelector<HTMLElement>('[data-component="StoreLocator"]')!;
+  const mapEl = root.querySelector<HTMLElement>('[data-component="MapboxMap"]')!;
+  const instance = getInstance<StoreLocator>(el, 'StoreLocator')!;
+  const mapbox = getInstance<MapboxMap>(mapEl, 'MapboxMap')!;
+  const mockMap = mapDouble(mapbox);
 
-  const mockMap = new MockMap();
-  const mapLoadHandlers: Array<() => void> = [];
-  const clusterHandlers: Record<string, Array<(event: unknown) => void>> = {};
-  const geocoderHandlers: Record<string, Array<(event: unknown) => void>> = {};
+  // The children collections are seeded in a microtask and the nested map
+  // announces itself only once `mapbox-gl` has resolved, so let both land
+  // before the map reports itself loaded.
+  await settle();
+  mockMap.fire('load');
+  await settle();
 
-  function off(bucket: Array<(event: unknown) => void>, callback: (event: unknown) => void) {
-    return () => {
-      const index = bucket.indexOf(callback);
-      if (index > -1) bucket.splice(index, 1);
-    };
-  }
-
-  const clusterItems = items.map((item, index) => fakeItem(listItems[index], item.id, item.lngLat));
-
-  const mockMapbox = {
-    isLoaded: false,
-    map: mockMap,
-    $on(event: string, callback: () => void) {
-      if (event === 'map-load') {
-        mapLoadHandlers.push(callback);
-        return off(mapLoadHandlers as any, callback as any);
-      }
-      return () => {};
-    },
-  };
-  const mockCluster = {
-    $isMounted: options.clusterMounted ?? true,
-    items: clusterItems,
-    $on(event: string, callback: (event: unknown) => void) {
-      (clusterHandlers[event] ??= []).push(callback);
-      return off(clusterHandlers[event], callback);
-    },
-  };
-  const mockGeocoder = options.geocoder
-    ? {
-        $on(event: string, callback: (event: unknown) => void) {
-          (geocoderHandlers[event] ??= []).push(callback);
-          return off(geocoderHandlers[event], callback);
-        },
-      }
-    : undefined;
-
-  Object.defineProperty(instance, 'mapboxMap', { get: () => mockMapbox, configurable: true });
-  Object.defineProperty(instance, 'cluster', { get: () => mockCluster, configurable: true });
-  Object.defineProperty(instance, 'geocoder', { get: () => mockGeocoder, configurable: true });
-
-  return {
+  const context = {
+    root,
+    el,
+    mapEl,
     instance,
-    list,
-    mockMap: mockMap as unknown as MockMap,
-    mockCluster,
-    clusterItems,
-    item: (id: string) => clusterItems.find((entry) => entry.id === id)!,
-    fireLoad() {
-      mapLoadHandlers.forEach((callback) => callback());
+    mapbox,
+    mockMap,
+    get cluster() {
+      return instance.cluster!;
+    },
+    get geocoder() {
+      return instance.geocoder!;
+    },
+    get list() {
+      return root.querySelector('ul')!;
+    },
+    item(id: string) {
+      return instance.items.find((entry) => entry.id === id)!;
     },
     fireMoveEnd() {
       mockMap.fire('moveend');
     },
-    fireItemClick(item: unknown) {
-      (clusterHandlers['map-item-click'] ?? []).forEach((callback) =>
-        callback({ detail: [item, {}, {}] }),
-      );
-    },
-    fireUpdate() {
-      (clusterHandlers['map-update'] ?? []).forEach((callback) =>
-        callback({ detail: [mockCluster.items] }),
-      );
+    fireItemClick(item: MapboxClusterItem | undefined) {
+      emitFrom(context.cluster, 'map-item-click', { item, feature: undefined, event: {} });
     },
     fireGeocoderResult(result: unknown) {
-      (geocoderHandlers['map-result'] ?? []).forEach((callback) => callback({ detail: [result] }));
+      emitFrom(context.geocoder, 'map-result', { result });
     },
   };
+
+  return context;
 }
 
-/**
- * Mount the component, let the js-toolkit timer-based mount settle, then simulate
- * the map load so the orchestrator wires itself. Leaves real timers active.
- */
-async function mountAndLoad(ctx: ReturnType<typeof createStoreLocator>) {
-  vi.useFakeTimers();
-  ctx.instance.$mount();
-  await vi.advanceTimersByTimeAsync(100);
-  ctx.fireLoad();
-  await vi.advanceTimersByTimeAsync(100);
-  vi.useRealTimers();
-}
+type StoreLocatorContext = Awaited<ReturnType<typeof createStoreLocator>>;
 
 /**
  * Configure the mock viewport so only the given longitudes are considered inside
  * bounds, letting a test drive the in-bounds axis independently of the map data.
  */
-function boundsContainingLng(ctx: ReturnType<typeof createStoreLocator>, lngs: number[]) {
+function boundsContainingLng(ctx: StoreLocatorContext, lngs: number[]) {
   ctx.mockMap.getBounds = vi.fn(() => ({
     contains: (lngLat: [number, number]) => lngs.includes(lngLat[0]),
-  })) as any;
+  })) as never;
 }
 
-/**
- * Read the current DOM order of item ids inside the `list` ref.
- */
-function listOrder(ctx: ReturnType<typeof createStoreLocator>): string[] {
+/** Read the current DOM order of item ids inside the sidebar list. */
+function listOrder(ctx: StoreLocatorContext): string[] {
   return [...ctx.list.children]
     .map((child) => child.getAttribute('data-option-id'))
     .filter((id): id is string => id !== null);
 }
 
+/**
+ * A well-formed locator reports nothing. `store-locator.no-map` is deferred
+ * until the DOM has settled and is judged on the *element*, so the ordinary
+ * "the nested `MapboxMap` has not mounted yet" state — the registry mounts the
+ * wrapper first — is not a diagnostic. Capturing keeps the console clean and
+ * lets a test assert that nothing was reported at all.
+ */
+let diagnostics: DiagnosticCapture;
+
+beforeEach(() => {
+  diagnostics = captureDiagnostics();
+});
+
+afterEach(() => {
+  diagnostics.stop();
+});
+
 describe('StoreLocator orchestrator', () => {
   // --- 1. Selection --------------------------------------------------------
   describe('selection', () => {
     it('flies to the item, marks it active/aria-current, opens a popup and emits map-select', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [3, 4] }]);
-      await mountAndLoad(ctx);
-
-      const select = vi.fn();
-      ctx.instance.$on('map-select', select);
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [3, 4] }]);
+      const log = recordEvents(ctx.el, 'map-select');
 
       const itemA = ctx.item('a');
       ctx.instance.selectItem(itemA);
@@ -182,26 +176,27 @@ describe('StoreLocator orchestrator', () => {
       expect(itemA.$el.hasAttribute('data-active')).toBe(true);
       expect(itemA.$el.getAttribute('aria-current')).toBe('true');
       // The popup was opened from the item's popup content.
-      expect(select).toHaveBeenCalledTimes(1);
-      expect(select.mock.calls[0][0].detail[0]).toBe(itemA);
+      expect((ctx.instance as unknown as { __popup?: unknown }).__popup).toBeDefined();
+      expect(log.events).toHaveLength(1);
+      // The payload is one named object: the item travels as `detail.item`.
+      expect((log.events[0].detail as { item: unknown }).item).toBe(itemA);
+      log.stop();
     });
 
     it('honors a custom data-option-item-zoom-level on fly-to', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [3, 4] }], {
-        attrs: { 'data-option-item-zoom-level': '17' },
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [3, 4] }], {
+        attrs: 'data-option-item-zoom-level="17"',
       });
-      await mountAndLoad(ctx);
 
       ctx.instance.selectItem(ctx.item('a'));
       expect(ctx.mockMap.flyTo).toHaveBeenCalledWith({ center: [3, 4], zoom: 17 });
     });
 
     it('deactivates the previously selected item when a second is selected', async () => {
-      const ctx = createStoreLocator([
+      const ctx = await createStoreLocator([
         { id: 'a', lngLat: [1, 1] },
         { id: 'b', lngLat: [2, 2] },
       ]);
-      await mountAndLoad(ctx);
 
       const itemA = ctx.item('a');
       const itemB = ctx.item('b');
@@ -215,11 +210,8 @@ describe('StoreLocator orchestrator', () => {
     });
 
     it('clears the active state and emits map-deselect on deselect()', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
-      await mountAndLoad(ctx);
-
-      const deselect = vi.fn();
-      ctx.instance.$on('map-deselect', deselect);
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
+      const log = recordEvents(ctx.el, 'map-deselect');
 
       const itemA = ctx.item('a');
       ctx.instance.selectItem(itemA);
@@ -227,19 +219,19 @@ describe('StoreLocator orchestrator', () => {
 
       expect(itemA.$el.hasAttribute('data-active')).toBe(false);
       expect(itemA.$el.hasAttribute('aria-current')).toBe(false);
-      expect(deselect).toHaveBeenCalledTimes(1);
-      expect((ctx.instance as any).__selected).toBeUndefined();
+      expect(log.events).toHaveLength(1);
+      // `map-deselect` carries no payload, so its `detail` is `null`.
+      expect(log.events[0].detail).toBeNull();
+      expect((ctx.instance as unknown as { __selected?: unknown }).__selected).toBeUndefined();
+      log.stop();
     });
 
     it('selects on a delegated sidebar click, resolving the clicked item element', async () => {
-      const ctx = createStoreLocator([
+      const ctx = await createStoreLocator([
         { id: 'a', lngLat: [1, 1] },
         { id: 'b', lngLat: [2, 2] },
       ]);
-      await mountAndLoad(ctx);
-
-      const select = vi.fn();
-      ctx.instance.$on('map-select', select);
+      const log = recordEvents(ctx.el, 'map-select');
 
       // Click the inner button of item `b`: the delegated handler resolves the
       // closest MapboxClusterItem element and selects its instance.
@@ -247,56 +239,50 @@ describe('StoreLocator orchestrator', () => {
       button.dispatchEvent(new Event('click', { bubbles: true }));
 
       expect(ctx.item('b').$el.hasAttribute('data-active')).toBe(true);
-      expect(select.mock.calls.at(-1)?.[0].detail[0]).toBe(ctx.item('b'));
+      expect((log.events.at(-1)!.detail as { item: unknown }).item).toBe(ctx.item('b'));
+      log.stop();
     });
   });
 
   // --- 2. Cluster item-click -> select -------------------------------------
   describe('cluster item-click -> select', () => {
     it('selects the item reported by the cluster', async () => {
-      const ctx = createStoreLocator([
+      const ctx = await createStoreLocator([
         { id: 'a', lngLat: [1, 1] },
         { id: 'b', lngLat: [2, 2] },
       ]);
-      await mountAndLoad(ctx);
-
-      const select = vi.fn();
-      ctx.instance.$on('map-select', select);
+      const log = recordEvents(ctx.el, 'map-select');
 
       ctx.fireItemClick(ctx.item('b'));
 
       expect(ctx.item('b').$el.hasAttribute('data-active')).toBe(true);
       expect(ctx.mockMap.flyTo).toHaveBeenCalledWith({ center: [2, 2], zoom: 14 });
-      expect(select.mock.calls.at(-1)?.[0].detail[0]).toBe(ctx.item('b'));
+      expect((log.events.at(-1)!.detail as { item: unknown }).item).toBe(ctx.item('b'));
+      log.stop();
     });
 
     it('does nothing (no select, no throw) when the cluster reports no item', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
-      await mountAndLoad(ctx);
-
-      const select = vi.fn();
-      ctx.instance.$on('map-select', select);
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
+      const log = recordEvents(ctx.el, 'map-select');
 
       expect(() => ctx.fireItemClick(undefined)).not.toThrow();
-      expect(select).not.toHaveBeenCalled();
+      expect(log.events).toHaveLength(0);
+      log.stop();
     });
   });
 
   // --- 3. Viewport filtering (in-bounds + sort + filter) -------------------
   describe('viewport filtering on moveend', () => {
     it('reflects data-in-bounds only for in-view items and emits map-filter with them', async () => {
-      const ctx = createStoreLocator([
+      const ctx = await createStoreLocator([
         { id: 'a', lngLat: [1, 1] },
         { id: 'b', lngLat: [2, 2] },
         { id: 'c', lngLat: [3, 3] },
       ]);
-      await mountAndLoad(ctx);
 
       // Only `a` and `c` fall inside the viewport.
       boundsContainingLng(ctx, [1, 3]);
-
-      const filter = vi.fn();
-      ctx.instance.$on('map-filter', filter);
+      const log = recordEvents(ctx.el, 'map-filter');
 
       ctx.fireMoveEnd();
 
@@ -304,17 +290,18 @@ describe('StoreLocator orchestrator', () => {
       expect(ctx.item('b').$el.hasAttribute('data-in-bounds')).toBe(false);
       expect(ctx.item('c').$el.hasAttribute('data-in-bounds')).toBe(true);
 
-      expect(filter).toHaveBeenCalled();
-      const inView = filter.mock.calls.at(-1)?.[0].detail[0] as MapboxClusterItem[];
-      expect(inView.map((entry) => entry.id).sort()).toEqual(['a', 'c']);
+      expect(log.events.length).toBeGreaterThan(0);
+      // The payload is one named object: the in-view set is `detail.items`.
+      const { items } = log.events.at(-1)!.detail as { items: MapboxClusterItem[] };
+      expect(items.map((entry) => entry.id).sort()).toEqual(['a', 'c']);
+      log.stop();
     });
 
     it('does not fit the map on a moveend (pan must not re-frame)', async () => {
-      const ctx = createStoreLocator([
+      const ctx = await createStoreLocator([
         { id: 'a', lngLat: [1, 1] },
         { id: 'b', lngLat: [2, 2] },
       ]);
-      await mountAndLoad(ctx);
 
       ctx.mockMap.fitBounds.mockClear();
       ctx.fireMoveEnd();
@@ -325,50 +312,45 @@ describe('StoreLocator orchestrator', () => {
 
     it('orders the filter payload and the list DOM ascending by distance (sort ON)', async () => {
       // Center is MockLngLat(0,0); planar distances: b(1,1) < c(2,2) < a(3,3).
-      const ctx = createStoreLocator([
+      const ctx = await createStoreLocator([
         { id: 'a', lngLat: [3, 3] },
         { id: 'b', lngLat: [1, 1] },
         { id: 'c', lngLat: [2, 2] },
       ]);
-      await mountAndLoad(ctx);
-
-      const filter = vi.fn();
-      ctx.instance.$on('map-filter', filter);
+      const log = recordEvents(ctx.el, 'map-filter');
 
       ctx.fireMoveEnd();
 
-      const inView = filter.mock.calls.at(-1)?.[0].detail[0] as MapboxClusterItem[];
-      expect(inView.map((entry) => entry.id)).toEqual(['b', 'c', 'a']);
+      const { items } = log.events.at(-1)!.detail as { items: MapboxClusterItem[] };
+      expect(items.map((entry) => entry.id)).toEqual(['b', 'c', 'a']);
       expect(listOrder(ctx)).toEqual(['b', 'c', 'a']);
+      log.stop();
     });
 
     it('preserves registration/DOM order when data-option-no-sort is set', async () => {
-      const ctx = createStoreLocator(
+      const ctx = await createStoreLocator(
         [
           { id: 'a', lngLat: [3, 3] },
           { id: 'b', lngLat: [1, 1] },
           { id: 'c', lngLat: [2, 2] },
         ],
-        { attrs: { 'data-option-no-sort': '' } },
+        { attrs: 'data-option-no-sort' },
       );
-      await mountAndLoad(ctx);
-
-      const filter = vi.fn();
-      ctx.instance.$on('map-filter', filter);
+      const log = recordEvents(ctx.el, 'map-filter');
 
       ctx.fireMoveEnd();
 
-      const inView = filter.mock.calls.at(-1)?.[0].detail[0] as MapboxClusterItem[];
-      expect(inView.map((entry) => entry.id)).toEqual(['a', 'b', 'c']);
+      const { items } = log.events.at(-1)!.detail as { items: MapboxClusterItem[] };
+      expect(items.map((entry) => entry.id)).toEqual(['a', 'b', 'c']);
       expect(listOrder(ctx)).toEqual(['a', 'b', 'c']);
+      log.stop();
     });
   });
 
   // --- 4. Geocoder result --------------------------------------------------
   describe('geocoder result', () => {
     it('fits the map to the bbox when the result has one', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }], { geocoder: true });
-      await mountAndLoad(ctx);
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }], { geocoder: true });
 
       ctx.mockMap.fitBounds.mockClear();
       ctx.fireGeocoderResult({ bbox: [10, 20, 30, 40] });
@@ -380,8 +362,7 @@ describe('StoreLocator orchestrator', () => {
     });
 
     it('flies to the center when the result has no bbox', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }], { geocoder: true });
-      await mountAndLoad(ctx);
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }], { geocoder: true });
 
       ctx.mockMap.flyTo.mockClear();
       ctx.fireGeocoderResult({ center: [5, 6] });
@@ -390,8 +371,7 @@ describe('StoreLocator orchestrator', () => {
     });
 
     it('does nothing and does not throw on a missing/empty result', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }], { geocoder: true });
-      await mountAndLoad(ctx);
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }], { geocoder: true });
 
       ctx.mockMap.fitBounds.mockClear();
       ctx.mockMap.flyTo.mockClear();
@@ -406,15 +386,14 @@ describe('StoreLocator orchestrator', () => {
   // --- 5. fitOnUpdate ------------------------------------------------------
   describe('fitOnUpdate', () => {
     it('fits the map to the item extent on the cluster update when enabled', async () => {
-      const ctx = createStoreLocator(
+      const ctx = await createStoreLocator(
         [
           { id: 'a', lngLat: [1, 2] },
           { id: 'b', lngLat: [3, 4] },
           { id: 'c', lngLat: [5, 0] },
         ],
-        { attrs: { 'data-option-fit-on-update': '' } },
+        { attrs: 'data-option-fit-on-update' },
       );
-      await mountAndLoad(ctx);
 
       expect(ctx.mockMap.fitBounds).toHaveBeenCalledWith(
         [
@@ -426,11 +405,10 @@ describe('StoreLocator orchestrator', () => {
     });
 
     it('does not fit the map when disabled', async () => {
-      const ctx = createStoreLocator([
+      const ctx = await createStoreLocator([
         { id: 'a', lngLat: [1, 2] },
         { id: 'b', lngLat: [3, 4] },
       ]);
-      await mountAndLoad(ctx);
 
       expect(ctx.mockMap.fitBounds).not.toHaveBeenCalled();
     });
@@ -439,35 +417,29 @@ describe('StoreLocator orchestrator', () => {
   // --- 6. Fetch-swap: list + map update together ---------------------------
   describe('Fetch-swap of the item set', () => {
     it('re-fits and re-filters against the new cluster item set on update', async () => {
-      const ctx = createStoreLocator(
+      const ctx = await createStoreLocator(
         [
           { id: 'a', lngLat: [1, 1] },
           { id: 'b', lngLat: [2, 2] },
         ],
-        { attrs: { 'data-option-fit-on-update': '' } },
+        { attrs: 'data-option-fit-on-update' },
       );
-      await mountAndLoad(ctx);
-
-      // A Fetch swap: the cluster (owner of the registry) now holds a fresh set.
-      const freshEls = [
-        h('li', { 'data-component': 'MapboxClusterItem', 'data-option-id': 'c' }),
-        h('li', { 'data-component': 'MapboxClusterItem', 'data-option-id': 'd' }),
-      ];
-      freshEls.forEach((el) => ctx.list.append(el));
-      ctx.mockCluster.items = [
-        fakeItem(freshEls[0], 'c', [7, 7]),
-        fakeItem(freshEls[1], 'd', [8, 8]),
-      ] as any;
 
       boundsContainingLng(ctx, [7, 8]);
-      const filter = vi.fn();
-      ctx.instance.$on('map-filter', filter);
+      const log = recordEvents(ctx.el, 'map-filter');
       ctx.mockMap.fitBounds.mockClear();
 
-      // The cluster announces the item-set change; the orchestrator re-fits and
-      // re-filters — list and map move together.
-      ctx.fireUpdate();
+      // A Fetch swap: the whole list is replaced. The items unregister and the
+      // fresh ones register, and the cluster announces the new set through its
+      // debounced `map-update`.
+      ctx.list.innerHTML = [
+        itemHtml({ id: 'c', lngLat: [7, 7] }),
+        itemHtml({ id: 'd', lngLat: [8, 8] }),
+      ].join('');
+      await settle();
+      await wait(REBUILD_DELAY);
 
+      // The orchestrator re-fits and re-filters — list and map move together.
       expect(ctx.mockMap.fitBounds).toHaveBeenCalledWith(
         [
           [7, 7],
@@ -475,164 +447,158 @@ describe('StoreLocator orchestrator', () => {
         ],
         { padding: 40 },
       );
-      const inView = filter.mock.calls.at(-1)?.[0].detail[0] as MapboxClusterItem[];
-      expect(inView.map((entry) => entry.id).sort()).toEqual(['c', 'd']);
+      const { items } = log.events.at(-1)!.detail as { items: MapboxClusterItem[] };
+      expect(items.map((entry) => entry.id).sort()).toEqual(['c', 'd']);
+      log.stop();
     });
 
     it('drops a stale selection whose item is no longer registered', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
-      await mountAndLoad(ctx);
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
+      function selected() {
+        return (ctx.instance as unknown as { __selected?: unknown }).__selected;
+      }
 
       ctx.instance.selectItem(ctx.item('a'));
-      expect((ctx.instance as any).__selected).toBe(ctx.item('a'));
+      expect(selected()).toBeDefined();
 
       // The selected item leaves the registry (Fetch swap).
-      ctx.mockCluster.items = [] as any;
-      ctx.fireUpdate();
+      ctx.list.innerHTML = '';
+      await settle();
+      await wait(REBUILD_DELAY);
 
-      expect((ctx.instance as any).__selected).toBeUndefined();
+      expect(selected()).toBeUndefined();
     });
 
     it('runs the full deselect cleanup when the selected item is dropped by a swap (D2)', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
-      await mountAndLoad(ctx);
-
-      const deselect = vi.fn();
-      ctx.instance.$on('map-deselect', deselect);
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
+      const log = recordEvents(ctx.el, 'map-deselect');
 
       ctx.instance.selectItem(ctx.item('a'));
-      const popup = (ctx.instance as any).__popup;
+      const popup = (ctx.instance as unknown as { __popup?: { remove: unknown } }).__popup!;
       expect(popup).toBeDefined();
 
       // The selected store leaves the registry: the popup must be removed and
       // `map-deselect` emitted, not just `__selected` cleared.
-      ctx.mockCluster.items = [] as any;
-      ctx.fireUpdate();
+      ctx.list.innerHTML = '';
+      await settle();
+      await wait(REBUILD_DELAY);
 
-      expect((ctx.instance as any).__selected).toBeUndefined();
+      expect((ctx.instance as unknown as { __selected?: unknown }).__selected).toBeUndefined();
       expect(popup.remove).toHaveBeenCalled();
-      expect(deselect).toHaveBeenCalledTimes(1);
+      expect(log.events).toHaveLength(1);
+      log.stop();
     });
 
-    it('re-wires onto a replacement cluster announced via MAPBOX_CLUSTER_CONNECTED (D1)', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
-      await mountAndLoad(ctx);
+    it('re-wires onto a replacement cluster picked up by $watchChildren (D1)', async () => {
+      // The orchestrator watches its `MapboxCluster` descendants with
+      // `$watchChildren()`, so a cluster that replaces the wired one arrives
+      // through the `removed`/`added` callbacks: there is nothing to announce
+      // and nothing to poll.
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
+      const firstCluster = ctx.cluster;
 
-      // Build a replacement cluster inside the locator with its own item set and
-      // its own listener registry.
-      const clusterEl = h('div', { 'data-component': 'MapboxCluster' });
-      ctx.instance.$el.append(clusterEl);
-      const newHandlers: Record<string, Array<(event: unknown) => void>> = {};
-      const itemEl = h('li', { 'data-component': 'MapboxClusterItem', 'data-option-id': 'z' });
-      const newItem = fakeItem(itemEl, 'z', [9, 9]);
-      const newCluster = {
-        $isMounted: true,
-        $el: clusterEl,
-        items: [newItem],
-        $on(event: string, callback: (event: unknown) => void) {
-          (newHandlers[event] ??= []).push(callback);
-          return () => {};
-        },
-      };
-      // The orchestrator now resolves the replacement cluster.
-      Object.defineProperty(ctx.instance, 'cluster', { get: () => newCluster, configurable: true });
+      // Replace the cluster wholesale, as a facet swap of the results panel would.
+      firstCluster.$el.remove();
+      ctx.mapEl.insertAdjacentHTML('beforeend', clusterHtml([{ id: 'z', lngLat: [9, 9] }]));
+      await settle();
 
-      const select = vi.fn();
-      ctx.instance.$on('map-select', select);
-
-      document.dispatchEvent(new CustomEvent('mapbox-cluster:connected', { detail: newCluster }));
+      const newCluster = await waitFor(() =>
+        ctx.instance.cluster && ctx.instance.cluster !== firstCluster
+          ? ctx.instance.cluster
+          : undefined,
+      );
+      expect((ctx.instance as unknown as { __cluster?: unknown }).__cluster).toBe(newCluster);
 
       // The stale wiring was dropped and the new cluster wired: an item-click
       // through the REPLACEMENT cluster selects its item.
-      expect((ctx.instance as any).__cluster).toBe(newCluster);
-      (newHandlers['map-item-click'] ?? []).forEach((callback) =>
-        callback({ detail: [newItem, {}, {}] }),
-      );
-      expect(select).toHaveBeenCalledTimes(1);
-      expect(select.mock.calls[0][0].detail[0]).toBe(newItem);
+      const log = recordEvents(ctx.el, 'map-select');
+      const newItem = ctx.item('z');
+      emitFrom(newCluster, 'map-item-click', { item: newItem, feature: undefined, event: {} });
+
+      expect(log.events).toHaveLength(1);
+      expect((log.events[0].detail as { item: unknown }).item).toBe(newItem);
+      log.stop();
     });
   });
 
-  // --- 7. Deferred cluster wiring (async mount timing) ---------------------
+  // --- 7. Deferred cluster wiring -----------------------------------------
   describe('deferred cluster wiring', () => {
-    it('does not wire the cluster until it is mounted, then wires it', async () => {
-      const ctx = createStoreLocator(
-        [
-          { id: 'a', lngLat: [1, 1] },
-          { id: 'b', lngLat: [2, 2] },
-        ],
-        { clusterMounted: false },
-      );
-      await mountAndLoad(ctx);
+    it('does not wire a cluster until one turns up, then wires it', async () => {
+      // `$watchChildren()` does the wiring, so the assertion is on its effect:
+      // there is no wiring until a cluster mounts, and it wires itself the
+      // moment one does.
+      const ctx = await createStoreLocator([], { cluster: false });
+      function wired() {
+        return (ctx.instance as unknown as { __cluster?: unknown }).__cluster;
+      }
 
-      const select = vi.fn();
-      ctx.instance.$on('map-select', select);
+      expect(wired()).toBeUndefined();
+      expect(ctx.instance.items).toEqual([]);
 
-      // Not wired yet: an item-click is ignored because the listener is not
-      // attached until the cluster's source is ready.
-      expect((ctx.instance as any).__clusterWired).toBe(false);
+      const log = recordEvents(ctx.el, 'map-select');
+
+      // The cluster mounts late (a lazily imported component, a `Fetch`-injected
+      // panel): the collection reports it and the orchestrator wires it.
+      ctx.mapEl.insertAdjacentHTML('beforeend', clusterHtml([{ id: 'b', lngLat: [2, 2] }]));
+      await settle();
+
+      const cluster = await waitFor(() => ctx.instance.cluster);
+      expect(wired()).toBe(cluster);
+
       ctx.fireItemClick(ctx.item('b'));
-      expect(select).not.toHaveBeenCalled();
-
-      // The cluster finishes mounting: wiring can proceed.
-      ctx.mockCluster.$isMounted = true;
-      (ctx.instance as any).__wireChildren();
-
-      expect((ctx.instance as any).__clusterWired).toBe(true);
-      ctx.fireItemClick(ctx.item('b'));
-      expect(select).toHaveBeenCalledTimes(1);
+      expect(log.events).toHaveLength(1);
+      log.stop();
     });
   });
 
   // --- 8. Lifecycle teardown (dynamic-DOM safety) --------------------------
   describe('lifecycle teardown', () => {
-    it('detaches listeners and clears state on destroy', async () => {
-      const ctx = createStoreLocator(
+    it('detaches listeners and clears state on unmount', async () => {
+      const ctx = await createStoreLocator(
         [
           { id: 'a', lngLat: [1, 1] },
           { id: 'b', lngLat: [2, 2] },
         ],
         { geocoder: true },
       );
-      await mountAndLoad(ctx);
 
-      const filter = vi.fn();
-      const select = vi.fn();
-      ctx.instance.$on('map-filter', filter);
-      ctx.instance.$on('map-select', select);
+      const itemA = ctx.item('a');
+      const cluster = ctx.cluster;
+      const geocoder = ctx.geocoder;
+      const log = recordEvents(ctx.el, 'map-filter', 'map-select');
 
-      vi.useFakeTimers();
-      ctx.instance.$destroy();
-      await vi.advanceTimersByTimeAsync(100);
-      vi.useRealTimers();
+      ctx.instance.$unmount();
+      await settle();
 
-      expect((ctx.instance as any).__selected).toBeUndefined();
-      expect((ctx.instance as any).__map).toBeUndefined();
+      expect((ctx.instance as unknown as { __selected?: unknown }).__selected).toBeUndefined();
+      expect((ctx.instance as unknown as { __map?: unknown }).__map).toBeUndefined();
       expect(ctx.instance.isLoaded).toBe(false);
 
       // Detached listeners: subsequent events are inert.
       ctx.fireMoveEnd();
-      ctx.fireItemClick(ctx.item('a'));
+      emitFrom(cluster, 'map-item-click', { item: itemA, feature: undefined, event: {} });
       ctx.mockMap.fitBounds.mockClear();
       ctx.mockMap.flyTo.mockClear();
-      ctx.fireGeocoderResult({ center: [1, 1] });
+      emitFrom(geocoder, 'map-result', { result: { center: [1, 1] } });
 
-      expect(filter).not.toHaveBeenCalled();
-      expect(select).not.toHaveBeenCalled();
+      expect(log.events).toHaveLength(0);
       expect(ctx.mockMap.flyTo).not.toHaveBeenCalled();
       expect(ctx.mockMap.fitBounds).not.toHaveBeenCalled();
+      log.stop();
     });
 
     it('drops the cached map on its remove event and never calls into the dead map (D3)', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
-      await mountAndLoad(ctx);
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
+      function cached() {
+        return (ctx.instance as unknown as { __map?: unknown }).__map;
+      }
 
-      expect((ctx.instance as any).__map).toBe(ctx.mockMap);
+      expect(cached()).toBe(ctx.mockMap);
 
       // The nested map is removed out from under the still-mounted orchestrator.
       ctx.mockMap.remove();
 
-      expect((ctx.instance as any).__map).toBeUndefined();
+      expect(cached()).toBeUndefined();
       expect(ctx.instance.isLoaded).toBe(false);
 
       // A later selection, viewport recompute or geocoder result must not call
@@ -646,35 +612,32 @@ describe('StoreLocator orchestrator', () => {
       expect(ctx.mockMap.fitBounds).not.toHaveBeenCalled();
     });
 
-    it('tears down without throwing after the map was removed', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
-      await mountAndLoad(ctx);
+    it('tears down without failing after the map was removed', async () => {
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
 
       // The map is removed out from under the orchestrator.
       ctx.mockMap.remove();
 
-      vi.useFakeTimers();
-      expect(() => {
-        ctx.instance.$destroy();
-      }).not.toThrow();
-      await vi.advanceTimersByTimeAsync(100);
-      vi.useRealTimers();
+      ctx.instance.$unmount();
+      await settle();
+
+      // A throwing `unmounted()` is contained and reported as
+      // `component.lifecycle-failed`, so `not.toThrow()` would pass either way.
+      // The absence of that diagnostic is what says teardown ran clean.
+      expect(diagnostics.codes).not.toContain('component.lifecycle-failed');
     });
 
-    it('does not throw when destroyed after being detached from the DOM', async () => {
-      const ctx = createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
-      await mountAndLoad(ctx);
+    it('does not fail when unmounted after being detached from the DOM', async () => {
+      const ctx = await createStoreLocator([{ id: 'a', lngLat: [1, 1] }]);
 
-      // Detach the root before teardown (e.g. a facet swap replacing the whole
-      // locator): teardown relies on cached refs, not a fresh `$query`.
-      ctx.instance.$el.remove();
+      // Detach the root (e.g. a facet swap replacing the whole locator): the
+      // registry unmounts it *after* the removal, so teardown has to rely on the
+      // cached references rather than a fresh `$query`.
+      ctx.el.remove();
+      await settle();
 
-      vi.useFakeTimers();
-      expect(() => {
-        ctx.instance.$destroy();
-      }).not.toThrow();
-      await vi.advanceTimersByTimeAsync(100);
-      vi.useRealTimers();
+      expect(ctx.instance.$isMounted).toBe(false);
+      expect(diagnostics.codes).not.toContain('component.lifecycle-failed');
     });
   });
 });

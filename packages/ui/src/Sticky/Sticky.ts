@@ -1,122 +1,89 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import { getMountedInstances } from '@studiometa/js-toolkit/getMountedInstances';
+import { withResize } from '@studiometa/js-toolkit/withResize';
+import { withScroll } from '@studiometa/js-toolkit/withScroll';
+import type {
+  BaseConfig,
+  BaseProps,
+  ChildrenCollection,
+  DelegatedEvent,
+  ScrollProps,
+} from '@studiometa/js-toolkit';
 import { Sentinel } from '../Sentinel/index.js';
 
-export interface StickyProps extends BaseProps {
-  $refs: {
-    inner: HTMLElement;
-  };
+export type StickyProps = BaseProps & {
+  $refs: { inner: HTMLElement };
   $options: {
     zIndex: number;
     hideWhenUp: boolean;
     hideWhenDown: boolean;
   };
-  $children: {
-    Sentinel: Sentinel[];
-  };
-}
+};
 
 /**
- * Sticky class.
- *
- * A sticky-positioning primitive that stacks multiple sticky elements without overlap. It
- * uses a child `Sentinel` to detect when the element becomes stuck, then offsets and
- * z-indexes each instance against the others sharing its positioning context. The
- * `hideWhenUp` and `hideWhenDown` options let it hide on scroll direction, and the `zIndex`
- * option sets the base stacking order.
+ * A sticky-positioning primitive that stacks multiple sticky elements
+ * without overlap. A child `Sentinel` detects when the element becomes
+ * stuck, then each instance offsets and z-indexes itself against the others
+ * sharing its positioning context. `hideWhenUp`/`hideWhenDown` hide on
+ * scroll direction, and `zIndex` sets the base stacking order.
  *
  * @link https://ui.studiometa.dev/reference/items/Sticky/
  */
-export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProps> {
-  /**
-   * Config.
-   */
+export class Sticky<T extends BaseProps = BaseProps> extends withResize(withScroll(Base))<
+  StickyProps & T
+> {
   static config: BaseConfig = {
     name: 'Sticky',
     refs: ['inner'],
-    components: {
-      Sentinel,
-    },
+    components: { Sentinel },
     options: {
-      zIndex: {
-        type: Number,
-        default: 100,
-      },
+      zIndex: { type: Number, default: 100 },
       hideWhenUp: Boolean,
       hideWhenDown: Boolean,
     },
   };
 
-  /**
-   * Holder for all instances.
-   */
-  // eslint-disable-next-line no-use-before-define
-  static instances: Set<Sticky> = new Set();
-
-  /**
-   * Is the component sticky?
-   */
   isSticky = false;
 
-  /**
-   * Is the component visible?
-   */
   isVisible = true;
 
   /**
-   * Set the Y value.
+   * Live collection rather than a constructed reference: a mount carries no
+   * ordering guarantee, so the sentinel may not exist yet on the first
+   * `mounted()` cycle. Measuring from `added` covers both orders.
    */
+  sentinels: ChildrenCollection<Sentinel> = this.$watchChildren<Sentinel>('Sentinel', {
+    added: () => this.setSentinelSize(),
+  });
+
+  get sentinel(): Sentinel | undefined {
+    return this.sentinels.items[0];
+  }
+
+  /**
+   * Every mounted `Sticky` on the page, in DOM order. Read from core's
+   * registry, which answers live, rather than from a set kept in sync by hand.
+   */
+  get instances(): Sticky[] {
+    return getMountedInstances<Sticky>('Sticky');
+  }
+
   set y(value: number) {
     this.$refs.inner.style.transform = `translateY(${value}px) translateZ(0px)`;
   }
 
-  /**
-   * Get instances as array.
-   */
-  get instances(): Sticky[] {
-    return Array.from(Sticky.instances);
-  }
-
-  /**
-   * Get the sentinel instance.
-   */
-  get sentinel(): Sentinel {
-    return this.$children.Sentinel[0];
-  }
-
-  /**
-   * Mounted hook.
-   */
-  mounted() {
-    Sticky.instances.add(this);
+  resized(): void {
     this.setSentinelSize();
   }
 
-  /**
-   * Resized hook.
-   */
-  resized() {
-    this.setSentinelSize();
-  }
-
-  /**
-   * Destroyed hook.
-   */
-  destroyed() {
-    Sticky.instances.delete(this);
-  }
-
-  /**
-   * Scrolled hook.
-   */
-  scrolled(props) {
-    if (!this.isSticky || props.y === props.last.y) {
+  scrolled(props: ScrollProps): void {
+    if (!this.isSticky || props.deltaY === 0) {
       return;
     }
 
     if (
-      (props.direction.y === 'DOWN' && this.$options.hideWhenDown) ||
-      (props.direction.y === 'UP' && this.$options.hideWhenUp)
+      (props.directionY === 1 && this.$options.hideWhenDown) ||
+      (props.directionY === -1 && this.$options.hideWhenUp)
     ) {
       this.hide();
     } else {
@@ -124,94 +91,92 @@ export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProp
     }
   }
 
-  /**
-   * Listen to the sentinel's `intersected` event to set the `isSticky` value.
-   * @param   {IntersectionObserverEntry[]} entries
-   * @returns {void}
-   */
-  onSentinelIntersected({ args: [[entry]] }: { args: [IntersectionObserverEntry[]] }) {
-    this.isSticky = entry.isIntersecting && entry.boundingClientRect.y < 0;
+  onSentinelIntersected({ payload }: DelegatedEvent<Sentinel, 'intersected'>): void {
+    const { entry } = payload;
+    this.isSticky = Boolean(entry && entry.isIntersecting && entry.boundingClientRect.y < 0);
     this.setPosition();
   }
 
-  /**
-   * Hide the sticky component when another one is sticky.
-   */
-  hide() {
+  /** Hide the sticky component when another one is sticky. */
+  hide(): void {
     if (!this.isVisible) {
       return;
     }
 
     this.isVisible = false;
-    this.$el.classList.add('pointer-events-none');
-
-    this.instances.forEach((instance, index) => instance.setPosition(index));
+    this.applyVisibility();
   }
 
-  /**
-   * Show the sticky component when the other one is not sticky anymore.
-   */
-  show() {
+  /** Show the sticky component when the other one is not sticky anymore. */
+  show(): void {
     if (this.isVisible) {
       return;
     }
 
     this.isVisible = true;
-    this.$el.classList.remove('pointer-events-none');
-    this.instances.forEach((instance, index) => instance.setPosition(index));
+    this.applyVisibility();
   }
 
   /**
-   * Set the sentinel height based on the previous instances.
+   * Write the visibility class and restack every instance.
+   *
+   * Split out of `hide()`/`show()` and deferred to `$write()` because their
+   * caller is `scrolled()`, and the scroll service emits from inside
+   * `defaultScheduler.read()` — so writing `classList` straight from there
+   * would interleave a write into the read phase and force a layout every
+   * other component in that phase then pays for. The split is what keeps
+   * `isVisible` synchronous: it is logical state that `setPosition()` reads on
+   * every instance, and only the DOM work belongs in a later phase.
    */
-  setSentinelSize() {
-    const { instances } = this;
+  applyVisibility(): void {
+    this.$write(() => {
+      this.$el.classList.toggle('pointer-events-none', !this.isVisible);
+      this.instances.forEach((instance, index) => instance.setPosition(index));
+    });
+  }
+
+  /** Set the sentinel height based on the previous instances. */
+  setSentinelSize(): void {
+    const { instances, sentinel } = this;
+    if (!sentinel) {
+      return;
+    }
+
     const index = instances.indexOf(this);
     const height = instances
       .slice(0, index)
-      .filter(
-        // Test each instance sticky context against the current element
-        (instance) => this.closestRelativeElement(instance.$el).contains(this.$el),
-      )
+      .filter((instance) => this.closestRelativeElement(instance.$el).contains(this.$el))
       .reduce((acc, instance) => acc + instance.$el.offsetHeight, 0);
 
-    this.sentinel.$el.style.height = `${height + 1}px`;
+    sentinel.$el.style.height = `${height + 1}px`;
     this.$el.style.top = `${height}px`;
     this.$el.style.zIndex = String(this.$options.zIndex - index);
   }
 
-  /**
-   * Set the component's position.
-   * @param   {number} [index] The instance index in all the pages' instances.
-   * @returns {void}
-   */
-  setPosition(index?: number) {
+  /** Set the component's position. */
+  setPosition(index?: number): void {
     if (!this.isSticky) {
       this.y = 0;
       return;
     }
 
     const { instances } = this;
-
-    // eslint-disable-next-line no-param-reassign
-    index = index ?? instances.indexOf(this);
+    const at = index ?? instances.indexOf(this);
 
     this.y = instances
-      .slice(0, index)
+      .slice(0, at)
       .filter((instance) => instance.isSticky && !instance.isVisible)
       .reduce<number>(
-        (y: number, instance) => y - instance.$refs.inner.offsetHeight,
+        (y, instance) => y - instance.$refs.inner.offsetHeight,
         this.isVisible ? 0 : this.$refs.inner.offsetHeight * -1,
-      ) as number;
+      );
   }
 
-  /**
-   * Find the first parent which has a relative position.
-   */
-  closestRelativeElement(element: HTMLElement) {
-    let parent = element.parentElement;
+  /** Find the first parent which has a relative position. */
+  closestRelativeElement(element: HTMLElement): HTMLElement {
+    let parent = element.parentElement as HTMLElement;
 
-    while (getComputedStyle(parent).position !== 'relative' && parent.parentElement) {
+    while (parent.parentElement && getComputedStyle(parent).position !== 'relative') {
       parent = parent.parentElement;
     }
 
@@ -219,4 +184,9 @@ export class Sticky<T extends BaseProps = BaseProps> extends Base<T & StickyProp
   }
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Sticky`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default Sticky;

@@ -1,30 +1,47 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { nextTick } from '@studiometa/js-toolkit/utils/nextTick';
-import { DISCLOSURE_CONNECTED, DISCLOSURE_GROUP_CONNECTED, type Disclosure } from './Disclosure.js';
+import { defaultScheduler } from '@studiometa/js-toolkit/defaultScheduler';
+import type { ChildrenCollection, MountedReturn } from '@studiometa/js-toolkit';
+import { Disclosure } from './Disclosure.js';
 
-export interface DisclosureGroupProps extends BaseProps {
+export type DisclosureGroupProps = {
   $options: {
     multiple: boolean;
     collapsible: boolean;
   };
-}
+  /**
+   * The group's own events, namespaced `disclosure-group-`.
+   *
+   * `$emit()` bubbles, so a listener bound on the group's element also hears
+   * the events its children emit. The two namespaces keep them apart by name
+   * on a single listener, which is what `on<Child><Event>` handler resolution
+   * needs to work at all.
+   */
+  $emits: {
+    'disclosure-group-open': { item: Disclosure; index: number };
+    'disclosure-group-close': { item: Disclosure; index: number };
+    'disclosure-group-change': { items: Disclosure[] };
+  };
+};
 
 /**
- * Coordinate a dynamic collection of independently registered disclosures.
+ * Coordinate a dynamic collection of independently mounted disclosures.
  *
  * The group owns only group constraints. Each `Disclosure` owns its markup,
- * accessibility state and transitions, and advertises itself to its closest
- * group instead of being instantiated by the parent.
+ * accessibility state and transitions, and is claimed by its closest group
+ * rather than being instantiated by it.
+ *
+ * **Membership is a live collection, not a registry.** `$watchChildren()` is
+ * live and DOM-ordered. What it is *not* is nesting-aware — it collects every
+ * mounted `Disclosure` in the subtree, including those belonging to a nested
+ * group — so the group claims each one and the disclosure arbitrates, and
+ * `items` reads back only the disclosures that ended up with this group.
  *
  * @link https://ui.studiometa.dev/reference/items/Disclosure/
  */
-export class DisclosureGroup<T extends BaseProps = BaseProps> extends Base<
-  T & DisclosureGroupProps
-> {
-  static config: BaseConfig = {
+export class DisclosureGroup extends Base<DisclosureGroupProps> {
+  static config = {
     name: 'DisclosureGroup',
-    emits: ['open', 'close', 'change'],
+    components: { Disclosure },
     options: {
       multiple: { type: Boolean, default: true },
       collapsible: { type: Boolean, default: true },
@@ -32,17 +49,14 @@ export class DisclosureGroup<T extends BaseProps = BaseProps> extends Base<
   };
 
   /**
-   * Registered disclosures. Public access goes through `items`, which returns
-   * them in current DOM order.
+   * Every mounted disclosure in this subtree, nested groups included. `items`
+   * is the filtered view.
    * @private
    */
-  __items = new Set<Disclosure>();
-
-  /**
-   * Remove the standing child advertisement listener.
-   * @private
-   */
-  __offDisclosureConnected?: () => void;
+  __descendants: ChildrenCollection<Disclosure> = this.$watchChildren(Disclosure, {
+    added: (item) => item.__claim(this),
+    removed: (item) => item.__release(this),
+  });
 
   /**
    * Whether an initialization reconciliation is already queued.
@@ -58,15 +72,10 @@ export class DisclosureGroup<T extends BaseProps = BaseProps> extends Base<
   __operation = 0;
 
   /**
-   * Registered disclosures in DOM order.
+   * The disclosures this group owns, in DOM order.
    */
   get items(): Disclosure[] {
-    return [...this.__items]
-      .filter((item) => item.group === this && this.$el.contains(item.$el))
-      .sort((a, b) => {
-        const position = a.$el.compareDocumentPosition(b.$el);
-        return position & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
-      });
+    return this.__descendants.items.filter((item) => item.group === this);
   }
 
   /**
@@ -77,73 +86,24 @@ export class DisclosureGroup<T extends BaseProps = BaseProps> extends Base<
   }
 
   /**
-   * Listen for independently mounted children and announce this group so
-   * children which mounted first can retry their closest-parent lookup.
+   * Claim the disclosures that were already mounted when this group mounted,
+   * and hand them back when it unmounts.
+   *
+   * The collection is built during construction and outlives a mount cycle, so
+   * a group behind `data-mount="media:…"` re-claims its subtree on every
+   * remount and releases it on every unmount.
    */
-  mounted() {
-    const onDisclosureConnected = (event: Event) => {
-      const disclosure = (event as CustomEvent<Disclosure>).detail;
-      if (disclosure?.$el && this.$el.contains(disclosure.$el)) {
-        disclosure.__connect();
+  mounted(): MountedReturn {
+    for (const item of this.__descendants) {
+      item.__claim(this);
+    }
+    this.__scheduleReconcile();
+
+    return () => {
+      for (const item of this.__descendants) {
+        item.__release(this);
       }
     };
-
-    document.addEventListener(DISCLOSURE_CONNECTED, onDisclosureConnected);
-    this.__offDisclosureConnected = () =>
-      document.removeEventListener(DISCLOSURE_CONNECTED, onDisclosureConnected);
-
-    document.dispatchEvent(
-      new CustomEvent(DISCLOSURE_GROUP_CONNECTED, {
-        detail: this,
-      }),
-    );
-
-    this.__scheduleReconcile();
-  }
-
-  /**
-   * Reconcile options and DOM ordering after an update.
-   */
-  updated() {
-    this.__scheduleReconcile();
-  }
-
-  /**
-   * Disconnect every child and remove document listeners.
-   */
-  destroyed() {
-    this.__offDisclosureConnected?.();
-    this.__offDisclosureConnected = undefined;
-
-    for (const item of this.__items) {
-      item.__disconnect(this as unknown as DisclosureGroup);
-      item.__connect();
-    }
-    this.__items.clear();
-  }
-
-  /**
-   * Register a disclosure. Registration is idempotent.
-   */
-  register(disclosure: Disclosure) {
-    if (
-      this.__items.has(disclosure) ||
-      disclosure.$closest<DisclosureGroup>('DisclosureGroup:mounted') !== this
-    ) {
-      return;
-    }
-
-    this.__items.add(disclosure);
-    this.__scheduleReconcile();
-  }
-
-  /**
-   * Unregister a disclosure. Registration order never affects public ordering.
-   */
-  unregister(disclosure: Disclosure) {
-    if (this.__items.delete(disclosure)) {
-      this.__scheduleReconcile();
-    }
   }
 
   /**
@@ -239,25 +199,33 @@ export class DisclosureGroup<T extends BaseProps = BaseProps> extends Base<
   /**
    * Relay item state changes through the group.
    * @internal
+   * @private
    */
-  __onItemStateChange(item: Disclosure, open: boolean) {
-    this.$emit(open ? 'open' : 'close', item, item.index);
-    this.$emit('change', this.openItems);
+  __onItemStateChange(item: Disclosure, open: boolean): void {
+    this.$emit(open ? 'disclosure-group-open' : 'disclosure-group-close', {
+      item,
+      index: item.index,
+    });
+    this.$emit('disclosure-group-change', { items: this.openItems });
     this.__syncLockedState();
   }
 
   /**
-   * Normalize initial state after all components from the current mount turn had
-   * a chance to advertise themselves.
+   * Normalize initial state once the current turn's mounts have all landed.
+   *
+   * The background lane is the lane the framework drains its own deferred
+   * mount work on, so "after everything mounted" is a guarantee rather than a
+   * hope about microtask ordering.
+   * @internal
    * @private
    */
-  __scheduleReconcile() {
+  __scheduleReconcile(): void {
     if (this.__reconcileScheduled) {
       return;
     }
 
     this.__reconcileScheduled = true;
-    nextTick().then(() => {
+    void defaultScheduler.background(() => {
       this.__reconcileScheduled = false;
       if (this.$isMounted) {
         this.__reconcile();
@@ -270,7 +238,7 @@ export class DisclosureGroup<T extends BaseProps = BaseProps> extends Base<
    * lifecycle events.
    * @private
    */
-  __reconcile() {
+  __reconcile(): void {
     const items = this.items;
 
     if (!this.$options.multiple) {
@@ -291,7 +259,7 @@ export class DisclosureGroup<T extends BaseProps = BaseProps> extends Base<
    * Apply `aria-disabled` to the one trigger which cannot currently collapse.
    * @private
    */
-  __syncLockedState() {
+  __syncLockedState(): void {
     for (const item of this.items) {
       item.__syncDisabledState(this.__isItemLocked(item));
     }
@@ -299,6 +267,7 @@ export class DisclosureGroup<T extends BaseProps = BaseProps> extends Base<
 
   /**
    * Whether closing this item would violate the group constraint.
+   * @internal
    * @private
    */
   __isItemLocked(item: Disclosure): boolean {
@@ -316,6 +285,6 @@ export class DisclosureGroup<T extends BaseProps = BaseProps> extends Base<
    */
   __resolveItem(itemOrIndex: Disclosure | number): Disclosure | undefined {
     const item = typeof itemOrIndex === 'number' ? this.items[itemOrIndex] : itemOrIndex;
-    return item && item.group === this && this.items.includes(item) ? item : undefined;
+    return item && item.group === this ? item : undefined;
   }
 }

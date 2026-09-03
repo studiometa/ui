@@ -1,12 +1,11 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import { withGroup } from '@studiometa/js-toolkit/withGroup';
+import { defaultScheduler } from '@studiometa/js-toolkit/defaultScheduler';
+import { domUpdate } from '@studiometa/js-toolkit/domUpdate';
+import { subscribeContext } from '@studiometa/js-toolkit/subscribeContext';
+import { watchAttributeNamespace } from '@studiometa/js-toolkit/watchAttributeNamespace';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { nextTick } from '@studiometa/js-toolkit/utils/nextTick';
-import { getDataChannel } from './DataChannel.js';
-import { DataScope, getDataScope, DATA_GROUP_NAMESPACE } from './DataScope.js';
-import type { DataScopeMember, DataValue } from './DataScope.js';
+import { getCallback } from './expression.js';
 import {
-  type DataControlContext,
   isCheckbox,
   isInput,
   readControlValue,
@@ -14,133 +13,132 @@ import {
   setProperty,
   valuesEqual,
   writeControlValue,
+  type DataControlContext,
 } from './formControl.js';
-import { getCallback } from './utils.js';
-import { emitDomUpdate, runWrapped } from '../utils/dom-update.js';
+import {
+  DataRegistryContext,
+  resolveDataRegistry,
+  type DataRegistry,
+  type DataScopeMember,
+  type DataUpdate,
+  type DataValue,
+} from './registry.js';
 
-export interface DataBindProps extends BaseProps {
-  $options: {
-    prop: string;
-    immediate: boolean;
-    key: string;
-  };
-}
+// An interface lacks the implicit index signature required by `BaseProps`.
+export type DataBindOptions = {
+  prop: string;
+  immediate: boolean;
+  key: string;
+  group: string;
+};
 
-const EMPTY_DATA = Object.freeze({});
-
-type VirtualBinding =
-  | { type: 'text' | 'if'; expression: string }
-  | { type: 'prop' | 'attr' | 'class' | 'style'; name: string; expression: string };
+export type DataBindProps = BaseProps & {
+  $options: DataBindOptions;
+};
 
 /**
- * DataBind class.
- *
- * Part of the reactive Data* family. It creates a binding between a DOM element
- * and a shared value within its Data group — optionally scoped by an enclosing
- * `DataScope` — reflecting values published by the other members of the group
- * onto the element. The bound target defaults to a form control's value or the
- * element's `textContent`, can be overridden with the `prop` option, keyed with
- * the `key` option, and propagated on mount with `immediate`; `data-bind:*`
- * attributes additionally drive an element's property, attribute, class, style,
- * text or — on a `<template>` element — the presence of its content in the DOM
- * from the same value. It also exposes `set`, `toggle`, `increment` and
- * `cycle` helpers to publish changes back to the group.
- *
- * @link https://ui.studiometa.dev/reference/items/DataBind/
+ * The namespace a virtual binding is declared by. Its qualifier head is finite
+ * — the six binding types — while the name a `prop`, `attr`, `class` or `style`
+ * binding carries after the dot is open, so the set of names is **not**
+ * enumerable and the namespace is watched rather than registered. The finite
+ * head is still worth declaring: it is what turns `data-bind:prpo.value` into a
+ * warning instead of an attribute silently doing nothing.
  */
-export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, DataScope>(
-  Base,
-  DATA_GROUP_NAMESPACE,
-  {
-    getScope: (instance) => getDataScope(instance.$el),
-    getGroup: (instance, scope) =>
-      (instance.$options as { group?: string }).group || scope?.$options.group || '',
-  },
-)<DataBindProps & T> {
+const BIND_NAMESPACE = 'data-bind';
+
+/** The qualifier heads that take no name. */
+const SIMPLE_BINDINGS = ['text', 'if'] as const;
+
+/** The qualifier heads that name what they write to. */
+const NAMED_BINDINGS = ['prop', 'attr', 'class', 'style'] as const;
+
+const BIND_QUALIFIERS = [...SIMPLE_BINDINGS, ...NAMED_BINDINGS];
+
+type SimpleBinding = (typeof SIMPLE_BINDINGS)[number];
+
+type NamedBinding = (typeof NAMED_BINDINGS)[number];
+
+type VirtualBinding =
+  | { type: SimpleBinding; expression: string }
+  | { type: NamedBinding; name: string; expression: string };
+
+/** A two-way binding between an element and a named data group. */
+/**
+ * Stringify whatever the author's expression returned, objects included — the
+ * same contract `v-bind` has. The default `[object Object]` form is the
+ * intended output here, not an oversight.
+ */
+// oxlint-disable-next-line typescript/no-base-to-string
+const bindingText = (result: unknown): string => String(result);
+
+export class DataBind<T extends BaseProps = DataBindProps>
+  extends Base<DataBindProps & T>
+  implements DataScopeMember
+{
   static config: BaseConfig = {
     name: 'DataBind',
-    emits: ['dom-update'],
     options: {
       prop: String,
       immediate: Boolean,
       key: String,
+      group: String,
     },
   };
 
-  __dataScopeResolved = false;
-  __dataScope?: DataScope;
-  __stopUpdates?: () => void;
-  __virtualBindings?: VirtualBinding[];
+  /** Lazily resolved before mount and updated when the nearest scope changes. @private */
+  __registry?: DataRegistry;
+
+  /** Undoes `__connect()`. `undefined` while disconnected. @private */
+  __leaveGroup?: () => void;
+
+  /**
+   * Live bindings by the attribute that declared them. Kept in step with the
+   * element rather than memoised: a `data-bind:*` rewritten in place would
+   * otherwise keep its first parse forever, which is what
+   * `watchAttributeNamespace()` exists to prevent.
+   */
+  __virtualBindings = new Map<string, VirtualBinding>();
+
   __virtualValue?: DataValue;
+
   __hasVirtualValue = false;
+
   __ifNodes?: ChildNode[];
+
   __ifPresent = false;
 
-  get isDataSource() {
+  /**
+   * Whether this component's value is one the scope should hydrate from.
+   * `DataModel` says yes; a plain binding is a subscriber.
+   */
+  get isDataSource(): boolean {
     return false;
   }
 
   /**
+   * Whether `toggle()` / `increment()` / `cycle()` make sense here.
    * @protected
    */
-  get __supportsMutations() {
+  get supportsMutations(): boolean {
     return true;
   }
 
-  get virtualBindings() {
-    if (!this.__virtualBindings) {
-      this.__virtualBindings = [];
-
-      for (const attribute of this.$el.attributes) {
-        const simpleMatch = attribute.name.match(/^data-bind:(text|if)$/);
-        if (simpleMatch) {
-          this.__virtualBindings.push({
-            type: simpleMatch[1] as 'text' | 'if',
-            expression: attribute.value,
-          });
-          continue;
-        }
-
-        const match = attribute.name.match(/^data-bind:(prop|attr|class|style)\.(.+)$/);
-        if (match) {
-          this.__virtualBindings.push({
-            type: match[1] as 'prop' | 'attr' | 'class' | 'style',
-            name: match[2],
-            expression: attribute.value,
-          });
-        }
-      }
-    }
-
-    return this.__virtualBindings;
+  get dataRegistry(): DataRegistry {
+    this.__registry ??= resolveDataRegistry(this.$el);
+    return this.__registry;
   }
 
-  get hasVirtualBindings() {
-    return this.virtualBindings.length > 0;
+  get group(): string {
+    return this.$options.group || this.dataRegistry.defaultGroup || '';
   }
 
-  get dataScope() {
-    if (!this.__dataScopeResolved) {
-      this.__dataScope = getDataScope(this.$el);
-      this.__dataScopeResolved = true;
-    }
-
-    return this.__dataScope;
+  /** The live peer set for the resolved group. */
+  get peers(): Set<DataScopeMember> {
+    return this.dataRegistry.members(this.group);
   }
 
-  get group() {
-    return this.$options.group || this.dataScope?.$options.group || '';
-  }
-
-  /**
-   * @deprecated Use the `$group` getter instead.
-   */
-  get relatedInstances() {
-    return this.$group as Set<this>;
-  }
-
-  get dataKey() {
-    if (!this.dataScope) {
+  get dataKey(): string {
+    if (!this.dataRegistry.scoped) {
       return '';
     }
 
@@ -160,41 +158,30 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
     return '';
   }
 
-  get $data() {
-    return this.dataScope?.getData(this.group) ?? EMPTY_DATA;
+  get $data(): Readonly<Record<string, DataValue>> {
+    return this.dataRegistry.getData(this.group);
   }
 
-  get multiple() {
+  get multiple(): boolean {
     return this.group.endsWith('[]');
   }
 
-  /**
-   * @private
-   */
-  get __channel() {
-    return (
-      this.dataScope?.getChannel(this.group) ?? getDataChannel(this.$group as Set<DataScopeMember>)
-    );
-  }
-
-  /**
-   * @protected
-   */
-  get __controlContext(): DataControlContext {
+  /** @protected */
+  get controlContext(): DataControlContext {
     return {
       dataKey: this.dataKey,
-      members: this.relatedInstances,
+      members: this.peers,
       multiple: this.multiple,
       prop: this.prop,
       target: this.target,
     };
   }
 
-  get target() {
+  get target(): HTMLElement {
     return this.$el;
   }
 
-  get prop() {
+  get prop(): string {
     if (this.$options.prop) {
       return this.$options.prop;
     }
@@ -214,11 +201,38 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
     return 'textContent';
   }
 
-  get value() {
+  get virtualBindings(): VirtualBinding[] {
+    return [...this.__virtualBindings.values()];
+  }
+
+  get hasVirtualBindings(): boolean {
+    return this.__virtualBindings.size > 0;
+  }
+
+  /**
+   * One `data-bind:<type>[.<name>]` qualifier. The head is validated by the
+   * namespace, so what is left here is the grammar's own rule: the first part
+   * names what a named binding writes to, and a head which takes no name
+   * carries no part.
+   * @private
+   */
+  __parseQualifier(qualifier: string, expression: string): VirtualBinding | undefined {
+    const separator = qualifier.indexOf('.');
+    const head = separator === -1 ? qualifier : qualifier.slice(0, separator);
+    const name = separator === -1 ? '' : qualifier.slice(separator + 1);
+
+    if ((SIMPLE_BINDINGS as readonly string[]).includes(head)) {
+      return name ? undefined : { type: head as SimpleBinding, expression };
+    }
+
+    return name ? { type: head as NamedBinding, name, expression } : undefined;
+  }
+
+  get value(): DataValue {
     return this.get();
   }
 
-  set value(value) {
+  set value(value: DataValue) {
     this.set(value);
   }
 
@@ -227,28 +241,66 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
       return this.__virtualValue;
     }
 
-    return this.__getTargetValue();
+    return this.getTargetValue();
   }
 
-  /**
-   * @protected
-   */
-  __getTargetValue(): DataValue {
-    return readControlValue(this.__controlContext);
+  /** @protected */
+  getTargetValue(): DataValue {
+    return readControlValue(this.controlContext);
   }
 
-  set(value: DataValue, dispatch = true) {
-    const publication = dispatch ? this.__publishValue(value) : undefined;
+  set(value: DataValue, dispatch = true): void {
+    const publication = dispatch ? this.publishValue(value) : undefined;
 
-    if (!publication || publication.channel.isCurrent(publication.frame)) {
-      this.__applyValue(value);
+    if (!publication || this.dataRegistry.isCurrent(publication.group, publication.frame)) {
+      this.applyValue(value);
     }
   }
 
   /**
-   * @private
+   * Publish to the resolved group without applying locally.
+   * @protected
    */
-  __applyValue(value: DataValue) {
+  publishValue(
+    value: DataValue,
+    force = false,
+    updateData = true,
+  ): { group: string; frame: DataUpdate } {
+    const registry = this.dataRegistry;
+    const { group } = this;
+
+    // Equal keyed values remain observable events.
+    if (registry.scoped && this.dataKey) {
+      if (updateData) {
+        registry.setValue(group, this.dataKey, value, this);
+      }
+      return {
+        group,
+        frame: registry.publish(group, {
+          force: true,
+          key: this.dataKey,
+          source: this,
+          value,
+        }),
+      };
+    }
+
+    return { group, frame: registry.publish(group, { force, source: this, value }) };
+  }
+
+  /**
+   * Publish a keyed value and synchronize matching subscribers.
+   */
+  dispatchScopedValue(value: DataValue, updateData = true): void {
+    const publication = this.publishValue(value, true, updateData);
+
+    if (this.dataRegistry.isCurrent(publication.group, publication.frame)) {
+      this.set(value, false);
+    }
+  }
+
+  /** @private */
+  applyValue(value: DataValue): void {
     if (this.hasVirtualBindings) {
       this.__virtualValue = value;
       this.__hasVirtualValue = true;
@@ -256,55 +308,20 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
       return;
     }
 
-    writeControlValue(this.__controlContext, value);
+    writeControlValue(this.controlContext, value);
   }
 
-  /**
-   * Publish a value to the resolved Data group without applying it locally.
-   * @protected
-   */
-  __publishValue(value: DataValue, force = false, updateData = true) {
-    if (this.dataScope && this.dataKey) {
-      if (updateData) {
-        this.dataScope.setValue(this.group, this.dataKey, value, this);
-      }
-
-      const channel = this.dataScope.getChannel(this.group);
-      const frame = channel.publish({
-        force: true,
-        key: this.dataKey,
-        source: this,
-        value,
-      });
-      return { channel, frame };
-    }
-
-    const channel = this.__channel;
-    const frame = channel.publish({
-      force,
-      source: this,
-      value,
-    });
-    return { channel, frame };
-  }
-
-  /**
-   * @private
-   */
-  __applyVirtualBindings(value: DataValue) {
+  /** @private */
+  /** @private */
+  __applyVirtualBindings(value: DataValue): void {
     for (const binding of this.virtualBindings) {
       let result: unknown = value;
 
       if (binding.expression) {
         try {
-          result = getCallback(this.group, `return ${binding.expression};`)(
-            value,
-            this.target,
-            this.$data,
-          );
+          result = getCallback(`return ${binding.expression};`)(value, this.target, this.$data);
         } catch (error) {
-          // @todo better handling of errors?
-          console.error('Failed', error);
+          console.error('[data] Binding expression failed:', error);
           continue;
         }
       }
@@ -317,7 +334,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
           if (result === false || result === null || result === undefined) {
             this.target.removeAttribute(binding.name);
           } else {
-            this.target.setAttribute(binding.name, result === true ? '' : String(result));
+            this.target.setAttribute(binding.name, result === true ? '' : bindingText(result));
           }
           break;
         case 'class':
@@ -326,7 +343,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
         case 'style':
           this.target.style.setProperty(
             binding.name,
-            result === false || result === null || result === undefined ? '' : String(result),
+            result === false || result === null || result === undefined ? '' : bindingText(result),
           );
           break;
         case 'text':
@@ -340,25 +357,15 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
   }
 
   /**
-   * Toggle the presence of the bound `<template>` content in the DOM. The
-   * content is cloned and inserted after the template element when the value
-   * is truthy, and removed when the value is falsy. Each insertion is a fresh
-   * clone, so any state held by the content is reset on every toggle. Before
-   * the change runs, the bubbling `dom-update` protocol event exposes
-   * `event.detail.wrap(runner)` so any listener can substitute the function or
-   * transitioner that runs the DOM change — to wrap it in a view transition,
-   * for example, and give removed content an exit animation. Registration is
-   * only valid while the event dispatches — later calls warn and are ignored —
-   * and the last registered runner wins. A rejected runner is reported with a
-   * warning and never loses the change: the insert or removal runs anyway if
-   * the runner did not call `apply()`.
+   * Toggle bound template content. Queued runners guard against stale state.
    * @private
    */
-  __applyIfBinding(isPresent: boolean) {
+  __applyIfBinding(isPresent: boolean): void {
     const { target } = this;
 
     if (!(target instanceof HTMLTemplateElement)) {
       this.$warn(
+        'data-bind.invalid-if-target',
         'The data-bind:if binding can only be used on a <template> element. Use data-bind:attr.hidden to show or hide an element in place.',
       );
       return;
@@ -370,9 +377,6 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
 
     this.__ifPresent = isPresent;
 
-    // The logical state is tracked synchronously by `__ifPresent` while the
-    // DOM change may run later through a runner, so each closure guards on
-    // `__ifNodes` to stay a no-op when queued runners apply in sequence.
     const apply = isPresent
       ? () => {
           if (this.__ifNodes) {
@@ -392,42 +396,26 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
           this.__ifNodes = undefined;
         };
 
-    const runner = emitDomUpdate(this, { isPresent });
-
-    if (runner) {
-      // Intentionally not awaited: the reactive pipeline stays synchronous
-      // while the runner defers the DOM change.
-      runWrapped(this, runner, apply);
-    } else {
-      apply();
-    }
+    // Intentionally not awaited: an unclaimed update applies before
+    // `domUpdate()` returns its promise, while a runner may defer the change.
+    void domUpdate(this.$el, apply, { isPresent });
   }
 
-  /**
-   * Publish a keyed value to the scoped group and synchronize matching subscribers.
-   * @internal
-   */
-  __dispatchScopedValue(value: DataValue, updateData = true) {
-    const publication = this.__publishValue(value, true, updateData);
-
-    if (publication.channel.isCurrent(publication.frame)) {
-      this.set(value, false);
-    }
-  }
-
-  /**
-   * @private
-   */
-  __validateMutation(method: string) {
-    if (this.__supportsMutations) {
+  /** @private */
+  /** @private */
+  __validateMutation(method: string): boolean {
+    if (this.supportsMutations) {
       return true;
     }
 
-    this.$warn(`The ${method}() method can not be used with this component.`);
+    this.$warn(
+      'data-bind.unsupported-mutation',
+      `The ${method}() method can not be used with this component.`,
+    );
     return false;
   }
 
-  toggle(onValue: DataValue = true, offValue: DataValue = false) {
+  toggle(onValue: DataValue = true, offValue: DataValue = false): void {
     if (!this.__validateMutation('toggle')) {
       return;
     }
@@ -437,20 +425,26 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
       isCheckbox(this.target) && (typeof onValue !== 'boolean' || typeof offValue !== 'boolean');
 
     if (isRadio || hasCustomCheckboxValues) {
-      this.$warn('The toggle() values can not be represented by this input.');
+      this.$warn(
+        'data-bind.unrepresentable-toggle',
+        'The toggle() values can not be represented by this input.',
+      );
       return;
     }
 
     this.set(valuesEqual(this.value, onValue) ? offValue : onValue);
   }
 
-  increment(step = 1) {
+  increment(step = 1): void {
     if (!this.__validateMutation('increment')) {
       return;
     }
 
     if (isInput(this.target) && this.target.type === 'date') {
-      this.$warn('The increment() method can not be used with date inputs.');
+      this.$warn(
+        'data-bind.unsupported-mutation',
+        'The increment() method can not be used with date inputs.',
+      );
       return;
     }
 
@@ -458,7 +452,7 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
     this.set((Number.isNaN(value) ? 0 : value) + step);
   }
 
-  cycle(values: readonly DataValue[]) {
+  cycle(values: readonly DataValue[]): void {
     if (!this.__validateMutation('cycle') || values.length === 0) {
       return;
     }
@@ -467,38 +461,67 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
     this.set(values[(index + 1) % values.length]);
   }
 
-  mounted() {
-    this.__stopUpdates?.();
-    this.__stopUpdates = this.__channel.subscribe((update) => {
-      if (!this.$el.isConnected) {
-        this.__stopUpdates?.();
-        this.__stopUpdates = undefined;
-        return;
-      }
+  /**
+   * Join the resolved group and start listening.
+   * @private
+   */
+  __connect(): void {
+    this.__disconnect();
+    const registry = this.dataRegistry;
+    const { group } = this;
+    const leave = registry.join(group, this);
+    const stop = registry.subscribe(group, (update) => this.__onUpdate(update));
+    this.__leaveGroup = () => {
+      stop();
+      leave();
+    };
+  }
 
-      if (
-        update.source !== this &&
-        (!update.key || !this.dataKey || update.key === this.dataKey) &&
-        (update.force || this.hasVirtualBindings || this.value !== update.value)
-      ) {
-        this.set(update.value, false);
-      }
-    });
+  /** @private */
+  /** @private */
+  __disconnect(): void {
+    this.__leaveGroup?.();
+    this.__leaveGroup = undefined;
+  }
 
+  /** @private */
+  /** @private */
+  __onUpdate(update: DataUpdate): void {
+    // Disconnection is processed by the registry on a background task, so an
+    // element can be out of the document while still subscribed for one turn.
+    if (!this.$el.isConnected) {
+      this.__disconnect();
+      return;
+    }
+
+    if (
+      update.source !== this &&
+      (!update.key || !this.dataKey || update.key === this.dataKey) &&
+      (update.force || this.hasVirtualBindings || this.value !== update.value)
+    ) {
+      this.set(update.value, false);
+    }
+  }
+
+  /** @private */
+  /** @private */
+  __propagateOnMount(): void {
     if (!this.$options.immediate) {
       return;
     }
 
-    if (this.dataScope && this.dataKey) {
+    const registry = this.dataRegistry;
+
+    if (registry.scoped && this.dataKey) {
       if (this.isDataSource) {
-        this.dataScope.hydrate(this.group, this);
+        registry.hydrate(this.group, this);
         return;
       }
 
-      // Subscribers mounted after hydration — content inserted by `data-bind:if`
-      // or any other DOM update — sync from the current scoped value; on first
-      // load the value is not collected yet and arrives through the
-      // post-hydration dispatch.
+      // A subscriber mounted after hydration — content inserted by
+      // `data-bind:if`, a fetched fragment — syncs from the current scoped
+      // value. On first load the value is not collected yet and arrives
+      // through the post-hydration dispatch instead.
       const data = this.$data;
       if (this.dataKey in data) {
         this.set(data[this.dataKey], false);
@@ -506,17 +529,56 @@ export class DataBind<T extends BaseProps = BaseProps> extends withGroup<Base, D
       return;
     }
 
-    nextTick().then(() => {
-      this.set(this.get());
+    defaultScheduler.background(() => {
+      if (this.$isMounted) {
+        this.set(this.get());
+      }
     });
   }
 
-  destroyed() {
-    this.__stopUpdates?.();
-    this.__stopUpdates = undefined;
+  /** Follow the nearest registry; create the required root registry as fallback. */
+  mounted(): () => void {
+    // Before the registry: `dataKey`, `prop` and `get()` all branch on whether
+    // this element has virtual bindings, and `__connect()` reads them.
+    const stopWatchingNamespace = watchAttributeNamespace(
+      this.$el,
+      BIND_NAMESPACE,
+      ({ qualifier, value, attribute }) => {
+        const binding = this.__parseQualifier(qualifier, value);
+        if (!binding) {
+          return undefined;
+        }
+        this.__virtualBindings.set(attribute, binding);
+        // A rewritten declaration applies the value already in force. Nothing
+        // is in force during the initial scan, so the mount pays nothing.
+        if (this.__hasVirtualValue) {
+          this.__applyVirtualBindings(this.__virtualValue);
+        }
+        return () => this.__virtualBindings.delete(attribute);
+      },
+      { qualifiers: BIND_QUALIFIERS, component: this.$config.name },
+    );
 
-    if (this.dataScope && this.dataKey) {
-      this.dataScope.deleteValue(this.group, this.dataKey, this);
+    const unsubscribe = subscribeContext(this.$el, DataRegistryContext, (registry) => {
+      this.__registry = registry;
+      this.__connect();
+      this.__propagateOnMount();
+
+      return () => {
+        this.__disconnect();
+        if (registry.scoped && this.dataKey) {
+          registry.deleteValue(this.group, this.dataKey, this);
+        }
+        this.__registry = undefined;
+      };
+    });
+
+    if (!this.__registry) {
+      resolveDataRegistry(this.$el);
     }
+    return () => {
+      unsubscribe();
+      stopWatchingNamespace();
+    };
   }
 }

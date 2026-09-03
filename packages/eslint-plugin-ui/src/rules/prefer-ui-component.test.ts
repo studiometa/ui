@@ -6,20 +6,20 @@ describe('prefer-ui-component', () => {
   it('passes and fails correctly', () => {
     tester.run('prefer-ui-component', preferUiComponent as any, {
       valid: [
-        // Unknown component name — not in @studiometa/ui
+        // A name @studiometa/ui does not export.
         `import { Base } from '@studiometa/js-toolkit';
-         class Carousel extends Base {}`,
+         class InvoiceRow extends Base {}`,
 
         // Properly extending from @studiometa/ui
         `import { Menu as MenuCore } from '@studiometa/ui';
          class Menu extends MenuCore {}`,
 
         // Extending a UI component with a different local name
-        `import { Accordion } from '@studiometa/ui';
-         class MyAccordion extends Accordion {}`,
+        `import { Disclosure } from '@studiometa/ui';
+         class MyDisclosure extends Disclosure {}`,
 
         // No superclass
-        `class Accordion {}`,
+        `class Carousel {}`,
       ],
       invalid: [
         {
@@ -28,13 +28,17 @@ class Menu extends Base {}`,
           errors: [{ messageId: 'preferImport' }],
         },
         {
+          // The list is generated from the autoload catalog now. It used to be
+          // hand-written, and `Carousel` was missing from it — so this exact
+          // code was the fixture's *valid* case, passing because the rule could
+          // not see the component rather than because there was nothing to see.
           code: `import { Base } from '@studiometa/js-toolkit';
-class Accordion extends Base {}`,
+class Carousel extends Base {}`,
           errors: [{ messageId: 'preferImport' }],
         },
         {
           code: `import { Base } from '@studiometa/js-toolkit';
-class Modal extends Base {}`,
+class Dialog extends Base {}`,
           errors: [{ messageId: 'preferImport' }],
         },
         {

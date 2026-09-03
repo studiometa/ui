@@ -1,4 +1,4 @@
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import { ViewTransition } from '@studiometa/ui';
 
 class Togglable extends ViewTransition {
@@ -17,12 +17,12 @@ class App extends Base {
   };
 
   onEnterBtnClick() {
-    this.$children.Togglable[0].enter();
+    this.$query('Togglable')[0].enter();
   }
 
   onLeaveBtnClick() {
-    this.$children.Togglable[0].leave();
+    this.$query('Togglable')[0].leave();
   }
 }
 
-export default createApp(App);
+registerComponent(App);

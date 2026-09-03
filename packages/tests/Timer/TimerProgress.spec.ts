@@ -1,123 +1,101 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Timer, TimerProgress } from '@studiometa/ui';
-import { h, useFakeTimers, useRealTimers, advanceTimersByTimeAsync } from '#test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { recordEvents, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
+import { TimerProgress } from '#private/Timer/TimerProgress.js';
 
-function listen(el: HTMLElement, ...names: string[]) {
-  const calls: Record<string, number> = {};
-  const details: Record<string, unknown[][]> = {};
+registerComponents(TimerProgress);
 
-  for (const name of names) {
-    calls[name] = 0;
-    details[name] = [];
-    el.addEventListener(name, (event) => {
-      calls[name] += 1;
-      details[name].push((event as CustomEvent).detail);
-    });
-  }
+afterEach(resetDom);
 
-  return { calls, details };
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function mountTimerProgress(
-  attributes: Record<string, string> = {},
-  events: string[] = [],
-) {
-  const el = h('div', { dataComponent: 'TimerProgress', ...attributes });
-  const recorder = listen(el, ...events);
-  const instance = new TimerProgress(el);
-  instance.$mount();
-  await advanceTimersByTimeAsync(50);
-
-  return { el, instance, ...recorder };
+async function render(attributes = ''): Promise<{ el: HTMLElement; instance: TimerProgress }> {
+  const root = document.createElement('div');
+  root.innerHTML = `<div data-component="TimerProgress" ${attributes}></div>`;
+  document.body.append(root);
+  await settle();
+  const el = root.firstElementChild as HTMLElement;
+  return { el, instance: getInstance<TimerProgress>(el, 'TimerProgress')! };
 }
 
-/** Flatten recorded single-argument `detail` arrays into their ratio values. */
-function ratios(details: unknown[][]): number[] {
-  return details.map((detail) => (detail as number[])[0]);
+/** {@link recordEvents}, projected to the ratio each `timer-progress` carried. */
+/**
+ * Insert the element without mounting it, so a recorder can be attached before
+ * the countdown arms. `render()` awaits `settle()`, and a short delay can
+ * elapse entirely inside that wait on a slow machine — the listener then
+ * attaches after the timer has already finished and sees nothing.
+ */
+function renderUnmounted(attributes = ''): HTMLElement {
+  const root = document.createElement('div');
+  root.innerHTML = `<div data-component="TimerProgress" ${attributes}></div>`;
+  document.body.append(root);
+  return root.firstElementChild as HTMLElement;
 }
 
-describe('TimerProgress component', () => {
-  beforeEach(() => {
-    useFakeTimers();
+function recordProgress(el: HTMLElement): () => number[] {
+  const log = recordEvents(el, 'timer-progress');
+  return () => log.events.map(({ detail }) => (detail as { ratio: number }).ratio);
+}
+
+describe('TimerProgress', () => {
+  it('does not run the frame loop before the countdown is armed', async () => {
+    const { el } = await render('data-option-no-autostart');
+    const ratios = recordProgress(el);
+
+    await wait(60);
+
+    expect(ratios()).toEqual([]);
   });
 
-  afterEach(() => {
-    useRealTimers();
+  it('reports increasing progress while armed, ending at 1', async () => {
+    const el = renderUnmounted('data-option-delay="0.08"');
+    const ratios = recordProgress(el);
+    await settle();
+
+    await waitFor(() => ratios().at(-1) === 1);
+
+    expect(ratios().length).toBeGreaterThan(1);
+    expect(ratios().at(-1)).toBe(1);
+    expect(ratios()).toEqual(ratios().sort((a, b) => a - b));
   });
 
-  it('should have the correct config and extend Timer', () => {
-    expect(TimerProgress.config.name).toBe('TimerProgress');
-    expect(TimerProgress.config.emits).toEqual(['timer-progress']);
-    expect(TimerProgress.prototype).toBeInstanceOf(Timer);
+  it('stops the frame loop once complete', async () => {
+    const { el } = await render('data-option-delay="0.02"');
+    const ratios = recordProgress(el);
+
+    await wait(60);
+    const countAtComplete = ratios().length;
+    await wait(60);
+
+    expect(ratios().length).toBe(countAtComplete);
   });
 
-  it('should merge the parent lifecycle events into its config', async () => {
-    const { instance } = await mountTimerProgress({ dataOptionDelay: '1' });
-    expect(instance.$config.emits).toContain('timer-start');
-    expect(instance.$config.emits).toContain('timer-end');
-    expect(instance.$config.emits).toContain('timer-progress');
-  });
+  it('resets progress to 0 when stopped', async () => {
+    const { el, instance } = await render('data-option-delay="0.2"');
+    const ratios = recordProgress(el);
 
-  it('should emit an increasing progress ratio during the countdown', async () => {
-    const { details } = await mountTimerProgress({ dataOptionDelay: '2' }, ['timer-progress']);
-    await advanceTimersByTimeAsync(1000);
-
-    const values = ratios(details['timer-progress']);
-    expect(values.length).toBeGreaterThan(1);
-    // Values stay within bounds and progress forward.
-    expect(Math.min(...values)).toBeGreaterThanOrEqual(0);
-    expect(values.at(-1)).toBeGreaterThan(values[0]);
-    expect(values.at(-1)).toBeLessThanOrEqual(1);
-  });
-
-  it('should report a final ratio of 1 when the countdown completes', async () => {
-    const { details, calls } = await mountTimerProgress({ dataOptionDelay: '1' }, [
-      'timer-progress',
-      'timer-end',
-    ]);
-    await advanceTimersByTimeAsync(1100);
-
-    expect(calls['timer-end']).toBe(1);
-    expect(ratios(details['timer-progress'])).toContain(1);
-  });
-
-  it('should reset progress to 0 on stop', async () => {
-    const { instance, details } = await mountTimerProgress({ dataOptionDelay: '2' }, [
-      'timer-progress',
-    ]);
-    await advanceTimersByTimeAsync(500);
+    await wait(30);
     instance.stop();
 
-    expect(ratios(details['timer-progress']).at(-1)).toBe(0);
+    expect(ratios().at(-1)).toBe(0);
   });
 
-  it('should stop the progress loop when a listener stops it mid-dispatch', async () => {
-    const el = h('div', { dataComponent: 'TimerProgress', dataOptionDelay: '5' });
-    const instance = new TimerProgress(el);
-    let count = 0;
-    // A listener that tears the timer down synchronously on the first frame.
-    el.addEventListener('timer-progress', () => {
-      count += 1;
-      if (count === 1) {
-        instance.stop();
-      }
-    });
-    instance.$mount();
+  it('stops the frame loop while paused and resumes it', async () => {
+    const { el, instance } = await render('data-option-delay="0.1"');
+    const ratios = recordProgress(el);
 
-    await advanceTimersByTimeAsync(2000);
+    await wait(20);
+    instance.pause();
+    const countAtPause = ratios().length;
+    await wait(40);
 
-    // Without the guard the loop would resurrect itself and keep counting up;
-    // `stop()` also emits a final progress of 0, so at most two events fire.
-    expect(count).toBeLessThanOrEqual(2);
-  });
+    expect(ratios().length).toBe(countAtPause);
 
-  it('should still emit the base lifecycle events', async () => {
-    const { calls } = await mountTimerProgress({ dataOptionDelay: '1' }, [
-      'timer-start',
-      'timer-end',
-    ]);
-    expect(calls['timer-start']).toBe(1);
-    await advanceTimersByTimeAsync(1100);
-    expect(calls['timer-end']).toBe(1);
+    instance.resume();
+    await wait(150);
+
+    expect(ratios().at(-1)).toBe(1);
   });
 });

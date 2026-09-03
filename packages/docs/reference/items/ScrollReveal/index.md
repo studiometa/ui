@@ -8,7 +8,7 @@ The `ScrollReveal` component should be used when you want to apply classes to an
 
 ## Usage
 
-This component can directly be used in an application. It is based on the [`Transition` primitive](/reference/items/Transition/) to manage its transition states under the hood.
+This component can directly be used in an application. It is built on the [`withTransition` mixin](/reference/items/withTransition/), so it accepts the same [transition options](/reference/items/Transition/js-api) as the `Transition` primitive.
 
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
@@ -28,7 +28,7 @@ registerComponent(ScrollReveal);
 
 ### Configuring an offset for the reveal
 
-The `ScrollReveal` component uses the [`withMountWhenInView` decorator] to detect when the root element is entering the viewport. You can configure an offset by using the `data-option-intersection-observer` option from the decorator to adjust the `rootMargin` property.
+The `ScrollReveal` component subscribes to the viewport itself rather than using a mount strategy, because its `repeat` option chooses the behavior at runtime. Configure an offset with the `intersectionObserver` option, which is passed straight to the observer, to adjust the `rootMargin` property.
 
 #### Via the `data-option` attribute in HTML
 
@@ -45,14 +45,13 @@ The `ScrollReveal` component uses the [`withMountWhenInView` decorator] to detec
 
 #### By overring the default value of the `intersectionObserver` option in JavaScript
 
-```js {8-11}
+```js {6-9}
 import { ScrollReveal as ScrollRevealCore } from '@studiometa/ui';
 
 export default class ScrollReveal extends ScrollRevealCore {
   static config = {
-    ...ScrollRevealCore.config,
+    name: 'ScrollReveal',
     options: {
-      ...ScrollRevealCore.config.options,
       intersectionObserver: {
         type: Object,
         default: () => ({ rootMargin: '100px' }),
@@ -61,3 +60,5 @@ export default class ScrollReveal extends ScrollRevealCore {
   };
 }
 ```
+
+v4 merges `config` along the prototype chain, so a subclass declares only what it changes. Keep the same `name` to replace the built-in component; give it a new one to register both, since v4 no longer renames automatically on a collision.

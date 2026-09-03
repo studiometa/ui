@@ -1,33 +1,30 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { AbstractFigure } from './AbstractFigure.js';
-import type { AbstractFigureProps } from './AbstractFigure.js';
+import { AbstractFigure, type AbstractFigureProps } from './AbstractFigure.js';
 
-export interface FigureProps extends AbstractFigureProps {}
+export type FigureProps = AbstractFigureProps;
 
 /**
- * Figure class.
- *
  * Concrete lazy-loaded image figure built on `AbstractFigure`. It loads the
- * `data-src` source when the element scrolls into view, then terminates itself
- * once the image has loaded, as it has no further work to do after the reveal.
+ * `data-src` source when the element scrolls into view, running the enter
+ * transition and emitting `load` once it is ready.
+ *
+ * Nothing has to stop the component once the reveal has run:
+ * `AbstractFigure.mounted()` only loads when `src !== this.src`, which is
+ * already false once loaded, so the remount the `in-view` strategy can trigger
+ * is a no-op on its own.
  *
  * @link https://ui.studiometa.dev/reference/items/Figure/
  */
 export class Figure<T extends BaseProps = BaseProps> extends AbstractFigure<T> {
-  /**
-   * Config.
-   */
   static config: BaseConfig = {
     ...AbstractFigure.config,
     name: 'Figure',
   };
-
-  /**
-   * Terminate the component on load.
-   */
-  onLoad() {
-    this.$terminate();
-  }
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Figure`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default Figure;

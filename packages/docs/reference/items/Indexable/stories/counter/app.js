@@ -1,4 +1,4 @@
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import { Indexable } from '@studiometa/ui';
 
 class Counter extends Indexable {
@@ -25,12 +25,12 @@ class App extends Base {
   };
 
   onPrevBtnClick() {
-    this.$children.Counter.forEach((instance) => instance.goPrev());
+    for (const instance of this.$query('Counter')) instance.goPrev();
   }
 
   onNextBtnClick() {
-    this.$children.Counter.forEach((instance) => instance.goNext());
+    for (const instance of this.$query('Counter')) instance.goNext();
   }
 }
 
-export default createApp(App);
+registerComponent(App);

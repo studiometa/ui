@@ -1,6 +1,5 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { AbstractTrack } from './AbstractTrack.js';
-import type { AbstractTrackProps } from './AbstractTrack.js';
+import { AbstractTrack, type AbstractTrackProps } from './AbstractTrack.js';
 
 declare global {
   interface Window {
@@ -12,48 +11,30 @@ declare global {
   }
 }
 
-export interface TrackShopifyProps extends AbstractTrackProps {}
+export type TrackShopifyProps = AbstractTrackProps;
 
-/**
- * TrackShopify class.
- *
- * A declarative analytics tracking component for Shopify storefronts. It
- * publishes the resolved payload through the `window.Shopify.analytics.publish`
- * API, using the payload's `event` key as the event name.
- *
- * @link https://ui.studiometa.dev/reference/items/Track/
- *
- * @example
- * ```html
- * <button
- *   data-component="TrackShopify"
- *   data-track:click='{"event": "add_to_cart", "product_id": "123"}'>
- *   Add to Cart
- * </button>
- * ```
- */
+/** Publishes tracking payloads through `window.Shopify.analytics.publish`. */
 export class TrackShopify<T extends BaseProps = BaseProps> extends AbstractTrack<T> {
-  /**
-   * Config.
-   */
   static config: BaseConfig = {
-    ...AbstractTrack.config,
     name: 'TrackShopify',
   };
 
-  /**
-   * Publish the resolved payload through `window.Shopify.analytics.publish`.
-   */
   dispatch(payload: Record<string, unknown>): void {
-    const analytics = typeof window === 'undefined' ? undefined : window.Shopify?.analytics;
+    const analytics = window.Shopify?.analytics;
 
-    if (!analytics || typeof analytics.publish !== 'function') {
-      this.$warn('`window.Shopify.analytics.publish` is not available.');
+    if (typeof analytics?.publish !== 'function') {
+      this.$warn(
+        'track.shopify-unavailable',
+        '`window.Shopify.analytics.publish` is not available.',
+      );
       return;
     }
 
     if (typeof payload.event !== 'string') {
-      this.$warn('Cannot publish a tracking event without a string `event` name.');
+      this.$warn(
+        'track.missing-event-name',
+        'Cannot publish a tracking event without a string `event` name.',
+      );
       return;
     }
 

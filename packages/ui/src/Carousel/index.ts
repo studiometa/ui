@@ -1,10 +1,14 @@
-export { Carousel, type CarouselProps, type CarouselStore } from './Carousel.js';
+export { AbstractCarouselChild } from './AbstractCarouselChild.js';
+export { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
+export { Carousel, type CarouselProps } from './Carousel.js';
 export { CarouselBtn, type CarouselBtnProps } from './CarouselBtn.js';
-export { CarouselDrag, type CarouselDragProps } from './CarouselDrag.js';
-export { CarouselItem, type CarouselItemProps } from './CarouselItem.js';
-export { CarouselWrapper, type CarouselWrapperProps } from './CarouselWrapper.js';
-export {
-  AbstractCarouselComponent,
-  type AbstractCarouselComponentProps,
-} from './AbstractCarouselComponent.js';
-export { AbstractCarouselChild, type AbstractCarouselChildProps } from './AbstractCarouselChild.js';
+export { CarouselCount, type CarouselCountProps } from './CarouselCount.js';
+export { CarouselDots, type CarouselDotsProps } from './CarouselDots.js';
+export { CarouselDrag } from './CarouselDrag.js';
+export { CarouselItem } from './CarouselItem.js';
+export { CarouselPlay, type CarouselPlayProps } from './CarouselPlay.js';
+export { CarouselProgress, type CarouselProgressProps } from './CarouselProgress.js';
+export { CarouselThumbnails, type CarouselThumbnailsProps } from './CarouselThumbnails.js';
+export { CarouselWrapper } from './CarouselWrapper.js';
+export { CarouselContext, type CarouselApi, type CarouselState } from './context.js';
+export { type ScrollPosition as CarouselScrollPosition } from './utils.js';

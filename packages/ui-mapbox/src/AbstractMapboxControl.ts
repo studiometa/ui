@@ -1,4 +1,4 @@
-import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import type { ControlPosition, IControl } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,
@@ -47,13 +47,9 @@ export class AbstractMapboxControl<T extends BaseProps = BaseProps> extends Abst
    */
   get control() {
     if (!this.__control) {
-      const {
-        position: _position,
-        name: _name,
-        debug: _debug,
-        log: _log,
-        ...options
-      } = this.$options;
+      // `position` is consumed by `map.addControl()`; every other option
+      // belongs to the concrete control.
+      const { position: _position, ...options } = this.$options;
       this.__control = this.createControl(options);
     }
 

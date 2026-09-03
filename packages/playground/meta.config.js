@@ -50,13 +50,12 @@ export default defineWebpackConfig({
       // bundling: sub-modules are inlined, so esm.sh never splits its barrels — which structurally
       // avoids the `export *`-from-externalized-module name-drop bug (also fixed at source in
       // js-toolkit 3.8.1). The singleton holds because js-toolkit's mutable state (the component
-      // registry behind `createApp`) lives in its main entry (one resolved URL), and `/utils` is
-      // stateless. The remaining entries are ui/ui-mapbox runtime peers the script editor needs.
+      // registry `registerComponent()` writes to) lives in its main entry (one resolved URL), and
+      // `/utils` is stateless. Its own `morphdom` dependency needs no entry here: esm.sh rewrites it
+      // to an absolute esm.sh URL, so the import map is never consulted for it. The remaining
+      // entries are the declared runtime peers of ui-mapbox and ui-motion the script editor needs —
+      // `@studiometa/ui` declares none beyond js-toolkit.
       dependencies: [
-        '@motionone/easing',
-        'compute-scroll-into-view',
-        'deepmerge',
-        'morphdom',
         { specifier: 'mapbox-gl', esmSh: { bundle: true } },
         { specifier: '@mapbox/mapbox-gl-geocoder', esmSh: { bundle: true } },
         { specifier: 'motion', esmSh: { bundle: true } },
@@ -74,7 +73,10 @@ export default defineWebpackConfig({
         { specifier: '@studiometa/ui-motion', source: '../ui-motion/src/**/*.ts', entries: motionEntries },
       ],
       defaults: {
-        html: `{% html_element 'span' with { class: 'dark:text-white font-bold border-b-2 border-current' } %}
+        // The element declares the component the script registers: in v4 an instance exists because
+        // its element is in the document AND its class is registered, so a `registerComponent()`
+        // with no matching `data-component` registers a class that silently never mounts.
+        html: `{% html_element 'span' with { 'data-component': 'App', class: 'dark:text-white font-bold border-b-2 border-current' } %}
   Hello world
 {% end_html_element %}`,
         style: `html.dark {
@@ -85,7 +87,7 @@ export default defineWebpackConfig({
 body {
   padding: 1rem;
 }`,
-        script: `import { Base, createApp } from '@studiometa/js-toolkit';
+        script: `import { Base, registerComponent } from '@studiometa/js-toolkit';
 import {} from '@studiometa/ui';
 
 class App extends Base {
@@ -94,7 +96,7 @@ class App extends Base {
   };
 }
 
-createApp(App);`,
+registerComponent(App);`,
       },
     }),
   ],

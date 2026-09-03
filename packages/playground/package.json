@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-playground",
-  "version": "1.10.0",
+  "version": "2.0.0-alpha.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,12 +9,12 @@
     "build": "meta build"
   },
   "dependencies": {
-    "@studiometa/playground": "^0.3.13"
+    "@studiometa/playground": "^0.4.0"
   },
   "devDependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",
     "@motionone/easing": "^10.18.0",
-    "@studiometa/js-toolkit": "3.9.0",
+    "@studiometa/js-toolkit": "4.0.0-alpha.1",
     "deepmerge": "^4.3.1",
     "mapbox-gl": "^3.13.0",
     "morphdom": "^2.7.8",

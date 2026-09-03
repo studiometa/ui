@@ -1,9 +1,6 @@
-import { withExtraConfig } from '@studiometa/js-toolkit/withExtraConfig';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import type { GeolocateControlOptions } from 'mapbox-gl';
-import {
-  AbstractMapboxControl,
-  type AbstractMapboxControlProps,
-} from './AbstractMapboxControl.js';
+import { AbstractMapboxControl, type AbstractMapboxControlProps } from './AbstractMapboxControl.js';
 import { getMapboxGl } from './dependencies.js';
 
 export interface MapboxGeolocateControlProps extends AbstractMapboxControlProps {
@@ -12,19 +9,27 @@ export interface MapboxGeolocateControlProps extends AbstractMapboxControlProps 
 
 /**
  * Add a geolocate control to the map.
+ *
  * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
-export class MapboxGeolocateControl extends withExtraConfig(AbstractMapboxControl, {
-  name: 'MapboxGeolocateControl',
-  options: {
-    positionOptions: Object,
-    fitBoundsOptions: Object,
-    trackUserLocation: Boolean,
-    showAccuracyCircle: Boolean,
-    showUserLocation: Boolean,
-    showUserHeading: Boolean,
-  },
-}) {
+export class MapboxGeolocateControl<T extends BaseProps = BaseProps> extends AbstractMapboxControl<
+  T & MapboxGeolocateControlProps
+> {
+  /**
+   * Config.
+   */
+  static config: BaseConfig = {
+    name: 'MapboxGeolocateControl',
+    options: {
+      positionOptions: Object,
+      fitBoundsOptions: Object,
+      trackUserLocation: Boolean,
+      showAccuracyCircle: Boolean,
+      showUserLocation: Boolean,
+      showUserHeading: Boolean,
+    },
+  };
+
   /**
    * Create the mapbox GeolocateControl instance.
    * @protected

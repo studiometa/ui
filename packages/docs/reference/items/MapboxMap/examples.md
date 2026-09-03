@@ -4,7 +4,7 @@ title: MapboxMap examples
 
 # Examples
 
-Every component in the family is self-registering, so each example registers exactly the components it uses — `MapboxMap` on its own for a bare map, plus the child components it declares (markers, popups, controls, sources, layers, images, clusters). Each child resolves its parent `MapboxMap` on its own once mounted. Each example loads the [Mapbox GL stylesheet](./#installation) from a CDN and picks a Mapbox style through the `map-options` option, which forwards any [`Map` option](https://docs.mapbox.com/mapbox-gl-js/api/map/#map-parameters) to mapbox-gl. Replace the access token with your own [access token](https://docs.mapbox.com/help/getting-started/access-tokens/); the token used here is a public, restricted demo token.
+Every component in the family is registered independently, so each example registers exactly the components it uses — `MapboxMap` on its own for a bare map, plus the child components it declares (markers, popups, controls, sources, layers, images, clusters). Each child resolves its parent `MapboxMap` on its own once mounted. Each example loads the [Mapbox GL stylesheet](./#installation) from a CDN and picks a Mapbox style through the `map-options` option, which forwards any [`Map` option](https://docs.mapbox.com/mapbox-gl-js/api/map/#map-parameters) to mapbox-gl. Replace the access token with your own [access token](https://docs.mapbox.com/help/getting-started/access-tokens/); the token used here is a public, restricted demo token.
 
 Child components that should not take part in the normal document flow (markers, popups, controls, sources, layers, images, clusters) are wrapped in a `hidden` element: their markup is only used as a declarative definition, the actual rendering happens on the map canvas.
 
@@ -140,7 +140,7 @@ The cluster reports a click on an unclustered point through its `map-item-click`
 The `MapboxMap` component re-emits the Mapbox map events with a `map-` prefix to avoid conflicts with native events. Listen to them from a parent component by defining `on<ComponentName><EventName>` methods — for example `onMapboxMapMapClick` or `onMapboxMapMapLoad`.
 
 ```js
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import { MapboxMap } from '@studiometa/ui-mapbox';
 
 class App extends Base {
@@ -149,14 +149,14 @@ class App extends Base {
     components: { MapboxMap },
   };
 
-  onMapboxMapMapLoad({ args: [map] }) {
+  onMapboxMapMapLoad({ payload: { map } }) {
     console.log('Map loaded', map);
   }
 
-  onMapboxMapMapClick({ args: [event] }) {
+  onMapboxMapMapClick({ payload: { event } }) {
     console.log('Clicked at', event.lngLat);
   }
 }
 
-createApp(App);
+registerComponent(App);
 ```

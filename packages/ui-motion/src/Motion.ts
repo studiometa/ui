@@ -22,6 +22,17 @@ export interface MotionProps extends BaseProps {
     inViewAmount: string;
     once: boolean;
   };
+  /**
+   * The playback lifecycle. None of these events carries a payload — a listener
+   * that needs the animation reads it from the component.
+   */
+  $emits: {
+    'motion-play': void;
+    'motion-pause': void;
+    'motion-complete': void;
+    'motion-cancel': void;
+    'motion-stop': void;
+  };
 }
 
 /**
@@ -50,7 +61,6 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
    */
   static config: BaseConfig = {
     name: 'Motion',
-    emits: ['motion-play', 'motion-pause', 'motion-complete', 'motion-cancel', 'motion-stop'],
     options: {
       initial: Object,
       animate: Object,
@@ -163,10 +173,14 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
   }
 
   /**
-   * Stop the current animation and release the gesture bindings on destroy,
+   * Stop the current animation and release the gesture bindings on unmount,
    * keeping the styles the animation reached.
+   *
+   * `unmounted()` rather than a cleanup returned by `mounted()`: the current
+   * animation is not owned by the mount — any playback call creates it — so
+   * the teardown does not pair with a piece of setup.
    */
-  destroyed() {
+  unmounted() {
     this.__completionToken += 1;
     this.__controls?.stop();
     this.__controls = null;
@@ -194,7 +208,7 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
 
     controls.speed = Math.abs(controls.speed || 1);
     controls.play();
-    this.__dispatch('motion-play');
+    this.$emit('motion-play');
     return this.__watchCompletion(controls);
   }
 
@@ -216,7 +230,7 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
 
     controls.speed = -Math.abs(controls.speed || 1);
     controls.play();
-    this.__dispatch('motion-play');
+    this.$emit('motion-play');
     return this.__watchCompletion(controls);
   }
 
@@ -229,7 +243,7 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
     }
 
     this.__controls.pause();
-    this.__dispatch('motion-pause');
+    this.$emit('motion-pause');
   }
 
   /**
@@ -247,7 +261,7 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
     });
     this.__controls = controls;
     this.__fromOptions = false;
-    this.__dispatch('motion-play');
+    this.$emit('motion-play');
     return this.__watchCompletion(controls);
   }
 
@@ -279,7 +293,7 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
     this.__completionToken += 1;
     this.__controls.stop();
     this.__controls = null;
-    this.__dispatch('motion-stop');
+    this.$emit('motion-stop');
   }
 
   /**
@@ -294,7 +308,7 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
     this.__completionToken += 1;
     this.__controls.cancel();
     this.__controls = null;
-    this.__dispatch('motion-cancel');
+    this.$emit('motion-cancel');
   }
 
   /**
@@ -455,6 +469,7 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
    */
   __warnMissingGesture(name: string) {
     this.$warn(
+      'motion.missing-gesture',
       `The resolved motion module has no \`${name}()\` (e.g. \`motion/mini\`). Provide the full \`motion\` entry to use the \`${name}\` option.`,
     );
   }
@@ -486,8 +501,8 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
    * current state is the point.
    */
   get keyframes(): DOMKeyframesDefinition {
-    const { initial, animate } = this.$options;
-    const keyframes: Record<string, unknown> = { ...animate };
+    const initial = this.$options.initial as Record<string, unknown>;
+    const keyframes: Record<string, unknown> = { ...(this.$options.animate as object) };
 
     for (const [property, to] of Object.entries(keyframes)) {
       if (!Array.isArray(to) && property in initial) {
@@ -510,19 +525,11 @@ export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & 
     return new Promise((resolve) => {
       controls.then(() => {
         if (token === this.__completionToken && this.__controls === controls) {
-          this.__dispatch('motion-complete');
+          this.$emit('motion-complete');
         }
         resolve();
       }, resolve);
     });
-  }
-
-  /**
-   * Dispatch a bubbling event so an ancestor `Action` can catch and route it.
-   * @private
-   */
-  __dispatch(name: string, ...detail: unknown[]) {
-    this.$emit(new CustomEvent(name, { detail, bubbles: true }));
   }
 }
 

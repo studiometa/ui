@@ -77,7 +77,21 @@ Enable the layout morph on each subject (the builder's `layout()`), so position 
 - Type: `boolean`
 - Default: `true`
 
-Enable [ambient wiring](#ambient-wiring): the component wraps any `dom-update` announced inside its subtree and joins the lifecycle of a containing `Dialog`. Opt out with `data-option-no-auto`.
+Enable [ambient wiring](#ambient-wiring): the component wraps any DOM update announced inside its subtree and joins the lifecycle of a containing `Dialog`. Opt out with `data-option-no-auto`.
+
+## Properties
+
+### `state`
+
+- Type: `'entering' | 'leaving' | null`
+
+The current state of the transition: `'entering'` while entering, `'leaving'` while leaving, or `null` before any transition has run. `toggle()` reads it to decide which direction to run.
+
+### `target`
+
+- Type: `HTMLElement`
+
+The element the `view-transition-name` and the enter and leave classes are applied to — the component's root element.
 
 ## Events
 
@@ -94,7 +108,7 @@ The same events as [`ViewTransition`](/reference/items/ViewTransition/js-api#eve
 
 ## Ambient wiring
 
-Containment is the wiring: with the `auto` option (on by default), a mounted `MotionView` listens for the bubbling `dom-update` event that mutating components — [`Fetch`](/reference/items/Fetch/), [`DataBind`](/reference/items/DataBind/)'s `data-bind:if` — announce before changing the DOM, and runs the announced change through `update()` so it plays as a view transition. Nesting the mutators inside the component is enough, with zero wiring attributes on either side:
+Containment is the wiring: with the `auto` option (on by default), a mounted `MotionView` listens for the bubbling `js-toolkit:dom:update` event that mutating components — [`Fetch`](/reference/items/Fetch/), [`DataBind`](/reference/items/DataBind/)'s `data-bind:if` — announce before changing the DOM, and runs the announced change through `update()` so it plays as a view transition. Nesting the mutators inside the component is enough, with zero wiring attributes on either side:
 
 <!-- prettier-ignore-start -->
 ```html {1}
@@ -110,7 +124,11 @@ Containment is the wiring: with the `auto` option (on by default), a mounted `Mo
 ```
 <!-- prettier-ignore-end -->
 
-A `MotionView` placed inside a [`Dialog`](/reference/items/Dialog/) also joins its lifecycle: the dialog's extendable `open` and `close` events bubble past the component, which hands itself to `detail.waitUntil()` — the dialog then awaits `enter()` on open and `leave()` on close.
+A `MotionView` also joins the lifecycle of an ancestor that emits **extendable** `open` and `close` events — those built with the toolkit's [`emitExtendable()`](https://js-toolkit-v4.studiometa.dev/api/dom/emitExtendable.html), whose `detail` carries a `waitUntil()` function. [`Dialog`](/reference/items/Dialog/js-api#events) emits exactly those, so nesting a `MotionView` inside a dialog is enough: it registers `enter()` on `open` and `leave()` on `close`, and the dialog stays painted until the animation settles.
+
+It registers a **function**, not itself: `emitExtendable()` duck-types an object registration on the name of the event, and a transition component has no `open()`/`close()` to offer. See [extending the lifecycle](/reference/items/Dialog/js-api#extending-the-lifecycle-with-waituntil).
+
+Only a **containing** ancestor counts. The event is heard on the document, and the component checks that its emitter contains the root element, so a dialog elsewhere on the page animates nothing here.
 
 Opt out with `data-option-no-auto`. Explicit wiring through [`Action`](/reference/items/Action/) remains for cross-subtree topologies, where the mutator and the animated subtree are not nested:
 
@@ -119,7 +137,7 @@ Opt out with `data-option-no-auto`. Explicit wiring through [`Action`](/referenc
 <form
   action="/search"
   data-component="Fetch Action"
-  data-on:dom-update="MotionView(#list)->event.detail.wrap(target)">
+  data-on:js-toolkit:dom:update="MotionView(#list)->event.detail.wrap(target)">
   <input type="search" name="q" />
 </form>
 

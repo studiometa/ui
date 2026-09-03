@@ -1,87 +1,78 @@
-import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import type { ScrollAction } from 'compute-scroll-into-view';
-import { compute } from 'compute-scroll-into-view';
+import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolkit';
 import { AbstractCarouselChild } from './AbstractCarouselChild.js';
+import type { CarouselState } from './context.js';
 
 /**
- * Props for the CarouselItem class.
+ * One slide.
+ *
+ * A slide owns neither its scroll target nor its `inert` state. Both are
+ * questions about the scroller as much as about the item, and `Carousel` is
+ * the only place holding both — one cache and one observer over the whole
+ * list, invalidated in one place.
  */
-export interface CarouselItemProps extends BaseProps {}
-
-/**
- * CarouselItem class.
- */
-export class CarouselItem<T extends BaseProps = BaseProps> extends AbstractCarouselChild<
-  T & CarouselItemProps
-> {
-  /**
-   * Config.
-   */
+export class CarouselItem<T extends BaseProps = BaseProps> extends AbstractCarouselChild<T> {
   static config: BaseConfig = {
     name: 'CarouselItem',
   };
 
   /**
-   * The item's index in the carousel.
+   * Whether the markup already names this slide.
+   *
+   * Read once, at mount, so a caption written by the author always wins over
+   * the generated positional name — and so the generated name is not mistaken
+   * for one on the next update.
+   * @private
    */
-  get index() {
-    return this.carousel?.$children.CarouselItem.indexOf(this) ?? -1;
+  __isNamed = false;
+
+  /** This item's position among its siblings, or `-1` outside a carousel. */
+  get index(): number {
+    return this.carousel?.indexOf(this.$el) ?? -1;
   }
 
-  __state: ScrollAction;
-  __shouldEvaluateState = true;
-
   /**
-   * The item's active state descriptor.
+   * Give the slide its role, and remember whether it came named.
+   *
+   * `role="group"` is what the APG asks for on a slide of a non-tabbed
+   * carousel. No `aria-roledescription="slide"` is written, for the reason the
+   * coordinator does not write `aria-roledescription="carousel"`: the string
+   * is never translated, and an English word read out in a French page is
+   * worse than the plain role.
    */
-  get state(): ScrollAction {
-    if (this.__shouldEvaluateState) {
-      const [state] = compute(this.$el, {
-        block: 'center',
-        inline: 'center',
-        boundary: this.carousel?.wrapper?.$el,
-      });
-      this.__state = state;
-      this.__shouldEvaluateState = false;
+  mounted(): MountedReturn {
+    this.__isNamed =
+      this.$el.hasAttribute('aria-label') || this.$el.hasAttribute('aria-labelledby');
+
+    if (!this.$el.hasAttribute('role')) {
+      this.$el.setAttribute('role', 'group');
     }
 
-    return this.__state;
+    return [
+      super.mounted(),
+      () => {
+        // The coordinator owns `inert` and clears it on its own teardown, but
+        // a slide can also be removed while the carousel stays mounted, and a
+        // detached element keeping `inert` would come back hidden if it were
+        // re-inserted elsewhere.
+        this.$el.inert = false;
+      },
+    ];
   }
 
   /**
-   * Invalidate the cached state on resize.
+   * Mirror the active index, and name the slide.
    *
-   * Extends the base reconnect/refresh (`super.resized`) rather than shadowing
-   * it: the cache is invalidated first so a subsequent `state` read re-measures.
-   * The active-state `update` does not depend on geometry, so the ordering only
-   * matters for keeping the base refresh alive for a future edit.
+   * The name is rebuilt on every update rather than written once: `total` is
+   * the live slide count, so "2 of 3" has to become "2 of 4" when a slide is
+   * appended. `index` is this slide's own position, not the carousel's current
+   * one — the name says where the slide sits, not whether it is showing.
    */
-  resized() {
-    this.__shouldEvaluateState = true;
-    super.resized();
-  }
+  update({ index, total }: CarouselState): void {
+    const ownIndex = this.index;
+    this.$el.style.setProperty('--carousel-item-active', String(Number(ownIndex === index)));
 
-  /**
-   * Invalidate the cached scroll target when the item list or content changes.
-   *
-   * Inserting/removing slides (or changing an item's content) via `$update`
-   * shifts the offsets returned by `compute-scroll-into-view`, so the cache is
-   * cleared before the base reconnect/refresh runs — otherwise `scrollToIndex`
-   * and `onScroll` keep using stale positions until the next resize.
-   */
-  updated() {
-    this.__shouldEvaluateState = true;
-    super.updated();
-  }
-
-  /**
-   * Reflect the active state for the given index.
-   * @todo a11y
-   */
-  update(index: number) {
-    const isActive = this.index === index;
-    return () => {
-      this.$el.style.setProperty('--carousel-item-active', String(Number(isActive)));
-    };
+    if (!this.__isNamed && ownIndex >= 0 && this.carousel) {
+      this.$el.setAttribute('aria-label', this.carousel.slideLabel(ownIndex, total));
+    }
   }
 }

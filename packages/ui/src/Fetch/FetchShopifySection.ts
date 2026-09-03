@@ -1,141 +1,114 @@
-import { type BaseConfig, type BaseProps } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { Fetch, type FetchProps } from './Fetch.js';
 
-export interface FetchShopifySectionProps extends FetchProps {
+/** The Section Rendering API query parameter name. */
+export const SECTIONS_PARAMETER = 'sections';
+
+/** The `response` option value the base class ships, and the one this replaces. */
+const DEFAULT_RESPONSE = (Fetch.config.options as Record<string, { default: string }>).response
+  .default;
+
+export type FetchShopifySectionProps = FetchProps & {
   $options: FetchProps['$options'] & {
     sections: string;
   };
-}
-
-export type FetchShopifySectionConstructor<
-  T extends FetchShopifySection = FetchShopifySection,
-> = {
-  new (...args: any[]): T;
-  prototype: FetchShopifySection;
-} & Pick<typeof FetchShopifySection, keyof typeof FetchShopifySection>;
+};
 
 /**
- * FetchShopifySection class.
+ * Adapts {@link Fetch} to Shopify's
+ * [Section Rendering API](https://shopify.dev/docs/api/ajax/section-rendering).
  *
- * Adapts the base {@link Fetch} component to Shopify's stable
- * [Section Rendering API](https://shopify.dev/docs/api/ajax/section-rendering). The section IDs
- * to refresh are declared through the `sections` option instead of being baked into the URL, so
- * the element's own `href`/`action` stays a clean, no-JS fallback: the `sections` parameter is
- * appended to the request URL only when JavaScript runs, and it is kept out of the URL pushed to
- * the history. The JSON response (`{ [id]: html }`) is unwrapped by {@link __parseResponse} and
- * each section is swapped in place by the inherited `[id]` selector — no per-element `response`
- * boilerplate required. When no `sections` are configured the component degrades to the base
- * {@link Fetch} behaviour (a plain text response and id-based swap of the fetched page).
+ * The section IDs are declared through the `sections` option instead of being
+ * baked into the URL, so the element's own `href`/`action` stays a clean,
+ * no-JS fallback. The JSON response (`{ [id]: html }`) is unwrapped by
+ * {@link parseResponse} and each section is swapped in place by the inherited
+ * `[id]` selector. With no `sections` configured the component degrades to the
+ * base {@link Fetch} behaviour.
  *
  * @link https://ui.studiometa.dev/reference/items/FetchShopifySection/
  */
 export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
-  T & { $options: { sections: string } }
+  FetchShopifySectionProps & T
 > {
   /**
-   * Declare the `this.constructor` type
-   * @link https://github.com/microsoft/TypeScript/issues/3841#issuecomment-2381594311
-   */
-  declare ['constructor']: FetchShopifySectionConstructor;
-
-  /**
-   * The Section Rendering API query parameter name.
-   */
-  static SECTIONS_PARAMETER = 'sections';
-
-  /**
-   * Config.
+   * The config does not spread `Fetch.config`: configs merge along the
+   * prototype chain (#627), so only what this class adds is stated.
    */
   static config: BaseConfig = {
-    ...Fetch.config,
     name: 'FetchShopifySection',
     options: {
-      ...Fetch.config.options,
       sections: String,
     },
   };
 
-  /**
-   * The configured section IDs, parsed from the comma-separated `sections` option into a
-   * trimmed, empty-filtered list.
-   * @private
-   */
-  get __sectionIds(): string[] {
+  /** The configured section IDs, trimmed and empty-filtered. */
+  get sectionIds(): string[] {
     return this.$options.sections
       .split(',')
       .map((section) => section.trim())
       .filter(Boolean);
   }
 
-  /**
-   * Append the configured section IDs as the Section Rendering API `sections` parameter, leaving
-   * the given URL otherwise untouched. Returns the same instance for convenience.
-   * @private
-   */
+  /** Append the configured section IDs, leaving the URL otherwise untouched. */
+  /** @protected */
   __appendSections(url: URL): URL {
-    const { __sectionIds: sections } = this;
+    const { sectionIds } = this;
 
-    if (sections.length) {
-      url.searchParams.set(this.constructor.SECTIONS_PARAMETER, sections.join(','));
+    if (sectionIds.length) {
+      url.searchParams.set(SECTIONS_PARAMETER, sectionIds.join(','));
     }
 
     return url;
   }
 
-  /**
-   * The request URL with the configured section IDs appended as the Section Rendering API
-   * `sections` parameter, leaving the element's own `href`/`action` untouched.
-   */
   get url(): URL {
     return this.__appendSections(super.url);
   }
 
   /**
-   * Ensure the `sections` parameter is present on every request URL, including the explicit,
-   * already-clean URL replayed by the inherited `onWindowPopstate()` on back/forward navigation —
-   * which bypasses the `url` getter and would otherwise request HTML instead of Section
-   * Rendering JSON.
-   * @inheritdoc
+   * Ensure the `sections` parameter is on every request URL, including the
+   * already-clean one the inherited `onWindowPopstate()` replays — which
+   * bypasses the `url` getter and would otherwise ask for HTML.
    */
-  fetch(url: URL | string = this.url, requestInit: RequestInit = {}) {
+  fetch(url?: URL | string, requestInit: RequestInit = {}): Promise<void> {
+    // An absent URL is forwarded as absent, so the base still reads this as
+    // the element's own navigation and pushes `historyUrl` rather than the
+    // requested URL. That path resolves through the `url` getter above, which
+    // appends the sections already.
+    if (url === undefined) {
+      return super.fetch(undefined, requestInit);
+    }
+
     const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
     return super.fetch(this.__appendSections(normalizedUrl), requestInit);
   }
 
   /**
-   * Unwrap the Section Rendering API JSON response (`{ [id]: html }`) into a single HTML string,
-   * dropping sections returned as `null`.
+   * Unwrap the Section Rendering JSON response (`{ [id]: html }`) into one HTML
+   * string, dropping sections returned as `null`.
    *
-   * This is only the default extraction: it is skipped — deferring to the base
-   * {@link Fetch.__parseResponse}, which evaluates the `response` option — when no `sections`
-   * are configured (no `sections` parameter is sent, so the response is a normal HTML page) or
-   * when the caller supplies a custom `response` option, so an explicit `data-option-response`
-   * keeps working exactly as it does on the base {@link Fetch}.
-   * @protected
-   * @inheritdoc
+   * Skipped — deferring to the base implementation, which evaluates the
+   * `response` option — when no sections are configured, or when the caller
+   * supplied their own `response` option.
    */
-  async __parseResponse(response: Response, url: URL, requestInit: RequestInit): Promise<string> {
+  async parseResponse(response: Response, url: URL, requestInit: RequestInit): Promise<string> {
     const { response: responseOption } = this.$options;
-    const defaultResponse = (Fetch.config.options.response as { default: string }).default;
 
-    if (!this.__sectionIds.length || responseOption !== defaultResponse) {
-      return super.__parseResponse(response, url, requestInit);
+    if (!this.sectionIds.length || responseOption !== DEFAULT_RESPONSE) {
+      return super.parseResponse(response, url, requestInit);
     }
 
     const parsed = (await response.json()) as Record<string, string | null>;
-    return Object.values(parsed)
-      .filter(Boolean)
-      .join('');
+    return Object.values(parsed).filter(Boolean).join('');
   }
 
   /**
-   * Strip the `sections` parameter before the base update so the URL pushed to the history is
-   * the human-facing page, not the raw Section Rendering endpoint.
-   * @inheritdoc
+   * Strip the `sections` parameter before the base update, so the URL pushed
+   * to the history is the human-facing page and not the raw endpoint.
    */
-  update(url: URL, requestInit: RequestInit, content: string) {
+  update(url: URL, requestInit: RequestInit, content: string): Promise<void> {
     const displayUrl = new URL(url);
-    displayUrl.searchParams.delete(this.constructor.SECTIONS_PARAMETER);
+    displayUrl.searchParams.delete(SECTIONS_PARAMETER);
     return super.update(displayUrl, requestInit, content);
   }
 }

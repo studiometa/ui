@@ -19,55 +19,7 @@ export function createRule<V extends Record<string, (node: Node) => unknown>>(ru
 export const UI_PACKAGE = '@studiometa/ui';
 export const TOOLKIT_PACKAGE = '@studiometa/js-toolkit';
 
-/**
- * All component names exported by @studiometa/ui.
- * Keep in sync with packages/ui/index.ts exports.
- */
-export const UI_COMPONENT_NAMES = new Set([
-  'Accordion',
-  'AccordionItem',
-  'Action',
-  'AnchorNav',
-  'AnchorNavLink',
-  'AnchorNavTarget',
-  'CircularMarquee',
-  'Cursor',
-  'DataBind',
-  'DataComputed',
-  'DataEffect',
-  'DataModel',
-  'DataScope',
-  'Draggable',
-  'Figure',
-  'FigureVideo',
-  'Frame',
-  'FrameAnchor',
-  'FrameForm',
-  'FrameTarget',
-  'FrameLoader',
-  'Hoverable',
-  'LargeText',
-  'LazyInclude',
-  'Menu',
-  'MenuBtn',
-  'MenuList',
-  'Modal',
-  'Panel',
-  'AbstractPrefetch',
-  'PrefetchWhenOver',
-  'PrefetchWhenVisible',
-  'AbstractScrollAnimation',
-  'ScrollAnimationTimeline',
-  'ScrollAnimationTarget',
-  'ScrollReveal',
-  'Sentinel',
-  'Slider',
-  'SliderItem',
-  'SliderDrag',
-  'Sticky',
-  'Tabs',
-  'Transition',
-]);
+export { UI_COMPONENT_NAMES } from './component-names.ts';
 
 /**
  * Returns the local name of the superclass for a class declaration/expression.

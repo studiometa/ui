@@ -1,84 +1,58 @@
-import { getInstances } from '@studiometa/js-toolkit/getInstances';
+import { getMountedInstances } from '@studiometa/js-toolkit/getMountedInstances';
 import type { Base } from '@studiometa/js-toolkit';
-import { isFunction } from '@studiometa/js-toolkit/utils/isFunction';
+import { MODIFIERS, parseEventDefinition, type Modifier } from '../utils/event-modifiers.js';
+import { getEffect, type EffectFunction } from './expression.js';
 
 /**
- * Extract component name and an optional additional selector from a string.
+ * Extract a component name and an optional additional selector from one
+ * target part: `Dialog`, `Dialog(#modal)`, `Dialog([data-can-be-closed])`.
  */
 const TARGET_REGEX = /([a-zA-Z]+)(\((.*)\))?/;
 
-const effectCache = new Map<string, Function>();
+/** What a bare `debounce` means here. `Track` reads the same modifier at 300. */
+const DEFAULT_DEBOUNCE_DELAY = 100;
 
-export type Modifiers = 'prevent' | 'stop' | 'once' | 'passive' | 'capture' | 'debounce';
+/** A resolved target: one entry, keyed by the component's name. */
+export type ActionTarget = Record<string, Base>;
 
-export class ActionEvent<T extends Base> {
-  static modifierSeparator = '.';
+/** One runtime event binding from an attribute or the option triple. */
+export class ActionEvent {
   static targetSeparator = ' ';
   static effectSeparator = '->';
 
-  /**
-   * Timer for debouncing event handling.
-   */
-  private debounceTimer?: number;
+  /** The `Action` this binding belongs to. */
+  action: Base;
 
-  /**
-   * The Action instance.
-   */
-  action: T;
-
-  /**
-   * The event to listen to.
-   */
+  /** The event type to listen to. */
   event: string;
 
-  /**
-   * The modifiers to apply to the event.
-   */
-  modifiers: Modifiers[];
+  modifiers: ReadonlySet<Modifier>;
 
-  /**
-   * The debounce delay in milliseconds.
-   */
-  debounceDelay: number = 100;
+  debounceDelay: number;
 
-  /**
-   * Target definition.
-   * Ex: `Target Target(.selector)`.
-   */
+  /** `Target Target(.selector)` — empty means "the action itself". */
   targetDefinition: string;
 
-  /**
-   * The content of the effect callback function.
-   */
+  /** The expression source. */
   effectDefinition: string;
 
+  __debounceTimer?: number;
+
   /**
-   * Class constructor.
-   * @param {T}      action The parent Action instance.
-   * @param {string} eventDefinition  The event with its modifiers: `click.prevent.stop`
-   * @param {string} effectDefinition The target and effect definition: `Target(.selector)->target.$destroy()`
+   * @param action           The parent `Action` instance.
+   * @param eventDefinition  Event plus modifiers: `click.prevent.stop`.
+   * @param effectDefinition Targets and effect: `Target(.selector)->target.$unmount()`.
    */
-  constructor(action: T, eventDefinition: string, effectDefinition: string) {
+  constructor(action: Base, eventDefinition: string, effectDefinition: string) {
     this.action = action;
-    const [event, ...modifiers] = eventDefinition.split(ActionEvent.modifierSeparator);
+
+    const { event, modifiers, delay } = parseEventDefinition(eventDefinition);
     this.event = event;
-
-    // Process modifiers and extract debounce delay if present
-    const processedModifiers: Modifiers[] = [];
-    for (const modifier of modifiers) {
-      if (modifier.startsWith('debounce')) {
-        processedModifiers.push('debounce');
-        this.debounceDelay = parseInt(modifier.replace('debounce', '') || '100');
-      } else {
-        processedModifiers.push(modifier as Modifiers);
-      }
-    }
-
-    this.modifiers = processedModifiers;
+    this.modifiers = modifiers;
+    this.debounceDelay = delay(MODIFIERS.DEBOUNCE) ?? DEFAULT_DEBOUNCE_DELAY;
 
     let effect = effectDefinition;
     let targetDefinition = '';
-
     if (effect.includes(ActionEvent.effectSeparator)) {
       [targetDefinition, effect] = effect.split(ActionEvent.effectSeparator);
     }
@@ -87,57 +61,48 @@ export class ActionEvent<T extends Base> {
     this.effectDefinition = effect.trim();
   }
 
-  /**
-   * Get the generated function for the defined effect.
-   */
-  get effect() {
-    const { effectDefinition } = this;
-    const keys = Array.from(this.instances.keys());
-    const cacheKey = effectDefinition + keys.join('');
-
-    if (!effectCache.has(cacheKey)) {
-      const args = [
-        'ctx',
-        'event',
-        'target',
-        'action',
-        'self',
-        '$el',
-        ...keys,
-        `return ${effectDefinition}`,
-      ];
-      effectCache.set(cacheKey, new Function(...args));
-    }
-
-    return effectCache.get(cacheKey) as Function;
+  /** Co-located mounted instances, recomputed for each event. */
+  get instances(): Map<string, Base> {
+    return new Map(
+      getMountedInstances(this.action.$el).map((instance) => [instance.$config.name, instance]),
+    );
   }
 
   /**
-   * Get the targets object for the defined targets string.
+   * The compiled effect for the current instance list.
    */
-  get targets() {
+  get effect(): EffectFunction {
+    return getEffect(this.effectDefinition, [...this.instances.keys()]);
+  }
+
+  /**
+   * Resolve targets in definition-part order and DOM order. With no definition,
+   * target the action itself.
+   */
+  get targets(): ActionTarget[] {
     const { targetDefinition } = this;
 
     if (!targetDefinition) {
       return [{ Action: this.action }];
     }
 
-    // Extract component's names and selectors.
-    const parts = targetDefinition.split(ActionEvent.targetSeparator).map((part) => {
-      const [, name, , selector] = part.match(TARGET_REGEX) ?? [];
-      return [name, selector];
-    });
+    const parts = targetDefinition
+      .split(ActionEvent.targetSeparator)
+      .filter(Boolean)
+      .map((part) => {
+        const [, name, , selector] = part.match(TARGET_REGEX) ?? [];
+        return [name, selector] as const;
+      });
 
-    const targets = [] as Array<Record<string, Base>>;
-
-    for (const instance of getInstances()) {
-      const { name } = instance.__config;
-
-      for (const part of parts) {
-        const shouldPush =
-          part[0] === name && (!part[1] || (part[1] && instance.$el.matches(part[1])));
-        if (shouldPush) {
-          targets.push({ [instance.__config.name]: instance });
+    const targets: ActionTarget[] = [];
+    for (const [name, selector] of parts) {
+      if (!name) {
+        // Ignore unparseable target parts.
+        continue;
+      }
+      for (const instance of getMountedInstances(name)) {
+        if (!selector || instance.$el.matches(selector)) {
+          targets.push({ [name]: instance });
         }
       }
     }
@@ -146,54 +111,48 @@ export class ActionEvent<T extends Base> {
   }
 
   /**
-   * Get instances mounted on the action element.
-   * @internal
+   * Apply the modifiers that live in the handler body, then run the effect.
    */
-  get instances() {
-    const { $el } = this.action;
-    const instances = new Map<string, Base>();
-    for (const instance of getInstances()) {
-      if (instance.$el === $el) {
-        instances.set(instance.$config.name, instance);
-      }
-    }
+  handleEvent(event: Event): void {
+    const { modifiers } = this;
 
-    return instances;
-  }
-
-  /**
-   * Handle the defined event and trigger the effect for each defined target.
-   */
-  handleEvent(event: Event) {
-    const { targets, effect, modifiers } = this;
-
-    if (modifiers.includes('prevent')) {
+    if (modifiers.has(MODIFIERS.PREVENT)) {
       event.preventDefault();
     }
-
-    if (modifiers.includes('stop')) {
+    if (modifiers.has(MODIFIERS.STOP)) {
       event.stopPropagation();
     }
 
-    if (modifiers.includes('debounce')) {
-      clearTimeout(this.debounceTimer);
-      this.debounceTimer = window.setTimeout(() => {
-        this.executeEffect(targets, effect, event);
+    // Use one instance snapshot for both parameter names and values.
+    const instances = this.instances;
+    const effect = getEffect(this.effectDefinition, [...instances.keys()]);
+    const { targets } = this;
+
+    if (modifiers.has(MODIFIERS.DEBOUNCE)) {
+      clearTimeout(this.__debounceTimer);
+      this.__debounceTimer = window.setTimeout(() => {
+        this.executeEffect(targets, effect, event, instances);
       }, this.debounceDelay);
     } else {
-      this.executeEffect(targets, effect, event);
+      this.executeEffect(targets, effect, event, instances);
     }
   }
 
   /**
-   * Execute the effect for all targets.
+   * Run once per target. Arguments are `ctx`, `event`, `target`, `action`,
+   * `self`, `$el`, then each co-located instance. `this` is the action element.
    */
-  executeEffect(targets: Array<Record<string, Base>>, effect: Function, event: Event) {
+  executeEffect(
+    targets: ActionTarget[],
+    effect: EffectFunction,
+    event: Event,
+    instances: Map<string, Base> = this.instances,
+  ): void {
     const { action } = this;
 
     for (const target of targets) {
       try {
-        const [currentTarget] = Object.values(target).flat();
+        const [currentTarget] = Object.values(target);
         const args = [
           target,
           event,
@@ -201,35 +160,32 @@ export class ActionEvent<T extends Base> {
           action,
           action,
           currentTarget.$el,
-          ...this.instances.values(),
+          ...instances.values(),
         ];
         const value = effect.apply(action.$el, args);
-        if (isFunction(value)) {
-          value.apply(action.$el, args);
+        if (typeof value === 'function') {
+          (value as EffectFunction).apply(action.$el, args);
         }
-      } catch (err) {
-        action.$warn(err);
+      } catch (error) {
+        // Reported as the `Action` this binding belongs to, which is the
+        // component a listener would want to filter on.
+        this.action.$error('action.effect-failed', 'An action effect threw.', error);
       }
     }
   }
 
-  /**
-   * Bind the defined event to the given Action instance root element.
-   */
-  attachEvent() {
-    const { event, modifiers } = this;
-    this.action.$el.addEventListener(event, this, {
-      capture: modifiers.includes('capture'),
-      once: modifiers.includes('once'),
-      passive: modifiers.includes('passive'),
+  /** Bind the event and return a release that also cancels pending debounce. */
+  attach(): () => void {
+    const { modifiers } = this;
+    const off = this.action.$on(this.event, (event) => this.handleEvent(event), {
+      capture: modifiers.has(MODIFIERS.CAPTURE),
+      once: modifiers.has(MODIFIERS.ONCE),
+      passive: modifiers.has(MODIFIERS.PASSIVE),
     });
-  }
 
-  /**
-   * Unbind the event from the given Action instance root element.
-   */
-  detachEvent() {
-    clearTimeout(this.debounceTimer);
-    this.action.$el.removeEventListener(this.event, this);
+    return () => {
+      clearTimeout(this.__debounceTimer);
+      off();
+    };
   }
 }

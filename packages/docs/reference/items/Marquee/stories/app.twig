@@ -1,0 +1,11 @@
+<div class="h-48"></div>
+
+{% include '@ui/Marquee/Marquee.twig' with {
+  content: 'Lorem ipsum dolor sit amet elit.'
+} %}
+{% include '@ui/Marquee/Marquee.twig' with {
+  content: 'Lorem ipsum dolor sit amet elit.',
+  attr: { data_option_sensitivity: - 0.001 }
+} %}
+
+<div class="h-screen"></div>

@@ -1,16 +1,27 @@
-import { describe, it, expect, vi } from 'vitest';
-import { h } from '#test-utils';
-import { MockMap } from './mock-mapbox-gl.js';
-import { AbstractMapboxMapChild, MapboxMarker } from '@studiometa/ui-mapbox';
+import { describe, it, expect } from 'vitest';
+import type { BaseConfig } from '@studiometa/js-toolkit';
+import { getInstance, registerComponent, registerComponents } from '@studiometa/js-toolkit';
+import {
+  captureDiagnostics,
+  mount,
+  recordEvents,
+  resetDom,
+  resetRegistry,
+  settle,
+} from '@studiometa/js-toolkit/test';
+import { AbstractMapboxMapChild, MapboxMap, MapboxMarker } from '@studiometa/ui-mapbox';
+import { append, mountMap } from './harness.js';
 
 /**
  * A concrete child whose ready callback and teardown can be made to throw, used
  * to exercise the guards centralized in `AbstractMapboxMapChild`.
+ *
+ * There is no runtime emit list: `map-error` comes from the props type this
+ * class inherits.
  */
 class ThrowingChild extends AbstractMapboxMapChild {
-  static config = {
+  static config: BaseConfig = {
     name: 'ThrowingChild',
-    emits: ['map-error'],
   };
 
   readyError?: Error;
@@ -31,173 +42,127 @@ class ThrowingChild extends AbstractMapboxMapChild {
   }
 }
 
-/**
- * Build a `ThrowingChild` bound to a ready `MockMap` through a mocked `$closest`.
- */
-function createChild(el?: HTMLElement) {
-  const mockMap = new MockMap();
-  const element =
-    el ??
-    h('div', {
-      'data-component': 'ThrowingChild',
-    });
-  const instance = new ThrowingChild(element);
-  instance.$closest = vi.fn((query: string) =>
-    query === 'MapboxMap'
-      ? ({ map: mockMap, isLoaded: true, $options: { accessToken: 'token' } } as any)
-      : undefined,
-  );
-  return { instance, mockMap };
-}
+registerComponents(MapboxMap, MapboxMarker, ThrowingChild);
 
-/**
- * A `MapboxMap` stand-in whose `map-load` fires on demand, letting a test drive
- * the deferred readiness path.
- */
-function createDeferredMap(mockMap: MockMap) {
-  const handlers: Function[] = [];
+const MARKER_HTML = '<div data-component="MapboxMarker" data-option-lng-lat="[2, 48]"></div>';
+const THROWING_HTML = '<div data-component="ThrowingChild"></div>';
+
+/** Mount a loaded `MapboxMap` holding one `ThrowingChild`. */
+async function createChild() {
+  const context = await mountMap();
+  await context.load();
+  const el = await append(context.mapEl, THROWING_HTML);
+
   return {
-    map: mockMap,
-    isLoaded: false,
-    $el: document.createElement('div'),
-    $options: { accessToken: 'token' },
-    $on(event: string, cb: Function) {
-      if (event === 'map-load') handlers.push(cb);
-      return () => {
-        const index = handlers.indexOf(cb);
-        if (index > -1) handlers.splice(index, 1);
-      };
-    },
-    fireLoad() {
-      this.isLoaded = true;
-      handlers.slice().forEach((cb) => cb());
-    },
+    context,
+    instance: getInstance<ThrowingChild>(el, 'ThrowingChild')!,
+    mockMap: context.mockMap,
   };
 }
 
 describe('AbstractMapboxMapChild — B1: guarded lifecycle', () => {
-  it('should contain a throwing ready callback: no rethrow, warns + emits map-error', async () => {
-    const { instance } = createChild();
-    instance.$options.log = true;
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const onError = vi.fn();
+  it('should contain a throwing ready callback: no rethrow, reports + emits map-error', async () => {
+    const { instance } = await createChild();
+
+    // A recovered failure is reported on the diagnostic channel, so the
+    // assertion reads the namespaced code rather than whichever sink the
+    // default handler writes to.
+    const diagnostics = captureDiagnostics();
+    const log = recordEvents(instance.$el, 'map-error');
     const boom = new Error('ready boom');
+
+    // Arm the ready callback and remount: `$mount()` returns normally, because
+    // the throw is contained instead of escaping into the framework.
+    instance.$unmount();
     instance.readyError = boom;
-    instance.$on('map-error', onError);
+    expect(() => instance.$mount()).not.toThrow();
+    await settle();
 
-    vi.useFakeTimers();
-    // `$mount` resolves even though the ready callback threw: the throw was
-    // contained instead of rejecting the queued task.
-    await expect(
-      (async () => {
-        instance.$mount();
-        await vi.advanceTimersByTimeAsync(100);
-      })(),
-    ).resolves.toBeUndefined();
-    vi.useRealTimers();
+    expect(diagnostics.codes).toContain('mapbox-map-child.failed');
+    expect(log.events).toHaveLength(1);
+    // The payload is one named object: the cause travels as `detail.error`.
+    expect((log.events[0].detail as { error: unknown }).error).toBe(boom);
 
-    expect(warn).toHaveBeenCalled();
-    expect(onError).toHaveBeenCalledTimes(1);
-    expect((onError.mock.calls[0][0] as CustomEvent).detail[0]).toBe(boom);
-
-    warn.mockRestore();
+    log.stop();
+    diagnostics.stop();
   });
 
-  it('should contain a throwing teardown: no rethrow, warns + emits map-error', async () => {
-    const { instance } = createChild();
-    instance.$options.log = true;
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const onError = vi.fn();
+  it('should contain a throwing teardown: no rethrow, reports + emits map-error', async () => {
+    const { instance } = await createChild();
+    const diagnostics = captureDiagnostics();
+    const log = recordEvents(instance.$el, 'map-error');
     const boom = new Error('teardown boom');
-    instance.$on('map-error', onError);
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
 
     instance.teardownError = boom;
-    await expect(
-      (async () => {
-        instance.$destroy();
-        await vi.advanceTimersByTimeAsync(100);
-      })(),
-    ).resolves.toBeUndefined();
-    vi.useRealTimers();
+    expect(() => instance.$unmount()).not.toThrow();
+    await settle();
 
-    expect(warn).toHaveBeenCalled();
-    expect(onError).toHaveBeenCalledTimes(1);
-    expect((onError.mock.calls[0][0] as CustomEvent).detail[0]).toBe(boom);
+    expect(diagnostics.codes).toContain('mapbox-map-child.failed');
+    expect(log.events).toHaveLength(1);
+    expect((log.events[0].detail as { error: unknown }).error).toBe(boom);
 
-    warn.mockRestore();
+    log.stop();
+    diagnostics.stop();
   });
 
-  it('should not wedge the global queue: a later mount still runs after a throwing one', async () => {
-    const first = createChild();
-    first.instance.readyError = new Error('boom');
+  it('should not wedge the framework: a later mount still runs after a throwing one', async () => {
+    const context = await mountMap();
+    await context.load();
+    const diagnostics = captureDiagnostics();
 
-    vi.useFakeTimers();
-    first.instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
+    const firstEl = await append(context.mapEl, THROWING_HTML);
+    const first = getInstance<ThrowingChild>(firstEl, 'ThrowingChild')!;
+    first.$unmount();
+    first.readyError = new Error('boom');
+    first.$mount();
+    await settle();
 
-    // A second, independent child mounts and injects normally: proof the global
-    // queue was not frozen by the first child's synchronous throw.
-    const second = createChild();
-    second.instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    // A second, independent child mounts and injects normally: proof the
+    // framework was not wedged by the first child's synchronous throw.
+    const secondEl = await append(context.mapEl, THROWING_HTML);
+    const second = getInstance<ThrowingChild>(secondEl, 'ThrowingChild')!;
 
-    expect(second.instance.$isMounted).toBe(true);
+    expect(second.$isMounted).toBe(true);
+    diagnostics.stop();
   });
 });
 
 describe('AbstractMapboxMapChild — B2: teardown against a removed map', () => {
   it('should not call any map method on teardown after the map was removed', async () => {
-    const el = h('div', { 'data-component': 'MapboxMarker', 'data-option-lng-lat': '[2, 48]' });
-    const mockMap = new MockMap();
-    const instance = new MapboxMarker(el);
-    instance.$closest = vi.fn((query: string) =>
-      query === 'MapboxMap'
-        ? ({ map: mockMap, isLoaded: true, $options: { accessToken: 'token' } } as any)
-        : undefined,
-    );
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
+    const context = await mountMap(MARKER_HTML);
+    await context.load();
+    const el = context.mapEl.querySelector<HTMLElement>('[data-component="MapboxMarker"]')!;
+    const instance = getInstance<MapboxMarker>(el, 'MapboxMarker')!;
+    const { mockMap } = context;
 
     // The map is removed first (fires its `remove` event), dropping the child's
     // cached reference. Marker `.remove()` is style-safe, but the guard must be
     // uniform: the cached map is gone so teardown reads no map.
     // Capture the marker before teardown, which nulls the backing field (so the
     // getter would otherwise build a fresh, never-removed marker).
-    const marker = instance.marker as any;
+    const marker = instance.marker as unknown as { remove: unknown };
 
     mockMap.remove();
-    expect((instance as any).__readyMap).toBeUndefined();
+    expect((instance as unknown as { __readyMap?: unknown }).__readyMap).toBeUndefined();
 
     // Teardown must not touch the dead map. Track every map method call from
-    // here on: none may fire during destroy.
-    const callsBefore = [
-      mockMap.removeControl,
-      mockMap.removeLayer,
-      mockMap.removeSource,
-      mockMap.getLayer,
-      mockMap.getSource,
-    ].reduce((total, mock) => total + mock.mock.calls.length, 0);
+    // here on: none may fire during teardown.
+    function mapCalls() {
+      return [
+        mockMap.removeControl,
+        mockMap.removeLayer,
+        mockMap.removeSource,
+        mockMap.getLayer,
+        mockMap.getSource,
+      ].reduce((total, spy) => total + spy.mock.calls.length, 0);
+    }
 
-    instance.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const callsBefore = mapCalls();
 
-    const callsAfter = [
-      mockMap.removeControl,
-      mockMap.removeLayer,
-      mockMap.removeSource,
-      mockMap.getLayer,
-      mockMap.getSource,
-    ].reduce((total, mock) => total + mock.mock.calls.length, 0);
+    instance.$unmount();
+    await settle();
 
-    expect(callsAfter).toBe(callsBefore);
+    expect(mapCalls()).toBe(callsBefore);
     // The marker itself is still torn down through its own (style-safe) remove.
     expect(marker.remove).toHaveBeenCalled();
   });
@@ -205,113 +170,96 @@ describe('AbstractMapboxMapChild — B2: teardown against a removed map', () => 
 
 describe('AbstractMapboxMapChild — M1: retryable resolution', () => {
   it('should inject once a MapboxMap connects when none existed at mount', async () => {
-    const mapEl = h('div', { 'data-component': 'MapboxMap' });
-    const childEl = h('div', {
-      'data-component': 'MapboxMarker',
-      'data-option-lng-lat': '[2, 48]',
-    });
-    mapEl.append(childEl);
+    // Reproduce the lazily-imported map: only the child's class is registered
+    // when the markup mounts, so `$closest` resolves nothing and the child parks
+    // on `MAPBOX_MAP_CONNECTED`. Registering `MapboxMap` afterwards mounts it and
+    // its announcement is what lets the child bind.
+    await resetDom();
+    resetRegistry();
 
-    const mockMap = new MockMap();
-    const instance = new MapboxMarker(childEl);
-    // No map at mount: `$closest` resolves nothing yet.
-    instance.$closest = vi.fn(() => undefined);
+    try {
+      registerComponent(MapboxMarker);
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+      const root = await mount(`
+        <div data-component="MapboxMap" data-option-access-token="test-token">
+          <div data-ref="container"></div>
+          ${MARKER_HTML}
+        </div>
+      `);
+      const mapEl = root.querySelector<HTMLElement>('[data-component="MapboxMap"]')!;
+      const markerEl = root.querySelector<HTMLElement>('[data-component="MapboxMarker"]')!;
+      const instance = getInstance<MapboxMarker>(markerEl, 'MapboxMarker')!;
+      const marker = instance.marker as unknown as { addTo: unknown };
 
-    // Nothing injected: the child is parked on the connected event.
-    expect((instance.marker as any).addTo).not.toHaveBeenCalled();
+      // Nothing injected: the child is parked on the connected event.
+      expect(instance.$closest('MapboxMap')).toBeNull();
+      expect(marker.addTo).not.toHaveBeenCalled();
 
-    // A map connects; make it resolvable and dispatch the connected event.
-    const mapboxMap = { map: mockMap, isLoaded: true, $el: mapEl, $options: { accessToken: 't' } };
-    instance.$closest = vi.fn((query: string) =>
-      query === 'MapboxMap' ? (mapboxMap as any) : undefined,
-    );
-    document.dispatchEvent(new CustomEvent('mapbox-map:connected', { detail: mapboxMap }));
+      registerComponent(MapboxMap);
+      await settle();
 
-    expect((instance.marker as any).addTo).toHaveBeenCalledWith(mockMap);
+      const mapbox = getInstance<MapboxMap>(mapEl, 'MapboxMap')!;
+      // The map announced itself, so the child is bound and injects on load.
+      (mapbox.map as unknown as { fire(type: string): void }).fire('load');
+      await settle();
+
+      expect(marker.addTo).toHaveBeenCalledWith(mapbox.map);
+    } finally {
+      // The registry is page-wide: restore it for the rest of the file.
+      registerComponents(MapboxMap, MapboxMarker, ThrowingChild);
+    }
   });
 
   it('should ignore a connected map that is not an ancestor of the child', async () => {
-    const childEl = h('div', {
-      'data-component': 'MapboxMarker',
-      'data-option-lng-lat': '[2, 48]',
-    });
-    const instance = new MapboxMarker(childEl);
-    instance.$closest = vi.fn(() => undefined);
+    // The marker lives outside every map, so the connecting map's ancestry check
+    // rejects it and it stays parked.
+    const root = await mount(`
+      <div>${MARKER_HTML}</div>
+      <div data-component="MapboxMap" data-option-access-token="test-token">
+        <div data-ref="container"></div>
+      </div>
+    `);
+    const markerEl = root.querySelector<HTMLElement>('[data-component="MapboxMarker"]')!;
+    const mapEl = root.querySelector<HTMLElement>('[data-component="MapboxMap"]')!;
+    const instance = getInstance<MapboxMarker>(markerEl, 'MapboxMarker')!;
+    const mapbox = getInstance<MapboxMap>(mapEl, 'MapboxMap')!;
 
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    (mapbox.map as unknown as { fire(type: string): void }).fire('load');
+    await settle();
 
-    // A map elsewhere on the page connects; its element does not contain the
-    // child, so the child must stay parked.
-    const otherMapEl = h('div', { 'data-component': 'MapboxMap' });
-    const mockMap = new MockMap();
-    const mapboxMap = {
-      map: mockMap,
-      isLoaded: true,
-      $el: otherMapEl,
-      $options: { accessToken: 't' },
-    };
-    document.dispatchEvent(new CustomEvent('mapbox-map:connected', { detail: mapboxMap }));
-
-    expect((instance.marker as any).addTo).not.toHaveBeenCalled();
+    expect((instance.marker as unknown as { addTo: unknown }).addTo).not.toHaveBeenCalled();
   });
 });
 
 describe('AbstractMapboxMapChild — M2: re-inject on map remount', () => {
   it('should re-run injection on a new map after the first is removed', async () => {
-    const mapEl = h('div', { 'data-component': 'MapboxMap' });
-    const childEl = h('div', {
-      'data-component': 'MapboxMarker',
-      'data-option-lng-lat': '[2, 48]',
-    });
-    mapEl.append(childEl);
+    const context = await mountMap(MARKER_HTML);
+    await context.load();
+    const el = context.mapEl.querySelector<HTMLElement>('[data-component="MapboxMarker"]')!;
+    const instance = getInstance<MapboxMarker>(el, 'MapboxMarker')!;
+    const marker = instance.marker as unknown as { addTo: unknown };
+    const firstMap = context.mockMap;
 
-    const firstMap = new MockMap();
-    const instance = new MapboxMarker(childEl);
-    const firstMapboxMap = {
-      map: firstMap,
-      isLoaded: true,
-      $el: mapEl,
-      $options: { accessToken: 't' },
-    };
-    instance.$closest = vi.fn((query: string) =>
-      query === 'MapboxMap' ? (firstMapboxMap as any) : undefined,
-    );
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
-
-    expect((instance.marker as any).addTo).toHaveBeenCalledWith(firstMap);
-    expect((instance.marker as any).addTo).toHaveBeenCalledTimes(1);
+    expect(marker.addTo).toHaveBeenCalledWith(firstMap);
+    expect(marker.addTo).toHaveBeenCalledTimes(1);
 
     // The map is destroyed (fires `remove`), then a brand new map connects on a
     // deferred-load path. The still-mounted child must re-inject on it.
-    firstMap.remove();
+    context.mapbox.$unmount();
+    await settle();
+    context.mapbox.$mount();
+    await settle();
 
-    const secondMock = new MockMap();
-    const secondMapboxMap = createDeferredMap(secondMock);
-    (secondMapboxMap as any).$el = mapEl;
-    instance.$closest = vi.fn((query: string) =>
-      query === 'MapboxMap' ? (secondMapboxMap as any) : undefined,
-    );
-    document.dispatchEvent(new CustomEvent('mapbox-map:connected', { detail: secondMapboxMap }));
+    const secondMap = context.mapbox.map;
+    expect(secondMap).not.toBe(firstMap);
 
     // Not loaded yet: nothing new injected.
-    expect((instance.marker as any).addTo).toHaveBeenCalledTimes(1);
+    expect(marker.addTo).toHaveBeenCalledTimes(1);
 
-    secondMapboxMap.fireLoad();
+    await context.load();
 
     // Re-injected against the second map.
-    expect((instance.marker as any).addTo).toHaveBeenCalledWith(secondMock);
-    expect((instance.marker as any).addTo).toHaveBeenCalledTimes(2);
+    expect(marker.addTo).toHaveBeenCalledWith(secondMap);
+    expect(marker.addTo).toHaveBeenCalledTimes(2);
   });
 });

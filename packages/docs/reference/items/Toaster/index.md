@@ -27,17 +27,27 @@ Author a fixed, click-through region that holds two live regions and the toast t
   data-component="Toaster"
   class="pointer-events-none fixed inset-0 z-50 flex flex-col items-end justify-end gap-2 p-4">
   <!-- Polite region: info & success -->
-  <div data-ref="polite" aria-live="polite" aria-atomic="false" aria-relevant="additions"
+  <div
+    data-ref="polite"
+    aria-live="polite"
+    aria-atomic="false"
+    aria-relevant="additions"
     class="flex w-full flex-col items-end gap-2"></div>
   <!-- Assertive region: errors -->
-  <div data-ref="assertive" role="alert" aria-live="assertive" aria-atomic="false" aria-relevant="additions"
+  <div
+    data-ref="assertive"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="false"
+    aria-relevant="additions"
     class="flex w-full flex-col items-end gap-2"></div>
 
   <!-- Cloned per toast. The Toaster tags the clone as a `Toast`, so you only
        provide the markup: `[data-message]` receives the text and the `close`
        ref dismisses it. -->
   <template data-ref="template">
-    <div class="toast pointer-events-auto flex w-80 items-start gap-3 rounded-lg border-l-4 bg-white p-4 shadow-lg">
+    <div
+      class="toast pointer-events-auto flex w-80 items-start gap-3 rounded-lg border-l-4 bg-white p-4 shadow-lg">
       <p data-message class="min-w-0 flex-1 text-sm"></p>
       <button type="button" data-ref="close" aria-label="Dismiss notification">&times;</button>
     </div>
@@ -71,7 +81,9 @@ The `assertive` ref is optional: with it absent, error toasts fall back to the p
 The stack animates through the native View Transitions API. Give every toast a `view-transition-class` so one set of pseudo-element rules styles them all — the unique `view-transition-name` is assigned per toast by the component:
 
 ```css
-.toast { view-transition-class: toast; }
+.toast {
+  view-transition-class: toast;
+}
 
 /* Toasts that merely change slot slide smoothly to their new position. */
 ::view-transition-group(.toast) {
@@ -80,10 +92,24 @@ The stack animates through the native View Transitions API. Give every toast a `
 }
 
 /* Slide ONLY entering/leaving toasts. */
-::view-transition-new(.toast):only-child { animation: toast-in 300ms ease-out both; }
-::view-transition-old(.toast):only-child { animation: toast-out 200ms ease-in both; }
-@keyframes toast-in { from { opacity: 0; transform: translateY(12px); } }
-@keyframes toast-out { to { opacity: 0; transform: translateY(12px); } }
+::view-transition-new(.toast):only-child {
+  animation: toast-in 300ms ease-out both;
+}
+::view-transition-old(.toast):only-child {
+  animation: toast-out 200ms ease-in both;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
 ```
 
 ::: tip Scope the enter/leave keyframes with `:only-child`
@@ -98,7 +124,7 @@ The `Toaster` adds no listeners of its own. Every trigger is wired declaratively
 
 ## The `Toast` component
 
-Each inserted toast is a [`Toast`](./js-api.md#toast), a thin component built on the [`Timer`](/reference/items/Timer/) primitive. Reusing `Timer` means the toast gets a real, pausable countdown for free — `Timer`'s `delay` is the toast lifetime (in seconds), `autostart` begins it on mount and `destroyed()` cancels it when the toast leaves. On top of that, `Toast` adds:
+Each inserted toast is a [`Toast`](./js-api.md#toast), a thin component built on the [`Timer`](/reference/items/Timer/) primitive. Reusing `Timer` means the toast gets a real, pausable countdown for free — `Timer`'s `delay` is the toast lifetime (in seconds), `autostart` begins it on mount and the cleanup returned by `mounted()` cancels it when the toast leaves. On top of that, `Toast` adds:
 
 - **Pause on hover/focus.** The countdown **pauses while the pointer is over the toast or the focus is inside it** and resumes on leave, so a toast the user is reading or acting on never disappears under them ([WCAG 2.2.1](https://www.w3.org/WAI/WCAG21/Understanding/timing-adjustable.html)).
 - **A close control.** A `close` ref dismisses the toast on click.

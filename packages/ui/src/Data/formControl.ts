@@ -1,5 +1,14 @@
-import { camelCase } from '@studiometa/js-toolkit/utils/camelCase';
-import type { DataValue } from './DataScope.js';
+import type { DataValue } from './registry.js';
+
+/** Form-control value reading, writing, grouping, and type coercion. */
+
+const REGEX_CAMEL = /[-_\s]+(.)?/g;
+
+function camelCase(value: string): string {
+  return value.replace(REGEX_CAMEL, (_match, character: string | undefined) =>
+    character ? character.toUpperCase() : '',
+  );
+}
 
 export interface DataControlMember {
   readonly dataKey: string;
@@ -26,7 +35,7 @@ export function isSelect(element: Element): element is HTMLSelectElement {
   return element instanceof HTMLSelectElement;
 }
 
-export function valuesEqual(left: DataValue, right: DataValue) {
+export function valuesEqual(left: DataValue, right: DataValue): boolean {
   if (Object.is(left, right)) {
     return true;
   }
@@ -49,25 +58,27 @@ export function valuesEqual(left: DataValue, right: DataValue) {
   return (isNumberAndString || isArrayAndString) && String(left) === String(right);
 }
 
-export function setProperty(target: HTMLElement, name: string, value: unknown) {
+export function setProperty(target: HTMLElement, name: string, value: unknown): void {
+  const element = target as unknown as Record<string, unknown>;
+
   if (value !== null && value !== undefined) {
-    target[name] = value;
+    element[name] = value;
     return;
   }
 
   switch (name) {
     case 'valueAsDate':
-      target[name] = null;
+      element[name] = null;
       break;
     case 'valueAsNumber':
-      target[name] = Number.NaN;
+      element[name] = Number.NaN;
       break;
     default:
-      target[name] = '';
+      element[name] = '';
   }
 }
 
-export function resolvePropertyName(target: HTMLElement, name: string) {
+export function resolvePropertyName(target: HTMLElement, name: string): string {
   const normalizedName = name.replaceAll('-', '').toLowerCase();
   let current: object | null = target;
 
@@ -78,7 +89,7 @@ export function resolvePropertyName(target: HTMLElement, name: string) {
     if (property) {
       return property;
     }
-    current = Object.getPrototypeOf(current);
+    current = Object.getPrototypeOf(current) as object | null;
   }
 
   return camelCase(name);
@@ -86,7 +97,6 @@ export function resolvePropertyName(target: HTMLElement, name: string) {
 
 /**
  * Read a value from a form control or generic element property.
- * @internal
  */
 export function readControlValue({
   dataKey,
@@ -97,13 +107,12 @@ export function readControlValue({
 }: DataControlContext): DataValue {
   if (isSelect(target)) {
     if (multiple) {
-      const values = [] as string[];
+      const values: string[] = [];
       for (const option of target.options) {
         if (option.selected) {
           values.push(option.value);
         }
       }
-
       return values;
     }
 
@@ -126,12 +135,11 @@ export function readControlValue({
     return target.checked;
   }
 
-  return target[prop];
+  return (target as unknown as Record<string, DataValue>)[prop];
 }
 
 /**
  * Serialize a model event while preserving grouped checkbox semantics.
- * @internal
  */
 export function serializeControlValue(context: DataControlContext): DataValue {
   const value = readControlValue(context);
@@ -148,12 +156,11 @@ export function serializeControlValue(context: DataControlContext): DataValue {
 
 /**
  * Write a value to a form control or generic element property.
- * @internal
  */
 export function writeControlValue(
   { multiple, prop, target }: DataControlContext,
   value: DataValue,
-) {
+): void {
   if (isSelect(target)) {
     for (const option of target.options) {
       option.selected =

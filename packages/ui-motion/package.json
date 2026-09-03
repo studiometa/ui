@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-motion",
-  "version": "1.10.0",
+  "version": "2.0.0-alpha.0",
   "description": "Vanilla js-toolkit components to animate elements declaratively with Motion",
   "publishConfig": {
     "access": "public"
@@ -79,11 +79,11 @@
   },
   "homepage": "https://github.com/studiometa/ui#readme",
   "peerDependencies": {
-    "@studiometa/js-toolkit": "^3.9.0",
+    "@studiometa/js-toolkit": "^4.0.0-alpha.1",
     "motion": "^13.0.0"
   },
   "devDependencies": {
-    "@studiometa/js-toolkit": "^3.9.0",
+    "@studiometa/js-toolkit": "^4.0.0-alpha.1",
     "motion": "^13.0.0",
     "tsdown": "0.21.5"
   },

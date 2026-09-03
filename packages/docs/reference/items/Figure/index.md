@@ -63,19 +63,10 @@ export default class Figure extends FigureTwicpics {
 
 And replace the import in your app to import your local class instead of the one from the package.
 
-```js twoslash
-import { Base, createApp } from '@studiometa/js-toolkit';
-import { Figure } from '@studiometa/ui'; // [!code --]
-import { Figure } from './Figure.js'; // [!code ++]
+```diff
+  import { registerComponent } from '@studiometa/js-toolkit';
+- import { Figure } from '@studiometa/ui';
++ import { Figure } from './Figure.js';
 
-class App extends Base {
-  static config = {
-    name: 'App',
-    components: {
-      Figure,
-    },
-  };
-}
-
-export default createApp(App);
+  registerComponent(Figure);
 ```

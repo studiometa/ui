@@ -122,16 +122,14 @@ export const scrollLinks: Array<{
   stopped: boolean;
 }> = [];
 
-export const mockScroll = vi.fn(
-  (animation: MockAnimation, options: Record<string, unknown>) => {
-    const link = { animation, options, stopped: false, stop: vi.fn() };
-    link.stop.mockImplementation(() => {
-      link.stopped = true;
-    });
-    scrollLinks.push(link);
-    return link.stop;
-  },
-);
+export const mockScroll = vi.fn((animation: MockAnimation, options: Record<string, unknown>) => {
+  const link = { animation, options, stopped: false, stop: vi.fn() };
+  link.stop.mockImplementation(() => {
+    link.stopped = true;
+  });
+  scrollLinks.push(link);
+  return link.stop;
+});
 
 /**
  * Chainable double for the builder `animateView()` returns: it records every

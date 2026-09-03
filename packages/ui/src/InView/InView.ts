@@ -1,39 +1,35 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import { withMountWhenInView } from '@studiometa/js-toolkit/withMountWhenInView';
-import type { BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+
+export type InViewProps = BaseProps & {
+  $emits: {
+    'in-view': void;
+    'out-of-view': void;
+  };
+};
 
 /**
- * InView class.
- *
- * A primitive emitting directional viewport events: `in-view` when the element
- * enters the viewport and `out-of-view` when it leaves. It is built on the
- * `withMountWhenInView` decorator, whose mount/destroy lifecycle maps directly
- * to the enter/leave transitions, re-firing on each re-entry.
- *
- * @link https://ui.studiometa.dev/reference/items/InView/
+ * With the default mount strategy, emits `in-view` on viewport entry and `out-of-view` on exit.
+ * Use `in-view:<rootMargin>` to configure early mounting.
  */
-export class InView extends withMountWhenInView(Base) {
-  /**
-   * Config.
-   */
+export class InView extends Base<InViewProps> {
   static config: BaseConfig = {
     name: 'InView',
-    emits: ['in-view', 'out-of-view'],
+    mountStrategy: 'in-view',
   };
 
-  /**
-   * Emit the `in-view` event when the element enters the viewport.
-   */
-  mounted() {
+  mounted(): void {
     this.$emit('in-view');
   }
 
-  /**
-   * Emit the `out-of-view` event when the element leaves the viewport.
-   */
-  destroyed() {
+  unmounted(): void {
     this.$emit('out-of-view');
   }
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/InView`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default InView;

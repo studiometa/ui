@@ -24,11 +24,11 @@ The documentation uses a small, consistent vocabulary:
 
 - **Reference item** — a documented public concept with one canonical page, such as `Dialog`, `Transition` or `withTransition`.
 - **Symbol** — a named public export documented by a Reference item, such as a class, function, type, constant or template.
-- **Component** — a ready-to-use interface or behavior solution, such as [`Dialog`](/reference/items/Dialog/) or [`Slider`](/reference/items/Slider/). It can be visual or headless.
+- **Component** — a ready-to-use interface or behavior solution, such as [`Dialog`](/reference/items/Dialog/) or [`Carousel`](/reference/items/Carousel/). It can be visual or headless.
 - **Primitive** — a low-level, usually headless building block intended primarily for composition, such as [`Transition`](/reference/items/Transition/) or [`Sentinel`](/reference/items/Sentinel/).
 - **Decorator** — a higher-order function that adds reusable behavior to a js-toolkit component class, such as [`withTransition`](/reference/items/withTransition/).
-- **Helper** — a supported plain function that operates independently of a component class, such as [`viewTransition`](/reference/items/view-transition-helper/).
-- **Family** — related symbols that cooperate as one feature, such as `Accordion` and `AccordionItem`.
+- **Helper** — a supported plain function that operates independently of a component class. The v2 surface exposes none of its own: standalone helpers such as `viewTransition` and `scrollTo` now come from [`@studiometa/js-toolkit`](https://js-toolkit-v4.studiometa.dev).
+- **Family** — related symbols that cooperate as one feature, such as `Disclosure` and `DisclosureGroup`.
 - **Surface** — the runtime or authoring format through which an item is used: JavaScript, Twig or Liquid.
 - **Parameter** — a value passed to a Twig template. Twig API pages document parameters and blocks.
 - **Option** — a value passed to a JavaScript component, commonly through a `data-option-*` attribute. JavaScript API pages document options, refs, methods and events.

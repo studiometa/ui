@@ -1,28 +1,19 @@
-import { withMountWhenInView } from '@studiometa/js-toolkit/withMountWhenInView';
 import type { BaseConfig } from '@studiometa/js-toolkit';
 import { AbstractPrefetch } from './AbstractPrefetch.js';
 
 /**
- * PrefetchWhenVisible class.
+ * Prefetches the link's URL the first time it enters the viewport.
  *
- * An `AbstractPrefetch` using the `withMountWhenInView` decorator so it mounts
- * only when the link enters the viewport, prefetching its URL on mount.
+ * The strategy is `visible` and not `in-view`, because the intent is one-shot:
+ * `in-view` would unmount and remount on every crossing and re-hint a URL the
+ * browser already holds.
  *
  * @link https://ui.studiometa.dev/reference/items/Prefetch/
  */
-export class PrefetchWhenVisible extends withMountWhenInView<AbstractPrefetch>(AbstractPrefetch) {
-  /**
-   * Config.
-   */
-  static config: BaseConfig = {
-    ...AbstractPrefetch.config,
-    name: 'PrefetchWhenVisible',
-  };
+export class PrefetchWhenVisible extends AbstractPrefetch {
+  static config: BaseConfig = { name: 'PrefetchWhenVisible', mountStrategy: 'visible' };
 
-  /**
-   * Prefetch on mount.
-   */
-  mounted() {
+  mounted(): void {
     this.prefetch();
   }
 }

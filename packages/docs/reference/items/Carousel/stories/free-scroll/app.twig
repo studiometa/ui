@@ -1,0 +1,43 @@
+{% set colors = ['red', 'green', 'blue', 'purple'] %}
+{% set count = 8 %}
+
+<div data-component="Carousel" aria-label="Free scrolling gallery" class="grid gap-10 p-10">
+  {# `snap-none` is the whole configuration: no `snap-x`, no `snap-mandatory`. #}
+  <div data-component="CarouselWrapper CarouselDrag"
+    class="flex items-center gap-8 w-full overflow-x-auto snap-none"
+    style="scrollbar-width: none;">
+    {% for i in 1..count %}
+      {% set color = colors[loop.index0 % (colors|length)] %}
+      <div data-component="CarouselItem"
+        class="
+          shrink-0 flex items-center justify-center
+          w-1/4 h-48 bg-{{
+        color
+        }}-400 ring-inset ring-{{
+        color
+        }}-600
+          ring
+          text-white font-bold rounded-xl
+        "
+        style="--tw-ring-opacity: var(--carousel-item-active, 0)">
+        N°{{ i }}
+      </div>
+    {% endfor %}
+  </div>
+  <nav class="flex items-center justify-center gap-2">
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: '← Prev',
+      attr: {
+        data_component: 'CarouselBtn',
+        data_option_action: 'prev'
+      }
+    } %}
+    {% include '@ui/Button/StyledButton.twig' with {
+      label: 'Next →',
+      attr: {
+        data_component: 'CarouselBtn',
+        data_option_action: 'next'
+      }
+    } %}
+  </nav>
+</div>

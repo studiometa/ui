@@ -7,10 +7,9 @@
 </button>
 
 {# Two MotionView instances, zero wiring attributes: the backdrop and the box
-   both live inside the Dialog, so both ambiently join the bubbling
-   `open`/`close` lifecycle. `waitUntil()` is additive — every transitioner
-   that registers is awaited — so the Dialog calls `enter()`/`leave()` on both
-   and stays painted until the slowest view transition finishes. #}
+   both live inside the Dialog and both listen for its extendable `open`/`close`
+   events on the document. Each registers with `detail.waitUntil()`, so the
+   dialog awaits both before it hides. #}
 <dialog
   id="ambient-modal"
   data-component="Action Dialog"

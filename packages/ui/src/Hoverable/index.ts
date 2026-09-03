@@ -1,1 +1,1 @@
-export { Hoverable, type HoverableProps } from './Hoverable.js';
+export { Hoverable, type HoverableBounds, type HoverableProps } from './Hoverable.js';

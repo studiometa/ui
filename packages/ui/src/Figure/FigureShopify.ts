@@ -1,41 +1,33 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { AbstractFigureDynamic } from './AbstractFigureDynamic.js';
+import { AbstractFigureDynamic, type AbstractFigureDynamicProps } from './AbstractFigureDynamic.js';
 import { normalizeSize } from './utils.js';
 
-export interface FigureShopifyProps extends BaseProps {
-  $options: {
+export type FigureShopifyProps = AbstractFigureDynamicProps & {
+  $options: AbstractFigureDynamicProps['$options'] & {
     crop?: 'top' | 'left' | 'right' | 'bottom' | 'center';
   };
-}
+};
 
 /**
- * FigureShopify class.
+ * Dynamic image figure that rewrites its source for the Shopify CDN,
+ * sized to the rendered element.
  *
- * Manager lazyloading image sources.
+ * @link https://shopify.dev/docs/api/liquid/filters/image_url
  * @link https://ui.studiometa.dev/reference/items/FigureShopify/
  */
 export class FigureShopify<T extends BaseProps = BaseProps> extends AbstractFigureDynamic<
-  T & FigureShopifyProps
+  FigureShopifyProps & T
 > {
-  /**
-   * Config.
-   */
   static config: BaseConfig = {
     ...AbstractFigureDynamic.config,
     name: 'FigureShopify',
     options: {
       ...AbstractFigureDynamic.config.options,
-      crop: {
-        type: String,
-        default: null,
-      },
+      crop: String,
     },
   };
 
-  /**
-   * Format the source for Shopify CDN API.
-   * @link https://shopify.dev/docs/api/liquid/filters/image_url
-   */
+  /** Format the source for Shopify CDN API. */
   formatSrc(src: string): string {
     const { crop, step } = this.$options;
 
@@ -47,7 +39,7 @@ export class FigureShopify<T extends BaseProps = BaseProps> extends AbstractFigu
     url.searchParams.set('height', String(height));
 
     if (crop) {
-      url.searchParams.set('crop', this.$options.crop);
+      url.searchParams.set('crop', crop);
     }
 
     return url.toString();

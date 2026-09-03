@@ -10,11 +10,19 @@ Use the `FigureTwicpics` component to display images with the Twicpics API.
 
 Register the component in your JavaScript app and use the Twig template to display images.
 
+The Twig template writes `data-component="Figure"`, and a component mounts on its configured name, so declare that name on a subclass:
+
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
 import { FigureTwicpics } from '@studiometa/ui';
 
-registerComponent(FigureTwicpics, 'Figure');
+class Figure extends FigureTwicpics {
+  static config = {
+    name: 'Figure',
+  };
+}
+
+registerComponent(Figure);
 ```
 
 ```twig
@@ -54,20 +62,12 @@ export default class Figure extends FigureTwicpics {
 And replace the import in your app to import your local class instead of the one from the package.
 
 ```diff
-  import { Base, createApp } from '@studiometa/js-toolkit';
+  import { registerComponent } from '@studiometa/js-toolkit';
 - import { FigureTwicpics } from '@studiometa/ui';
 + import { Figure } from './Figure.js';
 
-  class App extends Base {
-    static config = {
-      name: 'Base',
-      components: {
-        Figure,
-      }
-    };
-  }
-
-  export default createApp(App);
+- registerComponent(FigureTwicpics);
++ registerComponent(Figure);
 ```
 
 ::: warning

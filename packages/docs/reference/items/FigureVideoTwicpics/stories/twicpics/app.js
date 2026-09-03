@@ -2,6 +2,10 @@ import { registerComponent } from '@studiometa/js-toolkit';
 import { FigureVideoTwicpics } from '@studiometa/ui';
 
 class FigureVideo extends FigureVideoTwicpics {
+  static config = {
+    name: 'FigureVideo',
+  };
+
   get domain() {
     return 'studiometa.twic.pics';
   }
@@ -11,4 +15,4 @@ class FigureVideo extends FigureVideoTwicpics {
   }
 }
 
-registerComponent(FigureVideo, 'FigureVideo');
+registerComponent(FigureVideo);

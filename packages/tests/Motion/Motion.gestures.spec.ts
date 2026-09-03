@@ -130,13 +130,13 @@ describe('Motion gesture options', () => {
     expect(leave).toBeUndefined();
   });
 
-  it('should release the gesture bindings on destroy', async () => {
+  it('should release the gesture bindings on unmount', async () => {
     const { instance } = await mountMotion({
       dataOptionHover: '{ "scale": 1.1 }',
       dataOptionPress: '{ "scale": 0.95 }',
     });
 
-    await instance.$destroy();
+    instance.$unmount();
     expect(mockHover.stops[0]).toHaveBeenCalledTimes(1);
     expect(mockPress.stops[0]).toHaveBeenCalledTimes(1);
   });

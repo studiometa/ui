@@ -1,38 +1,28 @@
 import { Base } from '@studiometa/js-toolkit/Base';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 
+export type MenuBtnProps = BaseProps;
+
 /**
- * MenuBtn class.
+ * The toggle button child of a `Menu`. It tracks its own hover state and
+ * stops propagation of `mouseenter`/`mouseleave` so a wrapping `MenuList`
+ * does not also count the button as hovered.
  *
- * The toggle button child of a `Menu`. It tracks its own hover state and stops
- * propagation of `mouseenter`/`mouseleave` events so the parent `Menu` can
- * distinguish hovering the button from hovering the list.
+ * @link https://ui.studiometa.dev/reference/items/Menu/
  */
-export class MenuBtn<T extends BaseProps = BaseProps> extends Base<T> {
-  /**
-   * Config.
-   */
+export class MenuBtn<T extends BaseProps = BaseProps> extends Base<MenuBtnProps & T> {
   static config: BaseConfig = {
     name: 'MenuBtn',
   };
 
-  /**
-   * Wether the button is hovered or not.
-   */
   isHover = false;
 
-  /**
-   * Dispatch the mouseenter event.
-   */
-  onMouseenter({ event }: { event: MouseEvent }) {
+  onMouseenter(event: MouseEvent): void {
     this.isHover = true;
     event.stopPropagation();
   }
 
-  /**
-   * Dispatch the mouseleave event.
-   */
-  onMouseleave({ event }: { event: MouseEvent }) {
+  onMouseleave(event: MouseEvent): void {
     this.isHover = false;
     event.stopPropagation();
   }

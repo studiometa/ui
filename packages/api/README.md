@@ -2,7 +2,7 @@
 
 Small Symfony application powering [ui.studiometa.dev](https://ui.studiometa.dev):
 
-- renders `@ui/` Twig templates for the playground iframe (`/`, `/source`);
+- renders `@ui/` Twig templates for the playground iframe (`/`);
 - exposes an **MCP server** so agents can discover Reference items and generate playgrounds.
 
 ## MCP server

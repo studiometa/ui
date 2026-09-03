@@ -9,7 +9,7 @@ import {
 
 /**
  * Detect classes that extend Base and define both open() and close() methods —
- * a pattern that duplicates what Transition (or Modal) already provides.
+ * a pattern that duplicates what Transition (or Dialog) already provides.
  */
 export const preferTransition = createRule({
   meta: {

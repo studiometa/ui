@@ -1,101 +1,92 @@
-import { it, describe, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
-import { FigureVideoTwicpics } from '@studiometa/ui';
-import {
-  wait,
-  hConnected as h,
-  mockIsIntersecting,
-  intersectionObserverBeforeAllCallback,
-  intersectionObserverAfterEachCallback,
-  mockImageLoad,
-  mockImageLoadError,
-  unmockImageLoad,
-  mockVideoLoad,
-  unmockVideoLoad,
-  resizeWindow,
-} from '#test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { captureDiagnostics, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
+import { FigureVideoTwicpics } from '#private/FigureVideo/FigureVideoTwicpics.js';
 
-beforeAll(() => {
-  intersectionObserverBeforeAllCallback();
-});
+registerComponents(FigureVideoTwicpics);
 
-beforeEach(() => {
-  mockImageLoad();
-  mockVideoLoad();
-});
+afterEach(resetDom);
 
-afterEach(() => {
-  intersectionObserverAfterEachCallback();
-  unmockImageLoad();
-  unmockVideoLoad();
-});
-
-async function getContext({ figureAttributes = {}, poster = 'poster.jpg' } = {}) {
-  const source = h('source', { dataSrc: 'https://localhost/video.mp4' });
-  const video = h('video', { dataRef: 'video', dataPoster: poster }, [source]);
-  const figure = h('figure', { dataOptionLazy: '', ...figureAttributes }, [video]);
-
-  const widthSpy = vi.spyOn(video, 'offsetWidth', 'get').mockImplementation(() => 100);
-  const heightSpy = vi.spyOn(video, 'offsetHeight', 'get').mockImplementation(() => 100);
-
-  const instance = new FigureVideoTwicpics(figure);
-  mockIsIntersecting(figure, true);
-  await wait(100);
-
-  return {
-    source,
-    video,
-    figure,
-    instance,
-    setSize({ width, height }: { width?: number; height?: number } = {}) {
-      if (width) {
-        widthSpy.mockImplementation(() => width);
-      }
-      if (height) {
-        heightSpy.mockImplementation(() => height);
-      }
-    },
-  };
+// `lazy` left unset (defaults false) so mounting never attempts a real
+// network fetch against a fabricated CDN URL: `formatSrc` is tested as a
+// pure function.
+async function render(attributes = ''): Promise<FigureVideoTwicpics> {
+  const root = document.createElement('div');
+  root.innerHTML = `
+    <div data-component="FigureVideoTwicpics" ${attributes}>
+      <video data-ref="video" style="width:100px;height:200px">
+        <source data-src="https://example.com/original/clip.mp4" />
+      </video>
+    </div>`;
+  document.body.append(root);
+  await settle();
+  return getInstance<FigureVideoTwicpics>(root.firstElementChild, 'FigureVideoTwicpics')!;
 }
 
-describe('The FigureVideoTwicpics component', () => {
-  it('should format the sources with the normalized size', async () => {
-    const { source } = await getContext();
-    expect(source.src).toBe('https://localhost/video.mp4?twic=v1/cover=100x100');
+describe('FigureVideoTwicpics — the loadSources override', () => {
+  it('settles and reports when its sources fail, as the base does', async () => {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <div data-component="FigureVideoTwicpics" data-option-lazy="true" data-option-domain="cdn.twic.pics">
+        <video data-ref="video" style="width:100px;height:200px">
+          <source data-src="https://example.com/original/clip.mp4" />
+        </video>
+      </div>`;
+    document.body.append(root);
+    const log = captureDiagnostics();
+    await settle();
+
+    const el = root.firstElementChild as HTMLElement;
+    const video = el.querySelector('[data-ref="video"]') as HTMLVideoElement;
+    // This override replaces the base entirely, so fixing the base alone left
+    // it waiting on `canplaythrough` forever.
+    video.dispatchEvent(new Event('error'));
+    await waitFor(() => log.codes.includes('figure-video.load-failed'));
+
+    expect(getInstance<FigureVideoTwicpics>(el, 'FigureVideoTwicpics')!.hasLoaded).toBe(false);
+
+    log.stop();
+  });
+});
+
+describe('FigureVideoTwicpics', () => {
+  it('builds a twic query from the measured size and the default cover mode', async () => {
+    const instance = await render('data-option-step="50"');
+
+    const url = new URL(instance.formatSrc('https://example.com/original/clip.mp4'));
+
+    expect(url.searchParams.get('twic')).toBe('v1/cover=100x200');
   });
 
-  it('should format the poster with the normalized size', async () => {
-    const { video } = await getContext();
-    expect(video.poster).toBe('https://localhost/poster.jpg?twic=v1/cover=100x100');
+  it('appends extra segments after the size', async () => {
+    const instance = await render('data-option-step="50"');
+
+    const url = new URL(
+      instance.formatSrc('https://example.com/original/clip.mp4', ['output=mp4']),
+    );
+
+    expect(url.searchParams.get('twic')).toBe('v1/cover=100x200/output=mp4');
   });
 
-  it('should use the domain and path options', async () => {
-    const { source } = await getContext({
-      figureAttributes: {
-        dataOptionDomain: 'twic.pics',
-        dataOptionPath: 'path',
-      },
-    });
-    expect(source.src).toBe('https://twic.pics/path/video.mp4?twic=v1/cover=100x100');
+  it('defaults the domain to the first source host', async () => {
+    const instance = await render();
+
+    expect(instance.domain).toBe('example.com');
   });
 
-  it('should reformat the sources on resize', async () => {
-    const { source, setSize } = await getContext();
-    expect(source.src).toContain('cover=100x100');
-    setSize({ width: 200, height: 200 });
-    await resizeWindow();
-    expect(source.src).toContain('cover=200x200');
+  it('uses the domain option over the source host when given', async () => {
+    const instance = await render('data-option-domain="cdn.twic.pics"');
+
+    const url = new URL(instance.formatSrc('https://example.com/original/clip.mp4'));
+
+    expect(url.host).toBe('cdn.twic.pics');
   });
 
-  it('should warn when the poster fails to load', async () => {
-    unmockImageLoad();
-    mockImageLoadError();
+  it('prefixes the pathname with the path option, without a doubled slash', async () => {
+    const instance = await render('data-option-path="/my/base/"');
 
-    const { instance } = await getContext();
-    const warnSpy = vi.spyOn(instance, '$warn', 'get');
-
-    // Reload to trigger a fresh poster load with the error mock in place.
-    await instance.loadPoster();
-
-    expect(warnSpy).toHaveBeenCalledOnce();
+    expect(instance.path).toBe('my/base');
+    const url = new URL(instance.formatSrc('https://example.com/original/clip.mp4'));
+    expect(url.pathname).toBe('/my/base/original/clip.mp4');
   });
 });

@@ -7,14 +7,16 @@ outline: deep
 
 ## Registration
 
-Register `Disclosure` independently even when it is inside a group. Register `DisclosureGroup` only when group constraints are needed.
+No `@studiometa/ui` component registers itself: importing a module only defines the class. `DisclosureGroup` declares `Disclosure` as a family member, and `Disclosure` declares `Transition` and `ViewTransition`, so one call registers all four.
 
 ```js
-import { registerComponents } from '@studiometa/js-toolkit';
-import { Disclosure, DisclosureGroup } from '@studiometa/ui';
+import { registerComponent } from '@studiometa/js-toolkit';
+import { DisclosureGroup } from '@studiometa/ui';
 
-registerComponents(Disclosure, DisclosureGroup);
+registerComponent(DisclosureGroup);
 ```
+
+Register `Disclosure` on its own when you want disclosures without any group coordination.
 
 ## `Disclosure`
 
@@ -68,7 +70,7 @@ The current open state.
 
 - Type: `DisclosureGroup | undefined`
 
-The closest group with which the disclosure is registered, or `undefined` when it works standalone.
+The closest group that claimed this disclosure, or `undefined` when it works standalone.
 
 #### `index`
 
@@ -84,7 +86,7 @@ Whether interaction is disabled by the disclosure's `disabled` option.
 
 #### `transitions`
 
-- Type: `Array<Transition | ViewTransition>`
+- Type: `Transitionable[]` — the `Transition` and `ViewTransition` children
 
 Transition children owned by this disclosure. Transitions whose closest disclosure is nested inside this one are excluded.
 
@@ -110,33 +112,41 @@ Opens a closed disclosure or closes an open disclosure.
 
 #### `enable()`
 
-Enables interaction and synchronizes the native button's `disabled` state.
+Enables interaction: removes `data-option-disabled` from the root element and synchronizes the native button's `disabled` state. Because `$options` is a read-only view over the attributes, the pair writes the attribute the option reads, so the change is visible on the very next `$options.disabled` read.
 
 #### `disable()`
 
-Disables interaction and synchronizes the native button's `disabled` state. It does not close an already open disclosure.
+Disables interaction: sets `data-option-disabled` on the root element and synchronizes the native button's `disabled` state. It does not close an already open disclosure.
+
+::: warning Responsive overrides still win
+`enable()` and `disable()` write the presence-only attribute. A responsive `data-option-disabled:<breakpoint>` declared in the markup still outranks it at that breakpoint.
+:::
 
 ### Events
 
-#### `open`
+None of the four carries a `detail`: the emitting `Disclosure` is the event target, which is all a listener needs.
 
-Emitted immediately after open state is committed, with the `Disclosure` instance as payload.
+#### `disclosure-open`
 
-#### `close`
+Emitted immediately after the open state is committed, before the enter transitions run.
 
-Emitted immediately after close state is committed, with the `Disclosure` instance as payload.
+#### `disclosure-close`
 
-#### `after-open`
+Emitted immediately after the close state is committed, before the leave transitions run.
 
-Emitted with the `Disclosure` instance after all owned enter transitions finish and only if the disclosure is still open.
+#### `disclosure-after-open`
 
-#### `after-close`
+Emitted after all owned enter transitions finish, and only if the disclosure is still open.
 
-Emitted with the `Disclosure` instance after all owned leave transitions finish, the panel is hidden, and only if the disclosure is still closed.
+#### `disclosure-after-close`
+
+Emitted after all owned leave transitions finish and the panel is hidden, and only if the disclosure is still closed.
+
+All four bubble, so a listener on an ancestor — a `DisclosureGroup` included — hears them. That is why they are namespaced `disclosure-*` and the group's own events are namespaced `disclosure-group-*`.
 
 ### Transition serialization
 
-Opening and closing state is committed synchronously, but transition work is queued. Opposing operations never interrupt a still-pending toolkit transition promise. Stale completions do not hide a panel or emit an `after-*` event for a state that has since changed. Errors from transition children are warned and do not reject the disclosure operation.
+Opening and closing state is committed synchronously, but transition work is queued. Opposing operations never interrupt a still-pending toolkit transition promise. Stale completions do not hide a panel or emit a `disclosure-after-*` event for a state that has since changed. Errors from transition children are reported as a `disclosure.transition-failed` error diagnostic and do not reject the disclosure operation.
 
 ## `DisclosureGroup`
 
@@ -174,38 +184,32 @@ Registered disclosures belonging to this closest group, in current DOM order.
 
 - Type: `Disclosure[]`
 
-Currently open registered disclosures in DOM order.
+The claimed disclosures that are currently open, in DOM order.
+
+Membership is not a public API. The group holds a live `$watchChildren()` collection of every mounted `Disclosure` in its subtree and claims each one; a disclosure already claimed by a nearer group refuses the claim, so a nested group always wins. There is nothing to register or unregister by hand.
 
 ### Methods
-
-#### `register(disclosure)`
-
-Registers a disclosure when this is its closest mounted group. Registration is idempotent and normally happens automatically.
-
-#### `unregister(disclosure)`
-
-Removes a disclosure from the group. This normally happens automatically during destruction or reconnection.
 
 #### `open(itemOrIndex)`
 
 - Parameters: `Disclosure | number`
 - Returns: `Promise<void>`
 
-Opens a registered enabled disclosure. In single-open mode, other open items are closed.
+Opens a claimed, enabled disclosure. In single-open mode, other open items are closed.
 
 #### `close(itemOrIndex)`
 
 - Parameters: `Disclosure | number`
 - Returns: `Promise<void>`
 
-Closes a registered enabled disclosure unless it is the one item locked open by non-collapsible single-open mode.
+Closes a claimed, enabled disclosure unless it is the one item locked open by non-collapsible single-open mode.
 
 #### `toggle(itemOrIndex)`
 
 - Parameters: `Disclosure | number`
 - Returns: `Promise<void>`
 
-Toggles a registered disclosure while respecting group constraints.
+Toggles a claimed disclosure while respecting group constraints.
 
 #### `openAll()`
 
@@ -223,14 +227,14 @@ Unknown indexes, foreign disclosures, and disabled target disclosures are ignore
 
 ### Events
 
-#### `open`
+#### `disclosure-group-open`
 
-Relays an item opening with the `Disclosure` instance and its DOM-order index.
+Relays an item opening. The `detail` carries `item` (the `Disclosure`) and `index` (its DOM-order position in the group).
 
-#### `close`
+#### `disclosure-group-close`
 
-Relays an item closing with the `Disclosure` instance and its DOM-order index.
+Relays an item closing. The `detail` carries `item` (the `Disclosure`) and `index` (its DOM-order position in the group).
 
-#### `change`
+#### `disclosure-group-change`
 
-Emitted after an item state change with the current `openItems` array.
+Emitted after an item state change. The `detail` carries `items`, the current `openItems` array.

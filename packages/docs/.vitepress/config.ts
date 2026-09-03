@@ -45,6 +45,11 @@ export default defineConfig({
           compilerOptions: {
             moduleResolution: ts.ModuleResolutionKind.Bundler,
             customConditions: ['typescript'],
+            // Twoslash compiles every block as `index.js`. TypeScript emits no diagnostic at all
+            // for a `.js` file unless both of these are on, so without them the `js twoslash`
+            // samples build clean whatever they contain and every hover renders empty.
+            allowJs: true,
+            checkJs: true,
           },
         },
       }),
@@ -191,12 +196,18 @@ function getReferenceSidebar() {
       collapsed: true,
       items: linksForKind('decorator'),
     },
-    {
-      text: 'Helpers and utilities',
-      link: '/reference/helpers/',
-      collapsed: true,
-      items: linksForKind('helper'),
-    },
+    // A kind with no documented item keeps its overview page — the URL is public and the page
+    // explains the absence — but it is not offered as a collapsible group with nothing inside.
+    ...(linksForKind('helper').length
+      ? [
+          {
+            text: 'Helpers and utilities',
+            link: '/reference/helpers/',
+            collapsed: true,
+            items: linksForKind('helper'),
+          },
+        ]
+      : []),
   ];
 }
 

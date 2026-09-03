@@ -1,78 +1,100 @@
 {#
 /**
  * @file
- * Tabs component.
+ * Accessible tabs template.
  *
- * @param array $items
+ * Renders the `tablist` / `tab` / `tabpanel` structure the `Tabs` component
+ * drives. The tab list element is outside the `$title_wrapper` block on
+ * purpose: overriding that block must not be able to lose the `role="tablist"`
+ * the pattern requires. Put presentation on the list itself with `$list_attr`
+ * rather than wrapping the buttons in another element, which would separate
+ * the tabs from the list that owns them.
+ *
+ * @param array<{ title: string, content: unknown, selected?: bool, btn_attr?: array, content_attr?: array }> $items
+ *   Tab items. The first item marked `selected` is the open one; the first
+ *   item otherwise.
+ * @param string $label
+ *   Accessible name for the tab list. Required by the pattern: the component
+ *   warns on the diagnostic channel when the list has neither an `aria-label`
+ *   nor an `aria-labelledby`.
+ * @param string $id
+ *   Prefix for the generated tab and panel IDs. Optional — the component
+ *   generates them at runtime when the markup has none.
  * @param array $attr
  *   Custom attributes for the root element.
+ * @param array $list_attr
+ *   Custom attributes for the tab list. Set `aria_orientation: 'vertical'`
+ *   here to move the keyboard navigation onto the up and down arrows.
+ * @param array $btn_attr
+ *   Default attributes for every tab button.
+ * @param array $content_attr
+ *   Default attributes for every tab panel.
  *
  * @block $title_wrapper
+ *   Customize how the tab buttons are rendered inside the tab list.
  * @block $title
+ *   Customize each tab button's label.
  * @block $content_wrapper
+ *   Customize how the panels are rendered.
  * @block $content
+ *   Customize each panel's content.
  */
 #}
 
-{% set attributes =
-  merge_html_attributes(
-    attr ?? null,
-    {
-      data_component: 'Tabs',
-      data_option_styles: {
-        btn: {
-          open: {
-            borderBottomColor: '#fff'
-          }
-        }
-      }
-    },
-    {}
-  )
-%}
+{% set id = id ?? null %}
+{% set selected_index = 0 %}
+{% for item in items %}
+  {% if (item.selected ?? false) and selected_index == 0 %}
+    {% set selected_index = loop.index0 %}
+  {% endif %}
+{% endfor %}
 
-{% set btn_attributes =
-  merge_html_attributes(
-    btn_attr ?? null,
-    {
-      type: 'button',
-      data_ref: 'btn[]',
-      style: {
-        borderBottom: '1px solid transparent'
-      }
-    },
-    {}
-  )
-%}
+{% set attributes = merge_html_attributes(attr ?? null, { data_component: 'Tabs' }) %}
 
-{% set content_attributes =
-  merge_html_attributes(
-    content_attr ?? null,
-    {
-      data_ref: 'content[]',
-      aria_hidden: 'false'
-    },
-    {}
-  )
+{% set list_attributes =
+  merge_html_attributes(list_attr ?? null, {
+    data_ref: 'list',
+    role: 'tablist',
+    aria_label: label ?? null
+  })
 %}
 
 <div {{ html_attributes(attributes) }}>
-  {% block title_wrapper %}
-    {% for item in items %}
-      {% set current_btn_attributes =
-        merge_html_attributes(item.btn_attr ?? null, btn_attributes)
-      %}
-      <button {{ html_attributes(current_btn_attributes) }}>
-        {% block title %}
-          {{ item.title }}
-        {% endblock %}
-      </button>
-    {% endfor %}
-  {% endblock %}
+  <div {{ html_attributes(list_attributes) }}>
+    {% block title_wrapper %}
+      {% for item in items %}
+        {% set is_selected = loop.index0 == selected_index %}
+        {% set current_btn_attributes =
+          merge_html_attributes(btn_attr ?? null, item.btn_attr ?? null, {
+            id: id ? id ~ '-tab-' ~ loop.index0 : null,
+            type: 'button',
+            role: 'tab',
+            data_ref: 'btn[]',
+            aria_controls: id ? id ~ '-panel-' ~ loop.index0 : null,
+            aria_selected: is_selected ? 'true' : 'false',
+            tabindex: is_selected ? '0' : '-1'
+          })
+        %}
+        <button {{ html_attributes(current_btn_attributes) }}>
+          {% block title %}
+            {{ item.title }}
+          {% endblock %}
+        </button>
+      {% endfor %}
+    {% endblock %}
+  </div>
   {% block content_wrapper %}
     {% for item in items %}
+      {% set is_selected = loop.index0 == selected_index %}
       {% set current_content_attributes =
-        merge_html_attributes(item.content_attr ?? null, content_attributes)
+        merge_html_attributes(content_attr ?? null, item.content_attr ?? null, {
+          id: id ? id ~ '-panel-' ~ loop.index0 : null,
+          role: 'tabpanel',
+          data_ref: 'content[]',
+          aria_labelledby: id ? id ~ '-tab-' ~ loop.index0 : null,
+          tabindex: '0',
+          hidden: is_selected ? null : true
+        })
       %}
       <div {{ html_attributes(current_content_attributes) }}>
         {% block content %}

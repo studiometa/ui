@@ -1,104 +1,82 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import { getClosestParent } from '@studiometa/js-toolkit/getClosestParent';
-import type { BaseConfig, BaseProps, KeyServiceProps } from '@studiometa/js-toolkit';
-import { nextTick } from '@studiometa/js-toolkit/utils/nextTick';
+import { withKey } from '@studiometa/js-toolkit/withKey';
+import type {
+  BaseConfig,
+  BaseProps,
+  ChildrenCollection,
+  DelegatedEvent,
+  GlobalEvent,
+  KeyProps,
+} from '@studiometa/js-toolkit';
+import { defaultScheduler } from '@studiometa/js-toolkit/defaultScheduler';
 import { MenuBtn } from './MenuBtn.js';
 import { MenuList } from './MenuList.js';
 
-export interface MenuProps extends BaseProps {
-  $children: {
-    // eslint-disable-next-line no-use-before-define
-    Menu: Menu[];
-    MenuBtn: MenuBtn[];
-    MenuList: MenuList[];
-  };
-  $options: {
-    mode: 'click' | 'hover';
-  };
-}
+export type MenuProps = BaseProps & {
+  $options: { mode: 'click' | 'hover' };
+};
 
 /**
- * Menu class.
+ * A disclosure menu orchestrating a `MenuBtn` toggle button and a
+ * collapsible `MenuList`. The `mode` option chooses whether it opens on
+ * click or on hover, and it wires up ARIA attributes, keyboard handling
+ * (Enter/Escape), click-outside dismissal and mutual closing of sibling
+ * submenus.
  *
- * A disclosure menu orchestrating a `MenuBtn` toggle button and a collapsible
- * `MenuList`. The `mode` option chooses whether it opens on click or on hover,
- * and it wires up ARIA attributes, keyboard handling (Enter/Escape),
- * click-outside dismissal and mutual closing of sibling submenus.
+ * `menuBtn`/`menuList` filter their `$watchChildren` collections down to the
+ * child whose nearest `Menu` ancestor is this one, because a nested submenu's
+ * own button and list would otherwise match too.
+ *
+ * A child carries no ordering guarantee relative to its parent, so
+ * `$watchChildren`'s `added` callback — not `mounted()` — is where the button
+ * and the list are wired up, and a `Menu` with no list is inert rather than a
+ * hard failure.
  *
  * @link https://ui.studiometa.dev/reference/items/Menu/
  */
-export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
-  /**
-   * Config.
-   */
+export class Menu<T extends BaseProps = BaseProps> extends withKey(Base)<MenuProps & T> {
   static config: BaseConfig = {
     name: 'Menu',
-    components: {
-      MenuBtn,
-      MenuList,
-    },
-    options: {
-      mode: {
-        type: String,
-        default: 'click', // or 'hover'
-      },
-    },
+    components: { MenuBtn, MenuList },
+    options: { mode: { type: String, default: 'click' } },
   };
 
-  /**
-   * Get the first `MenuList` instance.
-   */
-  get menuList(): MenuList {
-    for (const menuList of this.$children.MenuList) {
-      if (getClosestParent(menuList, this.constructor) === this) {
-        return menuList;
+  menuBtns: ChildrenCollection<MenuBtn> = this.$watchChildren<MenuBtn>('MenuBtn', {
+    added: (btn) => {
+      if (btn.$closest('Menu') === this) {
+        btn.$el.setAttribute('aria-controls', this.$id);
       }
-    }
+    },
+  });
+
+  menuLists: ChildrenCollection<MenuList> = this.$watchChildren<MenuList>('MenuList', {
+    added: (list) => {
+      if (list.$closest('Menu') === this) {
+        list.$el.setAttribute('id', this.$id);
+        list.close();
+      }
+    },
+  });
+
+  /** The `MenuBtn` this `Menu` owns, a nested submenu's own button excluded. */
+  get menuBtn(): MenuBtn | undefined {
+    return this.menuBtns.items.find((btn) => btn.$closest('Menu') === this);
   }
 
-  /**
-   * Get the first `MenuBtn` instance.
-   */
-  get menuBtn(): MenuBtn {
-    for (const menuBtn of this.$children.MenuBtn) {
-      if (getClosestParent(menuBtn, this.constructor) === this) {
-        return menuBtn;
-      }
-    }
+  /** The `MenuList` this `Menu` owns, a nested submenu's own list excluded. */
+  get menuList(): MenuList | undefined {
+    return this.menuLists.items.find((list) => list.$closest('Menu') === this);
   }
 
-  /**
-   * Test which mode to use.
-   */
   get shouldReactOnClick(): boolean {
     return this.$options.mode === 'click';
   }
 
-  /**
-   * Wether the button or the items are hovered.
-   */
   get isHover(): boolean {
-    return this.menuBtn.isHover || this.menuList.isHover;
+    return Boolean(this.menuBtn?.isHover || this.menuList?.isHover);
   }
 
-  /**
-   * Set attributes on mounted, destroy the component if it is missing required
-   * child components.
-   */
-  mounted() {
-    if (!this.menuBtn || !this.menuList) {
-      return this.$destroy();
-    }
-
-    this.menuBtn.$el.setAttribute('aria-controls', this.$id);
-    this.menuList.$el.setAttribute('id', this.$id);
-    this.menuList.close();
-  }
-
-  /**
-   * Keyboard management.
-   */
-  keyed({ ENTER, ESC, isUp }: KeyServiceProps) {
+  keyed({ ENTER, ESC, isUp }: KeyProps): void {
     if (!isUp) {
       return;
     }
@@ -108,106 +86,76 @@ export class Menu<T extends BaseProps = BaseProps> extends Base<T & MenuProps> {
       return;
     }
 
-    if (!this.shouldReactOnClick) {
-      const hasFocusElementWithin = document.activeElement === this.menuBtn.$el;
-
-      if (ENTER && hasFocusElementWithin) {
-        this.toggle();
-      }
+    if (!this.shouldReactOnClick && ENTER && document.activeElement === this.menuBtn?.$el) {
+      this.toggle();
     }
   }
 
-  /**
-   * Close menu list on click outside.
-   */
-  onDocumentClick({ event }: { event: MouseEvent }) {
+  onDocumentClick({ event }: GlobalEvent<MouseEvent>): void {
     if (this.shouldReactOnClick && !this.$el.contains(event.target as Node)) {
       this.close();
     }
   }
 
-  /**
-   * Toggle menu items on button click.
-   */
-  onMenuBtnClick({ event, target }: { event: MouseEvent; target: MenuBtn }) {
-    if (!this.shouldReactOnClick) return;
-
-    if (getClosestParent(target, this.constructor) === this) {
-      event.preventDefault();
-      this.toggle();
+  onMenuBtnClick({ event, target }: DelegatedEvent<MenuBtn>): void {
+    if (!this.shouldReactOnClick || target.$closest('Menu') !== this) {
+      return;
     }
+    event.preventDefault();
+    this.toggle();
   }
 
-  /**
-   * Open menu items on button mouse enter.
-   */
-  onMenuBtnMouseenter({ target }: { target: MenuBtn }) {
+  onMenuBtnMouseenter({ target }: DelegatedEvent<MenuBtn>): void {
     if (target === this.menuBtn && !this.shouldReactOnClick) {
       this.open();
     }
   }
 
-  /**
-   * Close menu items on button mouse leave.
-   */
-  onMenuBtnMouseleave() {
+  onMenuBtnMouseleave(): void {
+    this.__closeIfNotHoveredOnNextTurn();
+  }
+
+  onMenuListMouseleave(): void {
+    this.__closeIfNotHoveredOnNextTurn();
+  }
+
+  onMenuListItemsOpen({ target }: DelegatedEvent<MenuList>): void {
+    for (const list of this.menuLists) {
+      if (!list.$el.contains(target.$el)) {
+        list.close();
+      }
+    }
+  }
+
+  close(): void {
+    this.menuList?.close();
+  }
+
+  open(): void {
+    this.menuList?.open();
+  }
+
+  toggle(): void {
+    void this.menuList?.toggle();
+  }
+
+  /** @private */
+  __closeIfNotHoveredOnNextTurn(): void {
     if (this.shouldReactOnClick) {
       return;
     }
 
-    nextTick(() => {
-      if (!this.isHover) {
+    defaultScheduler.background(() => {
+      if (this.$isMounted && !this.isHover) {
         this.close();
       }
     });
-  }
-
-  /**
-   * Close menu items on button mouse leave.
-   */
-  onMenuListMouseleave() {
-    if (this.shouldReactOnClick) {
-      return;
-    }
-
-    nextTick(() => {
-      if (!this.isHover) {
-        this.close();
-      }
-    });
-  }
-
-  /**
-   * Close other non-parent menu items on menu items open.
-   */
-  onMenuListItemsOpen({ target }: { target: MenuList }) {
-    for (const menuList of this.$children.MenuList) {
-      if (!menuList.$el.contains(target.$el)) {
-        menuList.close();
-      }
-    }
-  }
-
-  /**
-   * Close the menu.
-   */
-  close() {
-    this.menuList.close();
-  }
-
-  /**
-   * Open the menu.
-   */
-  open() {
-    this.menuList.open();
-  }
-
-  /**
-   * Toggle the menu.
-   */
-  toggle() {
-    this.menuList.toggle();
   }
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Menu`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default Menu;

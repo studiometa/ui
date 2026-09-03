@@ -1,157 +1,346 @@
-import { describe, it, expect, vi } from 'vitest';
-import { CarouselDrag } from '@studiometa/ui';
-import { h, mount, useMatchMedia, wait } from '#test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  DRAG_MODES,
+  getInstance,
+  registerComponents,
+  type DragProps,
+} from '@studiometa/js-toolkit';
+import { resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
+import { Carousel } from '#private/Carousel/Carousel.js';
+import { CarouselDrag } from '#private/Carousel/CarouselDrag.js';
+import { CarouselItem } from '#private/Carousel/CarouselItem.js';
+import { CarouselWrapper } from '#private/Carousel/CarouselWrapper.js';
 
-describe('The CarouselDrag class', () => {
-  it('should mount only when pointer is fine', async () => {
-    const matchMedia = useMatchMedia();
-    const div = h('div');
-    const carouselDrag = new CarouselDrag(div);
-    const fn = vi.fn();
-    carouselDrag.$on('mounted', fn);
-    await mount(carouselDrag);
-    expect(fn).not.toHaveBeenCalled();
+/**
+ * `CarouselDrag` mounts on `media:(pointer: fine)`, which is the environment's
+ * answer and not this file's — a suite that only ran where the query matched
+ * would silently assert nothing anywhere else. The subclass changes the mount
+ * strategy and nothing else, so every assertion below is about the real
+ * component's behaviour.
+ */
+class EagerCarouselDrag extends CarouselDrag {
+  static config = {
+    name: 'EagerCarouselDrag',
+    mountStrategy: 'eager' as const,
+  };
+}
 
-    matchMedia.useMediaQuery('(pointer: fine)');
+registerComponents(Carousel, CarouselItem, CarouselWrapper, EagerCarouselDrag);
 
-    await wait(10);
-    expect(fn).toHaveBeenCalledOnce();
+afterEach(async () => {
+  release();
+  await resetDom();
+});
+
+/** One slide per viewport, so one snap is exactly `SLIDE` pixels of scroll. */
+const SLIDE = 200;
+const WRAPPER_STYLE = `display:flex;overflow:auto;width:${SLIDE}px;height:100px;scroll-snap-type:x mandatory`;
+const ITEM_STYLE = `flex:0 0 ${SLIDE}px;width:${SLIDE}px;height:100px;scroll-snap-align:center`;
+
+interface Rendered {
+  carousel: Carousel;
+  drag: CarouselDrag;
+  wrapper: HTMLElement;
+}
+
+async function render({
+  count = 6,
+  attributes = '',
+  style = WRAPPER_STYLE,
+} = {}): Promise<Rendered> {
+  const root = document.createElement('div');
+  root.innerHTML = `
+    <div data-component="Carousel">
+      <div data-component="CarouselWrapper EagerCarouselDrag" style="${style}" ${attributes}>
+        ${Array.from(
+          { length: count },
+          () => `<div data-component="CarouselItem" style="${ITEM_STYLE}"></div>`,
+        ).join('')}
+      </div>
+    </div>`;
+  document.body.append(root);
+  await settle();
+
+  const el = root.firstElementChild as HTMLElement;
+  const wrapper = el.querySelector('[data-component~="CarouselWrapper"]') as HTMLElement;
+  const carousel = getInstance<Carousel>(el, 'Carousel')!;
+  const drag = await waitFor(() => getInstance<CarouselDrag>(wrapper, 'EagerCarouselDrag'));
+
+  await waitFor(() => carousel.positions.length === count);
+
+  return { carousel, drag, wrapper };
+}
+
+/** Real pointer events, at the element the drag service listens on. */
+function grab(el: HTMLElement, x: number): void {
+  el.dispatchEvent(
+    new PointerEvent('pointerdown', {
+      button: 0,
+      buttons: 1,
+      clientX: x,
+      clientY: 0,
+      pointerType: 'mouse',
+      bubbles: true,
+    }),
+  );
+}
+
+function move(x: number): void {
+  document.dispatchEvent(
+    new PointerEvent('pointermove', { buttons: 1, clientX: x, clientY: 0, pointerType: 'mouse' }),
+  );
+}
+
+function release(): void {
+  window.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'mouse' }));
+}
+
+/** A bounded quiet period, for the states asserted as unchanged. */
+async function quiet(count = 12): Promise<void> {
+  for (let index = 0; index < count; index += 1) {
+    await settle();
+  }
+}
+
+/**
+ * A `drop` the drag service would publish, with the projected settle point set
+ * explicitly.
+ *
+ * The velocity a synthetic pointer can reach is bounded — the service floors
+ * its sample interval at half a frame, so a projection is at most a few times
+ * the distance actually dragged — and the defect this pins is about the
+ * unbounded case: a real flick on a real device projecting a screen and a half
+ * ahead. Handing `__snap()` its props directly is the only way to state that
+ * case, and it is the seam the pointer-driven tests below exercise for real.
+ */
+function drop(x: number, projectedTravel: number): DragProps {
+  return {
+    mode: DRAG_MODES.DROP,
+    x,
+    y: 0,
+    deltaX: 0,
+    deltaY: 0,
+    originX: x,
+    originY: 0,
+    distanceX: 0,
+    distanceY: 0,
+    // The track travels against the pointer, so a positive scroll projection is
+    // a negative pointer one.
+    finalX: x - projectedTravel,
+    finalY: 0,
+  };
+}
+
+describe('CarouselDrag — the throw', () => {
+  it('runs the throw as far as its projection says', async () => {
+    const { drag, wrapper } = await render({ count: 6 });
+
+    // 2000px of projected travel is ten slides, so the throw runs to the end
+    // of the track. Crossing many slides on one hard flick is the inertia the
+    // component is meant to have, not a defect to clamp away.
+    drag.__snap(wrapper, drop(500, 2000));
+    await waitFor(() => wrapper.scrollLeft === 5 * SLIDE, { timeout: 2000 });
+
+    expect(wrapper.scrollLeft).toBe(5 * SLIDE);
   });
 
-  it('should do nothing when not mounted', async () => {
-    const div = h('div');
-    const carouselDrag = new CarouselDrag(div);
-    const spy = vi.spyOn(div, 'scrollTo');
-    // @ts-expect-error partial mock
-    carouselDrag.dragged({});
-    expect(spy).not.toHaveBeenCalled();
+  it('runs backwards the same way', async () => {
+    const { carousel, drag, wrapper } = await render({ count: 6 });
+    await carousel.goTo(4);
+    await waitFor(() => wrapper.scrollLeft === 4 * SLIDE, { timeout: 2000 });
+
+    drag.__snap(wrapper, drop(500, -2000));
+    await waitFor(() => wrapper.scrollLeft === 0, { timeout: 2000 });
+
+    expect(wrapper.scrollLeft).toBe(0);
   });
 
-  it('should do nothing for stop or inertia mode', async () => {
-    const div = h('div');
-    const carouselDrag = new CarouselDrag(div);
-    vi.spyOn(carouselDrag, '$isMounted', 'get').mockImplementation(() => true);
-    const spy = vi.spyOn(div, 'scrollTo');
-    // @ts-expect-error partial mock
-    carouselDrag.dragged({ mode: 'inertia' });
-    expect(spy).not.toHaveBeenCalled();
-    // @ts-expect-error partial mock
-    carouselDrag.dragged({ mode: 'stop' });
-    expect(spy).not.toHaveBeenCalled();
+  it('lands on the slide it is over when the throw barely moves', async () => {
+    const { carousel, drag, wrapper } = await render({ count: 6 });
+    await carousel.goTo(2);
+    await waitFor(() => wrapper.scrollLeft === 2 * SLIDE, { timeout: 2000 });
+
+    // 40px of projection does not reach the next slide, so the closest snap to
+    // where it was heading is the one it is already on.
+    drag.__snap(wrapper, drop(500, 40));
+    await quiet();
+
+    expect(wrapper.scrollLeft).toBe(2 * SLIDE);
   });
 
-  it('should do nothing if no distance', async () => {
-    const div = h('div');
-    const carouselDrag = new CarouselDrag(div);
+  it('leaves the pointer at speed instead of easing in', async () => {
+    const { drag, wrapper } = await render({ count: 6 });
 
-    vi.spyOn(carouselDrag, '$isMounted', 'get').mockImplementation(() => true);
-    vi.spyOn(carouselDrag, 'isHorizontal', 'get').mockImplementation(() => true);
-    vi.spyOn(carouselDrag, 'isVertical', 'get').mockImplementation(() => false);
+    drag.__snap(wrapper, drop(500, 2000));
 
-    const spy = vi.spyOn(div, 'scrollTo');
+    const steps: number[] = [];
+    let previous = wrapper.scrollLeft;
+    for (let index = 0; index < 6; index += 1) {
+      await settle();
+      steps.push(wrapper.scrollLeft - previous);
+      previous = wrapper.scrollLeft;
+    }
 
-    // @ts-expect-error partial mock
-    carouselDrag.dragged({ mode: 'drag', distance: { x: 0 } });
-    expect(spy).not.toHaveBeenCalled();
-
-    vi.spyOn(carouselDrag, 'isHorizontal', 'get').mockImplementation(() => false);
-    vi.spyOn(carouselDrag, 'isVertical', 'get').mockImplementation(() => true);
-
-    // @ts-expect-error partial mock
-    carouselDrag.dragged({ mode: 'drag', distance: { y: 0 } });
-    expect(spy).not.toHaveBeenCalled();
+    // The throw carries the pointer's velocity into the settle and decays from
+    // there, so the first frame is the fastest. `behavior: 'smooth'` eases in
+    // from a standstill instead, which measured as the track stopping dead for
+    // a frame and taking five more to reach the speed the hand already had.
+    expect(steps[0]).toBeGreaterThan(0);
+    expect(steps[0]).toBe(Math.max(...steps));
+    expect(steps.at(-1)).toBeLessThan(steps[0]);
   });
 
-  it('should scroll instantly when dragging', async () => {
-    const div = h('div');
-    const carouselDrag = new CarouselDrag(div);
-    const spy = vi.spyOn(div, 'scrollTo');
+  it('advances on a real flick, through the whole pointer path', async () => {
+    const { carousel, wrapper } = await render({ count: 6 });
 
-    vi.spyOn(carouselDrag, '$isMounted', 'get').mockImplementation(() => true);
-    vi.spyOn(carouselDrag, 'isHorizontal', 'get').mockImplementation(() => true);
-    vi.spyOn(carouselDrag, 'isVertical', 'get').mockImplementation(() => false);
+    // A short, fast gesture: 96px of travel, most of it in the last event, so
+    // the service's velocity smoothing projects past the slide it is on. This
+    // is the seam the synthetic `drop()` cases above skip — the pointer, the
+    // drag service and `__snap()` end to end.
+    grab(wrapper, 300);
+    move(280);
+    move(204);
+    release();
 
-    // @ts-expect-error partial mock
-    carouselDrag.dragged({ mode: 'drag', distance: { x: 1, y: 0 }, delta: { x: 1, y: 0 } });
+    // Two slides, not one: 96px of drag projects about 400px of scroll, and
+    // the throw is allowed to run there. A clamp would stop it at one and turn
+    // the gesture into a step.
+    await waitFor(() => wrapper.scrollLeft === 2 * SLIDE, { timeout: 2000 });
+    await waitFor(() => carousel.currentIndex === 2);
 
-    expect(div.style.scrollSnapType).toBe('none');
-    expect(spy).toHaveBeenCalledExactlyOnceWith({
-      left: -1,
-      top: 0,
-      behavior: 'instant',
+    expect(wrapper.scrollLeft).toBe(2 * SLIDE);
+    expect(carousel.currentIndex).toBe(2);
+  });
+});
+
+describe('CarouselDrag — a track that does not snap', () => {
+  /** The same carousel, with the track's `scroll-snap-type` set to `none`. */
+  async function renderFree(): Promise<Rendered> {
+    return render({
+      count: 6,
+      style: WRAPPER_STYLE.replace('scroll-snap-type:x mandatory', 'scroll-snap-type:none'),
     });
+  }
+
+  it('coasts to the projection instead of snapping to a slide', async () => {
+    const { drag, wrapper } = await renderFree();
+
+    // A real gesture first: the track's own `scroll-snap-type` is read on the
+    // first drag frame, before the component overwrites it. The two moves drag
+    // the track 40px, so a 340px throw is heading for 380 — between slides,
+    // which is exactly the point. A snapping track rounds that to 400.
+    grab(wrapper, 500);
+    move(480);
+    move(460);
+    drag.__snap(wrapper, drop(500, 340));
+    await waitFor(() => wrapper.scrollLeft === 380, { timeout: 2000 });
+
+    expect(wrapper.scrollLeft).toBe(380);
   });
 
-  it('should scroll to a snapped item on drop', async () => {
-    const div = h('div');
-    const carouselDrag = new CarouselDrag(div);
-    const spy = vi.spyOn(div, 'scrollTo');
+  it('still cannot be thrown past the end of the track', async () => {
+    const { drag, wrapper } = await renderFree();
 
-    vi.spyOn(carouselDrag, '$isMounted', 'get').mockImplementation(() => true);
-    vi.spyOn(carouselDrag, 'isHorizontal', 'get').mockImplementation(() => true);
-    vi.spyOn(carouselDrag, 'isVertical', 'get').mockImplementation(() => false);
-    vi.spyOn(carouselDrag, 'carousel', 'get').mockImplementation(() => ({
-      items: [
-        {
-          // @ts-expect-error partial mock
-          state: {
-            left: 0,
-            top: 0,
-          },
-        },
-        {
-          // @ts-expect-error partial mock
-          state: {
-            left: -100,
-            top: -100,
-          },
-        },
-      ],
-    }));
+    grab(wrapper, 500);
+    move(480);
+    move(460);
+    drag.__snap(wrapper, drop(500, 5000));
+    await waitFor(() => wrapper.scrollLeft === 5 * SLIDE, { timeout: 2000 });
 
-    // @ts-expect-error partial mock
-    carouselDrag.dragged({ mode: 'drop', distance: { x: 10, y: 0 }, delta: { x: 10, y: 0 } });
-
-    expect(spy).toHaveBeenCalledExactlyOnceWith({
-      left: -100,
-      behavior: 'smooth',
-    });
-    spy.mockClear();
-
-    vi.spyOn(carouselDrag, 'isHorizontal', 'get').mockImplementation(() => false);
-    vi.spyOn(carouselDrag, 'isVertical', 'get').mockImplementation(() => true);
-
-    // @ts-expect-error partial mock
-    carouselDrag.dragged({ mode: 'drop', distance: { x: 0, y: 10 }, delta: { x: 0, y: 10 } });
-
-    expect(spy).toHaveBeenCalledExactlyOnceWith({
-      top: -100,
-      behavior: 'smooth',
-    });
-    div.dispatchEvent(new Event('scrollend'));
-    expect(div.style.scrollSnapType).toBe('');
+    // 6 slides of 200px in a 200px scroller: 1000px of content, 800px of
+    // scroll. `scrollTo` clamps, so the projection cannot overshoot it.
+    expect(wrapper.scrollLeft).toBe(5 * SLIDE);
   });
 
-  it('should not throw or scroll on drop when the carousel has no items', async () => {
-    const div = h('div');
-    const carouselDrag = new CarouselDrag(div);
-    const spy = vi.spyOn(div, 'scrollTo');
+  it('leaves a freescroll track free after the gesture', async () => {
+    const { wrapper } = await renderFree();
 
-    vi.spyOn(carouselDrag, '$isMounted', 'get').mockImplementation(() => true);
-    vi.spyOn(carouselDrag, 'isHorizontal', 'get').mockImplementation(() => true);
-    vi.spyOn(carouselDrag, 'isVertical', 'get').mockImplementation(() => false);
-    // @ts-expect-error partial mock
-    vi.spyOn(carouselDrag, 'carousel', 'get').mockImplementation(() => ({ items: [] }));
+    grab(wrapper, 500);
+    move(480);
+    move(460);
+    release();
+    await quiet();
 
-    // A preceding `drag` disables scroll-snap; a drop with no target slide must
-    // restore it and bail instead of scrolling to an `undefined` offset.
-    div.style.scrollSnapType = 'none';
+    // The component puts back what it found, not an empty string. Clearing the
+    // declaration would leave this track at its stylesheet value — and on a
+    // track declared `x mandatory` inline, it would turn snapping off for good.
+    expect(wrapper.style.scrollSnapType).toBe('none');
+  });
 
-    expect(() =>
-      // @ts-expect-error partial mock
-      carouselDrag.dragged({ mode: 'drop', distance: { x: 10, y: 0 }, delta: { x: 10, y: 0 } }),
-    ).not.toThrow();
-    expect(spy).not.toHaveBeenCalled();
-    expect(div.style.scrollSnapType).toBe('');
+  it('snaps again when the track says it snaps', async () => {
+    const { drag, wrapper } = await render({ count: 6 });
+
+    // A real move first: the track's own `scroll-snap-type` is read on the
+    // first drag frame, before the component overwrites it.
+    grab(wrapper, 500);
+    move(490);
+    await settle();
+    drag.__snap(wrapper, drop(500, 340));
+    await waitFor(() => wrapper.scrollLeft === 2 * SLIDE, { timeout: 2000 });
+
+    expect(wrapper.scrollLeft).toBe(2 * SLIDE);
+  });
+});
+
+describe('CarouselDrag — the snapping restore', () => {
+  it('leaves snapping enabled when the drag ends where it started', async () => {
+    const { wrapper } = await render({ count: 6 });
+
+    // Dragging backwards from the first slide: the track is already at zero, so
+    // no `scroll` fires and — per CSSOM View — no `scrollend` ever will. The
+    // settle has nothing to scroll to either, and this is the gesture that used
+    // to leave the track with `scroll-snap-type: none` for good.
+    grab(wrapper, 100);
+    move(110);
+    move(120);
+    release();
+    await quiet();
+
+    expect(wrapper.scrollLeft).toBe(0);
+    expect(wrapper.style.scrollSnapType).toBe('x mandatory');
+  });
+
+  it('leaves snapping enabled once a settle has finished', async () => {
+    const { wrapper } = await render({ count: 6 });
+
+    grab(wrapper, 300);
+    move(280);
+    move(204);
+    expect(wrapper.style.scrollSnapType).toBe('none');
+
+    release();
+    await waitFor(() => wrapper.scrollLeft === 2 * SLIDE, { timeout: 2000 });
+    await waitFor(() => wrapper.style.scrollSnapType === 'x mandatory', { timeout: 2000 });
+
+    expect(wrapper.style.scrollSnapType).toBe('x mandatory');
+  });
+
+  it('leaves snapping enabled when the carousel has no slide to snap to', async () => {
+    const { wrapper } = await render({ count: 0 });
+
+    // A real gesture, so the component actually owns the track's value: it
+    // only puts back what it took, and here there is no slide to settle on.
+    grab(wrapper, 500);
+    move(480);
+    move(460);
+    expect(wrapper.style.scrollSnapType).toBe('none');
+
+    release();
+    await quiet();
+
+    expect(wrapper.style.scrollSnapType).toBe('x mandatory');
+  });
+
+  it('leaves snapping enabled when the track unmounts mid-gesture', async () => {
+    const { drag, wrapper } = await render({ count: 6 });
+
+    grab(wrapper, 300);
+    move(250);
+    expect(wrapper.style.scrollSnapType).toBe('none');
+
+    drag.$unmount();
+    await settle();
+
+    expect(wrapper.style.scrollSnapType).toBe('x mandatory');
   });
 });

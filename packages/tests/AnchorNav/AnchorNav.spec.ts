@@ -1,126 +1,82 @@
-import { describe, it, expect, vi, beforeAll, afterEach, onTestFinished } from 'vitest';
-import { AnchorNav, AnchorNavLink } from '@studiometa/ui';
-import {
-  wait,
-  intersectionObserverBeforeAllCallback,
-  intersectionObserverAfterEachCallback,
-  mockIsIntersecting,
-  mount,
-} from '#test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { mount, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
+import { AnchorNav } from '#private/AnchorNav/AnchorNav.js';
+import { AnchorNavLink } from '#private/AnchorNav/AnchorNavLink.js';
+import { AnchorNavTarget } from '#private/AnchorNav/AnchorNavTarget.js';
 
-beforeAll(() => {
-  intersectionObserverBeforeAllCallback();
-});
+const OFFSCREEN = 'position:absolute;top:300vh;left:0;width:50px;height:50px';
+const ONSCREEN = 'position:absolute;top:0;left:0;width:50px;height:50px';
 
-afterEach(() => {
-  intersectionObserverAfterEachCallback();
-});
+registerComponents(AnchorNav, AnchorNavLink, AnchorNavTarget);
 
-async function getContext() {
-  const mountedFn = vi.fn();
-  const destroyedFn = vi.fn();
-  const enterFn = vi.fn();
-  const leaveFn = vi.fn();
+afterEach(resetDom);
 
-  class AnchorNavLinkTest extends AnchorNavLink {
-    enter(...args) {
-      enterFn();
-      return super.enter(...args);
-    }
-
-    leave(...args) {
-      leaveFn();
-      return super.leave(...args);
-    }
-  }
-
-  class AnchorNavTest extends AnchorNav {
-    static config = {
-      ...AnchorNav.config,
-      components: {
-        ...AnchorNav.config.components,
-        AnchorNavLink: AnchorNavLinkTest,
-      },
-    };
-
-    onAnchorNavTargetMounted(...args) {
-      mountedFn();
-      super.onAnchorNavTargetMounted(...args);
-    }
-
-    onAnchorNavTargetDestroyed(...args) {
-      destroyedFn();
-      super.onAnchorNavTargetDestroyed(...args);
-    }
-  }
-
-  const div = document.createElement('div');
-  div.innerHTML = `
-    <a href="#one" data-component="AnchorNavLink">link one</a>
-    <a href="#two" data-component="AnchorNavLink">link two</a>
-
-    <section id="one" data-component="AnchorNavTarget">target one</section>
-    <section id="two" data-component="AnchorNavTarget">target two</section>
-    `;
-  const linkOne = div.querySelector('a[href="#one"]');
-  const targetOne = div.querySelector('#one');
-
-  const anchorNavTest = new AnchorNavTest(div);
-
-  await mount(anchorNavTest);
-
-  // Ensure the component is destroyed after each test to prevent
-  // async transition events from leaking into subsequent tests.
-  onTestFinished(async () => {
-    vi.useFakeTimers();
-    anchorNavTest.$destroy();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
-  });
-
-  return {
-    mountedFn,
-    enterFn,
-    leaveFn,
-    destroyedFn,
-    targetOne,
-    anchorNavTest,
-    linkOne,
-  };
+async function render(): Promise<{ root: HTMLElement; target: HTMLElement }> {
+  const root = await mount(`
+    <div data-component="AnchorNav">
+      <a data-component="AnchorNavLink" href="#one" data-option-enter-to="active" data-option-enter-keep="true"></a>
+      <div id="one" data-component="AnchorNavTarget" style="${OFFSCREEN}"></div>
+    </div>`);
+  return { root, target: root.querySelector('#one') as HTMLElement };
 }
 
-describe('The `AnchorNav` component', () => {
-  it('should listen to mounted and destroyed event on child AnchorNavTarget', async () => {
-    const { mountedFn, destroyedFn, targetOne } = await getContext();
-    expect(mountedFn).toHaveBeenCalledTimes(0);
-    expect(destroyedFn).toHaveBeenCalledTimes(0);
+describe('AnchorNav', () => {
+  it('enters the matching link once its target scrolls into view', async () => {
+    const { root, target } = await render();
+    const link = getInstance<AnchorNavLink>(
+      root.querySelector('[data-component="AnchorNavLink"]'),
+      'AnchorNavLink',
+    )!;
 
-    mockIsIntersecting(targetOne, true);
-    await wait(10);
+    target.setAttribute('style', ONSCREEN);
+    await waitFor(() => link.state === 'entering');
 
-    expect(mountedFn).toHaveBeenCalledTimes(1);
-    expect(destroyedFn).toHaveBeenCalledTimes(0);
-
-    mockIsIntersecting(targetOne, false);
-    await wait(10);
-
-    expect(destroyedFn).toHaveBeenCalledTimes(1);
+    expect(link.state).toBe('entering');
+    // `AnchorNav` fire-and-forgets the transition, so the kept end state lands
+    // a few frames after the state change and has to be polled for.
+    await waitFor(() => link.$el.classList.contains('active'));
   });
 
-  it('should trigger the enter and leave method on AnchorNavLink', async () => {
-    const { enterFn, leaveFn, targetOne } = await getContext();
-    expect(enterFn).toHaveBeenCalledTimes(0);
-    expect(leaveFn).toHaveBeenCalledTimes(0);
+  it('leaves the matching link once its target scrolls back out of view', async () => {
+    const { root, target } = await render();
+    const link = getInstance<AnchorNavLink>(
+      root.querySelector('[data-component="AnchorNavLink"]'),
+      'AnchorNavLink',
+    )!;
 
-    mockIsIntersecting(targetOne, true);
-    await wait(10);
+    target.setAttribute('style', ONSCREEN);
+    await waitFor(() => link.state === 'entering');
+    target.setAttribute('style', OFFSCREEN);
+    await waitFor(() => link.state === 'leaving');
 
-    expect(enterFn).toHaveBeenCalledTimes(1);
-    expect(leaveFn).toHaveBeenCalledTimes(0);
+    expect(link.state).toBe('leaving');
+    // A removal is asserted directly, never polled for: `leaveTransition()`
+    // clears the other direction's class before its first await.
+    expect(link.$el.classList.contains('active')).toBe(false);
+  });
 
-    mockIsIntersecting(targetOne, false);
-    await wait(10);
+  it('ignores a link whose targetId does not match any target', async () => {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <div data-component="AnchorNav">
+        <a data-component="AnchorNavLink" href="#unrelated"></a>
+        <div id="one" data-component="AnchorNavTarget" style="${OFFSCREEN}"></div>
+      </div>`;
+    document.body.append(root);
+    await settle();
+    const link = getInstance<AnchorNavLink>(
+      root.querySelector('[data-component="AnchorNavLink"]'),
+      'AnchorNavLink',
+    )!;
+    const target = root.querySelector('#one') as HTMLElement;
 
-    expect(leaveFn).toHaveBeenCalledTimes(1);
+    target.setAttribute('style', ONSCREEN);
+    // An absence cannot be polled for, so this keeps a bounded quiet period.
+    for (let i = 0; i < 6; i += 1) {
+      await settle();
+    }
+
+    expect(link.state).toBeNull();
   });
 });

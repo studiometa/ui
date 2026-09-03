@@ -1,1 +1,1 @@
-export { Sentinel } from './Sentinel.js';
+export { Sentinel, type SentinelProps } from './Sentinel.js';

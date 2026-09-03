@@ -1,79 +1,128 @@
-import { it, describe, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
-import { FigureVideo } from '@studiometa/ui';
-import {
-  wait,
-  hConnected as h,
-  mockIsIntersecting,
-  intersectionObserverBeforeAllCallback,
-  intersectionObserverAfterEachCallback,
-  mockImageLoad,
-  mockImageLoadError,
-  unmockImageLoad,
-  mockVideoLoad,
-  unmockVideoLoad,
-} from '#test-utils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { captureDiagnostics, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
+import { FigureVideo } from '#private/FigureVideo/FigureVideo.js';
 
-beforeAll(() => {
-  intersectionObserverBeforeAllCallback();
-});
+registerComponents(FigureVideo);
 
-beforeEach(() => {
-  mockImageLoad();
-  mockVideoLoad();
-});
+afterEach(resetDom);
 
-afterEach(() => {
-  intersectionObserverAfterEachCallback();
-  unmockImageLoad();
-  unmockVideoLoad();
-});
+const OFFSCREEN = 'position:absolute;top:300vh;left:0;width:50px;height:50px';
+const ONSCREEN = 'position:absolute;top:0;left:0;width:50px;height:50px';
 
-function getContext({ poster = 'http://localhost/poster.jpg' } = {}) {
-  const source = h('source', { dataSrc: 'http://localhost/video.mp4' });
-  const video = h('video', poster ? { dataRef: 'video', dataPoster: poster } : { dataRef: 'video' }, [
-    source,
-  ]);
-  const figure = h('figure', { dataOptionLazy: '' }, [video]);
+// A real 1x1 PNG, so `loadImage()` succeeds without network access.
+const PIXEL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
-  return { source, video, figure, instance: new FigureVideo(figure) };
+/** A bounded quiet period, for the assertions that nothing has loaded. */
+async function quiet(): Promise<void> {
+  for (let i = 0; i < 6; i += 1) {
+    await settle();
+  }
 }
 
-describe('The FigureVideo component', () => {
-  it('should lazily load the poster and sources then emit load', async () => {
-    const { video, source, figure, instance } = getContext();
-    const load = vi.fn();
-    instance.$on('load', load);
+function render(
+  style: string,
+  attributes = 'data-option-lazy="true"',
+): { el: HTMLElement; video: HTMLVideoElement } {
+  const root = document.createElement('div');
+  root.innerHTML = `
+    <div data-component="FigureVideo" style="${style}" ${attributes}>
+      <video data-ref="video" data-poster="${PIXEL}">
+        <source data-src="${PIXEL}" type="video/mp4" />
+      </video>
+    </div>`;
+  document.body.append(root);
+  const el = root.firstElementChild as HTMLElement;
+  return { el, video: el.querySelector('[data-ref="video"]') as HTMLVideoElement };
+}
 
-    mockIsIntersecting(figure, true);
-    await wait(100);
+/**
+ * `loadSources()` waits on the real `loadeddata` event, which a data-URI
+ * `<source>` may never fire in a headless browser. Dispatching it directly
+ * is the same technique used elsewhere in this migration to drive a
+ * component's logic without depending on real media decoding.
+ */
+function fireLoadedData(video: HTMLVideoElement): void {
+  video.dispatchEvent(new Event('loadeddata'));
+}
 
-    expect(video.poster).toBe('http://localhost/poster.jpg');
-    expect(source.src).toBe('http://localhost/video.mp4');
-    expect(load).toHaveBeenCalledOnce();
+describe('FigureVideo', () => {
+  it('loads the poster and sources once scrolled into view, emitting load', async () => {
+    const { el, video } = render(OFFSCREEN);
+    const events: unknown[] = [];
+    el.addEventListener('load', () => events.push(1));
+
+    await quiet();
+    expect(events).toEqual([]);
+    expect(video.querySelector('source')?.src).toBe('');
+
+    el.setAttribute('style', ONSCREEN);
+    await settle();
+    fireLoadedData(video);
+    await waitFor(() => events.length > 0);
+
+    expect(events).toEqual([1]);
+    expect(video.querySelector('source')?.src).toBe(PIXEL);
+    expect(video.poster).toBe(PIXEL);
   });
 
-  it('should resolve the poster silently when no poster is defined', async () => {
-    const { video, figure, instance } = getContext({ poster: '' });
-    const load = vi.fn();
-    instance.$on('load', load);
+  it('does not load when the `lazy` option is not set', async () => {
+    const { el, video } = render(ONSCREEN, '');
+    const events: unknown[] = [];
+    el.addEventListener('load', () => events.push(1));
 
-    mockIsIntersecting(figure, true);
-    await wait(100);
+    await quiet();
+    fireLoadedData(video);
+    await quiet();
 
-    expect(video.poster).toBeFalsy();
-    expect(load).toHaveBeenCalledOnce();
+    expect(events).toEqual([]);
   });
 
-  it('should warn when the poster fails to load', async () => {
-    unmockImageLoad();
-    mockImageLoadError();
+  it('does not reload once already loaded', async () => {
+    const { el, video } = render(ONSCREEN);
+    await settle();
+    fireLoadedData(video);
+    const instance = await waitFor(() =>
+      getInstance<FigureVideo>(el, 'FigureVideo')?.hasLoaded
+        ? getInstance<FigureVideo>(el, 'FigureVideo')!
+        : null,
+    );
+    const spy = vi.spyOn(instance, 'load');
 
-    const { figure, instance } = getContext();
-    const warnSpy = vi.spyOn(instance, '$warn', 'get');
+    // A later mount cycle on the same instance — the in-view strategy can
+    // trigger one — must not repeat the load.
+    await instance.mounted();
 
-    mockIsIntersecting(figure, true);
-    await wait(100);
+    expect(spy).not.toHaveBeenCalled();
+    expect(instance.hasLoaded).toBe(true);
+  });
 
-    expect(warnSpy).toHaveBeenCalledOnce();
+  it('settles and reports when the sources fail, instead of hanging forever', async () => {
+    const { el, video } = render(ONSCREEN);
+    const log = captureDiagnostics();
+
+    await settle();
+    // Waiting on `loadeddata` alone would never settle here and would leave
+    // `mounted()` pending for ever, so `error` has to end the wait too.
+    video.dispatchEvent(new Event('error'));
+    await waitFor(() => log.codes.includes('figure-video.load-failed'));
+
+    // Left un-loaded, so a later mount cycle can retry.
+    expect(getInstance<FigureVideo>(el, 'FigureVideo')!.hasLoaded).toBe(false);
+
+    log.stop();
+  });
+
+  it('warns and does not throw when the video ref is missing', async () => {
+    const root = document.createElement('div');
+    root.innerHTML = `<div data-component="FigureVideo" style="${ONSCREEN}" data-option-lazy="true"></div>`;
+    document.body.append(root);
+    const log = captureDiagnostics();
+
+    await expect(quiet()).resolves.toBeUndefined();
+
+    expect(log.codes).toEqual(['figure-video.invalid-ref']);
+    log.stop();
   });
 });

@@ -1,11 +1,14 @@
-export { Fetch, type FetchConstructor, type FetchProps } from './Fetch.js';
 export {
-  FetchShopifyPartial,
-  type FetchShopifyPartialConstructor,
-  type FetchShopifyPartialProps,
-} from './FetchShopifyPartial.js';
+  Fetch,
+  FETCH_EVENTS,
+  HEADER_NAMES,
+  type FetchEmits,
+  type FetchEventBase,
+  type FetchProps,
+} from './Fetch.js';
+export { FetchShopifyPartial, type FetchShopifyPartialProps } from './FetchShopifyPartial.js';
 export {
   FetchShopifySection,
-  type FetchShopifySectionConstructor,
+  SECTIONS_PARAMETER,
   type FetchShopifySectionProps,
 } from './FetchShopifySection.js';

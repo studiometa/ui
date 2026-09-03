@@ -7,15 +7,19 @@
 </button>
 
 {# The <dialog> host carries NO display utility, so its native open/closed
-   display (block / none) is preserved. Both lifecycle events expose
-   `event.detail.waitUntil(promise)`: the `open` event plays the box's spring
-   entrance, and the `close` event plays it in reverse — the dialog stays
-   painted until the registered promise settles. #}
+   display (block / none) is preserved. The `open` event plays the box's spring
+   entrance and the `close` event plays it in reverse; registering each with
+   `detail.waitUntil()` makes the dialog await it, so the exit plays in full
+   before the native dialog hides.
+
+   The `?.` is not decoration: <dialog> fires its own native `close` event once
+   hidden, with no detail. The optional chain skips it — and skips the
+   `reverse()` call with it. #}
 <dialog
   id="motion-modal"
   data-component="Action Dialog"
-  data-on:open="Motion(#motion-modal-box)->event.detail.waitUntil(target.play())"
-  data-on:close="Motion(#motion-modal-box)->event.detail.waitUntil(target.reverse())"
+  data-on:open="Motion(#motion-modal-box)->event.detail?.waitUntil(target.play())"
+  data-on:close="Motion(#motion-modal-box)->event.detail?.waitUntil(target.reverse())"
   data-on:cancel.prevent="Dialog.close()"
   class="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent overflow-y-auto">
   <div
@@ -36,7 +40,8 @@
       <p class="mb-6 text-black/60">
         The <code>Dialog</code> handles the top layer, focus and scroll lock; the
         <code>Motion</code> box springs in on its <code>open</code> event and springs
-        back out before the dialog closes — physics a CSS transition cannot express.
+        back out before the dialog closes, which it waits for — physics a CSS transition
+        cannot express.
       </p>
       <button
         type="button"

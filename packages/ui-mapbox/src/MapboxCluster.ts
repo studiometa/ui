@@ -1,4 +1,4 @@
-import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import { debounce } from '@studiometa/js-toolkit/utils/debounce';
 import type {
   Map,
@@ -11,7 +11,7 @@ import type {
   MapMouseEvent,
   LngLatLike,
 } from 'mapbox-gl';
-import type { FeatureCollection, Point } from 'geojson';
+import type { Feature, FeatureCollection, Point } from 'geojson';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
@@ -55,6 +55,18 @@ export interface MapboxClusterProps extends AbstractMapboxMapChildProps {
     unclusteredPointLayout: Record<string, unknown>;
     unclusteredPointPaint: Record<string, unknown>;
   };
+  /**
+   * The cluster's own events, on top of the inherited `map-error`.
+   */
+  $emits: AbstractMapboxMapChildProps['$emits'] & {
+    'map-cluster-click': { clusterId: number; event: MapMouseEvent };
+    'map-item-click': {
+      item: MapboxClusterItem | undefined;
+      feature: Feature | undefined;
+      event: MapMouseEvent;
+    };
+    'map-update': { items: readonly MapboxClusterItem[] };
+  };
 }
 
 /**
@@ -87,7 +99,6 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
    */
   static config: BaseConfig = {
     name: 'MapboxCluster',
-    emits: ['map-cluster-click', 'map-item-click', 'map-update'],
     options: {
       clusterMaxZoom: {
         type: Number,
@@ -277,7 +288,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
     this.setData(this.featureCollection as GeoJSONSourceSpecification['data']);
     // Let an orchestrator react to the new item set (fit the map, refilter the
     // list). The cluster itself never fits or filters — it only reports.
-    this.$emit('map-update', this.items);
+    this.$emit('map-update', { items: this.items });
   }
 
   /**
@@ -301,7 +312,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
 
     const clusterId = feature.properties?.cluster_id as number;
 
-    this.$emit('map-cluster-click', clusterId, event);
+    this.$emit('map-cluster-click', { clusterId, event });
 
     if (event.defaultPrevented) {
       return;
@@ -375,7 +386,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
         ? undefined
         : this.__items.find((candidate) => candidate.id === String(id));
 
-    this.$emit('map-item-click', item, feature, event);
+    this.$emit('map-item-click', { item, feature, event });
   };
 
   /**
@@ -504,7 +515,7 @@ export class MapboxCluster<T extends BaseProps = BaseProps> extends AbstractMapb
 
     // Announce the seeded item set so an orchestrator can run its first fit +
     // viewport filter against a cluster that was already populated at load.
-    this.$emit('map-update', this.items);
+    this.$emit('map-update', { items: this.items });
   }
 
   /**

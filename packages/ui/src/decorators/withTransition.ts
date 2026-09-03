@@ -1,215 +1,190 @@
-import { getInstances } from '@studiometa/js-toolkit/getInstances';
-import { nextFrame } from '@studiometa/js-toolkit/utils/nextFrame';
-import { removeClass } from '@studiometa/js-toolkit/utils/removeClass';
-import { transition } from '@studiometa/js-toolkit/utils/transition';
-import type {
-  Base,
-  BaseDecorator,
-  BaseProps,
-  BaseConfig,
-  BaseInterface,
-} from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseConstructor, MixedClass } from '@studiometa/js-toolkit';
+import { enterTransition } from '@studiometa/js-toolkit/utils/enterTransition';
+import { leaveTransition } from '@studiometa/js-toolkit/utils/leaveTransition';
+import { TRANSITION_OPTIONS } from '@studiometa/js-toolkit/utils/TRANSITION_OPTIONS';
+import type { TransitionOptions } from '@studiometa/js-toolkit/utils';
 
-export interface TransitionProps extends BaseProps {
-  $options: {
-    enterFrom: string;
-    enterActive: string;
-    enterTo: string;
-    enterKeep: boolean;
-    leaveFrom: string;
-    leaveActive: string;
-    leaveTo: string;
-    leaveKeep: boolean;
-    group: string;
+/** The option and event surface `withTransition` adds to its host. */
+export interface TransitionProps {
+  $options: TransitionOptions;
+  $emits: {
+    'transition-enter': void;
+    'transition-enter-start': void;
+    'transition-enter-end': void;
+    'transition-leave': void;
+    'transition-leave-start': void;
+    'transition-leave-end': void;
   };
 }
 
-export interface TransitionInterface extends BaseInterface {
-  /**
-   * Get the transition target.
-   */
-  get target(): HTMLElement | HTMLElement[];
-  /**
-   * Get the group targets.
-   */
-  get targets(): HTMLElement[];
-  /**
-   * Current state.
-   * @internal
-   */
-  state: null | 'entering' | 'leaving';
-  /**
-   * Trigger the enter transition.
-   */
-  enter(target?: HTMLElement | HTMLElement[]): Promise<void>;
-  /**
-   * Trigger the leave transition.
-   */
-  leave(target?: HTMLElement | HTMLElement[]): Promise<void>;
-  /**
-   * Toggle the leave or enter transition.
-   * Defaults to the enter transition if no transition has been triggered yet.
-   */
-  toggle(target?: HTMLElement | HTMLElement[]): Promise<void>;
+/**
+ * What a transition runs on: one element, or several transitioning together.
+ *
+ * The list form is load-bearing: a component whose visible part is a set of
+ * refs rather than its own root transitions all of them as one gesture.
+ */
+export type TransitionTarget = HTMLElement | HTMLElement[];
+
+/**
+ * A component that can be entered and left — what `Dialog` fans its
+ * open/close out to.
+ *
+ * The interface is deliberately narrower than what `withTransition` provides:
+ * it is the contract a caller needs, and a caller does not choose the target.
+ * `ViewTransition` implements these three methods over the native View
+ * Transitions API, sharing the contract and none of the CSS-class
+ * implementation.
+ */
+export interface Transitionable {
+  enter(): Promise<void>;
+  leave(): Promise<void>;
+  toggle(): Promise<void>;
+}
+
+/** What the mixin adds, beyond {@link Transitionable}. */
+export interface TransitionInterface extends Transitionable {
+  state: 'entering' | 'leaving' | null;
+  readonly target: TransitionTarget;
+  readonly transitionOptions: TransitionOptions;
+  enter(target?: TransitionTarget): Promise<void>;
+  leave(target?: TransitionTarget): Promise<void>;
+  toggle(target?: TransitionTarget): Promise<void>;
 }
 
 /**
- * Extend a class to add transition capabilities.
- * @link https://ui.studiometa.dev/reference/items/Transition/
+ * Add enter/leave CSS transitions to a component.
+ *
+ * A mixin because of consumer count rather than shape: `Transition`,
+ * `MenuList`, `AbstractFigure`, `FigureVideo` and `AnchorNavLink` all need the
+ * same `state`/`target`/`enter`/`leave`/`toggle` block around
+ * `enterTransition()`/`leaveTransition()`, and writing it once is what keeps
+ * the five in step.
+ *
+ * It is not built on `createServiceMixin()` because there is no service and
+ * no subscription: nothing to start on mount, nothing to release on unmount.
+ * What it shares with those mixins is the type shape — `MixedClass` — so a
+ * consumer threads its own props through exactly as it does for `withResize`:
+ * `class Figure<T> extends withTransition(Base)<FigureProps & T>`.
+ *
+ * **It declares no config**, so a consumer spreads `TRANSITION_OPTIONS` into
+ * its own — one line, which every consumer already had. Declaring them here
+ * would need a `name` too, because `BaseConfig` requires one and the static
+ * side has to stay assignable to `Base`'s; that name would then be inherited
+ * by any consumer which forgot to declare its own, registering a second
+ * component under a name it never chose. Core's service mixins declare no
+ * config for the same reason.
  */
-export function withTransition<S extends Base>(
-  BaseClass: typeof Base,
-): BaseDecorator<TransitionInterface, S, TransitionProps> {
-  type TransitionConstructor<T extends Transition = Transition> = {
-    new (...args: any[]): T;
-    prototype: Transition;
-  } & Pick<typeof Transition, keyof typeof Transition>;
+export interface TransitionMixin {
+  <T extends BaseConstructor>(BaseClass: T): MixedClass<T, TransitionInterface>;
+}
 
-  /**
-   * Class.
-   */
-  class Transition<T extends BaseProps = BaseProps> extends BaseClass<T & TransitionProps> {
+/**
+ * Typed against concrete `BaseConstructor` rather than the public signature's
+ * type parameter, and cast on the way out — the same split `createServiceMixin()`
+ * uses, and for the same reason: TypeScript requires a class extending a *type
+ * parameter* to declare `constructor(...args: any[])`, which would add a
+ * constructor this mixin does not need and would let a caller construct it with
+ * anything at all.
+ */
+const applyTransition = (BaseClass: BaseConstructor) => {
+  class WithTransition extends BaseClass implements Transitionable {
     /**
-     * Declare the `this.constructor` type
-     * @link https://github.com/microsoft/TypeScript/issues/3841#issuecomment-2381594311
+     * The options the mixin reads, declared once here instead of by every
+     * consumer: `resolveConfig()` walks the prototype chain and merges each
+     * own `config`, and a mixin class is a link in that chain like any other.
+     *
+     * Typed rather than spelled with a `name`, which `BaseConfig` requires and
+     * this has no business setting — a name here would be inherited by any
+     * consumer which declared none, registering it under a name it never
+     * chose. The merge treats a config without a name as a contributor to the
+     * one below it, which is exactly what a mixin is.
      */
-    declare ['constructor']: TransitionConstructor;
+    static config = { options: { ...TRANSITION_OPTIONS } } as BaseConfig;
 
-    /**
-     * Events.
-     */
-    static EVENTS = {
-      TRANSITION_TOGGLE: 'transition-toggle',
-      TRANSITION_ENTER: 'transition-enter',
-      TRANSITION_ENTER_START: 'transition-enter-start',
-      TRANSITION_ENTER_END: 'transition-enter-end',
-      TRANSITION_LEAVE: 'transition-leave',
-      TRANSITION_LEAVE_START: 'transition-leave-start',
-      TRANSITION_LEAVE_END: 'transition-leave-end',
-    } as const;
+    state: 'entering' | 'leaving' | null = null;
 
     /**
-     * Config.
+     * What the transition runs on. Defaults to the root element, and can be
+     * overridden to return one ref (`AbstractFigure` returns its `img`) or
+     * several, which then transition together.
      */
-    static config: BaseConfig = {
-      name: 'Transition',
-      emits: Object.values(this.EVENTS),
-      options: {
-        enterFrom: String,
-        enterActive: String,
-        enterTo: String,
-        enterKeep: Boolean,
-        leaveFrom: String,
-        leaveActive: String,
-        leaveTo: String,
-        leaveKeep: Boolean,
-        group: String,
-      },
-    };
-
-    /**
-     * States.
-     */
-    static STATES = {
-      ENTERING: 'entering',
-      LEAVING: 'leaving',
-    } as const;
-
-    /**
-     * Current state.
-     */
-    state: 'entering' | 'leaving' = null;
-
-    /**
-     * Get the transition target.
-     */
-    get target(): HTMLElement | HTMLElement[] {
-      return this.$el;
+    get target(): TransitionTarget {
+      // Through `unknown` for the same reason as `transitionOptions` below:
+      // the host is a loose `BaseConstructor`, so `$el` is `any` here.
+      const el: unknown = this.$el;
+      return el as HTMLElement;
     }
 
     /**
-     * Get the group targets.
+     * The transition declaration.
+     *
+     * Its own hook, rather than a direct `$options` read, because a component
+     * can need a value the markup is not allowed to choose: `MenuList` forces
+     * `enterKeep`/`leaveKeep` to `true`, since a menu left open must stay
+     * visible. `$options` is a read-only view over attributes with no override
+     * point, so the override lands here instead, on the declaration this mixin
+     * reads rather than on the options themselves.
      */
-    get targets(): HTMLElement[] {
-      const { group } = this.$options;
-      const targets = [this.target];
-
-      if (group) {
-        for (const instance of getInstances(this.constructor as typeof Transition)) {
-          if (instance !== this && instance.$options.group === group) {
-            targets.push(instance.target);
-          }
-        }
-      }
-
-      return targets.flat();
+    get transitionOptions(): TransitionOptions {
+      // Through `unknown`, not a direct assertion: the host is a loose
+      // `BaseConstructor`, so `$options` is `any` here and returning it
+      // straight would hand back an unchecked value under type-aware linting.
+      const options: unknown = this.$options;
+      return options as TransitionOptions;
     }
 
     /**
-     * Trigger the enter transition.
+     * The elements one call acts on: what it was handed, else the getter.
+     *
+     * An explicit argument **replaces** `target` rather than adding to it: the
+     * caller who names an element is the one who knows, so a component that
+     * transitions its own root by default can still be told to transition
+     * something else for one call.
+     * @private
      */
-    async enter(target?: HTMLElement | HTMLElement[]): Promise<void> {
-      const { STATES, EVENTS } = this.constructor;
-      const { enterFrom, enterActive, enterTo, enterKeep, leaveTo } = this.$options;
-      this.state = STATES.ENTERING;
-      this.$emit(EVENTS.TRANSITION_ENTER);
-      this.$emit(EVENTS.TRANSITION_ENTER_START);
-      removeClass(target ?? this.targets, leaveTo);
-      await nextFrame();
-      await transition(
-        target ?? this.targets,
-        {
-          from: enterFrom,
-          active: enterActive as string,
-          to: enterTo as string,
-        },
-        enterKeep ? 'keep' : undefined,
-      );
-      this.$emit(EVENTS.TRANSITION_ENTER_END);
+    __elements(target?: TransitionTarget): HTMLElement[] {
+      return [target ?? this.target].flat();
+    }
+
+    async enter(target?: TransitionTarget): Promise<void> {
+      this.state = 'entering';
+      this.$emit('transition-enter');
+      this.$emit('transition-enter-start');
+      await this.__run(enterTransition, target);
+      this.$emit('transition-enter-end');
+    }
+
+    async leave(target?: TransitionTarget): Promise<void> {
+      this.state = 'leaving';
+      this.$emit('transition-leave');
+      this.$emit('transition-leave-start');
+      await this.__run(leaveTransition, target);
+      this.$emit('transition-leave-end');
+    }
+
+    toggle(target?: TransitionTarget): Promise<void> {
+      return this.state === 'entering' ? this.leave(target) : this.enter(target);
     }
 
     /**
-     * Trigger the leave transition.
+     * Run one direction across every element, together rather than in turn.
+     *
+     * `Promise.all` over a synchronous `map` is what makes them one gesture:
+     * each `enterTransition()` applies its `from` state and clears the other
+     * direction's `to` before it first awaits, so every element is staged
+     * before any of them reaches the next frame.
+     * @private
      */
-    async leave(target?: HTMLElement | HTMLElement[]): Promise<void> {
-      const { STATES, EVENTS } = this.constructor;
-      const { leaveFrom, leaveActive, leaveTo, leaveKeep, enterTo } = this.$options;
-      this.state = STATES.LEAVING;
-      this.$emit(EVENTS.TRANSITION_LEAVE);
-      this.$emit(EVENTS.TRANSITION_LEAVE_START);
-      removeClass(target ?? this.targets, enterTo);
-      await nextFrame();
-      await transition(
-        target ?? this.targets,
-        {
-          from: leaveFrom,
-          active: leaveActive as string,
-          to: leaveTo as string,
-        },
-        leaveKeep ? 'keep' : undefined,
-      );
-      this.$emit(EVENTS.TRANSITION_LEAVE_END);
-    }
-
-    /**
-     * Toggle the leave or enter transition.
-     * Defaults to the enter transition if no transition has been triggered yet.
-     */
-    async toggle(target?: HTMLElement | HTMLElement[]): Promise<void> {
-      const { STATES, EVENTS } = this.constructor;
-
-      this.$emit(EVENTS.TRANSITION_TOGGLE);
-
-      switch (this.state) {
-        case STATES.ENTERING:
-          return this.leave(target);
-        case STATES.LEAVING:
-        default:
-          return this.enter(target);
-      }
+    __run(
+      run: (el: HTMLElement, options: TransitionOptions) => Promise<void>,
+      target?: TransitionTarget,
+    ): Promise<void[]> {
+      const { transitionOptions } = this;
+      return Promise.all(this.__elements(target).map((el) => run(el, transitionOptions)));
     }
   }
 
-  // @ts-ignore
-  return Transition;
-}
+  return WithTransition;
+};
+
+export const withTransition = applyTransition as unknown as TransitionMixin;

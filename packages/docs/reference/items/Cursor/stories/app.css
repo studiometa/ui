@@ -1,0 +1,48 @@
+/* `Cursor` publishes `--cursor-x`, `--cursor-y`, `data-cursor-state` and
+   `data-cursor-down`, and applies the position itself. Everything below is the
+   visual, and it is only CSS.
+
+   The template's own rules are wrapped in `:where()`, so these plain selectors
+   override them without `!important`. */
+
+[data-component='Cursor'] {
+  background-color: #000;
+  /* `scale` and `background-color` are ours: the component only writes
+     `translate`, so the two never fight. */
+  transition:
+    scale 300ms cubic-bezier(0.25, 1, 0.5, 1),
+    background-color 300ms ease-out;
+}
+
+/* `grow` — the state the default template ships. */
+[data-component='Cursor'][data-cursor-state='grow'] {
+  scale: 2;
+  background-color: #2563eb;
+}
+
+[data-component='Cursor'][data-cursor-state='shrink'] {
+  scale: 0.4;
+}
+
+/* `invert` — a name of our own, and a property the old API could not reach. */
+[data-component='Cursor'][data-cursor-state='invert'] {
+  scale: 1.5;
+  background-color: #fff;
+  mix-blend-mode: difference;
+}
+
+/* The button is published apart from the state, so a press over the link keeps
+   its `grow` and only gets smaller. */
+[data-component='Cursor'][data-cursor-down] {
+  scale: 0.75;
+}
+
+[data-component='Cursor'][data-cursor-state='grow'][data-cursor-down] {
+  scale: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component='Cursor'] {
+    transition: none;
+  }
+}

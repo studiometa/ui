@@ -1,1 +1,1 @@
-export { ClickOutside, type ClickOutsideProps } from './ClickOutside.js';
+export { ClickOutside } from './ClickOutside.js';

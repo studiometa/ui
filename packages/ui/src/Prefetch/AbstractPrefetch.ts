@@ -1,33 +1,31 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { loadLink } from '@studiometa/js-toolkit/utils/loadLink';
 
-export interface AbstractPrefetchProps extends BaseProps {
+export type AbstractPrefetchProps = BaseProps & {
   $el: HTMLAnchorElement;
   $options: {
     prefetch: boolean;
   };
-}
+  $emits: {
+    prefetched: { url: URL };
+  };
+};
 
 /**
- * AbstractPrefetch class.
- *
  * Shared base for the prefetch components, bound to an anchor element. It
  * injects a `<link rel="prefetch">` for the anchor's `href` when the URL is
  * prefetchable — same-origin, not the current page, and not disabled by the
- * `prefetch` option — deduplicates across instances and emits a `prefetched`
- * event. Subclasses decide when `prefetch()` is called.
+ * `prefetch` option — and emits `prefetched`. Subclasses decide when
+ * `prefetch()` is called.
  *
  * @link https://ui.studiometa.dev/reference/items/Prefetch/
  */
 export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
-  T & AbstractPrefetchProps
+  AbstractPrefetchProps & T
 > {
-  /**
-   * Config.
-   */
   static config: BaseConfig = {
     name: 'AbstractPrefetch',
-    emits: ['prefetched'],
     options: {
       prefetch: {
         type: Boolean,
@@ -36,26 +34,17 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
     },
   };
 
-  /**
-   * Store prefetched URL.
-   */
-  static prefetchedUrls: Set<string> = new Set();
-
-  /**
-   * Get the URL to prefetch.
-   */
+  /** The URL to prefetch, or `null` for an anchor with no destination. */
   get url(): URL | null {
     const { href } = this.$el;
     return href ? new URL(href) : null;
   }
 
-  /**
-   * Is the URL prefetchable?
-   */
+  /** Is the URL worth a hint? */
   get isPrefetchable(): boolean {
     const { url } = this;
 
-    if (!url || !url.href) {
+    if (!url?.href) {
       return false;
     }
 
@@ -82,25 +71,26 @@ export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   }
 
   /**
-   * Prefetch the URL.
+   * Hint the URL.
+   *
+   * `loadLink()` owns all of it: it builds the element, appends it to
+   * `<head>`, settles on the load event and deduplicates by resolved URL
+   * **and** `rel`, so nothing here has to track what was already hinted.
+   *
+   * `isPrefetchable` is asked before `url.href` is read, because an `<a>` with
+   * no `href` has no URL to read one from.
    */
-  prefetch() {
-    const { url } = this;
-
-    if (AbstractPrefetch.prefetchedUrls.has(url.href)) {
-      return;
-    }
-
+  prefetch(): void {
     if (!this.isPrefetchable) {
       return;
     }
 
-    const prefetcher = document.createElement('link');
-    prefetcher.rel = 'prefetch';
-    prefetcher.href = url.href;
-    prefetcher.addEventListener('load', () => this.$emit('prefetched', url));
-    document.head.append(prefetcher);
+    const url = this.url as URL;
 
-    AbstractPrefetch.prefetchedUrls.add(url.href);
+    void loadLink(url.href, { rel: 'prefetch' }).then(() => {
+      if (this.$isMounted) {
+        this.$emit('prefetched', { url });
+      }
+    });
   }
 }

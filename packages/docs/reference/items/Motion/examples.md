@@ -90,7 +90,13 @@ The `hover`, `press` and `inView` options apply keyframes while their state hold
 
 ## Spring entrance and exit for a `Dialog`
 
-The [`Dialog`](/reference/items/Dialog/) component handles the top layer, focus and scroll lock, and its lifecycle events are [extendable](/reference/items/Dialog/js-api#extending-the-choreography-with-waituntil): registering a promise with `event.detail.waitUntil()` makes the dialog wait for it. The `open` event plays a spring entrance on the `Motion` box, the `close` event plays it in reverse, and the dialog stays painted until the exit settles — physics a CSS transition cannot express. Every closing interaction (button, backdrop, <kbd>Esc</kbd>) just calls `Dialog.close()`.
+The [`Dialog`](/reference/items/Dialog/) component handles the top layer, focus and scroll lock, and both its lifecycle events bubble, so an [`Action`](/reference/items/Action/) can route them: the `open` event plays a spring entrance on the `Motion` box and the `close` event plays it in reverse — physics a CSS transition cannot express. Every closing interaction (button, backdrop, <kbd>Esc</kbd>) just calls `Dialog.close()`.
+
+A `Motion` is not one of the dialog's [transition children](/reference/items/Dialog/js-api#what-the-dialog-waits-for), so the exit would be cut off when the native dialog hides. Handing each animation to [`event.detail.waitUntil()`](/reference/items/Dialog/js-api#extending-the-lifecycle-with-waituntil) is what makes the dialog wait for it.
+
+::: tip Guard the `detail`
+A `<dialog>` fires its own native `close` event once hidden, which carries no `detail` and shares the name. `event.detail?.waitUntil(…)` skips it — and skips the animation call with it, since an optional chain does not evaluate its arguments.
+:::
 
 <llm-exclude>
   <PreviewPlayground

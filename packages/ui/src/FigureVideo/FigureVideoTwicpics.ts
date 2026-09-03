@@ -1,37 +1,31 @@
+import { withResize } from '@studiometa/js-toolkit/withResize';
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import { loadImage } from '@studiometa/js-toolkit/utils/loadImage';
 import { withLeadingSlash } from '@studiometa/js-toolkit/utils/withLeadingSlash';
 import { withoutLeadingSlash } from '@studiometa/js-toolkit/utils/withoutLeadingSlash';
 import { withoutTrailingSlash } from '@studiometa/js-toolkit/utils/withoutTrailingSlash';
 import { normalizeSize } from '../Figure/utils.js';
-import { FigureVideo } from './FigureVideo.js';
+import { FigureVideo, type FigureVideoProps } from './FigureVideo.js';
 
-export interface FigureVideoTwicpicsProps extends BaseProps {
-  $refs: {
-    video: HTMLVideoElement;
-  };
-  $options: {
-    lazy: boolean;
+export type FigureVideoTwicpicsProps = FigureVideoProps & {
+  $options: FigureVideoProps['$options'] & {
     transform: string;
     domain: string;
     path: string;
     step: number;
     mode: string;
   };
-}
+};
 
 /**
- * FigureVideoTwicpics class.
+ * Dynamic video figure that rewrites its poster and source URLs into
+ * TwicPics URLs sized to the rendered element, and reloads them on resize.
  *
- * Manager lazyloading image sources.
  * @link https://ui.studiometa.dev/reference/items/FigureVideoTwicpics/
  */
-export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends FigureVideo<
-  T & FigureVideoTwicpicsProps
+export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends withResize(FigureVideo)<
+  FigureVideoTwicpicsProps & T
 > {
-  /**
-   * Config.
-   */
   static config: BaseConfig = {
     ...FigureVideo.config,
     name: 'FigureVideoTwicpics',
@@ -40,50 +34,32 @@ export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends Figure
       transform: String,
       domain: String,
       path: String,
-      step: {
-        type: Number,
-        default: 50,
-      },
-      mode: {
-        type: String,
-        default: 'cover',
-      },
+      step: { type: Number, default: 50 },
+      mode: { type: String, default: 'cover' },
     },
   };
 
-  /**
-   * Normalize the given video dimension to the step option.
-   * @private
-   */
+  /** @private */
   __normalizeSize(prop: 'offsetWidth' | 'offsetHeight'): number {
     return normalizeSize(this.$refs.video[prop], this.$options.step);
   }
 
-  /**
-   * Get the Twicpics path.
-   */
+  /** The TwicPics path. */
   get path(): string {
     return withoutTrailingSlash(withoutLeadingSlash(this.$options.path));
   }
 
-  /**
-   * Get the Twicpics domain.
-   */
+  /** The TwicPics domain: the option, or the first source's own host. */
   get domain(): string {
     if (this.$options.domain) {
       return this.$options.domain;
     }
-    const url = new URL(this.sources[0].dataset.src);
-    return url.host;
+    const src = this.sources[0]?.dataset.src;
+    return src ? new URL(src).host : '';
   }
 
-  /**
-   * Format the source for Twicpics.
-   * @param {string} src
-   * @param {Array} options
-   * @returns {string}
-   */
-  formatSrc(src: string, options: Array<string> = []): string {
+  /** Format a source for TwicPics. */
+  formatSrc(src: string, extra: string[] = []): string {
     const url = new URL(src, 'https://localhost');
     url.host = this.domain;
     url.port = '';
@@ -95,11 +71,9 @@ export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends Figure
     const width = this.__normalizeSize('offsetWidth');
     const height = this.__normalizeSize('offsetHeight');
 
-    this.$log(this.$options.mode, width, height);
-
     url.searchParams.set(
       'twic',
-      ['v1', this.$options.transform, `${this.$options.mode}=${width}x${height}`, ...options]
+      ['v1', this.$options.transform, `${this.$options.mode}=${width}x${height}`, ...extra]
         .filter(Boolean)
         .join('/'),
     );
@@ -109,64 +83,79 @@ export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends Figure
     return url.toString();
   }
 
-  /**
-   * Load poster
-   */
-  loadPoster(): Promise<void> {
+  async loadPoster(): Promise<void> {
     const { video } = this.$refs;
 
     if (!video.dataset.poster) {
-      return Promise.resolve();
+      return;
     }
 
     const twicPoster = this.formatSrc(video.dataset.poster);
 
-    return loadImage(twicPoster)
-      .then(() => {
-        video.poster = twicPoster;
-        this.$log('fresh poster loaded');
-      })
-      .catch(() => {
-        this.$warn(`Failed to load poster "${twicPoster}".`);
-      });
+    try {
+      await loadImage(twicPoster);
+      video.poster = twicPoster;
+    } catch (error) {
+      this.$error(
+        'figure-video.poster-load-failed',
+        `Failed to load poster "${twicPoster}".`,
+        error,
+      );
+    }
   }
 
-  /**
-   * Load sources
-   */
   loadSources(): Promise<void> {
     const { video } = this.$refs;
 
-    this.sources.forEach((source) => {
+    for (const source of this.sources) {
       if (!source.dataset.src) {
-        return;
+        continue;
       }
       source.src = this.formatSrc(
         source.dataset.src,
         source.dataset.output ? [`output=${source.dataset.output}`] : [],
       );
-    });
+    }
 
-    return new Promise((resolve) => {
-      const loadHandler = () => {
-        resolve();
-        video.removeEventListener('canplaythrough', loadHandler);
-        this.$log('fresh sources loaded');
+    /**
+     * Settled by either outcome, mirroring the base `loadSources()`.
+     *
+     * This override waits on `canplaythrough` where the base waits on
+     * `loadeddata`, and it had the same defect: without an `error` listener a
+     * video whose sources fail never settles, and `mounted()` awaits it — so
+     * no diagnostic, no transition and no retry. Fixing only the base left the
+     * TwicPics variant hanging, because this method replaces it entirely.
+     */
+    return new Promise<void>((resolve, reject) => {
+      const settle = (handler: () => void) => {
+        video.removeEventListener('canplaythrough', onReady);
+        video.removeEventListener('error', onError);
+        handler();
       };
+      const onReady = () => settle(resolve);
+      const onError = () =>
+        settle(() => reject(new Error(`Failed to load the sources of "${video.currentSrc}".`)));
 
-      video.addEventListener('canplaythrough', loadHandler);
-
-      this.$refs.video.width = this.__normalizeSize('offsetWidth');
-      this.$refs.video.height = this.__normalizeSize('offsetHeight');
-
+      video.addEventListener('canplaythrough', onReady, { once: true });
+      video.addEventListener('error', onError, { once: true });
+      video.width = this.__normalizeSize('offsetWidth');
+      video.height = this.__normalizeSize('offsetHeight');
       video.load();
     });
   }
 
   /**
-   * Reassign the source from the original on resize.
+   * Reassign and reload the sources from the original on resize.
+   *
+   * Started rather than awaited, for the reason `AbstractFigureDynamic`
+   * documents: `ResizeHook.resized` returns `void`.
    */
-  async resized() {
+  resized(): void {
+    void this.reloadForSize();
+  }
+
+  /** Resize the video element and reload its sources, if the size changed. */
+  async reloadForSize(): Promise<void> {
     const width = this.__normalizeSize('offsetWidth');
     const height = this.__normalizeSize('offsetHeight');
 
@@ -178,12 +167,5 @@ export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends Figure
     this.$refs.video.height = height;
 
     await this.load();
-  }
-
-  /**
-   * Do not terminate on image load as we need to set the src on resize.
-   */
-  onLoad() {
-    // Do not terminate on image load as we need.
   }
 }

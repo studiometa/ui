@@ -1,21 +1,37 @@
 import { describe, it, expect, vi } from 'vitest';
-import { h } from '#test-utils';
-import { MockMap } from './mock-mapbox-gl.js';
-import { AbstractMapboxMapChild, MapboxMarker } from '@studiometa/ui-mapbox';
+import type { BaseConfig } from '@studiometa/js-toolkit';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { captureDiagnostics, recordEvents, settle } from '@studiometa/js-toolkit/test';
+import {
+  AbstractMapboxMapChild,
+  type AbstractMapboxMapChildProps,
+  MapboxMap,
+  MapboxMarker,
+} from '@studiometa/ui-mapbox';
+import { append, mountMap } from './harness.js';
+
+interface AsyncChildProps extends AbstractMapboxMapChildProps {
+  /**
+   * `done` joins the inherited `map-error`. Both are declared in the props
+   * type, and each payload is one named object.
+   */
+  $emits: AbstractMapboxMapChildProps['$emits'] & {
+    done: { map: unknown };
+  };
+}
 
 /**
  * A concrete child whose async ready callback can be made to reject or to gate on
  * an external promise, used to exercise the async containment and stale-callback
  * invalidation centralised in `AbstractMapboxMapChild`.
  */
-class AsyncChild extends AbstractMapboxMapChild {
-  static config = {
+class AsyncChild extends AbstractMapboxMapChild<AsyncChildProps> {
+  static config: BaseConfig = {
     name: 'AsyncChild',
-    emits: ['map-error', 'done'],
   };
 
   rejectWith?: Error;
-  gate = Promise.resolve();
+  gate: Promise<void> = Promise.resolve();
   ran = 0;
   skipped = 0;
 
@@ -23,10 +39,10 @@ class AsyncChild extends AbstractMapboxMapChild {
     this.whenMapReady(async (map) => {
       await this.gate;
 
-      // The map may have been removed/replaced (or the child destroyed) while
+      // The map may have been removed/replaced (or the child unmounted) while
       // the callback was awaiting: honour the same identity guard the built-in
       // subclasses use so a stale callback no-ops instead of mutating a dead map.
-      if (!this.$isMounted || (this as any).__readyMap !== map) {
+      if (!this.$isMounted || this.__readyMap !== map) {
         this.skipped += 1;
         return;
       }
@@ -37,167 +53,130 @@ class AsyncChild extends AbstractMapboxMapChild {
         throw this.rejectWith;
       }
 
-      this.$emit('done', map);
+      this.$emit('done', { map });
     });
   }
 }
 
-function createAsyncChild(mapboxMap: unknown) {
-  const el = h('div', { 'data-component': 'AsyncChild' });
-  const instance = new AsyncChild(el);
-  instance.$closest = vi.fn((query: string) =>
-    query === 'MapboxMap' ? (mapboxMap as any) : undefined,
-  );
-  return instance;
+registerComponents(MapboxMap, MapboxMarker, AsyncChild);
+
+const ASYNC_HTML = '<div data-component="AsyncChild"></div>';
+const MARKER_HTML = '<div data-component="MapboxMarker" data-option-lng-lat="[2, 48]"></div>';
+
+/** Mount a loaded `MapboxMap` holding one `AsyncChild`, not yet armed. */
+async function createAsyncChild() {
+  const context = await mountMap();
+  await context.load();
+  const el = await append(context.mapEl, ASYNC_HTML);
+
+  return {
+    context,
+    instance: getInstance<AsyncChild>(el, 'AsyncChild')!,
+    mockMap: context.mockMap,
+  };
 }
 
 describe('AbstractMapboxMapChild — async ready callbacks (F-async)', () => {
-  it('should contain a rejected async callback: no unhandled rejection, warns + emits map-error', async () => {
-    const mockMap = new MockMap();
-    const mapboxMap = { map: mockMap, isLoaded: true, $options: { accessToken: 't' } };
-    const instance = createAsyncChild(mapboxMap);
-    instance.$options.log = true;
-
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const onError = vi.fn();
+  it('should contain a rejected async callback: no unhandled rejection, reports + emits map-error', async () => {
+    const { instance } = await createAsyncChild();
+    // A recovered failure is reported on the diagnostic channel, so the
+    // assertion reads the namespaced code.
+    const diagnostics = captureDiagnostics();
+    const log = recordEvents(instance.$el, 'map-error');
     const boom = new Error('async boom');
-    instance.rejectWith = boom;
-    instance.$on('map-error', onError);
 
-    // A global unhandledrejection would fail the test run, so assert none fires.
+    // A global unhandled rejection would fail the run, so assert none fires.
     const onUnhandled = vi.fn();
-    process.on('unhandledRejection', onUnhandled);
+    window.addEventListener('unhandledrejection', onUnhandled);
 
-    vi.useFakeTimers();
+    instance.$unmount();
+    instance.ran = 0;
+    instance.rejectWith = boom;
     instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    // Let the awaited microtasks + the rejection routing settle.
-    await Promise.resolve();
-    await Promise.resolve();
-    vi.useRealTimers();
+    await settle();
 
-    process.off('unhandledRejection', onUnhandled);
+    window.removeEventListener('unhandledrejection', onUnhandled);
 
     expect(instance.ran).toBe(1);
-    expect(warn).toHaveBeenCalled();
-    expect(onError).toHaveBeenCalledTimes(1);
-    expect((onError.mock.calls[0][0] as CustomEvent).detail[0]).toBe(boom);
+    expect(diagnostics.codes).toContain('mapbox-map-child.failed');
+    expect(log.events).toHaveLength(1);
+    // The payload is one named object: the cause travels as `detail.error`.
+    expect((log.events[0].detail as { error: unknown }).error).toBe(boom);
     expect(onUnhandled).not.toHaveBeenCalled();
 
-    warn.mockRestore();
+    log.stop();
+    diagnostics.stop();
   });
 
   it('should run a resolving async callback to completion', async () => {
-    const mockMap = new MockMap();
-    const mapboxMap = { map: mockMap, isLoaded: true, $options: { accessToken: 't' } };
-    const instance = createAsyncChild(mapboxMap);
-    const done = vi.fn();
-    instance.$on('done', done);
+    const { instance } = await createAsyncChild();
+    const log = recordEvents(instance.$el, 'done');
 
-    vi.useFakeTimers();
+    instance.$unmount();
+    instance.ran = 0;
     instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    await Promise.resolve();
-    vi.useRealTimers();
+    await settle();
 
     expect(instance.ran).toBe(1);
-    expect(done).toHaveBeenCalledTimes(1);
+    expect(log.events).toHaveLength(1);
+    log.stop();
   });
 
   it('should no-op a stale async callback whose map was removed mid-flight', async () => {
-    const mockMap = new MockMap();
-    const mapboxMap = { map: mockMap, isLoaded: true, $options: { accessToken: 't' } };
-    const instance = createAsyncChild(mapboxMap);
-    const done = vi.fn();
-    instance.$on('done', done);
+    const { instance, mockMap } = await createAsyncChild();
+    const log = recordEvents(instance.$el, 'done');
 
     // Gate the callback so we can remove the map while it is awaiting.
-    let openGate: () => void = () => {};
+    let openGate: (() => void) | undefined;
+    instance.$unmount();
+    instance.ran = 0;
+    instance.skipped = 0;
     instance.gate = new Promise<void>((resolve) => {
       openGate = resolve;
     });
-
-    vi.useFakeTimers();
     instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
+    await settle();
 
     // The map is removed while the callback is still awaiting the gate: the base
     // clears `__readyMap`, invalidating the in-flight callback.
     mockMap.remove();
-    expect((instance as any).__readyMap).toBeUndefined();
+    expect(instance.__readyMap).toBeUndefined();
 
-    openGate();
-    await vi.advanceTimersByTimeAsync(100);
-    await Promise.resolve();
-    vi.useRealTimers();
+    openGate!();
+    await settle();
 
     // The stale callback bailed instead of mutating the dead map or emitting.
     expect(instance.skipped).toBe(1);
     expect(instance.ran).toBe(0);
-    expect(done).not.toHaveBeenCalled();
+    expect(log.events).toHaveLength(0);
+    log.stop();
   });
 });
 
 describe('AbstractMapboxMapChild — removal before initial load (H2)', () => {
   it('should re-inject on a replacement map after the first was removed before it loaded', async () => {
-    const mapEl = h('div', { 'data-component': 'MapboxMap' });
-    const childEl = h('div', {
-      'data-component': 'MapboxMarker',
-      'data-option-lng-lat': '[2, 48]',
-    });
-    mapEl.append(childEl);
-
-    // First map: resolved but NOT loaded yet — the child binds and waits on
+    // First map: built but NOT loaded yet — the child binds and waits on
     // `map-load`.
-    const firstMap = new MockMap();
-    const firstMapbox = {
-      map: firstMap,
-      isLoaded: false,
-      $el: mapEl,
-      $options: { accessToken: 't' },
-      _handlers: [] as Function[],
-      $on(event: string, cb: Function) {
-        if (event === 'map-load') this._handlers.push(cb);
-        return () => {
-          const i = this._handlers.indexOf(cb);
-          if (i > -1) this._handlers.splice(i, 1);
-        };
-      },
-    };
-
-    const instance = new MapboxMarker(childEl);
-    instance.$closest = vi.fn((query: string) =>
-      query === 'MapboxMap' ? (firstMapbox as any) : undefined,
-    );
-
-    vi.useFakeTimers();
-    instance.$mount();
-    await vi.advanceTimersByTimeAsync(100);
-    vi.useRealTimers();
+    const context = await mountMap(MARKER_HTML);
+    const el = context.mapEl.querySelector<HTMLElement>('[data-component="MapboxMarker"]')!;
+    const instance = getInstance<MapboxMarker>(el, 'MapboxMarker')!;
+    const marker = instance.marker as unknown as { addTo: unknown };
 
     // Not injected: the map never loaded.
-    expect((instance.marker as any).addTo).not.toHaveBeenCalled();
+    expect(marker.addTo).not.toHaveBeenCalled();
 
     // The map is removed BEFORE it ever loaded. Because the child bound the
     // `remove` handler at bind-time (not only after load), it drops the pending
     // `map-load` subscription and re-parks on the connected event.
-    firstMap.remove();
-    expect((instance as any).__readyMap).toBeUndefined();
+    context.mapbox.$unmount();
+    await settle();
+    expect(instance.__readyMap).toBeUndefined();
 
     // A replacement map connects and loads: the still-mounted child re-injects.
-    const secondMap = new MockMap();
-    const secondMapbox = {
-      map: secondMap,
-      isLoaded: true,
-      $el: mapEl,
-      $options: { accessToken: 't' },
-      $on: () => () => {},
-    };
-    instance.$closest = vi.fn((query: string) =>
-      query === 'MapboxMap' ? (secondMapbox as any) : undefined,
-    );
-    document.dispatchEvent(new CustomEvent('mapbox-map:connected', { detail: secondMapbox }));
+    context.mapbox.$mount();
+    await settle();
+    await context.load();
 
-    expect((instance.marker as any).addTo).toHaveBeenCalledWith(secondMap);
+    expect(marker.addTo).toHaveBeenCalledWith(context.mapbox.map);
   });
 });

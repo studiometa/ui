@@ -1,9 +1,6 @@
-import { withExtraConfig } from '@studiometa/js-toolkit/withExtraConfig';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import type { NavigationControlOptions } from 'mapbox-gl';
-import {
-  AbstractMapboxControl,
-  type AbstractMapboxControlProps,
-} from './AbstractMapboxControl.js';
+import { AbstractMapboxControl, type AbstractMapboxControlProps } from './AbstractMapboxControl.js';
 import { getMapboxGl } from './dependencies.js';
 
 export interface MapboxNavigationControlProps extends AbstractMapboxControlProps {
@@ -16,16 +13,24 @@ export interface MapboxNavigationControlProps extends AbstractMapboxControlProps
 
 /**
  * Add a navigation control to the map.
+ *
  * @see https://ui.studiometa.dev/reference/items/MapboxMap/
  */
-export class MapboxNavigationControl extends withExtraConfig(AbstractMapboxControl, {
-  name: 'MapboxNavigationControl',
-  options: {
-    showCompass: Boolean,
-    showZoom: Boolean,
-    visualizePitch: Boolean,
-  },
-}) {
+export class MapboxNavigationControl<T extends BaseProps = BaseProps> extends AbstractMapboxControl<
+  T & MapboxNavigationControlProps
+> {
+  /**
+   * Config.
+   */
+  static config: BaseConfig = {
+    name: 'MapboxNavigationControl',
+    options: {
+      showCompass: Boolean,
+      showZoom: Boolean,
+      visualizePitch: Boolean,
+    },
+  };
+
   /**
    * Create the mapbox NavigationControl instance.
    * @protected

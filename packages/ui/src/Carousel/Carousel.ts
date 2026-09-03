@@ -1,252 +1,465 @@
-import type { Base, BaseConfig } from '@studiometa/js-toolkit';
-import { createMemoryStorageProvider } from '@studiometa/js-toolkit/utils/createMemoryStorageProvider';
-import { createStorage } from '@studiometa/js-toolkit/utils/createStorage';
-import { isNumber } from '@studiometa/js-toolkit/utils/isNumber';
-import { nextFrame } from '@studiometa/js-toolkit/utils/nextFrame';
-import type { IndexableInstructions, IndexableProps } from '../decorators/index.js';
-import { Indexable } from '../Indexable/index.js';
-import { AbstractCarouselChild } from './AbstractCarouselChild.js';
+import { nextFrame } from '@studiometa/js-toolkit/nextFrame';
+import { signal } from '@studiometa/js-toolkit/signal';
+import { withRaf } from '@studiometa/js-toolkit/withRaf';
+import { withResize } from '@studiometa/js-toolkit/withResize';
+import type {
+  BaseConfig,
+  ChildrenCollection,
+  MountedReturn,
+  RafRender,
+} from '@studiometa/js-toolkit';
+import { SCROLL_AXES } from '@studiometa/js-toolkit/utils/SCROLL_AXES';
+import { scrollPosition } from '@studiometa/js-toolkit/utils/scrollPosition';
 import { CarouselBtn } from './CarouselBtn.js';
+import { CarouselCount } from './CarouselCount.js';
+import { CarouselDots } from './CarouselDots.js';
 import { CarouselDrag } from './CarouselDrag.js';
 import { CarouselItem } from './CarouselItem.js';
+import { CarouselPlay } from './CarouselPlay.js';
+import { CarouselProgress } from './CarouselProgress.js';
+import { CarouselThumbnails } from './CarouselThumbnails.js';
 import { CarouselWrapper } from './CarouselWrapper.js';
+import { CarouselContext, type CarouselApi, type CarouselState } from './context.js';
+import {
+  Indexable,
+  type IndexableInstruction,
+  type IndexableProps,
+} from '../Indexable/Indexable.js';
+import { snapAlignment, type ScrollPosition } from './utils.js';
 
-/**
- * Shape of the per-instance store shared with the child components.
- */
-export type CarouselStore = { index: number };
-
-/**
- * Props for the Carousel class.
- */
-export interface CarouselProps {
-  $children: {
-    CarouselBtn: CarouselBtn[];
-    CarouselDrag: CarouselDrag[];
-    CarouselItem: CarouselItem[];
-    CarouselWrapper: CarouselWrapper[];
-  };
-  $options: {
+export type CarouselProps = IndexableProps & {
+  $options: IndexableProps['$options'] & {
     axis: 'x' | 'y';
+    slideLabel: string;
   };
-}
+  $emits: IndexableProps['$emits'] & {
+    progress: { progress: number };
+  };
+};
 
 /**
- * Carousel class.
+ * The fallback accessible name of a slide, with the two placeholders the
+ * `slide-label` option substitutes.
+ *
+ * English, and replaceable through the option, because a generated name is the
+ * one string this component puts in front of a screen reader. `{index}` is
+ * one-based — "1 of 4", not "0 of 4" — since it is read aloud, not indexed
+ * with.
  */
-export class Carousel<T extends IndexableProps = IndexableProps> extends Indexable<T & CarouselProps> {
-  /**
-   * Config.
-   */
+const DEFAULT_SLIDE_LABEL = '{index} of {total}';
+
+/**
+ * The coordinator: a scroll-snapping carousel with live slides, navigation
+ * buttons, an optional drag track and a published progress value.
+ *
+ * The shape is the one the `Slider` port arrived at. State and commands travel
+ * on one provided object, so no control imports this class; the slides and the
+ * wrapper are live `$watchChildren` collections, so adding or removing a slide
+ * needs no `$update()`; and the geometry lives here, because this is the only
+ * place that knows both the scroller and the item list.
+ */
+export class Carousel extends withResize(withRaf(Indexable, { manual: true }))<CarouselProps> {
   static config: BaseConfig = {
     name: 'Carousel',
     components: {
       CarouselBtn,
+      CarouselCount,
+      CarouselDots,
       CarouselDrag,
       CarouselItem,
+      CarouselPlay,
+      CarouselProgress,
+      CarouselThumbnails,
       CarouselWrapper,
     },
     options: {
-      ...Indexable.config.options,
       axis: { type: String, default: 'x' },
+      slideLabel: { type: String, default: DEFAULT_SLIDE_LABEL },
     },
-    emits: ['progress'],
   };
 
+  state = signal<CarouselState>({
+    index: 0,
+    total: 0,
+    prevIndex: 0,
+    nextIndex: 0,
+    isHorizontal: true,
+  });
+
   /**
-   * Per-instance store used to broadcast the current index to the child
-   * components. Controls subscribe to it through a guarded `$closest('Carousel')`
-   * lookup instead of listening to `index`/`progress` events, which removes the
-   * mount-order race where a child that mounted before the Carousel missed the
-   * initial index.
+   * The scroll-derived progress, republished from the frame hook.
    *
-   * The store uses the in-memory provider and lives for the whole lifetime of
-   * the instance (it is a constructor-time field). It survives `$destroy`/
-   * `$mount` cycles of the same instance — a re-mounted Carousel exposes a
-   * stale-but-consistent seeded index and its children re-subscribe on remount
-   * and unsubscribe on destroy, so there is no leak and no need to `destroy()`
-   * the memory store.
+   * Declared before `api`, which reads it: class fields initialise in source
+   * order, so a signal declared after the provider would be `undefined` on the
+   * object every control receives.
    */
-  store = createStorage<CarouselStore>({ provider: createMemoryStorageProvider() });
+  scrollProgress = signal(0);
 
   /**
-   * Is the carousel horizontal?
+   * The exposed surface. Provided from a field initializer, so it answers a
+   * child's `$injectSync` from the moment the instance exists, with no
+   * handshake to arrange.
    */
-  get isHorizontal() {
-    return !this.isVertical;
-  }
+  api: CarouselApi = this.$provide(CarouselContext, {
+    state: this.state,
+    progress: this.scrollProgress,
+    el: this.$el,
+    slideLabel: (index, total) => this.slideLabel(index, total),
+    goTo: (indexOrInstruction) => {
+      void this.goTo(indexOrInstruction);
+    },
+    goNext: () => {
+      void this.goNext();
+    },
+    goPrev: () => {
+      void this.goPrev();
+    },
+    indexOf: (element) => this.items.items.findIndex((item) => item.$el === element),
+    positions: () => this.positions,
+    reportIndex: (index) => {
+      this.currentIndex = index;
+    },
+    keepTicking: () => {
+      this.$services.ticked.start();
+    },
+  });
 
-  /**
-   * Is the carousel vertical?
-   */
-  get isVertical() {
-    return this.$options.axis === 'y';
-  }
+  items: ChildrenCollection<CarouselItem> = this.$watchChildren(CarouselItem, {
+    added: () => this.itemsChanged(),
+    removed: () => this.itemsChanged(),
+  });
 
-  /**
-   * Get the carousel's items.
-   */
-  get items() {
-    return this.$children.CarouselItem;
-  }
+  wrappers: ChildrenCollection<CarouselWrapper> = this.$watchChildren(CarouselWrapper, {
+    added: () => this.wrappersChanged(),
+    removed: () => this.wrappersChanged(),
+  });
 
-  /**
-   * Get the carousel's length.
-   */
-  get length() {
-    return this.items?.length || 0;
-  }
-
-  /**
-   * Get the carousel's wrapper.
-   */
-  get wrapper() {
-    return this.$children.CarouselWrapper?.[0];
-  }
-
-  /**
-   * Previous progress value.
-   */
   previousProgress = -1;
 
   /**
-   * Progress from 0 to 1.
+   * The scroll offset of every slide, at the alignment its own
+   * `scroll-snap-align` asks for, measured once per change.
    */
-  get progress() {
+  __positions: ScrollPosition[] | null = null;
+
+  /**
+   * The observer deciding which slides are presented.
+   * @private
+   */
+  __presenceObserver: IntersectionObserver | null = null;
+
+  /**
+   * The scroller the current observer was built against. An
+   * `IntersectionObserver` bakes its root in at construction, so a wrapper
+   * arriving or leaving means a new observer rather than a new `observe()`.
+   * @private
+   */
+  __presenceRoot: HTMLElement | null = null;
+
+  get isHorizontal(): boolean {
+    return !this.isVertical;
+  }
+
+  get isVertical(): boolean {
+    return this.$options.axis === 'y';
+  }
+
+  /** The slide count, which is what `Indexable` normalises against. */
+  get length(): number {
+    return this.items.size;
+  }
+
+  get wrapper(): CarouselWrapper | undefined {
+    return this.wrappers.items[0];
+  }
+
+  get progress(): number {
     return this.wrapper?.progress ?? 0;
   }
 
-  /**
-   * Get the current index.
-   *
-   * The accessor pair is overridden as a whole: defining only the setter would
-   * shadow the getter inherited from `withIndex` and make reads `undefined`.
-   */
+  get positions(): ScrollPosition[] {
+    const scroller = this.wrapper?.$el;
+
+    if (!scroller) {
+      return [];
+    }
+
+    // Per item, not once for the track: `scroll-snap-align` is declared on the
+    // slide, so a carousel is free to align one slide differently from the
+    // next, and reading it here costs nothing the layout read did not already.
+    this.__positions ??= this.items.items.map((item) =>
+      scrollPosition(item.$el, {
+        rootElement: scroller,
+        axis: SCROLL_AXES.both,
+        align: snapAlignment(item.$el),
+      }),
+    );
+
+    return this.__positions;
+  }
+
   get currentIndex(): number {
     return super.currentIndex;
   }
 
   /**
-   * Set the current index and broadcast it to the child components.
+   * Set the index and publish it.
    *
-   * `super` runs first so `withIndex` normalises the value (clamp/loop/bounce)
-   * and assigns `__index` before any subscriber reads `currentIndex`; the store
-   * is then seeded with the normalised value, never the raw one. Assigning the
-   * index only reports and stores state — it never scrolls the wrapper. Use
-   * `goTo()` to navigate (which scrolls); this separation is what lets
-   * `CarouselWrapper.onScroll` report the scroll-synced index without forming a
-   * scroll/index feedback loop.
-   *
-   * The store write is gated on an actual change (or the store not being seeded
-   * yet) so the initial `0 -> 0` assignment during `mounted` still seeds the
-   * store, while same-value scroll updates do not re-run every subscriber. The
-   * memory store fires subscribers synchronously with no deduplication, so this
-   * gate is load-bearing.
+   * `super` runs first so the boundary normalisation lands before anything
+   * reads the value back. Assigning the index only reports state — it never
+   * scrolls the wrapper. That separation is what lets `onScroll` report the
+   * scroll-synced index without forming a scroll/index feedback loop.
    */
   set currentIndex(value: number) {
     super.currentIndex = value;
-    const index = this.currentIndex;
-    if (!this.store.has('index') || this.store.get('index') !== index) {
-      this.store.set('index', index);
-    }
+    this.publish();
   }
 
-  /**
-   * Mounted hook.
-   *
-   * Seeds the store with the current index (via `goTo`) then connects the
-   * children — including any that mounted before this Carousel — so they
-   * synchronise against an already-seeded store.
-   */
-  mounted() {
-    this.goTo(this.currentIndex);
-    this.connectChildren();
-  }
-
-  /**
-   * Connect the child components that track the current index, including those
-   * that mounted before this Carousel. Runs after `goTo` has seeded the store so
-   * connected children synchronise against an initialised Carousel. Idempotent
-   * thanks to the child-side `__unsubscribe` guard.
-   */
-  connectChildren() {
-    for (const children of Object.values(this.$children as Record<string, Base[]>)) {
-      for (const child of children) {
-        if (child instanceof AbstractCarouselChild) {
-          child.__connect(this as unknown as Carousel);
+  mounted(): MountedReturn {
+    this.__initializeAccessibility();
+    void this.goTo(this.currentIndex);
+    this.publish();
+    this.syncPresence();
+    this.wrapper?.syncAccessibility();
+    return [
+      super.mounted(),
+      () => {
+        this.__positions = null;
+        this.previousProgress = -1;
+        this.__presenceObserver?.disconnect();
+        this.__presenceObserver = null;
+        this.__presenceRoot = null;
+        for (const item of this.items.items) {
+          item.$el.inert = false;
         }
+      },
+    ];
+  }
+
+  /**
+   * Re-measure and re-snap after a viewport change.
+   *
+   * The frame is deferred because the layout the resize is about to produce
+   * has not landed yet; the geometry cache is invalidated straight away, since
+   * it lives here and nowhere else.
+   */
+  resized(): void {
+    this.__positions = null;
+    this.wrapper?.invalidate();
+    void nextFrame().then(() => {
+      if (this.$isMounted) {
+        void this.goTo(this.currentIndex);
       }
+    });
+  }
+
+  /**
+   * A slide arrived or left.
+   *
+   * Re-assigning the index re-normalises it against the new count — removing
+   * slides can leave `currentIndex` past the end with no slide active — and
+   * the progress denominator changed, so the loop is restarted to republish
+   * it.
+   */
+  itemsChanged(): void {
+    this.__positions = null;
+    this.wrapper?.invalidate();
+    // Re-run the setter so the boundary re-normalises against the new count.
+    // oxlint-disable-next-line no-self-assign
+    this.currentIndex = this.currentIndex;
+    this.previousProgress = -1;
+    this.$services.ticked.start();
+    this.syncPresence();
+    this.wrapper?.syncAccessibility();
+  }
+
+  /**
+   * The scroll track arrived or left.
+   *
+   * The presence observer is built against the track, and the track's own
+   * focusability and scroll padding are measured from it, so both are
+   * meaningless until there is one and both have to be redone if it is
+   * replaced.
+   */
+  wrappersChanged(): void {
+    this.__positions = null;
+    this.syncPresence();
+    this.wrapper?.syncAccessibility();
+  }
+
+  /**
+   * Rebuild the observer that decides which slides are presented.
+   *
+   * The set is computed as **everything not intersecting the scroller**, not
+   * "everything but the snapped one". Those are the same list only in a
+   * one-slide-at-a-time layout: under a peek or a multi-slide track the second
+   * rule hides slides the user can see, which is the defect Embla's own v9
+   * accessibility plugin shipped.
+   *
+   * The observer is rebuilt rather than incrementally updated because the
+   * cheap operation happens on a structural change — a slide added or removed,
+   * a track replaced — and re-observing re-delivers an entry per target, which
+   * is what re-establishes the state after the disconnect.
+   */
+  syncPresence(): void {
+    const root = this.wrapper?.$el ?? null;
+
+    if (root !== this.__presenceRoot) {
+      this.__presenceObserver?.disconnect();
+      this.__presenceObserver = root
+        ? new IntersectionObserver((entries) => this.__presented(entries), {
+            root,
+            threshold: 0,
+            // Measured in Chromium 151: an element whose box only *touches*
+            // the root edge reports `isIntersecting: true` with an
+            // `intersectionRatio` of `0` — and touching edges is exactly how
+            // adjacent slides sit in a snap track, so every slide would read
+            // as presented. Shrinking the root by a pixel turns the touch
+            // into a miss and makes the boolean mean what it says. Reading
+            // the ratio instead would not do: the observer only fires when a
+            // threshold is crossed, and a slide going from a zero-area touch
+            // to half visible crosses none.
+            rootMargin: '-1px',
+          })
+        : null;
+      this.__presenceRoot = root;
+    }
+
+    const observer = this.__presenceObserver;
+
+    if (!observer) {
+      return;
+    }
+
+    observer.disconnect();
+
+    for (const item of this.items.items) {
+      observer.observe(item.$el);
     }
   }
 
   /**
-   * Re-normalise the index and reconnect children on update.
+   * Take the slides that left the scroller out of the tab order.
    *
-   * Removing items after mount shrinks `length` but leaves `currentIndex`
-   * untouched, so it can fall outside the new `0…lastIndex` range and leave no
-   * item active. Reassigning it runs the `withIndex` setter, which re-normalises
-   * against the current item count and re-seeds the store (a no-op when the
-   * index is still in range). `connectChildren` then connects any newly-added
-   * children — it is idempotent for already-connected ones thanks to the
-   * `__unsubscribe` guard.
+   * `inert` and not `aria-hidden`: measured in Chromium 151 and Firefox 153,
+   * `aria-hidden` leaves an element fully tabbable, so a screen reader user
+   * lands on a control that has no name and no context. `inert` removes the
+   * subtree from both the tab order and the accessibility tree in both
+   * engines.
+   *
+   * A slide holding the focused element is left alone. Making it inert would
+   * blow the focus back to `<body>` mid-interaction — a worse failure than the
+   * one this method exists to fix — and it cannot happen for a slide the user
+   * has not already reached, which is the case the contract is about.
+   * @private
    */
-  updated() {
-    const { currentIndex } = this;
-    this.currentIndex = currentIndex;
-    this.connectChildren();
-    // Item changes alter the progress denominator (the children invalidate their
-    // geometry caches in their own `updated` hooks). Force `ticked` to re-emit
-    // the refreshed progress on the next frame, otherwise the emitted `progress`
-    // value and `--carousel-progress` stay stale until the next scroll.
-    this.previousProgress = -1;
-    this.$services.enable('ticked');
+  __presented(entries: IntersectionObserverEntry[]): void {
+    this.$write(() => {
+      for (const entry of entries) {
+        const element = entry.target as HTMLElement;
+        const shouldBeInert = !entry.isIntersecting;
+
+        if (shouldBeInert && element.contains(document.activeElement)) {
+          continue;
+        }
+
+        element.inert = shouldBeInert;
+      }
+    });
+  }
+
+  /** The accessible name of the slide at `index`, one-based when read aloud. */
+  slideLabel(index: number, total: number): string {
+    return this.$options.slideLabel
+      .replaceAll('{index}', String(index + 1))
+      .replaceAll('{total}', String(total));
   }
 
   /**
-   * Resized hook.
+   * Give the carousel a role, and check it has a name.
    *
-   * Re-snaps to the current index. `goTo` scrolls imperatively, reading each
-   * item's freshly-measured `state`, so the re-snap must run only after the
-   * children have invalidated their geometry caches (`CarouselItem.state` and
-   * `CarouselWrapper`'s scroll distance). js-toolkit dispatches resize callbacks
-   * in mount (registration) order — the parent Carousel registers *before* its
-   * children — so a synchronous re-snap here would read stale pre-resize
-   * geometry. Deferring by one frame lets the children's `resized` callbacks
-   * (which run synchronously later in the same resize tick) invalidate their
-   * caches first, mirroring how `Slider.resized` defers with `nextFrame`.
+   * The role comes first because Chrome silently drops
+   * `aria-roledescription` from a role-less `<div>`, so an author writing one
+   * on the root gets nothing unless this has run.
+   *
+   * **`group` and not `region`.** Both satisfy the APG. `region` is a
+   * landmark, and an unnamed one is dropped from the landmark list anyway,
+   * so the only thing it buys over `group` is an entry in the screen reader's
+   * landmark menu — which is the right trade for a page's main content and
+   * the wrong one for the four product carousels a listing page ships. An
+   * author who wants the landmark writes `role="region"` and keeps it: the
+   * role is only ever written when the element has none.
+   *
+   * **No `aria-roledescription`.** Nothing translates the string — not the
+   * browser, not the screen reader — and NVDA spells an unknown word out
+   * letter by letter in a German locale, so an English `carousel` is worse
+   * than none. Chrome's own reference gallery omits it for the same reason.
+   * An author who wants it writes it in their own language, and this method
+   * has already given it the role it needs to be honoured.
+   * @private
    */
-  resized() {
-    nextFrame(() => this.goTo(this.currentIndex));
+  __initializeAccessibility(): void {
+    if (!this.$el.hasAttribute('role')) {
+      this.$el.setAttribute('role', 'group');
+    }
+
+    if (!this.$el.hasAttribute('aria-label') && !this.$el.hasAttribute('aria-labelledby')) {
+      this.$warn(
+        'carousel.unnamed',
+        'The carousel needs an `aria-label` or an `aria-labelledby`. Without one it is an unnamed group a screen reader cannot tell from any other.',
+      );
+    }
   }
 
-  /**
-   * Go to the given item.
-   *
-   * Navigation is imperative: after updating the index it scrolls the wrapper to
-   * the matching item. The scroll is triggered only for numeric arguments —
-   * instruction arguments (`next`, `prev`, …) recurse through `goNext`/`goPrev`
-   * into a numeric `goTo`, which owns the scroll, so guarding on `isNumber`
-   * avoids scrolling twice per instruction navigation.
-   */
-  goTo(indexOrInstruction: number | IndexableInstructions) {
-    this.$log('goTo', indexOrInstruction);
-    this.$services.enable('ticked');
+  goTo(indexOrInstruction: number | IndexableInstruction): Promise<void> {
+    this.$services.ticked.start();
     const result = super.goTo(indexOrInstruction);
-    if (isNumber(indexOrInstruction)) {
+    // Instructions recurse into a numeric `goTo`, which owns the scroll, so
+    // guarding here avoids scrolling twice per instruction.
+    if (typeof indexOrInstruction === 'number') {
       this.wrapper?.scrollToIndex(this.currentIndex);
     }
     return result;
   }
 
-  ticked() {
-    if (this.progress !== this.previousProgress) {
-      this.previousProgress = this.progress;
-      this.$emit('progress', this.progress);
-      this.$el.style.setProperty('--carousel-progress', String(this.progress));
-    } else {
-      this.$services.disable('ticked');
+  /**
+   * The frame hook runs in the scheduler's **read** phase, which is where
+   * `progress` belongs — it reads the wrapper's `scrollLeft`. The custom
+   * property is a write, so it travels back as the returned render, which the
+   * frame service runs in the write phase of the same frame.
+   */
+  ticked(): void | RafRender {
+    const { progress } = this;
+
+    if (progress === this.previousProgress) {
+      this.$services.ticked.stop();
+      return;
     }
+
+    this.previousProgress = progress;
+    this.scrollProgress.value = progress;
+    this.$emit('progress', { progress });
+
+    return () => {
+      this.$el.style.setProperty('--carousel-progress', String(progress));
+    };
+  }
+
+  /** Publish the whole state, so a control never has to ask for a second value. */
+  publish(): void {
+    this.state.value = {
+      index: this.currentIndex,
+      total: this.length,
+      prevIndex: this.prevIndex,
+      nextIndex: this.nextIndex,
+      isHorizontal: this.isHorizontal,
+    };
   }
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Carousel`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default Carousel;

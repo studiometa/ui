@@ -4,31 +4,42 @@ This page is a quickstart for rendering markup and registering behavior. Read th
 
 ## Registering components
 
-Import the components your page uses and register them with [`registerComponent`](https://js-toolkit.studiometa.dev/api/helpers/registerComponent.html) or `registerComponents`:
+Import the components your page uses and register them with [`registerComponent`](https://js-toolkit-v4.studiometa.dev/api/registry/registerComponent.html) or `registerComponents`:
 
 ```js
 import { registerComponents } from '@studiometa/js-toolkit';
-import { Accordion, Cursor } from '@studiometa/ui';
+import { Disclosure, Cursor } from '@studiometa/ui';
 
-registerComponents(Accordion, Cursor);
+registerComponents(Disclosure, Cursor);
 ```
 
 Registered classes mount on matching `data-component` elements:
 
 ```html
-<div data-component="Accordion">…</div>
+<div data-component="Disclosure">…</div>
 ```
 
-Pass an alias or selector when the DOM uses a different component name:
+A component mounts on its configured name and on nothing else. When the DOM
+uses a different name, subclass the component and declare that name:
 
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
-import { AnchorScrollTo } from '@studiometa/ui';
+import { ScrollTo } from '@studiometa/ui';
 
-registerComponent(AnchorScrollTo, 'a[href^="#"]');
+class SmoothAnchor extends ScrollTo {
+  static config = {
+    name: 'SmoothAnchor',
+  };
+}
+
+registerComponent(SmoothAnchor);
 ```
 
-See [Declarative runtime](/guide/concepts/declarative-runtime) for options, refs, events, lifecycle, multiple components on one element and when to use `createApp`.
+::: tip Importing a component does not register it
+No `@studiometa/ui` component registers itself: importing a module only defines the class, and the class mounts on nothing until you register it. Every component a page uses needs its `registerComponent()` call, which keeps one readable list of what the page runs. The [autoloader](/guide/autoloading/) is the other way to get there: it registers the whole catalog for you and imports each component the first time the DOM asks for it.
+:::
+
+See [Declarative runtime](/guide/concepts/declarative-runtime) for options, refs, events, lifecycle and multiple components on one element.
 
 ## Rendering Twig templates
 
@@ -61,7 +72,7 @@ See [Templates and customization](/guide/concepts/templates-and-customization) f
 For an item with Twig and JavaScript surfaces, render its template and register its class:
 
 ```twig
-{% include '@ui/CircularMarquee/CircularMarquee.twig' with {
+{% include '@ui/Marquee/CircularMarquee.twig' with {
   id: 'services',
   content: 'Our services',
 } %}
@@ -69,9 +80,9 @@ For an item with Twig and JavaScript surfaces, render its template and register 
 
 ```js
 import { registerComponent } from '@studiometa/js-toolkit';
-import { CircularMarquee } from '@studiometa/ui';
+import { Marquee } from '@studiometa/ui';
 
-registerComponent(CircularMarquee);
+registerComponent(Marquee);
 ```
 
 The badges and API links on each Reference item show which surfaces it supports.

@@ -1,50 +1,29 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseProps } from '@studiometa/js-toolkit';
-import type { BaseConfig } from '@studiometa/js-toolkit';
-import { withTransition } from '../decorators/index.js';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { withTransition } from '../decorators/withTransition.js';
 
-export type TransitionConstructor<T extends Transition = Transition> = {
-  new (...args: any[]): T;
-  prototype: Transition;
-  EVENTS: {
-    TRANSITION_TOGGLE: 'transition-toggle';
-    TRANSITION_ENTER: 'transition-enter';
-    TRANSITION_ENTER_START: 'transition-enter-start';
-    TRANSITION_ENTER_END: 'transition-enter-end';
-    TRANSITION_LEAVE: 'transition-leave';
-    TRANSITION_LEAVE_START: 'transition-leave-start';
-    TRANSITION_LEAVE_END: 'transition-leave-end';
-  };
-
-  STATES: {
-    ENTERING: 'entering';
-    LEAVING: 'leaving';
-  };
-} & Pick<typeof Transition, keyof typeof Transition>;
+export type {
+  Transitionable,
+  TransitionInterface,
+  TransitionProps,
+} from '../decorators/withTransition.js';
 
 /**
- * Transition class.
+ * Runs configured enter and leave CSS transitions on its element.
  *
- * A primitive built on the `withTransition` decorator that runs enter/leave CSS
- * transitions on its element. It exposes `enter()`, `leave()` and `toggle()`
- * and emits the corresponding transition lifecycle events
- * (`transition-enter`, `transition-leave` and their start/end variants).
- *
- * @link https://ui.studiometa.dev/reference/items/Transition/
+ * The behaviour lives in `withTransition()` so a component with its own props
+ * can mix it in, and this class is the declarative form of the same thing —
+ * `withTransition(Base)` and nothing else.
  */
-export class Transition<T extends BaseProps = BaseProps> extends withTransition<Base>(Base)<T> {
-  /**
-   * Declare the `this.constructor` type
-   * @link https://github.com/microsoft/TypeScript/issues/3841#issuecomment-2381594311
-   */
-  declare ['constructor']: TransitionConstructor;
-
-  /**
-   * Config.
-   */
+export class Transition<T extends BaseProps = BaseProps> extends withTransition(Base)<T> {
   static config: BaseConfig = {
     name: 'Transition',
   };
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Transition`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default Transition;

@@ -13,7 +13,7 @@ export const outdir = resolve('../dist');
 
 // Every `.js`/`.ts` module under `src/`, excluding dependencies. `unbundle`
 // keeps the emitted `dist/` tree one-to-one with these sources (e.g.
-// `src/Accordion/Accordion.ts` → `dist/Accordion/Accordion.js`).
+// `src/Disclosure/Disclosure.ts` → `dist/Disclosure/Disclosure.js`).
 const entryPoints = glob.sync(['**/*.js', '**/*.ts', '!**/node_modules/**'], {
   cwd: srcRoot,
   absolute: true,

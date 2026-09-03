@@ -1,199 +1,141 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Timer } from '@studiometa/ui';
-import { h, useFakeTimers, useRealTimers, advanceTimersByTimeAsync } from '#test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { recordEvents, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
+import { Timer } from '#private/Timer/Timer.js';
 
-/**
- * Record how many times each named event fires on the element, keeping the
- * `detail` payloads so bubbling `CustomEvent`s can be asserted like an `Action`
- * would consume them.
- */
-function listen(el: HTMLElement, ...names: string[]) {
-  const calls: Record<string, number> = {};
-  const details: Record<string, unknown[][]> = {};
+registerComponents(Timer);
 
-  for (const name of names) {
-    calls[name] = 0;
-    details[name] = [];
-    el.addEventListener(name, (event) => {
-      calls[name] += 1;
-      details[name].push((event as CustomEvent).detail);
-    });
-  }
+afterEach(resetDom);
 
-  return { calls, details };
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Build a `Timer` element, attach listeners, then mount and flush the mount
- * queue so `mounted()` (and its `autostart`) has run.
+ * Creates the element and starts recording events on it before mounting
+ * settles: `mounted()`'s autostart fires `timer-start` synchronously during
+ * that first cycle, which a listener attached only after `await settle()`
+ * would already have missed.
  */
-async function mountTimer(attributes: Record<string, string> = {}, events: string[] = []) {
-  const el = h('div', { dataComponent: 'Timer', ...attributes });
-  const recorder = listen(el, ...events);
-  const instance = new Timer(el);
-  instance.$mount();
-  await advanceTimersByTimeAsync(50);
-
-  return { el, instance, ...recorder };
+function renderUnmounted(attributes = ''): HTMLElement {
+  const root = document.createElement('div');
+  root.innerHTML = `<div data-component="Timer" ${attributes}></div>`;
+  document.body.append(root);
+  return root.firstElementChild as HTMLElement;
 }
 
-describe('Timer component', () => {
-  beforeEach(() => {
-    useFakeTimers();
+async function render(attributes = ''): Promise<{ el: HTMLElement; instance: Timer }> {
+  const el = renderUnmounted(attributes);
+  await settle();
+  return { el, instance: getInstance<Timer>(el, 'Timer')! };
+}
+
+/** Only the order of the names is asserted here, so the payloads drop out. */
+function record(el: HTMLElement, ...types: string[]): () => string[] {
+  const log = recordEvents(el, ...types);
+  return () => log.events.map(({ type }) => type);
+}
+
+describe('Timer', () => {
+  it('starts on mount by default, then ends after the delay', async () => {
+    const el = renderUnmounted('data-option-delay="0.02"');
+    const events = record(el, 'timer-start', 'timer-end');
+    await settle();
+
+    await wait(60);
+
+    expect(events()).toEqual(['timer-start', 'timer-end']);
   });
 
-  afterEach(() => {
-    useRealTimers();
-  });
+  it('does not start on mount when autostart is disabled', async () => {
+    const { el, instance } = await render('data-option-delay="0.02" data-option-no-autostart');
+    const events = record(el, 'timer-start', 'timer-end');
 
-  it('should have the correct config', () => {
-    expect(Timer.config.name).toBe('Timer');
-    expect(Timer.config.emits).toEqual([
-      'timer-start',
-      'timer-end',
-      'timer-tick',
-      'timer-pause',
-      'timer-resume',
-      'timer-stop',
-    ]);
-  });
-
-  it('should start on mount and emit `timer-start`', async () => {
-    const { calls } = await mountTimer({ dataOptionDelay: '2' }, ['timer-start', 'timer-end']);
-    expect(calls['timer-start']).toBe(1);
-    expect(calls['timer-end']).toBe(0);
-  });
-
-  it('should emit `timer-end` once the delay (in seconds) elapsed', async () => {
-    const { calls } = await mountTimer({ dataOptionDelay: '2' }, ['timer-end']);
-    await advanceTimersByTimeAsync(1000);
-    expect(calls['timer-end']).toBe(0);
-    await advanceTimersByTimeAsync(1500);
-    expect(calls['timer-end']).toBe(1);
-  });
-
-  it('should dispatch bubbling events', async () => {
-    const el = h('div', { dataComponent: 'Timer', dataOptionDelay: '1' });
-    const parent = h('div', [el]);
-    let bubbled = 0;
-    parent.addEventListener('timer-end', () => {
-      bubbled += 1;
-    });
-    const instance = new Timer(el);
-    instance.$mount();
-    await advanceTimersByTimeAsync(1050);
-    expect(bubbled).toBe(1);
-  });
-
-  it('should re-arm and keep emitting when `repeat` is enabled', async () => {
-    const { calls } = await mountTimer({ dataOptionDelay: '1', dataOptionRepeat: '' }, [
-      'timer-end',
-      'timer-tick',
-    ]);
-    await advanceTimersByTimeAsync(3200);
-    expect(calls['timer-end']).toBe(3);
-    expect(calls['timer-tick']).toBe(3);
-  });
-
-  it('should not autostart when disabled, and start on demand', async () => {
-    const { instance, calls } = await mountTimer(
-      { dataOptionDelay: '1', dataOptionNoAutostart: '' },
-      ['timer-start', 'timer-end'],
-    );
-    expect(instance.$options.autostart).toBe(false);
-    expect(calls['timer-start']).toBe(0);
+    await wait(60);
+    expect(events()).toEqual([]);
 
     instance.start();
-    await advanceTimersByTimeAsync(1050);
-    expect(calls['timer-start']).toBe(1);
-    expect(calls['timer-end']).toBe(1);
+    await wait(60);
+    expect(events()).toEqual(['timer-start', 'timer-end']);
   });
 
-  it('should stop without completing', async () => {
-    const { instance, calls } = await mountTimer({ dataOptionDelay: '2' }, [
-      'timer-stop',
-      'timer-end',
-    ]);
-    instance.stop();
-    expect(calls['timer-stop']).toBe(1);
-    await advanceTimersByTimeAsync(3000);
-    expect(calls['timer-end']).toBe(0);
-  });
+  it('pauses and resumes, preserving the remaining time', async () => {
+    const { el, instance } = await render('data-option-delay="0.1" data-option-no-autostart');
+    const events = record(el, 'timer-pause', 'timer-resume', 'timer-end');
 
-  it('should pause and resume, preserving the remaining time', async () => {
-    const { instance, calls } = await mountTimer({ dataOptionDelay: '2' }, [
-      'timer-pause',
-      'timer-resume',
-      'timer-end',
-    ]);
-
-    await advanceTimersByTimeAsync(1000);
+    instance.start();
+    await wait(30);
     instance.pause();
-    expect(calls['timer-pause']).toBe(1);
+    const remainingAtPause = instance.remaining;
 
-    // Time passes while paused: the timer must not complete.
-    await advanceTimersByTimeAsync(5000);
-    expect(calls['timer-end']).toBe(0);
+    await wait(50);
+    expect(events()).toEqual(['timer-pause']);
+    expect(instance.timerId).toBeNull();
 
     instance.resume();
-    expect(calls['timer-resume']).toBe(1);
+    expect(events()).toEqual(['timer-pause', 'timer-resume']);
+    expect(instance.remaining).toBeCloseTo(remainingAtPause, 0);
 
-    // Only the ~1s that was left should be needed to complete.
-    await advanceTimersByTimeAsync(1100);
-    expect(calls['timer-end']).toBe(1);
+    await wait(120);
+    expect(events()).toEqual(['timer-pause', 'timer-resume', 'timer-end']);
   });
 
-  it('should restart from the beginning', async () => {
-    const { instance, calls } = await mountTimer({ dataOptionDelay: '2' }, [
-      'timer-start',
-      'timer-end',
-    ]);
+  it('is a no-op to pause an idle timer or resume a running one', async () => {
+    const { el, instance } = await render('data-option-delay="0.1"');
+    const events = record(el, 'timer-pause', 'timer-resume');
 
-    await advanceTimersByTimeAsync(1500);
-    instance.restart();
-    expect(calls['timer-start']).toBe(2);
-
-    // The elapsed 1.5s must have been discarded: no completion yet.
-    await advanceTimersByTimeAsync(1500);
-    expect(calls['timer-end']).toBe(0);
-
-    await advanceTimersByTimeAsync(600);
-    expect(calls['timer-end']).toBe(1);
-  });
-
-  it('should not resume after being stopped', async () => {
-    const { instance, calls } = await mountTimer({ dataOptionDelay: '2' }, [
-      'timer-resume',
-      'timer-end',
-    ]);
+    instance.resume();
+    expect(events()).toEqual([]);
 
     instance.stop();
-    instance.resume();
-
-    expect(calls['timer-resume']).toBe(0);
-    await advanceTimersByTimeAsync(3000);
-    expect(calls['timer-end']).toBe(0);
+    instance.pause();
+    expect(events()).toEqual([]);
   });
 
-  it('should not resume after completing', async () => {
-    const { instance, calls } = await mountTimer({ dataOptionDelay: '1' }, [
-      'timer-resume',
-      'timer-end',
-    ]);
+  it('stops without completing', async () => {
+    const { el, instance } = await render('data-option-delay="0.02"');
+    const events = record(el, 'timer-stop', 'timer-end');
 
-    await advanceTimersByTimeAsync(1100);
-    expect(calls['timer-end']).toBe(1);
+    instance.stop();
+    await wait(60);
 
-    instance.resume();
-    expect(calls['timer-resume']).toBe(0);
-    await advanceTimersByTimeAsync(2000);
-    expect(calls['timer-end']).toBe(1);
+    expect(events()).toEqual(['timer-stop']);
+    expect(instance.remaining).toBe(0);
   });
 
-  it('should cancel a pending countdown on destroy', async () => {
-    const { instance, calls } = await mountTimer({ dataOptionDelay: '2' }, ['timer-end']);
-    await instance.$destroy();
-    await advanceTimersByTimeAsync(3000);
-    expect(calls['timer-end']).toBe(0);
+  it('restarts from the beginning', async () => {
+    const { el, instance } = await render('data-option-delay="0.1" data-option-no-autostart');
+    const events = record(el, 'timer-start');
+
+    instance.start();
+    await wait(30);
+    instance.restart();
+
+    expect(events()).toEqual(['timer-start', 'timer-start']);
+    expect(instance.remaining).toBeCloseTo(100, 0);
+  });
+
+  it('re-arms itself and emits timer-tick when repeat is set', async () => {
+    // Assert the shape of one cycle, not how many fit in a fixed wait. A timer
+    // set to repeat keeps going, so counting on a wall-clock window means the
+    // result depends on machine speed: this asserted an exact four events and
+    // saw seven on a CI runner roughly eight times slower than a laptop.
+    const el = renderUnmounted('data-option-delay="0.15" data-option-repeat="true"');
+    const events = record(el, 'timer-start', 'timer-end', 'timer-tick');
+    await settle();
+
+    await waitFor(() => events().length >= 4);
+
+    expect(events().slice(0, 4)).toEqual(['timer-start', 'timer-end', 'timer-tick', 'timer-start']);
+  });
+
+  it('cancels the pending countdown when unmounted', async () => {
+    const { el, instance } = await render('data-option-delay="0.02"');
+    const events = record(el, 'timer-end');
+
+    instance.$unmount();
+    await wait(60);
+
+    expect(events()).toEqual([]);
   });
 });

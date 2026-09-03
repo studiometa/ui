@@ -78,9 +78,9 @@ export default class Name extends Base<NameProps> {
 Once your component is ready, export its public content from the family `index.ts` file and from `packages/ui/index.ts`. Add or update its entry in the documentation reference catalog so its symbols, package, surfaces and lifecycle status remain discoverable:
 
 ```diff
- export * from './Modal/index.js';
+ export * from './Menu/index.js';
 +export * from './MyComponent/index.js';
- export * from './Panel/index.js';
+ export * from './Prefetch/index.js';
 ```
 
 ### Twig

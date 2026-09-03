@@ -4,7 +4,7 @@ title: Hoverable JS API
 
 # JS API
 
-The `Hoverable` component uses the [`withRelativePointer` decorator](https://js-toolkit.studiometa.dev/api/decorators/withRelativePointer.html) of the [`@studiometa/js-toolkit` package](https://js-toolkit.studiometa.dev) and inherits from all of its APIs.
+The `Hoverable` component mixes in the pointer and animation-frame services of the [`@studiometa/js-toolkit` package](https://js-toolkit-v4.studiometa.dev) and inherits from all of their APIs.
 
 ## Options
 

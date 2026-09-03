@@ -6,9 +6,9 @@ badges: [JS]
 
 The `MotionView` component wraps DOM updates in Motion's [`animateView()`](https://motion.dev/docs/animate-view) so the change plays as a view transition. It is a drop-in alternative to the [`ViewTransition`](/reference/items/ViewTransition/) component — same `enter()`/`leave()`/`toggle()` methods, `state` property, events and `viewTransitionName`/`enterTo`/`leaveTo` options — but the animation is declared with Motion keyframes and transitions (including springs) instead of the `::view-transition-*` CSS pseudo-elements.
 
-Containment is the wiring: with the [`auto` option](./js-api#auto) (on by default), a mounted `MotionView` wraps any `dom-update` announced inside its subtree — by [`Fetch`](/reference/items/Fetch/) or [`DataBind`](/reference/items/DataBind/)'s `data-bind:if` — and joins the lifecycle of a containing [`Dialog`](/reference/items/Dialog/), with zero wiring attributes on either side. See [ambient wiring](./js-api#ambient-wiring).
+Containment is the wiring: with the [`auto` option](./js-api#auto) (on by default), a mounted `MotionView` wraps any DOM update announced inside its subtree — by [`Fetch`](/reference/items/Fetch/) or [`DataBind`](/reference/items/DataBind/)'s `data-bind:if` — and joins the extendable open/close lifecycle of a containing host such as [`Dialog`](/reference/items/Dialog/), with zero wiring attributes on either side. See [ambient wiring](./js-api#ambient-wiring).
 
-`MotionView` is part of `@studiometa/ui-motion`, alongside [`Motion`](/reference/items/Motion/), [`MotionScrollTimeline`](/reference/items/MotionScrollTimeline/) and [`MotionSequence`](/reference/items/MotionSequence/).
+`MotionView` needs its own `registerComponent()` call — see [installation](/reference/items/Motion/#installation). It is part of `@studiometa/ui-motion`, alongside [`Motion`](/reference/items/Motion/), [`MotionScrollTimeline`](/reference/items/MotionScrollTimeline/) and [`MotionSequence`](/reference/items/MotionSequence/).
 
 ## Usage
 

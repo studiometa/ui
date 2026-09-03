@@ -8,9 +8,38 @@ import {
   mockMotionModule,
   resetMockMotion,
 } from './mock-motion.js';
+import { captureDiagnostics } from '@studiometa/js-toolkit/test';
+import { domUpdate, emitExtendable, EVENTS } from '@studiometa/js-toolkit';
 import { MotionView } from '@studiometa/ui-motion';
 import { ViewTransition } from '@studiometa/ui';
 import { h } from '#test-utils';
+
+/**
+ * The transition lifecycle both components run, in order.
+ *
+ * Event names live in each component's `$emits` props type and are erased at
+ * runtime, so "MotionView mirrors ViewTransition" is asserted against what the
+ * two actually emit rather than against a declaration.
+ */
+const TRANSITION_EVENTS = [
+  'enter',
+  'enter-start',
+  'enter-end',
+  'leave',
+  'leave-start',
+  'leave-end',
+];
+
+/** Record the transition events reaching an element, in delivery order. */
+function recordTransitionEvents(el: HTMLElement) {
+  const events: string[] = [];
+
+  for (const type of TRANSITION_EVENTS) {
+    el.addEventListener(type, () => events.push(type));
+  }
+
+  return events;
+}
 
 async function mountView(attributes: Record<string, string> = {}, children: HTMLElement[] = []) {
   const el = h('div', { dataComponent: 'MotionView', ...attributes }, children);
@@ -25,9 +54,31 @@ describe('MotionView component', () => {
     resetMockMotion();
   });
 
-  it('should have the correct config, mirroring ViewTransition', () => {
+  it('should have the correct config', () => {
     expect(MotionView.config.name).toBe('MotionView');
-    expect(MotionView.config.emits).toEqual(ViewTransition.config.emits);
+  });
+
+  it('should emit the same transition lifecycle as ViewTransition', async () => {
+    const { el, instance } = await mountView({ dataOptionEnterTo: 'shown' });
+    const viewEl = h('div', { dataComponent: 'ViewTransition', dataOptionEnterTo: 'shown' });
+    const viewTransition = new ViewTransition(viewEl);
+    await viewTransition.$mount();
+
+    const motionEvents = recordTransitionEvents(el);
+    const nativeEvents = recordTransitionEvents(viewEl);
+
+    await instance.enter();
+    await instance.leave();
+    await viewTransition.enter();
+    await viewTransition.leave();
+
+    // Same names, same order: that is what makes MotionView a drop-in
+    // replacement, and it is the half of the old `config.emits` comparison that
+    // was ever worth asserting.
+    expect(motionEvents).toEqual(TRANSITION_EVENTS);
+    expect(nativeEvents).toEqual(TRANSITION_EVENTS);
+
+    viewTransition.$unmount();
   });
 
   it('should apply the `view-transition-name` on mount', async () => {
@@ -85,14 +136,16 @@ describe('MotionView component', () => {
 
     const el = h('div', { dataComponent: 'MotionView' });
     const instance = new MotionView(el);
-    const warn = vi.fn();
-    Object.defineProperty(instance, '$warn', { configurable: true, get: () => warn });
+    // `$warn()` reports on the diagnostic channel, so the capture reads the
+    // channel rather than stubbing the method or spying on the console.
+    const log = captureDiagnostics();
     await instance.$mount();
 
     const mutate = vi.fn();
     await instance.update(mutate);
 
-    expect(warn).toHaveBeenCalledTimes(1);
+    expect(log.codes).toEqual(['motion-view.missing-animate-view']);
+    log.stop();
     expect(mutate).toHaveBeenCalledTimes(1);
     expect(mockAnimateView).not.toHaveBeenCalled();
   });
@@ -103,10 +156,7 @@ describe('MotionView component', () => {
       dataOptionLeaveTo: 'hidden',
       dataOptionEnterTo: 'shown',
     });
-    const events: string[] = [];
-    for (const event of MotionView.config.emits as string[]) {
-      el.addEventListener(event, () => events.push(event));
-    }
+    const events = recordTransitionEvents(el);
 
     await instance.enter();
     expect(events).toEqual(['enter', 'enter-start', 'enter-end']);
@@ -148,29 +198,47 @@ describe('MotionView component', () => {
     expect(mutate).toHaveBeenCalledTimes(1);
   });
 
-  it('should wrap a `dom-update` announced inside its subtree', async () => {
+  it('should wrap a DOM update announced inside its subtree', async () => {
     const child = h('div');
     const { instance } = await mountView({}, [child]);
     const wrap = vi.fn();
 
-    child.dispatchEvent(new CustomEvent('dom-update', { bubbles: true, detail: { wrap } }));
+    child.dispatchEvent(new CustomEvent(EVENTS.dom.update, { bubbles: true, detail: { wrap } }));
 
     expect(wrap).toHaveBeenCalledTimes(1);
     expect(wrap).toHaveBeenCalledWith(instance);
 
-    await instance.$destroy();
+    instance.$unmount();
   });
 
-  it('should not wrap a `dom-update` with the `auto` option disabled', async () => {
+  it('should run a real `domUpdate()` announced inside its subtree', async () => {
+    // The event name is core's, not a literal: the component listened for
+    // `dom-update` while `domUpdate()` dispatches `js-toolkit:dom:update`, and
+    // no spec caught it because every spec dispatched the literal too.
+    const child = h('div');
+    const { el, instance } = await mountView({}, [child]);
+
+    await domUpdate(child, () => {
+      el.dataset.applied = 'yes';
+    });
+
+    expect(el.dataset.applied).toBe('yes');
+    // Applied through `update()`, so it went through the view animation.
+    expect(mockAnimateView).toHaveBeenCalledTimes(1);
+
+    instance.$unmount();
+  });
+
+  it('should not wrap a DOM update with the `auto` option disabled', async () => {
     const child = h('div');
     const { instance } = await mountView({ dataOptionNoAuto: '' }, [child]);
     const wrap = vi.fn();
 
-    child.dispatchEvent(new CustomEvent('dom-update', { bubbles: true, detail: { wrap } }));
+    child.dispatchEvent(new CustomEvent(EVENTS.dom.update, { bubbles: true, detail: { wrap } }));
 
     expect(wrap).not.toHaveBeenCalled();
 
-    await instance.$destroy();
+    instance.$unmount();
   });
 
   it('should join the lifecycle of a containing dialog only', async () => {
@@ -185,19 +253,78 @@ describe('MotionView component', () => {
       ancestor.dispatchEvent(new CustomEvent(event, { bubbles: true, detail: { waitUntil } }));
     }
     expect(waitUntil).toHaveBeenCalledTimes(2);
-    expect(waitUntil).toHaveBeenCalledWith(instance);
+    // A function, not the instance: `emitExtendable()` duck-types an object on
+    // the name of the *event*, and this component has no `open()`/`close()`.
+    // Handing it `this` is what left the wiring silently inert.
+    for (const [extension] of waitUntil.mock.calls) {
+      expect(extension).toBeTypeOf('function');
+    }
 
     waitUntil.mockClear();
     sibling.dispatchEvent(new CustomEvent('open', { bubbles: true, detail: { waitUntil } }));
     el.dispatchEvent(new CustomEvent('open', { bubbles: true, detail: { waitUntil } }));
     expect(waitUntil).not.toHaveBeenCalled();
 
-    await instance.$destroy();
+    instance.$unmount();
     ancestor.remove();
     sibling.remove();
   });
 
-  it('should stop listening once destroyed', async () => {
+  it('should map the dialog `open` onto `enter()` and `close` onto `leave()`', async () => {
+    const { el, instance } = await mountView();
+    const ancestor = h('div', {}, [el]);
+    document.body.append(ancestor);
+    const enter = vi.spyOn(instance, 'enter').mockResolvedValue();
+    const leave = vi.spyOn(instance, 'leave').mockResolvedValue();
+
+    // Through the real primitive, which is what a `Dialog` uses.
+    await emitExtendable(ancestor, 'open');
+    expect(enter).toHaveBeenCalledTimes(1);
+    expect(leave).not.toHaveBeenCalled();
+
+    await emitExtendable(ancestor, 'close');
+    expect(leave).toHaveBeenCalledTimes(1);
+
+    instance.$unmount();
+    ancestor.remove();
+  });
+
+  it('should hold an extendable event open until its transition settles', async () => {
+    const { el, instance } = await mountView();
+    const ancestor = h('div', {}, [el]);
+    document.body.append(ancestor);
+    let settled = false;
+    vi.spyOn(instance, 'leave').mockImplementation(async () => {
+      await new Promise<void>((resolve) => setTimeout(resolve, 20));
+      settled = true;
+    });
+
+    await emitExtendable(ancestor, 'close');
+    // The emitter awaited the registration rather than racing it.
+    expect(settled).toBe(true);
+
+    instance.$unmount();
+    ancestor.remove();
+  });
+
+  it('should ignore the native `close` event of a `<dialog>`', async () => {
+    const { el, instance } = await mountView();
+    const dialog = document.createElement('dialog');
+    dialog.append(el);
+    document.body.append(dialog);
+    const leave = vi.spyOn(instance, 'leave').mockResolvedValue();
+
+    // The platform fires a plain `close` on the element once it hides, with no
+    // detail: it shares the name of the extendable event and must not run the
+    // transition a second time.
+    dialog.dispatchEvent(new Event('close', { bubbles: true }));
+    expect(leave).not.toHaveBeenCalled();
+
+    instance.$unmount();
+    dialog.remove();
+  });
+
+  it('should stop listening once unmounted', async () => {
     const child = h('div');
     const { el, instance } = await mountView({}, [child]);
     const ancestor = h('div', {}, [el]);
@@ -205,9 +332,9 @@ describe('MotionView component', () => {
     const wrap = vi.fn();
     const waitUntil = vi.fn();
 
-    await instance.$destroy();
+    instance.$unmount();
 
-    child.dispatchEvent(new CustomEvent('dom-update', { bubbles: true, detail: { wrap } }));
+    child.dispatchEvent(new CustomEvent(EVENTS.dom.update, { bubbles: true, detail: { wrap } }));
     ancestor.dispatchEvent(new CustomEvent('open', { bubbles: true, detail: { waitUntil } }));
     ancestor.dispatchEvent(new CustomEvent('close', { bubbles: true, detail: { waitUntil } }));
 

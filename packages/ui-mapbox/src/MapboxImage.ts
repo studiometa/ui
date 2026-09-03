@@ -1,4 +1,4 @@
-import { type BaseProps, type BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
 import {
   AbstractMapboxMapChild,
   type AbstractMapboxMapChildProps,
@@ -8,6 +8,7 @@ import {
   claimMapboxOwnership,
   getMapboxOwner,
   releaseMapboxOwnership,
+  type MapboxImage as MapboxImageBitmap,
   type MapboxImageOptions,
 } from './utils.js';
 
@@ -20,6 +21,12 @@ export interface MapboxImageProps extends AbstractMapboxMapChildProps {
      * @see https://docs.mapbox.com/mapbox-gl-js/api/map/#map#addimage
      */
     options: MapboxImageOptions;
+  };
+  /**
+   * Announced once the sprite is registered against the map.
+   */
+  $emits: AbstractMapboxMapChildProps['$emits'] & {
+    'map-ready': { name: string; image: MapboxImageBitmap; options: MapboxImageOptions };
   };
 }
 
@@ -35,7 +42,6 @@ export class MapboxImage<T extends BaseProps = BaseProps> extends AbstractMapbox
    */
   static config: BaseConfig = {
     name: 'MapboxImage',
-    emits: ['map-ready'],
     options: {
       name: String,
       url: String,

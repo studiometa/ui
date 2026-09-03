@@ -1,15 +1,15 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import { withMountWhenInView } from '@studiometa/js-toolkit/withMountWhenInView';
-import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import type { BaseConfig } from '@studiometa/js-toolkit';
 
 /**
- * Manage a sticky table section.
+ * Marks a section `AnchorNav` tracks: mounts once scrolled into view and
+ * unmounts once it leaves, so `AnchorNav` can toggle the matching link.
+ *
+ * @link https://ui.studiometa.dev/reference/items/AnchorNav/
  */
-export class AnchorNavTarget extends withMountWhenInView(Base)<BaseProps> {
-  /**
-   * Config.
-   */
+export class AnchorNavTarget extends Base {
   static config: BaseConfig = {
     name: 'AnchorNavTarget',
+    mountStrategy: 'in-view',
   };
 }

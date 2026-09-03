@@ -1,34 +1,57 @@
-import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolkit';
 import { AbstractCarouselChild } from './AbstractCarouselChild.js';
+import type { CarouselState } from './context.js';
+import { hasAccessibleName } from './utils.js';
 
-/**
- * Props for the CarouselBtn class.
- */
-export interface CarouselBtnProps extends BaseProps {
+export type CarouselBtnProps = BaseProps & {
   $el: HTMLButtonElement;
   $options: {
-    action: 'next' | 'prev' | string;
+    action: string;
   };
-}
+};
 
-/**
- * CarouselBtn class.
- */
+/** The two step actions, as opposed to a numeric slide-picker action. */
+const STEP_ACTIONS = Object.freeze({
+  NEXT: 'next',
+  PREVIOUS: 'prev',
+} as const);
+
+/** A `next`, `prev` or numeric navigation button. */
 export class CarouselBtn<T extends BaseProps = BaseProps> extends AbstractCarouselChild<
-  T & CarouselBtnProps
+  CarouselBtnProps & T
 > {
-  /**
-   * Config.
-   */
   static config: BaseConfig = {
     name: 'CarouselBtn',
     options: { action: String },
   };
 
+  /** Whether this button picks one slide, rather than stepping. */
+  get isPicker(): boolean {
+    const { action } = this.$options;
+    return action !== STEP_ACTIONS.NEXT && action !== STEP_ACTIONS.PREVIOUS;
+  }
+
   /**
-   * Go to the next or previous item on click.
+   * Check the button can be announced.
+   *
+   * A dot is the usual offender: an empty `<button>` with a background, or one
+   * holding nothing but an `aria-hidden` icon. It is a tab stop with no name,
+   * which is a WCAG 4.1.2 failure and the single most common carousel defect
+   * an audit finds.
    */
-  onClick() {
+  mounted(): MountedReturn {
+    if (!hasAccessibleName(this.$el)) {
+      this.$warn(
+        'carousel.unnamed-btn',
+        `The \`${this.$options.action}\` button has no accessible name. Give it text, an \`aria-label\` or an \`aria-labelledby\`.`,
+      );
+    }
+
+    return super.mounted();
+  }
+
+  /** Navigate. */
+  onClick(): void {
     const { carousel } = this;
     if (!carousel) {
       return;
@@ -36,10 +59,10 @@ export class CarouselBtn<T extends BaseProps = BaseProps> extends AbstractCarous
 
     const { action } = this.$options;
     switch (action) {
-      case 'next':
+      case STEP_ACTIONS.NEXT:
         carousel.goNext();
         break;
-      case 'prev':
+      case STEP_ACTIONS.PREVIOUS:
         carousel.goPrev();
         break;
       default:
@@ -49,29 +72,39 @@ export class CarouselBtn<T extends BaseProps = BaseProps> extends AbstractCarous
   }
 
   /**
-   * Update the disabled state for the given index.
+   * Reflect what the button can do, which depends on which button it is.
+   *
+   * A `prev`/`next` button names an action, so at the end of the track the
+   * action genuinely cannot be performed and the native `disabled` property
+   * says so. The tab order stays stable because the two ends are never
+   * terminal at once. `prevIndex`/`nextIndex` already encode the `boundary`
+   * and `reverse` options, so `loop` and `bounce` never disable an end and
+   * `reverse` flips which end is terminal — and they travel on the state
+   * rather than being read off the coordinator, which is the whole reason no
+   * control imports its class.
+   *
+   * A numeric button names a slide rather than an action, which makes it a
+   * picker: the same job as a dot or a thumbnail, so it carries the same
+   * marker, `aria-current="true"`. One marker across the four pickers means
+   * one CSS hook — style `[aria-current='true']` — and `aria-current` is the
+   * attribute for "the current item within a set", which is exactly the claim.
+   * It is never `disabled` in either form: the picker for the slide on screen
+   * is the one a screen reader user looks for, so removing it from the
+   * accessibility tree, or announcing it as unavailable, both lose more than
+   * they say. Clicking it re-runs `goTo()` on the index already shown, which
+   * moves nothing.
    */
-  update(index: number) {
-    const { carousel } = this;
-    if (!carousel) {
-      return;
-    }
-
+  update({ index, prevIndex, nextIndex }: CarouselState): void {
     const { action } = this.$options;
-    // Base the disabled state on whether the action would actually move the
-    // index, so it honours the inherited `Indexable` options: with `boundary`
-    // `loop`/`bounce` the ends never disable (navigation wraps), and `reverse`
-    // flips which end is terminal. `prevIndex`/`nextIndex` already encode all of
-    // that; a numeric action disables only on the slide it points to.
-    let shouldDisable: boolean;
-    if (action === 'next') {
-      shouldDisable = carousel.nextIndex === index;
-    } else if (action === 'prev') {
-      shouldDisable = carousel.prevIndex === index;
-    } else {
-      shouldDisable = Number(action) === index;
-    }
 
-    this.$el.disabled = shouldDisable;
+    if (action === STEP_ACTIONS.NEXT) {
+      this.$el.disabled = nextIndex === index;
+    } else if (action === STEP_ACTIONS.PREVIOUS) {
+      this.$el.disabled = prevIndex === index;
+    } else if (Number(action) === index) {
+      this.$el.setAttribute('aria-current', 'true');
+    } else {
+      this.$el.removeAttribute('aria-current');
+    }
   }
 }

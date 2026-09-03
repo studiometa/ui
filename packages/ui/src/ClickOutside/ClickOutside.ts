@@ -1,36 +1,29 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import type { BaseConfig, BaseProps, BaseEventHookParams } from '@studiometa/js-toolkit';
+import type { BaseConfig, GlobalEvent } from '@studiometa/js-toolkit';
 
-export interface ClickOutsideProps extends BaseProps {}
-
-/**
- * ClickOutside class.
- *
- * A minimal marker component that reports clicks landing outside its own element.
- * Using the built-in `onDocumentClick` hook, it dispatches a native
- * `click-outside` `CustomEvent` on its root element whenever a document click
- * occurs outside of it. Paired with the `Action` component on the same element,
- * this lets HTML react to outside clicks — closing a dropdown or popover for
- * example — via `data-on:click-outside="..."` without writing any JavaScript.
- *
- * @link https://ui.studiometa.dev/reference/items/ClickOutside/
- */
-export class ClickOutside<T extends BaseProps = BaseProps> extends Base<ClickOutsideProps & T> {
-  /**
-   * Config.
-   */
+/** Emits `click-outside` when a document click lands outside its element. */
+export class ClickOutside extends Base<{
+  $emits: { 'click-outside': { event: MouseEvent } };
+}> {
   static config: BaseConfig = {
     name: 'ClickOutside',
   };
 
   /**
-   * Dispatch a `click-outside` event when a document click lands outside the element.
+   * `composedPath()` rather than `$el.contains(event.target)`: it is the one
+   * that answers correctly for a click inside a shadow root, and for a target
+   * the click removed from the DOM before the document heard about it.
    */
-  onDocumentClick({ event }: BaseEventHookParams<MouseEvent>) {
+  onDocumentClick({ event }: GlobalEvent<MouseEvent>): void {
     if (!event.composedPath().includes(this.$el)) {
-      this.$el.dispatchEvent(new CustomEvent('click-outside', { detail: { event } }));
+      this.$emit('click-outside', { event });
     }
   }
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/ClickOutside`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default ClickOutside;

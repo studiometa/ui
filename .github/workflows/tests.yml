@@ -32,6 +32,11 @@ jobs:
           restore-keys: ${{ runner.os }}-node-
       - name: Install modules
         run: npm install --no-audit --no-fund
+      # The component specs run in a real Chromium through Vitest browser mode,
+      # so the runner needs the browser binary. No `--with-deps`: that installs
+      # system packages through apt and is Ubuntu-only.
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
       - name: Run tests
         run: npm run test -- -- --coverage.enabled
       - name: Upload coverage to Codecov

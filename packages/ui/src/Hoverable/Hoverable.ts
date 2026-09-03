@@ -1,60 +1,48 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import { withRelativePointer } from '@studiometa/js-toolkit/withRelativePointer';
-import type { BaseConfig, BaseProps, PointerServiceProps } from '@studiometa/js-toolkit';
-import { map } from '@studiometa/js-toolkit/utils/map';
-import { transform } from '@studiometa/js-toolkit/utils/transform';
-import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { withPointer } from '@studiometa/js-toolkit/withPointer';
+import { withRaf } from '@studiometa/js-toolkit/withRaf';
+import type { BaseConfig, BaseProps, ElementPointerProps, RafProps } from '@studiometa/js-toolkit';
 import { getOffsetSizes } from '@studiometa/js-toolkit/utils/getOffsetSizes';
 import { clamp01 } from '@studiometa/js-toolkit/utils/clamp01';
+import { damp } from '@studiometa/js-toolkit/utils/damp';
+import { map } from '@studiometa/js-toolkit/utils/map';
+import { transform } from '@studiometa/js-toolkit/utils/transform';
 
-export interface HoverableProps extends BaseProps {
-  $refs: {
-    /**
-     * Target element that will be moved on hover.
-     */
-    target: HTMLElement;
-  };
-  $options: {
-    /**
-     * A number between in the range `0–1` used to smoothen the transition between each position.
-     */
-    sensitivity: number;
-    /**
-     * Wether to reverse the movement of the target or not.
-     */
-    reversed: boolean;
-    /**
-     * Wether to stop moving the target when the mouse is not over the root element or not.
-     */
-    contained: boolean;
-  };
+export interface HoverableBounds {
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
 }
 
+export type HoverableProps = BaseProps & {
+  $refs: { target: HTMLElement };
+  $options: {
+    /** A number in `0–1` that smoothens the transition between each position. */
+    sensitivity: number;
+    /** Reverse the movement of the target. */
+    reversed: boolean;
+    /** Stop moving the target once the pointer leaves the root element. */
+    contained: boolean;
+  };
+};
+
 /**
- * Hoverable class.
- *
  * Moves a `target` ref in response to the pointer's position over the root
- * element, using the `withRelativePointer` decorator. The target is mapped across
- * its available bounds and damped each frame by the `sensitivity` option; the
- * `reversed` option inverts the movement and `contained` stops it once the
- * pointer leaves the element.
+ * element. The target is mapped across its available bounds and damped each
+ * frame by the `sensitivity` option; `reversed` inverts the movement and
+ * `contained` stops it once the pointer leaves the element.
  *
  * @link https://ui.studiometa.dev/reference/items/Hoverable/
  */
-export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePointer(Base)<
-  T & HoverableProps
+export class Hoverable<T extends BaseProps = BaseProps> extends withRaf(withPointer(Base))<
+  HoverableProps & T
 > {
-  /**
-   * Config.
-   */
   static config: BaseConfig = {
     name: 'Hoverable',
     refs: ['target'],
     options: {
-      sensitivity: {
-        type: Number,
-        default: 0.1,
-      },
+      sensitivity: { type: Number, default: 0.1 },
       reversed: Boolean,
       contained: Boolean,
     },
@@ -67,24 +55,18 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePoin
     dampedY: 0,
   };
 
-  /**
-   * The hoverable element, defaults to `this.$refs.target`.
-   */
+  /** The hoverable element, defaults to `this.$refs.target`. */
   get target(): HTMLElement {
     return this.$refs.target;
   }
 
-  /**
-   * The bouding element, defaults to `this.$el`.
-   */
+  /** The bounding element, defaults to `this.$el`. */
   get parent(): HTMLElement {
     return this.$el;
   }
 
-  /**
-   * The bounds values in which the target can move.
-   */
-  get bounds() {
+  /** The bounds in which the target can move. */
+  get bounds(): HoverableBounds {
     const targetSizes = getOffsetSizes(this.target);
     const parentSizes = getOffsetSizes(this.parent);
     const xMin = targetSizes.x - parentSizes.x;
@@ -100,42 +82,43 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRelativePoin
     };
   }
 
-  /**
-   * Update props when the mouse moves.
-   */
-  movedrelative({ progress }: PointerServiceProps) {
+  moved({ relativeProgressX, relativeProgressY }: ElementPointerProps): void {
     const { bounds, props } = this;
     const { reversed, contained } = this.$options;
-    const { x, y } = progress;
 
-    // Stop updating when pointer is outside of the parent bounds
-    if (contained && (y < 0 || x < 0 || y > 1 || x > 1)) {
+    // Stop updating when the pointer is outside the parent bounds.
+    if (
+      contained &&
+      (relativeProgressY < 0 ||
+        relativeProgressX < 0 ||
+        relativeProgressY > 1 ||
+        relativeProgressX > 1)
+    ) {
       return;
     }
 
     const from = reversed ? 1 : 0;
     const to = reversed ? 0 : 1;
 
-    props.y = map(clamp01(y), from, to, bounds.yMin, bounds.yMax);
-    props.x = map(clamp01(x), from, to, bounds.xMin, bounds.xMax);
+    props.y = map(clamp01(relativeProgressY), from, to, bounds.yMin, bounds.yMax);
+    props.x = map(clamp01(relativeProgressX), from, to, bounds.xMin, bounds.xMax);
   }
 
-  /**
-   * Update target position on each frame.
-   */
-  ticked() {
+  ticked({ delta }: RafProps): void {
     const { props, target } = this;
     const { sensitivity } = this.$options;
-    props.dampedY = damp(props.y, props.dampedY, sensitivity);
-    props.dampedX = damp(props.x, props.dampedX, sensitivity);
+    props.dampedY = damp(props.y, props.dampedY, sensitivity, delta);
+    props.dampedX = damp(props.x, props.dampedX, sensitivity, delta);
 
-    return () => {
-      transform(target, {
-        y: props.dampedY,
-        x: props.dampedX,
-      });
-    };
+    this.$write(() => {
+      target.style.transform = transform({ x: props.dampedX, y: props.dampedY });
+    });
   }
 }
 
+/**
+ * The main component of a family is also its default export, which is how its
+ * own subpath (`@studiometa/ui/Hoverable`) has always exposed it. Family members
+ * and sub-components carry only their named export.
+ */
 export default Hoverable;

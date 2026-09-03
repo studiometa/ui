@@ -18,13 +18,13 @@ DisclosureGroup (optional)             data-component="DisclosureGroup"
 
 ## Parts
 
-| Part       | Selector                           | Required                          | Role                                                                                         |
-| ---------- | ---------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------- |
-| Group      | `data-component="DisclosureGroup"` | No                                | Coordinates multiple/collapsible constraints for its closest registered disclosure children. |
-| Disclosure | `data-component="Disclosure"`      | Yes                               | Owns state, accessibility attributes, focus handling, and local transitions.                 |
-| Heading    | Native heading element             | Required for an accordion pattern | Gives each disclosure trigger an appropriate place in the document outline.                  |
-| Trigger    | `button[data-ref="trigger"]`       | Yes                               | Toggles the panel and exposes `aria-expanded` and `aria-controls`.                           |
-| Panel      | `[data-ref="panel"]`               | Yes                               | Contains the disclosed content and is labelled by the trigger.                               |
+| Part       | Selector                           | Required                          | Role                                                                                                                  |
+| ---------- | ---------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Group      | `data-component="DisclosureGroup"` | No                                | Coordinates multiple/collapsible constraints for the disclosures it claims — those whose closest mounted group it is. |
+| Disclosure | `data-component="Disclosure"`      | Yes                               | Owns state, accessibility attributes, focus handling, and local transitions.                                          |
+| Heading    | Native heading element             | Required for an accordion pattern | Gives each disclosure trigger an appropriate place in the document outline.                                           |
+| Trigger    | `button[data-ref="trigger"]`       | Yes                               | Toggles the panel and exposes `aria-expanded` and `aria-controls`.                                                    |
+| Panel      | `[data-ref="panel"]`               | Yes                               | Contains the disclosed content and is labelled by the trigger.                                                        |
 
 Use a native `<button type="button">`; `Disclosure` warns when the trigger ref is not an `HTMLButtonElement`. For an accordion, wrap each button in a native heading whose level fits the page hierarchy. The JavaScript component does not create or validate that heading. The Twig template defaults to `<h3>` and lets you choose `heading_tag`.
 
@@ -38,6 +38,6 @@ Authored trigger and panel IDs are preserved. If either ID is missing, `Disclosu
 
 ## Nesting and dynamic children
 
-A disclosure registers with its closest mounted `DisclosureGroup`. Children and groups may mount in either order; dynamically mounted children register themselves, removed children unregister, and a mounted disclosure reconnects when it is moved in the DOM. If a nearer nested group mounts later, the disclosure migrates to it. Public `items` and `openItems` are always returned in current DOM order.
+A disclosure is claimed by its closest mounted `DisclosureGroup`. The group holds a live `$watchChildren()` collection of every mounted `Disclosure` in its subtree and claims each one; a disclosure already held by a nearer group refuses the claim, so a nested group always wins. Groups and children may mount in either order, dynamically mounted children are claimed as they arrive, and a disclosure whose group unmounts falls back to the nearest group still mounted above it. Public `items` and `openItems` are always returned in current DOM order.
 
 Transitions belonging to a nested disclosure are not orchestrated by an outer disclosure.

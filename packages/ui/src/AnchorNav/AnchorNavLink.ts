@@ -1,26 +1,29 @@
-import type { BaseConfig } from '@studiometa/js-toolkit';
-import { AnchorScrollTo, AnchorScrollToProps } from '../AnchorScrollTo/AnchorScrollTo.js';
-import { withTransition } from '../decorators/index.js';
+import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
+import { ScrollTo } from '../ScrollTo/index.js';
+import { withTransition, type TransitionProps } from '../decorators/withTransition.js';
 
-export interface AnchorNavLinkProps extends AnchorScrollToProps {
-  $options: {
-    id: string;
-  };
-}
+export type AnchorNavLinkProps = BaseProps & TransitionProps;
 
 /**
- * Manage a slider item and its state transition.
+ * A `ScrollTo` link that also enters/leaves a CSS transition on itself,
+ * driven by `AnchorNav` as its matching `AnchorNavTarget` mounts and
+ * unmounts.
+ *
+ * `withTransition(ScrollTo)` is why the behaviour is a mixin rather than a
+ * component: the transition belongs on a class that already extends something
+ * else.
+ *
+ * @link https://ui.studiometa.dev/reference/items/AnchorNav/
  */
-export class AnchorNavLink extends withTransition(AnchorScrollTo)<AnchorNavLinkProps> {
-  /**
-   * Config.
-   */
+export class AnchorNavLink<T extends BaseProps = BaseProps> extends withTransition(ScrollTo)<
+  AnchorNavLinkProps & T
+> {
   static config: BaseConfig = {
-    ...AnchorScrollTo.config,
     name: 'AnchorNavLink',
   };
 
-  get targetId() {
+  /** The target section id, read from the link's hash. */
+  get targetId(): string {
     return this.$el.hash.replace(/^#/, '');
   }
 }

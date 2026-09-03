@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-workspace",
-  "version": "1.10.0",
+  "version": "2.0.0-alpha.0",
   "type": "module",
   "private": true,
   "workspaces": [
@@ -16,7 +16,7 @@
     "lint": "npm run lint:static && npm run lint:types && npm run lint:prettier",
     "lint:static": "oxlint --tsconfig ./tsconfig.json --type-aware",
     "lint:types": "tsgo --build tsconfig.lint.json",
-    "lint:prettier": "prettier --check --cache packages/docs/**/*.md",
+    "lint:prettier": "prettier --check --cache \"packages/docs/**/*.md\"",
     "docs:dev": "npm run dev -w @studiometa/ui-docs",
     "docs:build": "npm run build -w @studiometa/ui-docs",
     "play:dev": "npm run dev -w @studiometa/ui-playground",
@@ -38,7 +38,7 @@
   },
   "overrides": {
     "@typescript/vfs": "1.6.4",
-    "@studiometa/js-toolkit": "3.9.0"
+    "@studiometa/js-toolkit": "4.0.0-alpha.1"
   },
   "dependencies": {
     "patch-package": "8.0.1"

@@ -1,6 +1,20 @@
-export { DataBind, type DataBindProps } from './DataBind.js';
-export { DataComputed, type DataComputedProps } from './DataComputed.js';
-export { DataEffect, type DataEffectProps } from './DataEffect.js';
-export { DataModel, type DataModelProps } from './DataModel.js';
-export { DataScope } from './DataScope.js';
-export type { DataScopeProps, DataValue } from './DataScope.js';
+/**
+ * Register with `registerComponents(DataScope, DataBind, DataModel, DataComputed,
+ * DataEffect)`. Registration order does not affect scope resolution.
+ */
+
+export { DataBind, type DataBindOptions, type DataBindProps } from "./DataBind.js";
+export { DataComputed, type DataComputedProps } from "./DataComputed.js";
+export { DataEffect, type DataEffectProps } from "./DataEffect.js";
+export { DataModel, type DataModelProps } from "./DataModel.js";
+export { DataScope, type DataScopeProps } from "./DataScope.js";
+export {
+  DataRegistry,
+  DataRegistryContext,
+  type DataRegistryOptions,
+  type DataScopeMember,
+  type DataUpdate,
+  type DataValue,
+} from "./registry.js";
+export { type DataExpression } from "./expression.js";
+export { type DataControlContext, type DataControlMember } from "./formControl.js";

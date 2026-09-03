@@ -117,9 +117,7 @@ Emitted at the start of the leave transition, before the state change is applied
 
 Emitted when the leave transition completes.
 
-### `toggle`
-
-Emitted when the `toggle` method is called.
+Calling `toggle()` emits no event of its own: it emits the `enter*` or the `leave*` set, depending on which direction it runs.
 
 ## Batching
 

@@ -1,0 +1,84 @@
+{#
+/**
+ * @file
+ * Circular Marquee
+ *
+ * A Twig-only helper: it lays text out along a circular SVG `textPath` and
+ * renders a `Marquee` around it. "Circular" is entirely this geometry — the
+ * rotation is the `--marquee-progress` the `Marquee` class publishes, read by
+ * the `transform` below, so this template needs no JavaScript of its own.
+ *
+ * @param {string} id - *required
+ * @param {number} outer_radius
+ * @param {number} radius
+ * @param {number} cx
+ * @param {number} cy
+ * @param {string} content
+ * @param {array} content_attr
+ * @param {number} speed
+ * @param {number} sensitivity
+ * @param array $attr
+ */
+#}
+
+{# Outer radius is svg size radius #}
+{% set outer_radius = outer_radius|default(250) %}
+{% set outer_diameter = outer_radius * 2 %}
+
+{# Inner radius is the circle size inside the svg (need to be smaller to not cut text with svg viewbox) #}
+{% set radius = radius|default(220) %}
+{% set diameter = radius * 2 %}
+{% set cx = cx|default(radius) %}
+{% set cy = cy|default(radius) %}
+{% set perimeter = 3.1413 * diameter %}
+
+{% set first = 'M ' ~ (outer_radius - cx) ~ ',' ~ outer_radius %}
+{% set second = 'a ' ~ radius ~ ',' ~ radius ~ ' 0 1,1 ' ~ diameter ~ ',0' %}
+{% set third = 'a ' ~ radius ~ ',' ~ radius ~ ' 0 1,1 -' ~ diameter ~ ',0' %}
+{% set d = [first, second, third]|join(' ') %}
+
+{% set attributes =
+  merge_html_attributes(
+    attr ?? null,
+    {
+      data_component: 'Marquee',
+      data_option_speed: speed ?? null,
+      data_option_sensitivity: sensitivity ?? null
+    },
+    {}
+  )
+%}
+
+{% set content_attributes =
+  merge_html_attributes(
+    content_attr ?? null,
+    {},
+    {
+      'xlink:href': '#' ~ id
+    }
+  )
+%}
+
+<div {{ html_attributes(attributes) }}>
+  <svg aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 {{ outer_diameter }} {{ outer_diameter }}"
+    width="{{ outer_diameter }}"
+    height="{{ outer_diameter }}"
+    class="z-default relative left-1/2 -translate-x-1/2">
+    <defs><path d="{{ d }}" id="{{ id }}" /></defs>
+    {#
+      The rotation sits on a group rather than on the `<svg>`, whose own
+      `-translate-x-1/2` already owns the element's `transform`. `view-box`
+      makes the origin the centre of the viewBox rather than the text's own
+      bounding box, so the ring turns around the circle it is written on.
+      A whole turn is one loop; the negative sign is what makes a positive
+      sensitivity spin the ring in the direction its text is read.
+    #}
+    <g style="transform: rotate(calc(var(--marquee-progress, 0) * -360deg)); transform-box: view-box; transform-origin: 50% 50%">
+      <text dy="0" textLength="{{ perimeter }}">
+        <textPath {{ html_attributes(content_attributes) }}>{{ content|raw }}</textPath>
+      </text>
+    </g>
+  </svg>
+</div>

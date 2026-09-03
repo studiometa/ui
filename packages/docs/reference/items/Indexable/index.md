@@ -6,18 +6,35 @@ badges: [JS]
 
 The Indexable primitive provides index management for components that need to navigate between multiple items. It offers methods to move between indices (`goNext()`, `goPrev()`, `goTo()`), supports different boundary behaviors (clamp, loop, bounce), and emits events when the index changes. It suits building components like sliders, carousels, tabs, or any component that needs to track and navigate through a collection of items.
 
-It is available as an `Indexable` component as well as a `withIndex(Base)` decorator.
-
 ## Usage
 
 ### Standalone
 
-For simple cases, the `Indexable` component can be used directly in your HTML by setting the number of items with the [`total`](./js-api#total) option. Its index can then be driven from other components such as [`Action`](../Action/):
+For simple cases, the `Indexable` component can be used directly in your HTML by setting the number of items with the [`total`](./js-api#total) option. Its index can then be driven from other components such as [`Action`](../Action/). Register both — importing a module only defines the class:
+
+```js
+import { registerComponents } from '@studiometa/js-toolkit';
+import { Action, Indexable } from '@studiometa/ui';
+
+registerComponents(Action, Indexable);
+```
 
 ```html
 <div data-component="Indexable" data-option-total="3" data-option-boundary="loop">
-  <button type="button" data-component="Action" data-option-target="Indexable" data-option-effect="target.goPrev()">Previous</button>
-  <button type="button" data-component="Action" data-option-target="Indexable" data-option-effect="target.goNext()">Next</button>
+  <button
+    type="button"
+    data-component="Action"
+    data-option-target="Indexable"
+    data-option-effect="target.goPrev()">
+    Previous
+  </button>
+  <button
+    type="button"
+    data-component="Action"
+    data-option-target="Indexable"
+    data-option-effect="target.goNext()">
+    Next
+  </button>
 </div>
 ```
 
@@ -46,7 +63,7 @@ export default class Counter extends Indexable {
 Once your component is created, you can use it in your app and trigger its `goNext` and `goPrev` methods to update its states:
 
 ```js {2,10,13-15,17-19}
-import { Base, createApp } from '@studiometa/js-toolkit';
+import { Base, registerComponent } from '@studiometa/js-toolkit';
 import Counter from './Counter.js';
 
 class App extends Base {
@@ -59,25 +76,41 @@ class App extends Base {
   };
 
   onPrevBtnClick() {
-    this.$children.Counter.forEach((instance) => instance.goPrev());
+    for (const instance of this.$query('Counter')) instance.goPrev();
   }
 
   onNextBtnClick() {
-    this.$children.Counter.forEach((instance) => instance.goNext());
+    for (const instance of this.$query('Counter')) instance.goNext();
   }
 }
 
-export default createApp(App);
+registerComponent(App);
 ```
 
-You can now add a counter component in your HTML and define the boundary behavior:
+You can now add a counter component in your HTML and define the boundary behavior. The application component needs its own `data-component`, which is what scopes its refs:
 
 ```html
-<output data-component="Counter" data-option-boundary="loop">0</output>
-<button type="button" data-ref="prevBtn">Previous</button>
-<button type="button" data-ref="nextBtn">Next</button>
+<div data-component="App">
+  <output data-component="Counter" data-option-boundary="loop">0</output>
+  <button type="button" data-ref="prevBtn">Previous</button>
+  <button type="button" data-ref="nextBtn">Next</button>
+</div>
 ```
 
 ::: tip Example
 Checkout the [result of this example](./examples#counter) for a better understanding.
 :::
+
+### As a decorator
+
+`Indexable` is `withIndex(Base)` and the component name, nothing more. When your component already extends something else, mix the same behaviour in with the [`withIndex`](../withIndex/) decorator instead of extending this class.
+
+```js
+import { Transition, withIndex } from '@studiometa/ui';
+
+export default class Gallery extends withIndex(Transition) {
+  static config = {
+    name: 'Gallery',
+  };
+}
+```

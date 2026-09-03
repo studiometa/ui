@@ -26,6 +26,15 @@ export default class Togglable extends ViewTransition {
 }
 ```
 
+Then register it — importing a module only defines the class, it never registers it:
+
+```js
+import { registerComponent } from '@studiometa/js-toolkit';
+import Togglable from './Togglable.js';
+
+registerComponent(Togglable);
+```
+
 Describe the hidden and shown states with `data-option-leave-to` / `data-option-enter-to`, and give the element a unique `view-transition-name` so it animates on its own:
 
 ```html
@@ -41,10 +50,22 @@ Describe the hidden and shown states with `data-option-leave-to` / `data-option-
 Then author the animation in CSS with the `::view-transition-old()` and `::view-transition-new()` pseudo-elements:
 
 ```css
-@keyframes slide-in  { from { transform: translateX(100%); } }
-@keyframes slide-out { to   { transform: translateX(100%); } }
-::view-transition-new(panel) { animation: 300ms ease slide-in; }
-::view-transition-old(panel) { animation: 300ms ease slide-out; }
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes slide-out {
+  to {
+    transform: translateX(100%);
+  }
+}
+::view-transition-new(panel) {
+  animation: 300ms ease slide-in;
+}
+::view-transition-old(panel) {
+  animation: 300ms ease slide-out;
+}
 ```
 
 Calling `enter()` removes `leave-to` and adds `enter-to`; `leave()` does the reverse. Each call is wrapped in a view transition.

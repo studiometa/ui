@@ -1,74 +1,66 @@
-import { it, describe, vi, expect, beforeAll, afterEach } from 'vitest';
-import { FigureShopify } from '@studiometa/ui';
-import {
-  wait,
-  hConnected as h,
-  mockIsIntersecting,
-  intersectionObserverBeforeAllCallback,
-  intersectionObserverAfterEachCallback,
-} from '#test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { resetDom, settle } from '@studiometa/js-toolkit/test';
+import { FigureShopify } from '#private/Figure/FigureShopify.js';
 
-beforeAll(() => {
-  intersectionObserverBeforeAllCallback();
-});
+registerComponents(FigureShopify);
 
-afterEach(() => {
-  intersectionObserverAfterEachCallback();
-});
+afterEach(resetDom);
 
-async function getContext({ figureAttributes = {} } = {}) {
-  const img = h('img', {
-    dataRef: 'img',
-    src: 'data:image/svg+xml,<svg viewport="0 0 1 1" width="1" height="1"></svg>',
-    dataSrc: 'https://localhost/image.jpg',
-  });
-  const figure = h('figure', { dataOptionLazy: '', ...figureAttributes }, [img]);
-
-  const widthSpy = vi.spyOn(img, 'offsetWidth', 'get');
-  widthSpy.mockImplementation(() => 100);
-  const heightSpy = vi.spyOn(img, 'offsetHeight', 'get');
-  heightSpy.mockImplementation(() => 100);
-
-  const instance = new FigureShopify(figure);
-  mockIsIntersecting(figure, true);
-  await wait(100);
-
-  return {
-    img,
-    figure,
-    instance,
-    setSize({ width, height }: { width?: number; height?: number } = {}) {
-      if (width) {
-        widthSpy.mockImplementation(() => width);
-      }
-      if (height) {
-        heightSpy.mockImplementation(() => height);
-      }
-    },
-  };
+// `lazy` is left unset (defaults false on a plain Figure, but
+// AbstractFigureDynamic defaults it true) so it is disabled explicitly:
+// `formatSrc` is tested as a pure function, and mounting must not attempt a
+// real network fetch against a fabricated CDN URL.
+async function render(attributes = ''): Promise<FigureShopify> {
+  const root = document.createElement('div');
+  root.innerHTML = `
+    <div data-component="FigureShopify" data-option-no-lazy ${attributes}>
+      <img data-ref="img" style="width:100px;height:200px" data-src="https://cdn.shopify.com/shop/product.jpg" />
+    </div>`;
+  document.body.append(root);
+  await settle();
+  return getInstance<FigureShopify>(root.firstElementChild, 'FigureShopify')!;
 }
 
-describe('The FigureShopify component', () => {
-  it('should override the original image', async () => {
-    const { instance, setSize } = await getContext();
-    expect(instance.original).toBe('https://localhost/image.jpg?width=100&height=100');
-    setSize({ width: 200, height: 200 });
-    expect(instance.original).toBe('https://localhost/image.jpg?width=200&height=200');
+describe('FigureShopify', () => {
+  it('sizes the source to the rendered element, rounded to the step', async () => {
+    const instance = await render('data-option-step="50"');
+
+    const url = new URL(instance.formatSrc('https://cdn.shopify.com/shop/product.jpg'));
+
+    expect(url.searchParams.get('width')).toBe(String(100 * window.devicePixelRatio));
+    expect(url.searchParams.get('height')).toBe(String(200 * window.devicePixelRatio));
   });
 
-  it('should not override the original image when disabled', async () => {
-    const { instance } = await getContext();
-    instance.$options.disable = true;
-    expect(instance.original).toBe('https://localhost/image.jpg');
+  it('rounds a size up to the next step', async () => {
+    const instance = await render('data-option-step="150"');
+
+    const url = new URL(instance.formatSrc('https://cdn.shopify.com/shop/product.jpg'));
+
+    // 100 -> 150, 200 -> 300, per `normalizeSize`.
+    expect(url.searchParams.get('width')).toBe(String(150 * window.devicePixelRatio));
+    expect(url.searchParams.get('height')).toBe(String(300 * window.devicePixelRatio));
   });
 
-  it('should add a crop parameter', async () => {
-    const { instance, setSize } = await getContext({
-      figureAttributes: { dataOptionCrop: 'center' },
-    });
+  it('sets the crop parameter when the option is given', async () => {
+    const instance = await render('data-option-crop="center"');
 
-    expect(instance.original).toBe('https://localhost/image.jpg?width=100&height=100&crop=center');
-    setSize({ width: 200, height: 200 });
-    expect(instance.original).toBe('https://localhost/image.jpg?width=200&height=200&crop=center');
+    const url = new URL(instance.formatSrc('https://cdn.shopify.com/shop/product.jpg'));
+
+    expect(url.searchParams.get('crop')).toBe('center');
+  });
+
+  it('omits the crop parameter by default', async () => {
+    const instance = await render();
+
+    const url = new URL(instance.formatSrc('https://cdn.shopify.com/shop/product.jpg'));
+
+    expect(url.searchParams.has('crop')).toBe(false);
+  });
+
+  it('bypasses formatSrc when disabled', async () => {
+    const instance = await render('data-option-disable');
+
+    expect(instance.original).toBe('https://cdn.shopify.com/shop/product.jpg');
   });
 });

@@ -4,12 +4,75 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v2.0.0-alpha.0](https://github.com/studiometa/ui/compare/1.11.1..2.0.0-alpha.0) (2026-09-03)
+
+This is the first release of the v2 line. It moves every package onto [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/), removes six component families that a newer component already covers, renames three components, merges `LargeText` and `CircularMarquee` into `Marquee`, rewrites `Tabs` on the WAI-ARIA Tabs pattern, redesigns `Cursor` around published CSS hooks, completes the `Carousel` family and gives it an accessibility contract, and changes the shape of every event payload. There is no compatibility layer.
+
+Read [the v1 → v2 migration guide](https://ui.studiometa.dev/migration-guides/1.0-2.0/) before upgrading: it lists every replacement, every renamed ref, option and event, and the markup and CSS each one needs.
+
+This is an alpha. The API may still change before `2.0.0`, and the packages install from the `next` dist-tag — `npm install @studiometa/ui@next`.
+
+### Removed
+
+- **@studiometa/ui:** remove `Accordion` and `AccordionItem` — use `DisclosureGroup` and `Disclosure`. `autoclose` was off by default and its replacement `multiple` is on by default, so the two are inverted rather than renamed ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui:** remove the `Frame` family (`Frame`, `FrameAnchor`, `FrameForm`, `FrameLoader`, `FrameTarget`, `FrameTriggerLoader`) and `AbstractFrameTrigger` — use `Fetch`, declared on the anchor or the form itself; `FrameTarget` becomes a plain `id` and the `frame-*` events become the `fetch-*` set ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui:** remove `Modal`, `ModalWithTransition` and `Panel` — use `Dialog`, whose root element must be a native `<dialog>` ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui:** remove the `ScrollAnimation` family, the `animationScrollWithEase` helper and the `withScrollAnimationDebug` decorator — use the `Motion` and `MotionScrollTimeline` components from `@studiometa/ui-motion` ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui:** remove the `Slider` family (`Slider`, `SliderBtn`, `SliderCount`, `SliderDots`, `SliderDrag`, `SliderItem`, `SliderProgress`) and `AbstractSliderChild` — use the `Carousel` family. `Carousel` moves the slides with native scrolling and `scroll-snap` instead of a transform, so the overflow moves from the root to the track and every v1 stylesheet has to follow ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui:** remove the `ImageGrid`, `Reinsurance`, `StyledModal` and `StyledPanel` Twig templates — copy the template into your project if you still need it ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui:** remove the `withDeprecation` decorator ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui:** remove the `Tabs` `styles` option and the `Transition` `group` option — style `[aria-selected="true"]` or nest a `Transition`, and give one component a list target to replace a group ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui:** remove the `@studiometa/ui/scheduler` subpath — `viewTransition` is exported by `@studiometa/js-toolkit` now — and the `@studiometa/ui/types` subpath, which went with the `Frame` family. Every dropped or renamed component takes its own subpath with it ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui:** remove the `CarouselStore`, `SliderStore`, `IndexableInstructions`, `TransitionConstructor`, `FetchConstructor`, `FetchShopifyPartialConstructor` and `FetchShopifySectionConstructor` types, along with the props types of the components that declare none; `Disclosure` and `DisclosureGroup` lose their props type parameter ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui-motion, @studiometa/ui:** remove `MotionView`'s `toggle` event and `withTransition`'s `transition-toggle` event — listen for the enter and leave events instead ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui:** remove every runtime dependency. `alien-signals`, `compute-scroll-into-view`, `deepmerge` and `morphdom` are all unreferenced since the port, so the package declares its runtime needs entirely through its `@studiometa/js-toolkit` peer ([#642](https://github.com/studiometa/ui/pull/642))
+
+### Changed
+
+- **@studiometa/ui, @studiometa/ui-mapbox, @studiometa/ui-motion:** require `@studiometa/js-toolkit` `^4.0.0-alpha.1` as a peer dependency. v4 is a major of its own — `createApp()` is removed, `$parent` and `$children` are removed, `destroyed()` becomes `unmounted()`, `$options` is read-only, every option is responsive, a boolean option reads presence and a handler payload is one object. See [the js-toolkit v3 → v4 migration guide](https://js-toolkit-v4.studiometa.dev/guide/migration/v3-to-v4.html) ([#642](https://github.com/studiometa/ui/pull/642))
+- **Events:** `event.detail` is the payload object, or `null` when there is none, where v1 passed an array of the positional arguments. Every `event.detail[0]` becomes a named read, in `@studiometa/ui` and in `@studiometa/ui-mapbox` alike; `Fetch` and `Draggable` were `[{ … }]` and are `{ … }` ([#642](https://github.com/studiometa/ui/pull/642))
+- **Disclosure, DisclosureGroup, Tabs:** namespace the shared event names, since `$emit()` bubbles in v4 and a listener on a group heard its children under the old names — `open`/`close`/`after-open`/`after-close` become `disclosure-*`, the group's `open`/`close`/`change` become `disclosure-group-*`, and `enable`/`disable` become `tabs-enable`/`tabs-disable` ([#642](https://github.com/studiometa/ui/pull/642))
+- **Defer:** rename `LazyInclude` to `Defer`, with its `content`, `error` and `always` events renamed to `defer-content`, `defer-error` and `defer-always` ([#642](https://github.com/studiometa/ui/pull/642))
+- **ScrollTo:** rename `AnchorScrollTo` to `ScrollTo`; `AnchorNavLink` extends it and follows the rename with no change of its own ([#642](https://github.com/studiometa/ui/pull/642))
+- **PrefetchOnInteraction:** rename `PrefetchWhenOver` to `PrefetchOnInteraction`, which prefetches on the first of `pointerenter`, `pointerdown` or `focusin` instead of the `mouseenter` that never fired for touch or keyboard ([#642](https://github.com/studiometa/ui/pull/642))
+- **Marquee:** merge `LargeText` and `CircularMarquee` into a single `Marquee` component that publishes `--marquee-progress`, `--marquee-offset` and `--marquee-velocity` and lets the stylesheet decide whether the travel is a translation, a rotation or a skew, instead of writing one hardcoded transform. `speed`, `sensitivity` and `damping` replace the old option set in units that say what they mean, the idle travel stops under `prefers-reduced-motion: reduce`, and `CircularMarquee.twig` survives as a Twig-only helper at `@ui/Marquee/CircularMarquee.twig` ([#642](https://github.com/studiometa/ui/pull/642))
+- **Cursor:** redesign around published CSS hooks. The eight visual options become `states` and `damping`, and the component publishes `--cursor-x`, `--cursor-y`, `data-cursor-state` and `data-cursor-down` on its own element so a stylesheet draws the cursor. The position is written into `translate` rather than `transform`, so an author `scale` composes instead of multiplying the position ([#642](https://github.com/studiometa/ui/pull/642))
+- **Tabs:** rewrite on the [WAI-ARIA Tabs pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/) — a new required `list` ref carries `role="tablist"` and the name, panels hide with the `hidden` property instead of `aria-hidden`, `enableItem()` and `disableItem()` become `goTo()`, `goNext()` and `goPrev()`, the open tab is the `btn` carrying `aria-selected="true"`, and arrow, <kbd>Home</kbd> and <kbd>End</kbd> keys drive a roving `tabindex`. `Tabs.twig` follows, with new `label` and `list_attr` parameters ([#642](https://github.com/studiometa/ui/pull/642))
+- **Carousel:** ship an accessibility contract — an `aria-label` or `aria-labelledby` on the root and a name on every `CarouselBtn` are required and diagnosed, `role="group"` is written on the root and on every slide, a slide that does not intersect the track is `inert`, the current picker carries `aria-current="true"` instead of `disabled`, and a `slide-label` option names each slide ([#642](https://github.com/studiometa/ui/pull/642))
+- **Carousel:** read the scroll alignment from each slide's own `scroll-snap-align` rather than hardcoding `center`, so `goTo()` lands exactly where a native snap would. `Slider`'s `mode` option becomes that CSS declaration: `left` is `scroll-snap-align: start`, `center` is `center` and `right` is `end` ([#642](https://github.com/studiometa/ui/pull/642))
+- **CarouselDrag:** let the track's own `scroll-snap-type` decide whether a drop snaps — on `none` the drag coasts to the projected position and stops between slides, which is what `fitBounds: false` did ([#642](https://github.com/studiometa/ui/pull/642))
+- **CarouselDrag:** carry the pointer's velocity into the drag settle. The track now leaves the pointer at the speed the hand had and decays at the drag service's own rate, instead of `behavior: 'smooth'` easing in from a standstill. The projection comes from the service too, so the same flick throws the same distance on every device ([#642](https://github.com/studiometa/ui/pull/642))
+- **Disclosure:** stop writing the open state back to the DOM — a stylesheet selecting `[data-option-open]` after the first render must select `[aria-expanded="true"]` instead ([#642](https://github.com/studiometa/ui/pull/642))
+- **Dialog:** look up a duck-typed `waitUntil()` extension by the event's own name (`open()`, `close()`) instead of v1's `enter()`/`leave()` pair, built on js-toolkit v4's `emitExtendable()`. Thenables are unaffected ([#642](https://github.com/studiometa/ui/pull/642))
+- **Indexable:** read `reverse` and `boundary` from `this.isReverse` and `this.boundary` — `$options` is read-only in v4, so `this.$options.reverse = true` no longer works ([#642](https://github.com/studiometa/ui/pull/642))
+
+### Added
+
+- **Carousel:** add the `CarouselDots`, `CarouselThumbnails`, `CarouselCount`, `CarouselProgress` and `CarouselPlay` controls, each on its own element and each optional. `Carousel` declares its whole family, so `registerComponent(Carousel)` is enough to register every child ([#642](https://github.com/studiometa/ui/pull/642))
+- **Carousel:** publish a `progress` event and a `--carousel-progress` custom property that follow the scroll offset continuously, plus `--carousel-item-active` on each slide in place of an `.is-active` class ([#642](https://github.com/studiometa/ui/pull/642))
+- **@studiometa/ui:** add the `/AbstractFigure`, `/AbstractFigureDynamic`, `/AbstractTrack`, `/ActionEvent`, `/TrackEvent` and `/DataRegistry` subpaths ([#642](https://github.com/studiometa/ui/pull/642))
+
+## [v1.11.1](https://github.com/studiometa/ui/compare/1.11.0..1.11.1) (2026-09-01)
+
+This patch extends the `historyUrl` separation introduced in `1.11.0` to the declarative link and form handlers, which still bypassed it.
+
+### Fixed
+
+- **Fetch:** apply the `historyUrl` separation to a link click and a form submit, not only to a bare `fetch()` call — the declarative handlers passed the resolved URL on, which read as a caller naming a destination and kept a `src` in the address bar ([#646](https://github.com/studiometa/ui/pull/646))
+
+## [v1.11.0](https://github.com/studiometa/ui/compare/1.10.0..1.11.0) (2026-09-01)
+
+This release is led by `@studiometa/ui-motion`, a new package for declarative animation with [Motion](https://motion.dev), and by the `dom-update` protocol event — a shared announcement that lets a component substitute how an imminent DOM change is applied, which `DataBind`, `Dialog` and `Fetch` all now speak.
 
 ### Added
 
 - **@studiometa/ui-motion:** add a new `@studiometa/ui-motion` package with the `Motion`, `MotionScrollTimeline`, `MotionSequence` and `MotionView` components to animate elements declaratively with [Motion](https://motion.dev) ([#628](https://github.com/studiometa/ui/pull/628), [#629](https://github.com/studiometa/ui/pull/629), [#630](https://github.com/studiometa/ui/pull/630), [#633](https://github.com/studiometa/ui/pull/633), [#636](https://github.com/studiometa/ui/pull/636), [#637](https://github.com/studiometa/ui/pull/637), [#638](https://github.com/studiometa/ui/pull/638), [#640](https://github.com/studiometa/ui/pull/640), [#641](https://github.com/studiometa/ui/pull/641))
 - **DataBind:** add the `data-bind:if` virtual binding to render `<template>` content conditionally, announcing each change with the bubbling `dom-update` protocol event ([#626](https://github.com/studiometa/ui/pull/626), [#634](https://github.com/studiometa/ui/pull/634))
+
+### Fixed
+
+- **Fetch:** send every value of a repeated GET form field instead of the last one, so a checkbox group or a `<select multiple>` no longer reaches the server with one of its values ([#643](https://github.com/studiometa/ui/pull/643))
+- **Fetch:** push the element's own destination in history rather than the fetched URL, so a `src` pointing at a lighter endpoint no longer leaks into the address bar — see the new `historyUrl` getter ([#643](https://github.com/studiometa/ui/pull/643))
 
 ### Changed
 

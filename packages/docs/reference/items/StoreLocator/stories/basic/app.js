@@ -39,9 +39,9 @@ class App extends Base {
 
   /**
    * Open the drawer with the selected store's detail.
-   * @param {{ args: [MapboxClusterItem] }} props
+   * @param {{ payload: { item: MapboxClusterItem } }} props
    */
-  onStoreLocatorMapSelect({ args: [item] }) {
+  onStoreLocatorMapSelect({ payload: { item } }) {
     const template = item.$el.querySelector('template');
     const content = this.$el.querySelector('#store-panel-content');
 
