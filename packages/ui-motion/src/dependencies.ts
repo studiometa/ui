@@ -43,10 +43,12 @@ let motionProvided = false;
 /**
  * Inject the `motion` module the components should use.
  *
- * Call once, before the components mount (e.g. right before `createApp`). Once
- * provided, `@studiometa/ui-motion` never imports `motion` by specifier — it
- * uses this instance — so a host can supply its own build (a specific version,
- * the smaller `motion/mini` entry, an import-map or CDN module).
+ * Call once, before the components mount — e.g. right before the
+ * `registerComponent()` or `registerManifest()` call that puts them on the
+ * page. Once provided, `@studiometa/ui-motion` never imports `motion` by
+ * specifier — it uses this instance — so a host can supply its own build (a
+ * specific version, the smaller `motion/mini` entry, an import-map or CDN
+ * module).
  *
  * @param {MotionModule} instance The `motion` module namespace.
  */
