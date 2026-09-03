@@ -19,7 +19,7 @@ function render(style: string): HTMLElement {
 }
 
 describe('Sentinel', () => {
-  it('emits `intersected` with the initial entry as soon as it observes, like the v3 decorator', async () => {
+  it('emits `intersected` with the initial entry as soon as it observes', async () => {
     const el = render(OFFSCREEN);
     const events: InViewProps[] = [];
     el.addEventListener('intersected', (event) => {

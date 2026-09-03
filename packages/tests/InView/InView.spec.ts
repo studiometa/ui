@@ -120,7 +120,7 @@ describe('InViewOnce', () => {
     expect(types()).toEqual(['in-view']);
   });
 
-  it('stays mounted after leaving the viewport, where v3 terminated', async () => {
+  it('stays mounted after leaving the viewport', async () => {
     const el = render('InViewOnce', ONSCREEN);
     const instance = await waitFor(() => getInstance(el, 'InViewOnce'));
 

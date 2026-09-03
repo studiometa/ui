@@ -483,7 +483,7 @@ describe('Action — the component', () => {
   });
 });
 
-describe('Action — the v4 lifecycle', () => {
+describe('Action — the lifecycle', () => {
   it('releases its listeners when the element leaves the DOM', async () => {
     const root = await mount(`
       <button id="action" data-component="Action" data-on:click="Foo -> target.fn()"></button>
