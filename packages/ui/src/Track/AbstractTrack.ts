@@ -62,11 +62,6 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
     },
   };
 
-  /** Resolved once per mount cycle. */
-  __payload: Record<string, unknown> | null = null;
-
-  __context: Record<string, unknown> | null = null;
-
   /** Every current `data-track:*` declaration on the element. */
   get trackEvents(): TrackEvent[] {
     const trackEvents: TrackEvent[] = [];
@@ -115,16 +110,18 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
   /**
    * The component's own payload, shared by every event on the element. The
    * option overrides the ref, mirroring `TrackContext`.
+   *
+   * Read per dispatch and never cached: both sources are DOM-backed, and a
+   * partial update can rewrite the script or the attribute under a component
+   * that stays mounted, which a mount-cycle cache would keep publishing past.
    */
   get payload(): Record<string, unknown> {
-    this.__payload ??= deepmerge(this.scriptPayload, this.optionPayload);
-    return this.__payload;
+    return deepmerge(this.scriptPayload, this.optionPayload);
   }
 
-  /** The merged context of the ancestor chain. */
+  /** The merged context of the ancestor chain, resolved per dispatch. */
   get context(): Record<string, unknown> {
-    this.__context ??= this.$closest<TrackContext>('TrackContext')?.context ?? {};
-    return this.__context;
+    return this.$closest<TrackContext>('TrackContext')?.context ?? {};
   }
 
   /**
@@ -150,11 +147,7 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
       ({ value, attribute }) => this.__bind(attribute, value),
     );
 
-    return () => {
-      stopWatchingNamespace();
-      this.__payload = null;
-      this.__context = null;
-    };
+    return stopWatchingNamespace;
   }
 
   /** One `data-track:<event>` attribute, or `null` for anything else. */

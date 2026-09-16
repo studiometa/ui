@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { getInstance, registerComponents, swap, SWAP_MODES } from '@studiometa/js-toolkit';
 import { captureDiagnostics, mount, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
 import { Track } from '#private/Track/Track.js';
 import { TrackContext } from '#private/Track/TrackContext.js';
@@ -179,6 +179,114 @@ describe('Track — payload resolution', () => {
     button.click();
 
     expect(pushes().map((entry) => entry.event)).toEqual(['mousedown_event', 'click_event']);
+  });
+});
+
+describe('Track — DOM-backed data read per dispatch', () => {
+  it('reads a morphed TrackContext script on the next dispatch, without remounting', async () => {
+    const root = await mount(`
+      <div id="host">
+        <div data-component="TrackContext">
+          <script data-ref="context" type="application/json">{ "page_type": "home" }</script>
+          <button data-component="Track" data-track:click='{"event": "cta"}'></button>
+        </div>
+      </div>
+    `);
+    const track = getInstance(root.querySelector('button'), 'Track')!;
+
+    (root.querySelector('button') as HTMLButtonElement).click();
+    expect(lastPush()).toEqual({ page_type: 'home', event: 'cta' });
+
+    await swap(
+      root.querySelector('#host') as Element,
+      `<div data-component="TrackContext">
+        <script data-ref="context" type="application/json">{ "page_type": "search" }</script>
+        <button data-component="Track" data-track:click='{"event": "cta"}'></button>
+      </div>`,
+      { mode: SWAP_MODES.MORPH },
+    );
+
+    // The same instance, so nothing re-read the context by remounting.
+    expect(getInstance(root.querySelector('button'), 'Track')).toBe(track);
+
+    (root.querySelector('button') as HTMLButtonElement).click();
+    expect(lastPush()).toEqual({ page_type: 'search', event: 'cta' });
+  });
+
+  it('reads a morphed payload script on the next dispatch', async () => {
+    const root = await mount(`
+      <div id="host">
+        <button data-component="Track" data-track:click='{"event": "cta"}'>
+          <script data-ref="payload" type="application/json">{ "source": "before" }</script>
+        </button>
+      </div>
+    `);
+    const track = getInstance(root.querySelector('button'), 'Track')!;
+
+    (root.querySelector('button') as HTMLButtonElement).click();
+    expect(lastPush()).toEqual({ event: 'cta', source: 'before' });
+
+    await swap(
+      root.querySelector('#host') as Element,
+      `<button data-component="Track" data-track:click='{"event": "cta"}'>
+        <script data-ref="payload" type="application/json">{ "source": "after" }</script>
+      </button>`,
+      { mode: SWAP_MODES.MORPH },
+    );
+
+    expect(getInstance(root.querySelector('button'), 'Track')).toBe(track);
+
+    (root.querySelector('button') as HTMLButtonElement).click();
+    expect(lastPush()).toEqual({ event: 'cta', source: 'after' });
+  });
+
+  it('reads a rewritten payload option on the next dispatch', async () => {
+    const root = await mount(
+      `<button data-component="Track" data-track:click='{"event": "cta"}'
+        data-option-payload='{"source": "before"}'></button>`,
+    );
+    const button = root.querySelector('button') as HTMLButtonElement;
+
+    button.click();
+    expect(lastPush()).toEqual({ event: 'cta', source: 'before' });
+
+    button.setAttribute('data-option-payload', '{"source": "after"}');
+    await settle();
+
+    button.click();
+    expect(lastPush()).toEqual({ event: 'cta', source: 'after' });
+  });
+
+  it('keeps the context < payload < event precedence when the sources change', async () => {
+    const root = await mount(`
+      <div data-component="TrackContext" data-option-context='{"value": "context", "from_context": true}'>
+        <button data-component="Track" data-track:click='{"event": "x", "value": "event"}'
+          data-option-payload='{"value": "payload", "from_payload": true}'></button>
+      </div>
+    `);
+    const button = root.querySelector('button') as HTMLButtonElement;
+
+    button.click();
+    expect(lastPush()).toEqual({
+      value: 'event',
+      from_context: true,
+      from_payload: true,
+      event: 'x',
+    });
+
+    (root.querySelector('[data-component="TrackContext"]') as HTMLElement).setAttribute(
+      'data-option-context',
+      '{"value": "context", "from_context": "rewritten"}',
+    );
+    await settle();
+
+    button.click();
+    expect(lastPush()).toEqual({
+      value: 'event',
+      from_context: 'rewritten',
+      from_payload: true,
+      event: 'x',
+    });
   });
 });
 

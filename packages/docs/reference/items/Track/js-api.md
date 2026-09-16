@@ -73,6 +73,8 @@ The dispatched payload is deep-merged from the following sources, in increasing 
 
 Later sources win on conflicting keys. **Arrays are replaced, not concatenated**, so a more specific layer fully overrides a list (e.g. GA4 `ecommerce.items`) from a broader one.
 
+All three sources are read when the event fires, never cached at mount. A partial DOM update that rewrites a payload script, a `data-option-payload` attribute or an ancestor `TrackContext` therefore changes what the next dispatch sends, with no remount.
+
 ```html
 <div
   data-component="Track"
@@ -86,15 +88,48 @@ Later sources win on conflicting keys. **Arrays are replaced, not concatenated**
 
 Malformed JSON (in an attribute value or a `<script>` ref) is skipped safely; a warning is logged when the element has `data-option-log`.
 
-### Custom event data
+### Event data
 
-For a `CustomEvent`, resolve values from its `detail` with `$detail.<path>` placeholders, or merge the full detail with the `.detail` modifier:
+A payload value starting with `$event.` or `$detail.` is a placeholder: it is replaced by the value found at that path on the event that triggered the dispatch.
+
+- `$event.<path>` resolves against the whole event, so it reaches native properties as well as a `CustomEvent` detail.
+- `$detail.<path>` is the shortcut for `$event.detail.<path>`.
 
 ```html
-<!-- Pull specific fields -->
+<!-- A CustomEvent detail, written both ways -->
+<div data-track:form-submitted='{"event": "lead", "email": "$event.detail.email"}'></div>
 <div data-track:form-submitted='{"event": "lead", "email": "$detail.email"}'></div>
 
-<!-- Merge the whole detail -->
+<!-- A native event -->
+<button
+  data-type="cta"
+  data-track:click='{"event": "cta_click", "type": "$event.target.dataset.type"}'></button>
+```
+
+A path walks objects and arrays, and a numeric segment reads an array index. Placeholders nested inside objects and arrays are resolved too, which is what a GA4 `ecommerce.items` list needs:
+
+```html
+<div
+  data-track:add-to-cart='{"event": "add_to_cart", "ecommerce": {"items": [{"item_id": "$detail.id"}]}}'></div>
+```
+
+A path naming data the event does not carry resolves to `undefined`, and so does every placeholder of an event that carries no event object at all, such as `mounted`.
+
+The resolver knows nothing about who emitted the event, so any component publishing plain data in its detail is readable from markup. A [`Fetch`](/reference/items/Fetch/) on the same element announces its request and its response that way:
+
+```html
+<form
+  data-component="Fetch Track"
+  data-track:fetch-update-after='{
+    "event": "content_search_results",
+    "result_count": "$event.detail.response.headers.x-search-result-count",
+    "genre": "$event.detail.request.searchParams.genre.0"
+  }'></form>
+```
+
+The `.detail` modifier is the other way to consume a `CustomEvent`: it merges the whole `event.detail` into the payload instead of resolving placeholders. It applies to a `CustomEvent` only, since a native event carries no detail to merge.
+
+```html
 <div data-track:form-submitted.detail='{"event": "lead"}'></div>
 ```
 

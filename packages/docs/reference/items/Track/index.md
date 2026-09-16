@@ -110,9 +110,11 @@ Wrap a section in `TrackContext` to provide data inherited by every descendant `
 
 </llm-only>
 
-### Custom events
+### Event data
 
-Track a `CustomEvent` emitted by third-party scripts and pull values from its `detail` with the `$detail.*` placeholder syntax:
+Pull values off the event that triggered the dispatch with `$event.<path>` placeholders. `$event` is the whole event, so the same syntax reads a `CustomEvent` detail and a native event property; `$detail.<path>` is the shortcut for `$event.detail.<path>`.
+
+The story below tracks a `CustomEvent` emitted by a third-party script:
 
 <llm-exclude>
 <PreviewPlayground
@@ -125,6 +127,25 @@ Track a `CustomEvent` emitted by third-party scripts and pull values from its `d
 :::code-group
 
 <<< ./stories/basic/custom-event.twig
+<<< ./stories/basic/app.js
+
+:::
+
+</llm-only>
+
+And this one reads a native click, where the value lives on the element rather than in a detail:
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/basic/event-paths.twig')"
+  :script="() => import('./stories/basic/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/basic/event-paths.twig
 <<< ./stories/basic/app.js
 
 :::
@@ -169,5 +190,5 @@ The provider is chosen by the component name, so switching destinations is a one
 `TrackShopify` uses the payload's `event` value as the published event name. Shopify recommends namespacing custom events (e.g. `my_app:add_to_cart`). To send to another destination, extend `Track` and override its [`dispatch()`](./js-api.md#providers) method.
 
 ::: warning
-Payloads are serialised into the DOM (attribute or `<script>`), so they are visible in the page source. Never put personal data (emails, names, user IDs) in a tracking payload — resolve sensitive values at runtime via a `CustomEvent` and `$detail.*` instead, and gate `TrackShopify` on the visitor's analytics consent where required.
+Payloads are serialised into the DOM (attribute or `<script>`), so they are visible in the page source. Never put personal data (emails, names, user IDs) in a tracking payload — resolve sensitive values at runtime via a `CustomEvent` and `$event.detail.*` instead, and gate `TrackShopify` on the visitor's analytics consent where required.
 :::
