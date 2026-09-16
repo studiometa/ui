@@ -69,14 +69,14 @@ Pin an exact version in production. An exact-version URL is immutable and stays 
 
 Each manifest entry carries a default mount strategy. Override it per element with `data-mount`. There are six:
 
-| Strategy        | The component mounts when…                                                |
-| --------------- | ------------------------------------------------------------------------- |
-| `eager`         | the runtime starts. The default for every `@studiometa/ui` component.     |
-| `visible`       | the element crosses into the viewport, once.                              |
-| `in-view`       | the element is in the viewport, and unmounts when it leaves. Reversible.  |
-| `idle`          | the browser is idle.                                                      |
-| `interaction`   | the first `pointerenter`, `pointerdown` or `focusin` on the element.      |
-| `media:<query>` | the media query matches, and unmounts when it stops matching. Reversible. |
+| Strategy        | The component mounts when…                                                           |
+| --------------- | ------------------------------------------------------------------------------------ |
+| `eager`         | the element exists. No other condition. See [What `eager` means](#what-eager-means). |
+| `visible`       | the element crosses into the viewport, once.                                         |
+| `in-view`       | the element is in the viewport, and unmounts when it leaves. Reversible.             |
+| `idle`          | the browser is idle.                                                                 |
+| `interaction`   | the first `pointerenter`, `pointerdown` or `focusin` on the element.                 |
+| `media:<query>` | the media query matches, and unmounts when it stops matching. Reversible.            |
 
 ```html
 <div data-component="Dialog" data-mount="interaction">Mounts on hover, touch, or focus</div>
@@ -86,7 +86,19 @@ Each manifest entry carries a default mount strategy. Override it per element wi
 
 The element's `data-mount` always wins over the manifest default. An invalid value reports a `component.invalid-mount-strategy` diagnostic and the entry's default is used.
 
-The `@studiometa/ui` manifest ships every component as `eager`; `@studiometa/ui-mapbox` and `@studiometa/ui-motion` ship theirs as `visible`, so their heavy dependencies stay off the critical path.
+### What `eager` means
+
+`eager` reads like "load at page load". It is not that. The runtime never walks the manifest: it reads the `data-component` tokens declared on the elements of the page, and consults a manifest entry only for a token it finds there. Nothing loads for a token absent from the markup.
+
+`eager` means the entry has no condition left to wait for beyond that element existing — no viewport crossing, no media query, no interaction. The import then runs on a background scheduler task, off the frame that discovered the element. Every element declaring the same token shares one import.
+
+Use it for an element that renders nothing. An element carrying `hidden` is never rendered, so it never intersects the viewport and never receives a pointer or focus event: `visible`, `in-view` and `interaction` wait on it for a signal that cannot arrive.
+
+### Package defaults
+
+The `@studiometa/ui` manifest ships every component as `eager`. `@studiometa/ui-motion` ships every component as `visible`, so the Motion library stays off the critical path.
+
+`@studiometa/ui-mapbox` splits. `MapboxMap` and `StoreLocator` render, so they are `visible` and the heavy `mapbox-gl` import waits for a map to approach the viewport. The twelve map children — clusters, cluster items, controls, the geocoder, images, layers, markers, popups and sources — configure the map from markup that renders nothing and is marked `hidden`, so they are `eager`. Their own modules are small; `mapbox-gl` still waits for `MapboxMap`.
 
 ## Component discovery
 
@@ -160,7 +172,7 @@ Declare an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Elemen
 </script>
 ```
 
-Load the Mapbox stylesheet yourself, and the geocoder stylesheet only when you use `MapboxGeocoder`. Give each map a valid access token through its `data-option-access-token`, and any other Mapbox `Map` option through `data-option-map-options`. Mapbox components default to the `visible` mount strategy, so the map code loads when a map crosses into the viewport.
+Load the Mapbox stylesheet yourself, and the geocoder stylesheet only when you use `MapboxGeocoder`. Give each map a valid access token through its `data-option-access-token`, and any other Mapbox `Map` option through `data-option-map-options`. `MapboxMap` and `StoreLocator` default to the `visible` mount strategy, so the map code loads when a map crosses into the viewport. The map children default to `eager`, because their markup renders nothing and carries `hidden` — see [Package defaults](#package-defaults).
 
 You own the `mapbox-gl` module, so its Web Worker is same-origin and a strict Content Security Policy works. When you load `mapbox-gl` from a CDN that builds its worker from a `blob:` URL, allow it: `Content-Security-Policy: worker-src blob:;`.
 
