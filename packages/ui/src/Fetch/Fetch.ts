@@ -6,6 +6,7 @@ import { SWAP_MODES } from '@studiometa/js-toolkit/SWAP_MODES';
 import { viewTransition } from '@studiometa/js-toolkit/viewTransition';
 import type { BaseConfig, BaseProps, DomUpdateDetail, SwapMode } from '@studiometa/js-toolkit';
 import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
+import { historyReplace } from '@studiometa/js-toolkit/utils/historyReplace';
 import { compileExpression } from '../utils/expression.js';
 
 /**
@@ -86,7 +87,7 @@ const RESPONSE_ARGUMENTS = ['response', 'url', 'requestInit', 'self'] as const;
  * What one request overrides on the element it is built from.
  *
  * It is threaded explicitly through every step that builds a request — the
- * destination, the fields, the URL and the `RequestInit` —
+ * destination, the fields, the URL, the history URL and the `RequestInit` —
  * and never stored on the instance. The instance outlives the submission it
  * describes: a submitter left on it would keep adding its `name=value` to the
  * next programmatic `fetch()` and to every popstate replay, and a request in
@@ -101,6 +102,17 @@ export interface FetchRequestContext {
    * `formmethod` and `formenctype` overrides.
    */
   submitter?: HTMLElement | null;
+
+  /**
+   * The history entry being restored, set only on the popstate path.
+   *
+   * It is both the destination — the address bar shows it already — and the
+   * state of the controls, which is why it replaces the live form fields
+   * instead of folding under them: the controls still hold what the visitor
+   * last typed, which is stale relative to the entry being restored, and the
+   * response is what brings them back in line.
+   */
+  restoredUrl?: URL;
 }
 
 /**
@@ -145,6 +157,7 @@ export type FetchProps = BaseProps & {
   };
   $options: {
     history: boolean;
+    historyMode: 'push' | 'replace';
     requestInit: RequestInit;
     headers: Record<string, string>;
     mode: SwapMode;
@@ -171,6 +184,10 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     refs: ['headers[]'],
     options: {
       history: Boolean,
+      historyMode: {
+        type: String,
+        default: 'push',
+      },
       mode: {
         type: String,
         default: SWAP_MODES.REPLACE,
@@ -236,9 +253,17 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * the document URL — not with the form's action — when the attribute is
    * absent.
    *
+   * On the popstate path the destination is the entry being restored: the
+   * address bar shows it already, while the element's `href` or `action`
+   * still points wherever it pointed when the page was rendered.
+   *
    * @private
    */
   __destination(context: FetchRequestContext): string {
+    if (context.restoredUrl) {
+      return context.restoredUrl.href;
+    }
+
     const { $el, isForm, isLink } = this;
 
     if (isForm) {
@@ -294,6 +319,10 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * @private
    */
   __fields(context: FetchRequestContext): URLSearchParams | undefined {
+    if (context.restoredUrl) {
+      return context.restoredUrl.searchParams;
+    }
+
     if (this.__method(context) !== 'get') {
       return undefined;
     }
@@ -514,17 +543,30 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     }
   }
 
-  /** Update the content on history back/forward navigation. */
+  /**
+   * Update the content on history back/forward navigation.
+   *
+   * No URL: the request is still the element's own, so a configured `src`
+   * keeps deciding what is requested and its fixed parameters survive the
+   * replay. Naming the restored location as the URL instead would discard
+   * that separation and fetch the displayed page. The restored entry travels
+   * in the context, where it stands for both the destination and the state of
+   * the controls.
+   */
   onWindowPopstate(): void {
     if (!this.$options.history) {
       return;
     }
 
-    void this.fetch(new URL(window.location.href), {
-      headers: {
-        [HEADER_NAMES.X_TRIGGERED_BY]: 'popstate',
+    void this.fetch(
+      undefined,
+      {
+        headers: {
+          [HEADER_NAMES.X_TRIGGERED_BY]: 'popstate',
+        },
       },
-    });
+      { restoredUrl: new URL(window.location.href) },
+    );
   }
 
   /**
@@ -703,11 +745,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     domParser ??= new DOMParser();
     const fragment = domParser.parseFromString(content, 'text/html');
 
+    this.__updateHistory(url, requestInit);
+
     if (history) {
-      if (headerValue(requestInit.headers, HEADER_NAMES.X_TRIGGERED_BY) !== 'popstate') {
-        const target = this.__historyUrl ?? url;
-        historyPush({ path: target.pathname, search: target.searchParams });
-      }
       this.$write(() => {
         if (fragment.title) {
           document.title = fragment.title;
@@ -735,6 +775,31 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     }
 
     this.$emit(FETCH_EVENTS.AFTER_UPDATE, { instance: this, url, requestInit, fragment });
+  }
+
+  /**
+   * Record the navigation in the browser history, when the `history` option
+   * asks for it.
+   *
+   * The `historyMode` option picks the writer: `push` leaves one entry per
+   * update, `replace` leaves none, which is what a live search needs so that
+   * a keystroke does not cost a back press.
+   *
+   * Nothing is written for an update popstate triggered: the entry being
+   * restored is already the current one.
+   *
+   * @protected
+   */
+  __updateHistory(url: URL, requestInit: RequestInit): void {
+    const { history, historyMode } = this.$options;
+
+    if (!history || headerValue(requestInit.headers, HEADER_NAMES.X_TRIGGERED_BY) === 'popstate') {
+      return;
+    }
+
+    const target = this.__historyUrl ?? url;
+    const write = historyMode === 'replace' ? historyReplace : historyPush;
+    write({ path: target.pathname, search: target.searchParams });
   }
 
   /** Announce a failed request, ignoring the abort the component caused. */

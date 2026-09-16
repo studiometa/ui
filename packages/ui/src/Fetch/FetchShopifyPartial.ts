@@ -1,11 +1,9 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
 import {
   FETCH_EVENTS,
   Fetch,
   HEADER_NAMES,
   headerNames,
-  headerValue,
   type FetchProps,
   type FetchRequestContext,
 } from './Fetch.js';
@@ -238,16 +236,9 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
     update: unknown,
     partials: PartialsApi,
   ): Promise<void> {
-    const { history } = this.$options;
-
     this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { instance: this, url, requestInit, content: update });
 
-    if (history) {
-      if (headerValue(requestInit.headers, HEADER_NAMES.X_TRIGGERED_BY) !== 'popstate') {
-        const target = this.__historyUrl ?? url;
-        historyPush({ path: target.pathname, search: target.searchParams });
-      }
-    }
+    this.__updateHistory(url, requestInit);
 
     this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, update });
 

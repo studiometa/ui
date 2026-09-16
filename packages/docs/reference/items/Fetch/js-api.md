@@ -30,7 +30,35 @@ This option can be used to extract specific content from the response, but the m
 - Type: `boolean`
 - Default: `false`
 
-Updates the browser's history when performing a request. The `historyPush` utility from [`@studiometa/js-toolkit`](https://js-toolkit-v4.studiometa.dev) will be used in the background.
+Updates the browser's history when performing a request. The [`historyMode` option](#historymode) picks between the `historyPush` and `historyReplace` utilities from [`@studiometa/js-toolkit`](https://js-toolkit-v4.studiometa.dev), which write the [`historyUrl`](#historyurl).
+
+The component also listens for `popstate` while this option is on, so a back or forward navigation re-fetches the restored entry and updates the same regions.
+
+### `historyMode`
+
+- Type: `'push' | 'replace'`
+- Default: `'push'`
+
+Picks the history writer, when the [`history` option](#history) is on.
+
+- `push` adds one entry per update, so every update is one back press away.
+- `replace` overwrites the current entry, so no update adds one.
+
+Use `replace` for a control that fires often — a live search, a facet list, a map — where one entry per keystroke buries the page the visitor came from.
+
+```html
+<form
+  action="/help"
+  method="get"
+  data-component="Fetch"
+  data-option-src="/apps/search?view=fragment"
+  data-option-history
+  data-option-history-mode="replace">
+  <input type="search" name="q" />
+</form>
+```
+
+Neither writer runs for an update `popstate` triggered: the entry being restored is already the current one.
 
 ### `requestInit`
 
@@ -129,6 +157,8 @@ This is handy for progressive enhancement, where the element's native `action`/`
 </form>
 ```
 
+The separation holds on a back or forward navigation too: the request is rebuilt against `src` rather than aimed at the displayed page. See [`historyUrl`](#historyurl).
+
 ## Getters
 
 ### `client`
@@ -179,8 +209,20 @@ Clicking that requests the `sections=listing` URL and pushes `/projects/page/2?o
 
 A URL passed explicitly to [`fetch(url)`](#fetch-url-url-string-requestinit-requestinit-context-fetchrequestcontext) is pushed as given: a caller that named a URL meant that URL.
 
+The `historyMode` option picks how that URL is written — one entry per update, or none. See [`historyMode`](#historymode).
+
+#### On back and forward navigation
+
+A `popstate` rebuilds the request the same way, from the entry being restored instead of from the live controls:
+
+- the destination is the restored entry, which the address bar already shows;
+- the request URL is still the [`src`](#src) when one is set, with its fixed parameters intact;
+- the restored entry's search parameters replace the form fields, which still hold whatever the visitor last typed.
+
+So the entry `/help?q=shipping`, restored on the form of the [`historyMode` option](#historymode), requests `/apps/search?view=fragment&q=shipping`. The response is what brings the controls back in line.
+
 ::: tip
-On a back or forward navigation the component re-fetches `window.location.href`, which is now the pushed URL rather than the `src` one. Keep the [`selector`](#selector) matching elements that exist in **both** responses — the full page and the lighter endpoint — or the two directions will not update the same regions.
+Keep the [`selector`](#selector) matching elements that exist in **both** responses — the full page and the lighter endpoint — or the two directions will not update the same regions.
 :::
 
 ### `requestInit`
@@ -213,7 +255,7 @@ An intercepted submission sends what a native one would send, the button that ca
 
 Pressing the second button requests `/projects?orderby=title&page=2`, with no script of its own.
 
-The submitter belongs to the submission that carried it: a later [`fetch()`](#fetch-url-url-string-requestinit-requestinit-context-fetchrequestcontext) call builds its request without it.
+The submitter belongs to the submission that carried it: a later [`fetch()`](#fetch-url-url-string-requestinit-requestinit-context-fetchrequestcontext) call, and a back or forward navigation, build their request without it.
 
 ## Refs
 
@@ -249,7 +291,7 @@ The declarative click, submit and popstate flows call this method for you, but i
 
 - `url` (`URL | string`, optional): the URL to fetch. Defaults to the [`url` getter](#url), so a bare `fetch()` call uses the element's `href`, `action` or [`src` option](#src). A `string` is coerced into a `URL` resolved against the current location.
 - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit), optional): extra options merged into the [`requestInit` getter](#requestinit-1) for this call.
-- `context` (`FetchRequestContext`, optional): what this one request overrides on the element it is built from — a `submitter` for [a form submission](#form-submissions). The declarative flows fill it in; it is never kept on the instance, so nothing leaks into the next request.
+- `context` (`FetchRequestContext`, optional): what this one request overrides on the element it is built from — a `submitter` for [a form submission](#form-submissions), a `restoredUrl` for a back or forward navigation. The declarative flows fill it in; it is never kept on the instance, so nothing leaks into the next request.
 
 ```html
 <div data-component="Action InView Fetch" data-option-src="/path" data-on:in-view="Fetch.fetch()">

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Fetch:** add the `historyMode` option and keep the `src` separation on popstate ([#656](https://github.com/studiometa/ui/pull/656))
+
 ### Fixed
 
 - **Fetch:** send a form submission's submitter and its `formaction`, `formmethod` and `formenctype` ([#656](https://github.com/studiometa/ui/pull/656))

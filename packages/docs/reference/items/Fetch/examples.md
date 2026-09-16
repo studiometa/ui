@@ -90,6 +90,47 @@ An intercepted submission sends the button that caused it, so a set of `<button 
 
 </llm-only>
 
+## Live search with a separate source
+
+A live search displays one URL and requests another. The form's `action` is the full results page a visitor can copy and a no-JS submission reaches; the [`src` option](./js-api.md#src) points the enhanced request at a fragment endpoint. [`historyMode`](./js-api.md#historymode) set to `replace` keeps the address bar in step without spending one history entry per keystroke.
+
+::: code-group
+
+```html [index.html]
+<form
+  id="search"
+  action="/help"
+  method="get"
+  data-component="Fetch"
+  data-option-src="/apps/search?view=fragment"
+  data-option-history
+  data-option-history-mode="replace">
+  <input
+    type="search"
+    name="q"
+    data-component="Action"
+    data-on:input.debounce300="Fetch(#search)->target.fetch()" />
+</form>
+
+<div id="search-results">…</div>
+```
+
+```js twoslash [app.ts]
+import { registerComponent } from '@studiometa/js-toolkit';
+import { Action, Fetch } from '@studiometa/ui';
+
+registerComponent(Action);
+registerComponent(Fetch);
+```
+
+:::
+
+Typing `shipping` requests `/apps/search?view=fragment&q=shipping` and displays `/help?q=shipping`. Pressing back restores `/help`, and the request is rebuilt against the source: `/apps/search?view=fragment`, with the restored entry's parameters rather than the text still sitting in the input.
+
+::: tip
+`Fetch` aborts the request in flight when a new one starts, so a fast typist never sees an older response land. The `debounce300` modifier of the [`Action`](../Action/js-api.md#on) component spares the endpoint the keystrokes in between.
+:::
+
 ## Modes
 
 Modes are configured with the [`data-option-mode` attribute](./js-api.md#mode).

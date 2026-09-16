@@ -60,6 +60,28 @@ function stubClient(
 
 /** Collect every `Fetch` event dispatched under `root`, in order. */
 
+/** Take over both history writers and record which one an update reaches for. */
+function stubHistory(): {
+  push: ReturnType<typeof vi.fn>;
+  replace: ReturnType<typeof vi.fn>;
+  restore: () => void;
+} {
+  const originalPush = window.history.pushState.bind(window.history);
+  const originalReplace = window.history.replaceState.bind(window.history);
+  const push = vi.fn(originalPush);
+  const replace = vi.fn(originalReplace);
+  window.history.pushState = push as typeof window.history.pushState;
+  window.history.replaceState = replace as typeof window.history.replaceState;
+  return {
+    push,
+    replace,
+    restore() {
+      window.history.pushState = originalPush;
+      window.history.replaceState = originalReplace;
+    },
+  };
+}
+
 /** Take over `document.startViewTransition` and count the calls. */
 function stubViewTransition(): { spy: ReturnType<typeof vi.fn>; restore: () => void } {
   const original = document.startViewTransition;
@@ -1002,6 +1024,180 @@ describe('Fetch — the DOM update', () => {
 
     const injected = document.querySelector('#target [data-component="Fetch"]');
     expect(getInstance<Fetch>(injected as HTMLElement, 'Fetch')?.$isMounted).toBe(true);
+  });
+});
+
+describe('Fetch — history mode', () => {
+  it('pushes one entry per update by default', async () => {
+    const history = stubHistory();
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-history data-option-no-view-transition></a>`,
+    );
+
+    await instance.update(new URL('https://example.com/one'), {}, '<div id="target">1</div>');
+    await instance.update(new URL('https://example.com/two'), {}, '<div id="target">2</div>');
+
+    expect(instance.$options.historyMode).toBe('push');
+    expect(history.push).toHaveBeenCalledTimes(2);
+    expect(history.replace).not.toHaveBeenCalled();
+    expect(window.location.pathname).toBe('/two');
+    history.restore();
+  });
+
+  it('adds no entry per update in `replace` mode', async () => {
+    // One keystroke of a live search must not cost one back press.
+    const history = stubHistory();
+    const entriesBefore = window.history.length;
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-history data-option-history-mode="replace"
+        data-option-no-view-transition></a>`,
+    );
+
+    await instance.update(new URL('https://example.com/one'), {}, '<div id="target">1</div>');
+    await instance.update(new URL('https://example.com/two'), {}, '<div id="target">2</div>');
+
+    expect(history.push).not.toHaveBeenCalled();
+    expect(history.replace).toHaveBeenCalledTimes(2);
+    expect(window.history.length).toBe(entriesBefore);
+    expect(window.location.pathname).toBe('/two');
+    history.restore();
+  });
+
+  it('writes nothing when `history` is off, whatever the mode', async () => {
+    const history = stubHistory();
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-history-mode="replace"
+        data-option-no-view-transition></a>`,
+    );
+
+    await instance.update(new URL('https://example.com/one'), {}, '<div id="target">1</div>');
+
+    expect(history.push).not.toHaveBeenCalled();
+    expect(history.replace).not.toHaveBeenCalled();
+    history.restore();
+  });
+
+  it('replaces the entry with the destination url, not the fetched `src`', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/help" method="get"
+        data-option-src="/apps/search?view=fragment"
+        data-option-history data-option-history-mode="replace">
+        <input name="q" value="shipping">
+      </form>`,
+    );
+
+    (root.querySelector('form') as HTMLFormElement).requestSubmit();
+    await settle();
+
+    const requested = new URL(String(client.mock.calls[0][0]));
+    expect(requested.pathname).toBe('/apps/search');
+    expect(requested.searchParams.get('view')).toBe('fragment');
+    expect(requested.searchParams.get('q')).toBe('shipping');
+    expect(window.location.pathname).toBe('/help');
+    expect(window.location.search).toBe('?q=shipping');
+  });
+});
+
+describe('Fetch — popstate with a separate source', () => {
+  it('fetches the restored location when there is no `src`', async () => {
+    // The element's own `href` is where it pointed when the page was
+    // rendered, not where the visitor just went back to.
+    const client = stubClient();
+    await mountFetch(`<a data-component="Fetch" href="/elsewhere" data-option-history></a>`);
+    window.history.replaceState({}, '', '/restored?page=3');
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    const requested = new URL(String(client.mock.calls[0][0]));
+    expect(requested.pathname).toBe('/restored');
+    expect(requested.searchParams.get('page')).toBe('3');
+  });
+
+  it('rebuilds the source request, keeping its fixed parameters', async () => {
+    const client = stubClient();
+    window.history.replaceState({}, '', '/help?q=shipping');
+    await mountFetch(
+      `<form data-component="Fetch" action="/help" method="get"
+        data-option-src="/apps/search?view=fragment"
+        data-option-history data-option-history-mode="replace">
+        <input name="q" value="shipping">
+      </form>`,
+    );
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    const requested = new URL(String(client.mock.calls[0][0]));
+    expect(requested.pathname).toBe('/apps/search');
+    expect(requested.searchParams.get('view')).toBe('fragment');
+    expect(requested.searchParams.get('q')).toBe('shipping');
+  });
+
+  it('lets the restored state win over the live controls', async () => {
+    // The field still holds what the visitor last typed, which is stale
+    // relative to the entry being restored.
+    const client = stubClient();
+    window.history.replaceState({}, '', '/help?q=returns');
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/help" method="get"
+        data-option-src="/apps/search?view=fragment" data-option-history>
+        <input name="q" value="shipping">
+      </form>`,
+    );
+    expect(root.querySelector('input')?.value).toBe('shipping');
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    expect(new URL(String(client.mock.calls[0][0])).searchParams.get('q')).toBe('returns');
+  });
+
+  it('does not replay a previous submitter on popstate', async () => {
+    const client = stubClient();
+    window.history.replaceState({}, '', '/help?q=shipping');
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/help" method="get"
+        data-option-src="/apps/search?view=fragment" data-option-history>
+        <input name="q" value="shipping">
+        <button type="submit" name="page" value="2">Next</button>
+      </form>`,
+    );
+    const form = root.querySelector('form') as HTMLFormElement;
+
+    form.requestSubmit(form.querySelector('button'));
+    await settle();
+    // Go back to the entry that came before the submission.
+    window.history.replaceState({}, '', '/help?q=shipping');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    expect(new URL(String(client.mock.calls[0][0])).searchParams.get('page')).toBe('2');
+    expect(new URL(String(client.mock.calls[1][0])).searchParams.has('page')).toBe(false);
+  });
+
+  it('writes no history entry on popstate', async () => {
+    const client = stubClient();
+    window.history.replaceState({}, '', '/help?q=shipping');
+    await mountFetch(
+      `<form data-component="Fetch" action="/help" method="get"
+        data-option-src="/apps/search?view=fragment" data-option-history>
+        <input name="q" value="shipping">
+      </form>`,
+    );
+    const history = stubHistory();
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    expect(client).toHaveBeenCalledTimes(1);
+    expect(history.push).not.toHaveBeenCalled();
+    expect(history.replace).not.toHaveBeenCalled();
+    history.restore();
   });
 });
 
