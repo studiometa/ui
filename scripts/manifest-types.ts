@@ -11,7 +11,8 @@ import type { MountStrategy } from '@studiometa/js-toolkit';
 
 /**
  * Curated authoring metadata for a single component, consumed by the manifest generator. The
- * `subpath` and `exportName` default to the `token` when omitted.
+ * `subpath` and `exportName` default to the `token` when omitted, and `strategy` defaults to the
+ * one the catalog declares for the whole package.
  */
 export interface CuratedComponentMetadata {
   token: string;
@@ -21,11 +22,13 @@ export interface CuratedComponentMetadata {
   integrations?: readonly string[];
   subpath?: string;
   exportName?: string;
+  strategy?: MountStrategy;
 }
 
 /**
  * The authoring catalog for a component package: the list of its components, the default strategy
- * they share, and the abstract exports that are intentionally excluded from the manifest.
+ * a component inherits when it declares none of its own, and the abstract exports that are
+ * intentionally excluded from the manifest.
  */
 export interface ComponentCatalog {
   packageName: string;

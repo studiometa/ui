@@ -3,41 +3,41 @@ import type { ComponentManifest } from '@studiometa/js-toolkit';
 
 export const manifest: ComponentManifest = {
   MapboxCluster: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./MapboxCluster.js').then(({ MapboxCluster }) => MapboxCluster),
   },
   MapboxClusterItem: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./MapboxClusterItem.js').then(({ MapboxClusterItem }) => MapboxClusterItem),
   },
   MapboxFullscreenControl: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () =>
       import('./MapboxFullscreenControl.js').then(
         ({ MapboxFullscreenControl }) => MapboxFullscreenControl,
       ),
   },
   MapboxGeocoder: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./MapboxGeocoder.js').then(({ MapboxGeocoder }) => MapboxGeocoder),
   },
   MapboxGeolocateControl: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () =>
       import('./MapboxGeolocateControl.js').then(
         ({ MapboxGeolocateControl }) => MapboxGeolocateControl,
       ),
   },
   MapboxImage: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./MapboxImage.js').then(({ MapboxImage }) => MapboxImage),
   },
   MapboxImages: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./MapboxImages.js').then(({ MapboxImages }) => MapboxImages),
   },
   MapboxLayer: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./MapboxLayer.js').then(({ MapboxLayer }) => MapboxLayer),
   },
   MapboxMap: {
@@ -45,22 +45,22 @@ export const manifest: ComponentManifest = {
     load: () => import('./MapboxMap.js').then(({ MapboxMap }) => MapboxMap),
   },
   MapboxMarker: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./MapboxMarker.js').then(({ MapboxMarker }) => MapboxMarker),
   },
   MapboxNavigationControl: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () =>
       import('./MapboxNavigationControl.js').then(
         ({ MapboxNavigationControl }) => MapboxNavigationControl,
       ),
   },
   MapboxPopup: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./MapboxPopup.js').then(({ MapboxPopup }) => MapboxPopup),
   },
   MapboxSource: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./MapboxSource.js').then(({ MapboxSource }) => MapboxSource),
   },
   StoreLocator: {
