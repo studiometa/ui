@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getInstance, registerComponents } from '@studiometa/js-toolkit';
-import { mount, recordEvents, resetDom, settle } from '@studiometa/js-toolkit/test';
+import { captureDiagnostics, mount, recordEvents, resetDom, settle } from '@studiometa/js-toolkit/test';
 import { Fetch, FETCH_EVENTS, type FetchEmits } from '#private/Fetch/Fetch.js';
 import { FetchShopifySection } from '#private/Fetch/FetchShopifySection.js';
 
@@ -59,6 +59,28 @@ function stubClient(
 }
 
 /** Collect every `Fetch` event dispatched under `root`, in order. */
+
+/** Take over both history writers and record which one an update reaches for. */
+function stubHistory(): {
+  push: ReturnType<typeof vi.fn>;
+  replace: ReturnType<typeof vi.fn>;
+  restore: () => void;
+} {
+  const originalPush = window.history.pushState.bind(window.history);
+  const originalReplace = window.history.replaceState.bind(window.history);
+  const push = vi.fn(originalPush);
+  const replace = vi.fn(originalReplace);
+  window.history.pushState = push as typeof window.history.pushState;
+  window.history.replaceState = replace as typeof window.history.replaceState;
+  return {
+    push,
+    replace,
+    restore() {
+      window.history.pushState = originalPush;
+      window.history.replaceState = originalReplace;
+    },
+  };
+}
 
 /** Take over `document.startViewTransition` and count the calls. */
 function stubViewTransition(): { spy: ReturnType<typeof vi.fn>; restore: () => void } {
@@ -274,13 +296,36 @@ describe('Fetch — request resolution', () => {
   });
 
   it('sends the form data as the body of a POST form', async () => {
+    // A form that declares no `enctype` posts `application/x-www-form-urlencoded`,
+    // which is what a native submission sends.
     const { instance } = await mountFetch(
       `<form data-component="Fetch" action="https://example.com" method="post">
         <input name="foo" value="bar">
       </form>`,
     );
     expect(instance.requestInit.method).toBe('post');
+    expect(instance.requestInit.body).toBeInstanceOf(URLSearchParams);
+    expect(String(instance.requestInit.body)).toBe('foo=bar');
+  });
+
+  it('sends `FormData` when the form declares `multipart/form-data`', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com" method="post"
+        enctype="multipart/form-data">
+        <input name="foo" value="bar">
+      </form>`,
+    );
     expect(instance.requestInit.body).toBeInstanceOf(FormData);
+  });
+
+  it('sends a plain text body when the form declares `text/plain`', async () => {
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com" method="post" enctype="text/plain">
+        <input name="foo" value="bar">
+        <input name="baz" value="qux">
+      </form>`,
+    );
+    expect(instance.requestInit.body).toBe('foo=bar\r\nbaz=qux\r\n');
   });
 
   it('sends no body for a GET form', async () => {
@@ -417,6 +462,316 @@ describe('Fetch — declarative triggers', () => {
     await settle();
 
     expect(client).not.toHaveBeenCalled();
+  });
+});
+
+describe('Fetch — native submitter semantics', () => {
+  /** The submit button of the mounted form, and the form it belongs to. */
+  function submit(root: HTMLElement, selector = 'button'): void {
+    const form = root.querySelector('form') as HTMLFormElement;
+    form.requestSubmit(form.querySelector<HTMLButtonElement>(selector));
+  }
+
+  it('makes the clicked submit button a successful control', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <input name="q" value="hello">
+        <button type="submit" name="page" value="2">Next</button>
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    expect(String(client.mock.calls[0][0])).toBe('https://example.com/search?q=hello&page=2');
+  });
+
+  it('lets each submit button choose its own value', async () => {
+    // Declarative pagination is two buttons of the same name over one form.
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <button type="submit" name="page" value="2">2</button>
+        <button type="submit" name="page" value="3">3</button>
+      </form>`,
+    );
+
+    submit(root, '[value="2"]');
+    await settle();
+    submit(root, '[value="3"]');
+    await settle();
+
+    expect(new URL(String(client.mock.calls[0][0])).searchParams.get('page')).toBe('2');
+    expect(new URL(String(client.mock.calls[1][0])).searchParams.get('page')).toBe('3');
+  });
+
+  it('stays valid when a submission has no submitter', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <input name="q" value="hello">
+        <button type="submit" name="page" value="2">Next</button>
+      </form>`,
+    );
+
+    (root.querySelector('form') as HTMLFormElement).requestSubmit();
+    await settle();
+
+    // No submitter, so the button is not a successful control — as natively.
+    expect(String(client.mock.calls[0][0])).toBe('https://example.com/search?q=hello');
+  });
+
+  it('honours `formaction`, on the request and on the pushed url alike', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get"
+        data-option-history>
+        <input name="q" value="hello">
+        <button type="submit" formaction="/elsewhere">Elsewhere</button>
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    expect(String(client.mock.calls[0][0])).toBe(
+      new URL('/elsewhere?q=hello', window.location.href).href,
+    );
+    expect(window.location.pathname).toBe('/elsewhere');
+    expect(window.location.search).toBe('?q=hello');
+  });
+
+  it('honours `formmethod` when it turns a GET form into a POST', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <input name="q" value="hello">
+        <button type="submit" formmethod="post" name="page" value="2">Next</button>
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    const [url, init] = client.mock.calls[0] as [URL, RequestInit];
+    expect(init.method).toBe('post');
+    // The fields travel in the body, so the url keeps none of them.
+    expect(String(url)).toBe('https://example.com/search');
+    expect(String(init.body)).toBe('q=hello&page=2');
+  });
+
+  it('honours `formmethod` when it turns a POST form into a GET', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="post">
+        <input name="q" value="hello">
+        <button type="submit" formmethod="get" name="page" value="2">Next</button>
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    const [url, init] = client.mock.calls[0] as [URL, RequestInit];
+    expect(init.method).toBe('get');
+    expect(init.body).toBeUndefined();
+    expect(String(url)).toBe('https://example.com/search?q=hello&page=2');
+  });
+
+  it('honours `formenctype`', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post">
+        <input name="foo" value="bar">
+        <button type="submit" formenctype="multipart/form-data">Upload</button>
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    const [, init] = client.mock.calls[0] as [URL, RequestInit];
+    expect(init.body).toBeInstanceOf(FormData);
+  });
+
+  it('keeps repeated names alongside the submitter on a GET form', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <input type="checkbox" name="genre" value="rock" checked>
+        <input type="checkbox" name="genre" value="jazz" checked>
+        <button type="submit" name="page" value="2">Next</button>
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    const { searchParams } = new URL(String(client.mock.calls[0][0]));
+    expect(searchParams.getAll('genre')).toEqual(['rock', 'jazz']);
+    expect(searchParams.get('page')).toBe('2');
+  });
+
+  it('keeps repeated names alongside the submitter in a POST body', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="post">
+        <input type="checkbox" name="genre" value="rock" checked>
+        <input type="checkbox" name="genre" value="jazz" checked>
+        <button type="submit" name="page" value="2">Next</button>
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    const [, init] = client.mock.calls[0] as [URL, RequestInit];
+    const body = new URLSearchParams(String(init.body));
+    expect(body.getAll('genre')).toEqual(['rock', 'jazz']);
+    expect(body.get('page')).toBe('2');
+  });
+
+  it('does not carry a submitter into a later programmatic `fetch()`', async () => {
+    // The submitter belongs to one submission. Kept on the instance it would
+    // keep adding `page=2` to every request that follows.
+    const client = stubClient();
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get">
+        <input name="q" value="hello">
+        <button type="submit" name="page" value="2">Next</button>
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+    await instance.fetch();
+    await settle();
+
+    expect(new URL(String(client.mock.calls[0][0])).searchParams.get('page')).toBe('2');
+    expect(new URL(String(client.mock.calls[1][0])).searchParams.has('page')).toBe(false);
+    expect(instance.url.searchParams.has('page')).toBe(false);
+  });
+});
+
+describe('Fetch — file controls', () => {
+  /** Put a real file in a file control, the way a file picker does. */
+  function attachFile(root: HTMLElement, name = 'photo.png'): File {
+    const input = root.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['pixels'], name, { type: 'image/png' });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+    return file;
+  }
+
+  it('sends a file control as its filename when the enctype is not multipart', async () => {
+    // A native URL-encoded submission sends the file's name. Stringifying the
+    // `File` instead would send the literal `[object File]`.
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    attachFile(root);
+
+    const body = instance.requestInit.body as URLSearchParams;
+    expect(body).toBeInstanceOf(URLSearchParams);
+    expect(body.get('photo')).toBe('photo.png');
+  });
+
+  it('reports the upload it cannot send', async () => {
+    const diagnostics = captureDiagnostics();
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    attachFile(root);
+    void instance.requestInit;
+
+    expect(diagnostics.codes).toContain('fetch.file-not-uploaded');
+    diagnostics.stop();
+  });
+
+  it('sends a file control as its filename in a `text/plain` body', async () => {
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post"
+        enctype="text/plain">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    attachFile(root);
+
+    expect(instance.requestInit.body).toBe('photo=photo.png\r\n');
+  });
+
+  it('sends the file itself when the form declares `multipart/form-data`', async () => {
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post"
+        enctype="multipart/form-data">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    const file = attachFile(root);
+
+    const body = instance.requestInit.body as FormData;
+    expect(body).toBeInstanceOf(FormData);
+    expect(body.get('photo')).toBeInstanceOf(File);
+    expect((body.get('photo') as File).name).toBe(file.name);
+  });
+
+  it('says nothing about a form that sends its file', async () => {
+    const diagnostics = captureDiagnostics();
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post"
+        enctype="multipart/form-data">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    attachFile(root);
+    void instance.requestInit;
+
+    expect(diagnostics.codes).not.toContain('fetch.file-not-uploaded');
+    diagnostics.stop();
+  });
+
+  it('sends a file control as its filename on a GET form, and reports it', async () => {
+    // No GET submission uploads a file, whatever the form declares.
+    const diagnostics = captureDiagnostics();
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="get">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    attachFile(root);
+    (root.querySelector('form') as HTMLFormElement).requestSubmit();
+    await settle();
+
+    const { searchParams } = new URL(String(client.mock.calls[0][0]));
+    expect(searchParams.get('photo')).toBe('photo.png');
+    expect(diagnostics.codes).toContain('fetch.file-not-uploaded');
+    diagnostics.stop();
+  });
+
+  it('sends the file when a submitter declares `formenctype="multipart/form-data"`', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post">
+        <input type="file" name="photo">
+        <button type="submit" formenctype="multipart/form-data">Upload</button>
+      </form>`,
+    );
+    const file = attachFile(root);
+    const form = root.querySelector('form') as HTMLFormElement;
+    form.requestSubmit(form.querySelector('button'));
+    await settle();
+
+    const [, init] = client.mock.calls[0] as [URL, RequestInit];
+    expect(init.body).toBeInstanceOf(FormData);
+    expect((init.body as FormData).get('photo')).toBeInstanceOf(File);
+    expect(((init.body as FormData).get('photo') as File).name).toBe(file.name);
   });
 });
 
@@ -790,6 +1145,180 @@ describe('Fetch — the DOM update', () => {
 
     const injected = document.querySelector('#target [data-component="Fetch"]');
     expect(getInstance<Fetch>(injected as HTMLElement, 'Fetch')?.$isMounted).toBe(true);
+  });
+});
+
+describe('Fetch — history mode', () => {
+  it('pushes one entry per update by default', async () => {
+    const history = stubHistory();
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-history data-option-no-view-transition></a>`,
+    );
+
+    await instance.update(new URL('https://example.com/one'), {}, '<div id="target">1</div>');
+    await instance.update(new URL('https://example.com/two'), {}, '<div id="target">2</div>');
+
+    expect(instance.$options.historyMode).toBe('push');
+    expect(history.push).toHaveBeenCalledTimes(2);
+    expect(history.replace).not.toHaveBeenCalled();
+    expect(window.location.pathname).toBe('/two');
+    history.restore();
+  });
+
+  it('adds no entry per update in `replace` mode', async () => {
+    // One keystroke of a live search must not cost one back press.
+    const history = stubHistory();
+    const entriesBefore = window.history.length;
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-history data-option-history-mode="replace"
+        data-option-no-view-transition></a>`,
+    );
+
+    await instance.update(new URL('https://example.com/one'), {}, '<div id="target">1</div>');
+    await instance.update(new URL('https://example.com/two'), {}, '<div id="target">2</div>');
+
+    expect(history.push).not.toHaveBeenCalled();
+    expect(history.replace).toHaveBeenCalledTimes(2);
+    expect(window.history.length).toBe(entriesBefore);
+    expect(window.location.pathname).toBe('/two');
+    history.restore();
+  });
+
+  it('writes nothing when `history` is off, whatever the mode', async () => {
+    const history = stubHistory();
+    await mount(`<div id="target">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-history-mode="replace"
+        data-option-no-view-transition></a>`,
+    );
+
+    await instance.update(new URL('https://example.com/one'), {}, '<div id="target">1</div>');
+
+    expect(history.push).not.toHaveBeenCalled();
+    expect(history.replace).not.toHaveBeenCalled();
+    history.restore();
+  });
+
+  it('replaces the entry with the destination url, not the fetched `src`', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/help" method="get"
+        data-option-src="/apps/search?view=fragment"
+        data-option-history data-option-history-mode="replace">
+        <input name="q" value="shipping">
+      </form>`,
+    );
+
+    (root.querySelector('form') as HTMLFormElement).requestSubmit();
+    await settle();
+
+    const requested = new URL(String(client.mock.calls[0][0]));
+    expect(requested.pathname).toBe('/apps/search');
+    expect(requested.searchParams.get('view')).toBe('fragment');
+    expect(requested.searchParams.get('q')).toBe('shipping');
+    expect(window.location.pathname).toBe('/help');
+    expect(window.location.search).toBe('?q=shipping');
+  });
+});
+
+describe('Fetch — popstate with a separate source', () => {
+  it('fetches the restored location when there is no `src`', async () => {
+    // The element's own `href` is where it pointed when the page was
+    // rendered, not where the visitor just went back to.
+    const client = stubClient();
+    await mountFetch(`<a data-component="Fetch" href="/elsewhere" data-option-history></a>`);
+    window.history.replaceState({}, '', '/restored?page=3');
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    const requested = new URL(String(client.mock.calls[0][0]));
+    expect(requested.pathname).toBe('/restored');
+    expect(requested.searchParams.get('page')).toBe('3');
+  });
+
+  it('rebuilds the source request, keeping its fixed parameters', async () => {
+    const client = stubClient();
+    window.history.replaceState({}, '', '/help?q=shipping');
+    await mountFetch(
+      `<form data-component="Fetch" action="/help" method="get"
+        data-option-src="/apps/search?view=fragment"
+        data-option-history data-option-history-mode="replace">
+        <input name="q" value="shipping">
+      </form>`,
+    );
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    const requested = new URL(String(client.mock.calls[0][0]));
+    expect(requested.pathname).toBe('/apps/search');
+    expect(requested.searchParams.get('view')).toBe('fragment');
+    expect(requested.searchParams.get('q')).toBe('shipping');
+  });
+
+  it('lets the restored state win over the live controls', async () => {
+    // The field still holds what the visitor last typed, which is stale
+    // relative to the entry being restored.
+    const client = stubClient();
+    window.history.replaceState({}, '', '/help?q=returns');
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/help" method="get"
+        data-option-src="/apps/search?view=fragment" data-option-history>
+        <input name="q" value="shipping">
+      </form>`,
+    );
+    expect(root.querySelector('input')?.value).toBe('shipping');
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    expect(new URL(String(client.mock.calls[0][0])).searchParams.get('q')).toBe('returns');
+  });
+
+  it('does not replay a previous submitter on popstate', async () => {
+    const client = stubClient();
+    window.history.replaceState({}, '', '/help?q=shipping');
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/help" method="get"
+        data-option-src="/apps/search?view=fragment" data-option-history>
+        <input name="q" value="shipping">
+        <button type="submit" name="page" value="2">Next</button>
+      </form>`,
+    );
+    const form = root.querySelector('form') as HTMLFormElement;
+
+    form.requestSubmit(form.querySelector('button'));
+    await settle();
+    // Go back to the entry that came before the submission.
+    window.history.replaceState({}, '', '/help?q=shipping');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    expect(new URL(String(client.mock.calls[0][0])).searchParams.get('page')).toBe('2');
+    expect(new URL(String(client.mock.calls[1][0])).searchParams.has('page')).toBe(false);
+  });
+
+  it('writes no history entry on popstate', async () => {
+    const client = stubClient();
+    window.history.replaceState({}, '', '/help?q=shipping');
+    await mountFetch(
+      `<form data-component="Fetch" action="/help" method="get"
+        data-option-src="/apps/search?view=fragment" data-option-history>
+        <input name="q" value="shipping">
+      </form>`,
+    );
+    const history = stubHistory();
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await settle();
+
+    expect(client).toHaveBeenCalledTimes(1);
+    expect(history.push).not.toHaveBeenCalled();
+    expect(history.replace).not.toHaveBeenCalled();
+    history.restore();
   });
 });
 

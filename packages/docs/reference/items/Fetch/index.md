@@ -57,7 +57,7 @@ We use `id` attributes to detect which content from the response should be used 
 
 ### From any element
 
-The `Fetch` component is not limited to `<a>` and `<form>` elements. Set the [`src` option](./js-api.md#src) to a URL and the component can be mounted on any element, then triggered programmatically with the [`fetch()` method](./js-api.md#fetch-url-url-string-requestinit-requestinit) — for example from an event via the [`Action`](../Action/index.md) component.
+The `Fetch` component is not limited to `<a>` and `<form>` elements. Set the [`src` option](./js-api.md#src) to a URL and the component can be mounted on any element, then triggered programmatically with the [`fetch()` method](./js-api.md#fetch-url-url-string-requestinit-requestinit-context-fetchrequestcontext) — for example from an event via the [`Action`](../Action/index.md) component.
 
 ::: code-group
 
@@ -80,6 +80,43 @@ registerComponent(Fetch);
 :::
 
 Calling `fetch()` without an argument uses the `src` option (or the element's `href` / `action` when it is a link or a form). You can also pass an explicit URL or a relative string, e.g. `Fetch.fetch('/other-content')`.
+
+### Submit buttons
+
+A submission sends the button that caused it, so pagination and alternate actions are markup:
+
+```html
+<form action="/projects" method="get" data-component="Fetch">
+  <input type="hidden" name="orderby" value="title" />
+  <button type="submit" name="page" value="1">1</button>
+  <button type="submit" name="page" value="2">2</button>
+</form>
+
+<div id="projects">…</div>
+```
+
+The second button requests `/projects?orderby=title&page=2` and swaps `#projects` with the same region from the response. The submitter's `formaction`, `formmethod` and `formenctype` are honoured too — see [form submissions](./js-api.md#form-submissions).
+
+### History
+
+Set the [`history` option](./js-api.md#history) to write each update to the browser history, and the [`historyMode` option](./js-api.md#historymode) to choose whether that costs an entry:
+
+```html
+<!-- One entry per page, so back returns to the previous one. -->
+<a href="/projects/page/2" data-component="Fetch" data-option-history>2</a>
+
+<!-- No entry per keystroke, so back leaves the search. -->
+<form
+  action="/help"
+  method="get"
+  data-component="Fetch"
+  data-option-history
+  data-option-history-mode="replace">
+  <input type="search" name="q" />
+</form>
+```
+
+With `history` on, a back or forward navigation re-fetches the restored entry. When the request URL and the displayed URL differ — the [`src` option](./js-api.md#src) — the request is rebuilt against `src`, so its fixed parameters survive the replay. See [`historyUrl`](./js-api.md#historyurl).
 
 ### With a loader
 

@@ -1,5 +1,5 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { Fetch, type FetchProps } from './Fetch.js';
+import { Fetch, type FetchProps, type FetchRequestContext } from './Fetch.js';
 
 /** The Section Rendering API query parameter name. */
 export const SECTIONS_PARAMETER = 'sections';
@@ -61,26 +61,34 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
     return url;
   }
 
-  get url(): URL {
-    return this.__appendSections(super.url);
+  /**
+   * Appending here rather than on the `url` getter puts the sections on every
+   * URL the element resolves for itself — the click, the submit and the
+   * popstate replay alike — since they all build their URL from this one
+   * method. The getter inherits it.
+   *
+   * @protected
+   */
+  __buildUrl(context: FetchRequestContext): URL {
+    return this.__appendSections(super.__buildUrl(context));
   }
 
-  /**
-   * Ensure the `sections` parameter is on every request URL, including the
-   * already-clean one the inherited `onWindowPopstate()` replays — which
-   * bypasses the `url` getter and would otherwise ask for HTML.
-   */
-  fetch(url?: URL | string, requestInit: RequestInit = {}): Promise<void> {
+  /** Ensure the `sections` parameter is on a URL a caller named too. */
+  fetch(
+    url?: URL | string,
+    requestInit: RequestInit = {},
+    context: FetchRequestContext = {},
+  ): Promise<void> {
     // An absent URL is forwarded as absent, so the base still reads this as
     // the element's own navigation and pushes `historyUrl` rather than the
-    // requested URL. That path resolves through the `url` getter above, which
+    // requested URL. That path resolves through `__buildUrl()` above, which
     // appends the sections already.
     if (url === undefined) {
-      return super.fetch(undefined, requestInit);
+      return super.fetch(undefined, requestInit, context);
     }
 
     const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
-    return super.fetch(this.__appendSections(normalizedUrl), requestInit);
+    return super.fetch(this.__appendSections(normalizedUrl), requestInit, context);
   }
 
   /**

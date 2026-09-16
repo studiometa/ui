@@ -27,7 +27,7 @@ Intercepting clicks on links, displaying a loader and updating the targets' cont
 
 ## Fetch from any element
 
-`Fetch` normally reads its URL from an `<a href>` or `<form action>`, but the [`src` option](./js-api.md#src) lets it be driven from **any** element and triggered programmatically. In the following example the panel is a `<div>`: it combines `Fetch` with the [`InViewOnce`](../InViewOnce/index.md) and [`Action`](../Action/index.md) components so that its content is lazy-loaded the first time it scrolls into view, with a bare [`Fetch.fetch()`](./js-api.md#fetch-url-url-string-requestinit-requestinit) call that resolves the `src` URL on its own.
+`Fetch` normally reads its URL from an `<a href>` or `<form action>`, but the [`src` option](./js-api.md#src) lets it be driven from **any** element and triggered programmatically. In the following example the panel is a `<div>`: it combines `Fetch` with the [`InViewOnce`](../InViewOnce/index.md) and [`Action`](../Action/index.md) components so that its content is lazy-loaded the first time it scrolls into view, with a bare [`Fetch.fetch()`](./js-api.md#fetch-url-url-string-requestinit-requestinit-context-fetchrequestcontext) call that resolves the `src` URL on its own.
 
 <llm-exclude>
 <PreviewPlayground
@@ -68,6 +68,68 @@ In the following example, we intercept a form submission, display a loader and u
 :::
 
 </llm-only>
+
+## Pagination with submit buttons
+
+An intercepted submission sends the button that caused it, so a set of `<button type="submit" name="page">` controls is a paginator with no script of its own. Each button carries its own `page` value, and the hidden `orderby` field travels with every submission. See [form submissions](./js-api.md#form-submissions).
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/pagination/app.twig')"
+  :script="() => import('./stories/pagination/app.ts?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/pagination/app.twig
+<<< ./stories/pagination/app.ts
+
+:::
+
+</llm-only>
+
+## Live search with a separate source
+
+A live search displays one URL and requests another. The form's `action` is the full results page a visitor can copy and a no-JS submission reaches; the [`src` option](./js-api.md#src) points the enhanced request at a fragment endpoint. [`historyMode`](./js-api.md#historymode) set to `replace` keeps the address bar in step without spending one history entry per keystroke.
+
+::: code-group
+
+```html [index.html]
+<form
+  id="search"
+  action="/help"
+  method="get"
+  data-component="Fetch"
+  data-option-src="/apps/search?view=fragment"
+  data-option-history
+  data-option-history-mode="replace">
+  <input
+    type="search"
+    name="q"
+    data-component="Action"
+    data-on:input.debounce300="Fetch(#search)->target.fetch()" />
+</form>
+
+<div id="search-results">…</div>
+```
+
+```js twoslash [app.ts]
+import { registerComponent } from '@studiometa/js-toolkit';
+import { Action, Fetch } from '@studiometa/ui';
+
+registerComponent(Action);
+registerComponent(Fetch);
+```
+
+:::
+
+Typing `shipping` requests `/apps/search?view=fragment&q=shipping` and displays `/help?q=shipping`. Pressing back restores `/help`, and the request is rebuilt against the source: `/apps/search?view=fragment`, with the restored entry's parameters rather than the text still sitting in the input.
+
+::: tip
+`Fetch` aborts the request in flight when a new one starts, so a fast typist never sees an older response land. The `debounce300` modifier of the [`Action`](../Action/js-api.md#on) component spares the endpoint the keystrokes in between.
+:::
 
 ## Modes
 
