@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getInstance, registerComponents } from '@studiometa/js-toolkit';
-import { mount, recordEvents, resetDom, settle } from '@studiometa/js-toolkit/test';
+import { captureDiagnostics, mount, recordEvents, resetDom, settle } from '@studiometa/js-toolkit/test';
 import { Fetch, FETCH_EVENTS, type FetchEmits } from '#private/Fetch/Fetch.js';
 import { FetchShopifySection } from '#private/Fetch/FetchShopifySection.js';
 
@@ -651,6 +651,127 @@ describe('Fetch — native submitter semantics', () => {
     expect(new URL(String(client.mock.calls[0][0])).searchParams.get('page')).toBe('2');
     expect(new URL(String(client.mock.calls[1][0])).searchParams.has('page')).toBe(false);
     expect(instance.url.searchParams.has('page')).toBe(false);
+  });
+});
+
+describe('Fetch — file controls', () => {
+  /** Put a real file in a file control, the way a file picker does. */
+  function attachFile(root: HTMLElement, name = 'photo.png'): File {
+    const input = root.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['pixels'], name, { type: 'image/png' });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+    return file;
+  }
+
+  it('sends a file control as its filename when the enctype is not multipart', async () => {
+    // A native URL-encoded submission sends the file's name. Stringifying the
+    // `File` instead would send the literal `[object File]`.
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    attachFile(root);
+
+    const body = instance.requestInit.body as URLSearchParams;
+    expect(body).toBeInstanceOf(URLSearchParams);
+    expect(body.get('photo')).toBe('photo.png');
+  });
+
+  it('reports the upload it cannot send', async () => {
+    const diagnostics = captureDiagnostics();
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    attachFile(root);
+    void instance.requestInit;
+
+    expect(diagnostics.codes).toContain('fetch.file-not-uploaded');
+    diagnostics.stop();
+  });
+
+  it('sends a file control as its filename in a `text/plain` body', async () => {
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post"
+        enctype="text/plain">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    attachFile(root);
+
+    expect(instance.requestInit.body).toBe('photo=photo.png\r\n');
+  });
+
+  it('sends the file itself when the form declares `multipart/form-data`', async () => {
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post"
+        enctype="multipart/form-data">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    const file = attachFile(root);
+
+    const body = instance.requestInit.body as FormData;
+    expect(body).toBeInstanceOf(FormData);
+    expect(body.get('photo')).toBeInstanceOf(File);
+    expect((body.get('photo') as File).name).toBe(file.name);
+  });
+
+  it('says nothing about a form that sends its file', async () => {
+    const diagnostics = captureDiagnostics();
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post"
+        enctype="multipart/form-data">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    attachFile(root);
+    void instance.requestInit;
+
+    expect(diagnostics.codes).not.toContain('fetch.file-not-uploaded');
+    diagnostics.stop();
+  });
+
+  it('sends a file control as its filename on a GET form, and reports it', async () => {
+    // No GET submission uploads a file, whatever the form declares.
+    const diagnostics = captureDiagnostics();
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="get">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    attachFile(root);
+    (root.querySelector('form') as HTMLFormElement).requestSubmit();
+    await settle();
+
+    const { searchParams } = new URL(String(client.mock.calls[0][0]));
+    expect(searchParams.get('photo')).toBe('photo.png');
+    expect(diagnostics.codes).toContain('fetch.file-not-uploaded');
+    diagnostics.stop();
+  });
+
+  it('sends the file when a submitter declares `formenctype="multipart/form-data"`', async () => {
+    const client = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/upload" method="post">
+        <input type="file" name="photo">
+        <button type="submit" formenctype="multipart/form-data">Upload</button>
+      </form>`,
+    );
+    const file = attachFile(root);
+    const form = root.querySelector('form') as HTMLFormElement;
+    form.requestSubmit(form.querySelector('button'));
+    await settle();
+
+    const [, init] = client.mock.calls[0] as [URL, RequestInit];
+    expect(init.body).toBeInstanceOf(FormData);
+    expect((init.body as FormData).get('photo')).toBeInstanceOf(File);
+    expect(((init.body as FormData).get('photo') as File).name).toBe(file.name);
   });
 });
 

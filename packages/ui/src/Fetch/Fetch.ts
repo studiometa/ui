@@ -313,6 +313,29 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   }
 
   /**
+   * A form's entries as text, the way a submission that is not
+   * `multipart/form-data` encodes them: a file control contributes its file's
+   * name, because no other encoding carries the file itself.
+   *
+   * An upload that silently turns into a filename is worth saying out loud,
+   * so a file control reaching this path is reported.
+   *
+   * @private
+   */
+  __textEntries(formData: FormData): [string, string][] {
+    const entries = [...formData];
+
+    if (entries.some(([, value]) => value instanceof File)) {
+      this.$warn(
+        'fetch.file-not-uploaded',
+        'A file control is sent as its filename and the file is not uploaded. Only a POST form with `enctype="multipart/form-data"` sends the file itself.',
+      );
+    }
+
+    return entries.map(([name, value]) => [name, value instanceof File ? value.name : value]);
+  }
+
+  /**
    * The fields this request folds onto its base URL, or `undefined` when it
    * has none: a link, a POST form, an element that is neither.
    *
@@ -327,7 +350,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       return undefined;
     }
 
-    return new URLSearchParams(this.__formData(context) as unknown as Record<string, string>);
+    return new URLSearchParams(this.__textEntries(this.__formData(context)));
   }
 
   /**
@@ -336,7 +359,8 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * defaulting to URL encoding as a native submission does.
    *
    * Every branch returns a body `fetch()` derives a `content-type` from, so
-   * none of them writes a header of its own.
+   * none of them writes a header of its own. Only the multipart branch
+   * carries a file; the other two send its name, and say so.
    *
    * @private
    */
@@ -349,11 +373,13 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       return formData;
     }
 
+    const entries = this.__textEntries(formData);
+
     if (enctype === 'text/plain') {
-      return [...formData].map(([name, value]) => `${name}=${String(value)}\r\n`).join('');
+      return entries.map(([name, value]) => `${name}=${value}\r\n`).join('');
     }
 
-    return new URLSearchParams(formData as unknown as Record<string, string>);
+    return new URLSearchParams(entries);
   }
 
   /**

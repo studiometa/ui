@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - **Fetch:** add the `historyMode` option and keep the `src` separation on popstate ([#656](https://github.com/studiometa/ui/pull/656))
+- **Fetch:** report `fetch.file-not-uploaded` when a file control cannot be sent as a file ([#656](https://github.com/studiometa/ui/pull/656))
 
 ### Fixed
 

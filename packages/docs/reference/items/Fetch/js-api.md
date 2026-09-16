@@ -257,6 +257,19 @@ Pressing the second button requests `/projects?orderby=title&page=2`, with no sc
 
 The submitter belongs to the submission that carried it: a later [`fetch()`](#fetch-url-url-string-requestinit-requestinit-context-fetchrequestcontext) call, and a back or forward navigation, build their request without it.
 
+### File controls
+
+The effective enctype decides what a file control sends. `multipart/form-data` sends the file. Every other encoding sends the file's name, as a native submission does, and no GET submission uploads a file whatever the form declares.
+
+A form that declares no `enctype` sends `application/x-www-form-urlencoded`, so a file control in it sends a name and not a file. `Fetch` reports that case on the diagnostic channel under the `fetch.file-not-uploaded` code. Declare `enctype="multipart/form-data"` on the form, or `formenctype="multipart/form-data"` on the submitter, to send the file itself.
+
+```html
+<form action="/upload" method="post" enctype="multipart/form-data" data-component="Fetch">
+  <input type="file" name="photo" />
+  <button type="submit">Upload</button>
+</form>
+```
+
 ## Refs
 
 ### `headers[]`
@@ -310,6 +323,14 @@ Abort the current request.
 ::: tip
 Using an `Error` instance as the `reason` parameter of the `abort(reason?: any)` method will trigger the [`fetch-error` event](#fetch-error) along the [`fetch-abort` event](#fetch-abort).
 :::
+
+## Diagnostics
+
+Every one is a development-only warning on the [toolkit diagnostic channel](https://js-toolkit-v4.studiometa.dev/).
+
+| Code                      | Meaning                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------- |
+| `fetch.file-not-uploaded` | A file control is sent as its filename because the effective enctype is not multipart. |
 
 ## Events
 
