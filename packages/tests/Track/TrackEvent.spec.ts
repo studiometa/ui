@@ -3,7 +3,7 @@ import { getInstance, registerComponents } from '@studiometa/js-toolkit';
 import { captureDiagnostics, mount, resetDom } from '@studiometa/js-toolkit/test';
 import { parseEventDefinition } from '#private/utils/event-modifiers.js';
 import { Track } from '#private/Track/Track.js';
-import { resolveDetailPlaceholders } from '#private/Track/TrackEvent.js';
+import { resolveEventPlaceholders } from '#private/Track/TrackEvent.js';
 
 registerComponents(Track);
 
@@ -80,18 +80,103 @@ describe('parseEventDefinition', () => {
   });
 });
 
-describe('resolveDetailPlaceholders', () => {
+describe('resolveEventPlaceholders', () => {
+  const event = new CustomEvent('x', { detail: { email: 'a@b.c', user: { name: 'John' } } });
+
   it('resolves a dotted path and leaves everything else alone', () => {
     expect(
-      resolveDetailPlaceholders(
-        { event: 'e', email: '$detail.email', name: '$detail.user.name', kept: 1 },
-        { email: 'a@b.c', user: { name: 'John' } },
+      resolveEventPlaceholders(
+        { event: 'e', email: '$event.detail.email', name: '$event.detail.user.name', kept: 1 },
+        event,
       ),
     ).toEqual({ event: 'e', email: 'a@b.c', name: 'John', kept: 1 });
   });
+
+  it('resolves `$detail.*` to the same value as `$event.detail.*`', () => {
+    expect(resolveEventPlaceholders({ name: '$detail.user.name' }, event)).toEqual(
+      resolveEventPlaceholders({ name: '$event.detail.user.name' }, event),
+    );
+  });
+
+  it('reaches an array element through a numeric segment', () => {
+    const arrayEvent = new CustomEvent('x', {
+      detail: { request: { searchParams: { genre: ['rock', 'jazz'] } } },
+    });
+
+    expect(
+      resolveEventPlaceholders(
+        {
+          first: '$event.detail.request.searchParams.genre.0',
+          second: '$detail.request.searchParams.genre.1',
+        },
+        arrayEvent,
+      ),
+    ).toEqual({ first: 'rock', second: 'jazz' });
+  });
+
+  it('resolves a missing path to `undefined`', () => {
+    expect(
+      resolveEventPlaceholders({ missing: '$event.detail.nope.deeper', kept: 'x' }, event),
+    ).toEqual({ missing: undefined, kept: 'x' });
+  });
+
+  it('resolves every placeholder to `undefined` with no event at all', () => {
+    expect(resolveEventPlaceholders({ a: '$event.type', b: '$detail.email' })).toEqual({
+      a: undefined,
+      b: undefined,
+    });
+  });
+
+  it('descends through nested objects and arrays', () => {
+    expect(
+      resolveEventPlaceholders(
+        { ecommerce: { items: [{ id: '$detail.user.name' }, { id: 'literal' }] } },
+        event,
+      ),
+    ).toEqual({ ecommerce: { items: [{ id: 'John' }, { id: 'literal' }] } });
+  });
 });
 
-describe('TrackEvent — custom events', () => {
+describe('TrackEvent — event paths', () => {
+  it('resolves `$event.*` placeholders against the whole event', async () => {
+    const el = await render(
+      `<div data-component="Track" data-track:form-submitted='{"event": "form_submitted", "type": "$event.type", "email": "$event.detail.email"}'></div>`,
+    );
+
+    el.dispatchEvent(
+      new CustomEvent('form-submitted', { detail: { email: 'test@example.com' } }),
+    );
+
+    expect(lastPush()).toEqual({
+      event: 'form_submitted',
+      type: 'form-submitted',
+      email: 'test@example.com',
+    });
+  });
+
+  it('resolves `$event.target.*` on a native event', async () => {
+    const el = await render(
+      `<div data-component="Track" data-type="cta" data-track:click='{"event": "click", "type": "$event.target.dataset.type"}'></div>`,
+    );
+
+    el.dispatchEvent(new Event('click'));
+
+    expect(lastPush()).toEqual({ event: 'click', type: 'cta' });
+  });
+
+  it('resolves `$event.detail.*` on a component lifecycle event', async () => {
+    const el = await render(
+      `<div data-component="Track" data-track:custom-lifecycle='{"event": "lifecycle", "id": "$event.detail.id"}'></div>`,
+    );
+
+    // What `$emit()` builds: a bubbling `CustomEvent` whose detail is the payload.
+    el.dispatchEvent(
+      new CustomEvent('custom-lifecycle', { bubbles: true, detail: { id: 'abc' } }),
+    );
+
+    expect(lastPush()).toEqual({ event: 'lifecycle', id: 'abc' });
+  });
+
   it('resolves `$detail.*` placeholders from the event detail', async () => {
     const el = await render(
       `<div data-component="Track" data-track:form-submitted='{"event": "form_submitted", "email": "$detail.email", "name": "$detail.user.name"}'></div>`,
