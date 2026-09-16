@@ -1105,7 +1105,13 @@ export const referenceCatalog = [
       uiSymbol('TrackEvent', '/reference/items/Track/js-api', 'TrackEvent', 'primitive'),
       uiSymbol('TrackShopify', '/reference/items/Track/js-api'),
     ],
-    capabilities: ['click tracking', 'context', 'custom events', 'impression tracking'],
+    capabilities: [
+      'click tracking',
+      'consent gating',
+      'context',
+      'custom events',
+      'impression tracking',
+    ],
   },
   {
     id: 'transition',

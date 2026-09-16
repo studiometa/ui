@@ -6,11 +6,11 @@ title: Track JS API
 
 ## Components
 
-| Component      | Destination                                                |
-| -------------- | ---------------------------------------------------------- |
-| `Track`        | `window.dataLayer.push(payload)` (GTM / GA4)               |
-| `TrackShopify` | `window.Shopify.analytics.publish(payload.event, payload)` |
-| `TrackContext` | Provides context inherited by descendant `Track`s          |
+| Component      | Destination                                                                              |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| `Track`        | `window.dataLayer.push(payload)` (GTM / GA4)                                             |
+| `TrackShopify` | `window.Shopify.analytics.publish(payload.event, payload)`, gated on [consent](#consent) |
+| `TrackContext` | Provides context inherited by descendant `Track`s                                        |
 
 `Track` and `TrackShopify` share a common, provider-agnostic base (`AbstractTrack`) and differ only in their [`dispatch()`](#providers) method.
 
@@ -136,7 +136,7 @@ Context is resolved by walking up the ancestor chain (`$closest('TrackContext')`
 `dispatch(payload, event?)` is the seam that sends the resolved payload to its destination:
 
 - **`Track`** — `window.dataLayer.push(payload)`.
-- **`TrackShopify`** — `window.Shopify.analytics.publish(payload.event, payload)`, guarded when the API is unavailable or the payload has no `event` name. Namespace Shopify event names (e.g. `my_app:add_to_cart`).
+- **`TrackShopify`** — `window.Shopify.analytics.publish(payload.event, payload)`, guarded when the API is unavailable, when the payload has no `event` name, and when [analytics consent](#consent) is not granted. Namespace Shopify event names (e.g. `my_app:add_to_cart`).
 
 To send to any other destination (Segment, a custom endpoint, …), extend `Track` and override `dispatch()`:
 
@@ -151,3 +151,28 @@ export class TrackSegment extends Track {
   }
 }
 ```
+
+## Consent
+
+`TrackShopify` is consent-safe by default. Before each publish it calls `window.Shopify.customerPrivacy.analyticsProcessingAllowed()` and publishes only when that call returns `true`.
+
+- The check runs on every dispatch, not once at mount. `window.Shopify` is read fresh each time, so a consent change applies to the next event without a remount.
+- A denied consent drops the event. Nothing is queued, and a dropped event is never replayed once consent is granted.
+- An absent Customer Privacy API drops the event as well. Shopify loads that API asynchronously through `loadFeatures()`, so it is legitimately undefined early in the page's life.
+- Every drop reports a diagnostic, so a missing event is diagnosable instead of silent.
+
+The event name is validated before consent is read. A declaration without an `event` name is wrong for every visitor, so it is reported even when consent is denied.
+
+This gate covers what the platform does not. Shopify's Web Pixels Manager gates App Pixels at load time: it loads a pixel only when the visitor has granted every consent that pixel declares as required. Custom pixels receive every published event and are expected to apply their own consent logic, which is what `TrackShopify` does for you.
+
+`Track` is not gated the same way, on purpose. It appends to `window.dataLayer`, an array in the page that transmits nothing by itself. The tag manager or CMP reading that array decides what leaves the browser, so consent belongs at the tag level there.
+
+## Diagnostics
+
+| Code                                | Reported when                                                                 |
+| ----------------------------------- | ----------------------------------------------------------------------------- |
+| `track.invalid-json`                | An attribute value, a `payload` ref or a `context` ref holds malformed JSON   |
+| `track.missing-event-name`          | `TrackShopify` resolved a payload with no string `event` key                  |
+| `track.shopify-unavailable`         | `window.Shopify.analytics.publish` is not a function                          |
+| `track.shopify-privacy-unavailable` | `window.Shopify.customerPrivacy.analyticsProcessingAllowed` is not a function |
+| `track.shopify-consent-denied`      | `analyticsProcessingAllowed()` returned `false`                               |

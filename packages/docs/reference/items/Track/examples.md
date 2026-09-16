@@ -37,7 +37,7 @@ A product page that sets shared context once, tracks a product impression, and p
 </section>
 ```
 
-The `add_to_cart` click publishes:
+The `add_to_cart` click publishes, when the visitor [allows analytics processing](./js-api.md#consent):
 
 ```js
 Shopify.analytics.publish('my_app:add_to_cart', {

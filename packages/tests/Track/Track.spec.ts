@@ -1,11 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { getInstance, registerComponents } from '@studiometa/js-toolkit';
 import { captureDiagnostics, mount, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
 import { Track } from '#private/Track/Track.js';
 import { TrackContext } from '#private/Track/TrackContext.js';
-import { TrackShopify } from '#private/Track/TrackShopify.js';
 
-registerComponents(Track, TrackContext, TrackShopify);
+registerComponents(Track, TrackContext);
 
 /**
  * Record diagnostics and cancel their default sink.
@@ -627,55 +626,5 @@ describe('the intersection service under load', () => {
     });
     expect(built).toBe(CARDS);
     expect(pushes()).toHaveLength(CARDS);
-  });
-});
-
-describe('TrackShopify — the dispatch seam', () => {
-  it('publishes through window.Shopify.analytics.publish', async () => {
-    const publish = vi.fn();
-    window.Shopify = { analytics: { publish } };
-
-    const root = await mount(`
-      <div data-component="TrackContext" data-option-context='{"page_type": "product"}'>
-        <button data-component="TrackShopify" data-track:click='{"event": "add_to_cart", "id": "1"}'></button>
-      </div>
-    `);
-    root.querySelector('button')?.click();
-
-    expect(publish).toHaveBeenCalledTimes(1);
-    expect(publish).toHaveBeenCalledWith('add_to_cart', {
-      page_type: 'product',
-      event: 'add_to_cart',
-      id: '1',
-    });
-    expect(pushes()).toHaveLength(0);
-    delete window.Shopify;
-  });
-
-  it('publishes nothing without a string `event` name', async () => {
-    const publish = vi.fn();
-    window.Shopify = { analytics: { publish } };
-    const log = captureDiagnostics();
-
-    const root = await mount(
-      `<button data-component="TrackShopify" data-track:click='{"id": "1"}'></button>`,
-    );
-    root.querySelector('button')?.click();
-
-    expect(publish).not.toHaveBeenCalled();
-    expect(log.codes).toContain('track.missing-event-name');
-    log.stop();
-    delete window.Shopify;
-  });
-
-  it('does not throw when the Shopify analytics API is absent', async () => {
-    const log = captureDiagnostics();
-    const root = await mount(
-      `<button data-component="TrackShopify" data-track:click='{"event": "x"}'></button>`,
-    );
-
-    expect(() => root.querySelector('button')?.click()).not.toThrow();
-    expect(log.codes).toContain('track.shopify-unavailable');
-    log.stop();
   });
 });
