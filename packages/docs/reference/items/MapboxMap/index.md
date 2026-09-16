@@ -95,14 +95,16 @@ registerManifest({
     load: () => import('@studiometa/ui-mapbox/MapboxMap'),
   },
   MapboxMarker: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('@studiometa/ui-mapbox/MapboxMarker'),
   },
   MapboxPopup: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('@studiometa/ui-mapbox/MapboxPopup'),
   },
 });
 ```
+
+The map renders, so `visible` holds the `mapbox-gl` import back until a map approaches the viewport. A marker or a popup renders nothing and its element carries `hidden`, so it never intersects the viewport: give it `eager`, which waits for nothing beyond the element being on the page. This is what the package manifest already does — see [Package defaults](/guide/autoloading/#package-defaults).
 
 Reach for a different strategy when it fits better — `idle`, `interaction`, `media:<query>` — and override any of them per element with `data-mount`. The [Autoloading](/guide/autoloading/) guide lists all six.

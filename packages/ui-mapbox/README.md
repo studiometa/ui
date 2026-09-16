@@ -21,20 +21,23 @@ npm install @mapbox/mapbox-gl-geocoder
 
 ## Usage
 
-Register each component your page uses: each one registers independently and resolves its parent map on its own. `mapbox-gl` is heavy (~230&nbsp;kB gzipped), so the recommended default is to lazy-register each component with js-toolkit's `importWhen*` helpers and the per-component subpaths (each subpath's default export is the component class), keeping the dependency out of your main bundle until a map is actually on the page:
+Register each component your page uses: each one registers independently and resolves its parent map on its own.
 
 ```js
-import { registerComponents, importWhenVisible } from '@studiometa/js-toolkit';
+import { registerComponents } from '@studiometa/js-toolkit';
+import { MapboxMap, MapboxMarker, MapboxPopup } from '@studiometa/ui-mapbox';
 
 // Register only the components your page uses; order doesn't matter.
-registerComponents(
-  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMap'), 'MapboxMap'),
-  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxMarker'), 'MapboxMarker'),
-  importWhenVisible(() => import('@studiometa/ui-mapbox/MapboxPopup'), 'MapboxPopup'),
-);
+registerComponents(MapboxMap, MapboxMarker, MapboxPopup);
 ```
 
-Other triggers are available too — `importWhenIdle`, `importOnInteraction` and `importOnMediaQuery` — see the [`importWhen*` helper docs](https://js-toolkit.studiometa.dev/api/helpers/importWhenVisible.html). Then author the map declaratively in your markup:
+`mapbox-gl` is heavy (~230&nbsp;kB gzipped), so import the autoload entry instead to keep it out of your main bundle. It registers a lazy entry for every component of the package, and imports a module only when an element on the page declares its token:
+
+```js
+import '@studiometa/ui-mapbox/autoload';
+```
+
+Then author the map declaratively in your markup:
 
 ```html
 <div
@@ -48,14 +51,7 @@ Other triggers are available too — `importWhenIdle`, `importOnInteraction` and
 </div>
 ```
 
-If you do not need code-splitting, register eagerly instead — each component is exported by name from the package:
-
-```js
-import { registerComponent } from '@studiometa/js-toolkit';
-import { MapboxMap } from '@studiometa/ui-mapbox';
-
-registerComponent(MapboxMap);
-```
+`MapboxMarker` renders nothing of its own — it configures the map from its attributes — so its element carries `hidden`. Every map child works that way, and the autoload manifest gives them the `eager` mount strategy for that reason: a `hidden` element is never rendered and never intersects the viewport, so a strategy waiting for a viewport crossing would never load them. `MapboxMap` and `StoreLocator` do render and keep `visible`, which is what holds the `mapbox-gl` import back until a map approaches the viewport. Override any of it per element with `data-mount`.
 
 Do not forget to include the `mapbox-gl` stylesheet so the map renders correctly.
 

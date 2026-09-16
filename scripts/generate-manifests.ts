@@ -153,7 +153,9 @@ function serializeComponent(
   component: CuratedComponentMetadata,
   packageJson: { exports: Record<string, ExportEntry> },
 ) {
-  const { strategy } = catalog;
+  // A component states its own strategy when the package default does not fit it; the catalog
+  // strategy covers the rest.
+  const strategy = component.strategy ?? catalog.strategy;
   const { token } = component;
   const subpath = component.subpath ?? token;
   const exportName = component.exportName ?? token;
