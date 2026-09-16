@@ -483,6 +483,134 @@ describe('Action — the component', () => {
   });
 });
 
+describe('Action — the `mounted` pseudo-event', () => {
+  it('runs once after the mount batch has settled', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action" data-on:mounted="Foo -> target.fn('ready')"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const foo = at<Foo>(root, '#foo', 'Foo');
+    await settle();
+
+    expect(foo.calls).toEqual([['ready']]);
+  });
+
+  it('reaches a component mounted on its own element', async () => {
+    // The point of the deferral: at bind time the co-located `Foo` is not
+    // resolvable yet, so the effect could not name it.
+    const root = await mount(`
+      <button id="action" data-component="Action Foo" data-on:mounted="Foo.fn('co-located')"></button>
+    `);
+    await settle();
+
+    expect(at<Foo>(root, '#action', 'Foo').calls).toEqual([['co-located']]);
+  });
+
+  it('binds no DOM listener at all', async () => {
+    const root = await mount('<div id="action" data-component="Action"></div>');
+    const action = at<Action>(root, '#action', 'Action');
+    const spy = vi.spyOn(action.$el, 'addEventListener');
+
+    const release = new ActionEvent(action, 'mounted', 'target').attach();
+
+    expect(spy).not.toHaveBeenCalled();
+    release();
+    spy.mockRestore();
+  });
+
+  it('ignores a `mounted` event bubbling from a descendant', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action" data-on:mounted="Foo -> target.fn()">
+        <span id="child"></span>
+      </button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const foo = at<Foo>(root, '#foo', 'Foo');
+    await settle();
+    expect(foo.calls).toHaveLength(1);
+
+    (root.querySelector('#child') as HTMLElement).dispatchEvent(
+      new CustomEvent('mounted', { bubbles: true }),
+    );
+    (root.querySelector('#child') as HTMLElement).dispatchEvent(
+      new CustomEvent('js-toolkit:component:mounted', { bubbles: true }),
+    );
+    await settle();
+
+    expect(foo.calls).toHaveLength(1);
+  });
+
+  it('cancels the deferred effect when the action unmounts first', async () => {
+    const root = await mount('<div id="foo" data-component="Foo"></div>');
+    const foo = at<Foo>(root, '#foo', 'Foo');
+
+    const host = document.createElement('div');
+    host.innerHTML = `<button data-component="Action" data-on:mounted="Foo -> target.fn()"></button>`;
+    document.body.append(host);
+    host.innerHTML = '';
+    await settle();
+    await settle();
+
+    expect(foo.calls).toHaveLength(0);
+    host.remove();
+  });
+
+  it('starts exactly one new effect on a remount', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action" data-on:mounted="Foo -> target.fn()"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const action = at<Action>(root, '#action', 'Action');
+    const foo = at<Foo>(root, '#foo', 'Foo');
+    await settle();
+    expect(foo.calls).toHaveLength(1);
+
+    action.$unmount();
+    action.$mount();
+    await settle();
+
+    expect(foo.calls).toHaveLength(2);
+  });
+
+  it('runs the effect with no event', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action"
+        data-on:mounted="Foo -> target.fn(typeof event)"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const foo = at<Foo>(root, '#foo', 'Foo');
+    await settle();
+
+    expect(foo.calls).toEqual([['undefined']]);
+  });
+
+  it('applies the debounce modifier to the deferred effect', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action"
+        data-on:mounted.debounce200="Foo -> target.fn()"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const foo = at<Foo>(root, '#foo', 'Foo');
+    await settle();
+    expect(foo.calls).toHaveLength(0);
+
+    await wait(300);
+    expect(foo.calls).toHaveLength(1);
+  });
+
+  it('works through the `on` option too', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action" data-option-on="mounted"
+        data-option-target="Foo" data-option-effect="target.fn('from-option')"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const foo = at<Foo>(root, '#foo', 'Foo');
+    await settle();
+
+    expect(foo.calls).toEqual([['from-option']]);
+  });
+});
+
 describe('Action — the lifecycle', () => {
   it('releases its listeners when the element leaves the DOM', async () => {
     const root = await mount(`

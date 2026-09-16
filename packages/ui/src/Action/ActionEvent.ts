@@ -1,6 +1,7 @@
 import { getMountedInstances } from '@studiometa/js-toolkit/getMountedInstances';
 import type { Base } from '@studiometa/js-toolkit';
 import { MODIFIERS, parseEventDefinition, type Modifier } from '../utils/event-modifiers.js';
+import { MOUNTED_EVENT } from '../utils/mounted-event.js';
 import { getEffect, type EffectFunction } from './expression.js';
 
 /**
@@ -112,14 +113,18 @@ export class ActionEvent {
 
   /**
    * Apply the modifiers that live in the handler body, then run the effect.
+   *
+   * The event is optional because the reserved `mounted` pseudo-event has
+   * none: the modifiers reading it then have nothing to act on, and the effect
+   * receives `undefined` for its `event` argument.
    */
-  handleEvent(event: Event): void {
+  handleEvent(event?: Event): void {
     const { modifiers } = this;
 
-    if (modifiers.has(MODIFIERS.PREVENT)) {
+    if (event && modifiers.has(MODIFIERS.PREVENT)) {
       event.preventDefault();
     }
-    if (modifiers.has(MODIFIERS.STOP)) {
+    if (event && modifiers.has(MODIFIERS.STOP)) {
       event.stopPropagation();
     }
 
@@ -145,7 +150,7 @@ export class ActionEvent {
   executeEffect(
     targets: ActionTarget[],
     effect: EffectFunction,
-    event: Event,
+    event?: Event,
     instances: Map<string, Base> = this.instances,
   ): void {
     const { action } = this;
@@ -177,6 +182,14 @@ export class ActionEvent {
   /** Bind the event and return a release that also cancels pending debounce. */
   attach(): () => void {
     const { modifiers } = this;
+
+    if (this.event === MOUNTED_EVENT) {
+      // Nothing to bind: `Action` triggers it once the mount batch has settled.
+      // A DOM listener would also catch the lifecycle events of descendants
+      // mounting later, which is exactly what the pseudo-event exists to avoid.
+      return () => clearTimeout(this.__debounceTimer);
+    }
+
     const off = this.action.$on(this.event, (event) => this.handleEvent(event), {
       capture: modifiers.has(MODIFIERS.CAPTURE),
       once: modifiers.has(MODIFIERS.ONCE),

@@ -2,6 +2,7 @@ import { useInView } from '@studiometa/js-toolkit/useInView';
 import type { Unsubscribe } from '@studiometa/js-toolkit';
 import { throttle } from '@studiometa/js-toolkit/utils/throttle';
 import { MODIFIERS, parseEventDefinition, type Modifier } from '../utils/event-modifiers.js';
+import { MOUNTED_EVENT } from '../utils/mounted-event.js';
 import type { AbstractTrack } from './AbstractTrack.js';
 
 /** What a bare `debounce` means here. `Action` reads the same modifier at 100. */
@@ -13,7 +14,7 @@ const DEFAULT_THROTTLE_DELAY = 16;
 /** Synthetic event names that do not map to DOM events. */
 export const TRACK_PSEUDO_EVENTS = {
   /** Fires once the component and its context have settled. */
-  MOUNTED: 'mounted',
+  MOUNTED: MOUNTED_EVENT,
   /** Fires when the element enters the viewport. */
   VIEW: 'view',
 } as const;
@@ -164,7 +165,7 @@ export class TrackEvent {
   __bind(): Unsubscribe {
     const { event, modifiers, track } = this;
 
-    if (event === TRACK_PSEUDO_EVENTS.MOUNTED) {
+    if (event === MOUNTED_EVENT) {
       // Nothing to bind: `AbstractTrack` triggers it once the DOM has settled.
       return () => {};
     }

@@ -2,6 +2,7 @@ import { Base } from '@studiometa/js-toolkit/Base';
 import { namespaceQualifier } from '@studiometa/js-toolkit/namespaceQualifier';
 import { watchAttributeNamespace } from '@studiometa/js-toolkit/watchAttributeNamespace';
 import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolkit';
+import { MOUNTED_EVENT, whenMounted } from '../utils/mounted-event.js';
 import { ActionEvent } from './ActionEvent.js';
 
 /**
@@ -70,7 +71,7 @@ export class Action extends Base<ActionProps> {
     const stopWatchingNamespace = watchAttributeNamespace(
       this.$el,
       ON_NAMESPACE,
-      ({ qualifier, value }) => new ActionEvent(this, qualifier, value).attach(),
+      ({ qualifier, value }) => this.__attach(new ActionEvent(this, qualifier, value)),
     );
 
     return () => {
@@ -128,7 +129,36 @@ export class Action extends Base<ActionProps> {
     }
     this.__optionSignature = signature;
     this.__releaseOptionBinding?.();
-    this.__releaseOptionBinding = this.__parseOptions()?.attach();
+    const actionEvent = this.__parseOptions();
+    this.__releaseOptionBinding = actionEvent ? this.__attach(actionEvent) : undefined;
+  }
+
+  /**
+   * Attach one binding and return its release.
+   *
+   * Both halves of the component go through here — the `data-on:*` namespace
+   * and the option triple — because the reserved `mounted` pseudo-event is a
+   * property of the declaration, not of where it was written. It binds no
+   * listener: the effect is posted to the background lane instead, so it runs
+   * once the batch has settled and can reach a component that mounts on the
+   * same element. The cancel belongs to this binding, so rewriting the
+   * declaration or unmounting before the lane drains drops the pending effect.
+   *
+   * @private
+   */
+  __attach(actionEvent: ActionEvent): () => void {
+    const release = actionEvent.attach();
+
+    if (actionEvent.event !== MOUNTED_EVENT) {
+      return release;
+    }
+
+    const cancel = whenMounted(this, () => actionEvent.handleEvent());
+
+    return () => {
+      cancel();
+      release();
+    };
   }
 }
 
