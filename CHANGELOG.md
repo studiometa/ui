@@ -9,10 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - **@studiometa/ui-mapbox:** let `MapboxGeocoder` work without a parent `MapboxMap`, with its own `accessToken` option ([#665](https://github.com/studiometa/ui/pull/665))
+- **Action:** add the reserved `mounted` pseudo-event ([#658](https://github.com/studiometa/ui/pull/658))
+- **Track:** add `$event.<path>` placeholders, with `$detail.<path>` as the shortcut for `$event.detail.<path>` ([#658](https://github.com/studiometa/ui/pull/658))
 
 ### Changed
 
 - **@studiometa/ui-mapbox:** mount `MapboxMap`, `StoreLocator` and `MapboxGeocoder` when they near the viewport, also when registered directly ([#655](https://github.com/studiometa/ui/pull/655))
+- **Track:** read the inherited context and both payload sources at dispatch time instead of caching them per mount cycle ([#658](https://github.com/studiometa/ui/pull/658))
 
 ### Fixed
 
