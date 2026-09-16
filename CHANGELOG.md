@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **TrackShopify:** publish only when Shopify analytics processing is allowed ([#654](https://github.com/studiometa/ui/pull/654))
+
 ## [v2.0.0-alpha.0](https://github.com/studiometa/ui/compare/1.11.1..2.0.0-alpha.0) (2026-09-03)
 
 This is the first release of the v2 line. It moves every package onto [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/), removes six component families that a newer component already covers, renames three components, merges `LargeText` and `CircularMarquee` into `Marquee`, rewrites `Tabs` on the WAI-ARIA Tabs pattern, redesigns `Cursor` around published CSS hooks, completes the `Carousel` family and gives it an accessibility contract, and changes the shape of every event payload. There is no compatibility layer.

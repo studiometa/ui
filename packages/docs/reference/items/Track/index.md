@@ -7,7 +7,7 @@ badges: [JS]
 The `Track` components provide declarative analytics tracking, defined entirely in HTML/Twig/Liquid attributes — no custom JavaScript required. A provider-agnostic core (`AbstractTrack`) is shipped as two ready-to-use variants selected by component name:
 
 - **`Track`** pushes the resolved payload to `window.dataLayer` (GTM / GA4).
-- **`TrackShopify`** publishes it through `window.Shopify.analytics.publish`.
+- **`TrackShopify`** publishes it through `window.Shopify.analytics.publish`, only when the visitor allows analytics processing.
 
 `TrackContext` lets you factor shared data out of individual events and inherit it from ancestors.
 
@@ -168,6 +168,12 @@ The provider is chosen by the component name, so switching destinations is a one
 
 `TrackShopify` uses the payload's `event` value as the published event name. Shopify recommends namespacing custom events (e.g. `my_app:add_to_cart`). To send to another destination, extend `Track` and override its [`dispatch()`](./js-api.md#providers) method.
 
+## Shopify analytics consent
+
+`TrackShopify` is consent-safe by default. Before each publish it calls `window.Shopify.customerPrivacy.analyticsProcessingAllowed()` and publishes only when that call returns `true`. The check runs on every dispatch, so a consent change applies to the next event without a remount. A denied consent and an absent Customer Privacy API both drop the event — nothing is queued, and each drop reports a diagnostic so the missing event is diagnosable.
+
+Shopify's Web Pixels Manager gates App Pixels at load time, but it hands every published event to custom pixels, which are expected to apply their own consent logic. `Track` is not gated the same way: it appends to `window.dataLayer`, which transmits nothing by itself, so consent there is applied by the tag manager or CMP reading that array. See the [JavaScript API](./js-api.md#consent) for the full behaviour and the diagnostic codes.
+
 ::: warning
-Payloads are serialised into the DOM (attribute or `<script>`), so they are visible in the page source. Never put personal data (emails, names, user IDs) in a tracking payload — resolve sensitive values at runtime via a `CustomEvent` and `$detail.*` instead, and gate `TrackShopify` on the visitor's analytics consent where required.
+Payloads are serialised into the DOM (attribute or `<script>`), so they are visible in the page source. Never put personal data (emails, names, user IDs) in a tracking payload — resolve sensitive values at runtime via a `CustomEvent` and `$detail.*` instead. The components add no customer identifier of their own.
 :::
