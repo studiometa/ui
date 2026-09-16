@@ -383,6 +383,14 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'FetchRequestContext',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Fetch/js-api',
+    status: 'stable',
+  },
+  {
     name: 'FetchShopifyPartialProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',
