@@ -10,11 +10,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Fetch:** add the `historyMode` option and keep the `src` separation on popstate ([#656](https://github.com/studiometa/ui/pull/656))
 - **Fetch:** report `fetch.file-not-uploaded` when a file control cannot be sent as a file ([#656](https://github.com/studiometa/ui/pull/656))
+- **Action:** add the reserved `mounted` pseudo-event ([#658](https://github.com/studiometa/ui/pull/658))
+- **Track:** add `$event.<path>` placeholders, with `$detail.<path>` as the shortcut for `$event.detail.<path>` ([#658](https://github.com/studiometa/ui/pull/658))
 
 ### Changed
 
 - ⚠️ **Fetch:** replace the `url` and `requestInit` event payload fields with one progressive lifecycle detail ([#657](https://github.com/studiometa/ui/pull/657))
 - ⚠️ **Fetch:** drop the raw `Response` from the `fetch-response` payload ([#657](https://github.com/studiometa/ui/pull/657))
+- **Track:** read the inherited context and both payload sources at dispatch time instead of caching them per mount cycle ([#658](https://github.com/studiometa/ui/pull/658))
+- **Track:** rename `resolveDetailPlaceholders` to `resolveEventPlaceholders` ([#658](https://github.com/studiometa/ui/pull/658))
 
 ### Fixed
 
