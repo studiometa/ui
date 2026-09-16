@@ -27,7 +27,7 @@ Intercepting clicks on links, displaying a loader and updating the targets' cont
 
 ## Fetch from any element
 
-`Fetch` normally reads its URL from an `<a href>` or `<form action>`, but the [`src` option](./js-api.md#src) lets it be driven from **any** element and triggered programmatically. In the following example the panel is a `<div>`: it combines `Fetch` with the [`InViewOnce`](../InViewOnce/index.md) and [`Action`](../Action/index.md) components so that its content is lazy-loaded the first time it scrolls into view, with a bare [`Fetch.fetch()`](./js-api.md#fetch-url-url-string-requestinit-requestinit) call that resolves the `src` URL on its own.
+`Fetch` normally reads its URL from an `<a href>` or `<form action>`, but the [`src` option](./js-api.md#src) lets it be driven from **any** element and triggered programmatically. In the following example the panel is a `<div>`: it combines `Fetch` with the [`InViewOnce`](../InViewOnce/index.md) and [`Action`](../Action/index.md) components so that its content is lazy-loaded the first time it scrolls into view, with a bare [`Fetch.fetch()`](./js-api.md#fetch-url-url-string-requestinit-requestinit-context-fetchrequestcontext) call that resolves the `src` URL on its own.
 
 <llm-exclude>
 <PreviewPlayground
@@ -64,6 +64,27 @@ In the following example, we intercept a form submission, display a loader and u
 <<< ./stories/form/app.twig
 <<< ./stories/form/app.ts
 <<< ./stories/form/app.css
+
+:::
+
+</llm-only>
+
+## Pagination with submit buttons
+
+An intercepted submission sends the button that caused it, so a set of `<button type="submit" name="page">` controls is a paginator with no script of its own. Each button carries its own `page` value, and the hidden `orderby` field travels with every submission. See [form submissions](./js-api.md#form-submissions).
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/pagination/app.twig')"
+  :script="() => import('./stories/pagination/app.ts?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/pagination/app.twig
+<<< ./stories/pagination/app.ts
 
 :::
 

@@ -1,0 +1,48 @@
+{#
+  The response is rendered by the API from this template, with the request's
+  query parameters as variables — so `page` is the value of the button that
+  was pressed, and `orderby` the hidden field that travels with every
+  submission. `verbatim` keeps both placeholders for the API to fill in.
+#}
+{%- set results -%}
+  {% verbatim %}
+  <div id="pagination-results" class="rounded border border-current/20 p-6">
+    <p>
+      Showing page <strong>{{ page|default(1) }}</strong>,
+      ordered by <strong>{{ orderby|default('title') }}</strong>.
+    </p>
+  </div>
+  {% endverbatim %}
+{%- endset -%}
+
+<div class="flex max-w-xl flex-col gap-6">
+  <div id="pagination-results" class="rounded border border-current/20 p-6">
+    <p>
+      Showing page <strong>1</strong>,
+      ordered by <strong>title</strong>.
+    </p>
+  </div>
+
+  {#
+    A plain GET form. Each button is a successful control of its own
+    submission, so the request carries the `page` value of the button that was
+    pressed, alongside the hidden `orderby` field.
+  #}
+  <form
+    data-component="Fetch"
+    method="get"
+    action="{{ twig_toolkit_url('/api/').withQueryParameter('content', results) }}"
+    class="flex items-center gap-2">
+    <input type="hidden" name="orderby" value="title">
+
+    {% for page in 1..3 %}
+      <button
+        type="submit"
+        name="page"
+        value="{{ page }}"
+        class="rounded border border-current/20 px-4 py-2 hover:bg-current/10">
+        {{ page }}
+      </button>
+    {% endfor %}
+  </form>
+</div>

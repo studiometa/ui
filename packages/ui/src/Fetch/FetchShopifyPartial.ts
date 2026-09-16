@@ -7,6 +7,7 @@ import {
   headerNames,
   headerValue,
   type FetchProps,
+  type FetchRequestContext,
 } from './Fetch.js';
 
 /** Minimal shape of the `partials` API exposed by `@shopify/partial-rendering`. */
@@ -116,10 +117,14 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
    * Framework-internal headers are ignored, so the declarative click,
    * submit and popstate flows still use partial rendering.
    */
-  canUsePartials(requestInit: RequestInit): boolean {
-    const method = requestInit.method ?? this.requestInit.method ?? 'get';
+  canUsePartials(requestInit: RequestInit, context: FetchRequestContext = {}): boolean {
+    // Built from the same context as the request itself: a submitter's
+    // `formmethod="post"` makes the request unexpressible, and reading a
+    // context-free `requestInit` would miss it.
+    const elementRequestInit = this.__buildRequestInit(context);
+    const method = requestInit.method ?? elementRequestInit.method ?? 'get';
 
-    if (method.toLowerCase() !== 'get' || requestInit.body || this.requestInit.body) {
+    if (method.toLowerCase() !== 'get' || requestInit.body || elementRequestInit.body) {
       return false;
     }
 
@@ -132,7 +137,7 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
 
     const internalHeaders = new Set<string>(Object.values(HEADER_NAMES));
     const declared = [
-      ...headerNames(this.requestInit.headers),
+      ...headerNames(elementRequestInit.headers),
       ...headerNames(requestInit.headers),
     ];
     for (const header of declared) {
@@ -145,25 +150,31 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
   }
 
   /** Fetch via Shopify partial rendering when configured, otherwise fall back to the base behaviour. */
-  async fetch(url?: URL | string, requestInit: RequestInit = {}): Promise<void> {
+  async fetch(
+    url?: URL | string,
+    requestInit: RequestInit = {},
+    context: FetchRequestContext = {},
+  ): Promise<void> {
     // Same reading as the base: an absent URL is the element's own
     // navigation, which is what lets `historyUrl` differ from the requested
     // one. The fallback path is handed the same absence, not a resolved URL.
     const fromElement = url === undefined;
     const normalizedUrl = fromElement
-      ? this.url
+      ? this.__buildUrl(context)
       : url instanceof URL
         ? url
         : new URL(url, window.location.href);
     const names = this.partialNames;
     const partials =
-      names.length && this.canUsePartials(requestInit) ? await this.resolvePartials() : null;
+      names.length && this.canUsePartials(requestInit, context)
+        ? await this.resolvePartials()
+        : null;
 
     if (!partials) {
-      return super.fetch(fromElement ? undefined : normalizedUrl, requestInit);
+      return super.fetch(fromElement ? undefined : normalizedUrl, requestInit, context);
     }
 
-    this.__historyUrl = fromElement ? this.historyUrl : undefined;
+    this.__historyUrl = fromElement ? this.__buildHistoryUrl(context) : undefined;
 
     this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url: normalizedUrl, requestInit });
 
@@ -178,7 +189,7 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
       });
     });
     this.__abortController = newController;
-    const init = this.mergeRequestInit(requestInit, newController.signal);
+    const init = this.mergeRequestInit(requestInit, newController.signal, context);
 
     this.$emit(FETCH_EVENTS.FETCH, { instance: this, url: normalizedUrl, requestInit: init });
 

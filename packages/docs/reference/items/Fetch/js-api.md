@@ -177,7 +177,7 @@ Without `src` the two are identical. With it, history follows the element's own 
 
 Clicking that requests the `sections=listing` URL and pushes `/projects/page/2?orderby=title`.
 
-A URL passed explicitly to [`fetch(url)`](#fetch-url-url-string-requestinit-requestinit) is pushed as given: a caller that named a URL meant that URL.
+A URL passed explicitly to [`fetch(url)`](#fetch-url-url-string-requestinit-requestinit-context-fetchrequestcontext) is pushed as given: a caller that named a URL meant that URL.
 
 ::: tip
 On a back or forward navigation the component re-fetches `window.location.href`, which is now the pushed URL rather than the `src` one. Keep the [`selector`](#selector) matching elements that exist in **both** responses — the full page and the lighter endpoint — or the two directions will not update the same regions.
@@ -187,7 +187,33 @@ On a back or forward navigation the component re-fetches `window.location.href`,
 
 - Return: [`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)
 
-Returns the [`requestInit` option](#requestinit) with additionnal headers from the [`headers` option](#headers) [`headers[]` refs](./js-api.md#headers-1) and if the root element is a form with a `method="post"` attribute, its data as body
+Returns the [`requestInit` option](#requestinit) with the headers of the [`headers` option](#headers) and the [`headers[]` refs](#headers-1), and, when the root element is a form, its method — plus its data as the body when that method is `post`.
+
+The body follows the form's `enctype`, as a native submission does: `application/x-www-form-urlencoded` by default, a `FormData` for `multipart/form-data`, plain text for `text/plain`.
+
+This getter describes a request with no submission behind it. A `submit` event builds the same parts from its submitter as well; see [form submissions](#form-submissions).
+
+## Form submissions
+
+An intercepted submission sends what a native one would send, the button that caused it included.
+
+- The submitter is a successful control: `<button type="submit" name="page" value="2">` puts `page=2` in the request, and two buttons of the same name each send their own value.
+- `formaction` overrides the form's `action` for that submission, so it overrides the destination and the URL written to history.
+- `formmethod` overrides the form's `method`, moving the fields between the URL and the body.
+- `formenctype` overrides the form's `enctype`, choosing how the body is encoded.
+- Repeated names keep every value, and the usual successful-control rules apply.
+
+```html
+<form action="/projects" method="get" data-component="Fetch">
+  <input type="hidden" name="orderby" value="title" />
+  <button type="submit" name="page" value="1">1</button>
+  <button type="submit" name="page" value="2">2</button>
+</form>
+```
+
+Pressing the second button requests `/projects?orderby=title&page=2`, with no script of its own.
+
+The submitter belongs to the submission that carried it: a later [`fetch()`](#fetch-url-url-string-requestinit-requestinit-context-fetchrequestcontext) call builds its request without it.
 
 ## Refs
 
@@ -213,7 +239,7 @@ The example above will add a `x-my-token: some-not-sensible-token` header to the
 
 ## Methods
 
-### `fetch(url?: URL | string, requestInit?: RequestInit)`
+### `fetch(url?: URL | string, requestInit?: RequestInit, context?: FetchRequestContext)`
 
 Performs the fetch request and updates the DOM with the response.
 
@@ -223,6 +249,7 @@ The declarative click, submit and popstate flows call this method for you, but i
 
 - `url` (`URL | string`, optional): the URL to fetch. Defaults to the [`url` getter](#url), so a bare `fetch()` call uses the element's `href`, `action` or [`src` option](#src). A `string` is coerced into a `URL` resolved against the current location.
 - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit), optional): extra options merged into the [`requestInit` getter](#requestinit-1) for this call.
+- `context` (`FetchRequestContext`, optional): what this one request overrides on the element it is built from — a `submitter` for [a form submission](#form-submissions). The declarative flows fill it in; it is never kept on the instance, so nothing leaks into the next request.
 
 ```html
 <div data-component="Action InView Fetch" data-option-src="/path" data-on:in-view="Fetch.fetch()">

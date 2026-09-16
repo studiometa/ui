@@ -5,6 +5,7 @@ export {
   type FetchEmits,
   type FetchEventBase,
   type FetchProps,
+  type FetchRequestContext,
 } from './Fetch.js';
 export { FetchShopifyPartial, type FetchShopifyPartialProps } from './FetchShopifyPartial.js';
 export {

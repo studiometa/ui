@@ -90,6 +90,7 @@ export {
   type FetchEmits,
   type FetchEventBase,
   type FetchProps,
+  type FetchRequestContext,
   type FetchShopifyPartialProps,
   type FetchShopifySectionProps,
 } from './Fetch/index.js';

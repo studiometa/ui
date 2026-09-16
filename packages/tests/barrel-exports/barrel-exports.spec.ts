@@ -136,6 +136,7 @@ test('@studiometa/ui barrel export surface', () => {
       "FetchEmits [type]",
       "FetchEventBase [type]",
       "FetchProps [type]",
+      "FetchRequestContext [type]",
       "FetchShopifyPartial [value]",
       "FetchShopifyPartialProps [type]",
       "FetchShopifySection [value]",

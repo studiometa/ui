@@ -82,6 +82,42 @@ let domParser: DOMParser;
 /** `response` expression argument names, in `parseResponse()`'s call order. */
 const RESPONSE_ARGUMENTS = ['response', 'url', 'requestInit', 'self'] as const;
 
+/**
+ * What one request overrides on the element it is built from.
+ *
+ * It is threaded explicitly through every step that builds a request — the
+ * destination, the fields, the URL and the `RequestInit` —
+ * and never stored on the instance. The instance outlives the submission it
+ * describes: a submitter left on it would keep adding its `name=value` to the
+ * next programmatic `fetch()` and to every popstate replay, and a request in
+ * flight would answer with whichever submission started last. The getters
+ * below are the empty context, which is what a request with no submission
+ * behind it is.
+ */
+export interface FetchRequestContext {
+  /**
+   * The control that caused the submission, `SubmitEvent.submitter`. It is a
+   * successful control of its own form, and it carries the `formaction`,
+   * `formmethod` and `formenctype` overrides.
+   */
+  submitter?: HTMLElement | null;
+}
+
+/**
+ * The submission overrides a submitter carries, when it can carry any.
+ *
+ * `SubmitEvent.submitter` is typed as an `HTMLElement` because a
+ * form-associated custom element can submit a form, and such an element has
+ * no `formaction` of its own to state.
+ */
+function submitterOverrides(
+  submitter?: HTMLElement | null,
+): HTMLButtonElement | HTMLInputElement | null {
+  return submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement
+    ? submitter
+    : null;
+}
+
 /** The context every lifecycle event carries. */
 export interface FetchEventBase {
   instance: Fetch;
@@ -194,12 +230,24 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * The element's own destination: a form's `action`, a link's `href`, or the
    * current location as a last resort.
    *
+   * A submitter's `formaction` overrides its form's action for its own
+   * submission, so it overrides the destination too. It is read from the
+   * attribute rather than from the `formAction` property, which answers with
+   * the document URL — not with the form's action — when the attribute is
+   * absent.
+   *
    * @private
    */
-  get __destination(): string {
+  __destination(context: FetchRequestContext): string {
     const { $el, isForm, isLink } = this;
 
     if (isForm) {
+      const submitter = submitterOverrides(context.submitter);
+
+      if (submitter?.hasAttribute('formaction')) {
+        return submitter.formAction;
+      }
+
       return ($el as HTMLFormElement).action;
     }
 
@@ -211,7 +259,76 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   }
 
   /**
-   * Resolve a base URL and fold a GET form's fields onto it.
+   * The method this request uses. A submitter's `formmethod` overrides its
+   * form's method for its own submission; anything that is not a form has no
+   * method of its own to state.
+   *
+   * @private
+   */
+  __method(context: FetchRequestContext): string {
+    if (!this.isForm) {
+      return '';
+    }
+
+    const submitter = submitterOverrides(context.submitter);
+    return (submitter?.formMethod || (this.$el as HTMLFormElement).method).toLowerCase();
+  }
+
+  /**
+   * The form's successful controls, the submitter included.
+   *
+   * The two-argument `FormData` constructor is what makes the clicked button
+   * one of them, as a native submission does, and it is what a declarative
+   * `<button type="submit" name="page" value="2">` rests on.
+   *
+   * @private
+   */
+  __formData(context: FetchRequestContext): FormData {
+    return new FormData(this.$el as HTMLFormElement, context.submitter ?? null);
+  }
+
+  /**
+   * The fields this request folds onto its base URL, or `undefined` when it
+   * has none: a link, a POST form, an element that is neither.
+   *
+   * @private
+   */
+  __fields(context: FetchRequestContext): URLSearchParams | undefined {
+    if (this.__method(context) !== 'get') {
+      return undefined;
+    }
+
+    return new URLSearchParams(this.__formData(context) as unknown as Record<string, string>);
+  }
+
+  /**
+   * The body of a POST request, encoded the way the effective enctype asks
+   * for — the submitter's `formenctype` over the form's `enctype`, both
+   * defaulting to URL encoding as a native submission does.
+   *
+   * Every branch returns a body `fetch()` derives a `content-type` from, so
+   * none of them writes a header of its own.
+   *
+   * @private
+   */
+  __body(context: FetchRequestContext): BodyInit {
+    const formData = this.__formData(context);
+    const submitter = submitterOverrides(context.submitter);
+    const enctype = submitter?.formEnctype || (this.$el as HTMLFormElement).enctype;
+
+    if (enctype === 'multipart/form-data') {
+      return formData;
+    }
+
+    if (enctype === 'text/plain') {
+      return [...formData].map(([name, value]) => `${name}=${String(value)}\r\n`).join('');
+    }
+
+    return new URLSearchParams(formData as unknown as Record<string, string>);
+  }
+
+  /**
+   * Resolve a base URL and fold this request's fields onto it.
    *
    * Fields replace what the base URL carried for the same name, and several
    * values under one name are all kept: the first field of a given name
@@ -222,19 +339,17 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    *
    * @private
    */
-  __resolveUrl(base: string): URL {
-    const { $el, isForm } = this;
+  __resolveUrl(base: string, context: FetchRequestContext): URL {
     const url = new URL(base, window.location.href);
+    const fields = this.__fields(context);
 
-    if (!isForm || ($el as HTMLFormElement).method.toLowerCase() !== 'get') {
+    if (!fields) {
       return url;
     }
 
     const overridden = new Set<string>();
 
-    for (const [key, value] of new URLSearchParams(
-      new FormData($el as HTMLFormElement) as unknown as Record<string, string>,
-    )) {
+    for (const [key, value] of fields) {
       if (!overridden.has(key)) {
         url.searchParams.delete(key);
         overridden.add(key);
@@ -247,7 +362,25 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   }
 
   /**
-   * The URL to use for the request.
+   * The URL to use for the request, for one request's context.
+   *
+   * @protected
+   */
+  __buildUrl(context: FetchRequestContext): URL {
+    return this.__resolveUrl(this.$options.src || this.__destination(context), context);
+  }
+
+  /**
+   * The URL the address bar should show, for one request's context.
+   *
+   * @protected
+   */
+  __buildHistoryUrl(context: FetchRequestContext): URL {
+    return this.__resolveUrl(this.__destination(context), context);
+  }
+
+  /**
+   * The URL to use for the request, with no submission behind it.
    *
    * The base URL is the `src` option when it is set, otherwise the element's
    * own destination. For a GET form the form data is then folded on top of
@@ -255,7 +388,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * alongside the live form fields, with form fields winning.
    */
   get url(): URL {
-    return this.__resolveUrl(this.$options.src || this.__destination);
+    return this.__buildUrl({});
   }
 
   /**
@@ -280,12 +413,17 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * every element that does not set one.
    */
   get historyUrl(): URL {
-    return this.__resolveUrl(this.__destination);
+    return this.__buildHistoryUrl({});
   }
 
-  /** The options for the request, merged from the element and its refs. */
-  get requestInit(): RequestInit {
-    const { isForm, $el, $options, $refs } = this;
+  /**
+   * The options for the request, merged from the element and its refs, for
+   * one request's context.
+   *
+   * @protected
+   */
+  __buildRequestInit(context: FetchRequestContext): RequestInit {
+    const { isForm, $options, $refs } = this;
     const { requestInit, headers } = $options;
     const requestedBy = '@studiometa/ui/Fetch';
 
@@ -305,15 +443,19 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     }
 
     if (isForm) {
-      const form = $el as HTMLFormElement;
-      const method = form.method.toLowerCase();
+      const method = this.__method(context);
       normalizedRequestInit.method = method;
       if (method === 'post') {
-        normalizedRequestInit.body = new FormData(form);
+        normalizedRequestInit.body = this.__body(context);
       }
     }
 
     return normalizedRequestInit;
+  }
+
+  /** The options for the request, with no submission behind them. */
+  get requestInit(): RequestInit {
+    return this.__buildRequestInit({});
   }
 
   get isLink(): boolean {
@@ -347,7 +489,11 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     }
   }
 
-  /** A form submission fetches its action with the form's own data. */
+  /**
+   * A form submission fetches its action with the form's own data, and with
+   * the same successful controls and overrides a native submission would
+   * send.
+   */
   onSubmit(event: SubmitEvent): void {
     if (!this.isForm) {
       return;
@@ -359,7 +505,12 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       // what the address bar gets. Passing `this.url` here would look
       // identical and read as a caller naming a destination, which keeps a
       // `src` in history.
-      void this.fetch(undefined, this.requestInit);
+      //
+      // The submitter travels as the context of this one call and nowhere
+      // else. Passing `this.requestInit` as the second argument would also
+      // undo the whole thing: the per-call init wins over the element's, so a
+      // submitter-less body would overwrite the one the context builds.
+      void this.fetch(undefined, {}, { submitter: event.submitter });
     }
   }
 
@@ -384,19 +535,23 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * current location, since the history and view-transition paths read
    * `url.pathname` and `url.searchParams`.
    */
-  async fetch(url?: URL | string, requestInit: RequestInit = {}): Promise<void> {
+  async fetch(
+    url?: URL | string,
+    requestInit: RequestInit = {},
+    context: FetchRequestContext = {},
+  ): Promise<void> {
     // Whether the URL came from the element or from a caller is what decides
     // where history goes: an explicit `fetch('/somewhere')` is a navigation
     // the caller named, and substituting the element's own destination for it
     // would be a surprise.
     const fromElement = url === undefined;
     const normalizedUrl = fromElement
-      ? this.url
+      ? this.__buildUrl(context)
       : url instanceof URL
         ? url
         : new URL(url, window.location.href);
 
-    this.__historyUrl = fromElement ? this.historyUrl : undefined;
+    this.__historyUrl = fromElement ? this.__buildHistoryUrl(context) : undefined;
 
     this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url: normalizedUrl, requestInit });
 
@@ -411,7 +566,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       });
     });
     this.__abortController = newController;
-    const init = this.mergeRequestInit(requestInit, newController.signal);
+    const init = this.mergeRequestInit(requestInit, newController.signal, context);
 
     this.$emit(FETCH_EVENTS.FETCH, { instance: this, url: normalizedUrl, requestInit: init });
 
@@ -454,13 +609,19 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * request is expressible through its own transport.
    * @protected
    */
-  mergeRequestInit(requestInit: RequestInit, signal: AbortSignal): RequestInit {
+  mergeRequestInit(
+    requestInit: RequestInit,
+    signal: AbortSignal,
+    context: FetchRequestContext = {},
+  ): RequestInit {
+    const elementRequestInit = this.__buildRequestInit(context);
+
     // Merged through `headerEntries()` rather than spread: spreading a
     // `Headers` instance or a tuple array yields nothing, so a caller's
     // `fetch(url, { headers: new Headers(…) })` would be dropped on the floor
     // before the request was ever built.
     const headers: Record<string, string> = {};
-    for (const [name, value] of headerEntries(this.requestInit.headers)) {
+    for (const [name, value] of headerEntries(elementRequestInit.headers)) {
       headers[name] = value;
     }
     for (const [name, value] of headerEntries(requestInit.headers)) {
@@ -468,7 +629,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     }
 
     return {
-      ...this.requestInit,
+      ...elementRequestInit,
       ...requestInit,
       headers,
       signal,
