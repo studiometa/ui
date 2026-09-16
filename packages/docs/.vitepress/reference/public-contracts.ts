@@ -367,7 +367,7 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
-    name: 'FetchEventBase',
+    name: 'FetchLifecycleDetail',
     kind: 'type',
     package: 'npm:@studiometa/ui',
     importPath: '@studiometa/ui',
@@ -384,6 +384,22 @@ export const publicContractSymbols = [
   },
   {
     name: 'FetchRequestContext',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Fetch/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'FetchRequestDetail',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Fetch/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'FetchResponseDetail',
     kind: 'type',
     package: 'npm:@studiometa/ui',
     importPath: '@studiometa/ui',

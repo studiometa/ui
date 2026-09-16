@@ -129,8 +129,8 @@ Use the [`Action`](../Action/index.md) and [`Transition`](../Transition/index.md
   href="/"
   data-component="Fetch Action"
   data-option-history
-  data-on:before-fetch="Transition(#foo) -> transition.enter()"
-  data-on:after-fetch="Transition(#foo) -> transition.leave()"
+  data-on:fetch-before="Transition(#foo) -> transition.enter()"
+  data-on:fetch-after="Transition(#foo) -> transition.leave()"
   data-on:fetch-error="alert('error')">
   Click me
 </a>
@@ -223,7 +223,7 @@ The `Fetch` components catches request errors and emits a [`fetch-error` event](
 ```html [index.html] {3}
 <main
   data-component="Action"
-  data-on:fetch-error="alert(event.detail[0].error)">
+  data-on:fetch-error="alert(event.detail.error)">
   <a href="/" data-component="Fetch">Home</a>
 </main>
 ```

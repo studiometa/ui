@@ -23,7 +23,7 @@
   data-component="Action"
   data-on:fetch-before="Transition(#loader) -> target.enter()"
   data-on:fetch-after="Transition(#loader) -> target.leave()"
-  data-on:fetch-error="DataBind(#toaster) -> target.value += event.detail[0].error.message + '\n'"
+  data-on:fetch-error="DataBind(#toaster) -> target.value += event.detail.error.message + '\n'"
   class="flex flex-col gap-8 max-w-xl">
   <nav class="flex items-center gap-4">
     {{

@@ -4,6 +4,8 @@ import {
   Fetch,
   HEADER_NAMES,
   headerNames,
+  type FetchEmits,
+  type FetchLifecycleDetail,
   type FetchProps,
   type FetchRequestContext,
 } from './Fetch.js';
@@ -23,6 +25,14 @@ interface PartialsModule {
 
 export type FetchShopifyPartialProps = FetchProps & {
   $options: FetchProps['$options'] & { partials: string };
+
+  /**
+   * Every event of the partial rendering path also carries the opaque update
+   * object `partials.apply()` consumes. It is the only part of that path's
+   * detail that is not plain data, and it stands where the base carries the
+   * `content` string and the parsed `fragment`, neither of which exists here.
+   */
+  $emits: { [K in keyof FetchEmits]: FetchEmits[K] & { update?: unknown } };
 };
 
 /**
@@ -34,9 +44,10 @@ export type FetchShopifyPartialProps = FetchProps & {
  *
  * Compared to the base lifecycle, the partials path diverges in two ways:
  * the `RESPONSE` event never fires (there is no `Response` object on this
- * path), and the `UPDATE` payload carries the opaque partials `update`
- * object instead of a parsed `Document` fragment — `partials.apply` owns DOM
- * swapping, View Transitions and focus/selection/form/scroll preservation.
+ * path, so no `response` description either), and the payload carries the
+ * opaque partials `update` object where the base carries `content` and a
+ * parsed `fragment` — `partials.apply` owns DOM swapping, View Transitions
+ * and focus/selection/form/scroll preservation.
  *
  * @link https://ui.studiometa.dev/reference/items/Fetch/
  */
@@ -174,52 +185,48 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
 
     this.__historyUrl = fromElement ? this.__buildHistoryUrl(context) : undefined;
 
-    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url: normalizedUrl, requestInit });
+    // Same ordering as the base: the controller is built first so the request
+    // is fully described by the time `fetch-before` announces it, and the
+    // previous request is aborted after that event.
+    const newController = new AbortController();
+    const init = this.mergeRequestInit(requestInit, newController.signal, context);
+    const detail: FetchLifecycleDetail = {
+      instance: this,
+      request: this.__requestDetail(normalizedUrl, init),
+    };
+
+    this.$emit(FETCH_EVENTS.BEFORE_FETCH, detail);
 
     this.__abortController.abort();
-    const newController = new AbortController();
     newController.signal.addEventListener('abort', () => {
-      this.$emit(FETCH_EVENTS.ABORT, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit,
-        reason: newController.signal.reason,
-      });
+      this.$emit(FETCH_EVENTS.ABORT, { ...detail, reason: newController.signal.reason });
     });
     this.__abortController = newController;
-    const init = this.mergeRequestInit(requestInit, newController.signal, context);
 
-    this.$emit(FETCH_EVENTS.FETCH, { instance: this, url: normalizedUrl, requestInit: init });
+    this.$emit(FETCH_EVENTS.FETCH, detail);
+
+    let update: unknown;
 
     try {
-      const update = await partials.fetch(...names, {
+      update = await partials.fetch(...names, {
         url: normalizedUrl.toString(),
         signal: init.signal ?? undefined,
       });
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit: init,
-        content: update,
-      });
-      // Fire-and-forget the apply phase, matching the base `Fetch.fetch`
-      // lifecycle: an `apply()` failure must not be misattributed to the
-      // fetch phase and re-emit `AFTER_FETCH` a second time. It still needs a
-      // `catch`, or a rejected Shopify DOM update is an unhandled rejection
-      // with no observable failure at all.
-      void this.applyPartials(normalizedUrl, init, update, partials).catch(
-        (applyError: unknown) => {
-          this.error(normalizedUrl, init, applyError as Error);
-        },
-      );
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { ...detail, update });
     } catch (error) {
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit: init,
-        error,
-      });
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { ...detail, error });
       this.error(normalizedUrl, init, error as Error);
+      return;
+    }
+
+    // Awaited, as the base awaits its own update: `fetch()` resolves once the
+    // Shopify swap has settled. It is caught on its own rather than inside the
+    // block above, or a failed apply would emit a second `fetch-after` and
+    // report itself as a failed request.
+    try {
+      await this.applyPartials(normalizedUrl, init, update, partials);
+    } catch (applyError) {
+      this.error(normalizedUrl, init, applyError as Error);
     }
   }
 
@@ -236,14 +243,20 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
     update: unknown,
     partials: PartialsApi,
   ): Promise<void> {
-    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { instance: this, url, requestInit, content: update });
+    const detail = {
+      instance: this,
+      request: this.__requestDetail(url, requestInit),
+      update,
+    };
+
+    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, detail);
 
     this.__updateHistory(url, requestInit);
 
-    this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, update });
+    this.$emit(FETCH_EVENTS.UPDATE, detail);
 
     await partials.apply(update);
 
-    this.$emit(FETCH_EVENTS.AFTER_UPDATE, { instance: this, url, requestInit, update });
+    this.$emit(FETCH_EVENTS.AFTER_UPDATE, detail);
   }
 }

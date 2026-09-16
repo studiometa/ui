@@ -1,5 +1,10 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { Fetch, type FetchProps, type FetchRequestContext } from './Fetch.js';
+import {
+  Fetch,
+  type FetchProps,
+  type FetchRequestContext,
+  type FetchResponseDetail,
+} from './Fetch.js';
 
 /** The Section Rendering API query parameter name. */
 export const SECTIONS_PARAMETER = 'sections';
@@ -114,9 +119,14 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
    * Strip the `sections` parameter before the base update, so the URL pushed
    * to the history is the human-facing page and not the raw endpoint.
    */
-  update(url: URL, requestInit: RequestInit, content: string): Promise<void> {
+  update(
+    url: URL,
+    requestInit: RequestInit,
+    content: string,
+    response?: FetchResponseDetail,
+  ): Promise<void> {
     const displayUrl = new URL(url);
     displayUrl.searchParams.delete(SECTIONS_PARAMETER);
-    return super.update(displayUrl, requestInit, content);
+    return super.update(displayUrl, requestInit, content, response);
   }
 }

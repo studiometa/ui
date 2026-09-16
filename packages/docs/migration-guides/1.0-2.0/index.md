@@ -644,6 +644,8 @@ In v1 every `detail` was an array of the positional arguments. In v2 it is the p
 
 This includes components whose payload was already an object: `Fetch` and `Draggable` were `[{ … }]` in v1 and are `{ … }` in v2.
 
+`Fetch` also changes what that object holds: the `url` and `requestInit` fields are replaced by one plain `request` description, and the update events gain the response status and headers. See [the event detail](/reference/items/Fetch/js-api#the-event-detail).
+
 | Component         | Event                              | v1.x `detail`            | v2.x `detail`              |
 | ----------------- | ---------------------------------- | ------------------------ | -------------------------- |
 | `Carousel`        | `progress`                         | `[progress]`             | `{ progress }`             |
@@ -654,7 +656,7 @@ This includes components whose payload was already an object: `Fetch` and `Dragg
 | `DisclosureGroup` | `disclosure-group-open` / `-close` | `[item, index]`          | `{ item, index }`          |
 | `DisclosureGroup` | `disclosure-group-change`          | `[openItems]`            | `{ items }`                |
 | `Draggable`       | `drag-*`                           | `[props]`                | `props`                    |
-| `Fetch`           | `fetch-*`                          | `[{ instance, url, … }]` | `{ instance, url, … }`     |
+| `Fetch`           | `fetch-*`                          | `[{ instance, url, … }]` | `{ instance, request, … }` |
 | `Indexable`       | `index`                            | `[index]`                | `{ index }`                |
 | `Prefetch`        | `prefetched`                       | `[url]`                  | `{ url }`                  |
 | `Sentinel`        | `intersected`                      | `[entries]`              | `{ isInView, entry }`      |
