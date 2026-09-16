@@ -107,6 +107,27 @@ The `Target` component is a companion of the `Action` component that can be used
 
 </llm-only>
 
+### Running an action on mount
+
+The reserved [`mounted`](./js-api.md#reserved-events) event runs the effect once, after the element and the components sharing it are mounted. It lets HTML drive an initial call without every component gaining its own option for it.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/mounted/app.twig')"
+  :script="() => import('./stories/mounted/app.js?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/mounted/app.twig
+<<< ./stories/mounted/app.js
+
+:::
+
+</llm-only>
+
 ### Listening to multiple events
 
 The advanced HTML [option `on:<event>[.<modifier>]`](./js-api.md#on-event-modifier) can be used to listen to multiple events on a single `Action` component.
