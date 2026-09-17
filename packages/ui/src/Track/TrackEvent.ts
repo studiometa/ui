@@ -2,6 +2,7 @@ import { useInView } from '@studiometa/js-toolkit/useInView';
 import type { Unsubscribe } from '@studiometa/js-toolkit';
 import { throttle } from '@studiometa/js-toolkit/utils/throttle';
 import { MODIFIERS, parseEventDefinition, type Modifier } from '../utils/event-modifiers.js';
+import { MOUNTED_EVENT } from '../utils/mounted-event.js';
 import type { AbstractTrack } from './AbstractTrack.js';
 
 /** What a bare `debounce` means here. `Action` reads the same modifier at 100. */
@@ -13,53 +14,87 @@ const DEFAULT_THROTTLE_DELAY = 16;
 /** Synthetic event names that do not map to DOM events. */
 export const TRACK_PSEUDO_EVENTS = {
   /** Fires once the component and its context have settled. */
-  MOUNTED: 'mounted',
+  MOUNTED: MOUNTED_EVENT,
   /** Fires when the element enters the viewport. */
   VIEW: 'view',
 } as const;
 
 export type TrackPseudoEvent = (typeof TRACK_PSEUDO_EVENTS)[keyof typeof TRACK_PSEUDO_EVENTS];
 
+/** The placeholder root resolving against the whole event. */
+const EVENT_PREFIX = '$event.';
+
+/** The placeholder root resolving against `event.detail`. */
+const DETAIL_PREFIX = '$detail.';
+
 /**
- * Resolve `$detail.*` placeholders in an arbitrary value, descending into both
- * objects and arrays so nested payload placeholders are resolved too.
+ * Walk a dotted path from a root value.
+ *
+ * Every segment is read as a key, so a numeric one reaches an array element:
+ * `request.searchParams.genre.0`. Descending into anything that is not an
+ * object — a primitive, `undefined`, a root that is not there — yields
+ * `undefined`, which is what a path naming data the event does not carry
+ * should resolve to.
  */
-function resolveDetailValue(value: unknown, detail: Record<string, unknown>): unknown {
-  if (typeof value === 'string' && value.startsWith('$detail.')) {
-    return getNestedValue(detail, value.slice(8));
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((item) => resolveDetailValue(item, detail));
-  }
-
-  if (value && typeof value === 'object') {
-    return resolveDetailPlaceholders(value as Record<string, unknown>, detail);
-  }
-
-  return value;
-}
-
-export function resolveDetailPlaceholders(
-  data: Record<string, unknown>,
-  detail: Record<string, unknown>,
-): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(data)) {
-    result[key] = resolveDetailValue(value, detail);
-  }
-
-  return result;
-}
-
-function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+function resolvePath(root: unknown, path: string): unknown {
   return path.split('.').reduce((current: unknown, key) => {
     if (current && typeof current === 'object') {
       return (current as Record<string, unknown>)[key];
     }
     return undefined;
-  }, obj);
+  }, root);
+}
+
+/**
+ * Resolve the placeholders of one value, descending into both objects and
+ * arrays so nested payload placeholders are resolved too.
+ *
+ * `$detail.x` is rewritten to the path `detail.x` walked from the event rather
+ * than resolved by a second code path, so the two roots can never disagree.
+ */
+function resolveValue(value: unknown, event?: Event): unknown {
+  if (typeof value === 'string') {
+    if (value.startsWith(EVENT_PREFIX)) {
+      return resolvePath(event, value.slice(EVENT_PREFIX.length));
+    }
+
+    if (value.startsWith(DETAIL_PREFIX)) {
+      return resolvePath(event, `detail.${value.slice(DETAIL_PREFIX.length)}`);
+    }
+
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveValue(item, event));
+  }
+
+  if (value && typeof value === 'object') {
+    return resolveEventPlaceholders(value as Record<string, unknown>, event);
+  }
+
+  return value;
+}
+
+/**
+ * Resolve every `$event.*` and `$detail.*` placeholder of a declared payload
+ * against the event that triggered it.
+ *
+ * The resolver knows nothing about who emitted the event: it walks paths, and
+ * an emitter that carries plain data is what makes a path reachable. With no
+ * event, every placeholder resolves to `undefined`.
+ */
+export function resolveEventPlaceholders(
+  data: Record<string, unknown>,
+  event?: Event,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(data)) {
+    result[key] = resolveValue(value, event);
+  }
+
+  return result;
 }
 
 /** One bound `data-track:<event>` declaration. */
@@ -123,18 +158,18 @@ export class TrackEvent {
       event.stopPropagation();
     }
 
-    // A non-object detail (0, false, '', …) is an empty detail, so placeholders
-    // resolve to `undefined` instead of leaking the literal `$detail.*` string.
-    let finalData = data;
-    if (event instanceof CustomEvent) {
-      const detail =
-        event.detail && typeof event.detail === 'object'
-          ? (event.detail as Record<string, unknown>)
-          : {};
-
-      finalData = modifiers.has(MODIFIERS.DETAIL)
-        ? { ...data, ...detail }
-        : resolveDetailPlaceholders(data, detail);
+    // Merging a detail wholesale stays a `CustomEvent` affair — a native event
+    // has none — while paths resolve against whatever event arrived, including
+    // none at all for the `mounted` pseudo-event.
+    let finalData: Record<string, unknown>;
+    if (modifiers.has(MODIFIERS.DETAIL)) {
+      const detail = event instanceof CustomEvent ? (event.detail as unknown) : undefined;
+      finalData =
+        detail && typeof detail === 'object'
+          ? { ...data, ...(detail as Record<string, unknown>) }
+          : data;
+    } else {
+      finalData = resolveEventPlaceholders(data, event);
     }
 
     track.send(finalData, event);
@@ -164,7 +199,7 @@ export class TrackEvent {
   __bind(): Unsubscribe {
     const { event, modifiers, track } = this;
 
-    if (event === TRACK_PSEUDO_EVENTS.MOUNTED) {
+    if (event === MOUNTED_EVENT) {
       // Nothing to bind: `AbstractTrack` triggers it once the DOM has settled.
       return () => {};
     }

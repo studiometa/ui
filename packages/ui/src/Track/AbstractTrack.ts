@@ -1,11 +1,11 @@
 import { Base } from '@studiometa/js-toolkit/Base';
-import { defaultScheduler } from '@studiometa/js-toolkit/defaultScheduler';
 import { namespaceQualifier } from '@studiometa/js-toolkit/namespaceQualifier';
 import { watchAttributeNamespace } from '@studiometa/js-toolkit/watchAttributeNamespace';
-import type { BaseConfig, BaseProps, MountedReturn, ScheduledTask } from '@studiometa/js-toolkit';
+import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolkit';
 import { deepmerge } from '@studiometa/js-toolkit/utils/deepmerge';
+import { MOUNTED_EVENT, whenMounted } from '../utils/mounted-event.js';
 import { TrackContext } from './TrackContext.js';
-import { TRACK_PSEUDO_EVENTS, TrackEvent } from './TrackEvent.js';
+import { TrackEvent } from './TrackEvent.js';
 
 /**
  * The namespace one `TrackEvent` is declared by. Its qualifiers are any DOM
@@ -62,14 +62,6 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
     },
   };
 
-  /** The deferred `mounted` dispatches, cancelled if the cycle ends first. */
-  __deferred = new Set<ScheduledTask<unknown>>();
-
-  /** Resolved once per mount cycle. */
-  __payload: Record<string, unknown> | null = null;
-
-  __context: Record<string, unknown> | null = null;
-
   /** Every current `data-track:*` declaration on the element. */
   get trackEvents(): TrackEvent[] {
     const trackEvents: TrackEvent[] = [];
@@ -118,16 +110,18 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
   /**
    * The component's own payload, shared by every event on the element. The
    * option overrides the ref, mirroring `TrackContext`.
+   *
+   * Read per dispatch and never cached: both sources are DOM-backed, and a
+   * partial update can rewrite the script or the attribute under a component
+   * that stays mounted, which a mount-cycle cache would keep publishing past.
    */
   get payload(): Record<string, unknown> {
-    this.__payload ??= deepmerge(this.scriptPayload, this.optionPayload);
-    return this.__payload;
+    return deepmerge(this.scriptPayload, this.optionPayload);
   }
 
-  /** The merged context of the ancestor chain. */
+  /** The merged context of the ancestor chain, resolved per dispatch. */
   get context(): Record<string, unknown> {
-    this.__context ??= this.$closest<TrackContext>('TrackContext')?.context ?? {};
-    return this.__context;
+    return this.$closest<TrackContext>('TrackContext')?.context ?? {};
   }
 
   /**
@@ -153,15 +147,7 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
       ({ value, attribute }) => this.__bind(attribute, value),
     );
 
-    return () => {
-      stopWatchingNamespace();
-      for (const task of this.__deferred) {
-        task.cancel();
-      }
-      this.__deferred.clear();
-      this.__payload = null;
-      this.__context = null;
-    };
+    return stopWatchingNamespace;
   }
 
   /** One `data-track:<event>` attribute, or `null` for anything else. */
@@ -191,24 +177,14 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
 
     const release = trackEvent.attach();
 
-    if (trackEvent.event !== TRACK_PSEUDO_EVENTS.MOUNTED) {
+    if (trackEvent.event !== MOUNTED_EVENT) {
       return release;
     }
 
-    // Run after queued mounts and cancel if this mount cycle ends first — or if
-    // the declaration is rewritten before the task runs, which is why the
-    // cancel belongs to this binding's release rather than to the mount's.
-    const task = defaultScheduler.background(() => {
-      this.__deferred.delete(task);
-      if (this.$isMounted) {
-        trackEvent.trigger();
-      }
-    });
-    this.__deferred.add(task);
+    const cancel = whenMounted(this, () => trackEvent.trigger());
 
     return () => {
-      this.__deferred.delete(task);
-      task.cancel();
+      cancel();
       release();
     };
   }

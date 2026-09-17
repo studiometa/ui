@@ -34,6 +34,32 @@ Modifiers can be chained with a `.` as separator:
 ```
 <!-- prettier-ignore-end -->
 
+#### Reserved events
+
+`mounted` is a reserved name rather than a DOM event. It runs the effect once per mount cycle, after the current mount batch has settled, so the effect can target a component mounted on the same element:
+
+<!-- prettier-ignore-start -->
+```html {3}
+<form
+  data-component="Fetch Action"
+  data-on:mounted="Fetch(#content-search) -> target.fetch()">
+</form>
+```
+<!-- prettier-ignore-end -->
+
+No listener is bound for it, so a lifecycle event bubbling from a descendant that mounts later never runs it again. Unmounting before the deferred effect runs cancels it, and remounting starts exactly one new one.
+
+The effect receives `undefined` for its `event` argument, which is what the modifiers reading an event have to work with:
+
+| Modifier                      | With `mounted`                                          |
+| ----------------------------- | ------------------------------------------------------- |
+| `.debounce` / `.debounce<ms>` | Applies — the effect runs that many milliseconds later. |
+| `.prevent` / `.stop`          | Ignored — there is no event to cancel or to stop.       |
+| `.once`                       | Ignored — the effect already runs once per mount cycle. |
+| `.capture` / `.passive`       | Ignored — they configure a listener, and none is bound. |
+
+Any other name binds a DOM event of that name.
+
 ### `target`
 
 - Type: `string`
@@ -116,7 +142,7 @@ Defines a small piece of JavaScript executed in the context of the current targe
 
 - `this` (`HTMLElement`): the current element
 - `ctx` (`Record<name, Base>`): the current targeted component in an object with a uniq key being its name set in the static `config.name` property and the value being the component instance
-- `event` (`Event`): the event that triggered the action
+- `event` (`Event | undefined`): the event that triggered the action, `undefined` for [`mounted`](#reserved-events)
 - `target` (`Base`): a direct reference to the current targeted component
 - `action` (`Base`): a direct reference to the current action component
 - `$el` (`HTMLElement`): a direct reference to the targeted element
@@ -223,7 +249,7 @@ The pattern described above with multiple components as targets is an advanced p
 - Type: `string`
 - Format: `[<name>[(<selector>)] -> ]<effect>`
 
-Combines the [`on`](#on), [`target`](#target) and [`effect`](#effect) options into a single attribute. Attaches multiple events to a single `Action` component.
+Combines the [`on`](#on), [`target`](#target) and [`effect`](#effect) options into a single attribute. Attaches multiple events to a single `Action` component. It reads the same event names and modifiers as the `on` option, [`mounted`](#reserved-events) included.
 
 ```html {3}
 <button
