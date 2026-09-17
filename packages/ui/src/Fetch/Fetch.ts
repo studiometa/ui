@@ -176,14 +176,10 @@ export interface FetchResponseDetail {
 /**
  * The detail every lifecycle event carries.
  *
- * One shape for the whole lifecycle, filled in as it progresses: the first
- * events describe the request, and each later one carries what has since
- * become known. A listener therefore reads the same path wherever it listens,
- * and reads `undefined` for what has not happened yet.
- *
- * Each event carries its own snapshot of that accumulation, not the
- * accumulator itself. A listener keeping the detail of `fetch-before` keeps
- * what was true then, and cannot write into what a later listener reads.
+ * One shape for the whole lifecycle: the first events describe the request,
+ * and each later one holds what has since become known. A listener therefore
+ * reads the same path wherever it listens, and reads `undefined` for what had
+ * not happened when the event it is reading fired.
  */
 export interface FetchLifecycleDetail {
   instance: Fetch;
@@ -731,8 +727,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     // One accumulator for the whole request, filled in as each part becomes
     // known and handed to `update()`, so the update events — and a
     // `fetch-error` raised by a failing update — carry everything learned
-    // before them. Each event gets a snapshot of it rather than the object
-    // itself, so a listener cannot write into what a later listener reads.
+    // before them. Each event is given a copy rather than the accumulator
+    // itself, so a field learned later does not turn up on the detail of an
+    // event that fired before it.
     const detail: FetchLifecycleDetail = {
       instance: this,
       request: this.__requestDetail(normalizedUrl, init),

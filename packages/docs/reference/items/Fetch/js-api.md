@@ -338,9 +338,7 @@ All events from the `Fetch` component bubble up the DOM tree, so they can be lis
 
 ### The event detail
 
-Every `fetch-*` event carries the same detail shape, filled in as the lifecycle progresses. `event.detail` **is** that object, so a listener reads a field by path with nothing to unwrap.
-
-Each event carries its own snapshot of what was known when it fired. The detail of `fetch-before` keeps describing the state at `fetch-before` however long a listener holds it, and writing to it changes nothing for the events that follow.
+Every `fetch-*` event carries a detail of the same shape, holding the fields known at that point in the lifecycle. `event.detail` **is** that object, so a listener reads a field by path with nothing to unwrap.
 
 ```ts
 interface FetchLifecycleDetail {

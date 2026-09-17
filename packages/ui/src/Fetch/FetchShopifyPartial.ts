@@ -197,8 +197,8 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
     const newController = new AbortController();
     const init = this.mergeRequestInit(requestInit, newController.signal, context);
 
-    // One accumulator for the whole request, as the base keeps: each event
-    // carries a snapshot of it, and `applyPartials()` fills in the rest.
+    // One accumulator for the whole request, as the base keeps: each event is
+    // given a copy of it, and `applyPartials()` fills in the rest.
     const detail: FetchShopifyPartialDetail = {
       instance: this,
       request: this.__requestDetail(normalizedUrl, init),

@@ -1332,10 +1332,10 @@ describe('Fetch — awaiting the update', () => {
     expect(detail.response?.status).toBe(500);
   });
 
-  it('gives each event its own snapshot of the detail', async () => {
-    // The accumulation is progressive, the object is not shared: a listener
-    // holding the detail of an early event must not see later fields appear
-    // on it, and must not be able to write into what a later listener reads.
+  it('does not add a later field to the detail of an earlier event', async () => {
+    // The accumulation is progressive, so each event is given a copy of it:
+    // the detail of `fetch-before` describes the point it fired at, whatever
+    // the lifecycle learns afterwards.
     stubClient();
     const { root, instance } = await mountFetch(
       `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
