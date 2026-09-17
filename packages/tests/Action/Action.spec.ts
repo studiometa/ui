@@ -7,7 +7,7 @@ import {
   SWAP_MODES,
   type BaseConfig,
 } from '@studiometa/js-toolkit';
-import { captureDiagnostics, mount, resetDom, settle } from '@studiometa/js-toolkit/test';
+import { captureDiagnostics, mount, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
 import { Dialog } from '#private/Dialog/Dialog.js';
 import { Action } from '#private/Action/Action.js';
 import { ActionEvent } from '#private/Action/ActionEvent.js';
@@ -484,12 +484,29 @@ describe('Action — the component', () => {
 });
 
 describe('Action — the `mounted` pseudo-event', () => {
+  /**
+   * The deferred effect lands in the scheduler's background lane, which a
+   * single `settle()` is generous about rather than deterministic — the helper
+   * says so itself. Every assertion that the effect **has** run therefore polls
+   * for it. Only an assertion that it has **not** run is made after a settle,
+   * and only where something observable proves the lane already drained.
+   */
+  function ran(foo: Foo, count: number): Promise<unknown> {
+    return waitFor(() => foo.calls.length === count, {
+      message: `Expected ${count} mounted effect(s), got ${foo.calls.length}.`,
+      timeout: 3000,
+    });
+  }
+
   it('runs once after the mount batch has settled', async () => {
     const root = await mount(`
       <button id="action" data-component="Action" data-on:mounted="Foo -> target.fn('ready')"></button>
       <div id="foo" data-component="Foo"></div>
     `);
     const foo = at<Foo>(root, '#foo', 'Foo');
+
+    await ran(foo, 1);
+    // Nothing queues a second one behind the first.
     await settle();
 
     expect(foo.calls).toEqual([['ready']]);
@@ -501,9 +518,11 @@ describe('Action — the `mounted` pseudo-event', () => {
     const root = await mount(`
       <button id="action" data-component="Action Foo" data-on:mounted="Foo.fn('co-located')"></button>
     `);
-    await settle();
+    const foo = at<Foo>(root, '#action', 'Foo');
 
-    expect(at<Foo>(root, '#action', 'Foo').calls).toEqual([['co-located']]);
+    await ran(foo, 1);
+
+    expect(foo.calls).toEqual([['co-located']]);
   });
 
   it('binds no DOM listener at all', async () => {
@@ -526,8 +545,7 @@ describe('Action — the `mounted` pseudo-event', () => {
       <div id="foo" data-component="Foo"></div>
     `);
     const foo = at<Foo>(root, '#foo', 'Foo');
-    await settle();
-    expect(foo.calls).toHaveLength(1);
+    await ran(foo, 1);
 
     (root.querySelector('#child') as HTMLElement).dispatchEvent(
       new CustomEvent('mounted', { bubbles: true }),
@@ -545,13 +563,17 @@ describe('Action — the `mounted` pseudo-event', () => {
     const foo = at<Foo>(root, '#foo', 'Foo');
 
     const host = document.createElement('div');
-    host.innerHTML = `<button data-component="Action" data-on:mounted="Foo -> target.fn()"></button>`;
+    host.innerHTML = `<button data-component="Action" data-on:mounted="Foo -> target.fn('doomed')"></button>`;
     document.body.append(host);
-    host.innerHTML = '';
-    await settle();
+    // Replaced in the same tick, so the first declaration never survives to run.
+    host.innerHTML = `<button data-component="Action" data-on:mounted="Foo -> target.fn('control')"></button>`;
+
+    // The control is what makes the absence an absence: its effect is queued
+    // behind the doomed one, so once it has run the lane has drained past both.
+    await ran(foo, 1);
     await settle();
 
-    expect(foo.calls).toHaveLength(0);
+    expect(foo.calls).toEqual([['control']]);
     host.remove();
   });
 
@@ -562,11 +584,11 @@ describe('Action — the `mounted` pseudo-event', () => {
     `);
     const action = at<Action>(root, '#action', 'Action');
     const foo = at<Foo>(root, '#foo', 'Foo');
-    await settle();
-    expect(foo.calls).toHaveLength(1);
+    await ran(foo, 1);
 
     action.$unmount();
     action.$mount();
+    await ran(foo, 2);
     await settle();
 
     expect(foo.calls).toHaveLength(2);
@@ -579,7 +601,8 @@ describe('Action — the `mounted` pseudo-event', () => {
       <div id="foo" data-component="Foo"></div>
     `);
     const foo = at<Foo>(root, '#foo', 'Foo');
-    await settle();
+
+    await ran(foo, 1);
 
     expect(foo.calls).toEqual([['undefined']]);
   });
@@ -587,15 +610,23 @@ describe('Action — the `mounted` pseudo-event', () => {
   it('applies the debounce modifier to the deferred effect', async () => {
     const root = await mount(`
       <button id="action" data-component="Action"
-        data-on:mounted.debounce200="Foo -> target.fn()"></button>
+        data-on:mounted="Foo -> target.fn('immediate', performance.now())"
+        data-on:mounted.debounce200="Foo -> target.fn('debounced', performance.now())"></button>
       <div id="foo" data-component="Foo"></div>
     `);
     const foo = at<Foo>(root, '#foo', 'Foo');
-    await settle();
-    expect(foo.calls).toHaveLength(0);
 
-    await wait(300);
-    expect(foo.calls).toHaveLength(1);
+    await ran(foo, 2);
+
+    // The delay is asserted as the gap between the two effects, never as a
+    // moment at which the debounced one has not run yet: a loaded machine can
+    // spend longer than the delay reaching such a moment, while a timer cannot
+    // fire early. Both declarations are deferred by the same lane and the
+    // undebounced one is queued first, so the gap is the delay itself.
+    const [immediate, debounced] = foo.calls;
+    expect(immediate[0]).toBe('immediate');
+    expect(debounced[0]).toBe('debounced');
+    expect((debounced[1] as number) - (immediate[1] as number)).toBeGreaterThanOrEqual(190);
   });
 
   it('works through the `on` option too', async () => {
@@ -605,7 +636,8 @@ describe('Action — the `mounted` pseudo-event', () => {
       <div id="foo" data-component="Foo"></div>
     `);
     const foo = at<Foo>(root, '#foo', 'Foo');
-    await settle();
+
+    await ran(foo, 1);
 
     expect(foo.calls).toEqual([['from-option']]);
   });
