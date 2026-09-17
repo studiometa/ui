@@ -1300,6 +1300,58 @@ describe('Fetch — awaiting the update', () => {
     ]);
   });
 
+  it('carries the content and the fragment in flight on the error of a failed update', async () => {
+    // The failed update is the one case where a consumer most needs to see
+    // what was being applied, so nothing learned before it is dropped.
+    stubClient(async () => new Response('<div id="fetch-default">new</div>'));
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    instance.updateDOM = () => Promise.reject(new Error('swap failed'));
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    const detail = detailOf(events, FETCH_EVENTS.ERROR);
+    expect(detail.content).toBe('<div id="fetch-default">new</div>');
+    expect(detail.fragment?.getElementById('fetch-default')?.textContent).toBe('new');
+  });
+
+  it('carries no content or fragment on the error of a failed request', async () => {
+    stubClient(async () => new Response('nope', { status: 500 }));
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    const detail = detailOf(events, FETCH_EVENTS.ERROR);
+    expect(detail.content).toBeUndefined();
+    expect(detail.fragment).toBeUndefined();
+    expect(detail.response?.status).toBe(500);
+  });
+
+  it('gives each event its own snapshot of the detail', async () => {
+    // The accumulation is progressive, the object is not shared: a listener
+    // holding the detail of an early event must not see later fields appear
+    // on it, and must not be able to write into what a later listener reads.
+    stubClient();
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    const before = detailOf(events, FETCH_EVENTS.BEFORE_FETCH);
+    const afterUpdate = detailOf(events, FETCH_EVENTS.AFTER_UPDATE);
+    expect(before).not.toBe(afterUpdate);
+    expect(before.content).toBeUndefined();
+    expect(before.fragment).toBeUndefined();
+    expect(afterUpdate.content).toBeDefined();
+  });
+
   it('describes the response on the error of a failed update', async () => {
     stubClient(
       async () =>

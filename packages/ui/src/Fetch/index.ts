@@ -9,7 +9,11 @@ export {
   type FetchRequestDetail,
   type FetchResponseDetail,
 } from './Fetch.js';
-export { FetchShopifyPartial, type FetchShopifyPartialProps } from './FetchShopifyPartial.js';
+export {
+  FetchShopifyPartial,
+  type FetchShopifyPartialDetail,
+  type FetchShopifyPartialProps,
+} from './FetchShopifyPartial.js';
 export {
   FetchShopifySection,
   SECTIONS_PARAMETER,

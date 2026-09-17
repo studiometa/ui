@@ -338,7 +338,9 @@ All events from the `Fetch` component bubble up the DOM tree, so they can be lis
 
 ### The event detail
 
-Every `fetch-*` event carries the same detail object, filled in as the lifecycle progresses. `event.detail` **is** that object, so a listener reads a field by path.
+Every `fetch-*` event carries the same detail shape, filled in as the lifecycle progresses. `event.detail` **is** that object, so a listener reads a field by path with nothing to unwrap.
+
+Each event carries its own snapshot of what was known when it fired. The detail of `fetch-before` keeps describing the state at `fetch-before` however long a listener holds it, and writing to it changes nothing for the events that follow.
 
 ```ts
 interface FetchLifecycleDetail {
@@ -407,7 +409,7 @@ The promise returned by [`fetch()`](#fetch-url-url-string-requestinit-requestini
 
 A failed request replaces steps 4 to 8 with `fetch-after` carrying `error` instead of `content`, then [`fetch-error`](#fetch-error). `fetch-response` is emitted only when a response came back, so a network failure goes straight from `fetch-fetch` to `fetch-after`.
 
-A failed update — a rejected swap, a rejected [`dom-update`](#the-dom-update-protocol-event) runner — emits `fetch-error` in place of `fetch-update-after`. It does not emit a second `fetch-after`: the request succeeded, the update did not.
+A failed update — a rejected swap, a rejected [`dom-update`](#the-dom-update-protocol-event) runner — emits `fetch-error` in place of `fetch-update-after`, carrying the `content` and the `fragment` it was applying. It does not emit a second `fetch-after`: the request succeeded, the update did not.
 
 [`fetch-abort`](#fetch-abort) is emitted whenever the request in flight is aborted, which happens when a new request starts on the same instance or when [`abort()`](#abort-reason-any) is called.
 
@@ -483,8 +485,10 @@ Emitted when the fetch request failed, or when the DOM update failed.
 
 **Detail**
 
-- `instance`, `request`, `response` when a response came back, and:
+- `instance`, `request`, everything the lifecycle had learned when it failed, and:
   - `error` (`Error`): the error thrown by the failing request or the failing update
+
+A failed request carries `response` when one came back and nothing else: there was no content to apply. A failed update carries `response`, `content` and `fragment`, which is what was being applied when it failed.
 
 ### `fetch-abort`
 

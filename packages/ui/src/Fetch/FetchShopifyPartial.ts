@@ -23,6 +23,12 @@ interface PartialsModule {
   partials: PartialsApi;
 }
 
+/**
+ * The detail of the partial rendering path: the base shape plus the opaque
+ * update object `partials.apply()` consumes.
+ */
+export type FetchShopifyPartialDetail = FetchLifecycleDetail & { update?: unknown };
+
 export type FetchShopifyPartialProps = FetchProps & {
   $options: FetchProps['$options'] & { partials: string };
 
@@ -32,7 +38,7 @@ export type FetchShopifyPartialProps = FetchProps & {
    * detail that is not plain data, and it stands where the base carries the
    * `content` string and the parsed `fragment`, neither of which exists here.
    */
-  $emits: { [K in keyof FetchEmits]: FetchEmits[K] & { update?: unknown } };
+  $emits: { [K in keyof FetchEmits]: FetchEmits[K] & Pick<FetchShopifyPartialDetail, 'update'> };
 };
 
 /**
@@ -190,12 +196,15 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
     // previous request is aborted after that event.
     const newController = new AbortController();
     const init = this.mergeRequestInit(requestInit, newController.signal, context);
-    const detail: FetchLifecycleDetail = {
+
+    // One accumulator for the whole request, as the base keeps: each event
+    // carries a snapshot of it, and `applyPartials()` fills in the rest.
+    const detail: FetchShopifyPartialDetail = {
       instance: this,
       request: this.__requestDetail(normalizedUrl, init),
     };
 
-    this.$emit(FETCH_EVENTS.BEFORE_FETCH, detail);
+    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { ...detail });
 
     this.__abortController.abort();
     newController.signal.addEventListener('abort', () => {
@@ -203,7 +212,7 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
     });
     this.__abortController = newController;
 
-    this.$emit(FETCH_EVENTS.FETCH, detail);
+    this.$emit(FETCH_EVENTS.FETCH, { ...detail });
 
     let update: unknown;
 
@@ -212,10 +221,11 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
         url: normalizedUrl.toString(),
         signal: init.signal ?? undefined,
       });
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, { ...detail, update });
+      detail.update = update;
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { ...detail });
     } catch (error) {
       this.$emit(FETCH_EVENTS.AFTER_FETCH, { ...detail, error });
-      this.error(normalizedUrl, init, error as Error);
+      this.error(detail, error as Error);
       return;
     }
 
@@ -224,9 +234,9 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
     // block above, or a failed apply would emit a second `fetch-after` and
     // report itself as a failed request.
     try {
-      await this.applyPartials(normalizedUrl, init, update, partials);
+      await this.applyPartials(normalizedUrl, init, update, partials, detail);
     } catch (applyError) {
-      this.error(normalizedUrl, init, applyError as Error);
+      this.error(detail, applyError as Error);
     }
   }
 
@@ -242,21 +252,21 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
     requestInit: RequestInit,
     update: unknown,
     partials: PartialsApi,
-  ): Promise<void> {
-    const detail = {
+    detail: FetchShopifyPartialDetail = {
       instance: this,
       request: this.__requestDetail(url, requestInit),
-      update,
-    };
+    },
+  ): Promise<void> {
+    detail.update = update;
 
-    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, detail);
+    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { ...detail });
 
     this.__updateHistory(url, requestInit);
 
-    this.$emit(FETCH_EVENTS.UPDATE, detail);
+    this.$emit(FETCH_EVENTS.UPDATE, { ...detail });
 
     await partials.apply(update);
 
-    this.$emit(FETCH_EVENTS.AFTER_UPDATE, detail);
+    this.$emit(FETCH_EVENTS.AFTER_UPDATE, { ...detail });
   }
 }

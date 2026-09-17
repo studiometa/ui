@@ -1,9 +1,9 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
 import {
   Fetch,
+  type FetchLifecycleDetail,
   type FetchProps,
   type FetchRequestContext,
-  type FetchResponseDetail,
 } from './Fetch.js';
 
 /** The Section Rendering API query parameter name. */
@@ -123,10 +123,10 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
     url: URL,
     requestInit: RequestInit,
     content: string,
-    response?: FetchResponseDetail,
+    detail?: FetchLifecycleDetail,
   ): Promise<void> {
     const displayUrl = new URL(url);
     displayUrl.searchParams.delete(SECTIONS_PARAMETER);
-    return super.update(displayUrl, requestInit, content, response);
+    return super.update(displayUrl, requestInit, content, detail);
   }
 }

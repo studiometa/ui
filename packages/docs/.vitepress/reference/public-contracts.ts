@@ -407,6 +407,14 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'FetchShopifyPartialDetail',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/FetchShopifyPartial/js-api',
+    status: 'preview',
+  },
+  {
     name: 'FetchShopifyPartialProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',

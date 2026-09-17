@@ -177,9 +177,13 @@ export interface FetchResponseDetail {
  * The detail every lifecycle event carries.
  *
  * One shape for the whole lifecycle, filled in as it progresses: the first
- * events describe the request, and each later one adds what has since become
- * known. A listener therefore reads the same path wherever it listens, and
- * reads `undefined` for what has not happened yet.
+ * events describe the request, and each later one carries what has since
+ * become known. A listener therefore reads the same path wherever it listens,
+ * and reads `undefined` for what has not happened yet.
+ *
+ * Each event carries its own snapshot of that accumulation, not the
+ * accumulator itself. A listener keeping the detail of `fetch-before` keeps
+ * what was true then, and cannot write into what a later listener reads.
  */
 export interface FetchLifecycleDetail {
   instance: Fetch;
@@ -723,12 +727,18 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     // comes after the `fetch-before` of the request that caused it.
     const newController = new AbortController();
     const init = this.mergeRequestInit(requestInit, newController.signal, context);
+
+    // One accumulator for the whole request, filled in as each part becomes
+    // known and handed to `update()`, so the update events — and a
+    // `fetch-error` raised by a failing update — carry everything learned
+    // before them. Each event gets a snapshot of it rather than the object
+    // itself, so a listener cannot write into what a later listener reads.
     const detail: FetchLifecycleDetail = {
       instance: this,
       request: this.__requestDetail(normalizedUrl, init),
     };
 
-    this.$emit(FETCH_EVENTS.BEFORE_FETCH, detail);
+    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { ...detail });
 
     this.__abortController.abort();
     newController.signal.addEventListener('abort', () => {
@@ -736,14 +746,14 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     });
     this.__abortController = newController;
 
-    this.$emit(FETCH_EVENTS.FETCH, detail);
+    this.$emit(FETCH_EVENTS.FETCH, { ...detail });
 
-    let response: FetchResponseDetail | undefined;
     let content: string;
 
     try {
       const rawResponse = await this.client(normalizedUrl, init);
-      response = this.__responseDetail(rawResponse);
+      const response = this.__responseDetail(rawResponse);
+      detail.response = response;
       this.$emit(FETCH_EVENTS.RESPONSE, { ...detail, response });
 
       if (!rawResponse.ok) {
@@ -751,10 +761,11 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       }
 
       content = await this.parseResponse(rawResponse, normalizedUrl, requestInit);
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, { ...detail, response, content });
+      detail.content = content;
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { ...detail });
     } catch (error) {
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, { ...detail, response, error });
-      this.error(normalizedUrl, init, error as Error, response);
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { ...detail, error });
+      this.error(detail, error as Error);
       return;
     }
 
@@ -764,9 +775,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     // above, or a failed update would emit a second `fetch-after` and report
     // itself as a failed request.
     try {
-      await this.update(normalizedUrl, init, content, response);
+      await this.update(normalizedUrl, init, content, detail);
     } catch (error) {
-      this.error(normalizedUrl, init, error as Error, response);
+      this.error(detail, error as Error);
     }
   }
 
@@ -863,30 +874,30 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * starts on this element, so any listener above overrides the default
    * without the component having to ask whether one exists.
    *
-   * The `response` description is carried through rather than rebuilt: the
-   * `Response` it came from is consumed by the time the update runs, and the
-   * update events are where a consumer reads the status and the headers that
-   * came with the content being applied.
+   * The accumulated `detail` is filled in rather than rebuilt: the `Response`
+   * it describes is consumed by the time the update runs, and the update
+   * events are where a consumer reads the status and the headers that came
+   * with the content being applied. A caller driving `update()` directly
+   * passes no detail and gets one describing this call alone.
    */
   async update(
     url: URL,
     requestInit: RequestInit,
     content: string,
-    response?: FetchResponseDetail,
-  ): Promise<void> {
-    const { history, viewTransition: hasViewTransition } = this.$options;
-    const detail: FetchLifecycleDetail = {
+    detail: FetchLifecycleDetail = {
       instance: this,
       request: this.__requestDetail(url, requestInit),
-      response,
-      content,
-    };
+    },
+  ): Promise<void> {
+    const { history, viewTransition: hasViewTransition } = this.$options;
 
-    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, detail);
+    detail.content = content;
+
+    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { ...detail });
 
     domParser ??= new DOMParser();
     const fragment = domParser.parseFromString(content, 'text/html');
-    const updateDetail = { ...detail, fragment };
+    detail.fragment = fragment;
 
     this.__updateHistory(url, requestInit);
 
@@ -898,7 +909,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       });
     }
 
-    this.$emit(FETCH_EVENTS.UPDATE, updateDetail);
+    this.$emit(FETCH_EVENTS.UPDATE, { ...detail });
 
     const releaseDefault = hasViewTransition
       ? this.$on(EVENTS.dom.update, (event) => {
@@ -907,12 +918,12 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       : null;
 
     try {
-      await domUpdate(this.$el, () => this.updateDOM(fragment), updateDetail);
+      await domUpdate(this.$el, () => this.updateDOM(fragment), { ...detail });
     } finally {
       releaseDefault?.();
     }
 
-    this.$emit(FETCH_EVENTS.AFTER_UPDATE, updateDetail);
+    this.$emit(FETCH_EVENTS.AFTER_UPDATE, { ...detail });
   }
 
   /**
@@ -940,18 +951,20 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     write({ path: target.pathname, search: target.searchParams });
   }
 
-  /** Announce a failed request or a failed update, ignoring the abort the component caused. */
-  error(url: URL, requestInit: RequestInit, error: Error, response?: FetchResponseDetail): void {
+  /**
+   * Announce a failed request or a failed update, ignoring the abort the
+   * component caused.
+   *
+   * The accumulated detail is carried through rather than rebuilt, so a
+   * failed update reports the content and the fragment it was applying — the
+   * one case where a consumer most needs them.
+   */
+  error(detail: FetchLifecycleDetail, error: Error): void {
     if (error.name === 'AbortError') {
       return;
     }
 
-    this.$emit(FETCH_EVENTS.ERROR, {
-      instance: this,
-      request: this.__requestDetail(url, requestInit),
-      response,
-      error,
-    });
+    this.$emit(FETCH_EVENTS.ERROR, { ...detail, error });
   }
 
   /** Abort the request in flight. */

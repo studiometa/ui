@@ -93,6 +93,7 @@ export {
   type FetchRequestContext,
   type FetchRequestDetail,
   type FetchResponseDetail,
+  type FetchShopifyPartialDetail,
   type FetchShopifyPartialProps,
   type FetchShopifySectionProps,
 } from './Fetch/index.js';

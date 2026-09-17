@@ -140,6 +140,7 @@ test('@studiometa/ui barrel export surface', () => {
       "FetchRequestDetail [type]",
       "FetchResponseDetail [type]",
       "FetchShopifyPartial [value]",
+      "FetchShopifyPartialDetail [type]",
       "FetchShopifyPartialProps [type]",
       "FetchShopifySection [value]",
       "FetchShopifySectionProps [type]",
