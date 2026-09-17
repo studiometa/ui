@@ -11,9 +11,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Fetch:** add the `historyMode` option and keep the `src` separation on popstate ([#656](https://github.com/studiometa/ui/pull/656))
 - **Fetch:** report `fetch.file-not-uploaded` when a file control cannot be sent as a file ([#656](https://github.com/studiometa/ui/pull/656))
 
+### Changed
+
+- ⚠️ **Fetch:** replace the `url` and `requestInit` event payload fields with one progressive lifecycle detail ([#657](https://github.com/studiometa/ui/pull/657))
+- ⚠️ **Fetch:** drop the raw `Response` from the `fetch-response` payload ([#657](https://github.com/studiometa/ui/pull/657))
+
 ### Fixed
 
 - **Fetch:** send a form submission's submitter and its `formaction`, `formmethod` and `formenctype` ([#656](https://github.com/studiometa/ui/pull/656))
+- **Fetch:** await the DOM update so `fetch-update-after` settles it and a failed update reaches `fetch-error` ([#657](https://github.com/studiometa/ui/pull/657))
 
 ## [v2.0.0-alpha.0](https://github.com/studiometa/ui/compare/1.11.1..2.0.0-alpha.0) (2026-09-03)
 

@@ -336,75 +336,128 @@ Every one is a development-only warning on the [toolkit diagnostic channel](http
 
 All events from the `Fetch` component bubble up the DOM tree, so they can be listened to from any parent element.
 
+### The event detail
+
+Every `fetch-*` event carries a detail of the same shape, holding the fields known at that point in the lifecycle. `event.detail` **is** that object, so a listener reads a field by path with nothing to unwrap.
+
+```ts
+interface FetchLifecycleDetail {
+  instance: Fetch;
+  request: {
+    url: string;
+    method: string;
+    searchParams: Record<string, string[]>;
+  };
+  response?: {
+    url: string;
+    status: number;
+    statusText: string;
+    ok: boolean;
+    redirected: boolean;
+    headers: Record<string, string>;
+  };
+  content?: string;
+  fragment?: Document;
+}
+```
+
+- `instance` (`Fetch`): the `Fetch` instance emitting the event.
+- `request.url` (`string`): the absolute URL the request is sent to.
+- `request.method` (`string`): the HTTP method, uppercase.
+- `request.searchParams` (`Record<string, string[]>`): the query, with every value each name carries. A repeated name — a checkbox group, a `<select multiple>` — keeps all of its values, which is why each name maps to a list.
+- `response` (`object`): the response description, present once the request has returned one.
+- `response.headers` (`Record<string, string>`): the response headers, names lowercase.
+- `content` (`string`): the string extracted from the response body by the [`response` option](#response), present once the body has been read.
+- `fragment` (`Document`): `content` parsed with a [`DOMParser`](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser), present once the update starts.
+
+Three events add one field of their own: [`fetch-after`](#fetch-after) and [`fetch-error`](#fetch-error) carry `error`, [`fetch-abort`](#fetch-abort) carries `reason`.
+
+Everything except `instance` and `fragment` is plain data — no `URL`, no `Headers`, no `RequestInit`, no getters — so a declarative consumer resolves any field by path, with nothing to import:
+
+<!-- prettier-ignore-start -->
+```html
+<main
+  data-component="Action"
+  data-on:fetch-update-after="console.log(event.detail.response.headers['x-search-result-count'])">
+  <form action="/search" method="get" data-component="Fetch">
+    <input type="search" name="q" />
+  </form>
+</main>
+```
+<!-- prettier-ignore-end -->
+
+`response` describes the response, it is not the [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response). A body reads once, and the component reads it to produce `content`, so the object itself is never handed to listeners: one of them consuming the body would leave the component with nothing to inject.
+
+### Event order
+
+A successful request emits, in this order:
+
+| Order | Event                                         | Detail added     |
+| ----- | --------------------------------------------- | ---------------- |
+| 1     | [`fetch-before`](#fetch-before)               | `request`        |
+| 2     | [`fetch-fetch`](#fetch-fetch)                 |                  |
+| 3     | [`fetch-response`](#fetch-response)           | `response`       |
+| 4     | [`fetch-after`](#fetch-after)                 | `content`        |
+| 5     | [`fetch-update-before`](#fetch-update-before) |                  |
+| 6     | [`fetch-update`](#fetch-update)               | `fragment`       |
+| 7     | [`dom-update`](#dom-update)                   | _protocol event_ |
+| 8     | [`fetch-update-after`](#fetch-update-after)   |                  |
+
+The promise returned by [`fetch()`](#fetch-url-url-string-requestinit-requestinit-context-fetchrequestcontext) resolves after `fetch-update-after`, so awaiting it means every swap has settled.
+
+A failed request replaces steps 4 to 8 with `fetch-after` carrying `error` instead of `content`, then [`fetch-error`](#fetch-error). `fetch-response` is emitted only when a response came back, so a network failure goes straight from `fetch-fetch` to `fetch-after`.
+
+A failed update — a rejected swap, a rejected [`dom-update`](#the-dom-update-protocol-event) runner — emits `fetch-error` in place of `fetch-update-after`, carrying the `content` and the `fragment` it was applying. It does not emit a second `fetch-after`: the request succeeded, the update did not.
+
+[`fetch-abort`](#fetch-abort) is emitted whenever the request in flight is aborted, which happens when a new request starts on the same instance or when [`abort()`](#abort-reason-any) is called.
+
 ### `fetch-before`
 
 Emitted before the fetch request is sent.
 
-**Payload**
+**Detail**
 
-- `ctx` (`Object`): context for the event with the following properties
-  - `instance` (`Fetch`): the `Fetch` instance emitting the event
-  - `url` (`URL`): the URL that will be fetched
-  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+- `instance`, `request`.
 
 ### `fetch-fetch`
 
 Emitted when the fetch request is sent.
 
-**Payload**
+**Detail**
 
-- `ctx` (`Object`): context for the event with the following properties
-  - `instance` (`Fetch`): the `Fetch` instance emitting the event
-  - `url` (`URL`): the URL that will be fetched
-  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+- `instance`, `request`.
 
 ### `fetch-response`
 
 Emitted when the fetch request returned a response, before extracting its body, and before throwing if `response.ok !== true`.
 
-**Payload**
+**Detail**
 
-- `ctx` (`Object`): context for the event with the following properties
-  - `response` (`Response`): the `Response` object returned by the `fetch` request
-  - `instance` (`Fetch`): the `Fetch` instance emitting the event
-  - `url` (`URL`): the URL that will be fetched
-  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+- `instance`, `request`, `response`.
 
 ### `fetch-after`
 
 Emitted after the fetch request is finished, whether it is successful or not.
 
-**Payload**
+**Detail**
 
-- `ctx` (`Object`): context for the event with the following properties
-  - `instance` (`Fetch`): the `Fetch` instance emitting the event
-  - `url` (`URL`): the URL that was fetched
-  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
-  - `content` (`string | void`): the content of the response if the request succeeded
+- `instance`, `request`, `response` when a response came back, and either `content` when the request succeeded or `error` when it failed.
 
 ### `fetch-update-before`
 
 Emitted before the DOM is updated.
 
-**Payload**
+**Detail**
 
-- `ctx` (`Object`): context for the event with the following properties
-  - `instance` (`Fetch`): the `Fetch` instance emitting the event
-  - `url` (`URL`): the URL that was fetched
-  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
-  - `content` (`string`): the content of the response
+- `instance`, `request`, `response`, `content`.
 
 ### `fetch-update`
 
 Emitted when the DOM is updated.
 
-**Payload**
+**Detail**
 
-- `ctx` (`Object`): context for the event with the following properties
-  - `instance` (`Fetch`): the `Fetch` instance emitting the event
-  - `url` (`URL`): the URL that was fetched
-  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
-  - `document` (`Document`): the content of the response, parsed with a [DOMParse](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser)
+- `instance`, `request`, `response`, `content`, `fragment`.
 
 ### `dom-update`
 
@@ -412,44 +465,36 @@ Emitted after the [`fetch-update` event](#fetch-update), right before the fetche
 
 **Detail**
 
-The event `detail` is a bare object (not an argument array) with the following property:
+The event `detail` carries the same fields as `fetch-update`, plus the one the protocol is made of:
 
 - `wrap` (`(runner: DomUpdateRunner) => void`): registers a runner or transitioner that substitutes the default update path
 
 ### `fetch-update-after`
 
-Emitted when the DOM has been updated.
+Emitted when the DOM has been updated and every swap has settled.
 
-**Payload**
+**Detail**
 
-- `ctx` (`Object`): context for the event with the following properties
-  - `instance` (`Fetch`): the `Fetch` instance emitting the event
-  - `url` (`URL`): the URL that was fetched
-  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
-  - `document` (`Document`): the content of the response, parsed with a [DOMParse](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser)
+- `instance`, `request`, `response`, `content`, `fragment`.
 
 ### `fetch-error`
 
-Emitted when the fetch request failed.
+Emitted when the fetch request failed, or when the DOM update failed.
 
-**Payload**
+**Detail**
 
-- `ctx` (`Object`): context for the event with the following properties
-  - `instance` (`Fetch`): the `Fetch` instance emitting the event
-  - `url` (`URL`): the URL that was fetched
-  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
-  - `error` (`Error`): the error object thrown by the failing request
+- `instance`, `request`, everything the lifecycle had learned when it failed, and:
+  - `error` (`Error`): the error thrown by the failing request or the failing update
+
+A failed request carries `response` when one came back and nothing else: there was no content to apply. A failed update carries `response`, `content` and `fragment`, which is what was being applied when it failed.
 
 ### `fetch-abort`
 
 Emitted when the fetch request has been aborted.
 
-**Payload**
+**Detail**
 
-- `ctx` (`Object`): context for the event with the following properties
-  - `instance` (`Fetch`): the `Fetch` instance emitting the event
-  - `url` (`URL`): the URL that was fetched
-  - `requestInit` ([`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit)): options for the `fetch` call
+- `instance`, `request`, and:
   - `reason` (`any`): the reason the request was aborted
 
 ## The `dom-update` protocol event

@@ -130,24 +130,76 @@ function submitterOverrides(
     : null;
 }
 
-/** The context every lifecycle event carries. */
-export interface FetchEventBase {
+/**
+ * The request a lifecycle event describes, as plain data.
+ *
+ * A `URL` and a `RequestInit` state the same things, but only through getters,
+ * a `Headers` and a `URLSearchParams`, none of which a consumer resolving a
+ * path against the detail can walk. Every value here is a string, a number, a
+ * boolean, or a plain object of those.
+ */
+export interface FetchRequestDetail {
+  /** The absolute URL the request is sent to. */
+  url: string;
+
+  /** The HTTP method, uppercase, as `Request.method` reports it. */
+  method: string;
+
+  /**
+   * The query, with every value each name carries.
+   *
+   * A repeated name — a checkbox group, a `<select multiple>` — is why this is
+   * a list per name and not one value: keeping the first would drop the rest.
+   */
+  searchParams: Record<string, string[]>;
+}
+
+/**
+ * The response a lifecycle event describes, as plain data.
+ *
+ * It describes the response, it is not the `Response`. A body reads once, and
+ * the component reads it, so the object itself on a bubbling event would hand
+ * every listener a body that is already gone — or let one listener consume it
+ * before the component does.
+ */
+export interface FetchResponseDetail {
+  url: string;
+  status: number;
+  statusText: string;
+  ok: boolean;
+  redirected: boolean;
+
+  /** Header names are lowercase, as the `Headers` iterator yields them. */
+  headers: Record<string, string>;
+}
+
+/**
+ * The detail every lifecycle event carries.
+ *
+ * One shape for the whole lifecycle: the first events describe the request,
+ * and each later one holds what has since become known. A listener therefore
+ * reads the same path wherever it listens, and reads `undefined` for what had
+ * not happened when the event it is reading fired.
+ */
+export interface FetchLifecycleDetail {
   instance: Fetch;
-  url: URL;
-  requestInit: RequestInit;
+  request: FetchRequestDetail;
+  response?: FetchResponseDetail;
+  content?: string;
+  fragment?: Document;
 }
 
 /** The declared event surface, with the payload each event carries. */
 export type FetchEmits = {
-  'fetch-before': FetchEventBase;
-  'fetch-fetch': FetchEventBase;
-  'fetch-response': FetchEventBase & { response: Response };
-  'fetch-after': FetchEventBase & { content?: unknown; error?: unknown };
-  'fetch-update-before': FetchEventBase & { content: unknown };
-  'fetch-update': FetchEventBase & { fragment?: Document; update?: unknown };
-  'fetch-update-after': FetchEventBase & { fragment?: Document; update?: unknown };
-  'fetch-error': FetchEventBase & { error: Error };
-  'fetch-abort': FetchEventBase & { reason: unknown };
+  'fetch-before': FetchLifecycleDetail;
+  'fetch-fetch': FetchLifecycleDetail;
+  'fetch-response': FetchLifecycleDetail & { response: FetchResponseDetail };
+  'fetch-after': FetchLifecycleDetail & { error?: unknown };
+  'fetch-update-before': FetchLifecycleDetail;
+  'fetch-update': FetchLifecycleDetail;
+  'fetch-update-after': FetchLifecycleDetail;
+  'fetch-error': FetchLifecycleDetail & { error: Error };
+  'fetch-abort': FetchLifecycleDetail & { reason: unknown };
 };
 
 export type FetchProps = BaseProps & {
@@ -513,6 +565,47 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     return this.__buildRequestInit({});
   }
 
+  /**
+   * The plain description of the request a lifecycle event announces.
+   *
+   * @protected
+   */
+  __requestDetail(url: URL, requestInit: RequestInit): FetchRequestDetail {
+    const searchParams: Record<string, string[]> = {};
+
+    for (const [name, value] of url.searchParams) {
+      (searchParams[name] ??= []).push(value);
+    }
+
+    return {
+      url: url.href,
+      method: (requestInit.method || 'get').toUpperCase(),
+      searchParams,
+    };
+  }
+
+  /**
+   * The plain description of a response, body excluded.
+   *
+   * @protected
+   */
+  __responseDetail(response: Response): FetchResponseDetail {
+    const headers: Record<string, string> = {};
+
+    for (const [name, value] of response.headers) {
+      headers[name] = value;
+    }
+
+    return {
+      url: response.url,
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      redirected: response.redirected,
+      headers,
+    };
+  }
+
   get isLink(): boolean {
     return this.$el instanceof HTMLAnchorElement;
   }
@@ -602,6 +695,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * `fetch()` works from an event handler. Strings are resolved against the
    * current location, since the history and view-transition paths read
    * `url.pathname` and `url.searchParams`.
+   *
+   * The returned promise settles once the DOM update has settled, so
+   * `fetch-update-after` has already fired when a caller awaits it.
    */
   async fetch(
     url?: URL | string,
@@ -621,52 +717,64 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
 
     this.__historyUrl = fromElement ? this.__buildHistoryUrl(context) : undefined;
 
-    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url: normalizedUrl, requestInit });
-
-    this.__abortController.abort();
+    // The controller is built before the previous request is aborted, so the
+    // request is fully described — merged headers, method and body included —
+    // by the time the first event announces it, while `fetch-abort` still
+    // comes after the `fetch-before` of the request that caused it.
     const newController = new AbortController();
-    newController.signal.addEventListener('abort', () => {
-      this.$emit(FETCH_EVENTS.ABORT, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit,
-        reason: newController.signal.reason,
-      });
-    });
-    this.__abortController = newController;
     const init = this.mergeRequestInit(requestInit, newController.signal, context);
 
-    this.$emit(FETCH_EVENTS.FETCH, { instance: this, url: normalizedUrl, requestInit: init });
+    // One accumulator for the whole request, filled in as each part becomes
+    // known and handed to `update()`, so the update events — and a
+    // `fetch-error` raised by a failing update — carry everything learned
+    // before them. Each event is given a copy rather than the accumulator
+    // itself, so a field learned later does not turn up on the detail of an
+    // event that fired before it.
+    const detail: FetchLifecycleDetail = {
+      instance: this,
+      request: this.__requestDetail(normalizedUrl, init),
+    };
+
+    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { ...detail });
+
+    this.__abortController.abort();
+    newController.signal.addEventListener('abort', () => {
+      this.$emit(FETCH_EVENTS.ABORT, { ...detail, reason: newController.signal.reason });
+    });
+    this.__abortController = newController;
+
+    this.$emit(FETCH_EVENTS.FETCH, { ...detail });
+
+    let content: string;
 
     try {
-      const response = await this.client(normalizedUrl, init);
-      this.$emit(FETCH_EVENTS.RESPONSE, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit: init,
-        response,
-      });
+      const rawResponse = await this.client(normalizedUrl, init);
+      const response = this.__responseDetail(rawResponse);
+      detail.response = response;
+      this.$emit(FETCH_EVENTS.RESPONSE, { ...detail, response });
 
-      if (!response.ok) {
-        throw new Error(`Fetch failed with status ${response.status}`);
+      if (!rawResponse.ok) {
+        throw new Error(`Fetch failed with status ${rawResponse.status}`);
       }
 
-      const content = await this.parseResponse(response, normalizedUrl, requestInit);
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit: init,
-        content,
-      });
-      void this.update(normalizedUrl, init, content);
+      content = await this.parseResponse(rawResponse, normalizedUrl, requestInit);
+      detail.content = content;
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { ...detail });
     } catch (error) {
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit: init,
-        error,
-      });
-      this.error(normalizedUrl, init, error as Error);
+      this.$emit(FETCH_EVENTS.AFTER_FETCH, { ...detail, error });
+      this.error(detail, error as Error);
+      return;
+    }
+
+    // The update is awaited, so `fetch()` resolves once every swap has
+    // settled and a failing update reaches the same `fetch-error` a failing
+    // request does. It is caught on its own rather than inside the block
+    // above, or a failed update would emit a second `fetch-after` and report
+    // itself as a failed request.
+    try {
+      await this.update(normalizedUrl, init, content, detail);
+    } catch (error) {
+      this.error(detail, error as Error);
     }
   }
 
@@ -762,14 +870,31 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * an `else` branch: `wrap()` keeps the last registration, and the event
    * starts on this element, so any listener above overrides the default
    * without the component having to ask whether one exists.
+   *
+   * The accumulated `detail` is filled in rather than rebuilt: the `Response`
+   * it describes is consumed by the time the update runs, and the update
+   * events are where a consumer reads the status and the headers that came
+   * with the content being applied. A caller driving `update()` directly
+   * passes no detail and gets one describing this call alone.
    */
-  async update(url: URL, requestInit: RequestInit, content: string): Promise<void> {
+  async update(
+    url: URL,
+    requestInit: RequestInit,
+    content: string,
+    detail: FetchLifecycleDetail = {
+      instance: this,
+      request: this.__requestDetail(url, requestInit),
+    },
+  ): Promise<void> {
     const { history, viewTransition: hasViewTransition } = this.$options;
 
-    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { instance: this, url, requestInit, content });
+    detail.content = content;
+
+    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { ...detail });
 
     domParser ??= new DOMParser();
     const fragment = domParser.parseFromString(content, 'text/html');
+    detail.fragment = fragment;
 
     this.__updateHistory(url, requestInit);
 
@@ -781,7 +906,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       });
     }
 
-    this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, fragment });
+    this.$emit(FETCH_EVENTS.UPDATE, { ...detail });
 
     const releaseDefault = hasViewTransition
       ? this.$on(EVENTS.dom.update, (event) => {
@@ -790,17 +915,12 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       : null;
 
     try {
-      await domUpdate(this.$el, () => this.updateDOM(fragment), {
-        instance: this,
-        url,
-        requestInit,
-        fragment,
-      });
+      await domUpdate(this.$el, () => this.updateDOM(fragment), { ...detail });
     } finally {
       releaseDefault?.();
     }
 
-    this.$emit(FETCH_EVENTS.AFTER_UPDATE, { instance: this, url, requestInit, fragment });
+    this.$emit(FETCH_EVENTS.AFTER_UPDATE, { ...detail });
   }
 
   /**
@@ -828,13 +948,20 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     write({ path: target.pathname, search: target.searchParams });
   }
 
-  /** Announce a failed request, ignoring the abort the component caused. */
-  error(url: URL, requestInit: RequestInit, error: Error): void {
+  /**
+   * Announce a failed request or a failed update, ignoring the abort the
+   * component caused.
+   *
+   * The accumulated detail is carried through rather than rebuilt, so a
+   * failed update reports the content and the fragment it was applying — the
+   * one case where a consumer most needs them.
+   */
+  error(detail: FetchLifecycleDetail, error: Error): void {
     if (error.name === 'AbortError') {
       return;
     }
 
-    this.$emit(FETCH_EVENTS.ERROR, { instance: this, url, requestInit, error });
+    this.$emit(FETCH_EVENTS.ERROR, { ...detail, error });
   }
 
   /** Abort the request in flight. */

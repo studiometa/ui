@@ -40,7 +40,7 @@ The package is loaded lazily on the first request, so it never needs to be bundl
 
 `FetchShopifyPartial` emits the same [events as `Fetch`](../Fetch/js-api.md#events), with two differences on the partial rendering path:
 
-- the [`fetch-response` event](../Fetch/js-api.md#fetch-response) is **not** emitted, as there is no `Response` object to expose;
-- the [`fetch-update` event](../Fetch/js-api.md#fetch-update) payload carries the opaque partials `update` object (as `event.detail[0].update`) instead of a parsed `Document` fragment.
+- the [`fetch-response` event](../Fetch/js-api.md#fetch-response) is **not** emitted, and no event carries a `response` description, as there is no `Response` on this path;
+- every event carries the opaque partials `update` object (as `event.detail.update`) instead of the `content` string and the parsed `fragment`, which do not exist on this path.
 
 On the fallback path, all events — including `fetch-response` — behave exactly like the base [`Fetch`](../Fetch/js-api.md#events) component.

@@ -45,6 +45,8 @@ Overrides the base [`fetch`](../Fetch/js-api.md#fetch-url-string-requestinit-req
 
 Unwraps the Section Rendering JSON object (`{ [id]: html }`) into the concatenated section HTML, dropping any section returned as `null` through `filter(Boolean)`. Each section is then swapped in place by the inherited [`[id]` selector](../Fetch/js-api.md#selector). The unwrap is skipped — deferring to the base [`Fetch`](../Fetch/js-api.md), which evaluates the [`response`](#response) option — when no `sections` are configured (a normal HTML page is requested) or when a custom `response` option is supplied.
 
-### `update(url, requestInit, content)`
+### `update(url, requestInit, content, detail)`
 
 Overrides the base `update` to remove the `sections` parameter from the URL before delegating to `Fetch`, so — when the [`history` option](../Fetch/js-api.md#history) is enabled — the address bar reflects the human-facing page and not the raw Section Rendering endpoint.
+
+The stripping is a history concern only. The [event detail](../Fetch/js-api.md#the-event-detail) describes the request that was actually made, so `event.detail.request.url` carries the Section Rendering endpoint on every event.

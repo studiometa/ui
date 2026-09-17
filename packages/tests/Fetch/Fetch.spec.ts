@@ -1,7 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getInstance, registerComponents } from '@studiometa/js-toolkit';
-import { captureDiagnostics, mount, recordEvents, resetDom, settle } from '@studiometa/js-toolkit/test';
-import { Fetch, FETCH_EVENTS, type FetchEmits } from '#private/Fetch/Fetch.js';
+import {
+  captureDiagnostics,
+  mount,
+  recordEvents,
+  resetDom,
+  settle,
+} from '@studiometa/js-toolkit/test';
+import {
+  Fetch,
+  FETCH_EVENTS,
+  type FetchEmits,
+  type FetchLifecycleDetail,
+} from '#private/Fetch/Fetch.js';
 import { FetchShopifySection } from '#private/Fetch/FetchShopifySection.js';
 
 registerComponents(Fetch, FetchShopifySection);
@@ -58,7 +69,23 @@ function stubClient(
   return client;
 }
 
-/** Collect every `Fetch` event dispatched under `root`, in order. */
+/** The detail of the first recorded event of the given type. */
+function detailOf(events: { type: string; detail: unknown }[], type: string): FetchLifecycleDetail {
+  const event = events.find((candidate) => candidate.type === type);
+  expect(event).toBeDefined();
+  return event!.detail as FetchLifecycleDetail;
+}
+
+/**
+ * Read a dotted path off a value, the way a declarative consumer resolves
+ * `$event.detail.response.headers.x-search-result-count` with no knowledge of
+ * `Fetch`.
+ */
+function resolvePath(source: unknown, path: string): unknown {
+  return path
+    .split('.')
+    .reduce<unknown>((value, key) => (value as Record<string, unknown> | undefined)?.[key], source);
+}
 
 /** Take over both history writers and record which one an update reaches for. */
 function stubHistory(): {
@@ -840,8 +867,8 @@ describe('Fetch — the request', () => {
     await instance.fetch();
 
     expect(detail?.instance).toBe(instance);
-    expect(detail?.response).toBeInstanceOf(Response);
-    expect(detail?.url).toBeInstanceOf(URL);
+    expect(detail?.request.url).toBe(instance.url.href);
+    expect(detail?.response.status).toBe(200);
   });
 
   it('aborts the request in flight when a new one starts', async () => {
@@ -913,6 +940,436 @@ describe('Fetch — the request', () => {
 
     const after = events.find(({ type }) => type === FETCH_EVENTS.AFTER_FETCH);
     expect((after as { detail: { error: Error } }).detail.error.message).toBe('network down');
+  });
+});
+
+describe('Fetch — the lifecycle detail', () => {
+  it('describes the request as plain data, with no URL or RequestInit in the way', async () => {
+    stubClient();
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get"
+        data-option-no-view-transition>
+        <input name="q" value="shoes">
+      </form>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+    await settle();
+
+    expect(events.length).toBeGreaterThan(0);
+    for (const { detail } of events as { detail: FetchLifecycleDetail }[]) {
+      expect(detail.instance).toBe(instance);
+      expect(detail.request).toEqual({
+        url: 'https://example.com/search?q=shoes',
+        method: 'GET',
+        searchParams: { q: ['shoes'] },
+      });
+      expect(detail).not.toHaveProperty('url');
+      expect(detail).not.toHaveProperty('requestInit');
+    }
+  });
+
+  it('reports the method of a POST form uppercase', async () => {
+    stubClient();
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/submit" method="post"
+        data-option-no-view-transition></form>`,
+    );
+    const { events } = recordEvents(root, FETCH_EVENTS.BEFORE_FETCH);
+
+    await instance.fetch();
+    await settle();
+
+    expect(detailOf(events, FETCH_EVENTS.BEFORE_FETCH).request.method).toBe('POST');
+  });
+
+  it('keeps every value of a repeated query parameter', async () => {
+    // A checkbox group is repeated names by design, so one value per name
+    // would describe a request the visitor never made.
+    stubClient();
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get"
+        data-option-no-view-transition>
+        <input type="checkbox" name="genre" value="rock" checked>
+        <input type="checkbox" name="genre" value="jazz" checked>
+        <input name="q" value="shoes">
+      </form>`,
+    );
+    const { events } = recordEvents(root, FETCH_EVENTS.BEFORE_FETCH);
+
+    await instance.fetch();
+    await settle();
+
+    expect(detailOf(events, FETCH_EVENTS.BEFORE_FETCH).request.searchParams).toEqual({
+      genre: ['rock', 'jazz'],
+      q: ['shoes'],
+    });
+  });
+
+  it('describes the response instead of handing out the `Response`', async () => {
+    stubClient(
+      async () =>
+        new Response('<div id="fetch-default">new</div>', {
+          status: 200,
+          headers: { 'X-Search-Result-Count': '42' },
+        }),
+    );
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="/page" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+    await settle();
+
+    const { response } = detailOf(events, FETCH_EVENTS.RESPONSE);
+    expect(response).not.toBeInstanceOf(Response);
+    expect(response?.headers).not.toBeInstanceOf(Headers);
+    expect(response?.status).toBe(200);
+    expect(response?.ok).toBe(true);
+    expect(response?.redirected).toBe(false);
+  });
+
+  it('normalises the response header names to lowercase', async () => {
+    stubClient(
+      async () =>
+        new Response('<div id="fetch-default">new</div>', {
+          headers: { 'X-Search-Result-Count': '42' },
+        }),
+    );
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="/page" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+    await settle();
+
+    expect(detailOf(events, FETCH_EVENTS.RESPONSE).response?.headers['x-search-result-count']).toBe(
+      '42',
+    );
+  });
+
+  it('keeps the response status and headers on the update events', async () => {
+    stubClient(
+      async () =>
+        new Response('<div id="fetch-default">new</div>', {
+          status: 200,
+          headers: { 'X-Search-Result-Count': '42' },
+        }),
+    );
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="/page" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+    await settle();
+
+    for (const type of [
+      FETCH_EVENTS.BEFORE_UPDATE,
+      FETCH_EVENTS.UPDATE,
+      FETCH_EVENTS.AFTER_UPDATE,
+    ]) {
+      const detail = detailOf(events, type);
+      expect(detail.response?.status).toBe(200);
+      expect(detail.response?.headers['x-search-result-count']).toBe('42');
+    }
+  });
+
+  it('adds the metadata as the lifecycle progresses', async () => {
+    stubClient();
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="/page" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+    await settle();
+
+    function known(type: string) {
+      const detail = detailOf(events, type);
+      return {
+        response: detail.response !== undefined,
+        content: detail.content !== undefined,
+        fragment: detail.fragment !== undefined,
+      };
+    }
+
+    expect(known(FETCH_EVENTS.BEFORE_FETCH)).toEqual({
+      response: false,
+      content: false,
+      fragment: false,
+    });
+    expect(known(FETCH_EVENTS.FETCH)).toEqual({
+      response: false,
+      content: false,
+      fragment: false,
+    });
+    expect(known(FETCH_EVENTS.RESPONSE)).toEqual({
+      response: true,
+      content: false,
+      fragment: false,
+    });
+    expect(known(FETCH_EVENTS.AFTER_FETCH)).toEqual({
+      response: true,
+      content: true,
+      fragment: false,
+    });
+    expect(known(FETCH_EVENTS.BEFORE_UPDATE)).toEqual({
+      response: true,
+      content: true,
+      fragment: false,
+    });
+    expect(known(FETCH_EVENTS.UPDATE)).toEqual({ response: true, content: true, fragment: true });
+    expect(known(FETCH_EVENTS.AFTER_UPDATE)).toEqual({
+      response: true,
+      content: true,
+      fragment: true,
+    });
+  });
+
+  it('carries the content and the parsed fragment on the update events', async () => {
+    stubClient(async () => new Response('<div id="fetch-default">new</div>'));
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="/page" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+    await settle();
+
+    const detail = detailOf(events, FETCH_EVENTS.AFTER_UPDATE);
+    expect(detail.content).toBe('<div id="fetch-default">new</div>');
+    expect(detail.fragment?.getElementById('fetch-default')?.textContent).toBe('new');
+  });
+
+  it('resolves every field through a generic nested-path walk', async () => {
+    // This is what a declarative consumer does with the detail: walk it by
+    // path, knowing nothing about `Fetch`. A getter, a `Headers` or a `Map`
+    // anywhere on the way would make the path resolve to `undefined`.
+    stubClient(
+      async () =>
+        new Response('<div id="fetch-default">new</div>', {
+          headers: { 'X-Search-Result-Count': '42' },
+        }),
+    );
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="https://example.com/search" method="get"
+        data-option-no-view-transition>
+        <input type="checkbox" name="genre" value="rock" checked>
+        <input type="checkbox" name="genre" value="jazz" checked>
+      </form>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+    await settle();
+
+    const detail = detailOf(events, FETCH_EVENTS.AFTER_UPDATE);
+
+    expect(resolvePath(detail, 'instance')).toBe(instance);
+    expect(resolvePath(detail, 'request.url')).toBe(
+      'https://example.com/search?genre=rock&genre=jazz',
+    );
+    expect(resolvePath(detail, 'request.method')).toBe('GET');
+    expect(resolvePath(detail, 'request.searchParams.genre.0')).toBe('rock');
+    expect(resolvePath(detail, 'request.searchParams.genre.1')).toBe('jazz');
+    expect(resolvePath(detail, 'response.status')).toBe(200);
+    expect(resolvePath(detail, 'response.ok')).toBe(true);
+    expect(resolvePath(detail, 'response.headers.x-search-result-count')).toBe('42');
+    expect(resolvePath(detail, 'content')).toBe('<div id="fetch-default">new</div>');
+  });
+
+  it('describes the response on the error of a failed request', async () => {
+    stubClient(async () => new Response('nope', { status: 500, headers: { 'X-Reason': 'boom' } }));
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="/page" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    for (const type of [FETCH_EVENTS.AFTER_FETCH, FETCH_EVENTS.ERROR]) {
+      const detail = detailOf(events, type);
+      expect(detail.response?.status).toBe(500);
+      expect(detail.response?.headers['x-reason']).toBe('boom');
+    }
+  });
+
+  it('leaves the response undefined when the request never returned one', async () => {
+    stubClient(async () => {
+      throw new Error('network down');
+    });
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="/page" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    expect(detailOf(events, FETCH_EVENTS.ERROR).response).toBeUndefined();
+  });
+
+  it('carries the request on the abort event', async () => {
+    stubClient(async () => new Promise<Response>(() => {}));
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="https://example.com/page"></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    void instance.fetch();
+    instance.abort('because');
+    await settle();
+
+    expect(detailOf(events, FETCH_EVENTS.ABORT).request.url).toBe('https://example.com/page');
+  });
+});
+
+describe('Fetch — awaiting the update', () => {
+  it('has emitted the whole lifecycle by the time `fetch()` resolves', async () => {
+    stubClient();
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    // No `settle()`: the returned promise alone is the guarantee under test.
+    await instance.fetch();
+
+    expect(events.map(({ type }) => type)).toEqual([
+      FETCH_EVENTS.BEFORE_FETCH,
+      FETCH_EVENTS.FETCH,
+      FETCH_EVENTS.RESPONSE,
+      FETCH_EVENTS.AFTER_FETCH,
+      FETCH_EVENTS.BEFORE_UPDATE,
+      FETCH_EVENTS.UPDATE,
+      FETCH_EVENTS.AFTER_UPDATE,
+    ]);
+  });
+
+  it('has applied the DOM update by the time `fetch()` resolves', async () => {
+    await mount(`<div id="target">old</div>`);
+    stubClient(async () => new Response('<div id="target">new</div>'));
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+
+    await instance.fetch();
+
+    expect(document.getElementById('target')?.textContent).toBe('new');
+  });
+
+  it('routes an update rejection through the error lifecycle', async () => {
+    stubClient();
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    const failure = new Error('swap failed');
+    instance.updateDOM = () => Promise.reject(failure);
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    const detail = detailOf(events, FETCH_EVENTS.ERROR) as FetchLifecycleDetail & {
+      error?: unknown;
+    };
+    expect(detail.instance).toBe(instance);
+    expect(detail.error).toBe(failure);
+  });
+
+  it('does not announce the fetch phase twice when the update fails', async () => {
+    stubClient();
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    instance.updateDOM = () => Promise.reject(new Error('swap failed'));
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    expect(events.map(({ type }) => type)).toEqual([
+      FETCH_EVENTS.BEFORE_FETCH,
+      FETCH_EVENTS.FETCH,
+      FETCH_EVENTS.RESPONSE,
+      FETCH_EVENTS.AFTER_FETCH,
+      FETCH_EVENTS.BEFORE_UPDATE,
+      FETCH_EVENTS.UPDATE,
+      FETCH_EVENTS.ERROR,
+    ]);
+  });
+
+  it('carries the content and the fragment in flight on the error of a failed update', async () => {
+    // The failed update is the one case where a consumer most needs to see
+    // what was being applied, so nothing learned before it is dropped.
+    stubClient(async () => new Response('<div id="fetch-default">new</div>'));
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    instance.updateDOM = () => Promise.reject(new Error('swap failed'));
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    const detail = detailOf(events, FETCH_EVENTS.ERROR);
+    expect(detail.content).toBe('<div id="fetch-default">new</div>');
+    expect(detail.fragment?.getElementById('fetch-default')?.textContent).toBe('new');
+  });
+
+  it('carries no content or fragment on the error of a failed request', async () => {
+    stubClient(async () => new Response('nope', { status: 500 }));
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    const detail = detailOf(events, FETCH_EVENTS.ERROR);
+    expect(detail.content).toBeUndefined();
+    expect(detail.fragment).toBeUndefined();
+    expect(detail.response?.status).toBe(500);
+  });
+
+  it('does not add a later field to the detail of an earlier event', async () => {
+    // The accumulation is progressive, so each event is given a copy of it:
+    // the detail of `fetch-before` describes the point it fired at, whatever
+    // the lifecycle learns afterwards.
+    stubClient();
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    const before = detailOf(events, FETCH_EVENTS.BEFORE_FETCH);
+    const afterUpdate = detailOf(events, FETCH_EVENTS.AFTER_UPDATE);
+    expect(before).not.toBe(afterUpdate);
+    expect(before.content).toBeUndefined();
+    expect(before.fragment).toBeUndefined();
+    expect(afterUpdate.content).toBeDefined();
+  });
+
+  it('describes the response on the error of a failed update', async () => {
+    stubClient(
+      async () =>
+        new Response('<div id="fetch-default">new</div>', {
+          headers: { 'X-Search-Result-Count': '42' },
+        }),
+    );
+    const { root, instance } = await mountFetch(
+      `<a data-component="Fetch" href="#a" data-option-no-view-transition></a>`,
+    );
+    instance.updateDOM = () => Promise.reject(new Error('swap failed'));
+    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+
+    await instance.fetch();
+
+    expect(detailOf(events, FETCH_EVENTS.ERROR).response?.headers['x-search-result-count']).toBe(
+      '42',
+    );
   });
 });
 

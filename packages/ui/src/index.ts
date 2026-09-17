@@ -88,9 +88,12 @@ export {
   HEADER_NAMES,
   SECTIONS_PARAMETER,
   type FetchEmits,
-  type FetchEventBase,
+  type FetchLifecycleDetail,
   type FetchProps,
   type FetchRequestContext,
+  type FetchRequestDetail,
+  type FetchResponseDetail,
+  type FetchShopifyPartialDetail,
   type FetchShopifyPartialProps,
   type FetchShopifySectionProps,
 } from './Fetch/index.js';
