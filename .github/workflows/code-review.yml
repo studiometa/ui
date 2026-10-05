@@ -25,7 +25,7 @@ jobs:
     # change here. GitHub's workflow scanning reads "dump every secret into the
     # environment" as an exfiltration attempt, flags the file, and holds every
     # run as `action_required` until someone with write access approves it by
-    # hand — which is why no review ran on a pull request after 2026-09-03. The
+    # hand — which is why no review ran on a pull request after 2026-09-16. The
     # cost of naming each value is one line here when the org gains an option.
     env:
       CODE_REVIEW_DEPTH: ${{ vars.CODE_REVIEW_DEPTH }}
@@ -44,6 +44,6 @@ jobs:
       # The composite action checks out the repo itself (checkout: true default).
       # `model` is an input rather than an env entry because the action sets
       # CODE_REVIEW_MODEL from it.
-      - uses: weareikko/code-review@0.8.2
+      - uses: weareikko/code-review@0.9.8
         with:
           model: ${{ vars.CODE_REVIEW_MODEL }}
