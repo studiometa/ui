@@ -1,11 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { getInstance, registerComponents } from '@studiometa/js-toolkit';
+import { Base, getInstance, registerComponents, type BaseConfig } from '@studiometa/js-toolkit';
 import { captureDiagnostics, mount, resetDom } from '@studiometa/js-toolkit/test';
 import { parseEventDefinition } from '#private/utils/event-modifiers.js';
 import { Track } from '#private/Track/Track.js';
 import { resolveEventPlaceholders } from '#private/Track/TrackEvent.js';
 
-registerComponents(Track);
+/** A component that emits plain data, the way any producer can feed `$event` paths. */
+class Emitter extends Base {
+  static config: BaseConfig = { name: 'Emitter' };
+}
+
+registerComponents(Track, Emitter);
 
 afterEach(resetDom);
 
@@ -143,9 +148,7 @@ describe('TrackEvent — event paths', () => {
       `<div data-component="Track" data-track:form-submitted='{"event": "form_submitted", "type": "$event.type", "email": "$event.detail.email"}'></div>`,
     );
 
-    el.dispatchEvent(
-      new CustomEvent('form-submitted', { detail: { email: 'test@example.com' } }),
-    );
+    el.dispatchEvent(new CustomEvent('form-submitted', { detail: { email: 'test@example.com' } }));
 
     expect(lastPush()).toEqual({
       event: 'form_submitted',
@@ -164,17 +167,18 @@ describe('TrackEvent — event paths', () => {
     expect(lastPush()).toEqual({ event: 'click', type: 'cta' });
   });
 
-  it('resolves `$event.detail.*` on a component lifecycle event', async () => {
+  it('resolves `$event.detail.*` on an event a component emits with plain data', async () => {
     const el = await render(
-      `<div data-component="Track" data-track:custom-lifecycle='{"event": "lifecycle", "id": "$event.detail.id"}'></div>`,
+      `<div data-component="Track Emitter" data-track:results='{"event": "search_results", "count": "$event.detail.response.headers.x-result-count", "tag": "$event.detail.request.tags.0"}'></div>`,
     );
 
-    // What `$emit()` builds: a bubbling `CustomEvent` whose detail is the payload.
-    el.dispatchEvent(
-      new CustomEvent('custom-lifecycle', { bubbles: true, detail: { id: 'abc' } }),
-    );
+    // `$emit()` dispatches a bubbling `CustomEvent` whose detail is the payload.
+    getInstance<Emitter>(el, 'Emitter')!.$emit('results', {
+      request: { tags: ['rock', 'jazz'] },
+      response: { headers: { 'x-result-count': '12' } },
+    });
 
-    expect(lastPush()).toEqual({ event: 'lifecycle', id: 'abc' });
+    expect(lastPush()).toEqual({ event: 'search_results', count: '12', tag: 'rock' });
   });
 
   it('resolves `$detail.*` placeholders from the event detail', async () => {

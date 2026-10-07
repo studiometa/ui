@@ -112,7 +112,7 @@ Wrap a section in `TrackContext` to provide data inherited by every descendant `
 
 ### Event data
 
-Pull values off the event that triggered the dispatch with `$event.<path>` placeholders. `$event` is the whole event, so the same syntax reads a `CustomEvent` detail and a native event property; `$detail.<path>` is the shortcut for `$event.detail.<path>`.
+Pull values off the event that triggered the dispatch with `$event.<path>` placeholders, in any payload source: the event payload, the component payload or a `TrackContext`. `$event` is the whole event, so the same syntax reads a `CustomEvent` detail and a native event property; `$detail.<path>` is the shortcut for `$event.detail.<path>`. See [Event data](./js-api.md#event-data) for the full rules.
 
 The story below tracks a `CustomEvent` emitted by a third-party script:
 
@@ -190,5 +190,5 @@ The provider is chosen by the component name, so switching destinations is a one
 `TrackShopify` uses the payload's `event` value as the published event name. Shopify recommends namespacing custom events (e.g. `my_app:add_to_cart`). To send to another destination, extend `Track` and override its [`dispatch()`](./js-api.md#providers) method.
 
 ::: warning
-Payloads are serialised into the DOM (attribute or `<script>`), so they are visible in the page source. Never put personal data (emails, names, user IDs) in a tracking payload — resolve sensitive values at runtime via a `CustomEvent` and `$event.detail.*` instead, and gate `TrackShopify` on the visitor's analytics consent where required.
+Payloads are serialised into the DOM (attribute or `<script>`), so they are visible in the page source. Never put personal data (emails, names, user IDs) in a tracking payload — resolve sensitive values at runtime via a `CustomEvent` and `$event.detail.*` instead.
 :::

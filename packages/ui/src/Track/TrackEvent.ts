@@ -80,9 +80,12 @@ function resolveValue(value: unknown, event?: Event): unknown {
  * Resolve every `$event.*` and `$detail.*` placeholder of a declared payload
  * against the event that triggered it.
  *
- * The resolver knows nothing about who emitted the event: it walks paths, and
- * an emitter that carries plain data is what makes a path reachable. With no
- * event, every placeholder resolves to `undefined`.
+ * A placeholder is a whole string value. A string that only contains one, or a
+ * bare `$event` or `$detail`, stays literal. The resolver knows nothing about
+ * who emitted the event: it walks paths, and an emitter that carries plain data
+ * is what makes a path reachable. The value found is returned as it is, so a
+ * path can return an object that does not serialise, such as a DOM node. With
+ * no event, every placeholder resolves to `undefined`.
  */
 export function resolveEventPlaceholders(
   data: Record<string, unknown>,
@@ -158,21 +161,19 @@ export class TrackEvent {
       event.stopPropagation();
     }
 
-    // Merging a detail wholesale stays a `CustomEvent` affair — a native event
-    // has none — while paths resolve against whatever event arrived, including
-    // none at all for the `mounted` pseudo-event.
-    let finalData: Record<string, unknown>;
-    if (modifiers.has(MODIFIERS.DETAIL)) {
-      const detail = event instanceof CustomEvent ? (event.detail as unknown) : undefined;
-      finalData =
-        detail && typeof detail === 'object'
-          ? { ...data, ...(detail as Record<string, unknown>) }
-          : data;
-    } else {
-      finalData = resolveEventPlaceholders(data, event);
-    }
+    // Merging a detail wholesale stays a `CustomEvent` affair: a native event
+    // has none. Placeholders are resolved by `send()`, against whatever event
+    // arrived, including none at all for the `mounted` and `view` pseudo-events.
+    const detail =
+      modifiers.has(MODIFIERS.DETAIL) && event instanceof CustomEvent
+        ? (event.detail as unknown)
+        : undefined;
 
-    track.send(finalData, event);
+    track.send(
+      data,
+      event,
+      detail && typeof detail === 'object' ? (detail as Record<string, unknown>) : undefined,
+    );
   }
 
   /**

@@ -290,6 +290,84 @@ describe('Track — DOM-backed data read per dispatch', () => {
   });
 });
 
+describe('Track — placeholders in every payload layer', () => {
+  function select(root: HTMLElement, detail: unknown = { id: 'abc' }): void {
+    root
+      .querySelector('[data-component~="Track"]')
+      ?.dispatchEvent(new CustomEvent('item-selected', { detail }));
+  }
+
+  it('resolves a placeholder in the payload script', async () => {
+    const root = await mount(`
+      <div data-component="Track" data-track:item-selected='{"event": "select_item"}'>
+        <script data-ref="payload" type="application/json">{"item_id": "$event.detail.id"}</script>
+      </div>
+    `);
+
+    select(root);
+
+    expect(lastPush()).toEqual({ item_id: 'abc', event: 'select_item' });
+  });
+
+  it('resolves a placeholder in the payload option', async () => {
+    const root = await mount(`
+      <div data-component="Track"
+        data-option-payload='{"item_id": "$detail.id"}'
+        data-track:item-selected='{"event": "select_item"}'></div>
+    `);
+
+    select(root);
+
+    expect(lastPush()).toEqual({ item_id: 'abc', event: 'select_item' });
+  });
+
+  it('resolves a placeholder in the TrackContext data', async () => {
+    const root = await mount(`
+      <div data-component="TrackContext" data-option-context='{"trigger": "$event.type"}'>
+        <div data-component="Track" data-track:item-selected='{"event": "select_item"}'></div>
+      </div>
+    `);
+
+    select(root);
+
+    expect(lastPush()).toEqual({ trigger: 'item-selected', event: 'select_item' });
+  });
+
+  it('resolves the declared placeholders with the `.detail` modifier, then merges the detail', async () => {
+    const root = await mount(`
+      <div data-component="Track"
+        data-track:item-selected.detail='{"event": "select_item", "trigger": "$event.type"}'></div>
+    `);
+
+    select(root);
+
+    expect(lastPush()).toEqual({ event: 'select_item', trigger: 'item-selected', id: 'abc' });
+  });
+
+  it('never reads a merged detail for placeholders', async () => {
+    // The detail is runtime data: a value a visitor typed must not be able to
+    // name a path on the event.
+    const root = await mount(`
+      <div data-component="Track" data-track:item-selected.detail='{"event": "select_item"}'></div>
+    `);
+
+    select(root, { query: '$event.type' });
+
+    expect(lastPush()).toEqual({ event: 'select_item', query: '$event.type' });
+  });
+
+  it('keeps a bare `$event` or `$detail` literal', async () => {
+    const root = await mount(`
+      <div data-component="Track"
+        data-track:item-selected='{"event": "select_item", "a": "$event", "b": "$detail"}'></div>
+    `);
+
+    select(root);
+
+    expect(lastPush()).toEqual({ event: 'select_item', a: '$event', b: '$detail' });
+  });
+});
+
 describe('Track — malformed declarations', () => {
   it('drops an event whose JSON cannot be parsed, without throwing', async () => {
     const log = captureDiagnostics();
@@ -336,7 +414,7 @@ describe('Track — malformed declarations', () => {
 });
 
 describe('Track — the `mounted` pseudo-event', () => {
-  it('dispatches once the batch has settled, with the resolved context', async () => {
+  it('dispatches once the DOM has settled, with the resolved context', async () => {
     await mount(`
       <div data-component="TrackContext" data-option-context='{"page_type": "home"}'>
         <div data-component="Track" data-track:mounted='{"event": "page_view"}'></div>

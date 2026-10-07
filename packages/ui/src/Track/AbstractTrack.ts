@@ -5,7 +5,7 @@ import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolki
 import { deepmerge } from '@studiometa/js-toolkit/utils/deepmerge';
 import { MOUNTED_EVENT, whenMounted } from '../utils/mounted-event.js';
 import { TrackContext } from './TrackContext.js';
-import { TrackEvent } from './TrackEvent.js';
+import { TrackEvent, resolveEventPlaceholders } from './TrackEvent.js';
 
 /**
  * The namespace one `TrackEvent` is declared by. Its qualifiers are any DOM
@@ -125,13 +125,28 @@ export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<Abstrac
   }
 
   /**
-   * Merge every layer and hand the result to the dispatch seam.
+   * Merge every layer, resolve its placeholders and hand the result to the
+   * dispatch seam.
    *
    * Lowest to highest: the ancestor context chain, this component's payload,
-   * then the event's own data.
+   * the event's own data, then the event detail when the `detail` modifier
+   * asked for it.
+   *
+   * Placeholders are resolved once the three declared layers are merged, so a
+   * `$event.*` or `$detail.*` value works in any of them. The detail is merged
+   * after that and is never read for placeholders: it is runtime data, and a
+   * value a visitor typed must not be able to name a path on the event.
+   *
+   * @param data   The event's own data, from its `data-track:<event>` value.
+   * @param event  The event that triggered the dispatch, if any.
+   * @param detail The detail to merge on top, for the `detail` modifier.
    */
-  send(data: Record<string, unknown>, event?: Event): void {
-    this.dispatch(deepmerge(this.context, this.payload ?? {}, data ?? {}), event);
+  send(data: Record<string, unknown>, event?: Event, detail?: Record<string, unknown>): void {
+    const declared = resolveEventPlaceholders(
+      deepmerge(this.context, this.payload ?? {}, data ?? {}),
+      event,
+    );
+    this.dispatch(detail ? deepmerge(declared, detail) : declared, event);
   }
 
   /**
