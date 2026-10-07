@@ -326,7 +326,7 @@ The promise resolves with the [outcome](#fetch-after) once the request has ended
 
 Aborts the request in flight. It emits [`fetch-abort`](#fetch-abort) with the reason, then [`fetch-after`](#fetch-after) with the outcome `aborted`. An aborted request is never reported as an error.
 
-A request that has ended is left alone, and so is a request that has started its DOM change: it ends `ok` or `error`.
+A request that has ended is left alone, and so are a request that has started its DOM change, which ends `ok` or `error`, and a request that has failed, which ends `error`.
 
 **Parameters**
 
@@ -394,8 +394,10 @@ interface FetchResponseDetail {
 **Order and targets**
 
 - A request ends with exactly one `fetch-after`. A loader bound to `fetch-before` and `fetch-after` covers the whole request, the DOM change and aborts included.
-- A new request on the same instance ends the previous one first: `fetch-abort`, then `fetch-after` with `aborted`, then the `fetch-before` of the new request. A cancelled `fetch-before` still ends the previous request.
-- A request that writes or restores history is a page navigation, and only one runs at a time on the page. When it starts, after its own `fetch-before`, it aborts the navigation of any other instance.
+- A new request on the same instance ends the previous one first: `fetch-abort`, then `fetch-after` with `aborted`, then the `fetch-before` of the new request.
+- A request that has started its DOM change, or that has failed, cannot be stopped. The new request then waits until it has ended, so its `fetch-after` still comes before the `fetch-before` of the new request.
+- A request that writes or restores history is a page navigation, and only one runs at a time on the page. A new navigation ends the navigation of any other instance the same way, before its own `fetch-before`. When a `fetch-before` listener turns history on, the request ends the other navigation after the event.
+- A cancelled `fetch-before` has already ended the previous request, so a `fetch-before` listener cannot keep the request in flight and drop the new one. A native submission behaves the same way: a second submission stops the first one. To ignore a second submission while a request runs, disable the submit button in `fetch-before` and enable it again in `fetch-after`.
 - Requests of different instances that write no history run in parallel. A loader shared by several instances must count the requests in flight, or the first `fetch-after` hides it.
 - When the DOM change removes the element, the events that follow it are also dispatched on the nearest ancestor that is still in the document, or on `document`.
 - A restore emits its events on the owner element when a mounted instance is there, and on `document` otherwise. See [history entries](#history-entries).
@@ -454,7 +456,7 @@ Emitted when the request fails: a network error, a status that is not ok, a pars
 
 ### `fetch-abort`
 
-Emitted when a request in flight is aborted with [`abort()`](#abort-reason-unknown) or superseded by a newer request. It is not emitted for a request that has ended, for a request that has started its DOM change, or for a request cancelled in `fetch-before`.
+Emitted when a request in flight is aborted with [`abort()`](#abort-reason-unknown) or superseded by a newer request. It is not emitted for a request that has ended, for a request that has started its DOM change, for a request that has failed, or for a request cancelled in `fetch-before`.
 
 **Detail**
 

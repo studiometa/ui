@@ -8,6 +8,7 @@ import type { BaseConfig, BaseProps, DomUpdateDetail, SwapMode } from '@studiome
 import { compileExpression } from '../utils/expression.js';
 import {
   claimNavigation,
+  currentNavigation,
   registerHistoryOwner,
   releaseNavigation,
   writeEntry,
@@ -576,9 +577,16 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * @private
    */
   async __run(run: FetchRun): Promise<FetchOutcome> {
-    // A new request ends the previous one first, so a loader bound to
-    // `fetch-before` and `fetch-after` stays on for the new request.
-    this.__token?.supersede();
+    // The element's own destination is a navigation when `history` is on;
+    // a `fetch-before` listener can still turn history on or off.
+    const isNavigation =
+      Boolean(run.restore) ||
+      (this.$options.history && (this.isForm || this.isLink || run.destination !== undefined));
+    const previous = this.__endPrevious(isNavigation);
+
+    if (previous) {
+      await previous;
+    }
 
     const ancestors: Element[] = [];
     for (let node = this.$el.parentElement; node; node = node.parentElement) {
@@ -591,14 +599,17 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     let request: FetchRequest | undefined;
     let response: FetchResponseDetail | undefined;
     let isStarted = false;
-    let isCommitted = false;
+    // Whether the request is past the point where it can be stopped: its DOM
+    // change has started, or it has failed and reports its error.
+    let isFinal = false;
     let outcome: FetchOutcome = 'error';
+    let finish = () => {};
 
     const token: NavigationToken = {
       settled: false,
+      finished: new Promise((resolve) => (finish = resolve)),
       supersede: (reason?: unknown) => {
-        // Once the DOM change has started, it is not stopped half-way.
-        if (token.settled || isCommitted) {
+        if (token.settled || isFinal) {
           return;
         }
 
@@ -614,6 +625,10 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     };
 
     this.__token = token;
+
+    if (isNavigation) {
+      claimNavigation(token);
+    }
 
     try {
       const prepared = this.__prepare(run);
@@ -646,7 +661,8 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       const { method, destination, history: historyMode } = sent;
       isStarted = true;
 
-      if (historyMode || run.restore) {
+      if (historyMode && !isNavigation) {
+        // A `fetch-before` listener turned history on.
         claimNavigation(token);
       }
 
@@ -669,7 +685,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
         return 'aborted';
       }
 
-      isCommitted = true;
+      isFinal = true;
       let isWritten = false;
 
       if (historyMode) {
@@ -700,6 +716,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
         return 'aborted';
       }
 
+      // A listener of `fetch-error` that starts or aborts a request does
+      // not turn this failed request into an aborted one.
+      isFinal = true;
       response ??= error && typeof error === 'object' ? errorResponses.get(error) : undefined;
       this.__emit(FETCH_EVENTS.ERROR, { instance, request, response, error });
       outcome = 'error';
@@ -710,9 +729,39 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
         token.settled = true;
         this.__emit(FETCH_EVENTS.AFTER_FETCH, { instance, request, outcome });
       }
+
+      finish();
     }
 
     return outcome;
+  }
+
+  /**
+   * End the request in flight of this instance and, for a navigation, the
+   * navigation in flight on the page, before a new request starts.
+   *
+   * A request that has started its DOM change, or has failed, cannot be
+   * stopped. The returned promise then waits until it has ended, so its
+   * `fetch-after` comes before the `fetch-before` of the new request. With
+   * nothing to wait for, nothing is returned and the new request starts at
+   * once.
+   *
+   * @private
+   */
+  __endPrevious(isNavigation: boolean): Promise<void> | undefined {
+    const running = isNavigation ? [this.__token, currentNavigation()] : [this.__token];
+    let pending: NavigationToken | undefined;
+
+    for (const token of running) {
+      token?.supersede();
+
+      if (token && !token.settled) {
+        pending = token;
+      }
+    }
+
+    // Another request may have started while this one waited.
+    return pending?.finished.then(() => this.__endPrevious(isNavigation));
   }
 
   /**

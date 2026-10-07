@@ -651,6 +651,55 @@ describe('Fetch history — one navigation at a time, page-wide', () => {
     expect(writes.pushed).toEqual([abs('/b')]);
   });
 
+  it('ends a navigation that has started its DOM change before the next one starts', async () => {
+    window.history.pushState(null, '', '/start');
+    servePages();
+    let finishAnimation = () => {};
+    const animation = new Promise<void>((resolve) => (finishAnimation = resolve));
+    let isApplied = false;
+    const { root } = await mountFetch(`
+      <div>
+        <a data-component="Fetch" id="a" href="/a" data-option-history></a>
+        <a data-component="Fetch" id="b" href="/b" data-option-history></a>
+      </div>
+    `);
+    root.addEventListener('js-toolkit:dom:update', (event) => {
+      (event as CustomEvent<{ wrap(runner: (apply: () => unknown) => unknown): void }>).detail.wrap(
+        async (apply) => {
+          await apply();
+          isApplied = true;
+          await animation;
+        },
+      );
+    });
+    const a = getInstance<Fetch>(root.querySelector('#a')!, 'Fetch')!;
+    const b = getInstance<Fetch>(root.querySelector('#b')!, 'Fetch')!;
+    const { events } = recordFetchEvents(root);
+
+    const first = a.fetch();
+    await waitFor(() => isApplied);
+    const second = b.fetch();
+    finishAnimation();
+
+    expect(await Promise.all([first, second])).toEqual(['ok', 'ok']);
+    expect(
+      events
+        .filter(
+          ({ type }) => type === FETCH_EVENTS.BEFORE_FETCH || type === FETCH_EVENTS.AFTER_FETCH,
+        )
+        .map(({ type, detail }) => [
+          type,
+          new URL((detail as FetchEmits['fetch-after']).request!.url).pathname,
+        ]),
+    ).toEqual([
+      [FETCH_EVENTS.BEFORE_FETCH, '/a'],
+      [FETCH_EVENTS.AFTER_FETCH, '/a'],
+      [FETCH_EVENTS.BEFORE_FETCH, '/b'],
+      [FETCH_EVENTS.AFTER_FETCH, '/b'],
+    ]);
+    expect(address()).toBe('/b');
+  });
+
   it('aborts a navigation in flight on popstate', async () => {
     window.history.pushState(null, '', '/projects?page=1');
     servePages();

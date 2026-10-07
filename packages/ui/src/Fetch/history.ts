@@ -49,7 +49,13 @@ export interface NavigationToken {
   /** Whether the request has ended: applied, failed or aborted. */
   settled: boolean;
 
-  /** Stop the request with its final events, unless it has settled or committed. */
+  /** Settles once the request has ended and emitted its final event. */
+  finished: Promise<void>;
+
+  /**
+   * Stop the request with its final events, unless it has ended, has started
+   * its DOM change or has failed.
+   */
   supersede(reason?: unknown): void;
 }
 
@@ -146,6 +152,11 @@ export function claimNavigation(token: NavigationToken): void {
   if (previous && previous !== token) {
     previous.supersede();
   }
+}
+
+/** The navigation in flight, page-wide, if there is one. */
+export function currentNavigation(): NavigationToken | undefined {
+  return navigation;
 }
 
 /** Release the page-wide claim of `token`, if it still holds it. */
