@@ -160,9 +160,16 @@ export interface TextEntries {
   hasFile: boolean;
 }
 
+/** Replace every lone CR, lone LF and CRLF with CRLF. */
+function crlf(text: string): string {
+  return text.replace(/\r\n|\r|\n/g, '\r\n');
+}
+
 /**
- * Read form data as text: a file control sends the name of its file, because
- * only a multipart body carries the file itself.
+ * Read form data as text, the way a native submission converts it to a list
+ * of name-value pairs: a file control sends the name of its file, because
+ * only a multipart body carries the file itself, and every line break in a
+ * name or a value becomes CRLF.
  */
 export function textEntries(formData: FormData): TextEntries {
   let hasFile = false;
@@ -171,10 +178,9 @@ export function textEntries(formData: FormData): TextEntries {
   for (const [name, value] of formData) {
     if (value instanceof File) {
       hasFile = true;
-      entries.push([name, value.name]);
-    } else {
-      entries.push([name, value]);
     }
+
+    entries.push([crlf(name), crlf(value instanceof File ? value.name : value)]);
   }
 
   return { entries, hasFile };

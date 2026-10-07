@@ -5,6 +5,7 @@ import {
   requestUrl,
   responseDetail,
   stringRecord,
+  textEntries,
 } from '#private/Fetch/request.js';
 
 const origin = 'https://shop.example';
@@ -146,6 +147,33 @@ describe('encodeBody', () => {
       body: 'q=hello\r\nphoto=photo.png\r\n',
       hasFile: true,
     });
+  });
+  /** Form data whose names and values hold every kind of line break. */
+  function lineBreaks(): FormData {
+    const data = new FormData();
+    data.append('a\nb', 'x\ny');
+    data.append('c', 'x\ry\r\nz');
+    data.append('d', new File([''], 'one\ntwo.txt'));
+    return data;
+  }
+
+  it('normalizes line breaks to CRLF in a URL-encoded body, as natively', () => {
+    expect(String(encodeBody(lineBreaks(), '').body)).toBe(
+      'a%0D%0Ab=x%0D%0Ay&c=x%0D%0Ay%0D%0Az&d=one%0D%0Atwo.txt',
+    );
+  });
+
+  it('normalizes line breaks to CRLF in a text/plain body, as natively', () => {
+    expect(encodeBody(lineBreaks(), 'text/plain').body).toBe(
+      'a\r\nb=x\r\ny\r\nc=x\r\ny\r\nz\r\nd=one\r\ntwo.txt\r\n',
+    );
+  });
+
+  it('normalizes line breaks to CRLF in the query of a GET form', () => {
+    const { entries } = textEntries(lineBreaks());
+    expect(new URLSearchParams(entries).toString()).toBe(
+      'a%0D%0Ab=x%0D%0Ay&c=x%0D%0Ay%0D%0Az&d=one%0D%0Atwo.txt',
+    );
   });
 });
 
