@@ -5,69 +5,68 @@ import { swap } from '@studiometa/js-toolkit/swap';
 import { SWAP_MODES } from '@studiometa/js-toolkit/SWAP_MODES';
 import { viewTransition } from '@studiometa/js-toolkit/viewTransition';
 import type { BaseConfig, BaseProps, DomUpdateDetail, SwapMode } from '@studiometa/js-toolkit';
-import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
 import { compileExpression } from '../utils/expression.js';
+import {
+  claimNavigation,
+  currentNavigation,
+  registerHistoryOwner,
+  releaseNavigation,
+  writeEntry,
+  type HistoryOwnerConstructor,
+  type NavigationToken,
+  type RestoreRecipe,
+} from './history.js';
+import {
+  encodeBody,
+  headerRecord,
+  requestUrl,
+  responseDetail,
+  stringRecord,
+  textEntries,
+  type FetchRequest,
+  type FetchResponseDetail,
+} from './request.js';
+
+export type { FetchRequest, FetchResponseDetail } from './request.js';
+export type { RestoreRecipe } from './history.js';
 
 /**
- * The lifecycle events a `Fetch` announces.
+ * The lifecycle events a `Fetch` announces, in the order they fire.
  *
  * A module constant rather than a static, because a static only pays for
  * itself if a subclass replaces the map, and nothing here does.
  */
 export const FETCH_EVENTS = Object.freeze({
   BEFORE_FETCH: 'fetch-before',
-  FETCH: 'fetch-fetch',
   RESPONSE: 'fetch-response',
-  AFTER_FETCH: 'fetch-after',
   BEFORE_UPDATE: 'fetch-update-before',
-  UPDATE: 'fetch-update',
   AFTER_UPDATE: 'fetch-update-after',
   ERROR: 'fetch-error',
   ABORT: 'fetch-abort',
+  AFTER_FETCH: 'fetch-after',
 } as const);
 
 /**
  * The header names the request carries on the component's own behalf.
  */
 export const HEADER_NAMES = Object.freeze({
-  ACCEPT: 'accept',
-  X_REQUESTED_BY: 'x-requested-by',
   X_TRIGGERED_BY: 'x-triggered-by',
   USER_AGENT: 'user-agent',
 } as const);
 
-/**
- * Read a `RequestInit`'s headers without assuming which form they took.
- *
- * `HeadersInit` is a record, a list of tuples, or a `Headers` instance, and
- * only the record answers to indexing or spreading — a `Headers` has no own
- * enumerable keys at all. Everything below is built on this one reader, and it
- * is allocation-light and, unlike `new Headers(init)`, does not throw on a
- * malformed name: an eligibility check and a history guard must give an
- * answer, not raise.
- */
-export function headerEntries(headers: HeadersInit | undefined): Array<[string, string]> {
-  if (!headers) {
-    return [];
-  }
-  if (headers instanceof Headers) {
-    return [...headers.entries()];
-  }
-  if (Array.isArray(headers)) {
-    return headers.map(([name, value]) => [name.toLowerCase(), value]);
-  }
-  return Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value]);
-}
+/** How a request ended: applied, failed, or aborted. */
+export type FetchOutcome = 'ok' | 'error' | 'aborted';
 
-/** The header names a `RequestInit` carries, lowercased. */
-export function headerNames(headers: HeadersInit | undefined): string[] {
-  return headerEntries(headers).map(([name]) => name);
-}
+/** What a transport loaded: the content to apply, and the response if there is one. */
+export interface FetchLoadResult {
+  content: unknown;
+  response?: FetchResponseDetail;
 
-/** One header's value, across the same three forms. Names compare case-insensitively. */
-export function headerValue(headers: HeadersInit | undefined, name: string): string | undefined {
-  const wanted = name.toLowerCase();
-  return headerEntries(headers).find(([candidate]) => candidate === wanted)?.[1];
+  /**
+   * `false` when the transport applies its own view transition, so `Fetch`
+   * does not claim one around the swap.
+   */
+  viewTransition?: boolean;
 }
 
 /**
@@ -80,26 +79,83 @@ export function headerValue(headers: HeadersInit | undefined, name: string): str
 let domParser: DOMParser;
 
 /** `response` expression argument names, in `parseResponse()`'s call order. */
-const RESPONSE_ARGUMENTS = ['response', 'url', 'requestInit', 'self'] as const;
+const RESPONSE_ARGUMENTS = ['response', 'request', 'self'] as const;
 
-/** The context every lifecycle event carries. */
-export interface FetchEventBase {
+/** The value of the `user-agent` header, which names the component. */
+function userAgent(): string {
+  return `${navigator.userAgent} @studiometa/ui/Fetch`;
+}
+
+/**
+ * The response a failed load had received, kept beside the error rather than
+ * written on it, so an error the caller threw is never changed.
+ */
+const errorResponses = new WeakMap<object, FetchResponseDetail>();
+
+/**
+ * The submission overrides a submitter carries, when it can carry any.
+ *
+ * `SubmitEvent.submitter` is typed as an `HTMLElement` because a
+ * form-associated custom element can submit a form, and such an element has
+ * no `formaction` of its own to state.
+ */
+function submitterOverrides(
+  submitter?: HTMLElement | null,
+): HTMLButtonElement | HTMLInputElement | null {
+  return submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement
+    ? submitter
+    : null;
+}
+
+/**
+ * The target of a link or a form, as the browser gets it: its own `target`
+ * attribute, or else the `target` of the first `<base>` element.
+ */
+function elementTarget(element: Element): string {
+  return element.hasAttribute('target')
+    ? (element.getAttribute('target') ?? '')
+    : (document.querySelector('base[target]')?.getAttribute('target') ?? '');
+}
+
+/**
+ * Whether an effective `target` or `formtarget` leaves the navigation to the
+ * browser: any value other than none or `_self` opens another browsing context.
+ */
+function opensElsewhere(target: string): boolean {
+  return target !== '' && target.toLowerCase() !== '_self';
+}
+
+/**
+ * Read a property of a form through the `HTMLFormElement` getter.
+ *
+ * A form control named `action`, `method` or `enctype` replaces the property
+ * of the same name on the form, so `form.action` can be an input. The getter
+ * reads the content attribute, as a native submission does.
+ */
+function formProperty(form: HTMLFormElement, name: 'action' | 'method' | 'enctype'): string {
+  return Reflect.get(HTMLFormElement.prototype, name, form) as string;
+}
+
+/** The detail every lifecycle event carries. */
+interface FetchDetail {
   instance: Fetch;
-  url: URL;
-  requestInit: RequestInit;
+  request: FetchRequest;
 }
 
 /** The declared event surface, with the payload each event carries. */
 export type FetchEmits = {
-  'fetch-before': FetchEventBase;
-  'fetch-fetch': FetchEventBase;
-  'fetch-response': FetchEventBase & { response: Response };
-  'fetch-after': FetchEventBase & { content?: unknown; error?: unknown };
-  'fetch-update-before': FetchEventBase & { content: unknown };
-  'fetch-update': FetchEventBase & { fragment?: Document; update?: unknown };
-  'fetch-update-after': FetchEventBase & { fragment?: Document; update?: unknown };
-  'fetch-error': FetchEventBase & { error: Error };
-  'fetch-abort': FetchEventBase & { reason: unknown };
+  'fetch-before': FetchDetail;
+  'fetch-response': FetchDetail & { response: FetchResponseDetail };
+  'fetch-update-before': FetchDetail & { response?: FetchResponseDetail; content: unknown };
+  'fetch-update-after': FetchDetail & { response?: FetchResponseDetail; fragment?: Document };
+  'fetch-error': {
+    instance: Fetch;
+    request?: FetchRequest;
+    response?: FetchResponseDetail;
+    error: unknown;
+  };
+  'fetch-abort': FetchDetail & { reason: unknown };
+  'fetch-after': { instance: Fetch; request?: FetchRequest; outcome: FetchOutcome };
 };
 
 export type FetchProps = BaseProps & {
@@ -109,6 +165,8 @@ export type FetchProps = BaseProps & {
   };
   $options: {
     history: boolean;
+    historyMode: string;
+    params: Record<string, unknown>;
     requestInit: RequestInit;
     headers: Record<string, string>;
     mode: SwapMode;
@@ -120,12 +178,29 @@ export type FetchProps = BaseProps & {
   $emits: FetchEmits;
 };
 
+/** What starts one run of the lifecycle. */
+interface FetchRun {
+  /** The destination a caller named, which replaces the element's own. */
+  destination?: string | URL;
+
+  /** The control that submitted the form. */
+  submitter?: HTMLElement | null;
+
+  /** The entry the history coordinator restores. */
+  restore?: { url: URL; recipe: RestoreRecipe };
+}
+
 /**
  * A self-contained AJAX navigation primitive bound to a link, a form or any
- * element with a `src` option. It resolves the request URL and `requestInit`
- * from that element, fetches the content, then updates the DOM by matching
- * elements from the response against the current page through the `selector`
- * option and swapping them following the `mode` option.
+ * element. It builds one request from the element, loads the content, then
+ * updates the DOM by matching elements from the response against the current
+ * page through the `selector` option and swapping them following the `mode`
+ * option. Back and forward navigation are restored by one coordinator per
+ * page.
+ *
+ * Subclasses change how content is loaded and applied through
+ * {@link Fetch.__load} and {@link Fetch.__apply}, and nothing else: the
+ * lifecycle of {@link Fetch.fetch} is never overridden.
  *
  * @link https://ui.studiometa.dev/reference/items/Fetch/
  */
@@ -135,6 +210,14 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     refs: ['headers[]'],
     options: {
       history: Boolean,
+      historyMode: {
+        type: String,
+        default: 'push',
+      },
+      params: {
+        type: Object,
+        default: () => ({}),
+      },
       mode: {
         type: String,
         default: SWAP_MODES.REPLACE,
@@ -164,8 +247,30 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     },
   };
 
-  /** Aborts the request in flight when a new one starts. */
-  __abortController = new AbortController();
+  /**
+   * The token of the latest request of this instance.
+   *
+   * @private
+   */
+  __token: NavigationToken | undefined;
+
+  /**
+   * The latest run asked of this instance. A run that waits for a request
+   * that cannot be stopped starts only if it is still the latest one when
+   * that request has ended.
+   *
+   * @private
+   */
+  __latest: FetchRun | undefined;
+
+  /**
+   * The ancestors of the element when the latest request started, nearest
+   * first. The final events of a request reach the nearest one that is still
+   * in the document when the swap has removed the element.
+   *
+   * @private
+   */
+  __ancestors: Element[] = [];
 
   __client: typeof fetch | undefined;
 
@@ -178,150 +283,243 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     this.__client = client;
   }
 
-  /**
-   * The URL history should be given for the request in flight, set only when
-   * that request is the element's own navigation.
-   *
-   * Left unset by a call that named its own URL: `update()` receives that URL
-   * and pushes it, which is what naming a destination asks for — and a
-   * subclass rewriting the URL on its way to `update()` keeps that rewrite.
-   *
-   * @private
-   */
-  __historyUrl: URL | undefined;
-
-  /**
-   * The element's own destination: a form's `action`, a link's `href`, or the
-   * current location as a last resort.
-   *
-   * @private
-   */
-  get __destination(): string {
-    const { $el, isForm, isLink } = this;
-
-    if (isForm) {
-      return ($el as HTMLFormElement).action;
-    }
-
-    if (isLink) {
-      return ($el as HTMLAnchorElement).href;
-    }
-
-    return window.location.href;
-  }
-
-  /**
-   * Resolve a base URL and fold a GET form's fields onto it.
-   *
-   * Fields replace what the base URL carried for the same name, and several
-   * values under one name are all kept: the first field of a given name
-   * deletes the base's values, and every field then appends. A single `set`
-   * per field would do the first half and silently drop the second, so a
-   * checkbox group or a `<select multiple>` — whose whole purpose is repeated
-   * names — would reach the server with one of its values.
-   *
-   * @private
-   */
-  __resolveUrl(base: string): URL {
-    const { $el, isForm } = this;
-    const url = new URL(base, window.location.href);
-
-    if (!isForm || ($el as HTMLFormElement).method.toLowerCase() !== 'get') {
-      return url;
-    }
-
-    const overridden = new Set<string>();
-
-    for (const [key, value] of new URLSearchParams(
-      new FormData($el as HTMLFormElement) as unknown as Record<string, string>,
-    )) {
-      if (!overridden.has(key)) {
-        url.searchParams.delete(key);
-        overridden.add(key);
-      }
-
-      url.searchParams.append(key, value);
-    }
-
-    return url;
-  }
-
-  /**
-   * The URL to use for the request.
-   *
-   * The base URL is the `src` option when it is set, otherwise the element's
-   * own destination. For a GET form the form data is then folded on top of
-   * that base, so an explicit `src` can carry a fixed query that survives
-   * alongside the live form fields, with form fields winning.
-   */
-  get url(): URL {
-    return this.__resolveUrl(this.$options.src || this.__destination);
-  }
-
-  /**
-   * The URL the address bar should show, which is not always the one that was
-   * requested.
-   *
-   * The `src` option answers "what to request"; this answers "what this
-   * navigation is". A link may point at a page and fetch a lighter endpoint
-   * that renders the same regions:
-   *
-   * ```html
-   * <a href="/projects/page/2?orderby=title"
-   *   data-component="Fetch"
-   *   data-option-history
-   *   data-option-src="/projects/page/2?orderby=title&sections=listing">2</a>
-   * ```
-   *
-   * Pushing the requested URL there would put `sections=listing` in the
-   * address bar and in anything a visitor copies out of it. So history follows
-   * the element's own destination, folded with the same form data, and equals
-   * the requested URL whenever there is no `src` to diverge from — which is
-   * every element that does not set one.
-   */
-  get historyUrl(): URL {
-    return this.__resolveUrl(this.__destination);
-  }
-
-  /** The options for the request, merged from the element and its refs. */
-  get requestInit(): RequestInit {
-    const { isForm, $el, $options, $refs } = this;
-    const { requestInit, headers } = $options;
-    const requestedBy = '@studiometa/ui/Fetch';
-
-    const normalizedRequestInit: RequestInit & { headers: Record<string, string> } = {
-      ...requestInit,
-      headers: {
-        [HEADER_NAMES.USER_AGENT]: `${navigator.userAgent} ${requestedBy}`,
-        ...(requestInit.headers as Record<string, string> | undefined),
-        ...headers,
-      },
-    };
-
-    for (const header of $refs.headers) {
-      if (header.dataset.name && header.value) {
-        normalizedRequestInit.headers[header.dataset.name] = header.value;
-      }
-    }
-
-    if (isForm) {
-      const form = $el as HTMLFormElement;
-      const method = form.method.toLowerCase();
-      normalizedRequestInit.method = method;
-      if (method === 'post') {
-        normalizedRequestInit.body = new FormData(form);
-      }
-    }
-
-    return normalizedRequestInit;
-  }
-
   get isLink(): boolean {
     return this.$el instanceof HTMLAnchorElement;
   }
 
   get isForm(): boolean {
     return this.$el instanceof HTMLFormElement;
+  }
+
+  /**
+   * Register the class with the history coordinator, so that back and forward
+   * navigation can restore its entries, also after a reload.
+   */
+  mounted(): void {
+    if (this.$options.history) {
+      registerHistoryOwner(
+        this.$config.name,
+        this.constructor as unknown as HistoryOwnerConstructor,
+      );
+    }
+  }
+
+  /**
+   * The headers of the `requestInit` and `headers` options and of the
+   * `headers[]` refs, with lower-case names.
+   *
+   * They are read from the instance for every request, restores included,
+   * and never kept in a history entry, because they can hold credentials.
+   *
+   * @private
+   */
+  get __headers(): Record<string, string> {
+    const { $options, $refs } = this;
+    const headers = {
+      ...headerRecord($options.requestInit.headers),
+      ...headerRecord($options.headers),
+    };
+
+    for (const ref of $refs.headers) {
+      if (ref.dataset.name && ref.value) {
+        headers[ref.dataset.name.toLowerCase()] = ref.value;
+      }
+    }
+
+    return headers;
+  }
+
+  /**
+   * The query parameters that the transport of a subclass needs on every
+   * request. They win over the `params` option, and a submitter with a
+   * `formaction` keeps them.
+   *
+   * @protected
+   */
+  get __transportParams(): Record<string, string> {
+    return {};
+  }
+
+  /**
+   * The options a request of this instance runs with, as the plain data a
+   * history entry keeps to restore it.
+   *
+   * Subclasses add their own transport options here.
+   *
+   * @protected
+   */
+  get __recipe(): RestoreRecipe {
+    const { $el, $options } = this;
+
+    return {
+      component: this.$config.name,
+      // The attribute, not the property: a form control named `id` replaces
+      // the `id` property of its form, as Shopify product forms do.
+      owner: $el.getAttribute('id') || undefined,
+      selector: $options.selector,
+      mode: $options.mode,
+      params: { ...stringRecord($options.params), ...this.__transportParams },
+      src: $options.src ? new URL($options.src, window.location.href).href : undefined,
+      response: $options.response,
+      viewTransition: $options.viewTransition,
+    };
+  }
+
+  /**
+   * The history mode, `push` unless the option asks for `replace`.
+   *
+   * @private
+   */
+  get __historyMode(): 'push' | 'replace' {
+    const historyMode: string = this.$options.historyMode;
+
+    if (historyMode === 'push' || historyMode === 'replace') {
+      return historyMode;
+    }
+
+    this.$warn(
+      'fetch.invalid-history-mode',
+      `The \`historyMode\` option must be \`push\` or \`replace\`; \`${historyMode}\` was given and \`push\` is used.`,
+    );
+    return 'push';
+  }
+
+  /**
+   * Report a file control that a body other than multipart reduces to the
+   * name of its file.
+   *
+   * @private
+   */
+  __warnFileNotUploaded(): void {
+    this.$warn(
+      'fetch.file-not-uploaded',
+      'A file control is sent as the name of its file and the file is not uploaded. Only a POST form with `enctype="multipart/form-data"` sends the file itself.',
+    );
+  }
+
+  /**
+   * Build the request of one run, and the recipe it runs with.
+   *
+   * @private
+   */
+  __prepare({ destination, submitter, restore }: FetchRun): {
+    request: FetchRequest;
+    recipe: RestoreRecipe;
+  } {
+    if (restore) {
+      const { url, recipe } = restore;
+      return {
+        recipe,
+        request: {
+          url: requestUrl(url, { src: recipe.src, params: recipe.params, fold: true }).href,
+          destination: url.href,
+          method: 'GET',
+          headers: {
+            [HEADER_NAMES.USER_AGENT]: userAgent(),
+            ...this.__headers,
+            [HEADER_NAMES.X_TRIGGERED_BY]: 'popstate',
+          },
+          history: false,
+        },
+      };
+    }
+
+    const { $el, $options, isForm, isLink } = this;
+    const recipe = this.__recipe;
+    let target: URL;
+    let method: string;
+    let body: FetchRequest['body'];
+    let fold = isForm || isLink;
+
+    if (isForm) {
+      const form = $el as HTMLFormElement;
+      const button = submitterOverrides(submitter);
+      const formData = new FormData(form, button);
+
+      method = (
+        button?.hasAttribute('formmethod') ? button.formMethod : formProperty(form, 'method')
+      ).toUpperCase();
+
+      // The attribute, not the `formAction` property alone: without the
+      // attribute, the property gives the document URL, not the form action.
+      if (button?.hasAttribute('formaction')) {
+        target = new URL(button.formAction);
+        // `formaction` names another endpoint for this submission, so the
+        // `src` and `params` options of the form do not apply to it. The
+        // parameters a subclass adds for its transport stay.
+        recipe.src = undefined;
+        recipe.params = this.__transportParams;
+      } else {
+        target = new URL(formProperty(form, 'action'));
+      }
+
+      if (method === 'GET') {
+        const { entries, hasFile } = textEntries(formData);
+        target.search = new URLSearchParams(entries).toString();
+
+        if (hasFile) {
+          this.__warnFileNotUploaded();
+        }
+      } else {
+        const enctype = button?.hasAttribute('formenctype')
+          ? button.formEnctype
+          : formProperty(form, 'enctype');
+        const encoded = encodeBody(formData, enctype);
+        body = encoded.body;
+
+        if (encoded.hasFile) {
+          this.__warnFileNotUploaded();
+        }
+      }
+    } else {
+      const { requestInit } = $options;
+      method = (requestInit.method || 'GET').toUpperCase();
+      body = (requestInit.body ?? undefined) as FetchRequest['body'];
+      target = new URL(isLink ? ($el as HTMLAnchorElement).href : window.location.href);
+    }
+
+    if (destination !== undefined) {
+      target = new URL(destination, window.location.href);
+      fold = true;
+    }
+
+    return {
+      recipe,
+      request: {
+        url: requestUrl(target, { src: recipe.src, params: recipe.params, fold }).href,
+        destination: target.href,
+        method,
+        headers: { [HEADER_NAMES.USER_AGENT]: userAgent(), ...this.__headers },
+        body,
+        // Only a link, a form or a named destination is a place the address
+        // bar can show.
+        history: $options.history && fold ? this.__historyMode : false,
+      },
+    };
+  }
+
+  /**
+   * Dispatch a lifecycle event and return whether it was cancelled.
+   *
+   * The event is dispatched on the element. When a swap has removed the
+   * element from the document, a copy is also dispatched on its nearest
+   * ancestor still in the document, or on `document`, so the listeners of
+   * the page still see how the request ended.
+   *
+   * @private
+   */
+  __emit<K extends keyof FetchEmits>(name: K, detail: FetchEmits[K]): boolean {
+    const emit = this.$emit as unknown as (event: string, payload: unknown) => CustomEvent;
+    let isPrevented = emit.call(this, name, detail).defaultPrevented;
+
+    if (!this.$el.isConnected) {
+      const host = this.__ancestors.find((ancestor) => ancestor.isConnected) ?? document;
+      const copy = new CustomEvent(name, { bubbles: true, cancelable: true, detail });
+      host.dispatchEvent(copy);
+      isPrevented ||= copy.defaultPrevented;
+    }
+
+    return isPrevented;
   }
 
   /** A plain left click on a link fetches its destination instead of navigating. */
@@ -336,178 +534,414 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       !event.altKey &&
       !event.metaKey &&
       event.button === 0 &&
-      this.$el.target !== '_blank'
+      !opensElsewhere(elementTarget(this.$el))
     ) {
       event.preventDefault();
-      // No URL: this is the element's own navigation, so `historyUrl` decides
-      // what the address bar gets. Passing `this.url` here would look
-      // identical and read as a caller naming a destination, which keeps a
-      // `src` in history.
-      void this.fetch(undefined, this.requestInit);
+      void this.__run({});
     }
   }
 
-  /** A form submission fetches its action with the form's own data. */
+  /**
+   * A form submission fetches its action with the same successful controls,
+   * overrides and encoding a native submission would use.
+   *
+   * A `dialog` method closes the dialog natively, and a target other than
+   * `_self` opens another browsing context: both are left to the browser.
+   */
   onSubmit(event: SubmitEvent): void {
     if (!this.isForm) {
       return;
     }
 
-    if (this.$el.target !== '_blank') {
-      event.preventDefault();
-      // No URL: this is the element's own navigation, so `historyUrl` decides
-      // what the address bar gets. Passing `this.url` here would look
-      // identical and read as a caller naming a destination, which keeps a
-      // `src` in history.
-      void this.fetch(undefined, this.requestInit);
-    }
-  }
+    const form = this.$el as HTMLFormElement;
+    const button = submitterOverrides(event.submitter);
+    const method = button?.hasAttribute('formmethod')
+      ? button.formMethod
+      : formProperty(form, 'method');
+    const target = button?.hasAttribute('formtarget') ? button.formTarget : elementTarget(form);
 
-  /** Update the content on history back/forward navigation. */
-  onWindowPopstate(): void {
-    if (!this.$options.history) {
+    if (method === 'dialog' || opensElsewhere(target)) {
       return;
     }
 
-    void this.fetch(new URL(window.location.href), {
-      headers: {
-        [HEADER_NAMES.X_TRIGGERED_BY]: 'popstate',
-      },
-    });
+    event.preventDefault();
+    // The submitter belongs to this one submission, so it travels as an
+    // argument and is never kept on the instance.
+    void this.__run({ submitter: event.submitter });
   }
 
   /**
-   * Fetch the given url.
+   * Load a destination and apply its content.
    *
-   * Omitting the `url` falls back to the {@link url} getter, so a bare
-   * `fetch()` works from an event handler. Strings are resolved against the
-   * current location, since the history and view-transition paths read
-   * `url.pathname` and `url.searchParams`.
+   * The destination is what the address bar would show: the element's own
+   * `href` or `action` when it is omitted. The URL that is requested is
+   * derived from it through the `src` and `params` options.
+   *
+   * The promise resolves with the outcome once the request has ended, after
+   * the DOM change, and never rejects.
    */
-  async fetch(url?: URL | string, requestInit: RequestInit = {}): Promise<void> {
-    // Whether the URL came from the element or from a caller is what decides
-    // where history goes: an explicit `fetch('/somewhere')` is a navigation
-    // the caller named, and substituting the element's own destination for it
-    // would be a surprise.
-    const fromElement = url === undefined;
-    const normalizedUrl = fromElement
-      ? this.url
-      : url instanceof URL
-        ? url
-        : new URL(url, window.location.href);
+  fetch(destination?: string | URL): Promise<FetchOutcome> {
+    return this.__run({ destination });
+  }
 
-    this.__historyUrl = fromElement ? this.historyUrl : undefined;
+  /**
+   * Restore a history entry, from the URL the browser moved to and the recipe
+   * the entry keeps. The recipe wins over the options of the instance, which
+   * gives only its events, its headers and its transport.
+   *
+   * @protected
+   */
+  __restore(url: URL, recipe: RestoreRecipe): Promise<FetchOutcome> {
+    return this.__run({ restore: { url, recipe } });
+  }
 
-    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url: normalizedUrl, requestInit });
+  /**
+   * The lifecycle: one request, its events, its history entry, its DOM change
+   * and exactly one final `fetch-after` with the outcome.
+   *
+   * A request is applied only while it is the latest one of its instance,
+   * and, when it writes or restores history, the latest navigation of the
+   * page. A superseded request ends at once with `fetch-abort` and
+   * `fetch-after`, and its response is never applied.
+   *
+   * @private
+   */
+  async __run(run: FetchRun): Promise<FetchOutcome> {
+    // The element's own destination is a navigation when `history` is on;
+    // a `fetch-before` listener can still turn history on or off.
+    const isNavigation =
+      Boolean(run.restore) ||
+      (this.$options.history && (this.isForm || this.isLink || run.destination !== undefined));
+    this.__latest = run;
+    let previous = this.__endPrevious(isNavigation);
 
-    this.__abortController.abort();
-    const newController = new AbortController();
-    newController.signal.addEventListener('abort', () => {
-      this.$emit(FETCH_EVENTS.ABORT, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit,
-        reason: newController.signal.reason,
-      });
-    });
-    this.__abortController = newController;
-    const init = this.mergeRequestInit(requestInit, newController.signal);
+    while (previous) {
+      await previous;
 
-    this.$emit(FETCH_EVENTS.FETCH, { instance: this, url: normalizedUrl, requestInit: init });
-
-    try {
-      const response = await this.client(normalizedUrl, init);
-      this.$emit(FETCH_EVENTS.RESPONSE, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit: init,
-        response,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Fetch failed with status ${response.status}`);
+      // A newer request or `abort()` dropped this one while it waited. It
+      // has announced nothing, so it ends without an event.
+      if (this.__latest !== run) {
+        return 'aborted';
       }
 
-      const content = await this.parseResponse(response, normalizedUrl, requestInit);
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit: init,
-        content,
-      });
-      void this.update(normalizedUrl, init, content);
-    } catch (error) {
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit: init,
-        error,
-      });
-      this.error(normalizedUrl, init, error as Error);
-    }
-  }
-
-  /**
-   * The per-call `requestInit` folded onto the element's own, with the abort
-   * signal of the request in flight. Carved out of `fetch()` because
-   * `FetchShopifyPartial` needs the same merge before it decides whether the
-   * request is expressible through its own transport.
-   * @protected
-   */
-  mergeRequestInit(requestInit: RequestInit, signal: AbortSignal): RequestInit {
-    // Merged through `headerEntries()` rather than spread: spreading a
-    // `Headers` instance or a tuple array yields nothing, so a caller's
-    // `fetch(url, { headers: new Headers(…) })` would be dropped on the floor
-    // before the request was ever built.
-    const headers: Record<string, string> = {};
-    for (const [name, value] of headerEntries(this.requestInit.headers)) {
-      headers[name] = value;
-    }
-    for (const [name, value] of headerEntries(requestInit.headers)) {
-      headers[name] = value;
+      // Another request may have started while this one waited.
+      previous = this.__endPrevious(isNavigation);
     }
 
-    return {
-      ...this.requestInit,
-      ...requestInit,
-      headers,
-      signal,
+    const ancestors: Element[] = [];
+    for (let node = this.$el.parentElement; node; node = node.parentElement) {
+      ancestors.push(node);
+    }
+    this.__ancestors = ancestors;
+
+    const instance = this as unknown as Fetch;
+    const controller = new AbortController();
+    let request: FetchRequest | undefined;
+    let response: FetchResponseDetail | undefined;
+    let isStarted = false;
+    // Whether the request is past the point where it can be stopped: its DOM
+    // change has started, or it has failed and reports its error.
+    let isFinal = false;
+    let outcome: FetchOutcome = 'error';
+    let finish!: () => void;
+
+    const token: NavigationToken = {
+      settled: false,
+      finished: new Promise((resolve) => {
+        finish = resolve;
+      }),
+      supersede: (reason?: unknown) => {
+        if (token.settled || isFinal) {
+          return;
+        }
+
+        token.settled = true;
+        controller.abort(reason);
+
+        if (isStarted && request) {
+          this.__emit(FETCH_EVENTS.ABORT, { instance, request, reason: controller.signal.reason });
+        }
+
+        this.__emit(FETCH_EVENTS.AFTER_FETCH, { instance, request, outcome: 'aborted' });
+      },
     };
+
+    this.__token = token;
+
+    if (isNavigation) {
+      claimNavigation(token);
+    }
+
+    try {
+      const prepared = this.__prepare(run);
+      const { recipe } = prepared;
+      request = prepared.request;
+
+      if (this.__emit(FETCH_EVENTS.BEFORE_FETCH, { instance, request })) {
+        outcome = 'aborted';
+        return outcome;
+      }
+
+      if (token.settled) {
+        return 'aborted';
+      }
+
+      // Read the request back once: a listener of `fetch-before` may change
+      // it, and a listener of any later event no longer can.
+      const { history } = request;
+      request = {
+        url: new URL(request.url, window.location.href).href,
+        destination: new URL(request.destination, window.location.href).href,
+        method: String(request.method).toUpperCase(),
+        headers: headerRecord(request.headers),
+        body: request.body,
+        history: !run.restore && (history === 'push' || history === 'replace') ? history : false,
+      };
+      const sent = request;
+      // Later events carry `sent`, so the lifecycle keeps its own copy of
+      // what decides the history entry.
+      const { method, destination, history: historyMode } = sent;
+      isStarted = true;
+
+      if (historyMode && !isNavigation) {
+        // A `fetch-before` listener turned history on.
+        claimNavigation(token);
+      }
+
+      const loaded = await this.__load(sent, controller.signal, recipe);
+
+      if (token.settled) {
+        return 'aborted';
+      }
+
+      response = loaded.response;
+      this.__emit(FETCH_EVENTS.BEFORE_UPDATE, {
+        instance,
+        request: sent,
+        response,
+        content: loaded.content,
+      });
+
+      // The gate: a listener above may have started a newer request.
+      if (token.settled) {
+        return 'aborted';
+      }
+
+      isFinal = true;
+      let isWritten = false;
+
+      if (historyMode) {
+        registerHistoryOwner(
+          this.$config.name,
+          this.constructor as unknown as HistoryOwnerConstructor,
+        );
+        const isAdditive = recipe.mode === SWAP_MODES.APPEND || recipe.mode === SWAP_MODES.PREPEND;
+        isWritten = writeEntry(
+          historyMode,
+          { method, destination },
+          // Restoring added content would add it twice.
+          isAdditive ? { ...recipe, mode: SWAP_MODES.REPLACE } : recipe,
+          response,
+        );
+      }
+
+      const fragment = await this.__swap(loaded, recipe, sent);
+
+      if ((isWritten || run.restore) && fragment?.title) {
+        document.title = fragment.title;
+      }
+
+      this.__emit(FETCH_EVENTS.AFTER_UPDATE, { instance, request: sent, response, fragment });
+      outcome = 'ok';
+    } catch (error) {
+      if (token.settled) {
+        return 'aborted';
+      }
+
+      // A listener of `fetch-error` that starts or aborts a request does
+      // not turn this failed request into an aborted one.
+      isFinal = true;
+      response ??= error && typeof error === 'object' ? errorResponses.get(error) : undefined;
+      this.__emit(FETCH_EVENTS.ERROR, { instance, request, response, error });
+      outcome = 'error';
+    } finally {
+      releaseNavigation(token);
+
+      if (!token.settled) {
+        token.settled = true;
+        this.__emit(FETCH_EVENTS.AFTER_FETCH, { instance, request, outcome });
+      }
+
+      finish();
+    }
+
+    return outcome;
   }
 
   /**
-   * Extract the string content to inject from the raw `Response`.
+   * End the request in flight of this instance and, for a navigation, the
+   * navigation in flight on the page, before a new request starts.
    *
-   * The default implementation evaluates the `response` option, giving it the
-   * `response`, `url`, `requestInit` and `self` bindings and the instance as
-   * `this`. Subclasses override this to parse with typed code instead.
+   * A request that has started its DOM change, or has failed, cannot be
+   * stopped. The returned promise then settles once it has ended, so its
+   * `fetch-after` comes before the `fetch-before` of the new request. With
+   * nothing to wait for, nothing is returned and the new request starts at
+   * once.
+   *
+   * @private
+   */
+  __endPrevious(isNavigation: boolean): Promise<void> | undefined {
+    const running = isNavigation ? [this.__token, currentNavigation()] : [this.__token];
+    let pending: NavigationToken | undefined;
+
+    for (const token of running) {
+      token?.supersede();
+
+      if (token && !token.settled) {
+        pending = token;
+      }
+    }
+
+    return pending?.finished;
+  }
+
+  /**
+   * Apply the loaded content inside the `js-toolkit:dom:update` protocol.
+   *
+   * The component's own view transition is registered as the first claim on
+   * the protocol, so a listener above it wins. The apply callback never
+   * throws: an error of the DOM change is kept and thrown once the protocol
+   * has settled, so a batched view transition still applies its other
+   * changes, and a runner that catches errors cannot hide it.
+   *
+   * @private
+   */
+  async __swap(
+    loaded: FetchLoadResult,
+    recipe: RestoreRecipe,
+    request: FetchRequest,
+  ): Promise<Document | undefined> {
+    // A detached instance restoring an entry announces on the document, so
+    // the runners of the page still negotiate the change.
+    const target = this.$el.isConnected ? this.$el : document.documentElement;
+    const claim =
+      recipe.viewTransition && loaded.viewTransition !== false
+        ? (event: Event) => {
+            (event as CustomEvent<DomUpdateDetail>).detail.wrap((apply) => viewTransition(apply));
+          }
+        : null;
+
+    let fragment: Document | undefined;
+    let isFailed = false;
+    let failure: unknown;
+
+    if (claim) {
+      target.addEventListener(EVENTS.dom.update, claim);
+    }
+
+    try {
+      await domUpdate(
+        target,
+        async () => {
+          try {
+            fragment = await this.__apply(loaded.content, recipe);
+          } catch (error) {
+            isFailed = true;
+            failure = error;
+          }
+        },
+        { instance: this, request, response: loaded.response, content: loaded.content },
+      );
+    } finally {
+      if (claim) {
+        target.removeEventListener(EVENTS.dom.update, claim);
+      }
+    }
+
+    if (isFailed) {
+      throw failure;
+    }
+
+    return fragment;
+  }
+
+  /**
+   * Load the content of a request: send it with the client, emit
+   * `fetch-response` when the response arrives, then parse it.
+   *
    * @protected
    */
-  parseResponse(response: Response, url: URL, requestInit: RequestInit): Promise<string> | string {
-    const fn = compileExpression(RESPONSE_ARGUMENTS, `return ${this.$options.response}`) as (
-      response: Response,
-      url: URL,
-      requestInit: RequestInit,
-      self: unknown,
-    ) => string;
-    return fn.call(this, response, url, requestInit, self);
+  async __load(
+    request: FetchRequest,
+    signal: AbortSignal,
+    recipe: RestoreRecipe,
+  ): Promise<FetchLoadResult> {
+    const raw = await this.client(request.url, {
+      ...this.$options.requestInit,
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+      signal,
+    });
+
+    // A client that does not follow the signal still gives a superseded
+    // request nothing more to announce.
+    signal.throwIfAborted();
+
+    const response = responseDetail(raw);
+    this.__emit(FETCH_EVENTS.RESPONSE, {
+      instance: this as unknown as Fetch,
+      request,
+      response,
+    });
+
+    try {
+      if (!raw.ok) {
+        throw new Error(`Fetch failed with status ${raw.status}`);
+      }
+
+      return { response, content: await this.parseResponse(raw, request, recipe) };
+    } catch (error) {
+      if (error && typeof error === 'object') {
+        errorResponses.set(error, response);
+      }
+
+      throw error;
+    }
   }
 
   /**
-   * Swap every element of the response whose id matches one on the page.
+   * Extract the content to apply from the raw `Response`.
+   *
+   * The default implementation evaluates the `response` expression of the
+   * recipe, giving it the `response`, `request` and `self` bindings and the
+   * instance as `this`. Subclasses override this to parse with typed code
+   * instead.
+   *
+   * @protected
+   */
+  parseResponse(response: Response, request: FetchRequest, recipe: RestoreRecipe): unknown {
+    const fn = compileExpression(RESPONSE_ARGUMENTS, `return ${recipe.response}`);
+    return fn.call(this, response, request, self);
+  }
+
+  /**
+   * Apply loaded content: parse it as HTML and swap every element that
+   * matches the `selector` of the recipe and has an id on the page, following
+   * its `mode`. Returns the parsed document.
    *
    * `swap()` covers all four modes: this family matches an element by id and
    * puts the response's element in its place, attributes included, which is
    * what `self` asks for. The additive modes keep the page element and add to
-   * its children, which is exactly `swap()`'s default.
-   *
-   * Every swap is started before any is awaited, so the whole update is one
-   * synchronous DOM pass and the settling of all of them is awaited once.
+   * its children, which is exactly `swap()`'s default. Every swap is started
+   * before any is awaited, so the whole update is one synchronous DOM pass.
    *
    * @protected
    */
-  async updateDOM(fragment: Document): Promise<void> {
-    const { mode, selector } = this.$options;
+  async __apply(content: unknown, recipe: RestoreRecipe): Promise<Document | undefined> {
+    domParser ??= new DOMParser();
+    const fragment = domParser.parseFromString(String(content), 'text/html');
+    const { mode, selector } = recipe;
     const isAdditive = mode === SWAP_MODES.APPEND || mode === SWAP_MODES.PREPEND;
     const swaps: Promise<void>[] = [];
 
@@ -522,72 +956,16 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     }
 
     await Promise.all(swaps);
+    return fragment;
   }
 
   /**
-   * Announce the imminent DOM change, then apply it.
-   *
-   * The change travels on core's `domUpdate()` protocol, so a listener can
-   * take it over through `detail.wrap()`. The component's own view transition
-   * is registered as the **first** claim on that same protocol rather than as
-   * an `else` branch: `wrap()` keeps the last registration, and the event
-   * starts on this element, so any listener above overrides the default
-   * without the component having to ask whether one exists.
+   * Abort the request in flight, and drop a request that waits to start. A
+   * request that has ended, or has started its DOM change, is left alone.
    */
-  async update(url: URL, requestInit: RequestInit, content: string): Promise<void> {
-    const { history, viewTransition: hasViewTransition } = this.$options;
-
-    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { instance: this, url, requestInit, content });
-
-    domParser ??= new DOMParser();
-    const fragment = domParser.parseFromString(content, 'text/html');
-
-    if (history) {
-      if (headerValue(requestInit.headers, HEADER_NAMES.X_TRIGGERED_BY) !== 'popstate') {
-        const target = this.__historyUrl ?? url;
-        historyPush({ path: target.pathname, search: target.searchParams });
-      }
-      this.$write(() => {
-        if (fragment.title) {
-          document.title = fragment.title;
-        }
-      });
-    }
-
-    this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, fragment });
-
-    const releaseDefault = hasViewTransition
-      ? this.$on(EVENTS.dom.update, (event) => {
-          (event as CustomEvent<DomUpdateDetail>).detail.wrap((apply) => viewTransition(apply));
-        })
-      : null;
-
-    try {
-      await domUpdate(this.$el, () => this.updateDOM(fragment), {
-        instance: this,
-        url,
-        requestInit,
-        fragment,
-      });
-    } finally {
-      releaseDefault?.();
-    }
-
-    this.$emit(FETCH_EVENTS.AFTER_UPDATE, { instance: this, url, requestInit, fragment });
-  }
-
-  /** Announce a failed request, ignoring the abort the component caused. */
-  error(url: URL, requestInit: RequestInit, error: Error): void {
-    if (error.name === 'AbortError') {
-      return;
-    }
-
-    this.$emit(FETCH_EVENTS.ERROR, { instance: this, url, requestInit, error });
-  }
-
-  /** Abort the request in flight. */
   abort(reason?: unknown): void {
-    this.__abortController.abort(reason);
+    this.__latest = undefined;
+    this.__token?.supersede(reason);
   }
 }
 

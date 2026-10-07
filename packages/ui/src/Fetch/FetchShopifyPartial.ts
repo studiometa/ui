@@ -1,12 +1,11 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { historyPush } from '@studiometa/js-toolkit/utils/historyPush';
 import {
-  FETCH_EVENTS,
   Fetch,
   HEADER_NAMES,
-  headerNames,
-  headerValue,
+  type FetchLoadResult,
   type FetchProps,
+  type FetchRequest,
+  type RestoreRecipe,
 } from './Fetch.js';
 
 /** Minimal shape of the `partials` API exposed by `@shopify/partial-rendering`. */
@@ -26,20 +25,38 @@ export type FetchShopifyPartialProps = FetchProps & {
   $options: FetchProps['$options'] & { partials: string };
 };
 
+/** The headers the component sends on its own behalf, which partials ignore. */
+const INTERNAL_HEADERS = new Set<string>(Object.values(HEADER_NAMES));
+
+/**
+ * The updates loaded through partials, and the API that applies each one.
+ * Content loaded by the inherited transport is a string and never lands here.
+ */
+const partialUpdates = new WeakMap<object, PartialsApi>();
+
+/** The configured partial names, trimmed and empty-filtered. */
+function partialNames(partials: unknown): string[] {
+  return String(partials ?? '')
+    .split(',')
+    .map((partial) => partial.trim())
+    .filter(Boolean);
+}
+
 /**
  * Adapts {@link Fetch} to Shopify's `@shopify/partial-rendering` API (Liquid
  * July '26 preview). Partial rendering engages only when partial names are
  * configured via the `partials` option **and** the preview package
- * resolves; otherwise it transparently falls back to the base {@link Fetch}
- * behaviour (id-based full-page swap).
+ * resolves; otherwise it transparently falls back to the inherited
+ * {@link Fetch} transport (id-based full-page swap).
  *
- * Compared to the base lifecycle, the partials path diverges in two ways:
- * the `RESPONSE` event never fires (there is no `Response` object on this
- * path), and the `UPDATE` payload carries the opaque partials `update`
- * object instead of a parsed `Document` fragment — `partials.apply` owns DOM
- * swapping, View Transitions and focus/selection/form/scroll preservation.
+ * It changes two steps of the inherited lifecycle and nothing else:
+ * {@link __load} asks `partials.fetch()` for the update, and {@link __apply}
+ * hands it to `partials.apply()`, which owns DOM swapping, view transitions
+ * and focus, selection, form and scroll preservation. On this path there is
+ * no `Response`, so `fetch-response` is not emitted, and the opaque update is
+ * the `content` of `fetch-update-before`.
  *
- * @link https://ui.studiometa.dev/reference/items/Fetch/
+ * @link https://ui.studiometa.dev/reference/items/FetchShopifyPartial/
  */
 export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
   FetchShopifyPartialProps & T
@@ -53,7 +70,7 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
 
   /**
    * Module specifier for the Shopify partial rendering package. A static
-   * field, not a module constant like {@link FETCH_EVENTS}: this one exists
+   * field, not a module constant like `FETCH_EVENTS`: this one exists
    * to be overridden, by a test or a subclass, so it keeps the shape a
    * `this.constructor` access needs.
    */
@@ -78,10 +95,17 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
 
   /** The configured partial names, trimmed and empty-filtered. */
   get partialNames(): string[] {
-    return this.$options.partials
-      .split(',')
-      .map((partial) => partial.trim())
-      .filter(Boolean);
+    return partialNames(this.$options.partials);
+  }
+
+  /**
+   * The inherited recipe, with the partial names, so a restore with no live
+   * owner still loads through partials.
+   *
+   * @protected
+   */
+  get __recipe(): RestoreRecipe {
+    return { ...super.__recipe, partials: this.$options.partials };
   }
 
   /**
@@ -106,142 +130,73 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
   }
 
   /**
-   * Whether the given request can be expressed through the partials API.
+   * Whether the final request, after `fetch-before`, can be sent through the
+   * partials API.
    *
    * `@shopify/partial-rendering` only performs a GET for a URL — it takes
-   * nothing but `{ url, signal }` — so a request carrying a body, a
-   * non-GET method, custom headers or any other `RequestInit` field falls
-   * back to the base {@link Fetch} behaviour, whether these come from the
-   * element options or from the per-call `requestInit` argument.
-   * Framework-internal headers are ignored, so the declarative click,
-   * submit and popstate flows still use partial rendering.
+   * nothing but `{ url, signal }` — so a request with a body, another method,
+   * a header that the component does not send on its own behalf, or a
+   * `requestInit` key other than `headers` uses the inherited transport.
+   *
+   * @private
    */
-  canUsePartials(requestInit: RequestInit): boolean {
-    const method = requestInit.method ?? this.requestInit.method ?? 'get';
-
-    if (method.toLowerCase() !== 'get' || requestInit.body || this.requestInit.body) {
+  __isPartialsRequest(request: FetchRequest): boolean {
+    if (request.method !== 'GET' || request.body !== undefined) {
       return false;
     }
 
-    const supportedKeys = new Set(['method', 'headers', 'body', 'signal']);
-    for (const key of Object.keys({ ...this.$options.requestInit, ...requestInit })) {
-      if (!supportedKeys.has(key)) {
-        return false;
-      }
+    if (Object.keys(this.$options.requestInit).some((key) => key !== 'headers')) {
+      return false;
     }
 
-    const internalHeaders = new Set<string>(Object.values(HEADER_NAMES));
-    const declared = [
-      ...headerNames(this.requestInit.headers),
-      ...headerNames(requestInit.headers),
-    ];
-    for (const header of declared) {
-      if (!internalHeaders.has(header)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  /** Fetch via Shopify partial rendering when configured, otherwise fall back to the base behaviour. */
-  async fetch(url?: URL | string, requestInit: RequestInit = {}): Promise<void> {
-    // Same reading as the base: an absent URL is the element's own
-    // navigation, which is what lets `historyUrl` differ from the requested
-    // one. The fallback path is handed the same absence, not a resolved URL.
-    const fromElement = url === undefined;
-    const normalizedUrl = fromElement
-      ? this.url
-      : url instanceof URL
-        ? url
-        : new URL(url, window.location.href);
-    const names = this.partialNames;
-    const partials =
-      names.length && this.canUsePartials(requestInit) ? await this.resolvePartials() : null;
-
-    if (!partials) {
-      return super.fetch(fromElement ? undefined : normalizedUrl, requestInit);
-    }
-
-    this.__historyUrl = fromElement ? this.historyUrl : undefined;
-
-    this.$emit(FETCH_EVENTS.BEFORE_FETCH, { instance: this, url: normalizedUrl, requestInit });
-
-    this.__abortController.abort();
-    const newController = new AbortController();
-    newController.signal.addEventListener('abort', () => {
-      this.$emit(FETCH_EVENTS.ABORT, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit,
-        reason: newController.signal.reason,
-      });
-    });
-    this.__abortController = newController;
-    const init = this.mergeRequestInit(requestInit, newController.signal);
-
-    this.$emit(FETCH_EVENTS.FETCH, { instance: this, url: normalizedUrl, requestInit: init });
-
-    try {
-      const update = await partials.fetch(...names, {
-        url: normalizedUrl.toString(),
-        signal: init.signal ?? undefined,
-      });
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit: init,
-        content: update,
-      });
-      // Fire-and-forget the apply phase, matching the base `Fetch.fetch`
-      // lifecycle: an `apply()` failure must not be misattributed to the
-      // fetch phase and re-emit `AFTER_FETCH` a second time. It still needs a
-      // `catch`, or a rejected Shopify DOM update is an unhandled rejection
-      // with no observable failure at all.
-      void this.applyPartials(normalizedUrl, init, update, partials).catch(
-        (applyError: unknown) => {
-          this.error(normalizedUrl, init, applyError as Error);
-        },
-      );
-    } catch (error) {
-      this.$emit(FETCH_EVENTS.AFTER_FETCH, {
-        instance: this,
-        url: normalizedUrl,
-        requestInit: init,
-        error,
-      });
-      this.error(normalizedUrl, init, error as Error);
-    }
+    return Object.keys(request.headers).every((name) => INTERNAL_HEADERS.has(name));
   }
 
   /**
-   * Apply the partials update to the DOM. Kept separate from the base
-   * {@link Fetch.update}, which is still used verbatim on the fallback
-   * path: on the partials path, `partials.apply` owns DOM swapping, View
-   * Transitions and focus/selection/form/scroll preservation, so no
-   * fragment parsing happens here.
+   * Load the update through partials when the recipe names partials, the
+   * request allows it and the module resolves; otherwise use the inherited
+   * transport.
+   *
+   * @protected
    */
-  async applyPartials(
-    url: URL,
-    requestInit: RequestInit,
-    update: unknown,
-    partials: PartialsApi,
-  ): Promise<void> {
-    const { history } = this.$options;
+  async __load(
+    request: FetchRequest,
+    signal: AbortSignal,
+    recipe: RestoreRecipe,
+  ): Promise<FetchLoadResult> {
+    const names = partialNames(recipe.partials);
+    const partials =
+      names.length && this.__isPartialsRequest(request) ? await this.resolvePartials() : null;
 
-    this.$emit(FETCH_EVENTS.BEFORE_UPDATE, { instance: this, url, requestInit, content: update });
-
-    if (history) {
-      if (headerValue(requestInit.headers, HEADER_NAMES.X_TRIGGERED_BY) !== 'popstate') {
-        const target = this.__historyUrl ?? url;
-        historyPush({ path: target.pathname, search: target.searchParams });
-      }
+    if (!partials) {
+      return super.__load(request, signal, recipe);
     }
 
-    this.$emit(FETCH_EVENTS.UPDATE, { instance: this, url, requestInit, update });
+    const update = await partials.fetch(...names, { url: request.url, signal });
 
-    await partials.apply(update);
+    if (update && typeof update === 'object') {
+      partialUpdates.set(update, partials);
+    }
 
-    this.$emit(FETCH_EVENTS.AFTER_UPDATE, { instance: this, url, requestInit, update });
+    // `partials.apply()` runs its own view transition.
+    return { content: update, viewTransition: false };
+  }
+
+  /**
+   * Apply a partials update with `partials.apply()`, and any other content
+   * with the inherited swap.
+   *
+   * @protected
+   */
+  async __apply(content: unknown, recipe: RestoreRecipe): Promise<Document | undefined> {
+    const partials =
+      content && typeof content === 'object' ? partialUpdates.get(content) : undefined;
+
+    if (!partials) {
+      return super.__apply(content, recipe);
+    }
+
+    await partials.apply(content);
+    return undefined;
   }
 }

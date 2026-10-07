@@ -1,5 +1,5 @@
 import type { BaseConfig, BaseProps } from '@studiometa/js-toolkit';
-import { Fetch, type FetchProps } from './Fetch.js';
+import { Fetch, type FetchProps, type FetchRequest, type RestoreRecipe } from './Fetch.js';
 
 /** The Section Rendering API query parameter name. */
 export const SECTIONS_PARAMETER = 'sections';
@@ -18,12 +18,14 @@ export type FetchShopifySectionProps = FetchProps & {
  * Adapts {@link Fetch} to Shopify's
  * [Section Rendering API](https://shopify.dev/docs/api/ajax/section-rendering).
  *
- * The section IDs are declared through the `sections` option instead of being
- * baked into the URL, so the element's own `href`/`action` stays a clean,
- * no-JS fallback. The JSON response (`{ [id]: html }`) is unwrapped by
- * {@link parseResponse} and each section is swapped in place by the inherited
- * `[id]` selector. With no `sections` configured the component degrades to the
- * base {@link Fetch} behaviour.
+ * The section IDs are declared through the `sections` option, which adds the
+ * `sections` query parameter to every request. The element's own `href` or
+ * `action` stays a clean, no-JS fallback, and the address bar never shows the
+ * parameter, because history records the destination and not the request
+ * URL. The JSON response (`{ [id]: html }`) is unwrapped by
+ * {@link parseResponse}, and each section is swapped in place by the
+ * inherited `[id]` selector. With no `sections` configured the component
+ * degrades to the base {@link Fetch} behaviour.
  *
  * @link https://ui.studiometa.dev/reference/items/FetchShopifySection/
  */
@@ -49,38 +51,16 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
       .filter(Boolean);
   }
 
-  /** Append the configured section IDs, leaving the URL otherwise untouched. */
-  /** @protected */
-  __appendSections(url: URL): URL {
-    const { sectionIds } = this;
-
-    if (sectionIds.length) {
-      url.searchParams.set(SECTIONS_PARAMETER, sectionIds.join(','));
-    }
-
-    return url;
-  }
-
-  get url(): URL {
-    return this.__appendSections(super.url);
-  }
-
   /**
-   * Ensure the `sections` parameter is on every request URL, including the
-   * already-clean one the inherited `onWindowPopstate()` replays — which
-   * bypasses the `url` getter and would otherwise ask for HTML.
+   * The section IDs as the `sections` query parameter, so every request built
+   * from a destination asks for them, restores and `formaction` submissions
+   * included.
+   *
+   * @protected
    */
-  fetch(url?: URL | string, requestInit: RequestInit = {}): Promise<void> {
-    // An absent URL is forwarded as absent, so the base still reads this as
-    // the element's own navigation and pushes `historyUrl` rather than the
-    // requested URL. That path resolves through the `url` getter above, which
-    // appends the sections already.
-    if (url === undefined) {
-      return super.fetch(undefined, requestInit);
-    }
-
-    const normalizedUrl = url instanceof URL ? url : new URL(url, window.location.href);
-    return super.fetch(this.__appendSections(normalizedUrl), requestInit);
+  get __transportParams(): Record<string, string> {
+    const { sectionIds } = this;
+    return sectionIds.length ? { [SECTIONS_PARAMETER]: sectionIds.join(',') } : {};
   }
 
   /**
@@ -88,27 +68,21 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
    * string, dropping sections returned as `null`.
    *
    * Skipped — deferring to the base implementation, which evaluates the
-   * `response` option — when no sections are configured, or when the caller
-   * supplied their own `response` option.
+   * `response` expression — when the request asks for no sections, or when
+   * the recipe carries its own `response` expression.
+   *
+   * @protected
    */
-  async parseResponse(response: Response, url: URL, requestInit: RequestInit): Promise<string> {
-    const { response: responseOption } = this.$options;
-
-    if (!this.sectionIds.length || responseOption !== DEFAULT_RESPONSE) {
-      return super.parseResponse(response, url, requestInit);
+  async parseResponse(
+    response: Response,
+    request: FetchRequest,
+    recipe: RestoreRecipe,
+  ): Promise<unknown> {
+    if (!recipe.params[SECTIONS_PARAMETER] || recipe.response !== DEFAULT_RESPONSE) {
+      return super.parseResponse(response, request, recipe);
     }
 
     const parsed = (await response.json()) as Record<string, string | null>;
     return Object.values(parsed).filter(Boolean).join('');
-  }
-
-  /**
-   * Strip the `sections` parameter before the base update, so the URL pushed
-   * to the history is the human-facing page and not the raw endpoint.
-   */
-  update(url: URL, requestInit: RequestInit, content: string): Promise<void> {
-    const displayUrl = new URL(url);
-    displayUrl.searchParams.delete(SECTIONS_PARAMETER);
-    return super.update(displayUrl, requestInit, content);
   }
 }

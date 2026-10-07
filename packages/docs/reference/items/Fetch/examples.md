@@ -27,7 +27,7 @@ Intercepting clicks on links, displaying a loader and updating the targets' cont
 
 ## Fetch from any element
 
-`Fetch` normally reads its URL from an `<a href>` or `<form action>`, but the [`src` option](./js-api.md#src) lets it be driven from **any** element and triggered programmatically. In the following example the panel is a `<div>`: it combines `Fetch` with the [`InViewOnce`](../InViewOnce/index.md) and [`Action`](../Action/index.md) components so that its content is lazy-loaded the first time it scrolls into view, with a bare [`Fetch.fetch()`](./js-api.md#fetch-url-url-string-requestinit-requestinit) call that resolves the `src` URL on its own.
+A link or a form gives `Fetch` its destination. Any other element requests the endpoint of the [`src` option](./js-api.md#src) when [`fetch()`](./js-api.md#fetch-destination-string-url) is called. In the following example the panel is a `<div>`: it combines `Fetch` with the [`InViewOnce`](../InViewOnce/index.md) and [`Action`](../Action/index.md) components, so its content is loaded the first time it scrolls into view, with a bare `Fetch.fetch()` call.
 
 <llm-exclude>
 <PreviewPlayground
@@ -68,6 +68,31 @@ In the following example, we intercept a form submission, display a loader and u
 :::
 
 </llm-only>
+
+## Pagination
+
+A set of submit buttons is a paginator with no script of its own: each button sends its own `page` value, and the hidden `orderby` field travels with every submission. The [`params` option](./js-api.md#params) adds the template of the results to every request, so it never reaches the address bar. With the [`history` option](./js-api.md#history), each page is a history entry that back and forward restore. See [forms](./index.md#forms).
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/pagination/app.twig')"
+  :script="() => import('./stories/pagination/app.ts?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/pagination/app.twig
+<<< ./stories/pagination/app.ts
+
+:::
+
+</llm-only>
+
+::: tip Back and forward
+The preview runs in a frame with no address of its own, so `Fetch` writes no history entry there. On a page, the second button writes `?orderby=title&page=2`, and back requests page 1 again with the same `params`.
+:::
 
 ## Modes
 
@@ -130,7 +155,7 @@ Modes are configured with the [`data-option-mode` attribute](./js-api.md#mode).
 
 ## Cancelling a request
 
-Use the [`abort` method](./js-api.md#abort-reason-any) to cancel a request. In the following example, we use the [`Action` component](../Action/index.md) to cancel any pending request from any mounted `Fetch` component.
+Use the [`abort` method](./js-api.md#abort-reason-unknown) to cancel a request. In the following example, we use the [`Action` component](../Action/index.md) to cancel any pending request from any mounted `Fetch` component.
 
 <llm-exclude>
 <PreviewPlayground
@@ -161,14 +186,15 @@ Shopify's [Section Rendering API](https://shopify.dev/docs/api/ajax/section-rend
 The [`FetchShopifySection`](../FetchShopifySection/index.md) component wraps this pattern: it declares the sections through a `sections` option (keeping them out of the `href` for a working no-JS fallback) and ships the JSON extraction below as its default, so you don't repeat it on every element.
 :::
 
-Request the sections to update by adding the comma-separated `sections` parameter (up to five) to the URL:
+Request the sections to update with the comma-separated `sections` parameter (up to five). Set it with the [`params` option](./js-api.md#params), so the `href` stays a working link without JavaScript and the parameter never reaches the address bar:
 
 :::code-group
 
 ```html [collection.liquid]
 <a
-  href="{{ collection.url }}?sort_by=price-ascending&sections=main-collection-product-grid,collection-results-count"
+  href="{{ collection.url }}?sort_by=price-ascending"
   data-component="Fetch"
+  data-option-params='{"sections": "main-collection-product-grid,collection-results-count"}'
   data-option-response="response.json().then((sections) => Object.values(sections).filter(Boolean).join(''))">
   Sort by price
 </a>
@@ -192,5 +218,5 @@ Request the sections to update by adding the comma-separated `sections` paramete
 - Keep the default `replace` [`mode`](./js-api.md#mode) (or use `morph`) so each section is swapped in place — `append` and `prepend` insert the new markup _inside_ the existing `shopify-section-{id}` wrapper and would duplicate its content. This works together with the [`history`](./js-api.md#history) and [`viewTransition`](./js-api.md#viewtransition) options.
 
 ::: tip
-Use a `<form method="get">` instead of a link when the parameters come from user input (facet filters, a sort `<select>`, a search field): the form data is [automatically appended to the URL](./js-api.md#url), so you only need to add a hidden `<input name="sections">`.
+Use a `<form method="get">` instead of a link when the parameters come from user input (facet filters, a sort `<select>`, a search field): the fields become the query of the request, and the [`params` option](./js-api.md#params) adds `sections` to it. No hidden `<input name="sections">` is needed.
 :::
