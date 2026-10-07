@@ -116,6 +116,20 @@ function opensElsewhere(target: string): boolean {
   return target !== '' && target.toLowerCase() !== '_self';
 }
 
+/**
+ * Read a property of a form through the `HTMLFormElement` getter.
+ *
+ * A form control named `action`, `method`, `enctype` or `target` replaces the
+ * property of the same name on the form, so `form.action` can be an input.
+ * The getter reads the content attribute, as a native submission does.
+ */
+function formProperty(
+  form: HTMLFormElement,
+  name: 'action' | 'method' | 'enctype' | 'target',
+): string {
+  return Reflect.get(HTMLFormElement.prototype, name, form) as string;
+}
+
 /** The detail every lifecycle event carries. */
 interface FetchDetail {
   instance: Fetch;
@@ -380,7 +394,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       const button = submitterOverrides(submitter);
       const formData = new FormData(form, button);
 
-      method = (button?.hasAttribute('formmethod') ? button.formMethod : form.method).toUpperCase();
+      method = (
+        button?.hasAttribute('formmethod') ? button.formMethod : formProperty(form, 'method')
+      ).toUpperCase();
 
       // The attribute, not the `formAction` property alone: without the
       // attribute, the property gives the document URL, not the form action.
@@ -390,7 +406,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
         // fixed endpoint of the form does not apply to it.
         recipe.src = undefined;
       } else {
-        target = new URL(form.action);
+        target = new URL(formProperty(form, 'action'));
       }
 
       if (method === 'GET') {
@@ -401,7 +417,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
           this.__warnFileNotUploaded();
         }
       } else {
-        const enctype = button?.hasAttribute('formenctype') ? button.formEnctype : form.enctype;
+        const enctype = button?.hasAttribute('formenctype')
+          ? button.formEnctype
+          : formProperty(form, 'enctype');
         const encoded = encodeBody(formData, enctype);
         body = encoded.body;
 
@@ -493,8 +511,12 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
 
     const form = this.$el as HTMLFormElement;
     const button = submitterOverrides(event.submitter);
-    const method = button?.hasAttribute('formmethod') ? button.formMethod : form.method;
-    const target = button?.hasAttribute('formtarget') ? button.formTarget : form.target;
+    const method = button?.hasAttribute('formmethod')
+      ? button.formMethod
+      : formProperty(form, 'method');
+    const target = button?.hasAttribute('formtarget')
+      ? button.formTarget
+      : formProperty(form, 'target');
 
     if (method === 'dialog' || opensElsewhere(target)) {
       return;

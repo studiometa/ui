@@ -1207,6 +1207,40 @@ describe('Fetch — native form submission', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
+  it('reads the `action`, `method` and `enctype` of a form that has controls with those names', async () => {
+    const { calls } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/wp/wp-admin/admin-ajax.php" method="post">
+        <input type="hidden" name="action" value="load_more">
+        <input type="hidden" name="method" value="ajax">
+        <input type="hidden" name="enctype" value="none">
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    expect(calls[0]).toMatchObject({
+      url: abs('/wp/wp-admin/admin-ajax.php'),
+      init: { method: 'POST' },
+    });
+    expect(String(calls[0].init.body)).toBe('action=load_more&method=ajax&enctype=none');
+  });
+
+  it('handles a form that has a control named `target`', async () => {
+    const { spy } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/search" method="get">
+        <input type="hidden" name="target" value="_blank">
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
   it('leaves a form that targets a new tab to the browser', async () => {
     const { spy } = stubClient();
     const { root } = await mountFetch(
