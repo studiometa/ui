@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Track:** add `$event.<path>` placeholders in every payload source, with `$detail.<path>` as a shortcut ([#658](https://github.com/studiometa/ui/pull/658))
 - **Fetch:** add the `params` option, which adds query parameters to every request built from the destination ([#669](https://github.com/studiometa/ui/pull/669))
 - **Fetch:** add the `historyMode` option, `push` by default or `replace` ([#669](https://github.com/studiometa/ui/pull/669))
-- **Fetch:** add the `FetchRequest`, `FetchResponseDetail`, `FetchOutcome` and `RestoreRecipe` types ([#669](https://github.com/studiometa/ui/pull/669))
+- **Fetch:** add the `FetchRequest`, `FetchResponseDetail`, `FetchLoadResult`, `FetchOutcome` and `RestoreRecipe` types ([#669](https://github.com/studiometa/ui/pull/669))
 - **Fetch:** add the `fetch.file-not-uploaded` and `fetch.invalid-history-mode` diagnostics ([#669](https://github.com/studiometa/ui/pull/669))
 
 ### Changed
@@ -32,6 +32,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - ⚠️ **Fetch:** replace the query of the `action` of a GET form with its fields, as a native submission does ([#669](https://github.com/studiometa/ui/pull/669))
 - ⚠️ **Fetch:** leave a link or a form with a `target` other than `_self` to the browser ([#669](https://github.com/studiometa/ui/pull/669))
 - ⚠️ **Fetch:** remove the `FetchEventBase` type and the `headerEntries`, `headerNames` and `headerValue` helpers ([#669](https://github.com/studiometa/ui/pull/669))
+- ⚠️ **Fetch:** give `request`, `response` and `content` in the `js-toolkit:dom:update` detail, instead of `url`, `requestInit` and `fragment` ([#669](https://github.com/studiometa/ui/pull/669))
+- ⚠️ **Fetch:** let `abort()` leave a request that has started its DOM change or has failed ([#669](https://github.com/studiometa/ui/pull/669))
+- ⚠️ **Fetch:** set `document.title` only when an entry is written or restored ([#669](https://github.com/studiometa/ui/pull/669))
+- ⚠️ **Fetch:** write no history entry for an element that is neither a link nor a form, unless `fetch()` gets a destination ([#669](https://github.com/studiometa/ui/pull/669))
+- ⚠️ **Fetch:** restore `append` and `prepend` content with `replace` ([#669](https://github.com/studiometa/ui/pull/669))
+- ⚠️ **Fetch:** remove `HEADER_NAMES.ACCEPT` and `HEADER_NAMES.X_REQUESTED_BY`, which the component does not send ([#669](https://github.com/studiometa/ui/pull/669))
 - ⚠️ **FetchShopifySection:** remove the `url` getter and the `fetch()`, `update()` and `__appendSections()` overrides, as `sections` now sets `params` ([#669](https://github.com/studiometa/ui/pull/669))
 - ⚠️ **FetchShopifyPartial:** remove the `fetch()` override, `canUsePartials()` and `applyPartials()`, and give the partials update as the `content` of `fetch-update-before` ([#669](https://github.com/studiometa/ui/pull/669))
 - ⚠️ **Track:** rename `resolveDetailPlaceholders` to `resolveEventPlaceholders`, which takes the event instead of its detail ([#658](https://github.com/studiometa/ui/pull/658))
@@ -53,6 +59,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Fetch:** report a failed DOM change as `fetch-error`, also inside a view transition ([#669](https://github.com/studiometa/ui/pull/669))
 - **Fetch:** never apply a superseded response ([#669](https://github.com/studiometa/ui/pull/669))
 - **Fetch:** emit no `fetch-abort` for a request that has ended ([#669](https://github.com/studiometa/ui/pull/669))
+- **Fetch:** read the `action`, `method` and `enctype` of a form that has controls with those names ([#669](https://github.com/studiometa/ui/pull/669))
+- **Fetch:** leave links and forms to the browser under `<base target>` ([#669](https://github.com/studiometa/ui/pull/669))
+- **Fetch:** send the line breaks of form fields as CRLF, as natively ([#669](https://github.com/studiometa/ui/pull/669))
+- **Fetch:** replace the entry, instead of pushing one, for a navigation to the URL of the page ([#669](https://github.com/studiometa/ui/pull/669))
+- **Fetch:** send no request on back to an anchor of the same page ([#669](https://github.com/studiometa/ui/pull/669))
 
 ## [v2.0.0-alpha.0](https://github.com/studiometa/ui/compare/1.11.1..2.0.0-alpha.0) (2026-09-03)
 
