@@ -552,6 +552,23 @@ describe('Fetch history — back and forward', () => {
     expect(calls[1].url).toBe(abs('/projects?page=2'));
   });
 
+  it('stops a navigation in flight on back to an entry of another script', async () => {
+    window.history.pushState(null, '', '/start');
+    window.history.pushState(null, '', '/start#faq');
+    const { calls } = deferClient();
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="/b" data-option-history data-option-no-view-transition></a>`,
+    );
+
+    const navigation = instance.fetch();
+    await waitFor(() => calls.length === 1);
+    await back();
+    calls[0].resolve(new Response('<div id="fetch-default">b</div>'));
+
+    expect(await navigation).toBe('aborted');
+    expect(address()).toBe('/start');
+  });
+
   it('restores after a reload, once a `Fetch` with history has mounted', async () => {
     window.history.pushState(
       { fetch: makeRecipe({ params: { view: 'fragment' } }) },
