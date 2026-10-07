@@ -181,7 +181,7 @@ describe('AbstractMapboxMapChild — M1: retryable resolution', () => {
       registerComponent(MapboxMarker);
 
       const root = await mount(`
-        <div data-component="MapboxMap" data-option-access-token="test-token">
+        <div data-component="MapboxMap" data-mount="eager" data-option-access-token="test-token">
           <div data-ref="container"></div>
           ${MARKER_HTML}
         </div>
@@ -215,7 +215,7 @@ describe('AbstractMapboxMapChild — M1: retryable resolution', () => {
     // rejects it and it stays parked.
     const root = await mount(`
       <div>${MARKER_HTML}</div>
-      <div data-component="MapboxMap" data-option-access-token="test-token">
+      <div data-component="MapboxMap" data-mount="eager" data-option-access-token="test-token">
         <div data-ref="container"></div>
       </div>
     `);

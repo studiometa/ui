@@ -442,6 +442,8 @@ Add an address search control powered by [`@mapbox/mapbox-gl-geocoder`](https://
 
 ::: tip Optional, loaded on demand
 `@mapbox/mapbox-gl-geocoder` is an optional peer dependency. It is loaded lazily with a dynamic `import()` when a `MapboxGeocoder` mounts, so the rest of the package works without it installed. If you use this component, add it to your project: `npm install @mapbox/mapbox-gl-geocoder`.
+
+With autoloading, `MapboxGeocoder` uses the `visible` mount strategy, so it mounts and loads the library when its element nears the viewport. Do not put `hidden` on its element: a hidden element never does. Use `data-mount="eager"` to load it without waiting for the viewport.
 :::
 
 #### Options

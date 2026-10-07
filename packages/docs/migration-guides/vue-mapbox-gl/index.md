@@ -44,15 +44,17 @@ registerManifest({
     load: () => import('@studiometa/ui-mapbox/MapboxMap'),
   },
   MapboxMarker: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('@studiometa/ui-mapbox/MapboxMarker'),
   },
   MapboxPopup: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('@studiometa/ui-mapbox/MapboxPopup'),
   },
 });
 ```
+
+The map renders, so `visible` keeps `mapbox-gl` off the critical path. A marker carries `hidden`, and a hidden element never intersects the viewport, so markers and popups take `eager`. A `MapboxGeocoder` keeps `visible` and must not carry `hidden` — see [Package defaults](/guide/autoloading/#package-defaults).
 
 ## Component mapping
 

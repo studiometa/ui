@@ -54,7 +54,6 @@ With `add-to-map`, the geocoder is added to the map as a Mapbox control, overlai
   <div data-ref="container" class="h-full w-full"></div>
 
   <div
-    hidden
     data-component="MapboxGeocoder"
     data-option-add-to-map
     data-option-options='{"placeholder": "Search a place…"}'></div>
@@ -79,6 +78,8 @@ Without `add-to-map`, the geocoder is rendered inside the component's own elemen
 ```
 
 The access token is inherited from the parent `MapboxMap` when it is not set in the geocoder `options`.
+
+Do not put `hidden` on a `MapboxGeocoder` element. With autoloading, the geocoder loads when its element nears the viewport, and a hidden element never does.
 
 ## Source and layer
 

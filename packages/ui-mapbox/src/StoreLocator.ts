@@ -73,6 +73,7 @@ export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & Stor
    */
   static config: BaseConfig = {
     name: 'StoreLocator',
+    mountStrategy: 'visible',
     options: {
       itemZoomLevel: {
         type: Number,

@@ -63,6 +63,7 @@ export class MapboxMap<T extends BaseProps = BaseProps> extends Base<T & MapboxM
    */
   static config: BaseConfig = {
     name: 'MapboxMap',
+    mountStrategy: 'visible',
     refs: ['container'],
     options: {
       accessToken: String,

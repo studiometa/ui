@@ -3,20 +3,20 @@ import type { ComponentManifest } from '@studiometa/js-toolkit';
 
 export const manifest: ComponentManifest = {
   Motion: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./Motion.js').then(({ Motion }) => Motion),
   },
   MotionScrollTimeline: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () =>
       import('./MotionScrollTimeline.js').then(({ MotionScrollTimeline }) => MotionScrollTimeline),
   },
   MotionSequence: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./MotionSequence.js').then(({ MotionSequence }) => MotionSequence),
   },
   MotionView: {
-    mountStrategy: 'visible',
+    mountStrategy: 'eager',
     load: () => import('./MotionView.js').then(({ MotionView }) => MotionView),
   },
 };
