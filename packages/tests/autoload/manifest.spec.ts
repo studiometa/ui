@@ -110,3 +110,65 @@ describe('@studiometa/ui-mapbox mount strategies', () => {
     expect(eager.length + visible.length).toBe(Object.keys(mapboxManifest).length);
   });
 });
+
+/**
+ * The strategy the registry uses for a class: the nearest `config` in the
+ * prototype chain that declares `mountStrategy`, or `eager` when none does.
+ * This is the same merge as js-toolkit's own config resolution.
+ */
+function classStrategy(Constructor: BaseConstructor): MountStrategy {
+  for (
+    let current: unknown = Constructor;
+    isBaseConstructor(current);
+    current = Object.getPrototypeOf(current)
+  ) {
+    if (Object.hasOwn(current, 'config') && Object.hasOwn(current.config, 'mountStrategy')) {
+      return current.config.mountStrategy ?? 'eager';
+    }
+  }
+  return 'eager';
+}
+
+/**
+ * List the entries whose class strategy differs from their manifest strategy,
+ * as `token: manifest -> class`.
+ */
+async function strategyMismatches(
+  manifest: ComponentManifest,
+  filter: (entry: ComponentManifestEntry) => boolean = () => true,
+): Promise<string[]> {
+  const mismatches: string[] = [];
+
+  for (const [token, entry] of Object.entries(manifest) as [string, ComponentManifestEntry][]) {
+    if (!filter(entry)) {
+      continue;
+    }
+    const strategy = classStrategy((await entry.load()) as BaseConstructor);
+    if (strategy !== entry.mountStrategy) {
+      mismatches.push(`${token}: ${entry.mountStrategy} -> ${strategy}`);
+    }
+  }
+
+  return mismatches;
+}
+
+// The registry reads a manifest entry's strategy only until its module loads.
+// It then registers the class, and every later element with that token uses
+// the class strategy. A lazy entry whose class declares no strategy therefore
+// stays lazy for the first element only: every later element mounts at once.
+describe('mount strategies after a lazy entry loads', () => {
+  it('gives every @studiometa/ui-mapbox class the strategy of its manifest entry', async () => {
+    // Strict in both directions: an `eager` entry whose class waited for the
+    // viewport would never mount a `hidden` map child.
+    expect(await strategyMismatches(mapboxManifest)).toEqual([]);
+  });
+
+  it('keeps every lazy @studiometa/ui entry lazy once its class is registered', async () => {
+    // The `@studiometa/ui` manifest imports every module eagerly on purpose,
+    // and a class that declares a condition, such as `in-view`, still decides
+    // when it mounts. Only a lazy entry must agree with its class.
+    expect(
+      await strategyMismatches(uiManifest, (entry) => entry.mountStrategy !== 'eager'),
+    ).toEqual([]);
+  });
+});

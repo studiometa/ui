@@ -227,3 +227,42 @@ describe('autoloading map children declared on a hidden element', () => {
     );
   });
 });
+
+describe('autoloading several maps on one page', () => {
+  it('keeps a second below-the-fold map lazy after the first map has loaded', async () => {
+    // Once the first map loads its module, the registry registers the
+    // `MapboxMap` class and uses the class strategy for every other map
+    // element. The class must therefore declare `visible` too.
+    const root = await mount(
+      belowTheFold(`
+        <div data-component="MapboxMap" data-option-access-token="test-token" id="first">
+          <div data-ref="container" style="height: 200px"></div>
+        </div>
+        ${belowTheFold(`
+          <div data-component="MapboxMap" data-option-access-token="test-token" id="second">
+            <div data-ref="container" style="height: 200px"></div>
+          </div>
+        `)}
+      `),
+    );
+    const firstEl = root.querySelector<HTMLElement>('#first')!;
+    const secondEl = root.querySelector<HTMLElement>('#second')!;
+
+    firstEl.scrollIntoView();
+    const firstMap = await builtMap(firstEl);
+    firstMap.fire('load');
+    await settle();
+
+    // The second map is still far below the viewport: it has no instance and
+    // has not requested `mapbox-gl`, so it builds no map and loads no tiles.
+    expect(loads.MapboxMap).toBe(1);
+    expect(getInstance(secondEl, 'MapboxMap')).toBeUndefined();
+    expect(resolveMapboxGl).toHaveBeenCalledTimes(1);
+
+    secondEl.scrollIntoView();
+    const secondMap = await builtMap(secondEl);
+
+    expect(secondMap).not.toBe(firstMap);
+    expect(resolveMapboxGl).toHaveBeenCalledTimes(2);
+  });
+});

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **@studiometa/ui-mapbox:** mount `MapboxMap`, `StoreLocator` and `MapboxGeocoder` when they near the viewport, also when registered directly ([#655](https://github.com/studiometa/ui/pull/655))
+
 ### Fixed
 
 - **@studiometa/ui-mapbox:** autoload map children declared on a `hidden` element ([#655](https://github.com/studiometa/ui/pull/655))

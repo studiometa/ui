@@ -47,6 +47,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
    */
   static config: BaseConfig = {
     name: 'MapboxGeocoder',
+    mountStrategy: 'visible',
     options: {
       addToMap: Boolean,
       options: Object,
