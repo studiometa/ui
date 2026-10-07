@@ -91,6 +91,23 @@ describe('Fetch history — writing entries', () => {
     expect(recipe()).toMatchObject({ component: 'Fetch', params: { view: 'fragment' } });
   });
 
+  it('replaces the current entry in `push` mode when the destination is the URL of the page', async () => {
+    window.history.pushState(null, '', '/projects?page=1');
+    servePages();
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="/projects?page=2" data-option-history
+        data-option-no-view-transition></a>`,
+    );
+    const writes = recordHistoryWrites();
+
+    await instance.fetch();
+    await instance.fetch();
+
+    expect(writes.pushed).toEqual([abs('/projects?page=2')]);
+    expect(writes.replaced.at(-1)).toBe(abs('/projects?page=2'));
+    expect(recipe()).toMatchObject({ component: 'Fetch' });
+  });
+
   it('replaces the current entry in `replace` mode and keeps the keys of other scripts', async () => {
     window.history.pushState({ other: 1 }, '', '/help');
     servePages();

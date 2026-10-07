@@ -29,7 +29,7 @@ See [back and forward navigation](./index.md#back-and-forward-navigation) for ho
 
 How a request writes history.
 
-- `push` adds an entry, as a native navigation does. Back returns to the previous state of the page.
+- `push` adds an entry, as a native navigation does. Back returns to the previous state of the page. As natively, a GET to the URL the page already shows replaces the current entry instead, so clicking the same link twice does not add a second entry.
 - `replace` replaces the current entry. Back then leaves the page, not the last state of the request. Use it for a live search, where one entry per keystroke would make back useless.
 
 Any other value reports the `fetch.invalid-history-mode` diagnostic, and `push` is used.
