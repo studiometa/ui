@@ -81,6 +81,16 @@ The access token is inherited from the parent `MapboxMap` when it is not set in 
 
 Do not put `hidden` on a `MapboxGeocoder` element. With autoloading, the geocoder loads when its element nears the viewport, and a hidden element never does.
 
+The geocoder also works without a map. Outside a `MapboxMap`, set the `accessToken` in its `options` and listen to `map-result` to use the selected address, for example to submit a search form:
+
+```html
+<div
+  data-component="MapboxGeocoder"
+  data-option-options='{"accessToken": "<YOUR_MAPBOX_ACCESS_TOKEN>", "placeholder": "Search a place…"}'></div>
+```
+
+See [Standalone usage](./js-api.md#standalone-usage) for a complete example.
+
 ## Source and layer
 
 Add a [source](https://docs.mapbox.com/style-spec/reference/sources/) with `MapboxSource`, then render it with one or more `MapboxLayer` elements referencing the source `id`. The `layer` option accepts a full [layer specification](https://docs.mapbox.com/style-spec/reference/layers/).
