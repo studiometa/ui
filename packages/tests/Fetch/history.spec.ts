@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { getInstance, registerComponents } from '@studiometa/js-toolkit';
 import { mount, settle, waitFor } from '@studiometa/js-toolkit/test';
 import { Fetch, FETCH_EVENTS, type FetchEmits, type RestoreRecipe } from '#private/Fetch/Fetch.js';
@@ -643,6 +643,74 @@ describe('Fetch history — back and forward', () => {
 
     expect(await navigation).toBe('aborted');
     expect(address()).toBe('/start');
+  });
+
+  it('keeps a navigation in flight on a jump to an anchor of the page', async () => {
+    window.history.pushState(null, '', '/start');
+    const { calls } = deferClient();
+    await mount(`<div id="list">old</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="/b" data-option-history data-option-no-view-transition></a>`,
+    );
+
+    const navigation = instance.fetch();
+    await waitFor(() => calls.length === 1);
+    const popstate = new Promise((resolve) =>
+      window.addEventListener('popstate', resolve, { once: true }),
+    );
+    window.location.hash = 'x';
+    await popstate;
+    calls[0].resolve(new Response('<div id="list">b</div>'));
+
+    expect(await navigation).toBe('ok');
+    expect(list()).toBe('b');
+    expect(address()).toBe('/b');
+  });
+
+  describe('without the Navigation API', () => {
+    beforeEach(() => {
+      Object.defineProperty(window, 'navigation', { value: undefined, configurable: true });
+      onTestFinished(() => {
+        delete (window as { navigation?: unknown }).navigation;
+      });
+    });
+
+    it('keeps a navigation in flight on a jump to an anchor of the page', async () => {
+      window.history.pushState(null, '', '/start');
+      const { calls } = deferClient();
+      const { instance } = await mountFetch(
+        `<a data-component="Fetch" href="/b" data-option-history data-option-no-view-transition></a>`,
+      );
+
+      const navigation = instance.fetch();
+      await waitFor(() => calls.length === 1);
+      const popstate = new Promise((resolve) =>
+        window.addEventListener('popstate', resolve, { once: true }),
+      );
+      window.location.hash = 'x';
+      await popstate;
+      calls[0].resolve(new Response('<div id="fetch-default">b</div>'));
+
+      expect(await navigation).toBe('ok');
+      expect(address()).toBe('/b');
+    });
+
+    it('stops a navigation in flight on back to another page', async () => {
+      window.history.pushState(null, '', '/start');
+      window.history.pushState(null, '', '/other');
+      const { calls } = deferClient();
+      const { instance } = await mountFetch(
+        `<a data-component="Fetch" href="/b" data-option-history data-option-no-view-transition></a>`,
+      );
+
+      const navigation = instance.fetch();
+      await waitFor(() => calls.length === 1);
+      await back();
+      calls[0].resolve(new Response('<div id="fetch-default">b</div>'));
+
+      expect(await navigation).toBe('aborted');
+      expect(address()).toBe('/start');
+    });
   });
 
   it('restores the regions that the entries after the restored one changed', async () => {
