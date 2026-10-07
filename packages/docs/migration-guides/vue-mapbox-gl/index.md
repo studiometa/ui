@@ -54,7 +54,7 @@ registerManifest({
 });
 ```
 
-The map renders, so `visible` keeps `mapbox-gl` off the critical path. The children are wrapped in a `hidden` element, which never intersects the viewport, so they take `eager` — see [Package defaults](/guide/autoloading/#package-defaults).
+The map renders, so `visible` keeps `mapbox-gl` off the critical path. A marker carries `hidden`, and a hidden element never intersects the viewport, so markers and popups take `eager`. A `MapboxGeocoder` keeps `visible` and must not carry `hidden` — see [Package defaults](/guide/autoloading/#package-defaults).
 
 ## Component mapping
 

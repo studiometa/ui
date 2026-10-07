@@ -92,13 +92,17 @@ The element's `data-mount` always wins over the manifest default. An invalid val
 
 `eager` means the entry has no condition left to wait for beyond that element existing — no viewport crossing, no media query, no interaction. The import then runs on a background scheduler task, off the frame that discovered the element. Every element declaring the same token shares one import.
 
-Use it for an element that renders nothing. An element carrying `hidden` is never rendered, so it never intersects the viewport and never receives a pointer or focus event: `visible`, `in-view` and `interaction` wait on it for a signal that cannot arrive.
+Use it for a component that only needs to exist, and always for an element that carries `hidden`. A hidden element is never rendered, so it never intersects the viewport and never receives a pointer or focus event: `visible`, `in-view` and `interaction` wait on it for a signal that cannot arrive.
 
 ### Package defaults
 
 The `@studiometa/ui` manifest ships every component as `eager`. `@studiometa/ui-motion` ships every component as `visible`, so the Motion library stays off the critical path.
 
-`@studiometa/ui-mapbox` splits. `MapboxMap` and `StoreLocator` render, so they are `visible` and the heavy `mapbox-gl` import waits for a map to approach the viewport. The twelve map children — clusters, cluster items, controls, the geocoder, images, layers, markers, popups and sources — configure the map from markup that renders nothing and is marked `hidden`, so they are `eager`. Their own modules are small; `mapbox-gl` still waits for `MapboxMap`.
+`@studiometa/ui-mapbox` splits:
+
+- `MapboxMap` and `StoreLocator` are `visible`, so the heavy `mapbox-gl` import waits for a map to approach the viewport.
+- `MapboxGeocoder` is `visible`, so `@mapbox/mapbox-gl-geocoder` waits for the geocoder to approach the viewport. Do not put `hidden` on its element: it holds the search input, or nothing when the control is added to the map, and a hidden element never loads. To load it without waiting for the viewport, set `data-mount="eager"` on it.
+- The other eleven map children are `eager`: clusters, cluster items, the navigation, geolocate and fullscreen controls, images, layers, markers, popups and sources. They only need to exist, because `MapboxMap` already gates `mapbox-gl` and their own modules are small. Many of them render nothing and carry `hidden`, which `visible` could never load.
 
 ## Component discovery
 
@@ -172,7 +176,7 @@ Declare an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Elemen
 </script>
 ```
 
-Load the Mapbox stylesheet yourself, and the geocoder stylesheet only when you use `MapboxGeocoder`. Give each map a valid access token through its `data-option-access-token`, and any other Mapbox `Map` option through `data-option-map-options`. `MapboxMap` and `StoreLocator` default to the `visible` mount strategy, so the map code loads when a map crosses into the viewport. The map children default to `eager`, because their markup renders nothing and carries `hidden` — see [Package defaults](#package-defaults).
+Load the Mapbox stylesheet yourself, and the geocoder stylesheet only when you use `MapboxGeocoder`. Give each map a valid access token through its `data-option-access-token`, and any other Mapbox `Map` option through `data-option-map-options`. `MapboxMap`, `StoreLocator` and `MapboxGeocoder` default to the `visible` mount strategy, so the map code and the geocoder code load when they cross into the viewport. The other map children default to `eager`, so they load as soon as they are on the page, `hidden` or not — see [Package defaults](#package-defaults).
 
 You own the `mapbox-gl` module, so its Web Worker is same-origin and a strict Content Security Policy works. When you load `mapbox-gl` from a CDN that builds its worker from a `blob:` URL, allow it: `Content-Security-Policy: worker-src blob:;`.
 

@@ -31,7 +31,7 @@ import { MapboxMap, MapboxMarker, MapboxPopup } from '@studiometa/ui-mapbox';
 registerComponents(MapboxMap, MapboxMarker, MapboxPopup);
 ```
 
-`mapbox-gl` is heavy (~230&nbsp;kB gzipped), so import the autoload entry instead to keep it out of your main bundle. It registers a lazy entry for every component of the package, and imports a module only when an element on the page declares its token:
+`mapbox-gl` is heavy (~230&nbsp;kB gzipped), but it is never in your main bundle: `MapboxMap` loads it with a dynamic `import()` when it mounts. The autoload entry changes when that happens. It registers a lazy entry for every component of the package, imports a component module only when an element on the page declares its token, and mounts `MapboxMap` only when the map nears the viewport:
 
 ```js
 import '@studiometa/ui-mapbox/autoload';
@@ -51,7 +51,7 @@ Then author the map declaratively in your markup:
 </div>
 ```
 
-`MapboxMarker` renders nothing of its own — it configures the map from its attributes — so its element carries `hidden`. Every map child works that way, and the autoload manifest gives them the `eager` mount strategy for that reason: a `hidden` element is never rendered and never intersects the viewport, so a strategy waiting for a viewport crossing would never load them. `MapboxMap` and `StoreLocator` do render and keep `visible`, which is what holds the `mapbox-gl` import back until a map approaches the viewport. Override any of it per element with `data-mount`.
+`MapboxMarker` renders nothing of its own, because it configures the map from its attributes, so its element carries `hidden`. The autoload manifest gives the map children the `eager` mount strategy, so they load because their element exists, `hidden` or not. `MapboxMap`, `StoreLocator` and `MapboxGeocoder` keep `visible`, which holds `mapbox-gl` and `@mapbox/mapbox-gl-geocoder` back until they near the viewport. Do not put `hidden` on a `MapboxGeocoder`: it holds the search input, or nothing when it is added to the map, and a hidden element never loads. Override any strategy per element with `data-mount`.
 
 Do not forget to include the `mapbox-gl` stylesheet so the map renders correctly.
 

@@ -69,11 +69,11 @@ registerComponent(MapboxMap);
 
 :::
 
-`mapbox-gl` is a heavy dependency (~230&nbsp;kB gzipped, more with the geocoder), so the recommended default is to register each component lazily — see [Lazy loading](#lazy-loading) below.
+`mapbox-gl` is a heavy dependency (~230&nbsp;kB gzipped, more with the geocoder), so the recommended default is to register the components as lazy manifest entries — see [Lazy loading](#lazy-loading) below.
 
 ## Lazy loading
 
-Keep `mapbox-gl` out of your main bundle by registering the family as a [manifest](/guide/autoloading/) rather than as classes. A manifest entry is a lazy importer plus a mount strategy, so the dynamic import is deferred until an element that needs it is about to mount — `mapbox-gl` lands in its own chunk, loaded only when a map is actually on the page.
+`mapbox-gl` is never in your main bundle: `MapboxMap` loads it with a dynamic `import()` when it mounts. Registering the family as a [manifest](/guide/autoloading/) rather than as classes controls when that happens. A manifest entry is a lazy importer plus a mount strategy, so a component module loads only when an element on the page declares its token, and `MapboxMap` mounts, and loads `mapbox-gl`, only when its strategy allows.
 
 The package ships its own manifest, which is the shortest way to get all of it:
 
@@ -105,6 +105,6 @@ registerManifest({
 });
 ```
 
-The map renders, so `visible` holds the `mapbox-gl` import back until a map approaches the viewport. A marker or a popup renders nothing and its element carries `hidden`, so it never intersects the viewport: give it `eager`, which waits for nothing beyond the element being on the page. This is what the package manifest already does — see [Package defaults](/guide/autoloading/#package-defaults).
+The map renders, so `visible` holds the `mapbox-gl` import back until a map approaches the viewport. A marker renders nothing, so its element carries `hidden`, and a popup nested in it is hidden with it. A standalone popup shows its content until the map is ready, unless its element carries `hidden` too. A hidden element never intersects the viewport, so give markers and popups `eager`, which waits for nothing beyond the element being on the page. This is what the package manifest already does — see [Package defaults](/guide/autoloading/#package-defaults).
 
 Reach for a different strategy when it fits better — `idle`, `interaction`, `media:<query>` — and override any of them per element with `data-mount`. The [Autoloading](/guide/autoloading/) guide lists all six.
