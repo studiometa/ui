@@ -12,6 +12,7 @@ import {
 } from '#private/Fetch/Fetch.js';
 import {
   abs,
+  allowNativeSubmit,
   deferClient,
   detailOf,
   mountFetch,
@@ -899,43 +900,20 @@ describe('Fetch — declarative triggers', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('leaves a link that opens a new tab to the browser', async () => {
-    const { spy } = stubClient();
-    const { el } = await mountFetch(
-      `<a data-component="Fetch" href="/target" target="_blank"></a>`,
-    );
+  it.each(['_blank', '_top', 'named-frame'])(
+    'leaves a link with `target="%s"` to the browser',
+    async (target) => {
+      const { spy } = stubClient();
+      const { el } = await mountFetch(
+        `<a data-component="Fetch" href="/target" target="${target}"></a>`,
+      );
 
-    el.click();
-    await settle();
+      el.click();
+      await settle();
 
-    expect(spy).not.toHaveBeenCalled();
-  });
-
-  it('fetches the action of a submitted GET form with its fields', async () => {
-    const { calls } = stubClient();
-    const { el } = await mountFetch(
-      `<form data-component="Fetch" action="/search" method="get">
-        <input name="q" value="hello">
-      </form>`,
-    );
-
-    (el as HTMLFormElement).requestSubmit();
-    await settle();
-
-    expect(calls[0].url).toBe(abs('/search?q=hello'));
-  });
-
-  it('leaves a form that targets a new tab to the browser', async () => {
-    const { spy } = stubClient();
-    const { el } = await mountFetch(
-      `<form data-component="Fetch" action="/search" method="get" target="_blank"></form>`,
-    );
-
-    (el as HTMLFormElement).requestSubmit();
-    await settle();
-
-    expect(spy).not.toHaveBeenCalled();
-  });
+      expect(spy).not.toHaveBeenCalled();
+    },
+  );
 
   it('does nothing on a click when the element is not a link', async () => {
     const { spy } = stubClient();
@@ -955,6 +933,290 @@ describe('Fetch — declarative triggers', () => {
     expect([link.isLink, link.isForm]).toEqual([true, false]);
     expect([form.isLink, form.isForm]).toEqual([false, true]);
     expect([div.isLink, div.isForm]).toEqual([false, false]);
+  });
+});
+
+describe('Fetch — native form submission', () => {
+  /** Submit the mounted form through the given submit button, or with none. */
+  function submit(root: HTMLElement, selector?: string): void {
+    const form = root.querySelector('form') as HTMLFormElement;
+    form.requestSubmit(selector ? form.querySelector<HTMLElement>(selector) : null);
+  }
+
+  /** Put a real file in a file control, the way a file picker does. */
+  function attachFile(root: HTMLElement, name = 'photo.png'): File {
+    const input = root.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['pixels'], name, { type: 'image/png' });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+    return file;
+  }
+
+  it('puts the name and value of the submitter in the query of a GET form', async () => {
+    const { calls } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/search" method="get">
+        <input name="q" value="hello">
+        <button type="submit" name="page" value="2">Next</button>
+      </form>`,
+    );
+
+    submit(root, 'button');
+    await settle();
+
+    expect(calls[0].url).toBe(abs('/search?q=hello&page=2'));
+  });
+
+  it('puts the name and value of the submitter in the body of a POST form', async () => {
+    const { calls } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/search" method="post">
+        <input type="checkbox" name="genre" value="rock" checked>
+        <input type="checkbox" name="genre" value="jazz" checked>
+        <button type="submit" name="page" value="2">Next</button>
+      </form>`,
+    );
+
+    submit(root, 'button');
+    await settle();
+
+    const body = calls[0].init.body as URLSearchParams;
+    expect(body).toBeInstanceOf(URLSearchParams);
+    expect(body.getAll('genre')).toEqual(['rock', 'jazz']);
+    expect(body.get('page')).toBe('2');
+  });
+
+  it('sends no submitter value when the form is submitted without one', async () => {
+    const { calls } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/search" method="get">
+        <input name="q" value="hello">
+        <button type="submit" name="page" value="2">Next</button>
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    expect(calls[0].url).toBe(abs('/search?q=hello'));
+  });
+
+  it('does not carry a submitter into a later `fetch()`', async () => {
+    const { calls } = stubClient();
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="/search" method="get">
+        <button type="submit" name="page" value="2">Next</button>
+      </form>`,
+    );
+
+    submit(root, 'button');
+    await settle();
+    await instance.fetch();
+
+    expect(new URL(calls[0].url).searchParams.get('page')).toBe('2');
+    expect(new URL(calls[1].url).searchParams.has('page')).toBe(false);
+  });
+
+  it('replaces the query of the action with the fields of a GET form', async () => {
+    const { calls } = stubClient();
+    const { instance } = await mountFetch(
+      `<form data-component="Fetch" action="/search?stale=1&amp;q=old" method="get">
+        <input name="q" value="new">
+        <select name="genre" multiple>
+          <option value="rock" selected>Rock</option>
+          <option value="jazz" selected>Jazz</option>
+        </select>
+      </form>`,
+    );
+
+    await instance.fetch();
+
+    expect(calls[0].url).toBe(abs('/search?q=new&genre=rock&genre=jazz'));
+  });
+
+  it('lets `formaction` win over the action and `src`, and keeps `params`', async () => {
+    const { calls } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/search" method="get" data-option-history
+        data-option-src="/apps/search" data-option-params='{"view":"fragment"}'>
+        <input name="q" value="hello">
+        <button type="submit" formaction="/elsewhere">Elsewhere</button>
+      </form>`,
+    );
+
+    submit(root, 'button');
+    await settle();
+
+    expect(calls[0].url).toBe(abs('/elsewhere?q=hello&view=fragment'));
+    expect(window.location.pathname).toBe('/elsewhere');
+    expect(window.location.search).toBe('?q=hello');
+  });
+
+  it('lets `formmethod` turn a GET form into a POST, and a POST form into a GET', async () => {
+    const { calls } = stubClient();
+    const { root } = await mountFetch(
+      `<div>
+        <form data-component="Fetch" id="to-post" action="/search" method="get">
+          <input name="q" value="hello">
+          <button type="submit" formmethod="post">Post</button>
+        </form>
+        <form data-component="Fetch" id="to-get" action="/search" method="post">
+          <input name="q" value="hello">
+          <button type="submit" formmethod="get">Get</button>
+        </form>
+      </div>`,
+    );
+
+    for (const id of ['to-post', 'to-get']) {
+      const form = root.querySelector<HTMLFormElement>(`#${id}`)!;
+      form.requestSubmit(form.querySelector('button'));
+    }
+    await settle();
+
+    expect(calls[0]).toMatchObject({ url: abs('/search'), init: { method: 'POST' } });
+    expect(String(calls[0].init.body)).toBe('q=hello');
+    expect(calls[1]).toMatchObject({ url: abs('/search?q=hello'), init: { method: 'GET' } });
+    expect(calls[1].init.body).toBeUndefined();
+  });
+
+  it('sends a URL-encoded body by default, with the name of a file and a warning', async () => {
+    const diagnostics = captureDiagnostics();
+    const { calls } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/upload" method="post">
+        <input name="title" value="Holiday">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    attachFile(root);
+
+    submit(root);
+    await settle();
+
+    const body = calls[0].init.body as URLSearchParams;
+    expect(body).toBeInstanceOf(URLSearchParams);
+    expect(String(body)).toBe('title=Holiday&photo=photo.png');
+    expect(diagnostics.codes).toContain('fetch.file-not-uploaded');
+    diagnostics.stop();
+  });
+
+  it('sends the file itself with `enctype="multipart/form-data"`, and no warning', async () => {
+    const diagnostics = captureDiagnostics();
+    const { calls } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="photo">
+      </form>`,
+    );
+    const file = attachFile(root);
+
+    submit(root);
+    await settle();
+
+    const body = calls[0].init.body as FormData;
+    expect(body).toBeInstanceOf(FormData);
+    expect((body.get('photo') as File).name).toBe(file.name);
+    expect(diagnostics.codes).not.toContain('fetch.file-not-uploaded');
+    diagnostics.stop();
+  });
+
+  it('lets `formenctype` override the enctype of the form', async () => {
+    const { calls } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/upload" method="post">
+        <input type="file" name="photo">
+        <button type="submit" formenctype="multipart/form-data">Upload</button>
+      </form>`,
+    );
+    attachFile(root);
+
+    submit(root, 'button');
+    await settle();
+
+    expect(calls[0].init.body).toBeInstanceOf(FormData);
+  });
+
+  it('sends `name=value` lines for `enctype="text/plain"`', async () => {
+    const { calls } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/upload" method="post" enctype="text/plain">
+        <input name="a" value="1">
+        <input name="b" value="2">
+      </form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    expect(calls[0].init.body).toBe('a=1\r\nb=2\r\n');
+  });
+
+  it.each([
+    ['method="dialog"', 'method="dialog"', ''],
+    ['formmethod="dialog"', 'method="post"', 'formmethod="dialog"'],
+  ])('leaves %s to the browser, which closes the dialog', async (_label, formMethod, button) => {
+    const { spy } = stubClient();
+    const root = await mount(`
+      <dialog>
+        <form data-component="Fetch" action="/never" ${formMethod}>
+          <button type="submit" ${button}>Close</button>
+        </form>
+      </dialog>
+    `);
+    const dialog = root.querySelector('dialog')!;
+    dialog.show();
+    const form = root.querySelector('form')!;
+    let isPreventedByFetch: boolean | undefined;
+    form.addEventListener('submit', (event) => (isPreventedByFetch = event.defaultPrevented));
+    allowNativeSubmit();
+
+    form.requestSubmit(form.querySelector('button'));
+    await settle();
+
+    expect(isPreventedByFetch).toBe(false);
+    expect(dialog.open).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('leaves a submitter with `formtarget="_blank"` to the browser', async () => {
+    const { spy } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/search" method="get">
+        <button type="submit" formtarget="_blank">New tab</button>
+      </form>`,
+    );
+
+    submit(root, 'button');
+    await settle();
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('handles a submitter with `formtarget="_self"` in a form that targets a new tab', async () => {
+    const { spy } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/search" method="get" target="_blank">
+        <button type="submit" formtarget="_self">Here</button>
+      </form>`,
+    );
+
+    submit(root, 'button');
+    await settle();
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves a form that targets a new tab to the browser', async () => {
+    const { spy } = stubClient();
+    const { root } = await mountFetch(
+      `<form data-component="Fetch" action="/search" method="get" target="_blank"></form>`,
+    );
+
+    submit(root);
+    await settle();
+
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 
