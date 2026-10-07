@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - **@studiometa/ui-mapbox:** autoload map children declared on a `hidden` element ([#655](https://github.com/studiometa/ui/pull/655))
+- **@studiometa/ui-motion:** mount every motion component as soon as its element is on the page ([#667](https://github.com/studiometa/ui/pull/667))
 
 ## [v2.0.0-alpha.0](https://github.com/studiometa/ui/compare/1.11.1..2.0.0-alpha.0) (2026-09-03)
 

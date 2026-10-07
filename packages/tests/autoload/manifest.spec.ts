@@ -61,7 +61,7 @@ const cases: readonly ManifestCase[] = [
     '@studiometa/ui-motion',
     motionManifest,
     motionExports as Record<string, unknown>,
-    () => 'visible',
+    () => 'eager',
   ],
 ];
 
@@ -161,6 +161,10 @@ describe('mount strategies after a lazy entry loads', () => {
     // Strict in both directions: an `eager` entry whose class waited for the
     // viewport would never mount a `hidden` map child.
     expect(await strategyMismatches(mapboxManifest)).toEqual([]);
+  });
+
+  it('gives every @studiometa/ui-motion class the strategy of its manifest entry', async () => {
+    expect(await strategyMismatches(motionManifest)).toEqual([]);
   });
 
   it('keeps every lazy @studiometa/ui entry lazy once its class is registered', async () => {
