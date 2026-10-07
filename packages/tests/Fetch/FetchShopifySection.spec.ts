@@ -137,6 +137,25 @@ describe('FetchShopifySection', () => {
     expect(calls[0].url).toBe(abs('/collections/all?page=4&sections=results'));
   });
 
+  it('keeps `sections` for a submitter with `formaction` when `params` has the same `sections`', async () => {
+    const { calls } = serveSections();
+    await mount(`<div id="results">results 1</div>`);
+    const { root } = await mountSection(
+      `<form data-component="FetchShopifySection" action="/search" method="get"
+        data-option-sections="results" data-option-params='{"sections":"results"}'
+        data-option-no-view-transition>
+        <input name="page" value="4">
+        <button type="submit" formaction="/collections/all">Go</button>
+      </form>`,
+    );
+    const form = root.querySelector('form')!;
+
+    form.requestSubmit(form.querySelector('button'));
+    await waitFor(() => document.getElementById('results')?.textContent === 'results 4');
+
+    expect(calls[0].url).toBe(abs('/collections/all?page=4&sections=results'));
+  });
+
   it('reports a section endpoint that does not answer JSON as an error', async () => {
     stubClient(() => new Response('<html>not json</html>'));
     const { root, instance } = await mountSection(

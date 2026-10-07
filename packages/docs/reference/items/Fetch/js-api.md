@@ -518,7 +518,7 @@ With the [ambient `MotionView`](/reference/items/MotionView/js-api#ambient-wirin
 
 ## Extending Fetch
 
-`fetch()` holds the whole lifecycle: the request, the checks against newer requests, the events, history and the outcome. A subclass never overrides it. It changes how content is loaded and applied, through two protected methods, and the options a request runs with, through one getter:
+`fetch()` holds the whole lifecycle: the request, the checks against newer requests, the events, history and the outcome. A subclass never overrides it. It changes how content is loaded and applied, through two protected methods, and the options a request runs with, through two getters:
 
 | Method                                     | Role                                                                                                                                                                                                                             |
 | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -526,6 +526,7 @@ With the [ambient `MotionView`](/reference/items/MotionView/js-api#ambient-wirin
 | `parseResponse(response, request, recipe)` | Gives the content from the raw `Response`. The base class evaluates the [`response` option](#response) of the recipe.                                                                                                            |
 | `__apply(content, recipe)`                 | Applies the content. The base class parses it as HTML and swaps the elements that match the `selector` of the recipe, following its `mode`. Resolves with the parsed `Document`.                                                 |
 | `__recipe`                                 | The options a request runs with, as the plain data a history entry keeps. A subclass adds its own options here.                                                                                                                  |
+| `__transportParams`                        | The query parameters that the transport needs on every request. They win over the [`params`](#params) option, and a submitter with a `formaction` keeps them. The base class gives none.                                         |
 
 Each method receives the recipe, not the options of the instance: on a restore, the recipe of the entry wins. `signal` aborts when the request is superseded or aborted. A `viewTransition: false` result tells `Fetch` that the transport runs its own transition, so `Fetch` does not claim one around `__apply()`.
 
@@ -544,7 +545,7 @@ The subclasses of this package are built this way:
 | Class                                                     | `__load(request, signal, recipe)`                                                                                                                                          | `__apply(content, recipe)`                                       |
 | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `Fetch`                                                   | The `client`, then `fetch-response`, then `parseResponse()`                                                                                                                | Swaps the regions that match `selector`, following `mode`        |
-| [`FetchShopifySection`](../FetchShopifySection/js-api.md) | Inherited. `__recipe` sets `params.sections` from the `sections` option, and `parseResponse()` reads the JSON of the Section Rendering API.                                | Inherited                                                        |
+| [`FetchShopifySection`](../FetchShopifySection/js-api.md) | Inherited. `__transportParams` gives `sections` from the `sections` option, and `parseResponse()` reads the JSON of the Section Rendering API.                             | Inherited                                                        |
 | [`FetchShopifyPartial`](../FetchShopifyPartial/js-api.md) | `partials.fetch(...names, { url, signal })`, with no `fetch-response`. Falls back to the inherited steps when the request is not a plain GET or the package does not load. | `partials.apply(update)`, or the inherited swap after a fallback |
 
 Every rule of this page, from the checks to the final event, then applies to each class from one place.
