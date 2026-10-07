@@ -79,6 +79,13 @@ let navigation: NavigationToken | undefined;
  */
 let shownPage: string | undefined;
 
+/**
+ * The selectors of the regions that the entries of this page swap. A restore
+ * swaps them all: an entry after the restored one may have changed a region
+ * that the restored entry does not name.
+ */
+const regions = new Set<string>();
+
 let isListening = false;
 
 /**
@@ -109,16 +116,24 @@ function withoutHash(href: string): string {
   return url.href;
 }
 
+/** Keep the selector of a recipe among the regions a restore swaps. */
+function addRegion(recipe: Record<string, unknown>): void {
+  if (typeof recipe.selector === 'string') {
+    regions.add(recipe.selector);
+  }
+}
+
 /**
  * Restore the entry the browser moved to.
  *
  * A traversal stops the navigation in flight first, as natively. An entry
  * without a `fetch` key belongs to another script and is ignored. An entry
  * whose URL differs from the content on the page only by its hash needs no
- * request: the browser scrolls to the fragment. A live owner runs the
- * restore, so its events and loading states apply. With no live owner, a
- * detached instance of the registered class runs it, and its events reach
- * `document`.
+ * request: the browser scrolls to the fragment. A restore swaps the regions
+ * of every entry of the page, not only those of the entry it restores. A
+ * live owner runs the restore, so its events and loading states apply. With
+ * no live owner, a detached instance of the registered class runs it, and
+ * its events reach `document`.
  */
 function onPopstate(): void {
   navigation?.supersede();
@@ -150,9 +165,13 @@ function onPopstate(): void {
     live instanceof Owner && live.$isMounted ? live : new Owner(document.createElement('div'));
 
   shownPage = page;
+  addRegion(recipe);
 
   void instance
-    .__restore(new URL(window.location.href), recipe as RestoreRecipe)
+    .__restore(new URL(window.location.href), {
+      ...recipe,
+      selector: [...regions].join(', '),
+    } as RestoreRecipe)
     .then((outcome) => {
       if (outcome !== 'ok' && shownPage === page) {
         shownPage = undefined;
@@ -171,6 +190,12 @@ export function registerHistoryOwner(name: string, Owner: HistoryOwnerConstructo
     window.addEventListener('popstate', onPopstate);
     isListening = true;
     shownPage = withoutHash(window.location.href);
+
+    const recipe = currentState().fetch;
+
+    if (isRecord(recipe)) {
+      addRegion(recipe);
+    }
   }
 }
 
@@ -258,6 +283,7 @@ export function writeEntry(
   const write = isPush ? historyPush : historyReplace;
   write(parts, { ...currentState(), fetch: recipe });
   shownPage = withoutHash(url.href);
+  addRegion(recipe);
 
   return true;
 }
@@ -274,4 +300,5 @@ export function resetHistoryCoordinator(): void {
   owners.clear();
   navigation = undefined;
   shownPage = undefined;
+  regions.clear();
 }

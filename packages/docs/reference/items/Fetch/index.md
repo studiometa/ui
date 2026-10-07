@@ -104,7 +104,7 @@ flowchart TB
   c -- owner gone --> detached["detached instance<br>events on document"]
   live --> g["GET /projects?page=1<br>rebuilt from the URL and the recipe"]
   detached --> g
-  g -- swaps recipe.selector --> d["#results"]
+  g -- swaps the selectors of the entries --> d["#results"]
 ```
 
 </llm-only>
