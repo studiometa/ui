@@ -67,9 +67,9 @@ function tick() {
 describe('MapboxGeocoder inside a lazily mounted MapboxMap', () => {
   it('should wait for the map and use it once it mounts', async () => {
     const root = await mount(`
-      <div data-component="MapboxMap" data-option-access-token="map-token">
+      <div data-component="MapboxMap" data-mount="eager" data-option-access-token="map-token">
         <div data-ref="container"></div>
-        <div data-component="MapboxGeocoder"></div>
+        <div data-component="MapboxGeocoder" data-mount="eager"></div>
       </div>
     `);
     const el = root.querySelector<HTMLElement>('[data-component="MapboxGeocoder"]')!;

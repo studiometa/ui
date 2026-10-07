@@ -113,7 +113,7 @@ async function mountGeocoder(
   attrs = '',
 ) {
   const root = await mount(
-    `<div data-component="MapboxGeocoder" data-option-options='${JSON.stringify(options)}' ${attrs}></div>`,
+    `<div data-component="MapboxGeocoder" data-mount="eager" data-option-options='${JSON.stringify(options)}' ${attrs}></div>`,
   );
   const el = root.querySelector<HTMLElement>('[data-component="MapboxGeocoder"]')!;
 
