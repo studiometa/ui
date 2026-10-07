@@ -662,7 +662,7 @@ flowchart TB
     c -- owner gone --> detached["detached instance<br>events on document"]
     live --> g4["GET /projects?page=1<br>rebuilt from the URL and the recipe"]
     detached --> g4
-    g4 -- swaps recipe.selector --> d2["#results"]
+    g4 -- swaps the selectors of the entries --> d2["#results"]
   end
 ```
 
@@ -673,6 +673,7 @@ flowchart TB
 - A POST writes history only after a redirect. In v1, it wrote the URL of the form.
 - The entry is the full destination with its own hash. In v1, the current hash was kept, so `/a#x` led to `/b#x`.
 - The page takes the `<title>` of the response only when an entry is written or restored.
+- A restore of `append` or `prepend` content uses `replace`, so the content is not added twice.
 - Give the element an `id`, so a restore emits its events on it. Without one, they reach `document`.
 
 #### `src` is a fixed endpoint
@@ -745,6 +746,7 @@ A file control in a URL-encoded body sends the name of its file, and the `fetch.
 | `update()`, `error()`, `__updateDOM()`, `onWindowPopstate()`                               | `__load()` and `__apply()`, see [extending Fetch](/reference/items/Fetch/js-api#extending-fetch)                              |
 | `Fetch.FETCH_EVENTS`                                                                       | `FETCH_EVENTS`, exported from `@studiometa/ui`                                                                                |
 | `Fetch.FETCH_MODES`                                                                        | `SWAP_MODES` from `@studiometa/js-toolkit`                                                                                    |
+| `HEADER_NAMES.ACCEPT` and `HEADER_NAMES.X_REQUESTED_BY`                                    | removed: the component does not send these headers                                                                            |
 | `FetchShopifySection.SECTIONS_PARAMETER`                                                   | `SECTIONS_PARAMETER`, exported from `@studiometa/ui`                                                                          |
 | `FetchShopifySection` `url`, `fetch()` and `update()`                                      | `sections` sets `params.sections`, so no override is needed                                                                   |
 | `FetchShopifySection` `__sectionIds`                                                       | `sectionIds`                                                                                                                  |
