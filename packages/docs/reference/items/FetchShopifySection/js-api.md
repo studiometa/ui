@@ -5,7 +5,7 @@ outline: deep
 
 # JS API
 
-The `FetchShopifySection` class extends the [`Fetch` class](../Fetch/js-api.md). It appends the configured section IDs to the request URL and unwraps the Section Rendering API JSON response. All [`Fetch` options](../Fetch/js-api.md#options), getters, methods and events are inherited; the additions and differences are documented below.
+The `FetchShopifySection` class extends the [`Fetch` class](../Fetch/js-api.md). It changes two things: the `sections` option sets the `sections` value of the [`params` option](../Fetch/js-api.md#params), and the response is parsed as the JSON of the Section Rendering API. All [`Fetch` options](../Fetch/js-api.md#options), getters, methods and events are inherited, with the same lifecycle. See [extending Fetch](../Fetch/js-api.md#extending-fetch).
 
 ## Options
 
@@ -14,7 +14,9 @@ The `FetchShopifySection` class extends the [`Fetch` class](../Fetch/js-api.md).
 - Type: `string`
 - Default: `''`
 
-The IDs of the Shopify sections to refresh, matching the `sections` parameter of the [Section Rendering API](https://shopify.dev/docs/api/ajax/section-rendering) (up to five). Provide them as a comma-separated list in the `data-option-sections` attribute; surrounding whitespace is trimmed. They are appended to the request URL as the comma-separated `sections` parameter, leaving the element's `href`/`action` untouched so it keeps working without JavaScript.
+The IDs of the Shopify sections to refresh, matching the `sections` parameter of the [Section Rendering API](https://shopify.dev/docs/api/ajax/section-rendering) (up to five). Provide them as a comma-separated list in the `data-option-sections` attribute. Whitespace around each ID is removed.
+
+The IDs become the `sections` value of the [`params` option](../Fetch/js-api.md#params). The request URL carries them, and the destination does not: the `href` or `action` keeps working without JavaScript, and the address bar never shows the parameter. A history entry keeps them in its recipe, so back and forward navigation ask for the sections again, also when the element has left the page.
 
 ```html
 <a
@@ -25,26 +27,26 @@ The IDs of the Shopify sections to refresh, matching the `sections` parameter of
 </a>
 ```
 
+A value given to `sections` wins over a `sections` key of `data-option-params`. A submitter with a `formaction` keeps the sections, because `params` still apply to it.
+
 ### `response`
 
-`FetchShopifySection` does **not** override the base [`response`](../Fetch/js-api.md#response) option — it keeps the inherited default (`response.text()`). The Section Rendering JSON is unwrapped by the [`__parseResponse()`](#parseresponse-response-url-requestinit) method instead. Set `data-option-response` to supply a custom extraction: doing so disables the JSON unwrap and makes the component parse the response exactly like the base [`Fetch`](../Fetch/js-api.md#response).
+`FetchShopifySection` keeps the inherited default of the [`response` option](../Fetch/js-api.md#response), `response.text()`. With this default, the [`parseResponse()` method](#parseresponse-response-request-recipe) reads the JSON. Set `data-option-response` to read the response yourself: the component then evaluates your expression, like the base `Fetch`.
 
 ## Getters
 
-### `url`
+### `sectionIds`
 
-Extends the base [`url`](../Fetch/js-api.md#url) getter: when at least one section is configured, the [`sections` option](#sections) is appended to the resolved URL as the comma-separated `sections` query parameter.
+- Type: `string[]`
+
+The configured section IDs, trimmed, without empty values.
 
 ## Methods
 
-### `fetch(url, requestInit)`
+### `parseResponse(response, request, recipe)`
 
-Overrides the base [`fetch`](../Fetch/js-api.md#fetch-url-string-requestinit-requestinit) to re-append the [`sections` option](#sections) to the request URL before delegating to `Fetch`. This covers callers that pass an explicit URL and so bypass the [`url`](#url) getter — most importantly the inherited `onWindowPopstate()` handler, which on back/forward navigation replays the clean, section-free history URL. Without this, popstate-driven requests would hit the human-facing page (HTML) instead of the Section Rendering endpoint (JSON).
+Reads the Section Rendering JSON object (`{ [id]: html }`) and joins the HTML of every section, without the sections returned as `null`. The inherited [`[id]` selector](../Fetch/js-api.md#selector) then swaps each section in place.
 
-### `__parseResponse(response, url, requestInit)`
+It reads the `params` of the recipe, not the options of the instance. A restore with no element left on the page therefore still parses JSON.
 
-Unwraps the Section Rendering JSON object (`{ [id]: html }`) into the concatenated section HTML, dropping any section returned as `null` through `filter(Boolean)`. Each section is then swapped in place by the inherited [`[id]` selector](../Fetch/js-api.md#selector). The unwrap is skipped — deferring to the base [`Fetch`](../Fetch/js-api.md), which evaluates the [`response`](#response) option — when no `sections` are configured (a normal HTML page is requested) or when a custom `response` option is supplied.
-
-### `update(url, requestInit, content)`
-
-Overrides the base `update` to remove the `sections` parameter from the URL before delegating to `Fetch`, so — when the [`history` option](../Fetch/js-api.md#history) is enabled — the address bar reflects the human-facing page and not the raw Section Rendering endpoint.
+The base implementation is used instead when the request asks for no sections, or when the [`response` option](#response) is not the default.

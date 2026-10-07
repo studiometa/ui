@@ -37,17 +37,17 @@ Refresh the product grid and the results count when the customer picks a sort or
 ```
 
 ```ts [app.ts]
-import { registerComponent } from '@studiometa/js-toolkit';
+import { registerComponents } from '@studiometa/js-toolkit';
 import { FetchShopifyPartial } from '@studiometa/ui';
 
-registerComponent(FetchShopifyPartial);
+registerComponents(FetchShopifyPartial);
 ```
 
 :::
 
 ## Faceted filtering with a form
 
-Use a `<form method="get">` so the selected facets are appended to the URL automatically, and display a loader while the partials are refreshed with the inherited [`Action`](../Action/index.md) and [`Transition`](../Transition/index.md) components.
+Use a `<form method="get">` so the selected facets become the query of the request, and display a loader while the partials are refreshed with the inherited [`Action`](../Action/index.md) and [`Transition`](../Transition/index.md) components.
 
 ::: code-group
 
@@ -88,12 +88,10 @@ Use a `<form method="get">` so the selected facets are appended to the URL autom
 ```
 
 ```ts [app.ts]
-import { registerComponent } from '@studiometa/js-toolkit';
+import { registerComponents } from '@studiometa/js-toolkit';
 import { Action, FetchShopifyPartial, Transition } from '@studiometa/ui';
 
-registerComponent(Action);
-registerComponent(FetchShopifyPartial);
-registerComponent(Transition);
+registerComponents(Action, FetchShopifyPartial, Transition);
 ```
 
 :::
@@ -122,11 +120,10 @@ Changing a facet fires a native `change` event that bubbles to the form, where t
 ```
 
 ```ts [app.ts]
-import { registerComponent } from '@studiometa/js-toolkit';
+import { registerComponents } from '@studiometa/js-toolkit';
 import { Action, FetchShopifyPartial } from '@studiometa/ui';
 
-registerComponent(Action);
-registerComponent(FetchShopifyPartial);
+registerComponents(Action, FetchShopifyPartial);
 ```
 
 :::
