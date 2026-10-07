@@ -55,7 +55,7 @@ Clicking on the link will dispatch a background fetch request and will replace t
 We use `id` attributes to detect which content from the response should be used and injected in the DOM. Any content from the response not nested in a parent with an `id` attribute will be discarded.
 :::
 
-A click with a modifier key, a middle click and a link with a `target` other than `_self` are left to the browser.
+A click with a modifier key, a middle click and a link with a `target` other than `_self` are left to the browser. A link without a `target` of its own takes the `target` of the `<base>` element, as natively.
 
 ### From any element
 
@@ -150,7 +150,7 @@ A form submission sends what a native submission would send:
 - **Overrides.** A submitter with a `formaction`, `formmethod` or `formenctype` attribute overrides the form for that submission. `formaction` also replaces [`src`](./js-api.md#src). The [`params` option](./js-api.md#params) still applies.
 - **GET.** The fields replace the query of the `action`, as natively.
 - **POST.** The body is URL-encoded by default, as natively. A file control then sends only the name of its file, and the `fetch.file-not-uploaded` diagnostic is reported. Set `enctype="multipart/form-data"` to upload files. `enctype="text/plain"` sends `name=value` lines.
-- **Left to the browser.** A `dialog` method closes its dialog natively, and a `target` or `formtarget` other than `_self` opens another browsing context. `Fetch` does not intercept these submissions.
+- **Left to the browser.** A `dialog` method closes its dialog natively, and a `target` or `formtarget` other than `_self` opens another browsing context. A form without a `target` of its own takes the `target` of the `<base>` element. `Fetch` does not intercept these submissions.
 - **The Enter key.** Pressing <kbd>Enter</kbd> in a field submits the form through its first submit button, as natively. A form that paginates with submit buttons sends the value of the first one.
 
 The submitter makes pagination with no script of its own:
