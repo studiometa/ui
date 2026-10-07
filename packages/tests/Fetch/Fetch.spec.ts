@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 import { getInstance, registerComponents } from '@studiometa/js-toolkit';
 import { captureDiagnostics, mount, settle, waitFor } from '@studiometa/js-toolkit/test';
 import { Action } from '#private/Action/Action.js';
@@ -914,6 +914,30 @@ describe('Fetch — declarative triggers', () => {
       expect(spy).not.toHaveBeenCalled();
     },
   );
+
+  it('follows the target of a `<base>` element for a link and a form without their own', async () => {
+    const base = document.createElement('base');
+    base.target = '_blank';
+    document.head.append(base);
+    onTestFinished(() => base.remove());
+    const { spy } = stubClient();
+    const { root } = await mountFetch(`
+      <div>
+        <a data-component="Fetch" id="inherits" href="/target"></a>
+        <a data-component="Fetch" id="self" href="/target" target="_self"></a>
+        <form data-component="Fetch" action="/search"></form>
+      </div>
+    `);
+
+    root.querySelector<HTMLElement>('#inherits')!.click();
+    root.querySelector('form')!.requestSubmit();
+    await settle();
+    expect(spy).not.toHaveBeenCalled();
+
+    root.querySelector<HTMLElement>('#self')!.click();
+    await settle();
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
 
   it('does nothing on a click when the element is not a link', async () => {
     const { spy } = stubClient();

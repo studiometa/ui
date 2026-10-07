@@ -109,6 +109,16 @@ function submitterOverrides(
 }
 
 /**
+ * The target of a link or a form, as the browser gets it: its own `target`
+ * attribute, or else the `target` of the first `<base>` element.
+ */
+function elementTarget(element: Element): string {
+  return element.hasAttribute('target')
+    ? (element.getAttribute('target') ?? '')
+    : (document.querySelector('base[target]')?.getAttribute('target') ?? '');
+}
+
+/**
  * Whether an effective `target` or `formtarget` leaves the navigation to the
  * browser: any value other than none or `_self` opens another browsing context.
  */
@@ -119,14 +129,11 @@ function opensElsewhere(target: string): boolean {
 /**
  * Read a property of a form through the `HTMLFormElement` getter.
  *
- * A form control named `action`, `method`, `enctype` or `target` replaces the
- * property of the same name on the form, so `form.action` can be an input.
- * The getter reads the content attribute, as a native submission does.
+ * A form control named `action`, `method` or `enctype` replaces the property
+ * of the same name on the form, so `form.action` can be an input. The getter
+ * reads the content attribute, as a native submission does.
  */
-function formProperty(
-  form: HTMLFormElement,
-  name: 'action' | 'method' | 'enctype' | 'target',
-): string {
+function formProperty(form: HTMLFormElement, name: 'action' | 'method' | 'enctype'): string {
   return Reflect.get(HTMLFormElement.prototype, name, form) as string;
 }
 
@@ -490,7 +497,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       !event.altKey &&
       !event.metaKey &&
       event.button === 0 &&
-      !opensElsewhere((this.$el as HTMLAnchorElement).target)
+      !opensElsewhere(elementTarget(this.$el))
     ) {
       event.preventDefault();
       void this.__run({});
@@ -514,9 +521,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     const method = button?.hasAttribute('formmethod')
       ? button.formMethod
       : formProperty(form, 'method');
-    const target = button?.hasAttribute('formtarget')
-      ? button.formTarget
-      : formProperty(form, 'target');
+    const target = button?.hasAttribute('formtarget') ? button.formTarget : elementTarget(form);
 
     if (method === 'dialog' || opensElsewhere(target)) {
       return;

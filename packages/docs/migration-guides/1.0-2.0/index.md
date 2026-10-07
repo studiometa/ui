@@ -724,12 +724,12 @@ A loader bound to `fetch-before` and `fetch-after` now covers the DOM change and
 
 #### `Fetch` forms
 
-| v1.x                                              | v2.x                                                                                        |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| the submitter is not sent                         | its name and value are sent, and `formaction`, `formmethod` and `formenctype` apply         |
-| a POST sends `multipart/form-data`                | a POST is URL-encoded, as natively. Add `enctype="multipart/form-data"` to upload files     |
-| a GET folds its fields onto the query of `action` | the fields replace the query of `action`, as natively. Move fixed values to `params`        |
-| only `target="_blank"` is left to the browser     | every `target` and `formtarget` other than `_self`, and the `dialog` method, are left to it |
+| v1.x                                              | v2.x                                                                                                                  |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| the submitter is not sent                         | its name and value are sent, and `formaction`, `formmethod` and `formenctype` apply                                   |
+| a POST sends `multipart/form-data`                | a POST is URL-encoded, as natively. Add `enctype="multipart/form-data"` to upload files                               |
+| a GET folds its fields onto the query of `action` | the fields replace the query of `action`, as natively. Move fixed values to `params`                                  |
+| only `target="_blank"` is left to the browser     | every `target` and `formtarget` other than `_self`, `<base target>` included, and the `dialog` method, are left to it |
 
 A file control in a URL-encoded body sends the name of its file, and the `fetch.file-not-uploaded` diagnostic is reported.
 
