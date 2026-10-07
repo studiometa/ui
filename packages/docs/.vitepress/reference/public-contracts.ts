@@ -367,6 +367,14 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'FetchLoadResult',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Fetch/js-api',
+    status: 'stable',
+  },
+  {
     name: 'FetchOutcome',
     kind: 'type',
     package: 'npm:@studiometa/ui',

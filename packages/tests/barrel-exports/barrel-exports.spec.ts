@@ -134,6 +134,7 @@ test('@studiometa/ui barrel export surface', () => {
       "FETCH_EVENTS [value]",
       "Fetch [value]",
       "FetchEmits [type]",
+      "FetchLoadResult [type]",
       "FetchOutcome [type]",
       "FetchProps [type]",
       "FetchRequest [type]",
