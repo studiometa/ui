@@ -23,7 +23,7 @@
         class="dg"
         viewBox="0 0 360 410"
         role="img"
-        aria-label="One history coordinator handles popstate. It ignores an entry without a fetch key, reloads the page when no class can restore the entry, and otherwise lets the mounted instance on the owner element run the restore, or a detached instance whose events reach document. One GET request is rebuilt from the restored URL and the recipe, and the regions that match the recipe selector are swapped.">
+        aria-label="One history coordinator handles popstate. It stops the navigation in flight, ignores an entry without a fetch key, sends no request when only the hash differs from the content on the page, reloads the page when no class can restore the entry, and otherwise lets the mounted instance on the owner element run the restore, or a detached instance whose events reach document. One GET request is rebuilt from the restored URL and the recipe, and the regions that match the recipe selector are swapped.">
         <defs>
           <marker
             :id="marker"
@@ -40,8 +40,9 @@
         <rect class="box mute" x="120" y="10" width="120" height="32" rx="6" />
         <text class="mono" x="180" y="30" text-anchor="middle">popstate</text>
         <path class="ln dash" d="M120 26 H86" />
-        <text class="lbl" x="6" y="22">no fetch key:</text>
-        <text class="lbl" x="6" y="36">ignored</text>
+        <text class="lbl" x="6" y="16">no fetch key,</text>
+        <text class="lbl" x="6" y="29">or hash only:</text>
+        <text class="lbl" x="6" y="42">no request</text>
 
         <path class="ln acc" d="M180 42 V74" :marker-end="`url(#${marker})`" />
         <rect class="box acc" x="70" y="76" width="220" height="44" rx="6" />

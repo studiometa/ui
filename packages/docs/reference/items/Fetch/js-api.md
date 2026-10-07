@@ -77,12 +77,13 @@ interface RestoreRecipe {
 | 1, after a click  | `/projects?page=2`     | `{ ...otherKeys, fetch: recipe }` | Pushed with the full destination, its own hash included.  |
 | 2, another script | `/projects?page=2#map` | `{ router: { … } }`               | No `fetch` key: ignored and kept as it is.                |
 
-Back from entry 2 to entry 1 requests `/projects?page=2&view=fragment`. Back from entry 1 to entry 0 requests `/projects?view=fragment` and swaps `#results`.
+Back from entry 2 to entry 1 sends no request, because the page already shows `/projects?page=2` and only the hash differs. Back from entry 1 to entry 0 requests `/projects?view=fragment` and swaps `#results`.
 
 </llm-only>
 
 - **The first entry.** Before its first push, `Fetch` stamps the current entry with the same recipe through `replaceState()`. Back to the page as it was first loaded then finds a recipe too.
 - **Entries of other scripts.** An entry without a `fetch` key is ignored on back and forward navigation.
+- **Anchors of the page.** Back or forward to an entry whose URL differs from the content on the page only by its hash sends no request: the browser scrolls to the fragment, and the swapped regions keep their state.
 - **A traversal stops the navigation in flight.** Back and forward abort the navigation in flight, also when they reach an entry of another script, as they stop a native navigation.
 - **Plain data only.** The recipe holds no element and no function, so it survives the element that wrote it and a reload. The [`requestInit` option](#requestinit) is not stored, because a value the browser cannot clone would make `pushState()` throw.
 - **The owner.** A restore runs on the mounted instance on the `owner` element, so its events reach that element. Give the element an `id`: without one, the restore runs on a detached instance and its events reach `document`.

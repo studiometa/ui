@@ -73,6 +73,12 @@ const owners = new Map<string, HistoryOwnerConstructor>();
 /** The navigation in flight, page-wide. */
 let navigation: NavigationToken | undefined;
 
+/**
+ * The URL, without its hash, of the content the page shows, or `undefined`
+ * when a restore did not complete and the content is not known.
+ */
+let shownPage: string | undefined;
+
 let isListening = false;
 
 /**
@@ -96,14 +102,23 @@ function currentState(): Record<string, unknown> {
   return isRecord(window.history.state) ? window.history.state : {};
 }
 
+/** A URL without its hash. */
+function withoutHash(href: string): string {
+  const url = new URL(href);
+  url.hash = '';
+  return url.href;
+}
+
 /**
  * Restore the entry the browser moved to.
  *
  * A traversal stops the navigation in flight first, as natively. An entry
- * without a `fetch` key belongs to another script and is ignored. A live
- * owner runs the restore, so its events and loading states apply. With no
- * live owner, a detached instance of the registered class runs it, and its
- * events reach `document`.
+ * without a `fetch` key belongs to another script and is ignored. An entry
+ * whose URL differs from the content on the page only by its hash needs no
+ * request: the browser scrolls to the fragment. A live owner runs the
+ * restore, so its events and loading states apply. With no live owner, a
+ * detached instance of the registered class runs it, and its events reach
+ * `document`.
  */
 function onPopstate(): void {
   navigation?.supersede();
@@ -111,6 +126,12 @@ function onPopstate(): void {
   const recipe = currentState().fetch;
 
   if (!isRecord(recipe) || typeof recipe.component !== 'string') {
+    return;
+  }
+
+  const page = withoutHash(window.location.href);
+
+  if (page === shownPage) {
     return;
   }
 
@@ -128,7 +149,15 @@ function onPopstate(): void {
   const instance =
     live instanceof Owner && live.$isMounted ? live : new Owner(document.createElement('div'));
 
-  void instance.__restore(new URL(window.location.href), recipe as RestoreRecipe);
+  shownPage = page;
+
+  void instance
+    .__restore(new URL(window.location.href), recipe as RestoreRecipe)
+    .then((outcome) => {
+      if (outcome !== 'ok' && shownPage === page) {
+        shownPage = undefined;
+      }
+    });
 }
 
 /**
@@ -141,6 +170,7 @@ export function registerHistoryOwner(name: string, Owner: HistoryOwnerConstructo
   if (!isListening) {
     window.addEventListener('popstate', onPopstate);
     isListening = true;
+    shownPage = withoutHash(window.location.href);
   }
 }
 
@@ -227,6 +257,7 @@ export function writeEntry(
 
   const write = isPush ? historyPush : historyReplace;
   write(parts, { ...currentState(), fetch: recipe });
+  shownPage = withoutHash(url.href);
 
   return true;
 }
@@ -242,4 +273,5 @@ export function resetHistoryCoordinator(): void {
   isListening = false;
   owners.clear();
   navigation = undefined;
+  shownPage = undefined;
 }
