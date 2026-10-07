@@ -615,11 +615,13 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     // change has started, or it has failed and reports its error.
     let isFinal = false;
     let outcome: FetchOutcome = 'error';
-    let finish = () => {};
+    let finish!: () => void;
 
     const token: NavigationToken = {
       settled: false,
-      finished: new Promise((resolve) => (finish = resolve)),
+      finished: new Promise((resolve) => {
+        finish = resolve;
+      }),
       supersede: (reason?: unknown) => {
         if (token.settled || isFinal) {
           return;

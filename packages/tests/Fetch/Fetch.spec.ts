@@ -577,8 +577,10 @@ describe('Fetch — one request at a time per instance', () => {
 
   it('ends a request that has started its DOM change before the next one starts', async () => {
     stubClient((url) => new Response(`<div id="fetch-default">${new URL(url).pathname}</div>`));
-    let finishAnimation = () => {};
-    const animation = new Promise<void>((resolve) => (finishAnimation = resolve));
+    let finishAnimation!: () => void;
+    const animation = new Promise<void>((resolve) => {
+      finishAnimation = resolve;
+    });
     let isApplied = false;
     const { root, instance } = await mountFetch(`<a data-component="Fetch" href="/page"></a>`);
     root.addEventListener('js-toolkit:dom:update', (event) => {
