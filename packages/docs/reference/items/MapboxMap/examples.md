@@ -77,16 +77,17 @@ Without `add-to-map`, the geocoder is rendered inside the component's own elemen
 </div>
 ```
 
-The access token is inherited from the parent `MapboxMap` when it is not set in the geocoder `options`.
+The geocoder uses the access token of the parent `MapboxMap`, unless it sets its own with `data-option-access-token`.
 
 Do not put `hidden` on a `MapboxGeocoder` element. With autoloading, the geocoder loads when its element nears the viewport, and a hidden element never does.
 
-The geocoder also works without a map. Outside a `MapboxMap`, set the `accessToken` in its `options` and listen to `map-result` to use the selected address, for example to submit a search form:
+The geocoder also works without a map. Outside a `MapboxMap`, set its `data-option-access-token` and listen to `map-result` to use the selected address, for example to submit a search form:
 
 ```html
 <div
   data-component="MapboxGeocoder"
-  data-option-options='{"accessToken": "<YOUR_MAPBOX_ACCESS_TOKEN>", "placeholder": "Search a place…"}'></div>
+  data-option-access-token="<YOUR_MAPBOX_ACCESS_TOKEN>"
+  data-option-options='{"placeholder": "Search a place…"}'></div>
 ```
 
 See [Standalone usage](./js-api.md#standalone-usage) for a complete example.

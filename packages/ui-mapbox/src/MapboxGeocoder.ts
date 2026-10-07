@@ -10,6 +10,12 @@ import { getMapboxGl, resolveMapboxGeocoder, type MapboxGeocoderControl } from '
 export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
   $options: {
     /**
+     * The Mapbox access token for the geocoding requests. Inside a `MapboxMap`,
+     * it falls back to the map's `accessToken`. An `accessToken` set in
+     * `options` wins over it, as one set in `mapOptions` does on `MapboxMap`.
+     */
+    accessToken: string;
+    /**
      * Wether to add the geocoder to the parent map or to the component's root
      * element. Requires a parent `MapboxMap`.
      */
@@ -39,8 +45,9 @@ export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
  * map's `accessToken`. Only a control added to the map (`addToMap`) shows a
  * marker for the picked result: the geocoder library skips the marker when it is
  * rendered in an element. Without a parent map (and without `addToMap`), it works
- * on its own: it renders in the root element as soon as it mounts, needs
- * `options.accessToken`, and never loads `mapbox-gl`.
+ * on its own: it renders in the root element as soon as it mounts, needs its own
+ * access token (the `accessToken` option, or `options.accessToken`), and never
+ * loads `mapbox-gl`.
  *
  * The Mapbox geocoder module is an optional peer dependency and is loaded on
  * demand with a dynamic `import()` when the component mounts, so the rest of the
@@ -58,6 +65,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
     name: 'MapboxGeocoder',
     mountStrategy: 'visible',
     options: {
+      accessToken: String,
       addToMap: Boolean,
       options: Object,
     },
@@ -97,10 +105,10 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
     const standalone =
       !this.$options.addToMap && !this.$el.parentElement?.closest(selectorFor('MapboxMap'));
 
-    if (standalone && !this.$options.options.accessToken) {
+    if (standalone && !this.__controlOptions().accessToken) {
       this.$warn(
         'mapbox-geocoder.missing-access-token',
-        'Can not create the geocoder without a parent MapboxMap: set the `accessToken` in its `options`.',
+        'A MapboxGeocoder without a parent MapboxMap needs an access token: set its `data-option-access-token`.',
       );
       return;
     }
@@ -119,7 +127,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
       // Contain a throw like the map path does: without it, it would surface as
       // an unhandled rejection of `mounted()` with no `map-error` event.
       try {
-        this.__addControl(new GeocoderControlClass(this.$options.options));
+        this.__addControl(new GeocoderControlClass(this.__controlOptions()));
       } catch (err) {
         this.__handleError(err);
       }
@@ -130,13 +138,29 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
     this.whenMapReady(() => {
       this.__addControl(
         new GeocoderControlClass({
-          ...this.$options.options,
+          ...this.__controlOptions(this.__readyMapboxMap?.$options.accessToken),
           mapboxgl: getMapboxGl(),
-          accessToken:
-            this.$options.options.accessToken ?? this.__readyMapboxMap?.$options.accessToken,
         }),
       );
     });
+  }
+
+  /**
+   * The options the control is built with.
+   *
+   * The token comes from the `accessToken` option, or else from the fallback (the
+   * parent map's token). The raw `options` are spread over it, so an
+   * `accessToken` set there wins, as one set in `mapOptions` does on
+   * `MapboxMap`. An empty `accessToken` option counts as absent: a `String`
+   * option reads as `''` when its attribute is missing.
+   * @private
+   * @param {string} [fallbackAccessToken] The parent map's access token.
+   */
+  __controlOptions(fallbackAccessToken?: string): Record<string, unknown> {
+    return {
+      accessToken: this.$options.accessToken || fallbackAccessToken,
+      ...this.$options.options,
+    };
   }
 
   /**

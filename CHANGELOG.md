@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- **@studiometa/ui-mapbox:** let `MapboxGeocoder` work without a parent `MapboxMap` ([#665](https://github.com/studiometa/ui/pull/665))
+- **@studiometa/ui-mapbox:** let `MapboxGeocoder` work without a parent `MapboxMap`, with its own `accessToken` option ([#665](https://github.com/studiometa/ui/pull/665))
 
 ### Changed
 
