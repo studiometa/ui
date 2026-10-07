@@ -255,6 +255,15 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   __token: NavigationToken | undefined;
 
   /**
+   * The latest run asked of this instance. A run that waits for a request
+   * that cannot be stopped starts only if it is still the latest one when
+   * that request has ended.
+   *
+   * @private
+   */
+  __latest: FetchRun | undefined;
+
+  /**
    * The ancestors of the element when the latest request started, nearest
    * first. The final events of a request reach the nearest one that is still
    * in the document when the swap has removed the element.
@@ -596,10 +605,20 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     const isNavigation =
       Boolean(run.restore) ||
       (this.$options.history && (this.isForm || this.isLink || run.destination !== undefined));
-    const previous = this.__endPrevious(isNavigation);
+    this.__latest = run;
+    let previous = this.__endPrevious(isNavigation);
 
-    if (previous) {
+    while (previous) {
       await previous;
+
+      // A newer request or `abort()` dropped this one while it waited. It
+      // has announced nothing, so it ends without an event.
+      if (this.__latest !== run) {
+        return 'aborted';
+      }
+
+      // Another request may have started while this one waited.
+      previous = this.__endPrevious(isNavigation);
     }
 
     const ancestors: Element[] = [];
@@ -757,7 +776,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
    * navigation in flight on the page, before a new request starts.
    *
    * A request that has started its DOM change, or has failed, cannot be
-   * stopped. The returned promise then waits until it has ended, so its
+   * stopped. The returned promise then settles once it has ended, so its
    * `fetch-after` comes before the `fetch-before` of the new request. With
    * nothing to wait for, nothing is returned and the new request starts at
    * once.
@@ -776,8 +795,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       }
     }
 
-    // Another request may have started while this one waited.
-    return pending?.finished.then(() => this.__endPrevious(isNavigation));
+    return pending?.finished;
   }
 
   /**
@@ -934,8 +952,12 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     return fragment;
   }
 
-  /** Abort the request in flight. A request that has ended is left alone. */
+  /**
+   * Abort the request in flight, and drop a request that waits to start. A
+   * request that has ended, or has started its DOM change, is left alone.
+   */
   abort(reason?: unknown): void {
+    this.__latest = undefined;
     this.__token?.supersede(reason);
   }
 }

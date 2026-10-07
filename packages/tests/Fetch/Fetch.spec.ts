@@ -625,6 +625,89 @@ describe('Fetch — one request at a time per instance', () => {
     ]);
   });
 
+  /**
+   * Mount a link whose first DOM change is held inside `js-toolkit:dom:update`
+   * until the test releases it.
+   */
+  async function mountHeldLink() {
+    const { calls } = stubClient(
+      (url) => new Response(`<div id="region">${new URL(url).pathname}</div>`),
+    );
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let isApplied = false;
+    const { root, instance } = await mountFetch(
+      `<div><div id="region">old</div><a data-component="Fetch" href="/page"></a></div>`,
+    );
+    root.addEventListener(
+      'js-toolkit:dom:update',
+      (event) => {
+        (
+          event as CustomEvent<{ wrap(runner: (apply: () => unknown) => unknown): void }>
+        ).detail.wrap(async (apply) => {
+          await apply();
+          isApplied = true;
+          await held;
+        });
+      },
+      { once: true },
+    );
+    const { events } = recordFetchEvents(root);
+
+    return {
+      instance,
+      events,
+      release,
+      isApplied(): boolean {
+        return isApplied;
+      },
+      paths(): string[] {
+        return calls.map(({ url }) => new URL(url).pathname);
+      },
+      region(): string | null {
+        return document.getElementById('region')!.textContent;
+      },
+    };
+  }
+
+  it('starts only the latest of the requests that wait for a DOM change', async () => {
+    const { instance, events, paths, region, release, isApplied } = await mountHeldLink();
+
+    const one = instance.fetch('/one');
+    await waitFor(isApplied);
+    const two = instance.fetch('/two');
+    const three = instance.fetch('/three');
+    release();
+
+    expect(await Promise.all([one, two, three])).toEqual(['ok', 'aborted', 'ok']);
+    expect(paths()).toEqual(['/one', '/three']);
+    expect(region()).toBe('/three');
+    // The dropped request never started, so it announces nothing.
+    expect(
+      events.filter(
+        ({ detail }) => (detail as { request?: FetchRequest }).request?.url === abs('/two'),
+      ),
+    ).toEqual([]);
+    expect(types(events).filter((type) => type === FETCH_EVENTS.AFTER_FETCH)).toHaveLength(2);
+  });
+
+  it('drops a request that waits for a DOM change on `abort()`', async () => {
+    const { instance, events, paths, region, release, isApplied } = await mountHeldLink();
+
+    const one = instance.fetch('/one');
+    await waitFor(isApplied);
+    const two = instance.fetch('/two');
+    instance.abort('stop');
+    release();
+
+    expect(await Promise.all([one, two])).toEqual(['ok', 'aborted']);
+    expect(paths()).toEqual(['/one']);
+    expect(region()).toBe('/one');
+    expect(types(events).filter((type) => type === FETCH_EVENTS.BEFORE_FETCH)).toHaveLength(1);
+  });
+
   it('lets two instances without history run in parallel', async () => {
     const { calls } = deferClient();
     const { root } = await mountFetch(`
