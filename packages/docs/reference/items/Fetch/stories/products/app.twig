@@ -122,7 +122,7 @@
             data-on:fetch-after="Transition(#add-to-cart-loader-{{
             loop.index
             }}) -> target.leave()"
-            data-on:fetch-update="Dialog(#cart)->target.open()"
+            data-on:fetch-update-after="Dialog(#cart)->target.open()"
             class="flex items-center gap-2">
             {%- set cart_content -%}
               <span id="cart-summary">Cart: 1</span>
