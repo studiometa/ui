@@ -544,6 +544,85 @@ describe('Fetch — one request at a time per instance', () => {
     expect(types(events).filter((type) => type === FETCH_EVENTS.AFTER_FETCH)).toHaveLength(1);
   });
 
+  it.each([
+    ['a retry', (instance: Fetch) => void instance.fetch('/retry')],
+    ['abort()', (instance: Fetch) => instance.abort('late')],
+  ])(
+    'ends a failed request with `error` when a `fetch-error` listener calls %s',
+    async (_label, act) => {
+      stubClient((url) =>
+        url.endsWith('/first')
+          ? new Response('nope', { status: 500 })
+          : new Response('<div id="fetch-default">retry</div>'),
+      );
+      const { root, instance } = await mountFetch(`<a data-component="Fetch" href="/page"></a>`);
+      const { events } = recordFetchEvents(root);
+      root.addEventListener(FETCH_EVENTS.ERROR, () => act(instance), { once: true });
+
+      expect(await instance.fetch('/first')).toBe('error');
+      await settle();
+
+      const ofFirst = events.filter(
+        ({ detail }) => (detail as { request: FetchRequest }).request.url === abs('/first'),
+      );
+      expect(types(ofFirst)).toEqual([
+        FETCH_EVENTS.BEFORE_FETCH,
+        FETCH_EVENTS.RESPONSE,
+        FETCH_EVENTS.ERROR,
+        FETCH_EVENTS.AFTER_FETCH,
+      ]);
+      expect(detailOf(ofFirst, FETCH_EVENTS.AFTER_FETCH)).toMatchObject({ outcome: 'error' });
+    },
+  );
+
+  it('ends a request that has started its DOM change before the next one starts', async () => {
+    stubClient((url) => new Response(`<div id="fetch-default">${new URL(url).pathname}</div>`));
+    let finishAnimation = () => {};
+    const animation = new Promise<void>((resolve) => (finishAnimation = resolve));
+    let isApplied = false;
+    const { root, instance } = await mountFetch(`<a data-component="Fetch" href="/page"></a>`);
+    root.addEventListener('js-toolkit:dom:update', (event) => {
+      (event as CustomEvent<{ wrap(runner: (apply: () => unknown) => unknown): void }>).detail.wrap(
+        async (apply) => {
+          await apply();
+          isApplied = true;
+          await animation;
+        },
+      );
+    });
+    const { events } = recordFetchEvents(root);
+    let isLoading = false;
+    const loading: boolean[] = [];
+    root.addEventListener(FETCH_EVENTS.BEFORE_FETCH, () => (isLoading = true));
+    root.addEventListener(FETCH_EVENTS.AFTER_FETCH, () => (isLoading = false));
+    root.addEventListener(FETCH_EVENTS.RESPONSE, () => loading.push(isLoading));
+
+    const first = instance.fetch('/one');
+    await waitFor(() => isApplied);
+    const second = instance.fetch('/two');
+    finishAnimation();
+
+    expect(await Promise.all([first, second])).toEqual(['ok', 'ok']);
+    expect(loading).toEqual([true, true]);
+    expect(
+      events.map(({ type, detail }) => [
+        type,
+        new URL((detail as { request: FetchRequest }).request.url).pathname,
+      ]),
+    ).toEqual([
+      [FETCH_EVENTS.BEFORE_FETCH, '/one'],
+      [FETCH_EVENTS.RESPONSE, '/one'],
+      [FETCH_EVENTS.BEFORE_UPDATE, '/one'],
+      [FETCH_EVENTS.AFTER_UPDATE, '/one'],
+      [FETCH_EVENTS.AFTER_FETCH, '/one'],
+      [FETCH_EVENTS.BEFORE_FETCH, '/two'],
+      [FETCH_EVENTS.RESPONSE, '/two'],
+      [FETCH_EVENTS.BEFORE_UPDATE, '/two'],
+      [FETCH_EVENTS.AFTER_UPDATE, '/two'],
+      [FETCH_EVENTS.AFTER_FETCH, '/two'],
+    ]);
+  });
+
   it('lets two instances without history run in parallel', async () => {
     const { calls } = deferClient();
     const { root } = await mountFetch(`

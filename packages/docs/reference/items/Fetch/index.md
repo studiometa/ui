@@ -230,7 +230,7 @@ The [events](./js-api.md#events) sent by the `Fetch` component bubble up the DOM
 </div>
 ```
 
-A new request on the same element ends the previous one first, so the loader stays on. Requests that write history run one at a time on the page. Other requests run one at a time per element only: two elements without `history` can run in parallel, and the first `fetch-after` would hide a shared loader. Count the requests in flight when several such elements share one loader.
+A new request on the same element ends the previous one first, so the loader stays on. Requests that write history run one at a time on the page, and a new one ends the previous one first too. Other requests run one at a time per element only: two elements without `history` can run in parallel, and the first `fetch-after` would hide a shared loader. Count the requests in flight when several such elements share one loader.
 
 ### Transitions
 
