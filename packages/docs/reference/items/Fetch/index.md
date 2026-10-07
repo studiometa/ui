@@ -97,7 +97,7 @@ Set the [`history` option](./js-api.md#history) to write the destination of each
 
 ```mermaid
 flowchart TB
-  p([popstate]) -. no fetch key .-> i[ignored]
+  p([popstate]) -. no fetch key, or the hash only .-> i[no request]
   p --> c["history coordinator<br>reads history.state.fetch"]
   c -. no class to restore it .-> r[reload the page]
   c -- owner mounted --> live["live instance on #owner<br>events on its element"]
@@ -113,6 +113,7 @@ flowchart TB
 - **The entry keeps a recipe.** Each entry stores plain data under the `fetch` key of `history.state`: the regions to swap, the swap mode, the [`params`](./js-api.md#params) and [`src`](./js-api.md#src) options, and the `id` of the element that wrote it. Back rebuilds the request from the restored URL and that recipe. It works after the element has left the page. See [history entries](./js-api.md#history-entries).
 - **Push by default.** Each request adds an entry, as a native navigation does. A GET to the URL the page already shows replaces the current entry, as natively. Set [`historyMode`](./js-api.md#historymode) to `replace` for a live search: the request replaces the current entry, so back leaves the search instead of going back one keystroke.
 - **Entries of other scripts are kept.** An entry without a `fetch` key is ignored, and the keys that other scripts put in `history.state` are kept.
+- **Anchors cost nothing.** Back to an entry that differs from the content on the page only by its hash sends no request, as natively.
 - **A POST writes history only after a redirect.** The entry is then the page the server redirected to, which back restores with a GET. A POST without a redirect writes nothing.
 - **Give the element an `id`.** The events of a restore reach the element that wrote the entry only when it has an `id`. Without one, they reach `document`.
 

@@ -213,12 +213,16 @@ describe('Fetch history — writing entries', () => {
     await instance.fetch();
     expect(address()).toBe('/thanks?id=7');
 
-    window.history.pushState(null, '', '/elsewhere');
+    const { instance: link } = await mountFetch(
+      `<a data-component="Fetch" href="/elsewhere" data-option-history
+        data-option-no-view-transition></a>`,
+    );
+    await link.fetch();
     await back();
     await waitFor(() => list() === 'thanks again');
 
-    expect(calls[1]).toMatchObject({ url: abs('/thanks?id=7'), init: { method: 'GET' } });
-    expect(calls[1].init.body).toBeUndefined();
+    expect(calls[2]).toMatchObject({ url: abs('/thanks?id=7'), init: { method: 'GET' } });
+    expect(calls[2].init.body).toBeUndefined();
   });
 
   it('removes the `params` keys from the URL a POST was redirected to', async () => {
@@ -539,17 +543,42 @@ describe('Fetch history — back and forward', () => {
         data-option-no-view-transition></a>`,
     );
     await instance.fetch();
-    window.history.pushState({ other: 1 }, '', '/projects?page=2#map');
+    window.history.pushState({ other: 1 }, '', '/map');
     window.history.pushState(null, '', '/elsewhere');
 
     await back();
     await settle();
+    expect(address()).toBe('/map');
+    expect(window.history.state).toEqual({ other: 1 });
+    expect(calls).toHaveLength(1);
+
+    await back();
+    await back();
+    await waitFor(() => calls.length === 2);
+
+    expect(address()).toBe('/projects?page=1');
+    expect(calls[1].url).toBe(abs('/projects?page=1'));
+  });
+
+  it('sends no request on back from an anchor of the page to the page itself', async () => {
+    window.history.pushState(null, '', '/projects?page=1');
+    const { calls } = servePages();
+    await mount(`<div id="list">page 1</div>`);
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="/projects?page=2" data-option-history
+        data-option-no-view-transition></a>`,
+    );
+    await instance.fetch();
+    const swapped = document.getElementById('list');
+
+    window.location.hash = 'top';
+    await waitFor(() => address() === '/projects?page=2#top');
     await back();
     await settle();
 
     expect(address()).toBe('/projects?page=2');
-    expect(calls).toHaveLength(2);
-    expect(calls[1].url).toBe(abs('/projects?page=2'));
+    expect(calls).toHaveLength(1);
+    expect(document.getElementById('list')).toBe(swapped);
   });
 
   it('stops a navigation in flight on back to an entry of another script', async () => {
@@ -575,11 +604,13 @@ describe('Fetch history — back and forward', () => {
       '',
       '/projects?page=4',
     );
+    // The page reloaded on the next entry.
+    window.history.pushState({ fetch: makeRecipe() }, '', '/projects?page=5');
     const { calls } = servePages();
-    await mount(`<div id="list">stale</div>`);
+    await mount(`<div id="list">page 5</div>`);
     await mountFetch(`<a data-component="Fetch" href="/projects" data-option-history></a>`);
 
-    window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
+    await back();
     await waitFor(() => list() === 'page 4');
 
     expect(calls.map(({ url }) => url)).toEqual([abs('/projects?page=4&view=fragment')]);
@@ -588,10 +619,11 @@ describe('Fetch history — back and forward', () => {
   it('reloads the page for an entry that no class on the page can restore', async () => {
     const reload = vi.spyOn(historyCoordinator, 'reload').mockImplementation(() => {});
     window.history.pushState({ fetch: makeRecipe({ component: 'Unknown' }) }, '', '/x');
+    window.history.pushState(null, '', '/y');
     const { spy } = servePages();
     await mountFetch(`<a data-component="Fetch" href="/projects" data-option-history></a>`);
 
-    window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
+    await back();
     await settle();
 
     expect(reload).toHaveBeenCalledTimes(1);

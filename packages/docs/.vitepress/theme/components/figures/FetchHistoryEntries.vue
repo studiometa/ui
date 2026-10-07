@@ -58,11 +58,11 @@
     </div>
     <!-- prettier-ignore -->
     <ol class="steps">
-      <li>Back from entry 2 to entry 1: the coordinator finds a recipe and requests <code>/projects?page=2&amp;view=fragment</code>.</li>
+      <li>Back from entry 2 to entry 1: the coordinator finds a recipe, but the page already shows <code>/projects?page=2</code> and only the hash differs, so it sends no request.</li>
       <li>Back from entry 1 to entry 0: it requests <code>/projects?view=fragment</code> and swaps <code>#results</code>.</li>
       <li>A mounted instance of <code>component</code> on the <code>owner</code> element runs the restore, so its events and loading states apply. Without one, a detached instance runs it and its events reach <code>document</code>.</li>
     </ol>
     <!-- prettier-ignore -->
-    <figcaption :id="captionId">Three entries on one page. <code>Fetch</code> restores the two it wrote and leaves the third alone. A recipe is plain data, so back and forward navigation still work after the element that wrote the entry has left the page.</figcaption>
+    <figcaption :id="captionId">Three entries on one page. <code>Fetch</code> restores the two it wrote when the page shows other content, and leaves the third alone. A recipe is plain data, so back and forward navigation still work after the element that wrote the entry has left the page.</figcaption>
   </figure>
 </template>
