@@ -554,7 +554,7 @@ class FetchJson extends Fetch {
 ## Constants
 
 - `FETCH_EVENTS`: the names of the lifecycle events, in the order they fire: `BEFORE_FETCH` (`fetch-before`), `RESPONSE`, `BEFORE_UPDATE`, `AFTER_UPDATE`, `ERROR`, `ABORT` and `AFTER_FETCH` (`fetch-after`).
-- `HEADER_NAMES`: the names of the headers the component uses on its own behalf: `accept`, `x-requested-by`, `x-triggered-by` and `user-agent`.
+- `HEADER_NAMES`: the names of the headers the component sends on its own behalf: `x-triggered-by` and `user-agent`.
 
 ## Diagnostics
 
