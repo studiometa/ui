@@ -140,7 +140,7 @@ class SearchResults extends Base {
   data-track:search-results='{"event": "search_results", "count": "$event.detail.count", "tag": "$event.detail.tags.0"}'></div>
 ```
 
-A placeholder is replaced by the value at its path as it is. A path can therefore reach an object that does not serialise to JSON, such as a DOM element (`$event.target`) or a component instance. `Track` pushes it to `window.dataLayer` unchanged. `Shopify.analytics.publish()` only accepts JSON-serialisable payloads, so a `TrackShopify` placeholder must point to a plain value, such as `$event.target.dataset.plan`.
+A placeholder is replaced by the value at its path as it is. A path can therefore reach an object that does not serialise to JSON, such as a DOM element (`$event.target`) or a component instance. `Track` pushes it to `window.dataLayer` unchanged. `TrackShopify` hands the payload to `Shopify.analytics.publish()`, which passes it as `customData` to pixels that run in a sandbox. Keep a `TrackShopify` payload JSON-serialisable: point its placeholders to plain values, such as `$event.target.dataset.plan`.
 
 A debounced or throttled event is read when the dispatch runs, after the event has finished. At that time `event.currentTarget` is `null`. Read `$event.target` instead.
 
