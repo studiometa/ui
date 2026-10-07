@@ -23,7 +23,7 @@ interface MockGeocoderControl {
  */
 async function createGeocoder(attrs = '') {
   const context = await mountMap(
-    `<div data-component="MapboxGeocoder" data-option-options='{"accessToken":"geo-token"}' ${attrs}></div>`,
+    `<div data-component="MapboxGeocoder" data-mount="eager" data-option-options='{"accessToken":"geo-token"}' ${attrs}></div>`,
   );
   await context.load();
   const el = context.mapEl.querySelector<HTMLElement>('[data-component="MapboxGeocoder"]')!;

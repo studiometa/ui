@@ -82,9 +82,9 @@ registerComponents(MapboxMap, MapboxGeocoder);
  */
 async function mountGeocoder() {
   const root = await mount(`
-    <div data-component="MapboxMap" data-option-access-token="test-token">
+    <div data-component="MapboxMap" data-mount="eager" data-option-access-token="test-token">
       <div data-ref="container"></div>
-      <div data-component="MapboxGeocoder" data-option-options='{"accessToken":"geo-token"}'></div>
+      <div data-component="MapboxGeocoder" data-mount="eager" data-option-options='{"accessToken":"geo-token"}'></div>
     </div>
   `);
   const mapEl = root.querySelector<HTMLElement>('[data-component="MapboxMap"]')!;

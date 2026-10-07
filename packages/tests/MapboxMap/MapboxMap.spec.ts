@@ -14,6 +14,7 @@ async function createMapboxMap(attrs = '', container = '<div data-ref="container
   const root = await mount(`
     <div
       data-component="MapboxMap"
+      data-mount="eager"
       data-option-access-token="test-token"
       data-option-zoom="10"
       data-option-center="[2.35, 48.85]"
@@ -44,7 +45,7 @@ describe('MapboxMap component', () => {
 
   it('should default center to [0, 0]', async () => {
     const root = await mount(`
-      <div data-component="MapboxMap" data-option-access-token="token">
+      <div data-component="MapboxMap" data-mount="eager" data-option-access-token="token">
         <div data-ref="container"></div>
       </div>
     `);

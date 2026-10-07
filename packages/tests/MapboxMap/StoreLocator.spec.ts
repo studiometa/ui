@@ -47,7 +47,7 @@ function clusterHtml(items: ItemSpec[]) {
   return `<div data-component="MapboxCluster"><ul>${items.map(itemHtml).join('')}</ul></div>`;
 }
 
-const GEOCODER_HTML = `<div data-component="MapboxGeocoder" data-option-options='{"accessToken":"geo-token"}'></div>`;
+const GEOCODER_HTML = `<div data-component="MapboxGeocoder" data-mount="eager" data-option-options='{"accessToken":"geo-token"}'></div>`;
 
 /**
  * Simulate a child component emitting one of its events.
@@ -71,8 +71,8 @@ async function createStoreLocator(
 ) {
   const { attrs = '', geocoder = false, cluster = true } = options;
   const root = await mount(`
-    <div data-component="StoreLocator" ${attrs}>
-      <div data-component="MapboxMap" data-option-access-token="test-token">
+    <div data-component="StoreLocator" data-mount="eager" ${attrs}>
+      <div data-component="MapboxMap" data-mount="eager" data-option-access-token="test-token">
         <div data-ref="container"></div>
         ${geocoder ? GEOCODER_HTML : ''}
         ${cluster ? clusterHtml(items) : ''}

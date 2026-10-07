@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Spy on the two resolvers, keeping their implementation. `MapboxMap` is the
 // only caller of `resolveMapboxGl()`, and `MapboxGeocoder` the only caller of
@@ -71,6 +71,12 @@ beforeEach(() => {
 
   vi.mocked(resolveMapboxGl).mockClear();
   vi.mocked(resolveMapboxGeocoder).mockClear();
+});
+
+// These specs scroll the page. Put it back at the top, so a later spec that
+// waits for the viewport does not start scrolled down.
+afterEach(() => {
+  window.scrollTo(0, 0);
 });
 
 /**

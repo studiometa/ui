@@ -42,12 +42,19 @@ export interface MountedMap {
  * building the map, so the returned `mockMap` is only available once `mount()`
  * has settled — which it has by the time this resolves.
  *
+ * `MapboxMap` declares the `visible` mount strategy, so it mounts only once an
+ * `IntersectionObserver` reports it, which `mount()` does not wait for. The
+ * element sets `data-mount="eager"` so the map mounts with the rest of the
+ * markup. The same applies to `StoreLocator` and `MapboxGeocoder` in the specs
+ * that mount them: these specs test the components, not their strategy, which
+ * `autoload/hidden-elements.spec.ts` covers.
+ *
  * @param children Markup appended inside the `MapboxMap` element.
  * @param attrs    Extra attributes for the `MapboxMap` element.
  */
 export async function mountMap(children = '', attrs = ''): Promise<MountedMap> {
   const root = await mount(`
-    <div data-component="MapboxMap" data-option-access-token="test-token" ${attrs}>
+    <div data-component="MapboxMap" data-mount="eager" data-option-access-token="test-token" ${attrs}>
       <div data-ref="container"></div>
       ${children}
     </div>
