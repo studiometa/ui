@@ -334,7 +334,7 @@ The underlying Popup instance.
 
 ## Controls
 
-All controls extend [`AbstractMapboxMapChild`](#abstractmapboxmapchild) and expose the underlying Mapbox control through a `control` getter. They share a `position` option and are added to the map on mount, removed on unmount.
+All controls extend [`AbstractMapboxMapChild`](#abstractmapboxmapchild) and expose the underlying Mapbox control through a `control` getter. They share a `position` option and are added to the map on mount, removed on unmount. `MapboxGeocoder` is the exception: it has no `position` option, and it can render in its own element, with or without a map.
 
 ### MapboxNavigationControl
 
@@ -448,12 +448,26 @@ With autoloading, `MapboxGeocoder` uses the `visible` mount strategy, so it moun
 
 #### Options
 
+##### `access-token`
+
+- Type: `String`
+
+Mapbox [access token](https://docs.mapbox.com/help/getting-started/access-tokens/) for the geocoding requests. Inside a `MapboxMap`, the geocoder uses the map's `access-token` when this option is not set. Without a parent map, the geocoder needs it (see [Standalone usage](#standalone-usage)).
+
+The token is taken from the first of these that is set:
+
+1. `accessToken` in the `options` option.
+2. The `access-token` option.
+3. The `access-token` of the parent `MapboxMap`.
+
+This is the same order as on `MapboxMap`, where an `accessToken` in [`map-options`](#map-options) wins over its `access-token` option.
+
 ##### `add-to-map`
 
 - Type: `Boolean`
 - Default: `false`
 
-Add the geocoder to the map as a control. Otherwise it is rendered inside the component's element.
+Add the geocoder to the map as a control. This requires a parent `MapboxMap`. Otherwise it is rendered inside the component's element, with or without a parent map (see [Standalone usage](#standalone-usage)).
 
 ##### `options`
 
@@ -462,7 +476,7 @@ Add the geocoder to the map as a control. Otherwise it is rendered inside the co
 
 [Geocoder options](https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md#parameters). Non-serializable options (`filter`, `externalGeocoder`, `render`, `getItemValue`, `localGeocoder`) are not supported.
 
-The `accessToken` is inherited from the parent `MapboxMap` when it is not set in `options`.
+An `accessToken` set in `options` wins over the geocoder's `access-token` option. Prefer the `access-token` option: it keeps the token out of the JSON.
 
 #### Getters
 
@@ -485,6 +499,38 @@ Where the control is mounted, depending on `add-to-map`.
 - Payload: `{ result }`
 
 Emitted when the geocoder resolves an address, carrying the geocoder's selected feature.
+
+#### Standalone usage
+
+The geocoder does not need a map. Without `add-to-map` and without an ancestor element declared as `MapboxMap`, the component works on its own: it creates the control on mount, adds the search input to its own root element and emits `map-result` with the selected feature. Use it for an address search that drives something other than a map, such as a search form.
+
+A standalone geocoder has no map to read the access token from, so set its `access-token` option. Without a token, the component logs a `mapbox-geocoder.missing-access-token` warning and does not create the control. A standalone geocoder does not load `mapbox-gl`.
+
+The following example fills a hidden `near` field with the coordinates of the selected address, then submits a [`Fetch`](/reference/items/Fetch/) form. An [`Action`](/reference/items/Action/) on the same element listens to `map-result`. The field stays disabled until an address is selected, so the form never sends an empty `near` parameter.
+
+```html
+<form id="store-search" action="/stores" method="get" data-component="Fetch">
+  <input type="hidden" name="near" disabled />
+</form>
+
+<div
+  data-component="Action MapboxGeocoder"
+  data-option-access-token="pk.…"
+  data-option-options='{"countries": "fr"}'
+  data-on:map-result="Fetch(#store-search) -> () => {
+    const [lng, lat] = event.detail.result.center;
+    const { near } = target.$el.elements;
+    near.value = `${lat},${lng}`;
+    near.disabled = false;
+    target.$el.requestSubmit();
+  }"></div>
+
+<div id="stores">…</div>
+```
+
+Inside a `MapboxMap`, the geocoder uses the map, even when the map mounts after it: the access token falls back to the map's [`access-token`](#access-token). Only a geocoder added to the map with [`add-to-map`](#add-to-map) shows a marker for the result and moves the map: a geocoder rendered in its own element never does, with or without a parent map.
+
+In a [`StoreLocator`](/reference/items/StoreLocator/), the geocoder can also be placed outside the `MapboxMap` element, anywhere inside the `StoreLocator` element. It then works standalone and needs its own `access-token`, and the `StoreLocator` still frames the map on its `map-result` event.
 
 ## Data
 

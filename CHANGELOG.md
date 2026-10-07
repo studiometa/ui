@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **@studiometa/ui-mapbox:** let `MapboxGeocoder` work without a parent `MapboxMap`, with its own `accessToken` option ([#665](https://github.com/studiometa/ui/pull/665))
+
 ### Changed
 
 - **@studiometa/ui-mapbox:** mount `MapboxMap`, `StoreLocator` and `MapboxGeocoder` when they near the viewport, also when registered directly ([#655](https://github.com/studiometa/ui/pull/655))

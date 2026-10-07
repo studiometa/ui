@@ -1,4 +1,5 @@
 import type { BaseProps, BaseConfig } from '@studiometa/js-toolkit';
+import { selectorFor } from '@studiometa/js-toolkit/utils/selectorFor';
 import type { Map, IControl } from 'mapbox-gl';
 import {
   AbstractMapboxMapChild,
@@ -9,7 +10,14 @@ import { getMapboxGl, resolveMapboxGeocoder, type MapboxGeocoderControl } from '
 export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
   $options: {
     /**
-     * Wether to add the geocoder to the map or to the component's root element.
+     * The Mapbox access token for the geocoding requests. Inside a `MapboxMap`,
+     * it falls back to the map's `accessToken`. An `accessToken` set in
+     * `options` wins over it, as one set in `mapOptions` does on `MapboxMap`.
+     */
+    accessToken: string;
+    /**
+     * Wether to add the geocoder to the parent map or to the component's root
+     * element. Requires a parent `MapboxMap`.
      */
     addToMap: boolean;
     /**
@@ -31,7 +39,15 @@ export interface MapboxGeocoderProps extends AbstractMapboxMapChildProps {
 }
 
 /**
- * Add a geocoder control to the map.
+ * Add a geocoder control to the map, or to the component's root element.
+ *
+ * Inside a `MapboxMap`, the control waits for the map and falls back to the
+ * map's `accessToken`. Only a control added to the map (`addToMap`) shows a
+ * marker for the picked result: the geocoder library skips the marker when it is
+ * rendered in an element. Without a parent map (and without `addToMap`), it works
+ * on its own: it renders in the root element as soon as it mounts, needs its own
+ * access token (the `accessToken` option, or `options.accessToken`), and never
+ * loads `mapbox-gl`.
  *
  * The Mapbox geocoder module is an optional peer dependency and is loaded on
  * demand with a dynamic `import()` when the component mounts, so the rest of the
@@ -49,6 +65,7 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
     name: 'MapboxGeocoder',
     mountStrategy: 'visible',
     options: {
+      accessToken: String,
       addToMap: Boolean,
       options: Object,
     },
@@ -68,8 +85,8 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
   }
 
   /**
-   * Target element the geocoder is added to: the map when `addToMap` is set,
-   * otherwise the component's own root element.
+   * Target element the geocoder is added to: the parent map when `addToMap` is
+   * set, otherwise the component's own root element.
    */
   get target(): Map | HTMLElement | string {
     return this.$options.addToMap ? this.map : this.$el;
@@ -79,9 +96,23 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
    * Mounted hook.
    *
    * Lazily loads the optional Mapbox geocoder module, then builds and adds the
-   * control once the parent map is ready.
+   * control: once the parent map is ready, or right away without a parent map.
    */
   async mounted() {
+    // Look for the parent map element rather than a mounted `MapboxMap`
+    // instance: a lazily mounted map has no instance yet, and the geocoder must
+    // wait for it instead of going standalone.
+    const standalone =
+      !this.$options.addToMap && !this.$el.parentElement?.closest(selectorFor('MapboxMap'));
+
+    if (standalone && !this.__controlOptions().accessToken) {
+      this.$warn(
+        'mapbox-geocoder.missing-access-token',
+        'A MapboxGeocoder without a parent MapboxMap needs an access token: set its `data-option-access-token`.',
+      );
+      return;
+    }
+
     const GeocoderControlClass = await resolveMapboxGeocoder();
 
     // The component may have been destroyed while the dynamic import was still
@@ -92,34 +123,74 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
       return;
     }
 
-    this.whenMapReady(() => {
-      // The ready callback is standing: it re-runs on every map replacement. An
-      // element-targeted control (`addToMap` false) lives on `$el`, which
-      // survives the map swap, so a previous control must be removed first or
-      // each replacement would stack another geocoder onto the element. A
-      // map-targeted control went away with its (removed) map, so only its
-      // reference needs dropping.
-      if (this.__control) {
-        if (!this.$options.addToMap) {
-          this.__control.onRemove();
-        }
-        this.__control = undefined;
+    if (standalone) {
+      // Contain a throw like the map path does: without it, it would surface as
+      // an unhandled rejection of `mounted()` with no `map-error` event.
+      try {
+        this.__addControl(new GeocoderControlClass(this.__controlOptions()));
+      } catch (err) {
+        this.__handleError(err);
       }
+      return;
+    }
 
-      const options = {
-        ...this.$options.options,
-        mapboxgl: getMapboxGl(),
-        accessToken:
-          this.$options.options.accessToken ?? this.__readyMapboxMap?.$options.accessToken,
-      };
-      this.__control = new GeocoderControlClass(
-        options as ConstructorParameters<typeof GeocoderControlClass>[0],
+    // The ready callback is standing: it re-runs on every map replacement.
+    this.whenMapReady(() => {
+      this.__addControl(
+        new GeocoderControlClass({
+          ...this.__controlOptions(this.__readyMapboxMap?.$options.accessToken),
+          mapboxgl: getMapboxGl(),
+        }),
       );
-      // Re-emit the control's `result` event as a prefixed component event so
-      // consumers (e.g. a `StoreLocator`) can react to a geocoded address.
-      this.__control.on?.('result', (event) => this.$emit('map-result', { result: event.result }));
-      this.__control.addTo(this.target);
     });
+  }
+
+  /**
+   * The options the control is built with.
+   *
+   * The token comes from the `accessToken` option, or else from the fallback (the
+   * parent map's token). The raw `options` are spread over it, so an
+   * `accessToken` set there wins, as one set in `mapOptions` does on
+   * `MapboxMap`. An empty `accessToken` option counts as absent: a `String`
+   * option reads as `''` when its attribute is missing.
+   * @private
+   * @param {string} [fallbackAccessToken] The parent map's access token.
+   */
+  __controlOptions(fallbackAccessToken?: string): Record<string, unknown> {
+    return {
+      accessToken: this.$options.accessToken || fallbackAccessToken,
+      ...this.$options.options,
+    };
+  }
+
+  /**
+   * Add a control to the target, replacing the previous one, and re-emit its
+   * `result` event as a prefixed component event, so consumers (e.g. a
+   * `StoreLocator`) can react to a geocoded address.
+   *
+   * A previous control exists when the map is replaced (the ready callback
+   * re-runs) or when the instance is unmounted and mounted again while the
+   * geocoder import is pending (both `mounted()` calls resume). An
+   * element-targeted control (`addToMap` false) lives on `$el`, which survives
+   * both, so it must be removed first or the element would stack several
+   * geocoders. A map-targeted control went away with its (removed) map, so only
+   * its reference needs dropping.
+   * @private
+   * @param {MapboxGeocoderControl} control
+   */
+  __addControl(control: MapboxGeocoderControl) {
+    if (this.__control) {
+      if (!this.$options.addToMap) {
+        this.__control.onRemove();
+      }
+      this.__control = undefined;
+    }
+
+    control.on?.('result', (event) => this.$emit('map-result', { result: event.result }));
+    control.addTo(this.target);
+    // Keep the control only once it is added: teardown calls `onRemove()` on it,
+    // which throws on a control that never rendered.
+    this.__control = control;
   }
 
   /**
@@ -127,7 +198,8 @@ export class MapboxGeocoder<T extends BaseProps = BaseProps> extends AbstractMap
    */
   __onDestroyed() {
     // The control may not exist yet: the dynamic import in `mounted()` might not
-    // have resolved, or the geocoder module was never loaded.
+    // have resolved, the geocoder module was never loaded, or a geocoder without
+    // a parent map had no access token.
     if (this.__control) {
       if (this.$options.addToMap) {
         this.__readyMap?.removeControl(this.__control as unknown as IControl);
