@@ -1,271 +1,232 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getInstance, registerComponents } from '@studiometa/js-toolkit';
-import { mount, recordEvents, resetDom, settle } from '@studiometa/js-toolkit/test';
-import { FETCH_EVENTS } from '#private/Fetch/Fetch.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { registerComponents } from '@studiometa/js-toolkit';
+import { mount, settle, waitFor } from '@studiometa/js-toolkit/test';
+import { FETCH_EVENTS, type FetchEmits } from '#private/Fetch/Fetch.js';
 import { FetchShopifyPartial } from '#private/Fetch/FetchShopifyPartial.js';
+import {
+  abs,
+  back,
+  detailOf,
+  mountFetch,
+  recordFetchEvents,
+  recordHistoryWrites,
+  stubClient,
+  types,
+  useFetchSpecHooks,
+} from './helpers.js';
 
 registerComponents(FetchShopifyPartial);
 
-const originalFetch = window.fetch;
-const originalHref = window.location.href;
+useFetchSpecHooks();
+
 const originalLoadPartialsModule = FetchShopifyPartial.loadPartialsModule;
 
-/** Real navigation would take the test runner with it. */
-function preventNavigation(event: Event): void {
-  event.preventDefault();
-}
-
-beforeEach(() => {
-  document.addEventListener('click', preventNavigation, true);
-});
-
-afterEach(async () => {
-  document.removeEventListener('click', preventNavigation, true);
-  window.fetch = originalFetch;
-  window.history.replaceState({}, '', originalHref);
+afterEach(() => {
   FetchShopifyPartial.loadPartialsModule = originalLoadPartialsModule;
-  await resetDom();
 });
 
-/** {@link mount}, plus the one instance every test here goes on to drive. */
-async function mountWithInstance(
-  html: string,
-): Promise<{ root: HTMLElement; instance: FetchShopifyPartial }> {
-  const root = await mount(html);
-  return {
-    root,
-    instance: getInstance<FetchShopifyPartial>(root.firstElementChild, 'FetchShopifyPartial')!,
+/** Mount one `FetchShopifyPartial` from markup. */
+function mountPartial(html: string): ReturnType<typeof mountFetch<FetchShopifyPartial>> {
+  return mountFetch<FetchShopifyPartial>(html, 'FetchShopifyPartial');
+}
+
+/** The partials API of a fake `@shopify/partial-rendering`. */
+interface FakePartials {
+  fetch: ReturnType<typeof vi.fn>;
+  apply: ReturnType<typeof vi.fn>;
+}
+
+/**
+ * Install a fake partials module. Its update names the page it was fetched
+ * for, and applying it writes that page into `#main`.
+ */
+function stubPartials(overrides: Partial<FakePartials> = {}): FakePartials {
+  const api: FakePartials = {
+    fetch: vi.fn(async (...args: unknown[]) => {
+      const { url } = args.at(-1) as { url: string };
+      return { page: new URL(url).searchParams.get('page') };
+    }),
+    apply: vi.fn((update: { page: string | null }) => {
+      const main = document.getElementById('main');
+      if (main) {
+        main.textContent = `main ${update.page}`;
+      }
+    }),
+    ...overrides,
   };
-}
-
-function stubClient(
-  respond: () => Response | Promise<Response> = () => new Response('<div id="a">base</div>'),
-): ReturnType<typeof vi.fn> {
-  const client = vi.fn(async () => respond());
-  window.fetch = client as unknown as typeof fetch;
-  return client;
-}
-
-function stubPartials(api: {
-  fetch: (...args: unknown[]) => Promise<unknown>;
-  apply: (update: unknown) => void | Promise<void>;
-}): void {
   FetchShopifyPartial.loadPartialsModule = async () => ({ partials: api });
+  return api;
 }
 
 describe('FetchShopifyPartial', () => {
-  it('falls back to the base Fetch behaviour when no partials are configured', async () => {
-    const client = stubClient();
-    const { root, instance } = await mountWithInstance(
-      `<a data-component="FetchShopifyPartial" href="/page" id="a"><div id="a">old</div></a>`,
+  it('uses the inherited transport when no partials are configured', async () => {
+    const { spy } = stubClient();
+    const { root, instance } = await mountPartial(
+      `<a data-component="FetchShopifyPartial" href="/page"></a>`,
     );
-    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+    const { events } = recordFetchEvents(root);
 
-    await instance.fetch();
-    await settle();
+    expect(await instance.fetch()).toBe('ok');
 
-    expect(client).toHaveBeenCalledOnce();
-    expect(events.map((e) => e.type)).toContain(FETCH_EVENTS.RESPONSE);
+    expect(spy).toHaveBeenCalledOnce();
+    expect(types(events)).toContain(FETCH_EVENTS.RESPONSE);
   });
 
-  it('uses partial rendering when partials are configured and the module resolves', async () => {
-    const client = stubClient();
-    const apply = vi.fn();
-    const fetchPartials = vi.fn(async () => ({ shape: 'partial-update' }));
-    stubPartials({ fetch: fetchPartials, apply });
-    const { root, instance } = await mountWithInstance(
-      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main, header"></a>`,
+  it('loads and applies through partials, with the inherited lifecycle and no `fetch-response`', async () => {
+    const { spy } = stubClient();
+    const partials = stubPartials();
+    await mount(`<div id="main">main 1</div>`);
+    const { root, instance } = await mountPartial(
+      `<a data-component="FetchShopifyPartial" href="/page?page=2" data-option-partials="main, header"></a>`,
     );
-    const { events } = recordEvents(root, ...Object.values(FETCH_EVENTS));
+    const { events } = recordFetchEvents(root);
 
-    await instance.fetch();
-    await settle();
+    expect(await instance.fetch()).toBe('ok');
 
-    expect(client).not.toHaveBeenCalled();
-    expect(fetchPartials).toHaveBeenCalledWith(
-      'main',
-      'header',
-      expect.objectContaining({ url: expect.stringContaining('/page') }),
-    );
-    expect(apply).toHaveBeenCalledWith({ shape: 'partial-update' });
-
-    const types = events.map((e) => e.type);
-    expect(types).not.toContain(FETCH_EVENTS.RESPONSE);
-    expect(types).toEqual([
+    expect(spy).not.toHaveBeenCalled();
+    expect(partials.fetch).toHaveBeenCalledWith('main', 'header', {
+      url: abs('/page?page=2'),
+      signal: expect.any(AbortSignal),
+    });
+    expect(partials.apply).toHaveBeenCalledWith({ page: '2' });
+    expect(document.getElementById('main')?.textContent).toBe('main 2');
+    expect(types(events)).toEqual([
       FETCH_EVENTS.BEFORE_FETCH,
-      FETCH_EVENTS.FETCH,
-      FETCH_EVENTS.AFTER_FETCH,
       FETCH_EVENTS.BEFORE_UPDATE,
-      FETCH_EVENTS.UPDATE,
       FETCH_EVENTS.AFTER_UPDATE,
+      FETCH_EVENTS.AFTER_FETCH,
     ]);
-    const updateEvent = events.find((e) => e.type === FETCH_EVENTS.UPDATE);
-    expect(updateEvent?.detail).toMatchObject({ update: { shape: 'partial-update' } });
+    expect(
+      detailOf<FetchEmits['fetch-update-before']>(events, FETCH_EVENTS.BEFORE_UPDATE).content,
+    ).toEqual({ page: '2' });
+    expect(detailOf(events, FETCH_EVENTS.AFTER_FETCH)).toMatchObject({ outcome: 'ok' });
   });
 
-  it('falls back to the base Fetch behaviour when the partials module fails to resolve', async () => {
-    const client = stubClient();
+  it('does not claim a view transition around `partials.apply()`, which runs its own', async () => {
+    stubPartials();
+    const { root, instance } = await mountPartial(
+      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"></a>`,
+    );
+    const runners: unknown[] = [];
+    root.addEventListener('js-toolkit:dom:update', (event) => {
+      runners.push((event as CustomEvent<{ request: unknown }>).detail.request);
+    });
+    const startViewTransition = vi.spyOn(document, 'startViewTransition');
+
+    await instance.fetch();
+
+    expect(runners).toHaveLength(1);
+    expect(startViewTransition).not.toHaveBeenCalled();
+    startViewTransition.mockRestore();
+  });
+
+  it('uses the inherited transport when the module does not resolve', async () => {
+    const { spy } = stubClient();
     FetchShopifyPartial.loadPartialsModule = async () => {
       throw new Error('not installed');
     };
-    const { instance } = await mountWithInstance(
-      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"><div id="a">old</div></a>`,
-    );
-
-    await instance.fetch();
-    await settle();
-
-    expect(client).toHaveBeenCalledOnce();
-  });
-
-  it('falls back to the base behaviour for a non-GET request even with partials configured', async () => {
-    const client = stubClient();
-    const fetchPartials = vi.fn(async () => ({}));
-    stubPartials({ fetch: fetchPartials, apply: vi.fn() });
-    const { instance } = await mountWithInstance(
-      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"><div id="a">old</div></a>`,
-    );
-
-    await instance.fetch(instance.url, { method: 'POST' });
-    await settle();
-
-    expect(fetchPartials).not.toHaveBeenCalled();
-    expect(client).toHaveBeenCalledOnce();
-  });
-
-  it('falls back to the base behaviour for a request carrying a non-internal header', async () => {
-    const client = stubClient();
-    const fetchPartials = vi.fn(async () => ({}));
-    stubPartials({ fetch: fetchPartials, apply: vi.fn() });
-    const { instance } = await mountWithInstance(
-      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"><div id="a">old</div></a>`,
-    );
-
-    await instance.fetch(instance.url, { headers: { 'x-custom': '1' } });
-    await settle();
-
-    expect(fetchPartials).not.toHaveBeenCalled();
-    expect(client).toHaveBeenCalledOnce();
-  });
-
-  it('falls back for a custom header given as a Headers instance, not only as a record', async () => {
-    const client = stubClient();
-    const fetchPartials = vi.fn(async () => ({}));
-    stubPartials({ fetch: fetchPartials, apply: vi.fn() });
-    const { instance } = await mountWithInstance(
-      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"><div id="a">old</div></a>`,
-    );
-
-    // Spreading a `Headers` yields no keys, so a spread would let this pass the
-    // check.
-    await instance.fetch(instance.url, { headers: new Headers({ 'X-Custom': '1' }) });
-    await settle();
-
-    expect(fetchPartials).not.toHaveBeenCalled();
-    expect(client).toHaveBeenCalledOnce();
-  });
-
-  it('falls back for a custom header given as a list of tuples', async () => {
-    const client = stubClient();
-    const fetchPartials = vi.fn(async () => ({}));
-    stubPartials({ fetch: fetchPartials, apply: vi.fn() });
-    const { instance } = await mountWithInstance(
-      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"><div id="a">old</div></a>`,
-    );
-
-    await instance.fetch(instance.url, { headers: [['X-Custom', '1']] });
-    await settle();
-
-    expect(fetchPartials).not.toHaveBeenCalled();
-    expect(client).toHaveBeenCalledOnce();
-  });
-
-  it('still uses partial rendering for an internal header given as a Headers instance', async () => {
-    const client = stubClient();
-    const fetchPartials = vi.fn(async () => ({}));
-    stubPartials({ fetch: fetchPartials, apply: vi.fn() });
-    const { instance } = await mountWithInstance(
+    const { instance } = await mountPartial(
       `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"></a>`,
     );
 
-    await instance.fetch(instance.url, { headers: new Headers({ 'X-Requested-By': 'x' }) });
-    await settle();
-
-    expect(fetchPartials).toHaveBeenCalledOnce();
-    expect(client).not.toHaveBeenCalled();
+    expect(await instance.fetch()).toBe('ok');
+    expect(spy).toHaveBeenCalledOnce();
   });
 
-  it('routes an apply() rejection through the error event instead of leaving it unhandled', async () => {
-    stubClient();
+  it.each([
+    [
+      'adds a header',
+      (request: { headers: Record<string, string> }) => (request.headers['x-custom'] = '1'),
+    ],
+    [
+      'adds a body',
+      (request: { body?: unknown; method: string }) => {
+        request.method = 'POST';
+        request.body = 'a=1';
+      },
+    ],
+  ])(
+    'uses the inherited transport, with `fetch-response`, when a `fetch-before` listener %s',
+    async (_label, change) => {
+      const { spy } = stubClient();
+      const partials = stubPartials();
+      const { root, instance } = await mountPartial(
+        `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"></a>`,
+      );
+      root.addEventListener(FETCH_EVENTS.BEFORE_FETCH, (event) => {
+        change((event as CustomEvent<FetchEmits['fetch-before']>).detail.request as never);
+      });
+      const { events } = recordFetchEvents(root);
+
+      expect(await instance.fetch()).toBe('ok');
+
+      expect(partials.fetch).not.toHaveBeenCalled();
+      expect(spy).toHaveBeenCalledOnce();
+      expect(types(events)).toContain(FETCH_EVENTS.RESPONSE);
+    },
+  );
+
+  it('uses the inherited transport for a `requestInit` it cannot express', async () => {
+    const { spy } = stubClient();
+    const partials = stubPartials();
+    const { instance } = await mountPartial(
+      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"
+        data-option-request-init='{"credentials":"include"}'></a>`,
+    );
+
+    await instance.fetch();
+
+    expect(partials.fetch).not.toHaveBeenCalled();
+    expect(spy).toHaveBeenCalledOnce();
+  });
+
+  it('keeps partials for the headers the component sends on its own behalf', async () => {
+    const { spy } = stubClient();
+    const partials = stubPartials();
+    const { instance } = await mountPartial(
+      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"
+        data-option-headers='{"X-Requested-By":"theme"}'></a>`,
+    );
+
+    await instance.fetch();
+
+    expect(partials.fetch).toHaveBeenCalledOnce();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('reports a rejected `partials.apply()` as `fetch-error`, then `fetch-after`', async () => {
     const failure = new Error('apply failed');
-    stubPartials({
-      fetch: async () => ({}),
-      apply: () => Promise.reject(failure),
-    });
-    const { root, instance } = await mountWithInstance(
+    stubPartials({ apply: vi.fn(() => Promise.reject(failure)) });
+    const { root, instance } = await mountPartial(
       `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"></a>`,
     );
-    const errors: unknown[] = [];
-    root.addEventListener(FETCH_EVENTS.ERROR, (event) => {
-      errors.push((event as CustomEvent<{ error: unknown }>).detail.error);
+    const { events } = recordFetchEvents(root);
+
+    expect(await instance.fetch()).toBe('error');
+
+    expect(types(events).slice(-2)).toEqual([FETCH_EVENTS.ERROR, FETCH_EVENTS.AFTER_FETCH]);
+    expect(detailOf(events, FETCH_EVENTS.ERROR)).toMatchObject({ error: failure });
+    expect(types(events)).not.toContain(FETCH_EVENTS.AFTER_UPDATE);
+  });
+
+  it('never applies a superseded partials update', async () => {
+    const releases: ((update: unknown) => void)[] = [];
+    const partials = stubPartials({
+      fetch: vi.fn(() => new Promise((resolve) => releases.push(resolve))),
     });
-
-    await instance.fetch();
-    await settle();
-
-    expect(errors).toEqual([failure]);
-  });
-
-  it('skips the history push for a popstate header given as a Headers instance', async () => {
-    stubPartials({ fetch: async () => ({}), apply: vi.fn() });
-    const { instance } = await mountWithInstance(
-      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main" data-option-history></a>`,
-    );
-    const before = window.history.length;
-
-    // The internal header is what tells `applyPartials()` not to push; read as
-    // a plain record it is invisible in this form.
-    await instance.fetch(instance.url, {
-      headers: new Headers({ 'x-triggered-by': 'popstate' }),
-    });
-    await settle();
-
-    expect(window.history.length).toBe(before);
-  });
-
-  it('still pushes history for a request that is not popstate-triggered', async () => {
-    stubPartials({ fetch: async () => ({}), apply: vi.fn() });
-    const { instance } = await mountWithInstance(
-      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main" data-option-history></a>`,
-    );
-    const before = window.history.length;
-
-    await instance.fetch();
-    await settle();
-
-    expect(window.history.length).toBe(before + 1);
-  });
-
-  it('pushes the element destination rather than the fetched `src`', async () => {
-    const partialsFetch = vi.fn(async () => ({}));
-    stubPartials({ fetch: partialsFetch, apply: vi.fn() });
-    const { root } = await mountWithInstance(
-      `<a data-component="FetchShopifyPartial" href="/projects/page/2?orderby=title"
-        data-option-src="/projects/page/2?orderby=title&amp;sections=listing"
-        data-option-partials="main" data-option-history></a>`,
+    const { instance } = await mountPartial(
+      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"></a>`,
     );
 
-    root.querySelector('a')?.click();
-    await settle();
+    const first = instance.fetch('/one');
+    await waitFor(() => releases.length === 1);
+    const second = instance.fetch('/two');
+    await waitFor(() => releases.length === 2);
+    releases[1]({ page: 'two' });
+    releases[0]({ page: 'one' });
 
-    expect(partialsFetch).toHaveBeenCalledWith(
-      'main',
-      expect.objectContaining({
-        url: new URL('/projects/page/2?orderby=title&sections=listing', window.location.href).href,
-      }),
-    );
-    expect(window.location.pathname).toBe('/projects/page/2');
-    expect(window.location.search).toBe('?orderby=title');
+    expect(await Promise.all([first, second])).toEqual(['aborted', 'ok']);
+    expect(partials.apply.mock.calls).toEqual([[{ page: 'two' }]]);
   });
 
   it('memoises the resolved partials module across calls', async () => {
@@ -273,7 +234,7 @@ describe('FetchShopifyPartial', () => {
       partials: { fetch: vi.fn(async () => ({})), apply: vi.fn() },
     }));
     FetchShopifyPartial.loadPartialsModule = loadSpy;
-    const { instance } = await mountWithInstance(
+    const { instance } = await mountPartial(
       `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"></a>`,
     );
 
@@ -281,5 +242,71 @@ describe('FetchShopifyPartial', () => {
     await instance.fetch();
 
     expect(loadSpy).toHaveBeenCalledOnce();
+  });
+});
+
+describe('FetchShopifyPartial — history', () => {
+  it('pushes the destination, not the `src` it requested', async () => {
+    window.history.pushState(null, '', '/start');
+    const partials = stubPartials();
+    const { el } = await mountPartial(
+      `<a data-component="FetchShopifyPartial" href="/projects?page=2"
+        data-option-src="/apps/projects" data-option-partials="main" data-option-history></a>`,
+    );
+    const writes = recordHistoryWrites();
+
+    el.click();
+    await waitFor(() => writes.pushed.length === 1);
+
+    expect(partials.fetch).toHaveBeenCalledWith('main', {
+      url: abs('/apps/projects?page=2'),
+      signal: expect.any(AbortSignal),
+    });
+    expect(writes.pushed).toEqual([abs('/projects?page=2')]);
+  });
+
+  it('restores through partials with a live owner', async () => {
+    window.history.pushState(null, '', '/projects?page=1');
+    const partials = stubPartials();
+    await mount(`<div id="main">main 1</div>`);
+    const { instance } = await mountPartial(
+      `<a data-component="FetchShopifyPartial" id="pager" href="/projects?page=2"
+        data-option-partials="main" data-option-history></a>`,
+    );
+
+    await instance.fetch();
+    expect(document.getElementById('main')?.textContent).toBe('main 2');
+    await back();
+    await waitFor(() => document.getElementById('main')?.textContent === 'main 1');
+
+    expect(partials.fetch).toHaveBeenLastCalledWith('main', {
+      url: abs('/projects?page=1'),
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  it('restores through partials with no owner left on the page', async () => {
+    window.history.pushState(null, '', '/projects?page=1');
+    const partials = stubPartials({
+      apply: vi.fn((update: { page: string | null }) => {
+        document.getElementById('main')!.innerHTML = `main ${update.page}`;
+      }),
+    });
+    const root = await mount(`
+      <div id="main">
+        main 1
+        <a data-component="FetchShopifyPartial" href="/projects?page=2"
+          data-option-partials="main" data-option-history>2</a>
+      </div>
+    `);
+
+    root.querySelector('a')!.click();
+    await waitFor(() => document.getElementById('main')?.textContent === 'main 2');
+    await settle();
+    expect(document.querySelector('[data-component="FetchShopifyPartial"]')).toBeNull();
+    await back();
+    await waitFor(() => document.getElementById('main')?.textContent === 'main 1');
+
+    expect(partials.fetch).toHaveBeenCalledTimes(2);
   });
 });

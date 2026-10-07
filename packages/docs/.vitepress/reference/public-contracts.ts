@@ -367,7 +367,7 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
-    name: 'FetchEventBase',
+    name: 'FetchOutcome',
     kind: 'type',
     package: 'npm:@studiometa/ui',
     importPath: '@studiometa/ui',
@@ -376,6 +376,22 @@ export const publicContractSymbols = [
   },
   {
     name: 'FetchProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Fetch/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'FetchRequest',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Fetch/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'FetchResponseDetail',
     kind: 'type',
     package: 'npm:@studiometa/ui',
     importPath: '@studiometa/ui',
@@ -556,6 +572,14 @@ export const publicContractSymbols = [
     package: 'npm:@studiometa/ui',
     importPath: '@studiometa/ui',
     href: '/reference/items/Action/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'RestoreRecipe',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Fetch/js-api',
     status: 'stable',
   },
   {

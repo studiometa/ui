@@ -88,10 +88,13 @@ export {
   HEADER_NAMES,
   SECTIONS_PARAMETER,
   type FetchEmits,
-  type FetchEventBase,
+  type FetchOutcome,
   type FetchProps,
+  type FetchRequest,
+  type FetchResponseDetail,
   type FetchShopifyPartialProps,
   type FetchShopifySectionProps,
+  type RestoreRecipe,
 } from './Fetch/index.js';
 export {
   AbstractFigure,

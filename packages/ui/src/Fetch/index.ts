@@ -3,8 +3,11 @@ export {
   FETCH_EVENTS,
   HEADER_NAMES,
   type FetchEmits,
-  type FetchEventBase,
+  type FetchOutcome,
   type FetchProps,
+  type FetchRequest,
+  type FetchResponseDetail,
+  type RestoreRecipe,
 } from './Fetch.js';
 export { FetchShopifyPartial, type FetchShopifyPartialProps } from './FetchShopifyPartial.js';
 export {
