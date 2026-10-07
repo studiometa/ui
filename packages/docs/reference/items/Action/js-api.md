@@ -49,6 +49,8 @@ Modifiers can be chained with a `.` as separator:
 ```
 <!-- prettier-ignore-end -->
 
+[`target.fetch()`](/reference/items/Fetch/js-api#fetch-destination-string-url) resolves with the [outcome](/reference/items/Fetch/js-api#fetch-after) of the request and never rejects, so the effect needs no error handling.
+
 Two limits apply:
 
 - A target that waits for a `visible`, `in-view`, `idle`, `interaction` or `media:` mount strategy is not awaited. If it has not mounted when the DOM settles, the effect does not reach it.
