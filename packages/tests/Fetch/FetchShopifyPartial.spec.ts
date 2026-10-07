@@ -180,19 +180,22 @@ describe('FetchShopifyPartial', () => {
     expect(spy).toHaveBeenCalledOnce();
   });
 
-  it('keeps partials for the headers the component sends on its own behalf', async () => {
-    const { spy } = stubClient();
-    const partials = stubPartials();
-    const { instance } = await mountPartial(
-      `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"
-        data-option-headers='{"X-Requested-By":"theme"}'></a>`,
-    );
+  it.each(['accept', 'x-requested-by'])(
+    'uses the inherited transport for an `%s` header of the `headers` option',
+    async (name) => {
+      const { spy } = stubClient();
+      const partials = stubPartials();
+      const { instance } = await mountPartial(
+        `<a data-component="FetchShopifyPartial" href="/page" data-option-partials="main"
+          data-option-headers='{"${name}":"theme"}'></a>`,
+      );
 
-    await instance.fetch();
+      await instance.fetch();
 
-    expect(partials.fetch).toHaveBeenCalledOnce();
-    expect(spy).not.toHaveBeenCalled();
-  });
+      expect(partials.fetch).not.toHaveBeenCalled();
+      expect(spy.mock.calls[0][1].headers).toMatchObject({ [name]: 'theme' });
+    },
+  );
 
   it('reports a rejected `partials.apply()` as `fetch-error`, then `fetch-after`', async () => {
     const failure = new Error('apply failed');

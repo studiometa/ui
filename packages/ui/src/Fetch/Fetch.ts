@@ -50,8 +50,6 @@ export const FETCH_EVENTS = Object.freeze({
  * The header names the request carries on the component's own behalf.
  */
 export const HEADER_NAMES = Object.freeze({
-  ACCEPT: 'accept',
-  X_REQUESTED_BY: 'x-requested-by',
   X_TRIGGERED_BY: 'x-triggered-by',
   USER_AGENT: 'user-agent',
 } as const);
