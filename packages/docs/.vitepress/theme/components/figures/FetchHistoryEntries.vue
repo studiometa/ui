@@ -18,7 +18,6 @@
     params: { view: 'fragment' },
     // src: an absolute URL, when set
     response: 'response.text()',
-    headers: {},
     viewTransition: true,
   },
 }`;
@@ -46,7 +45,7 @@
         <span class="u">/projects?page=2</span>
         <pre><code>{{ pushed }}</code></pre>
         <!-- prettier-ignore -->
-        <span class="how"><b>Pushed</b> with the full destination, its own hash included. The keys of other scripts are kept. <code>append</code> and <code>prepend</code> are stored as <code>replace</code>, so a restore does not add the content twice. A subclass adds its own options, such as <code>partials</code>.</span>
+        <span class="how"><b>Pushed</b> with the full destination, its own hash included. The keys of other scripts are kept. <code>append</code> and <code>prepend</code> are stored as <code>replace</code>, so a restore does not add the content twice. A subclass adds its own options, such as <code>partials</code>. Header values are never stored.</span>
       </div>
       <div class="entry other">
         <span class="idx">Entry 2 · another script</span>

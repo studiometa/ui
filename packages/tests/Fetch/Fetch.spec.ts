@@ -1425,7 +1425,6 @@ describe('Fetch — options', () => {
       params: { view: 'fragment' },
       src: abs('endpoint'),
       response: 'response.text()',
-      headers: { 'x-variant': 'compact' },
       viewTransition: true,
     });
   });

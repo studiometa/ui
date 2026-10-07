@@ -60,7 +60,6 @@ interface RestoreRecipe {
   params: Record<string, string>;
   src?: string; // the absolute endpoint
   response: string;
-  headers: Record<string, string>;
   viewTransition: boolean;
   [option: string]: unknown; // the options a subclass adds, such as `partials`
 }
@@ -86,7 +85,7 @@ Back from entry 2 to entry 1 sends no request, because the page already shows `/
 - **Regions.** A restore swaps the regions of every entry that the page has written, restored or loaded on, not only those of the restored entry. When two elements with `history` and different `selector` options share a page, back to the entry of the first one also brings back the region that the second one changed.
 - **Anchors of the page.** Back or forward to an entry whose URL differs from the content on the page only by its hash sends no request: the browser scrolls to the fragment, and the swapped regions keep their state.
 - **A traversal stops the navigation in flight.** Back and forward abort the navigation in flight, also when they reach an entry of another script, as they stop a native navigation.
-- **Plain data only.** The recipe holds no element and no function, so it survives the element that wrote it and a reload. The [`requestInit` option](#requestinit) is not stored, because a value the browser cannot clone would make `pushState()` throw.
+- **Plain data only.** The recipe holds no element and no function, so it survives the element that wrote it and a reload. The [`requestInit` option](#requestinit) is not stored, because a value the browser cannot clone would make `pushState()` throw. Header values are not stored either, because they can hold credentials that session history would keep. A restore sends the headers of the instance that runs it, and none when no instance is left on the page.
 - **The owner.** A restore runs on the mounted instance on the `owner` element, so its events reach that element. Give the element an `id`: without one, the restore runs on a detached instance and its events reach `document`.
 - **An unknown class.** When no class on the page can restore the entry, the page reloads, so the address bar and the content stay in agreement. A class can restore entries once one of its instances with `history` has mounted, or has written an entry.
 
@@ -178,7 +177,7 @@ History entries do not keep this option. A restore uses the `requestInit` of the
 - Type: `Record<string, string>`
 - Default: `{}`
 
-Adds headers to the request. Names are lower-cased. They are merged after `requestInit.headers` and before the [`headers[]` refs](#headers-1).
+Adds headers to the request. Names are lower-cased. They are merged after `requestInit.headers` and before the [`headers[]` refs](#headers-1). History entries do not keep header values, so a credential never reaches session history. A restore sends the headers of the instance that runs it.
 
 ```html
 <a href="/path" data-component="Fetch" data-option-headers='{ "authorization": "Basic ..." }'>
