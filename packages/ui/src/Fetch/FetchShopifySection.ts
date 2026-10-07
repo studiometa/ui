@@ -18,8 +18,8 @@ export type FetchShopifySectionProps = FetchProps & {
  * Adapts {@link Fetch} to Shopify's
  * [Section Rendering API](https://shopify.dev/docs/api/ajax/section-rendering).
  *
- * The section IDs are declared through the `sections` option, which sets the
- * `sections` value of the `params` option. The element's own `href` or
+ * The section IDs are declared through the `sections` option, which adds the
+ * `sections` query parameter to every request. The element's own `href` or
  * `action` stays a clean, no-JS fallback, and the address bar never shows the
  * parameter, because history records the destination and not the request
  * URL. The JSON response (`{ [id]: html }`) is unwrapped by
@@ -52,21 +52,15 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
   }
 
   /**
-   * The inherited recipe, with the section IDs as the `sections` value of
-   * `params`, so every request built from a destination asks for them,
-   * restores included.
+   * The section IDs as the `sections` query parameter, so every request built
+   * from a destination asks for them, restores and `formaction` submissions
+   * included.
    *
    * @protected
    */
-  get __recipe(): RestoreRecipe {
-    const recipe = super.__recipe;
+  get __transportParams(): Record<string, string> {
     const { sectionIds } = this;
-
-    if (sectionIds.length) {
-      recipe.params = { ...recipe.params, [SECTIONS_PARAMETER]: sectionIds.join(',') };
-    }
-
-    return recipe;
+    return sectionIds.length ? { [SECTIONS_PARAMETER]: sectionIds.join(',') } : {};
   }
 
   /**

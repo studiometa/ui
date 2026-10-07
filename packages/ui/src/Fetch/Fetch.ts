@@ -330,6 +330,17 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   }
 
   /**
+   * The query parameters that the transport of a subclass needs on every
+   * request. They win over the `params` option, and a submitter with a
+   * `formaction` keeps them.
+   *
+   * @protected
+   */
+  get __transportParams(): Record<string, string> {
+    return {};
+  }
+
+  /**
    * The options a request of this instance runs with, as the plain data a
    * history entry keeps to restore it.
    *
@@ -347,7 +358,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       owner: $el.getAttribute('id') || undefined,
       selector: $options.selector,
       mode: $options.mode,
-      params: stringRecord($options.params),
+      params: { ...stringRecord($options.params), ...this.__transportParams },
       src: $options.src ? new URL($options.src, window.location.href).href : undefined,
       response: $options.response,
       viewTransition: $options.viewTransition,
@@ -437,11 +448,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
         // `src` and `params` options of the form do not apply to it. The
         // parameters a subclass adds for its transport stay.
         recipe.src = undefined;
-        for (const [name, value] of Object.entries(stringRecord($options.params))) {
-          if (recipe.params[name] === value) {
-            delete recipe.params[name];
-          }
-        }
+        recipe.params = this.__transportParams;
       } else {
         target = new URL(formProperty(form, 'action'));
       }
