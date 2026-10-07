@@ -641,8 +641,9 @@ describe('Fetch history — back and forward', () => {
           data-option-selector="#rb" data-option-no-view-transition></a>
       </div>
     `);
-    const regions = () =>
-      [document.getElementById('ra'), document.getElementById('rb')].map((el) => el?.textContent);
+    function regions(): (string | null | undefined)[] {
+      return ['ra', 'rb'].map((id) => document.getElementById(id)?.textContent);
+    }
 
     await getInstance<Fetch>(root.querySelector('#a')!, 'Fetch')!.fetch();
     await getInstance<Fetch>(root.querySelector('#b')!, 'Fetch')!.fetch();
@@ -784,8 +785,10 @@ describe('Fetch history — one navigation at a time, page-wide', () => {
   it('ends a navigation that has started its DOM change before the next one starts', async () => {
     window.history.pushState(null, '', '/start');
     servePages();
-    let finishAnimation = () => {};
-    const animation = new Promise<void>((resolve) => (finishAnimation = resolve));
+    let finishAnimation!: () => void;
+    const animation = new Promise<void>((resolve) => {
+      finishAnimation = resolve;
+    });
     let isApplied = false;
     const { root } = await mountFetch(`
       <div>
