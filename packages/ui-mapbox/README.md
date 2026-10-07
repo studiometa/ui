@@ -31,7 +31,7 @@ import { MapboxMap, MapboxMarker, MapboxPopup } from '@studiometa/ui-mapbox';
 registerComponents(MapboxMap, MapboxMarker, MapboxPopup);
 ```
 
-`mapbox-gl` is heavy (~230&nbsp;kB gzipped), but it is never in your main bundle: `MapboxMap` loads it with a dynamic `import()` when it mounts. The autoload entry changes when that happens. It registers a lazy entry for every component of the package, imports a component module only when an element on the page declares its token, and mounts `MapboxMap` only when the map nears the viewport:
+`mapbox-gl` is heavy (~230&nbsp;kB gzipped), but it is never in your main bundle: `MapboxMap` loads it with a dynamic `import()` when it mounts, and `MapboxMap` mounts only when the map nears the viewport. The autoload entry also defers the component modules. It registers a lazy entry for every component of the package, and imports a component module only when an element on the page declares its token:
 
 ```js
 import '@studiometa/ui-mapbox/autoload';

@@ -104,6 +104,8 @@ The `@studiometa/ui` manifest ships every component as `eager`. `@studiometa/ui-
 - `MapboxGeocoder` is `visible`, so `@mapbox/mapbox-gl-geocoder` waits for the geocoder to approach the viewport. Do not put `hidden` on its element: it holds the search input, or nothing when the control is added to the map, and a hidden element never loads. To load it without waiting for the viewport, set `data-mount="eager"` on it.
 - The other eleven map children are `eager`: clusters, cluster items, the navigation, geolocate and fullscreen controls, images, layers, markers, popups and sources. They only need to exist, because `MapboxMap` already gates `mapbox-gl` and their own modules are small. Many of them render nothing and carry `hidden`, which `visible` could never load.
 
+The classes of `MapboxMap`, `StoreLocator` and `MapboxGeocoder` declare `visible` too, so the strategy holds for every one of them on a page, including the ones inserted later. It also applies when you register these classes directly with `registerComponents`: they then mount when they near the viewport, not at once.
+
 ## Component discovery
 
 The runtime scans the document at startup and then observes it with a `MutationObserver`. It discovers:

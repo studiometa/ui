@@ -73,7 +73,7 @@ registerComponent(MapboxMap);
 
 ## Lazy loading
 
-`mapbox-gl` is never in your main bundle: `MapboxMap` loads it with a dynamic `import()` when it mounts. Registering the family as a [manifest](/guide/autoloading/) rather than as classes controls when that happens. A manifest entry is a lazy importer plus a mount strategy, so a component module loads only when an element on the page declares its token, and `MapboxMap` mounts, and loads `mapbox-gl`, only when its strategy allows.
+`mapbox-gl` is never in your main bundle: `MapboxMap` loads it with a dynamic `import()` when it mounts, and `MapboxMap` mounts only when the map nears the viewport, whether you register the class or a manifest entry. Registering the family as a [manifest](/guide/autoloading/) rather than as classes also defers the component modules. A manifest entry is a lazy importer plus a mount strategy, so a component module loads only when an element on the page declares its token, and only when its strategy allows.
 
 The package ships its own manifest, which is the shortest way to get all of it:
 
