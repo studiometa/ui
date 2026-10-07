@@ -88,6 +88,13 @@ const regions = new Set<string>();
 let isListening = false;
 
 /**
+ * Whether the latest navigation of the document moves through session
+ * history, as the `navigate` event of the Navigation API reports it before
+ * `popstate`. `undefined` where the API is missing.
+ */
+let isTraversal: boolean | undefined;
+
+/**
  * The actions the coordinator takes on the page, as an object so a spec can
  * replace the reload that would take the test runner with it.
  *
@@ -122,28 +129,38 @@ function addRegion(recipe: Record<string, unknown>): void {
   }
 }
 
+/** Keep the type of the navigation that the next `popstate` reports. */
+function onNavigate(event: NavigateEvent): void {
+  isTraversal = event.navigationType === 'traverse';
+}
+
 /**
  * Restore the entry the browser moved to.
  *
- * A traversal stops the navigation in flight first, as natively. An entry
- * without a `fetch` key belongs to another script and is ignored. An entry
- * whose URL differs from the content on the page only by its hash needs no
- * request: the browser scrolls to the fragment. A restore swaps the regions
- * of every entry of the page, not only those of the entry it restores. A
- * live owner runs the restore, so its events and loading states apply. With
- * no live owner, a detached instance of the registered class runs it, and
- * its events reach `document`.
+ * A traversal stops the navigation in flight first, as natively. A jump to
+ * an anchor of the page also fires `popstate`, but leaves the navigation in
+ * flight alone, as natively. Without the Navigation API to tell them apart,
+ * a `popstate` that keeps the page and changes only the hash counts as a
+ * jump to an anchor. An entry without a `fetch` key belongs to another
+ * script and is ignored. An entry whose URL differs from the content on the
+ * page only by its hash needs no request: the browser scrolls to the
+ * fragment. A restore swaps the regions of every entry of the page, not
+ * only those of the entry it restores. A live owner runs the restore, so its
+ * events and loading states apply. With no live owner, a detached instance
+ * of the registered class runs it, and its events reach `document`.
  */
 function onPopstate(): void {
-  navigation?.supersede();
+  const page = withoutHash(window.location.href);
+
+  if (isTraversal ?? page !== shownPage) {
+    navigation?.supersede();
+  }
 
   const recipe = currentState().fetch;
 
   if (!isRecord(recipe) || typeof recipe.component !== 'string') {
     return;
   }
-
-  const page = withoutHash(window.location.href);
 
   if (page === shownPage) {
     return;
@@ -187,6 +204,7 @@ export function registerHistoryOwner(name: string, Owner: HistoryOwnerConstructo
 
   if (!isListening) {
     window.addEventListener('popstate', onPopstate);
+    window.navigation?.addEventListener('navigate', onNavigate);
     isListening = true;
     shownPage = withoutHash(window.location.href);
 
@@ -295,7 +313,9 @@ export function writeEntry(
  */
 export function resetHistoryCoordinator(): void {
   window.removeEventListener('popstate', onPopstate);
+  window.navigation?.removeEventListener('navigate', onNavigate);
   isListening = false;
+  isTraversal = undefined;
   owners.clear();
   navigation = undefined;
   shownPage = undefined;

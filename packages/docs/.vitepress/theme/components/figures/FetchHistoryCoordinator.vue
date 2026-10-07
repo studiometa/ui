@@ -23,7 +23,7 @@
         class="dg"
         viewBox="0 0 360 410"
         role="img"
-        aria-label="One history coordinator handles popstate. It stops the navigation in flight, ignores an entry without a fetch key, sends no request when only the hash differs from the content on the page, reloads the page when no class can restore the entry, and otherwise lets the mounted instance on the owner element run the restore, or a detached instance whose events reach document. One GET request is rebuilt from the restored URL and the recipe, and the regions that match the selectors of the page's entries are swapped.">
+        aria-label="One history coordinator handles popstate. On back and forward, it stops the navigation in flight, which a jump to an anchor of the page leaves alone. It ignores an entry without a fetch key, sends no request when only the hash differs from the content on the page, reloads the page when no class can restore the entry, and otherwise lets the mounted instance on the owner element run the restore, or a detached instance whose events reach document. One GET request is rebuilt from the restored URL and the recipe, and the regions that match the selectors of the page's entries are swapped.">
         <defs>
           <marker
             :id="marker"
