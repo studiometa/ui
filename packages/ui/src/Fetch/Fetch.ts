@@ -16,11 +16,12 @@ import {
   type RestoreRecipe,
 } from './history.js';
 import {
-  foldQuery,
+  encodeBody,
   headerRecord,
   requestUrl,
   responseDetail,
   stringRecord,
+  textEntries,
   type FetchRequest,
   type FetchResponseDetail,
 } from './request.js';
@@ -92,6 +93,29 @@ function userAgent(): string {
  */
 const errorResponses = new WeakMap<object, FetchResponseDetail>();
 
+/**
+ * The submission overrides a submitter carries, when it can carry any.
+ *
+ * `SubmitEvent.submitter` is typed as an `HTMLElement` because a
+ * form-associated custom element can submit a form, and such an element has
+ * no `formaction` of its own to state.
+ */
+function submitterOverrides(
+  submitter?: HTMLElement | null,
+): HTMLButtonElement | HTMLInputElement | null {
+  return submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement
+    ? submitter
+    : null;
+}
+
+/**
+ * Whether an effective `target` or `formtarget` leaves the navigation to the
+ * browser: any value other than none or `_self` opens another browsing context.
+ */
+function opensElsewhere(target: string): boolean {
+  return target !== '' && target.toLowerCase() !== '_self';
+}
+
 /** The detail every lifecycle event carries. */
 interface FetchDetail {
   instance: Fetch;
@@ -138,6 +162,9 @@ export type FetchProps = BaseProps & {
 interface FetchRun {
   /** The destination a caller named, which replaces the element's own. */
   destination?: string | URL;
+
+  /** The control that submitted the form. */
+  submitter?: HTMLElement | null;
 
   /** The entry the history coordinator restores. */
   restore?: { url: URL; recipe: RestoreRecipe };
@@ -302,11 +329,24 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   }
 
   /**
+   * Report a file control that a body other than multipart reduces to the
+   * name of its file.
+   *
+   * @private
+   */
+  __warnFileNotUploaded(): void {
+    this.$warn(
+      'fetch.file-not-uploaded',
+      'A file control is sent as the name of its file and the file is not uploaded. Only a POST form with `enctype="multipart/form-data"` sends the file itself.',
+    );
+  }
+
+  /**
    * Build the request of one run, and the recipe it runs with.
    *
    * @private
    */
-  __prepare({ destination, restore }: FetchRun): {
+  __prepare({ destination, submitter, restore }: FetchRun): {
     request: FetchRequest;
     recipe: RestoreRecipe;
   } {
@@ -337,17 +377,37 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
 
     if (isForm) {
       const form = $el as HTMLFormElement;
-      const formData = new FormData(form);
-      method = form.method.toUpperCase();
-      target = new URL(form.action);
+      const button = submitterOverrides(submitter);
+      const formData = new FormData(form, button);
+
+      method = (button?.hasAttribute('formmethod') ? button.formMethod : form.method).toUpperCase();
+
+      // The attribute, not the `formAction` property alone: without the
+      // attribute, the property gives the document URL, not the form action.
+      if (button?.hasAttribute('formaction')) {
+        target = new URL(button.formAction);
+        // `formaction` names another endpoint for this submission, so the
+        // fixed endpoint of the form does not apply to it.
+        recipe.src = undefined;
+      } else {
+        target = new URL(form.action);
+      }
 
       if (method === 'GET') {
-        foldQuery(
-          target.searchParams,
-          new URLSearchParams(formData as unknown as Record<string, string>),
-        );
+        const { entries, hasFile } = textEntries(formData);
+        target.search = new URLSearchParams(entries).toString();
+
+        if (hasFile) {
+          this.__warnFileNotUploaded();
+        }
       } else {
-        body = formData;
+        const enctype = button?.hasAttribute('formenctype') ? button.formEnctype : form.enctype;
+        const encoded = encodeBody(formData, enctype);
+        body = encoded.body;
+
+        if (encoded.hasFile) {
+          this.__warnFileNotUploaded();
+        }
       }
     } else {
       const { requestInit } = $options;
@@ -412,23 +472,38 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       !event.altKey &&
       !event.metaKey &&
       event.button === 0 &&
-      (this.$el as HTMLAnchorElement).target !== '_blank'
+      !opensElsewhere((this.$el as HTMLAnchorElement).target)
     ) {
       event.preventDefault();
       void this.__run({});
     }
   }
 
-  /** A form submission fetches its action with the form's own data. */
+  /**
+   * A form submission fetches its action with the same successful controls,
+   * overrides and encoding a native submission would use.
+   *
+   * A `dialog` method closes the dialog natively, and a target other than
+   * `_self` opens another browsing context: both are left to the browser.
+   */
   onSubmit(event: SubmitEvent): void {
     if (!this.isForm) {
       return;
     }
 
-    if ((this.$el as HTMLFormElement).target !== '_blank') {
-      event.preventDefault();
-      void this.__run({});
+    const form = this.$el as HTMLFormElement;
+    const button = submitterOverrides(event.submitter);
+    const method = button?.hasAttribute('formmethod') ? button.formMethod : form.method;
+    const target = button?.hasAttribute('formtarget') ? button.formTarget : form.target;
+
+    if (method === 'dialog' || opensElsewhere(target)) {
+      return;
     }
+
+    event.preventDefault();
+    // The submitter belongs to this one submission, so it travels as an
+    // argument and is never kept on the instance.
+    void this.__run({ submitter: event.submitter });
   }
 
   /**

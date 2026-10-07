@@ -8,8 +8,8 @@
 /**
  * The plain description of one request.
  *
- * `Fetch` builds it from the element, the options and, on back or forward
- * navigation, the restored URL. It travels in `fetch-before`, where
+ * `Fetch` builds it from the element, the submitter, the options and, on back
+ * or forward navigation, the restored URL. It travels in `fetch-before`, where
  * a listener can change `url`, `headers`, `body` and `history` before the
  * request is sent.
  */
@@ -150,6 +150,66 @@ export function headerRecord(headers: HeadersInit | undefined): Record<string, s
   }
 
   return record;
+}
+
+/** The entries of a form as text, the way a body that is not multipart sends them. */
+export interface TextEntries {
+  entries: [string, string][];
+
+  /** Whether a file control was reduced to the name of its file. */
+  hasFile: boolean;
+}
+
+/**
+ * Read form data as text: a file control sends the name of its file, because
+ * only a multipart body carries the file itself.
+ */
+export function textEntries(formData: FormData): TextEntries {
+  let hasFile = false;
+  const entries: [string, string][] = [];
+
+  for (const [name, value] of formData) {
+    if (value instanceof File) {
+      hasFile = true;
+      entries.push([name, value.name]);
+    } else {
+      entries.push([name, value]);
+    }
+  }
+
+  return { entries, hasFile };
+}
+
+/** A form body, encoded for one enctype. */
+export interface EncodedBody {
+  body: FormData | URLSearchParams | string;
+
+  /** Whether a file control was reduced to the name of its file. */
+  hasFile: boolean;
+}
+
+/**
+ * Encode form data as a native submission does for the given enctype.
+ *
+ * `multipart/form-data` sends the `FormData`, `text/plain` sends
+ * `name=value` lines, and any other value sends a URL-encoded body. The
+ * `content-type` header is left to `fetch()`, which derives it from the body.
+ */
+export function encodeBody(formData: FormData, enctype: string): EncodedBody {
+  if (enctype === 'multipart/form-data') {
+    return { body: formData, hasFile: false };
+  }
+
+  const { entries, hasFile } = textEntries(formData);
+
+  if (enctype === 'text/plain') {
+    return {
+      body: entries.map(([name, value]) => `${name}=${value}\r\n`).join(''),
+      hasFile,
+    };
+  }
+
+  return { body: new URLSearchParams(entries), hasFile };
 }
 
 /** Describe a response as plain data, without reading its body. */

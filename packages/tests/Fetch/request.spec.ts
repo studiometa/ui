@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { headerRecord, requestUrl, responseDetail, stringRecord } from '#private/Fetch/request.js';
+import {
+  encodeBody,
+  headerRecord,
+  requestUrl,
+  responseDetail,
+  stringRecord,
+} from '#private/Fetch/request.js';
 
 const origin = 'https://shop.example';
 
@@ -112,6 +118,34 @@ describe('headerRecord', () => {
     expect(headerRecord([['X-B', '2']])).toEqual({ 'x-b': '2' });
     expect(headerRecord(new Headers({ 'X-C': '3' }))).toEqual({ 'x-c': '3' });
     expect(headerRecord(undefined)).toEqual({});
+  });
+});
+
+describe('encodeBody', () => {
+  function formData(): FormData {
+    const data = new FormData();
+    data.append('q', 'hello');
+    data.append('photo', new File(['pixels'], 'photo.png', { type: 'image/png' }));
+    return data;
+  }
+
+  it('sends the FormData itself for multipart/form-data', () => {
+    const data = formData();
+    expect(encodeBody(data, 'multipart/form-data')).toEqual({ body: data, hasFile: false });
+  });
+
+  it('sends a URL-encoded body by default, with the name of the file', () => {
+    const { body, hasFile } = encodeBody(formData(), 'application/x-www-form-urlencoded');
+    expect(body).toBeInstanceOf(URLSearchParams);
+    expect(String(body)).toBe('q=hello&photo=photo.png');
+    expect(hasFile).toBe(true);
+  });
+
+  it('sends name=value lines for text/plain', () => {
+    expect(encodeBody(formData(), 'text/plain')).toEqual({
+      body: 'q=hello\r\nphoto=photo.png\r\n',
+      hasFile: true,
+    });
   });
 });
 

@@ -39,6 +39,14 @@ export function useFetchSpecHooks(): void {
 }
 
 /**
+ * Let submissions reach the browser for the rest of the test, for a form
+ * whose native default does not navigate, such as `method="dialog"`.
+ */
+export function allowNativeSubmit(): void {
+  document.removeEventListener('submit', preventNavigation, true);
+}
+
+/**
  * Record the URLs written with `pushState()` and `replaceState()` from now on.
  *
  * `history.length` cannot tell: the browser caps it, and a spec that went

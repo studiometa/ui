@@ -590,6 +590,30 @@ describe('Fetch history — back and forward', () => {
       abs('/shop/search?view=fragment&q=shoes'),
     ]);
   });
+
+  it('restores a `formaction` entry to the same request as the navigation', async () => {
+    window.history.pushState(null, '', '/start');
+    const { calls } = servePages();
+    const { root, instance } = await mountFetch(
+      `<form data-component="Fetch" action="/search" method="get" data-option-history
+        data-option-src="/apps/search" data-option-params='{"view":"fragment"}'
+        data-option-no-view-transition>
+        <input name="q" value="boots">
+        <button type="submit" formaction="/elsewhere">Go</button>
+      </form>`,
+    );
+    const form = root.querySelector('form')!;
+
+    form.requestSubmit(form.querySelector('button'));
+    await waitFor(() => calls.length === 1);
+    await waitFor(() => address() === '/elsewhere?q=boots');
+    await instance.fetch('/search?q=next');
+    await back();
+    await waitFor(() => calls.length === 3);
+
+    expect(calls[0].url).toBe(abs('/elsewhere?q=boots&view=fragment'));
+    expect(calls[2].url).toBe(calls[0].url);
+  });
 });
 
 describe('Fetch history — one navigation at a time, page-wide', () => {
