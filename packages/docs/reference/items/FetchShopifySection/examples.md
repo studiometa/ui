@@ -29,17 +29,17 @@ Refresh the product grid and the results count when the customer picks a sort or
 ```
 
 ```ts [app.ts]
-import { registerComponent } from '@studiometa/js-toolkit';
+import { registerComponents } from '@studiometa/js-toolkit';
 import { FetchShopifySection } from '@studiometa/ui';
 
-registerComponent(FetchShopifySection);
+registerComponents(FetchShopifySection);
 ```
 
 :::
 
 ## Faceted filtering with a form
 
-Use a `<form method="get">` so the selected facets are appended to the URL automatically; `FetchShopifySection` adds the `sections` parameter on top. A loader is shown while the sections refresh, using the inherited [`Action`](../Action/index.md) and [`Transition`](../Transition/index.md) components.
+Use a `<form method="get">` so the selected facets become the query of the request, and `FetchShopifySection` adds the `sections` parameter to it. A loader is shown while the sections refresh, using the inherited [`Action`](../Action/index.md) and [`Transition`](../Transition/index.md) components.
 
 ::: code-group
 
@@ -75,12 +75,10 @@ Use a `<form method="get">` so the selected facets are appended to the URL autom
 ```
 
 ```ts [app.ts]
-import { registerComponent } from '@studiometa/js-toolkit';
+import { registerComponents } from '@studiometa/js-toolkit';
 import { Action, FetchShopifySection, Transition } from '@studiometa/ui';
 
-registerComponent(Action);
-registerComponent(FetchShopifySection);
-registerComponent(Transition);
+registerComponents(Action, FetchShopifySection, Transition);
 ```
 
 :::
