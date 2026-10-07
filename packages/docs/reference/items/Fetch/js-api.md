@@ -104,7 +104,7 @@ Query parameters set on every request URL, after the query of the destination an
 </a>
 ```
 
-The link requests `/projects?page=2&view=fragment` and writes `/projects?page=2`. Back to `/projects?page=1` requests `/projects?page=1&view=fragment`. See [a lighter page: `params` or `src`](./index.md#a-lighter-page-params-or-src).
+The link requests `/projects?page=2&view=fragment` and writes `/projects?page=2`. Back to `/projects?page=1` requests `/projects?page=1&view=fragment`. A submitter with a `formaction` names another endpoint, so `params` does not apply to its submission. See [a lighter page: `params` or `src`](./index.md#a-lighter-page-params-or-src).
 
 ### `src`
 
@@ -115,7 +115,7 @@ A fixed endpoint. When it is set, the request URL takes its origin, its path and
 
 - For a link, a form, or a destination given to `fetch()`, the query of the destination is folded on. A name of the destination replaces the value of `src` for that name, and a repeated name keeps all its values.
 - The [`params` option](#params) is set last.
-- A submitter with a `formaction` names another endpoint for its submission, so `src` does not apply to it.
+- A submitter with a `formaction` names another endpoint for its submission, so neither `src` nor `params` applies to it.
 - On any other element, the request URL is `src` with `params`. The query of the page is not folded on.
 
 The address bar shows the destination, never `src`. On back and forward navigation, the request is rebuilt from the restored URL and the `src` of the entry.

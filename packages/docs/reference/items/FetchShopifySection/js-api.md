@@ -27,7 +27,7 @@ The IDs become the `sections` value of the [`params` option](../Fetch/js-api.md#
 </a>
 ```
 
-A value given to `sections` wins over a `sections` key of `data-option-params`. A submitter with a `formaction` keeps the sections, because `params` still apply to it.
+A value given to `sections` wins over a `sections` key of `data-option-params`. A submitter with a `formaction` keeps the sections: it drops the `params` option of the form, but not the `sections` value that this component adds.
 
 ### `response`
 
