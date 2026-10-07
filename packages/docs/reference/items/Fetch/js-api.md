@@ -518,14 +518,24 @@ With the [ambient `MotionView`](/reference/items/MotionView/js-api#ambient-wirin
 
 `fetch()` holds the whole lifecycle: the request, the checks against newer requests, the events, history and the outcome. A subclass never overrides it. It changes how content is loaded and applied, through two protected methods, and the options a request runs with, through one getter:
 
-| Method                                     | Role                                                                                                                                                                                                        |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `__load(request, signal, recipe)`          | Loads the content of a request. Resolves with `{ content, response?, viewTransition? }`. The base class sends the request with the [`client`](#client), emits `fetch-response` and calls `parseResponse()`. |
-| `parseResponse(response, request, recipe)` | Gives the content from the raw `Response`. The base class evaluates the [`response` option](#response) of the recipe.                                                                                       |
-| `__apply(content, recipe)`                 | Applies the content. The base class parses it as HTML and swaps the elements that match the `selector` of the recipe, following its `mode`. Resolves with the parsed `Document`.                            |
-| `__recipe`                                 | The options a request runs with, as the plain data a history entry keeps. A subclass adds its own options here.                                                                                             |
+| Method                                     | Role                                                                                                                                                                                                                             |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `__load(request, signal, recipe)`          | Loads the content of a request. Resolves with a `FetchLoadResult`, `{ content, response?, viewTransition? }`. The base class sends the request with the [`client`](#client), emits `fetch-response` and calls `parseResponse()`. |
+| `parseResponse(response, request, recipe)` | Gives the content from the raw `Response`. The base class evaluates the [`response` option](#response) of the recipe.                                                                                                            |
+| `__apply(content, recipe)`                 | Applies the content. The base class parses it as HTML and swaps the elements that match the `selector` of the recipe, following its `mode`. Resolves with the parsed `Document`.                                                 |
+| `__recipe`                                 | The options a request runs with, as the plain data a history entry keeps. A subclass adds its own options here.                                                                                                                  |
 
 Each method receives the recipe, not the options of the instance: on a restore, the recipe of the entry wins. `signal` aborts when the request is superseded or aborted. A `viewTransition: false` result tells `Fetch` that the transport runs its own transition, so `Fetch` does not claim one around `__apply()`.
+
+The types of these steps, `FetchRequest`, `FetchLoadResult`, `FetchResponseDetail`, `RestoreRecipe` and `FetchOutcome`, are exported from `@studiometa/ui`:
+
+```ts
+interface FetchLoadResult {
+  content: unknown;
+  response?: FetchResponseDetail;
+  viewTransition?: boolean; // false when the transport runs its own transition
+}
+```
 
 The subclasses of this package are built this way:
 

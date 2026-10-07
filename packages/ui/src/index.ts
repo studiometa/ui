@@ -88,6 +88,7 @@ export {
   HEADER_NAMES,
   SECTIONS_PARAMETER,
   type FetchEmits,
+  type FetchLoadResult,
   type FetchOutcome,
   type FetchProps,
   type FetchRequest,

@@ -3,6 +3,7 @@ export {
   FETCH_EVENTS,
   HEADER_NAMES,
   type FetchEmits,
+  type FetchLoadResult,
   type FetchOutcome,
   type FetchProps,
   type FetchRequest,
