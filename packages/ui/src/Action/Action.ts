@@ -139,10 +139,10 @@ export class Action extends Base<ActionProps> {
    * Both halves of the component go through here — the `data-on:*` namespace
    * and the option triple — because the reserved `mounted` pseudo-event is a
    * property of the declaration, not of where it was written. It binds no
-   * listener: the effect is posted to the background lane instead, so it runs
-   * once the batch has settled and can reach a component that mounts on the
-   * same element. The cancel belongs to this binding, so rewriting the
-   * declaration or unmounting before the lane drains drops the pending effect.
+   * listener: the effect waits for the DOM to settle instead, so it can reach a
+   * component imported lazily on the same element or elsewhere. The cancel
+   * belongs to this binding, so rewriting the declaration or unmounting before
+   * the effect runs drops it, and the new binding runs once in its place.
    *
    * @private
    */

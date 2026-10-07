@@ -128,19 +128,28 @@ export class ActionEvent {
       event.stopPropagation();
     }
 
-    // Use one instance snapshot for both parameter names and values.
-    const instances = this.instances;
-    const effect = getEffect(this.effectDefinition, [...instances.keys()]);
-    const { targets } = this;
-
     if (modifiers.has(MODIFIERS.DEBOUNCE)) {
       clearTimeout(this.__debounceTimer);
-      this.__debounceTimer = window.setTimeout(() => {
-        this.executeEffect(targets, effect, event, instances);
-      }, this.debounceDelay);
+      this.__debounceTimer = window.setTimeout(() => this.__run(event), this.debounceDelay);
     } else {
-      this.executeEffect(targets, effect, event, instances);
+      this.__run(event);
     }
+  }
+
+  /**
+   * Resolve the co-located instances, the effect and the targets, then run.
+   *
+   * Resolved when the effect runs, after any debounce, rather than when the
+   * event fires: a component that mounts during the debounce window is
+   * reached, and one that unmounted during it is not called.
+   *
+   * @private
+   */
+  __run(event?: Event): void {
+    // One instance snapshot for both the parameter names and their values.
+    const instances = this.instances;
+    const effect = getEffect(this.effectDefinition, [...instances.keys()]);
+    this.executeEffect(this.targets, effect, event, instances);
   }
 
   /**
@@ -184,7 +193,7 @@ export class ActionEvent {
     const { modifiers } = this;
 
     if (this.event === MOUNTED_EVENT) {
-      // Nothing to bind: `Action` triggers it once the mount batch has settled.
+      // Nothing to bind: `Action` triggers it once the DOM has settled.
       // A DOM listener would also catch the lifecycle events of descendants
       // mounting later, which is exactly what the pseudo-event exists to avoid.
       return () => clearTimeout(this.__debounceTimer);

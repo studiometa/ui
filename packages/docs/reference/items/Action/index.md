@@ -109,7 +109,7 @@ The `Target` component is a companion of the `Action` component that can be used
 
 ### Running an action on mount
 
-The reserved [`mounted`](./js-api.md#reserved-events) event runs the effect once, after the element and the components sharing it are mounted. It lets HTML drive an initial call without every component gaining its own option for it.
+The reserved [`mounted`](./js-api.md#reserved-events) event runs the effect once, when the DOM has settled after the action mounts. It lets HTML drive an initial call without every component gaining its own option for it.
 
 <llm-exclude>
 <PreviewPlayground
