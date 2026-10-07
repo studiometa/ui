@@ -324,6 +324,27 @@ describe('Fetch history — writing entries', () => {
     expect(await instance.fetch()).toBe('ok');
     expect(address()).toBe('/page');
   });
+
+  it.each([
+    ['without an `id`', '', undefined],
+    ['with an `id`', 'id="product"', 'product'],
+  ])(
+    'keeps the `id` of a form %s as the owner although a control is named `id`',
+    async (_label, attribute, owner) => {
+      window.history.pushState(null, '', '/start');
+      servePages();
+      const { instance } = await mountFetch(
+        `<form data-component="Fetch" ${attribute} action="/product" data-option-history
+          data-option-no-view-transition>
+          <input type="hidden" name="id" value="123">
+        </form>`,
+      );
+
+      expect(await instance.fetch('/product?id=123')).toBe('ok');
+      expect(address()).toBe('/product?id=123');
+      expect(recipe()?.owner).toBe(owner);
+    },
+  );
 });
 
 describe('Fetch history — the title', () => {

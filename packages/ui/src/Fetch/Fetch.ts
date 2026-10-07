@@ -333,7 +333,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
 
     return {
       component: this.$config.name,
-      owner: $el.id || undefined,
+      // The attribute, not the property: a form control named `id` replaces
+      // the `id` property of its form, as Shopify product forms do.
+      owner: $el.getAttribute('id') || undefined,
       selector: $options.selector,
       mode: $options.mode,
       params: stringRecord($options.params),
