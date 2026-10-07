@@ -83,6 +83,7 @@ Back from entry 2 to entry 1 sends no request, because the page already shows `/
 
 - **The first entry.** Before its first push, `Fetch` stamps the current entry with the same recipe through `replaceState()`. Back to the page as it was first loaded then finds a recipe too.
 - **Entries of other scripts.** An entry without a `fetch` key is ignored on back and forward navigation.
+- **Regions.** A restore swaps the regions of every entry that the page has written, restored or loaded on, not only those of the restored entry. When two elements with `history` and different `selector` options share a page, back to the entry of the first one also brings back the region that the second one changed.
 - **Anchors of the page.** Back or forward to an entry whose URL differs from the content on the page only by its hash sends no request: the browser scrolls to the fragment, and the swapped regions keep their state.
 - **A traversal stops the navigation in flight.** Back and forward abort the navigation in flight, also when they reach an entry of another script, as they stop a native navigation.
 - **Plain data only.** The recipe holds no element and no function, so it survives the element that wrote it and a reload. The [`requestInit` option](#requestinit) is not stored, because a value the browser cannot clone would make `pushState()` throw.

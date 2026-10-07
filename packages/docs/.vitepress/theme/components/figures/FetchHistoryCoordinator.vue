@@ -23,7 +23,7 @@
         class="dg"
         viewBox="0 0 360 410"
         role="img"
-        aria-label="One history coordinator handles popstate. It stops the navigation in flight, ignores an entry without a fetch key, sends no request when only the hash differs from the content on the page, reloads the page when no class can restore the entry, and otherwise lets the mounted instance on the owner element run the restore, or a detached instance whose events reach document. One GET request is rebuilt from the restored URL and the recipe, and the regions that match the recipe selector are swapped.">
+        aria-label="One history coordinator handles popstate. It stops the navigation in flight, ignores an entry without a fetch key, sends no request when only the hash differs from the content on the page, reloads the page when no class can restore the entry, and otherwise lets the mounted instance on the owner element run the restore, or a detached instance whose events reach document. One GET request is rebuilt from the restored URL and the recipe, and the regions that match the selectors of the page's entries are swapped.">
         <defs>
           <marker
             :id="marker"
@@ -73,7 +73,8 @@
         </text>
 
         <path class="ln acc" d="M180 296 V334" :marker-end="`url(#${marker})`" />
-        <text class="lbl acc mono" x="188" y="320">swaps recipe.selector</text>
+        <text class="lbl acc" x="188" y="314">swaps the selectors</text>
+        <text class="lbl acc" x="188" y="327">of the page's entries</text>
         <rect class="box acc" x="80" y="336" width="200" height="36" rx="6" />
         <text class="mono" x="180" y="358" text-anchor="middle">#results</text>
         <text class="lbl acc" x="180" y="396" text-anchor="middle">
@@ -82,6 +83,6 @@
       </svg>
     </div>
     <!-- prettier-ignore -->
-    <figcaption v-if="!bare" :id="`${id}-caption`"><slot>One coordinator holds the only <code>popstate</code> listener of the page. It reads the recipe of the entry, finds who runs the restore, rebuilds one GET request from the restored URL and swaps only the regions the recipe names. The owner is found by the <code>id</code> of the element that wrote the entry.</slot></figcaption>
+    <figcaption v-if="!bare" :id="`${id}-caption`"><slot>One coordinator holds the only <code>popstate</code> listener of the page. It reads the recipe of the entry, finds who runs the restore, rebuilds one GET request from the restored URL and swaps the regions that the entries of the page name, so a region that a later entry changed comes back too. The owner is found by the <code>id</code> of the element that wrote the entry.</slot></figcaption>
   </component>
 </template>

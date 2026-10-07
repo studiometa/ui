@@ -598,6 +598,44 @@ describe('Fetch history — back and forward', () => {
     expect(address()).toBe('/start');
   });
 
+  it('restores the regions that the entries after the restored one changed', async () => {
+    window.history.pushState(null, '', '/p');
+    stubClient((url) => {
+      const { searchParams } = new URL(url);
+      return new Response(
+        `<div id="ra">a${searchParams.get('a') ?? 1}</div><div id="rb">b${searchParams.get('b') ?? 1}</div>`,
+      );
+    });
+    await mount(`<div id="ra">a1</div><div id="rb">b1</div>`);
+    const { root } = await mountFetch(`
+      <div>
+        <a data-component="Fetch" id="a" href="/p?a=2" data-option-history
+          data-option-selector="#ra" data-option-no-view-transition></a>
+        <a data-component="Fetch" id="b" href="/p?a=2&amp;b=2" data-option-history
+          data-option-selector="#rb" data-option-no-view-transition></a>
+      </div>
+    `);
+    const regions = () =>
+      [document.getElementById('ra'), document.getElementById('rb')].map((el) => el?.textContent);
+
+    await getInstance<Fetch>(root.querySelector('#a')!, 'Fetch')!.fetch();
+    await getInstance<Fetch>(root.querySelector('#b')!, 'Fetch')!.fetch();
+    expect(regions()).toEqual(['a2', 'b2']);
+
+    await back();
+    await waitFor(() => regions().join() === 'a2,b1');
+    expect(address()).toBe('/p?a=2');
+
+    await back();
+    await waitFor(() => regions().join() === 'a1,b1');
+    expect(address()).toBe('/p');
+
+    await forward();
+    await forward();
+    await waitFor(() => regions().join() === 'a2,b2');
+    expect(address()).toBe('/p?a=2&b=2');
+  });
+
   it('restores after a reload, once a `Fetch` with history has mounted', async () => {
     window.history.pushState(
       { fetch: makeRecipe({ params: { view: 'fragment' } }) },
