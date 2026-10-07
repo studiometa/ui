@@ -41,25 +41,27 @@ Several `data-track:*` attributes can be set on the same element to track indepe
 
 ### Reserved events
 
-| Event     | Behaviour                                                                                                             |
-| --------- | --------------------------------------------------------------------------------------------------------------------- |
-| `mounted` | Dispatched once, when the component mounts.                                                                           |
-| `view`    | Dispatched when the element enters the viewport, via `IntersectionObserver` (see the [`threshold`](#options) option). |
+| Event     | Behaviour                                                                                                                                  |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `mounted` | Dispatched once after the component mounts, when the DOM has settled. It carries no event.                                                 |
+| `view`    | Dispatched when the element enters the viewport, via `IntersectionObserver` (see the [`threshold`](#options) option). It carries no event. |
+
+`mounted` waits until every pending import and mount has finished, so the context of a `TrackContext` loaded lazily through a manifest is included. A `TrackContext` that waits for a `visible`, `in-view`, `idle`, `interaction` or `media:` mount strategy is not awaited. Rewriting a `data-track:mounted` attribute creates a new declaration, which dispatches again.
 
 Any other name binds a native DOM event (`click`, `mouseenter`, `submit`, a `CustomEvent` type, …).
 
 ### Modifiers
 
-| Modifier                      | Effect                                                                |
-| ----------------------------- | --------------------------------------------------------------------- |
-| `.prevent`                    | `event.preventDefault()`                                              |
-| `.stop`                       | `event.stopPropagation()`                                             |
-| `.once`                       | Dispatch at most once (also stops the `view` observer).               |
-| `.passive`                    | Register the listener as passive.                                     |
-| `.capture`                    | Register the listener in the capture phase.                           |
-| `.debounce` / `.debounce<ms>` | Debounce the dispatch (default `300`).                                |
-| `.throttle` / `.throttle<ms>` | Throttle the dispatch (default `16`).                                 |
-| `.detail`                     | For a `CustomEvent`, merge the whole `event.detail` into the payload. |
+| Modifier                      | Effect                                                                      |
+| ----------------------------- | --------------------------------------------------------------------------- |
+| `.prevent`                    | `event.preventDefault()`                                                    |
+| `.stop`                       | `event.stopPropagation()`                                                   |
+| `.once`                       | Dispatch at most once (also stops the `view` observer).                     |
+| `.passive`                    | Register the listener as passive.                                           |
+| `.capture`                    | Register the listener in the capture phase.                                 |
+| `.debounce` / `.debounce<ms>` | Debounce the dispatch (default `300`).                                      |
+| `.throttle` / `.throttle<ms>` | Throttle the dispatch (default `16`).                                       |
+| `.detail`                     | For a `CustomEvent`, merge the whole `event.detail` into the payload, last. |
 
 Example: `data-track:input.debounce500`, `data-track:click.prevent.once`.
 
@@ -71,7 +73,9 @@ The dispatched payload is deep-merged from the following sources, in increasing 
 2. **Component payload** — shared by every event on the element, from a `<script data-ref="payload" type="application/json">` child and/or a `data-option-payload` attribute (the option overrides the ref on conflicts).
 3. **Event payload** — the JSON value of the `data-track:<event>` attribute (or the `event` key when the bare-name shorthand is used).
 
-Later sources win on conflicting keys. **Arrays are replaced, not concatenated**, so a more specific layer fully overrides a list (e.g. GA4 `ecommerce.items`) from a broader one.
+Later sources win on conflicting keys. **Arrays are replaced, not concatenated**, so a more specific layer fully overrides a list (e.g. GA4 `ecommerce.items`) from a broader one. With the [`.detail`](#modifiers) modifier, the event detail is merged last, on top of the three sources.
+
+All three sources are read when the event fires, never cached at mount. A partial DOM update that rewrites a payload script, a `data-option-payload` attribute or an ancestor `TrackContext` therefore changes what the next dispatch sends, with no remount.
 
 ```html
 <div
@@ -86,17 +90,69 @@ Later sources win on conflicting keys. **Arrays are replaced, not concatenated**
 
 Malformed JSON (in an attribute value or a `<script>` ref) is skipped safely; a warning is logged when the element has `data-option-log`.
 
-### Custom event data
+### Event data
 
-For a `CustomEvent`, resolve values from its `detail` with `$detail.<path>` placeholders, or merge the full detail with the `.detail` modifier:
+A payload value starting with `$event.` or `$detail.` is a placeholder: it is replaced by the value found at that path on the event that triggered the dispatch.
+
+- `$event.<path>` resolves against the whole event, so it reaches native properties as well as a `CustomEvent` detail.
+- `$detail.<path>` is the shortcut for `$event.detail.<path>`.
+
+A placeholder works in every source: the event payload, the component payload (script and option) and the inherited context. Placeholders are resolved once the sources are merged. A placeholder is a whole value: a string that only contains one stays as it is, and so does a bare `$event` or `$detail`.
 
 ```html
-<!-- Pull specific fields -->
+<!-- A CustomEvent detail, written both ways -->
+<div data-track:form-submitted='{"event": "lead", "email": "$event.detail.email"}'></div>
 <div data-track:form-submitted='{"event": "lead", "email": "$detail.email"}'></div>
 
-<!-- Merge the whole detail -->
+<!-- A native event -->
+<button
+  data-type="cta"
+  data-track:click='{"event": "cta_click", "type": "$event.target.dataset.type"}'></button>
+```
+
+A path walks objects and arrays, and a numeric segment reads an array index. Placeholders nested inside objects and arrays are resolved too, which is what a GA4 `ecommerce.items` list needs:
+
+```html
+<div
+  data-track:add-to-cart='{"event": "add_to_cart", "ecommerce": {"items": [{"item_id": "$detail.id"}]}}'></div>
+```
+
+A path naming data the event does not carry resolves to `undefined`. So does every placeholder of the `mounted` and `view` events, which carry no event at all.
+
+The resolver knows nothing about who emitted the event, so any component that emits plain data in its detail is readable from markup:
+
+```js
+import { Base } from '@studiometa/js-toolkit';
+
+class SearchResults extends Base {
+  static config = { name: 'SearchResults' };
+
+  show(results, tags) {
+    // Render the results, then announce them with plain data.
+    this.$emit('search-results', { count: results.length, tags });
+  }
+}
+```
+
+```html
+<div
+  data-component="SearchResults Track"
+  data-track:search-results='{"event": "search_results", "count": "$event.detail.count", "tag": "$event.detail.tags.0"}'></div>
+```
+
+A placeholder is replaced by the value at its path as it is. A path can therefore reach an object that does not serialise to JSON, such as a DOM element (`$event.target`) or a component instance. `Track` pushes it to `window.dataLayer` unchanged. `TrackShopify` hands the payload to `Shopify.analytics.publish()`, which passes it as `customData` to pixels that run in a sandbox. Keep a `TrackShopify` payload JSON-serialisable: point its placeholders to plain values, such as `$event.target.dataset.plan`.
+
+A debounced or throttled event is read when the dispatch runs, after the event has finished. At that time `event.currentTarget` is `null`. Read `$event.target` instead.
+
+The `.detail` modifier is the other way to consume a `CustomEvent`: it merges the whole `event.detail` into the payload. The placeholders of the other sources are resolved first, and the detail is merged after them. The detail itself is never read for placeholders, because it is runtime data. The modifier applies to a `CustomEvent` only, since a native event carries no detail to merge.
+
+```html
 <div data-track:form-submitted.detail='{"event": "lead"}'></div>
 ```
+
+::: warning
+Placeholders are read in every source, including data that a server writes into a `TrackContext` or a payload script. Do not write untrusted text, such as a search term, in a way that it can become a whole value starting with `$event.` or `$detail.`. It would be read as a path on the event.
+:::
 
 ## Options
 

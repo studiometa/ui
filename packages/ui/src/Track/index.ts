@@ -4,7 +4,7 @@ export { TrackContext, type TrackContextProps } from './TrackContext.js';
 export {
   TrackEvent,
   TRACK_PSEUDO_EVENTS,
-  resolveDetailPlaceholders,
+  resolveEventPlaceholders,
   type TrackPseudoEvent,
 } from './TrackEvent.js';
 export { TrackShopify, type TrackShopifyProps } from './TrackShopify.js';

@@ -1,6 +1,7 @@
 import { getMountedInstances } from '@studiometa/js-toolkit/getMountedInstances';
 import type { Base } from '@studiometa/js-toolkit';
 import { MODIFIERS, parseEventDefinition, type Modifier } from '../utils/event-modifiers.js';
+import { MOUNTED_EVENT } from '../utils/mounted-event.js';
 import { getEffect, type EffectFunction } from './expression.js';
 
 /**
@@ -112,30 +113,43 @@ export class ActionEvent {
 
   /**
    * Apply the modifiers that live in the handler body, then run the effect.
+   *
+   * The event is optional because the reserved `mounted` pseudo-event has
+   * none: the modifiers reading it then have nothing to act on, and the effect
+   * receives `undefined` for its `event` argument.
    */
-  handleEvent(event: Event): void {
+  handleEvent(event?: Event): void {
     const { modifiers } = this;
 
-    if (modifiers.has(MODIFIERS.PREVENT)) {
+    if (event && modifiers.has(MODIFIERS.PREVENT)) {
       event.preventDefault();
     }
-    if (modifiers.has(MODIFIERS.STOP)) {
+    if (event && modifiers.has(MODIFIERS.STOP)) {
       event.stopPropagation();
     }
 
-    // Use one instance snapshot for both parameter names and values.
-    const instances = this.instances;
-    const effect = getEffect(this.effectDefinition, [...instances.keys()]);
-    const { targets } = this;
-
     if (modifiers.has(MODIFIERS.DEBOUNCE)) {
       clearTimeout(this.__debounceTimer);
-      this.__debounceTimer = window.setTimeout(() => {
-        this.executeEffect(targets, effect, event, instances);
-      }, this.debounceDelay);
+      this.__debounceTimer = window.setTimeout(() => this.__run(event), this.debounceDelay);
     } else {
-      this.executeEffect(targets, effect, event, instances);
+      this.__run(event);
     }
+  }
+
+  /**
+   * Resolve the co-located instances, the effect and the targets, then run.
+   *
+   * Resolved when the effect runs, after any debounce, rather than when the
+   * event fires: a component that mounts during the debounce window is
+   * reached, and one that unmounted during it is not called.
+   *
+   * @private
+   */
+  __run(event?: Event): void {
+    // One instance snapshot for both the parameter names and their values.
+    const instances = this.instances;
+    const effect = getEffect(this.effectDefinition, [...instances.keys()]);
+    this.executeEffect(this.targets, effect, event, instances);
   }
 
   /**
@@ -145,7 +159,7 @@ export class ActionEvent {
   executeEffect(
     targets: ActionTarget[],
     effect: EffectFunction,
-    event: Event,
+    event?: Event,
     instances: Map<string, Base> = this.instances,
   ): void {
     const { action } = this;
@@ -177,6 +191,14 @@ export class ActionEvent {
   /** Bind the event and return a release that also cancels pending debounce. */
   attach(): () => void {
     const { modifiers } = this;
+
+    if (this.event === MOUNTED_EVENT) {
+      // Nothing to bind: `Action` triggers it once the DOM has settled.
+      // A DOM listener would also catch the lifecycle events of descendants
+      // mounting later, which is exactly what the pseudo-event exists to avoid.
+      return () => clearTimeout(this.__debounceTimer);
+    }
+
     const off = this.action.$on(this.event, (event) => this.handleEvent(event), {
       capture: modifiers.has(MODIFIERS.CAPTURE),
       once: modifiers.has(MODIFIERS.ONCE),

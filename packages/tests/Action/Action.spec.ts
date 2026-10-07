@@ -1,13 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   Base,
+  EVENTS,
   getInstance,
   registerComponents,
+  registerManifest,
   swap,
   SWAP_MODES,
   type BaseConfig,
 } from '@studiometa/js-toolkit';
-import { captureDiagnostics, mount, resetDom, settle } from '@studiometa/js-toolkit/test';
+import { captureDiagnostics, mount, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
 import { Dialog } from '#private/Dialog/Dialog.js';
 import { Action } from '#private/Action/Action.js';
 import { ActionEvent } from '#private/Action/ActionEvent.js';
@@ -305,6 +307,40 @@ describe('ActionEvent — modifiers', () => {
     expect(foo.calls).toHaveLength(1);
   });
 
+  it('resolves the targets when a debounced effect runs, reaching one that mounted meanwhile', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action"
+        data-on:click.debounce400="Foo(#late) -> target.fn()"></button>
+    `);
+
+    click(root.querySelector('#action') as Element);
+    root.insertAdjacentHTML('beforeend', '<div id="late" data-component="Foo"></div>');
+    const late = await waitFor(() => getInstance<Foo>(root.querySelector('#late'), 'Foo'));
+
+    await waitFor(() => late.calls.length > 0, {
+      message: 'Expected the target mounted during the debounce window to be called.',
+      timeout: 3000,
+    });
+    expect(late.calls).toHaveLength(1);
+  });
+
+  it('does not call a target that unmounted during the debounce window', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action"
+        data-on:click.debounce200="Foo -> target.fn()"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const foo = at<Foo>(root, '#foo', 'Foo');
+
+    click(root.querySelector('#action') as Element);
+    (root.querySelector('#foo') as Element).remove();
+    await settle();
+    expect(foo.$isMounted).toBe(false);
+
+    await wait(300);
+    expect(foo.calls).toHaveLength(0);
+  });
+
   it('drops a pending debounced effect when the action is unmounted', async () => {
     const root = await mount(`
       <button id="action" data-component="Action"
@@ -480,6 +516,261 @@ describe('Action — the component', () => {
     expect(log.entries[0].error).toBeInstanceOf(Error);
 
     log.stop();
+  });
+});
+
+describe('Action — the `mounted` pseudo-event', () => {
+  /**
+   * The deferred effect lands in the scheduler's background lane, which a
+   * single `settle()` is generous about rather than deterministic — the helper
+   * says so itself. Every assertion that the effect **has** run therefore polls
+   * for it. Only an assertion that it has **not** run is made after a settle,
+   * and only where something observable proves the lane already drained.
+   */
+  function ran(foo: Foo, count: number): Promise<unknown> {
+    return waitFor(() => foo.calls.length === count, {
+      message: `Expected ${count} mounted effect(s), got ${foo.calls.length}.`,
+      timeout: 3000,
+    });
+  }
+
+  it('runs once after the DOM has settled', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action" data-on:mounted="Foo -> target.fn('ready')"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const foo = at<Foo>(root, '#foo', 'Foo');
+
+    await ran(foo, 1);
+    // Nothing queues a second one behind the first.
+    await settle();
+
+    expect(foo.calls).toEqual([['ready']]);
+  });
+
+  it('reaches a component mounted on its own element', async () => {
+    // The point of the deferral: at bind time the co-located `Foo` is not
+    // resolvable yet, so the effect could not name it.
+    const root = await mount(`
+      <button id="action" data-component="Action Foo" data-on:mounted="Foo.fn('co-located')"></button>
+    `);
+    const foo = at<Foo>(root, '#action', 'Foo');
+
+    await ran(foo, 1);
+
+    expect(foo.calls).toEqual([['co-located']]);
+  });
+
+  it('binds no DOM listener at all', async () => {
+    const root = await mount('<div id="action" data-component="Action"></div>');
+    const action = at<Action>(root, '#action', 'Action');
+    const spy = vi.spyOn(action.$el, 'addEventListener');
+
+    const release = new ActionEvent(action, 'mounted', 'target').attach();
+
+    expect(spy).not.toHaveBeenCalled();
+    release();
+    spy.mockRestore();
+  });
+
+  it('ignores a `mounted` event bubbling from a descendant', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action" data-on:mounted="Foo -> target.fn()">
+        <span id="child"></span>
+      </button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const foo = at<Foo>(root, '#foo', 'Foo');
+    await ran(foo, 1);
+
+    (root.querySelector('#child') as HTMLElement).dispatchEvent(
+      new CustomEvent('mounted', { bubbles: true }),
+    );
+    (root.querySelector('#child') as HTMLElement).dispatchEvent(
+      new CustomEvent('js-toolkit:component:mounted', { bubbles: true }),
+    );
+    await settle();
+
+    expect(foo.calls).toHaveLength(1);
+  });
+
+  /**
+   * Run `act` once, inside the `js-toolkit:component:mounted` listener of the
+   * Action matching `selector`. That is the first moment the Action is fully
+   * mounted, and its deferred effect cannot have run yet: it still waits for
+   * the DOM to settle.
+   */
+  function onFirstMount(selector: string, act: (action: Action) => void): () => void {
+    let isDone = false;
+    function listener(event: Event): void {
+      const { instance } = (event as CustomEvent<{ instance: Base }>).detail;
+      if (isDone || !(instance instanceof Action) || !instance.$el.matches(selector)) {
+        return;
+      }
+      isDone = true;
+      act(instance);
+    }
+    document.addEventListener(EVENTS.component.mounted, listener);
+    return () => document.removeEventListener(EVENTS.component.mounted, listener);
+  }
+
+  it('drops the deferred effect when the action unmounts before it runs', async () => {
+    const stop = onFirstMount('#doomed', (action) => action.$unmount());
+    const root = await mount(`
+      <button id="doomed" data-component="Action" data-on:mounted="Foo -> target.fn('doomed')"></button>
+      <button id="control" data-component="Action" data-on:mounted="Foo -> target.fn('control')"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    stop();
+    const foo = at<Foo>(root, '#foo', 'Foo');
+
+    // The doomed action really mounted, then unmounted: this is not a
+    // declaration that was replaced before it could bind.
+    expect(at<Action>(root, '#doomed', 'Action').$isMounted).toBe(false);
+
+    // The control waits for the same settled DOM, so once it has run, the
+    // doomed effect would have run too.
+    await ran(foo, 1);
+    await settle();
+
+    expect(foo.calls).toEqual([['control']]);
+  });
+
+  it.each([
+    ['the `data-on:mounted` attribute', `data-on:mounted="Foo -> target.fn('once')"`],
+    [
+      'the option triple',
+      `data-option-on="mounted" data-option-target="Foo" data-option-effect="target.fn('once')"`,
+    ],
+  ])(
+    'runs once when the action remounts before the effect runs, through %s',
+    async (_label, declaration) => {
+      let remounts = 0;
+      const stop = onFirstMount('#action', (action) => {
+        action.$unmount();
+        action.$mount();
+        remounts += 1;
+      });
+      const root = await mount(`
+        <button id="action" data-component="Action" ${declaration}></button>
+        <div id="foo" data-component="Foo"></div>
+      `);
+      stop();
+      const foo = at<Foo>(root, '#foo', 'Foo');
+
+      // A remount passes the `$isMounted` check, so only the cancel of the
+      // first binding keeps its effect from running beside the new one.
+      await waitFor(() => foo.calls.length > 0, { timeout: 3000 });
+      await settle();
+
+      expect(remounts).toBe(1);
+      expect(foo.calls).toEqual([['once']]);
+    },
+  );
+
+  it('waits for a target imported lazily, on its own element and elsewhere', async () => {
+    class LazyNear extends Foo {
+      static config: BaseConfig = { name: 'LazyNear' };
+    }
+    class LazyFar extends Foo {
+      static config: BaseConfig = { name: 'LazyFar' };
+    }
+    // What the `/autoload` entries do: the modules resolve after `Action` has
+    // mounted, so a single background turn would run the effect too early.
+    registerManifest({
+      LazyNear: () => wait(300).then(() => LazyNear),
+      LazyFar: () => wait(300).then(() => LazyFar),
+    });
+    const log = captureDiagnostics();
+
+    try {
+      const root = await mount(`
+        <div id="near" data-component="Action LazyNear" data-on:mounted="LazyNear.fn('near')"></div>
+        <div data-component="Action" data-on:mounted="LazyFar(#far) -> target.fn('far')"></div>
+        <div id="far" data-component="LazyFar"></div>
+      `);
+      const near = await waitFor(() =>
+        getInstance<LazyNear>(root.querySelector('#near'), 'LazyNear'),
+      );
+      const far = await waitFor(() => getInstance<LazyFar>(root.querySelector('#far'), 'LazyFar'));
+
+      await waitFor(() => near.calls.length > 0 && far.calls.length > 0, {
+        message: 'Expected both lazily imported targets to be called.',
+        timeout: 3000,
+      });
+      await settle();
+
+      expect(near.calls).toEqual([['near']]);
+      expect(far.calls).toEqual([['far']]);
+      expect(log.codes).toEqual([]);
+    } finally {
+      log.stop();
+    }
+  });
+
+  it('starts exactly one new effect on a remount', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action" data-on:mounted="Foo -> target.fn()"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const action = at<Action>(root, '#action', 'Action');
+    const foo = at<Foo>(root, '#foo', 'Foo');
+    await ran(foo, 1);
+
+    action.$unmount();
+    action.$mount();
+    await ran(foo, 2);
+    await settle();
+
+    expect(foo.calls).toHaveLength(2);
+  });
+
+  it('runs the effect with no event', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action"
+        data-on:mounted="Foo -> target.fn(typeof event)"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const foo = at<Foo>(root, '#foo', 'Foo');
+
+    await ran(foo, 1);
+
+    expect(foo.calls).toEqual([['undefined']]);
+  });
+
+  it('applies the debounce modifier to the deferred effect', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action"
+        data-on:mounted="Foo -> target.fn('immediate', performance.now())"
+        data-on:mounted.debounce200="Foo -> target.fn('debounced', performance.now())"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const foo = at<Foo>(root, '#foo', 'Foo');
+
+    await ran(foo, 2);
+
+    // The delay is asserted as the gap between the two effects, never as a
+    // moment at which the debounced one has not run yet: a loaded machine can
+    // spend longer than the delay reaching such a moment, while a timer cannot
+    // fire early. Both declarations are deferred by the same lane and the
+    // undebounced one is queued first, so the gap is the delay itself.
+    const [immediate, debounced] = foo.calls;
+    expect(immediate[0]).toBe('immediate');
+    expect(debounced[0]).toBe('debounced');
+    expect((debounced[1] as number) - (immediate[1] as number)).toBeGreaterThanOrEqual(190);
+  });
+
+  it('works through the `on` option too', async () => {
+    const root = await mount(`
+      <button id="action" data-component="Action" data-option-on="mounted"
+        data-option-target="Foo" data-option-effect="target.fn('from-option')"></button>
+      <div id="foo" data-component="Foo"></div>
+    `);
+    const foo = at<Foo>(root, '#foo', 'Foo');
+
+    await ran(foo, 1);
+
+    expect(foo.calls).toEqual([['from-option']]);
   });
 });
 

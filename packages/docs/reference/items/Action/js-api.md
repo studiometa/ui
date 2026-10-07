@@ -22,6 +22,8 @@ The event that triggers the [effect callback](#effect) on the defined [targets](
 - `debounce` to debounce the event handler with a 100ms delay by default
 - `debounce<delay>` to debounce the event handler with a custom delay in milliseconds (e.g., `debounce300`)
 
+The targets and the components on the action element are found when the effect runs, after any debounce delay. A component that mounts during the delay is reached, and one that unmounts during it is not called.
+
 Modifiers can be chained with a `.` as separator:
 
 <!-- prettier-ignore-start -->
@@ -33,6 +35,37 @@ Modifiers can be chained with a `.` as separator:
 </button>
 ```
 <!-- prettier-ignore-end -->
+
+#### Reserved events
+
+`mounted` is a reserved name rather than a DOM event. Its effect runs once the DOM has settled, which means that every pending import and mount has finished. The effect can therefore target a component on the same element or elsewhere on the page, even when that component is loaded lazily through a manifest:
+
+<!-- prettier-ignore-start -->
+```html {3}
+<form
+  data-component="Fetch Action"
+  data-on:mounted="Fetch(#content-search) -> target.fetch()">
+</form>
+```
+<!-- prettier-ignore-end -->
+
+Two limits apply:
+
+- A target that waits for a `visible`, `in-view`, `idle`, `interaction` or `media:` mount strategy is not awaited. If it has not mounted when the DOM settles, the effect does not reach it.
+- Each binding runs its effect once. Rewriting the `data-on:mounted` attribute, or changing the `on`, `target` or `effect` option, creates a new binding, which runs again. This includes an option value that changes at a breakpoint.
+
+No listener is bound for it, so a lifecycle event bubbling from a descendant that mounts later never runs it again. Unmounting before the effect runs cancels it, and remounting starts exactly one new one.
+
+The effect receives `undefined` for its `event` argument, which is what the modifiers reading an event have to work with:
+
+| Modifier                      | With `mounted`                                          |
+| ----------------------------- | ------------------------------------------------------- |
+| `.debounce` / `.debounce<ms>` | Applies — the effect runs that many milliseconds later. |
+| `.prevent` / `.stop`          | Ignored — there is no event to cancel or to stop.       |
+| `.once`                       | Ignored — each binding already runs its effect once.    |
+| `.capture` / `.passive`       | Ignored — they configure a listener, and none is bound. |
+
+Any other name binds a DOM event of that name.
 
 ### `target`
 
@@ -116,7 +149,7 @@ Defines a small piece of JavaScript executed in the context of the current targe
 
 - `this` (`HTMLElement`): the current element
 - `ctx` (`Record<name, Base>`): the current targeted component in an object with a uniq key being its name set in the static `config.name` property and the value being the component instance
-- `event` (`Event`): the event that triggered the action
+- `event` (`Event | undefined`): the event that triggered the action, `undefined` for [`mounted`](#reserved-events)
 - `target` (`Base`): a direct reference to the current targeted component
 - `action` (`Base`): a direct reference to the current action component
 - `$el` (`HTMLElement`): a direct reference to the targeted element
@@ -223,7 +256,7 @@ The pattern described above with multiple components as targets is an advanced p
 - Type: `string`
 - Format: `[<name>[(<selector>)] -> ]<effect>`
 
-Combines the [`on`](#on), [`target`](#target) and [`effect`](#effect) options into a single attribute. Attaches multiple events to a single `Action` component.
+Combines the [`on`](#on), [`target`](#target) and [`effect`](#effect) options into a single attribute. Attaches multiple events to a single `Action` component. It reads the same event names and modifiers as the `on` option, [`mounted`](#reserved-events) included.
 
 ```html {3}
 <button
