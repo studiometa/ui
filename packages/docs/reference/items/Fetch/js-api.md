@@ -330,6 +330,8 @@ Aborts the request in flight. It emits [`fetch-abort`](#fetch-abort) with the re
 
 A request that has ended is left alone, and so are a request that has started its DOM change, which ends `ok` or `error`, and a request that has failed, which ends `error`.
 
+A request that waits for such a request to end is dropped: it never starts, emits no event, and its `fetch()` promise resolves `aborted`.
+
 **Parameters**
 
 - `reason` (`unknown`, optional): the reason why the request was aborted, given as the `reason` of the `fetch-abort` event.
@@ -397,7 +399,7 @@ interface FetchResponseDetail {
 
 - A request ends with exactly one `fetch-after`. A loader bound to `fetch-before` and `fetch-after` covers the whole request, the DOM change and aborts included.
 - A new request on the same instance ends the previous one first: `fetch-abort`, then `fetch-after` with `aborted`, then the `fetch-before` of the new request.
-- A request that has started its DOM change, or that has failed, cannot be stopped. The new request then waits until it has ended, so its `fetch-after` still comes before the `fetch-before` of the new request.
+- A request that has started its DOM change, or that has failed, cannot be stopped. The new request then waits until it has ended, so its `fetch-after` still comes before the `fetch-before` of the new request. Only the latest of the requests that wait then starts: an earlier one, or one that `abort()` dropped, emits no event and resolves `aborted`.
 - A request that writes or restores history is a page navigation, and only one runs at a time on the page. A new navigation ends the navigation of any other instance the same way, before its own `fetch-before`. When a `fetch-before` listener turns history on, the request ends the other navigation after the event.
 - A cancelled `fetch-before` has already ended the previous request, so a `fetch-before` listener cannot keep the request in flight and drop the new one. A native submission behaves the same way: a second submission stops the first one. To ignore a second submission while a request runs, disable the submit button in `fetch-before` and enable it again in `fetch-after`.
 - Requests of different instances that write no history run in parallel. A loader shared by several instances must count the requests in flight, or the first `fetch-after` hides it.
