@@ -1059,7 +1059,7 @@ describe('Fetch — native form submission', () => {
     expect(calls[0].url).toBe(abs('/search?q=new&genre=rock&genre=jazz'));
   });
 
-  it('lets `formaction` win over the action and `src`, and keeps `params`', async () => {
+  it('lets `formaction` win over the action, `src` and `params`', async () => {
     const { calls } = stubClient();
     const { root } = await mountFetch(
       `<form data-component="Fetch" action="/search" method="get" data-option-history
@@ -1072,7 +1072,7 @@ describe('Fetch — native form submission', () => {
     submit(root, 'button');
     await settle();
 
-    expect(calls[0].url).toBe(abs('/elsewhere?q=hello&view=fragment'));
+    expect(calls[0].url).toBe(abs('/elsewhere?q=hello'));
     expect(window.location.pathname).toBe('/elsewhere');
     expect(window.location.search).toBe('?q=hello');
   });

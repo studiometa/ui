@@ -118,12 +118,13 @@ describe('FetchShopifySection', () => {
     expect(document.getElementById('target')?.textContent).toBe('custom');
   });
 
-  it('keeps `sections` for a submitter with `formaction`, and still parses JSON', async () => {
+  it('keeps `sections` for a submitter with `formaction`, drops `params`, and still parses JSON', async () => {
     const { calls } = serveSections();
     await mount(`<div id="results">results 1</div>`);
     const { root } = await mountSection(
       `<form data-component="FetchShopifySection" action="/search" method="get"
-        data-option-sections="results" data-option-no-view-transition>
+        data-option-sections="results" data-option-params='{"view":"fragment"}'
+        data-option-no-view-transition>
         <input name="page" value="4">
         <button type="submit" formaction="/collections/all">Go</button>
       </form>`,

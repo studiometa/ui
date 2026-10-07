@@ -69,13 +69,13 @@
       </div>
       <div class="case">
         <!-- prettier-ignore -->
-        <div class="case-head"><span><code>formaction</code>: the submitter names another destination</span><span class="use"><code>src</code> is dropped, <code>params</code> still apply</span></div>
+        <div class="case-head"><span><code>formaction</code>: the submitter names another destination</span><span class="use"><code>src</code> and <code>params</code> are dropped</span></div>
         <div class="markup">{{ markup.formaction }}</div>
         <div class="row">
           <span class="k">Submit</span>
           <span class="url">/elsewhere?q=hello</span>
-          <span class="op">+ params</span>
-          <span class="url ok">/elsewhere?q=hello&amp;view=fragment</span>
+          <span class="op">no src, no params</span>
+          <span class="url ok">/elsewhere?q=hello</span>
         </div>
       </div>
       <div v-if="legacy" class="case bad">

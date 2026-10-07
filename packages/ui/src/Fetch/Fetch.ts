@@ -410,8 +410,14 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       if (button?.hasAttribute('formaction')) {
         target = new URL(button.formAction);
         // `formaction` names another endpoint for this submission, so the
-        // fixed endpoint of the form does not apply to it.
+        // `src` and `params` options of the form do not apply to it. The
+        // parameters a subclass adds for its transport stay.
         recipe.src = undefined;
+        for (const [name, value] of Object.entries(stringRecord($options.params))) {
+          if (recipe.params[name] === value) {
+            delete recipe.params[name];
+          }
+        }
       } else {
         target = new URL(formProperty(form, 'action'));
       }

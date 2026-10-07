@@ -611,7 +611,7 @@ describe('Fetch history — back and forward', () => {
     await back();
     await waitFor(() => calls.length === 3);
 
-    expect(calls[0].url).toBe(abs('/elsewhere?q=boots&view=fragment'));
+    expect(calls[0].url).toBe(abs('/elsewhere?q=boots'));
     expect(calls[2].url).toBe(calls[0].url);
   });
 });

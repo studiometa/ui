@@ -132,11 +132,11 @@ The address bar always shows the destination: the `href` of a link or the `actio
 2. Query: the query of `src`, then the query of the destination folded on. Without `src`, the query of the destination.
 3. `params` are set last, so they win.
 
-| Option       | Markup                                                                 | Navigate                                                  | Back                                                   |
-| ------------ | ---------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------ |
-| `params`     | `<a href="/projects?page=2" data-option-params='{"view":"fragment"}'>` | `/projects?page=2` → `/projects?page=2&view=fragment`     | `/projects?page=1` → `/projects?page=1&view=fragment`  |
-| `src`        | `<form action="/help" data-option-src="/apps/search?view=fragment">`   | `/help?q=shoes` → `/apps/search?view=fragment&q=shoes`    | `/help?q=boots` → `/apps/search?view=fragment&q=boots` |
-| `formaction` | `<button formaction="/elsewhere">` in a form with `src` and `params`   | `/elsewhere?q=hello` → `/elsewhere?q=hello&view=fragment` |                                                        |
+| Option       | Markup                                                                 | Navigate                                               | Back                                                   |
+| ------------ | ---------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------ |
+| `params`     | `<a href="/projects?page=2" data-option-params='{"view":"fragment"}'>` | `/projects?page=2` → `/projects?page=2&view=fragment`  | `/projects?page=1` → `/projects?page=1&view=fragment`  |
+| `src`        | `<form action="/help" data-option-src="/apps/search?view=fragment">`   | `/help?q=shoes` → `/apps/search?view=fragment&q=shoes` | `/help?q=boots` → `/apps/search?view=fragment&q=boots` |
+| `formaction` | `<button formaction="/elsewhere">` in a form with `src` and `params`   | `/elsewhere?q=hello` → `/elsewhere?q=hello`            |                                                        |
 
 </llm-only>
 
@@ -147,7 +147,7 @@ Keep a lighter copy of the page out of `src`: `src` is the same for every page, 
 A form submission sends what a native submission would send:
 
 - **The submitter.** The body comes from `new FormData(form, submitter)`, so the name and the value of the button that submitted the form are sent.
-- **Overrides.** A submitter with a `formaction`, `formmethod` or `formenctype` attribute overrides the form for that submission. `formaction` also replaces [`src`](./js-api.md#src). The [`params` option](./js-api.md#params) still applies.
+- **Overrides.** A submitter with a `formaction`, `formmethod` or `formenctype` attribute overrides the form for that submission. `formaction` also wins over the [`src`](./js-api.md#src) and [`params`](./js-api.md#params) options, which do not apply to that submission. The parameters that a subclass adds for its transport, such as the `sections` of [`FetchShopifySection`](../FetchShopifySection/index.md), still apply.
 - **GET.** The fields replace the query of the `action`, as natively.
 - **POST.** The body is URL-encoded by default, as natively. A file control then sends only the name of its file, and the `fetch.file-not-uploaded` diagnostic is reported. Set `enctype="multipart/form-data"` to upload files. `enctype="text/plain"` sends `name=value` lines.
 - **Left to the browser.** A `dialog` method closes its dialog natively, and a `target` or `formtarget` other than `_self` opens another browsing context. A form without a `target` of its own takes the `target` of the `<base>` element. `Fetch` does not intercept these submissions.
