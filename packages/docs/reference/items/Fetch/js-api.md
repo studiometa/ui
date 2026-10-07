@@ -83,6 +83,7 @@ Back from entry 2 to entry 1 requests `/projects?page=2&view=fragment`. Back fro
 
 - **The first entry.** Before its first push, `Fetch` stamps the current entry with the same recipe through `replaceState()`. Back to the page as it was first loaded then finds a recipe too.
 - **Entries of other scripts.** An entry without a `fetch` key is ignored on back and forward navigation.
+- **A traversal stops the navigation in flight.** Back and forward abort the navigation in flight, also when they reach an entry of another script, as they stop a native navigation.
 - **Plain data only.** The recipe holds no element and no function, so it survives the element that wrote it and a reload. The [`requestInit` option](#requestinit) is not stored, because a value the browser cannot clone would make `pushState()` throw.
 - **The owner.** A restore runs on the mounted instance on the `owner` element, so its events reach that element. Give the element an `id`: without one, the restore runs on a detached instance and its events reach `document`.
 - **An unknown class.** When no class on the page can restore the entry, the page reloads, so the address bar and the content stay in agreement. A class can restore entries once one of its instances with `history` has mounted, or has written an entry.

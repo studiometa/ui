@@ -99,12 +99,15 @@ function currentState(): Record<string, unknown> {
 /**
  * Restore the entry the browser moved to.
  *
- * An entry without a `fetch` key belongs to another script and is ignored. A
- * live owner runs the restore, so its events and loading states apply. With
- * no live owner, a detached instance of the registered class runs it, and
- * its events reach `document`.
+ * A traversal stops the navigation in flight first, as natively. An entry
+ * without a `fetch` key belongs to another script and is ignored. A live
+ * owner runs the restore, so its events and loading states apply. With no
+ * live owner, a detached instance of the registered class runs it, and its
+ * events reach `document`.
  */
 function onPopstate(): void {
+  navigation?.supersede();
+
   const recipe = currentState().fetch;
 
   if (!isRecord(recipe) || typeof recipe.component !== 'string') {
