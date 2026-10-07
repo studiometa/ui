@@ -13,7 +13,7 @@
         class="dg"
         viewBox="0 0 720 810"
         role="img"
-        style="min-width: 600px"
+        style="min-width: 520px"
         aria-label="Request lifecycle. The main path runs from fetch-before through the request in flight, fetch-response, the parse, a first check that the request is still the latest, fetch-update-before, a second check that commits the request, writing history, applying the DOM change inside js-toolkit:dom:update, fetch-update-after and fetch-after with outcome ok. A request superseded or aborted while in flight sends fetch-abort and fetch-after with outcome aborted at once, and stops at the next check. A cancelled fetch-before goes straight to fetch-after aborted. A network error, a status that is not ok, a parse failure or a failed DOM change sends fetch-error and fetch-after with outcome error. When the swap removed the element, the last events also reach its nearest connected ancestor or document.">
         <defs>
           <marker
