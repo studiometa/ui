@@ -7,18 +7,22 @@ import type {
 // CDN, so these components declare neither a CDN-served stylesheet nor a bundled integration
 // chunk — consumers load the Mapbox JavaScript and CSS from the source their import map points at.
 //
-// `MapboxMap` and `StoreLocator` render, so the package default `visible` suits them: the import
-// waits until the map is about to be seen. Every other component configures the map from markup
-// that renders nothing, and the README tells consumers to mark such an element `hidden`. A hidden
-// element never intersects the viewport, so a `visible` entry would wait for a signal that can
-// never come. They declare `eager` instead: the registry only schedules a token declared in the
-// document, so the import happens because the element exists, and it runs on a background
-// scheduler task rather than at page load. The heavy `mapbox-gl` import stays behind `MapboxMap`.
+// The package default is `visible`, so a module loads when its element nears the viewport.
+// `MapboxMap` and `StoreLocator` keep it, which holds the heavy `mapbox-gl` import back until a
+// map nears the viewport. `MapboxGeocoder` keeps it too, so `@mapbox/mapbox-gl-geocoder` stays
+// lazy: its element holds the search input, or nothing when the control is added to the map, so
+// it never needs `hidden`.
+//
+// The other map children declare `eager`. They only need to exist: `MapboxMap` already gates
+// `mapbox-gl`, so their own modules are small. Many of them render nothing and carry `hidden`,
+// and a hidden element never intersects the viewport, so `visible` would never load them. The
+// registry only schedules a token declared on an element of the page, so `eager` imports a
+// module because its element exists, on a background scheduler task, not at page load.
 const components: readonly CuratedComponentMetadata[] = [
   { token: 'MapboxCluster', group: 'mapbox', strategy: 'eager' },
   { token: 'MapboxClusterItem', group: 'mapbox', strategy: 'eager' },
   { token: 'MapboxFullscreenControl', group: 'mapbox', strategy: 'eager' },
-  { token: 'MapboxGeocoder', group: 'mapbox', strategy: 'eager' },
+  { token: 'MapboxGeocoder', group: 'mapbox' },
   { token: 'MapboxGeolocateControl', group: 'mapbox', strategy: 'eager' },
   { token: 'MapboxImage', group: 'mapbox', strategy: 'eager' },
   { token: 'MapboxImages', group: 'mapbox', strategy: 'eager' },

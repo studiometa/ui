@@ -18,7 +18,7 @@ export const manifest: ComponentManifest = {
       ),
   },
   MapboxGeocoder: {
-    mountStrategy: 'eager',
+    mountStrategy: 'visible',
     load: () => import('./MapboxGeocoder.js').then(({ MapboxGeocoder }) => MapboxGeocoder),
   },
   MapboxGeolocateControl: {

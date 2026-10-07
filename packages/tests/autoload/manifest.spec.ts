@@ -18,17 +18,17 @@ function isBaseConstructor(value: unknown): value is BaseConstructor {
 }
 
 /**
- * The two `@studiometa/ui-mapbox` components that render. They keep the package
- * default `visible`; every other entry configures the map from markup that
- * renders nothing and is therefore `eager`.
+ * The `@studiometa/ui-mapbox` components that keep the package default
+ * `visible`, so their heavy dependency waits for the viewport: `mapbox-gl` for
+ * the map and the store locator, `@mapbox/mapbox-gl-geocoder` for the geocoder.
+ * Every other map child only needs to exist and is `eager`.
  */
-const MAPBOX_VISIBLE_TOKENS: readonly string[] = ['MapboxMap', 'StoreLocator'];
+const MAPBOX_VISIBLE_TOKENS: readonly string[] = ['MapboxGeocoder', 'MapboxMap', 'StoreLocator'];
 
 const MAPBOX_EAGER_TOKENS: readonly string[] = [
   'MapboxCluster',
   'MapboxClusterItem',
   'MapboxFullscreenControl',
-  'MapboxGeocoder',
   'MapboxGeolocateControl',
   'MapboxImage',
   'MapboxImages',
@@ -97,7 +97,7 @@ describe.each(cases)('%s ./manifest export', (_packageName, manifest, exports, s
 // Listing both halves keeps a new component from inheriting a strategy by
 // accident: adding one to the catalog fails here until it is classified.
 describe('@studiometa/ui-mapbox mount strategies', () => {
-  it('splits every entry between the rendered roots and the declarative children', () => {
+  it('splits every entry between the visible components and the eager children', () => {
     const eager = Object.entries(mapboxManifest)
       .filter(([, entry]) => (entry as ComponentManifestEntry).mountStrategy === 'eager')
       .map(([token]) => token);
