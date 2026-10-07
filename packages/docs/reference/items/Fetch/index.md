@@ -111,7 +111,7 @@ flowchart TB
 
 - **One owner per page.** One history coordinator holds the only `popstate` listener of the page. Two `Fetch` elements with `history` never race on one back navigation: it sends one request.
 - **The entry keeps a recipe.** Each entry stores plain data under the `fetch` key of `history.state`: the regions to swap, the swap mode, the [`params`](./js-api.md#params) and [`src`](./js-api.md#src) options, and the `id` of the element that wrote it. Back rebuilds the request from the restored URL and that recipe. It works after the element has left the page. See [history entries](./js-api.md#history-entries).
-- **Push by default.** Each request adds an entry, as a native navigation does. Set [`historyMode`](./js-api.md#historymode) to `replace` for a live search: the request replaces the current entry, so back leaves the search instead of going back one keystroke.
+- **Push by default.** Each request adds an entry, as a native navigation does. A GET to the URL the page already shows replaces the current entry, as natively. Set [`historyMode`](./js-api.md#historymode) to `replace` for a live search: the request replaces the current entry, so back leaves the search instead of going back one keystroke.
 - **Entries of other scripts are kept.** An entry without a `fetch` key is ignored, and the keys that other scripts put in `history.state` are kept.
 - **A POST writes history only after a redirect.** The entry is then the page the server redirected to, which back restores with a GET. A POST without a redirect writes nothing.
 - **Give the element an `id`.** The events of a restore reach the element that wrote the entry only when it has an `id`. Without one, they reach `document`.

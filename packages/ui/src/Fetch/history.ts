@@ -197,8 +197,10 @@ export function entryUrl(
 /**
  * Write the entry of a navigation and return whether one was written.
  *
- * Before the first push, the current entry is stamped with the same recipe,
- * so back to the page as first loaded finds a recipe too.
+ * A push of a GET to the URL the page already shows replaces the current
+ * entry, as a native navigation does. Before the first push, the current
+ * entry is stamped with the same recipe, so back to the page as first loaded
+ * finds a recipe too.
  */
 export function writeEntry(
   mode: 'push' | 'replace',
@@ -213,12 +215,14 @@ export function writeEntry(
   }
 
   const parts = { path: url.pathname, search: url.searchParams, hash: url.hash };
+  const isPush =
+    mode === 'push' && !(request.method === 'GET' && url.href === window.location.href);
 
-  if (mode === 'push' && !isRecord(currentState().fetch)) {
+  if (isPush && !isRecord(currentState().fetch)) {
     window.history.replaceState({ ...currentState(), fetch: recipe }, '', window.location.href);
   }
 
-  const write = mode === 'replace' ? historyReplace : historyPush;
+  const write = isPush ? historyPush : historyReplace;
   write(parts, { ...currentState(), fetch: recipe });
 
   return true;
