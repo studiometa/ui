@@ -67,7 +67,6 @@ function makeRecipe(overrides: Partial<RestoreRecipe> = {}): RestoreRecipe {
     mode: 'replace',
     params: {},
     response: 'response.text()',
-    headers: {},
     viewTransition: false,
     ...overrides,
   };
@@ -438,6 +437,33 @@ describe('Fetch history — back and forward', () => {
 
     expect(address()).toBe('/before');
     expect(calls).toHaveLength(2);
+  });
+
+  it('keeps no header value in the entry, and restores with the headers of the instance', async () => {
+    window.history.pushState(null, '', '/projects?page=1');
+    const { calls } = servePages();
+    await mount(`<div id="list">page 1</div>`);
+    await mountFetch(
+      `<a data-component="Fetch" id="next" href="/projects?page=2" data-option-history
+        data-option-headers='{"authorization":"Basic secret"}'
+        data-option-request-init='{"headers":{"x-from-init":"token"}}'
+        data-option-no-view-transition>
+        <input type="hidden" data-ref="headers[]" data-name="x-my-token" value="ref-token">
+      </a>`,
+    );
+
+    document.querySelector<HTMLElement>('#next')!.click();
+    await waitFor(() => list() === 'page 2');
+    expect(JSON.stringify(window.history.state)).not.toMatch(/secret|token/);
+
+    await back();
+    await waitFor(() => list() === 'page 1');
+    expect(calls[1].init.headers).toMatchObject({
+      authorization: 'Basic secret',
+      'x-from-init': 'token',
+      'x-my-token': 'ref-token',
+      'x-triggered-by': 'popstate',
+    });
   });
 
   it('restores with a detached instance when the owner has left the page', async () => {

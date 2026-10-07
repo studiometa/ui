@@ -298,15 +298,16 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   }
 
   /**
-   * The options a request of this instance runs with, as the plain data a
-   * history entry keeps to restore it.
+   * The headers of the `requestInit` and `headers` options and of the
+   * `headers[]` refs, with lower-case names.
    *
-   * Subclasses add their own transport options here.
+   * They are read from the instance for every request, restores included,
+   * and never kept in a history entry, because they can hold credentials.
    *
-   * @protected
+   * @private
    */
-  get __recipe(): RestoreRecipe {
-    const { $el, $options, $refs } = this;
+  get __headers(): Record<string, string> {
+    const { $options, $refs } = this;
     const headers = {
       ...headerRecord($options.requestInit.headers),
       ...headerRecord($options.headers),
@@ -318,6 +319,20 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       }
     }
 
+    return headers;
+  }
+
+  /**
+   * The options a request of this instance runs with, as the plain data a
+   * history entry keeps to restore it.
+   *
+   * Subclasses add their own transport options here.
+   *
+   * @protected
+   */
+  get __recipe(): RestoreRecipe {
+    const { $el, $options } = this;
+
     return {
       component: this.$config.name,
       owner: $el.id || undefined,
@@ -326,7 +341,6 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       params: stringRecord($options.params),
       src: $options.src ? new URL($options.src, window.location.href).href : undefined,
       response: $options.response,
-      headers,
       viewTransition: $options.viewTransition,
     };
   }
@@ -382,7 +396,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
           method: 'GET',
           headers: {
             [HEADER_NAMES.USER_AGENT]: userAgent(),
-            ...recipe.headers,
+            ...this.__headers,
             [HEADER_NAMES.X_TRIGGERED_BY]: 'popstate',
           },
           history: false,
@@ -459,7 +473,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
         url: requestUrl(target, { src: recipe.src, params: recipe.params, fold }).href,
         destination: target.href,
         method,
-        headers: { [HEADER_NAMES.USER_AGENT]: userAgent(), ...recipe.headers },
+        headers: { [HEADER_NAMES.USER_AGENT]: userAgent(), ...this.__headers },
         body,
         // Only a link, a form or a named destination is a place the address
         // bar can show.
@@ -557,7 +571,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   /**
    * Restore a history entry, from the URL the browser moved to and the recipe
    * the entry keeps. The recipe wins over the options of the instance, which
-   * gives only its events and its transport.
+   * gives only its events, its headers and its transport.
    *
    * @protected
    */

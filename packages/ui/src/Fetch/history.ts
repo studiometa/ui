@@ -10,7 +10,9 @@ import type { FetchRequest, FetchResponseDetail } from './request.js';
  *
  * `history.state` holds `{ ...otherKeys, fetch: RestoreRecipe }`: the keys of
  * other scripts are kept. The `requestInit` option is not stored, because a
- * value the browser cannot clone would make `pushState()` throw.
+ * value the browser cannot clone would make `pushState()` throw. Header
+ * values are not stored either, because they can hold credentials that
+ * session history would keep.
  */
 export interface RestoreRecipe {
   /** The `config.name` of the class that wrote the entry. */
@@ -33,9 +35,6 @@ export interface RestoreRecipe {
 
   /** The `response` expression. */
   response: string;
-
-  /** The headers from the `headers` option, the header refs and `requestInit.headers`. */
-  headers: Record<string, string>;
 
   /** Whether the swap runs in a view transition. */
   viewTransition: boolean;
