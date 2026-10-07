@@ -96,7 +96,16 @@ Use it for a component that only needs to exist, and always for an element that 
 
 ### Package defaults
 
-The `@studiometa/ui` manifest ships every component as `eager`. `@studiometa/ui-motion` ships every component as `visible`, so the Motion library stays off the critical path.
+The `@studiometa/ui` manifest ships every component as `eager`.
+
+`@studiometa/ui-motion` ships every component as `eager`, so each one mounts because its element is on the page:
+
+- `Motion` applies its `initial` styles before the element is first seen, so the final state does not flash. It also exists inside a closed `<dialog>`, before the dialog opens. Use its `inView` option to play when it enters the viewport.
+- `MotionScrollTimeline` links every `Motion` child when it mounts, including a child far below the viewport.
+- `MotionSequence` builds its sequence from every `Motion` child, including a child far below the viewport.
+- `MotionView` mounts even when its element starts out not rendered, so it can enter, and it already listens when a containing `Dialog` opens or a descendant announces a DOM update. It loads the Motion library only on its first transition.
+
+`Motion`, `MotionScrollTimeline` and `MotionSequence` load the Motion library when they mount. Nothing changes for code that registers these classes directly with `registerComponents`: they declare no strategy, so they were already `eager`.
 
 `@studiometa/ui-mapbox` splits:
 
