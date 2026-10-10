@@ -165,11 +165,17 @@ describe('Sheet — enter() and leave()', () => {
     const { el, root, sheet } = await render();
     el.showModal();
     root.scrollTo({ top: OPEN, behavior: 'instant' });
+    // Let the `scrollend` of that instant scroll pass, so it cannot settle
+    // the `enter()` below.
+    await frames(3);
     holdScroll(root);
+    const settled = vi.fn();
 
     // A scroll that does not move fires no `scrollend`: waiting for one
-    // would hold the dialog open for good.
-    await sheet.enter();
+    // would hold the dialog open until the settle timeout.
+    void sheet.enter().then(settled);
+    await frames(2);
+    expect(settled).toHaveBeenCalledOnce();
     expect(root.scrollTop).toBe(OPEN);
   });
 
@@ -198,19 +204,23 @@ describe('Sheet — enter() and leave()', () => {
   });
 
   it('settles an older scroll when a newer one starts', async () => {
-    const { el, root, sheet } = await render();
+    // Half open, so the `leave()` below has a scroll to make rather than
+    // resolving at once.
+    const { el, root, sheet } = await render({ snap: false });
     el.showModal();
+    root.scrollTo({ top: 140, behavior: 'instant' });
+    await frames(3);
     holdScroll(root);
     const entered = vi.fn();
 
-    const entering = sheet.enter().then(entered);
+    void sheet.enter().then(entered);
     await frames(2);
     expect(entered).not.toHaveBeenCalled();
 
-    // A close during the opening scroll: `open()` must not stay pending.
+    // A close during the opening scroll: `open()` must not stay pending
+    // until the settle timeout.
     void sheet.leave();
-
-    await entering;
+    await frames(2);
     expect(entered).toHaveBeenCalledOnce();
   });
 
@@ -218,11 +228,13 @@ describe('Sheet — enter() and leave()', () => {
     const { el, root, sheet } = await render();
     el.showModal();
     holdScroll(root);
+    const entered = vi.fn();
 
-    const entering = sheet.enter();
+    void sheet.enter().then(entered);
     sheet.$unmount();
+    await frames(2);
 
-    await expect(entering).resolves.toBeUndefined();
+    expect(entered).toHaveBeenCalledOnce();
   });
 
   it('resolves without `scrollend` once the settle timeout has passed', async () => {
