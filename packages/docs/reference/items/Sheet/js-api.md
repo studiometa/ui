@@ -66,7 +66,7 @@ Scroll to the end of the scroll range, which puts the panel fully on screen. Res
 
 - Returns `Promise<void>`
 
-Scroll back to `0`, which puts the panel off screen. Resolves on `scrollend`. Resolves at once when the panel is already out of view, after it jumps to `0` if a swipe is still settling. Scrolls instantly under `prefers-reduced-motion: reduce`. `Dialog` calls it on close.
+Scroll back to `0`, which puts the panel off screen. Resolves as soon as the panel is off screen, after a jump to `0`, or on `scrollend` when the user stops the scroll first. Resolves at once when the panel is already out of view, after it jumps to `0` if a swipe is still settling. Scrolls instantly under `prefers-reduced-motion: reduce`. `Dialog` calls it on close.
 
 ### `toggle`
 

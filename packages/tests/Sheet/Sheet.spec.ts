@@ -237,6 +237,26 @@ describe('Sheet — enter() and leave()', () => {
     expect(entered).toHaveBeenCalledOnce();
   });
 
+  it('resolves `leave()` as soon as the panel is off screen, and lands closed', async () => {
+    const { el, root, sheet } = await render();
+    el.showModal();
+    root.scrollTo({ top: OPEN, behavior: 'instant' });
+    await frames(3);
+    // The panel leaves the screen at `80`: every position the smooth scroll
+    // shows below it, before `0`, is travel nobody can see.
+    const hidden: number[] = [];
+    root.addEventListener('scroll', () => {
+      if (root.scrollTop > 0 && root.scrollTop < 80) {
+        hidden.push(root.scrollTop);
+      }
+    });
+
+    await sheet.leave();
+
+    expect(root.scrollTop).toBe(0);
+    expect(hidden.length).toBeLessThanOrEqual(1);
+  });
+
   it('resolves without `scrollend` once the settle timeout has passed', async () => {
     const { el, root, sheet } = await render();
     el.showModal();
@@ -349,8 +369,11 @@ describe('Sheet — reduced motion', () => {
     await frames(3);
 
     await emulateReducedMotion(false);
+    scrollTo.mockClear();
     await sheet.leave();
-    expect(scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: 'smooth' });
+    // Smooth again; the instant jump that follows lands it once the panel is
+    // off screen.
+    expect(scrollTo).toHaveBeenNthCalledWith(1, { top: 0, behavior: 'smooth' });
     expect(root.scrollTop).toBe(0);
   });
 });

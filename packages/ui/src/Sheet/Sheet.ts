@@ -227,9 +227,9 @@ export class Sheet<T extends BaseProps = BaseProps>
   }
 
   /**
-   * Scroll the panel out of view. Resolves once the scroll has ended, and at
-   * once when the panel is already out of view — swiped away, or never
-   * opened.
+   * Scroll the panel out of view. Resolves as soon as the panel is off
+   * screen, after a jump to the closed position, and at once when it already
+   * is — swiped away, or never opened.
    */
   async leave(): Promise<void> {
     this.state = 'leaving';
@@ -239,8 +239,7 @@ export class Sheet<T extends BaseProps = BaseProps>
       // A swipe can still be settling past the point where the panel left
       // the screen. Land on the closed position now, so the next `enter()`
       // starts from it, rather than animating a scroll nobody can see.
-      this.__settle?.();
-      this.$el.scrollTo({ top: 0, behavior: 'instant' });
+      this.__land();
       return;
     }
 
@@ -301,10 +300,32 @@ export class Sheet<T extends BaseProps = BaseProps>
     };
   }
 
+  /**
+   * Publish the progress, and cut the leave short once the panel is off
+   * screen.
+   *
+   * The scroll range is a full viewport and the panel is usually much
+   * shorter, so most of the leave scroll moves nothing visible. Waiting for
+   * its `scrollend` would keep the closed sheet's transparent backdrop over
+   * the page, taking every tap, until the scroll reaches `0`.
+   */
   onScroll(): void {
     if (this.__publishesProgress) {
       this.$services.ticked.start();
     }
+
+    if (this.state === 'leaving' && this.__settle && this.progress === 0) {
+      this.__land();
+    }
+  }
+
+  /**
+   * Settle the scroll in flight, and jump to the closed position.
+   * @private
+   */
+  __land(): void {
+    this.__settle?.();
+    this.$el.scrollTo({ top: 0, behavior: 'instant' });
   }
 
   /**

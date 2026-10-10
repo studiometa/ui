@@ -70,10 +70,12 @@ The scroller is **twice the height of the viewport**, and only its top half is o
 With `scroll-snap-type: y mandatory`, every gesture settles fully open or fully closed.
 
 - **`enter()`** scrolls to the end of the scroll range, the open snap point, and resolves on `scrollend`.
-- **`leave()`** scrolls back to `0` and resolves on `scrollend`. It resolves at once when the sheet is already out of view.
+- **`leave()`** scrolls back to `0`. It resolves as soon as the sheet is off screen, after a jump to `0`, and at once when the sheet is already out of view. The panel is usually much shorter than the scroll range, so the end of the scroll moves nothing visible: waiting for it would keep the transparent backdrop over the page, and every tap on it, after the sheet has gone.
 - **Swipe to dismiss.** An `IntersectionObserver` watches the `panel`. When it leaves the screen after it was on screen, the `Sheet` calls `close()` on its parent `Dialog`. The `leave()` that close runs then resolves at once: the sheet is already gone, so there is no second animation.
 
 A scroll that does not move fires no `scrollend`, so a scroll that lands at once — already in place, or instant under reduced motion — resolves at once too. A scroll that never sends `scrollend` resolves after one second, so a `Dialog` is never left open waiting for it.
+
+`enter()` scrolls the whole range too, and the first part of that scroll moves the stage through the hidden half: with a short panel, the sheet appears a moment after the click. Scroll snapping applies to programmatic scrolls, so the `Sheet` cannot jump to the point where the panel starts to enter.
 
 ## The required CSS
 
