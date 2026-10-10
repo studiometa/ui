@@ -6,7 +6,7 @@ title: Sheet examples
 
 ## Bottom sheet
 
-Click the Open sheet button, then swipe the sheet down — or scroll down with a wheel or a trackpad — to dismiss it. The backdrop opacity and the corner radius follow the gesture through the `--sheet` view timeline, with the `--sheet-progress` fallback where view timelines are not supported. The close button, the backdrop and <kbd>Esc</kbd> close it too. See [the required CSS](./index.md#the-required-css).
+Click the Open sheet button, then swipe the sheet down to dismiss it: drag it down on a touch screen, scroll up with a mouse wheel, or swipe down with two fingers on a trackpad. The backdrop opacity and the corner radius follow the gesture through the `--sheet` view timeline, with the `--sheet-progress` fallback where view timelines are not supported. The close button, the backdrop and <kbd>Esc</kbd> close it too. See [the required CSS](./index.md#the-required-css).
 
 <llm-exclude>
 <PreviewPlayground

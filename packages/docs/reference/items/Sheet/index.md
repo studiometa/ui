@@ -228,7 +228,7 @@ The `position` option is `bottom`, and `bottom` is the only position this versio
 ## Browser support
 
 - **View timelines.** Chromium and Safari 26 support `animation-timeline: view()`. Firefox does not support it by default: use the [`--sheet-progress` fallback](#without-view-timelines). Scroll snapping, the swipe and the dismissal work everywhere.
-- **`scrollend`.** Safari supports it from 18.2. Before that, `enter()` and `leave()` resolve after a one-second timeout, so a close holds the invisible dialog open a little longer than the scroll.
+- **`scrollend`.** Safari supports it from 26.2. Safari 26.0 and 26.1 support view timelines but not `scrollend`, so there, and in older versions, every `enter()`, and every `leave()` whose scroll is cut short by the user, resolves after the one-second timeout.
 - **iOS Safari toolbar.** On iOS Safari, more than `100lvh` can be visible, even when the toolbar is collapsed. React Aria offsets the stage and the `IntersectionObserver` by `calc(100lvh - 100svh + 58px)` there, so that a sheet is only reported closed when it is fully hidden. This version does not: test on a device.
 - **Software keyboard.** On iOS the keyboard covers the content instead of resizing the viewport, and `dvh` units do not follow it. This version does not handle it: an input near the bottom of the sheet can end up under the keyboard.
 - **Desktop Safari momentum.** After a swipe out, React Aria waits for `scrollend` plus 50 ms on desktop Safari before it closes, so that the momentum scroll does not move to what is behind the sheet. This version closes at once.
