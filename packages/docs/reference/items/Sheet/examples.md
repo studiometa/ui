@@ -26,3 +26,26 @@ Click the Open sheet button, then swipe the sheet down to dismiss it: drag it do
 :::
 
 </llm-only>
+
+## Long content
+
+When the content is taller than the screen, the panel scrolls it. Scroll the content down, then drag it back up: once the content reaches its top, the drag chains to the sheet and dismisses it. This story uses the same CSS and JavaScript as the bottom sheet.
+
+<llm-exclude>
+<PreviewPlayground
+  :html="() => import('./stories/long-content/app.twig')"
+  :script="() => import('./stories/bottom/app.js?raw')"
+  :css="() => import('./stories/bottom/app.css?raw')"
+  />
+</llm-exclude>
+<llm-only>
+
+:::code-group
+
+<<< ./stories/long-content/app.twig
+<<< ./stories/bottom/app.js
+<<< ./stories/bottom/app.css
+
+:::
+
+</llm-only>

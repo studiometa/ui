@@ -1,0 +1,67 @@
+<div class="flex flex-col items-start gap-8">
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="Dialog(#sheet)->target.open()"
+    class="px-4 py-2 rounded bg-emerald-600 text-white font-semibold">
+    Open long sheet
+  </button>
+
+  <p class="max-w-md text-current/60">
+    The panel content is longer than the screen: it scrolls inside the
+    sheet, and a drag down from its top dismisses the sheet.
+  </p>
+</div>
+
+{# The <dialog> host carries NO display utility, so a closed sheet stays
+   display:none instead of covering the page. Its user-agent box is
+   neutralised in app.css. #}
+<dialog
+  id="sheet"
+  data-component="Action Dialog"
+  data-on:cancel.prevent="Dialog.close()"
+  aria-labelledby="sheet-title"
+  class="sheet">
+  {# The scroller: twice the viewport height, only its top half on screen. #}
+  <div data-component="Sheet" class="sheet__scroller">
+    {# Scrolled to `0`, this marker fills the screen: the sheet is closed. #}
+    <div class="sheet__snap sheet__snap--closed"></div>
+
+    {# The stage: one viewport high, the sheet at its bottom edge. #}
+    <div class="sheet__stage">
+      {# The backdrop is a stage element, not `::backdrop`, so it can use the
+         sheet's timeline. A tap on it closes the sheet, a swipe on it
+         scrolls the sheet away. #}
+      <div
+        data-component="Action"
+        data-on:click="Dialog(#sheet)->target.close()"
+        class="sheet__backdrop"></div>
+
+      <div data-ref="panel" class="sheet__panel bg-white text-black">
+        <div class="sheet__handle"></div>
+        <h2 id="sheet-title" class="text-xl font-bold mb-3">Long content</h2>
+        <p class="mb-4 text-black/60">
+          The panel is never taller than the screen, so its content scrolls
+          inside it. Scroll it down, then drag it back up: once its top is
+          reached, the drag chains to the sheet and dismisses it.
+        </p>
+        <ol class="mb-6 list-decimal pl-5 space-y-3 text-black/60">
+          {% for i in 1..30 %}
+            <li>Item {{ i }}: enough lines of text to make the panel scroll on any screen.</li>
+          {% endfor %}
+        </ol>
+        <button
+          type="button"
+          data-component="Action"
+          data-on:click="Dialog(#sheet)->target.close()"
+          class="px-4 py-2 rounded bg-gray-900 text-white">
+          Close
+        </button>
+      </div>
+    </div>
+
+    {# Scrolled to the end, this marker fills the hidden bottom half: the
+       sheet is open. #}
+    <div class="sheet__snap sheet__snap--open"></div>
+  </div>
+</dialog>
