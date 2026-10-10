@@ -353,7 +353,7 @@ export const referenceCatalog = [
     status: 'stable',
     symbols: [uiSymbol('Dialog', '/reference/items/Dialog/js-api')],
     capabilities: ['native dialog', 'delegated triggers', 'transitions'],
-    related: ['action', 'disclosure', 'transition'],
+    related: ['action', 'disclosure', 'sheet', 'transition'],
   },
   {
     id: 'disclosure',
@@ -996,6 +996,23 @@ export const referenceCatalog = [
     status: 'stable',
     symbols: [uiSymbol('Sentinel', '/reference/items/Sentinel/', 'Sentinel', 'primitive')],
     related: ['in-view'],
+  },
+  {
+    id: 'sheet',
+    title: 'Sheet',
+    summary:
+      'Add a swipeable sheet to a Dialog, driven by native scroll snapping and a CSS view timeline.',
+    kind: 'component',
+    path: '/reference/items/Sheet/',
+    family: 'overlay',
+    primaryTask: 'overlay',
+    tags: ['sheet', 'bottom sheet', 'drawer', 'swipe', 'scroll snap', 'view timeline', 'overlay'],
+    surfaces: ['js'],
+    packages: [uiPackage],
+    status: 'preview',
+    symbols: [uiSymbol('Sheet', '/reference/items/Sheet/js-api', 'Sheet', 'component', 'preview')],
+    capabilities: ['swipe to dismiss', 'scroll-driven animations', 'transitions'],
+    related: ['dialog', 'transition', 'view-transition'],
   },
   {
     id: 'sticky',

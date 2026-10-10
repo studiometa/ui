@@ -59,7 +59,7 @@ A getter returning the native `<dialog>` element (`this.$el`).
 
 - Type: `Transitionable[]`
 
-A getter returning every [`Transition`](/reference/items/Transition/) and [`ViewTransition`](/reference/items/ViewTransition/) child the dialog orchestrates.
+A getter returning every [`Transition`](/reference/items/Transition/), [`ViewTransition`](/reference/items/ViewTransition/) and [`Sheet`](/reference/items/Sheet/) child the dialog orchestrates.
 
 ## Methods
 
@@ -145,7 +145,7 @@ event.detail.waitUntil(event.type === 'open' ? () => view.enter() : () => view.l
 
 Two mechanisms hold the dialog open, and they never overlap:
 
-1. **The declared children.** `open()` and `close()` fan `enter()` and `leave()` out to every [`Transition`](/reference/items/Transition/) and [`ViewTransition`](/reference/items/ViewTransition/) child.
+1. **The declared children.** `open()` and `close()` fan `enter()` and `leave()` out to every [`Transition`](/reference/items/Transition/), [`ViewTransition`](/reference/items/ViewTransition/) and [`Sheet`](/reference/items/Sheet/) child.
 2. **The extendable events.** Anything registered with `waitUntil()`, from anywhere.
 
 The events are dispatched on the dialog element and bubble **upwards**, so a declared child never receives them and cannot register itself a second time. Both start in the same tick and are awaited by a single `Promise.all`, so they run concurrently: a slow extension does not delay the children, and the children do not delay it. On `close`, the native dialog stays painted until the last of them settles.

@@ -1,0 +1,146 @@
+/* The host: a transparent, full-viewport box. The user-agent styles of a
+   modal <dialog> (max-width, max-height, margin, padding, border, background)
+   are neutralised, and it clips the bottom half of the scroller. No `display`
+   here: a closed dialog has to stay `display: none`. */
+.sheet {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: clip;
+}
+
+/* The native backdrop cannot follow a timeline declared on a descendant:
+   the backdrop is an element of the stage instead. */
+.sheet::backdrop {
+  background: transparent;
+}
+
+/* Twice the viewport height, so only its top half is on screen. Closed at
+   `0`, open at the end of its scroll range: snapping makes every gesture
+   settle on one of the two. `Sheet` also sets `overscroll-behavior-y:
+   contain` when nothing else does, so a swipe never scrolls the page. */
+.sheet__scroller {
+  height: 200dvh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+}
+
+.sheet__scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.sheet__snap {
+  height: 100dvh;
+}
+
+.sheet__snap--closed {
+  scroll-snap-align: start;
+}
+
+.sheet__snap--open {
+  scroll-snap-align: end;
+}
+
+/* One viewport high, with the sheet on its bottom edge. */
+.sheet__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100dvh;
+}
+
+/* It reaches one viewport up, over the closed marker, so it covers the
+   screen at any scroll position. It moves with the scroll, which a flat
+   colour does not show. */
+.sheet__backdrop {
+  position: absolute;
+  inset: -100dvh 0 0;
+  background: rgb(0 0 0 / 0.5);
+}
+
+/* Positioned, so it paints above the backdrop. Never taller than the
+   screen: the `entry` range of the timeline ends when the whole sheet is in
+   view. Its own content scrolls, and chains to the sheet at its top. */
+.sheet__panel {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 40rem;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  padding: 2.5rem 2rem 2rem;
+  border-radius: 1.5rem 1.5rem 0 0;
+}
+
+.sheet__handle {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  width: 3rem;
+  height: 0.25rem;
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.2);
+  transform: translateX(-50%);
+}
+
+/* The panel declares the `--sheet` view timeline, scoped to the scroller:
+   `entry` runs from the sheet's top edge reaching the bottom of the screen
+   to the whole sheet being on screen. The keyframes go from closed to open,
+   and a swipe plays them backwards. */
+@supports (animation-timeline: view()) {
+  .sheet__backdrop {
+    animation: sheet-backdrop linear both;
+    animation-timeline: --sheet;
+    animation-range: entry;
+  }
+
+  .sheet__panel {
+    animation: sheet-radius linear both;
+    animation-timeline: --sheet;
+    animation-range: entry;
+  }
+}
+
+@keyframes sheet-backdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheet-radius {
+  from {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+  }
+  to {
+    border-top-left-radius: 1.5rem;
+    border-top-right-radius: 1.5rem;
+  }
+}
+
+/* Without view timelines, `Sheet` publishes the same progress, from `0` to
+   `1`, as `--sheet-progress` on the scroller. */
+@supports not (animation-timeline: view()) {
+  .sheet__backdrop {
+    opacity: var(--sheet-progress, 0);
+  }
+
+  .sheet__panel {
+    border-top-left-radius: calc(0.5rem + 1rem * var(--sheet-progress, 0));
+    border-top-right-radius: calc(0.5rem + 1rem * var(--sheet-progress, 0));
+  }
+}

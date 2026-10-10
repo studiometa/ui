@@ -1,0 +1,67 @@
+<div class="flex flex-col items-start gap-8">
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="Dialog(#sheet)->target.open()"
+    class="px-4 py-2 rounded bg-emerald-600 text-white font-semibold">
+    Open sheet
+  </button>
+
+  <p class="max-w-md text-current/60">
+    The sheet is a native scroller: swipe it down, or scroll down with a wheel
+    or a trackpad, to dismiss it. The backdrop and the corner radius follow the
+    gesture through a CSS view timeline.
+  </p>
+</div>
+
+{# The <dialog> host carries NO display utility, so a closed sheet stays
+   display:none instead of covering the page. Its user-agent box is
+   neutralised in app.css. #}
+<dialog
+  id="sheet"
+  data-component="Action Dialog"
+  data-on:cancel.prevent="Dialog.close()"
+  aria-labelledby="sheet-title"
+  class="sheet">
+  {# The scroller: twice the viewport height, only its top half on screen. #}
+  <div data-component="Sheet" class="sheet__scroller">
+    {# Scrolled to `0`, this marker fills the screen: the sheet is closed. #}
+    <div class="sheet__snap sheet__snap--closed"></div>
+
+    {# The stage: one viewport high, the sheet at its bottom edge. #}
+    <div class="sheet__stage">
+      {# The backdrop is a stage element, not `::backdrop`, so it can use the
+         sheet's timeline. A tap on it closes the sheet, a swipe on it
+         scrolls the sheet away. #}
+      <div
+        data-component="Action"
+        data-on:click="Dialog(#sheet)->target.close()"
+        class="sheet__backdrop"></div>
+
+      <div data-ref="panel" class="sheet__panel bg-white text-black">
+        <div class="sheet__handle"></div>
+        <h2 id="sheet-title" class="text-xl font-bold mb-3">Bottom sheet</h2>
+        <p class="mb-4 text-black/60">
+          Opening scrolls the sheet into view, closing scrolls it back out.
+          There is no touch handling in JavaScript: the swipe, its momentum and
+          its bounce are the browser's own scrolling.
+        </p>
+        <p class="mb-6 text-black/60">
+          Focus, <kbd>Esc</kbd> and the top layer stay with the native
+          <code>&lt;dialog&gt;</code>.
+        </p>
+        <button
+          type="button"
+          data-component="Action"
+          data-on:click="Dialog(#sheet)->target.close()"
+          class="px-4 py-2 rounded bg-gray-900 text-white">
+          Close
+        </button>
+      </div>
+    </div>
+
+    {# Scrolled to the end, this marker fills the hidden bottom half: the
+       sheet is open. #}
+    <div class="sheet__snap sheet__snap--open"></div>
+  </div>
+</dialog>
