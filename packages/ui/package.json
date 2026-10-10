@@ -297,6 +297,11 @@
       "types": "./dist/Sentinel/Sentinel.d.ts",
       "import": "./dist/Sentinel/Sentinel.js"
     },
+    "./Sheet": {
+      "typescript": "./src/Sheet/Sheet.ts",
+      "types": "./dist/Sheet/Sheet.d.ts",
+      "import": "./dist/Sheet/Sheet.js"
+    },
     "./Sticky": {
       "typescript": "./src/Sticky/Sticky.ts",
       "types": "./dist/Sticky/Sticky.d.ts",
