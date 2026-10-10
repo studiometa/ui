@@ -212,6 +212,10 @@ export const manifest: ComponentManifest = {
     mountStrategy: 'eager',
     load: () => import('./Sentinel/Sentinel.js').then(({ Sentinel }) => Sentinel),
   },
+  Sheet: {
+    mountStrategy: 'eager',
+    load: () => import('./Sheet/Sheet.js').then(({ Sheet }) => Sheet),
+  },
   Sticky: {
     mountStrategy: 'eager',
     load: () => import('./Sticky/Sticky.js').then(({ Sticky }) => Sticky),

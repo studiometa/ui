@@ -4,6 +4,7 @@ import { withKey } from '@studiometa/js-toolkit/withKey';
 import type { ChildrenCollection, ExtendableDetail, KeyProps } from '@studiometa/js-toolkit';
 import { Transition, type Transitionable } from '../Transition/Transition.js';
 import { ViewTransition } from '../ViewTransition/ViewTransition.js';
+import { Sheet } from '../Sheet/Sheet.js';
 import { saveActiveElement } from '@studiometa/js-toolkit/utils/saveActiveElement';
 import { trapFocus } from '@studiometa/js-toolkit/utils/trapFocus';
 import { untrapFocus } from '@studiometa/js-toolkit/utils/untrapFocus';
@@ -37,8 +38,8 @@ export interface DialogProps {
  *
  * ## The two things that hold the dialog open
  *
- * 1. **Declared children.** Every `Transition` and `ViewTransition` inside the
- *    dialog gets `enter()` on open and `leave()` on close.
+ * 1. **Declared children.** Every `Transition`, `ViewTransition` and `Sheet`
+ *    inside the dialog gets `enter()` on open and `leave()` on close.
  * 2. **The extendable `open`/`close` events.** Any listener can register work
  *    with `event.detail.waitUntil()`, which is how a component that is not a
  *    declared child — or plain JavaScript — joins the choreography.
@@ -52,7 +53,7 @@ export interface DialogProps {
 export class Dialog extends withKey(Base)<DialogProps> {
   static config = {
     name: 'Dialog',
-    components: { Transition, ViewTransition },
+    components: { Transition, ViewTransition, Sheet },
     options: {
       modal: { type: Boolean, default: true },
       trapFocus: { type: Boolean, default: true },
@@ -89,8 +90,14 @@ export class Dialog extends withKey(Base)<DialogProps> {
   viewTransitionChildren: ChildrenCollection<ViewTransition> =
     this.$watchChildren<ViewTransition>('ViewTransition');
 
+  sheetChildren: ChildrenCollection<Sheet> = this.$watchChildren<Sheet>('Sheet');
+
   get transitions(): Transitionable[] {
-    return [...this.transitionChildren.items, ...this.viewTransitionChildren.items];
+    return [
+      ...this.transitionChildren.items,
+      ...this.viewTransitionChildren.items,
+      ...this.sheetChildren.items,
+    ];
   }
 
   get isOpen(): boolean {

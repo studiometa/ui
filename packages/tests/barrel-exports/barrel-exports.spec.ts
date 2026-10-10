@@ -182,6 +182,8 @@ test('@studiometa/ui barrel export surface', () => {
       "ScrollToProps [type]",
       "Sentinel [value]",
       "SentinelProps [type]",
+      "Sheet [value]",
+      "SheetProps [type]",
       "Sticky [value]",
       "StickyProps [type]",
       "TABS_ACTIVATIONS [value]",

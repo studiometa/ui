@@ -591,6 +591,14 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'SheetProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Sheet/js-api',
+    status: 'preview',
+  },
+  {
     name: 'StickyProps',
     kind: 'type',
     package: 'npm:@studiometa/ui',

@@ -57,6 +57,7 @@ export const UI_COMPONENT_NAMES: ReadonlySet<string> = new Set([
   'ScrollReveal',
   'ScrollTo',
   'Sentinel',
+  'Sheet',
   'Sticky',
   'Tabs',
   'Target',

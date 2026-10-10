@@ -139,6 +139,7 @@ export {
 export { ScrollReveal, type ScrollRevealProps } from './ScrollReveal/index.js';
 export { ScrollTo, type ScrollToProps } from './ScrollTo/index.js';
 export { Sentinel, type SentinelProps } from './Sentinel/index.js';
+export { Sheet, type SheetProps } from './Sheet/index.js';
 export { Sticky, type StickyProps } from './Sticky/index.js';
 export {
   Tabs,

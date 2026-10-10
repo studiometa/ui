@@ -1,9 +1,9 @@
-import { usePrefersReducedMotion } from '@studiometa/js-toolkit/usePrefersReducedMotion';
 import { withResize } from '@studiometa/js-toolkit/withResize';
 import type { BaseConfig, BaseProps, MountedReturn } from '@studiometa/js-toolkit';
 import { clamp } from '@studiometa/js-toolkit/utils/clamp';
 import { AbstractCarouselComponent } from './AbstractCarouselComponent.js';
 import { getClosestIndex, hasTabbableDescendant } from './utils.js';
+import { scrollBehavior } from '../utils/scroll-behavior.js';
 
 /** The four sides `scroll-padding` is mirrored on, in `scroll-padding-*` order. */
 const SIDES = ['top', 'right', 'bottom', 'left'] as const;
@@ -47,15 +47,6 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends withResize
   __scrollDistance: { x: number; y: number } | null = null;
 
   /**
-   * Whether the user asked for reduced motion, kept current by the toolkit's
-   * shared `(prefers-reduced-motion: reduce)` service rather than sampled once
-   * at mount — the setting is changed mid-session, on every platform that has
-   * a "reduce motion" toggle in its quick settings.
-   * @private
-   */
-  __prefersReducedMotion = false;
-
-  /**
    * The sides whose `scroll-padding` this component wrote. Anything the author
    * declared is never touched, and anything written here is recomputed on a
    * resize rather than read back as if it were the author's.
@@ -81,18 +72,10 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends withResize
   __pendingSettle: (() => void) | null = null;
 
   mounted(): MountedReturn {
-    const unsubscribe = usePrefersReducedMotion().subscribe(
-      ({ matches }) => {
-        this.__prefersReducedMotion = matches;
-      },
-      { immediate: true },
-    );
-
     this.syncScrollPadding();
 
     return [
       super.mounted(),
-      unsubscribe,
       () => {
         this.__scrollDistance = null;
         this.__releaseSettle();
@@ -108,14 +91,12 @@ export class CarouselWrapper<T extends BaseProps = BaseProps> extends withResize
   }
 
   /**
-   * How a programmatic scroll should animate.
-   *
-   * `smooth` is an author-implemented animation, so it is the carousel's to
-   * suppress under `prefers-reduced-motion: reduce`; the destination is
-   * unchanged, only the travel disappears.
+   * How a programmatic scroll should animate: `instant` under
+   * `prefers-reduced-motion: reduce`, `smooth` otherwise, read from the live
+   * setting on every call.
    */
   get scrollBehavior(): ScrollBehavior {
-    return this.__prefersReducedMotion ? 'instant' : 'smooth';
+    return scrollBehavior();
   }
 
   get scrollDistance(): { x: number; y: number } {
