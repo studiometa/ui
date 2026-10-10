@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cdp } from 'vitest/browser';
+import { cdp, userEvent } from 'vitest/browser';
 import { getInstance, registerComponent } from '@studiometa/js-toolkit';
 import { captureDiagnostics, frames, resetDom, settle, waitFor } from '@studiometa/js-toolkit/test';
 import { Dialog } from '#private/Dialog/Dialog.js';
@@ -53,9 +53,15 @@ interface RenderOptions {
   attributes?: string;
   scrollerStyle?: string;
   snap?: boolean;
+  content?: string;
 }
 
-async function render({ attributes = '', scrollerStyle = '', snap = true }: RenderOptions = {}) {
+async function render({
+  attributes = '',
+  scrollerStyle = '',
+  snap = true,
+  content = 'panel',
+}: RenderOptions = {}) {
   const el = document.createElement('dialog');
   el.setAttribute('data-component', 'Dialog');
   el.style.cssText =
@@ -65,7 +71,7 @@ async function render({ attributes = '', scrollerStyle = '', snap = true }: Rend
       style="height:400px;overflow-y:auto;scrollbar-width:none;${snap ? 'scroll-snap-type:y mandatory;' : ''}${scrollerStyle}">
       <div style="height:200px;scroll-snap-align:start"></div>
       <div style="height:200px;display:flex;flex-direction:column;justify-content:flex-end">
-        <div data-ref="panel" style="height:120px">panel</div>
+        <div data-ref="panel" style="height:120px">${content}</div>
       </div>
       <div style="height:200px;scroll-snap-align:end"></div>
     </div>`;
@@ -352,6 +358,75 @@ describe('Sheet — swipe to dismiss', () => {
     sheet.$unmount();
 
     expect(() => intersectionMockInstance(panel)).toThrow('Failed to find IntersectionObserver');
+  });
+});
+
+describe('Sheet — the keyboard', () => {
+  function press(target: Element, key: string, shiftKey = false): KeyboardEvent {
+    const event = new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true });
+    target.dispatchEvent(event);
+    return event;
+  }
+
+  it('does not close on a key that scrolls up', async () => {
+    const { root, dialog } = await render();
+    await dialog.open();
+    root.focus();
+
+    await userEvent.keyboard('{ArrowUp}');
+    await frames(30);
+
+    expect(root.scrollTop).toBe(OPEN);
+  });
+
+  it.each([
+    ['ArrowUp', false],
+    ['PageUp', false],
+    ['Home', false],
+    [' ', true],
+  ])('cancels `%s` (shift: %s), which would scroll it closed', async (key, shiftKey) => {
+    const { root, dialog } = await render({ content: '<a href="#">link</a>' });
+    await dialog.open();
+
+    expect(press(root, key, shiftKey).defaultPrevented).toBe(true);
+    expect(press(root.querySelector('a')!, key, shiftKey).defaultPrevented).toBe(true);
+  });
+
+  it('leaves the keys that do not scroll up alone', async () => {
+    const { root, dialog } = await render();
+    await dialog.open();
+
+    for (const [key, shiftKey] of [
+      ['ArrowDown', false],
+      ['PageDown', false],
+      ['End', false],
+      [' ', false],
+    ] as const) {
+      expect(press(root, key, shiftKey).defaultPrevented).toBe(false);
+    }
+  });
+
+  it('leaves the keys to an element that uses them', async () => {
+    const { root, dialog } = await render({
+      content: `
+        <textarea></textarea>
+        <div contenteditable="true"><span>text</span></div>
+        <button type="button">button</button>
+        <div class="inner" style="height:60px;overflow-y:auto"><div style="height:200px"><a href="#">link</a></div></div>`,
+    });
+    await dialog.open();
+    const inner = root.querySelector<HTMLElement>('.inner')!;
+    inner.scrollTop = 50;
+
+    expect(press(root.querySelector('textarea')!, 'ArrowUp').defaultPrevented).toBe(false);
+    expect(press(root.querySelector('span')!, 'Home').defaultPrevented).toBe(false);
+    expect(press(root.querySelector('button')!, ' ', true).defaultPrevented).toBe(false);
+    // An inner scroller that can still scroll up takes the press…
+    expect(press(inner.querySelector('a')!, 'PageUp').defaultPrevented).toBe(false);
+
+    // …until it reaches its top, where the press would chain to the sheet.
+    inner.scrollTop = 0;
+    expect(press(inner.querySelector('a')!, 'PageUp').defaultPrevented).toBe(true);
   });
 });
 

@@ -51,6 +51,44 @@ const PROGRESS_PROPERTY = '--sheet-progress';
 const SETTLE_TIMEOUT = 1000;
 
 /**
+ * The keys that scroll the root towards `0`. With mandatory snapping, one
+ * press settles on the closed snap point, which is a swipe to dismiss.
+ */
+const CLOSING_KEYS = new Set(['ArrowUp', 'PageUp', 'Home']);
+
+/**
+ * Whether a key press scrolls the root towards `0`.
+ *
+ * It does not when the focused element uses the key itself — an editable
+ * field, or <kbd>Space</kbd> on a control it activates — or when a scroller
+ * between the focus and the root can still scroll up and takes the press.
+ */
+function scrollsRootUp(event: KeyboardEvent, root: HTMLElement): boolean {
+  const { key, shiftKey, target } = event;
+
+  if (!CLOSING_KEYS.has(key) && !(key === ' ' && shiftKey)) {
+    return false;
+  }
+
+  if (
+    !(target instanceof HTMLElement) ||
+    target.isContentEditable ||
+    target.matches('input, textarea, select') ||
+    (key === ' ' && target.matches('button, summary, [role]'))
+  ) {
+    return false;
+  }
+
+  for (let node: HTMLElement | null = target; node && node !== root; node = node.parentElement) {
+    if (node.scrollTop > 0 && /auto|scroll/.test(window.getComputedStyle(node).overflowY)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
  * The top of an element's layout box, summed along its `offsetParent` chain.
  *
  * Layout offsets ignore transforms, as a view timeline does: a panel scaled by
@@ -316,6 +354,19 @@ export class Sheet<T extends BaseProps = BaseProps>
 
     if (this.state === 'leaving' && this.__settle && this.progress === 0) {
       this.__land();
+    }
+  }
+
+  /**
+   * Keep the keyboard from scrolling the sheet closed.
+   *
+   * The focus can start on the root when the dialog opens, so a single
+   * <kbd>↑</kbd> to read the content would otherwise dismiss it. Closing from
+   * the keyboard stays with <kbd>Esc</kbd>.
+   */
+  onKeydown(event: KeyboardEvent): void {
+    if (!event.defaultPrevented && scrollsRootUp(event, this.$el)) {
+      event.preventDefault();
     }
   }
 
