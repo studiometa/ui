@@ -85,8 +85,9 @@ export class FetchShopifyPartial<T extends BaseProps = BaseProps> extends Fetch<
   static async loadPartialsModule(): Promise<PartialsModule> {
     // Through `unknown`: a dynamic import of a non-literal specifier is `any`,
     // and the shape is asserted rather than known — `resolvePartials()` is what
-    // turns a module that does not match into a `null` fallback.
-    const loaded: unknown = await import(/* @vite-ignore */ this.PARTIALS_MODULE);
+    // turns a module that does not match into a `null` fallback. Bundlers leave
+    // the specifier to the browser instead of warning about an expression.
+    const loaded: unknown = await import(/* webpackIgnore: true */ /* @vite-ignore */ this.PARTIALS_MODULE);
     return loaded as PartialsModule;
   }
 
