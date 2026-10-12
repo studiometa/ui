@@ -126,4 +126,6 @@ Run the `release` workflow from the branch to release, in the [Actions tab](http
 gh workflow run publish.yml --ref main -f version=patch
 ```
 
-The `version` input accepts `patch`, `minor`, `major` or an exact version such as `1.12.0-beta.0`. The workflow updates the version number of all packages and of `composer.json`, folds the `.changelog/` fragments into `CHANGELOG.md`, commits and tags the release, publishes the `@studiometa/ui` packages to NPM (with the `next` tag for alpha, beta and rc versions) and creates a release on GitHub. The [Packagist package](https://packagist.org/packages/studiometa/ui) will be updated with the latest tag as well.
+The `version` input accepts `patch`, `minor`, `major` or an exact version such as `1.12.0-beta.0`. The workflow updates the version number of all packages and of `composer.json`, folds the `.changelog/` fragments into `CHANGELOG.md`, commits and tags the release, publishes the `@studiometa/ui` packages to NPM (with the `latest` tag, or `next-1.x` for a prerelease) and creates a release on GitHub. The [Packagist package](https://packagist.org/packages/studiometa/ui) will be updated with the latest tag as well.
+
+The `2.x` branch releases the next major version with its own `release` workflow (`--ref 2.x`), on the NPM `next` tag. Release `main` before you merge `main` into `2.x`: the fragments of `main` that are not released yet would otherwise also go into the next 2.x release.

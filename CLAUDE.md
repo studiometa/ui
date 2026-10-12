@@ -43,7 +43,8 @@
 ## Releases
 
 - Do not bump versions, tag or create GitHub releases by hand: run the `release` workflow (`.github/workflows/publish.yml`) from the branch to release, e.g. `gh workflow run publish.yml --ref main -f version=patch` (or `minor`, `major`, or an exact version such as `1.12.0-beta.0`)
-- The workflow bumps every package and `composer.json`, folds `.changelog/` into `CHANGELOG.md`, commits `Prepare <version>`, tags `<version>` (no `v` prefix), publishes the npm packages (`next` dist-tag for alpha, beta and rc versions) and creates the GitHub release
+- The workflow bumps every package and `composer.json`, folds `.changelog/` into `CHANGELOG.md`, commits `Prepare <version>`, tags `<version>` (no `v` prefix), publishes the npm packages (`latest` dist-tag, `next-1.x` for prereleases) and creates the GitHub release
+- Two release lines: `main` releases 1.x and `2.x` releases 2.x (npm `next` dist-tag), each from its own workflow file. Release `main` before you merge `main` into `2.x`: unreleased fragments from `main` would otherwise go into the next 2.x release too
 
 ## Code conventions
 

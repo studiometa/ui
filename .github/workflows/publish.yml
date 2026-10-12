@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'New version: patch, minor, major, or an exact version such as 1.12.0 or 2.0.0-alpha.1'
+        description: 'New 1.x version: patch, minor, major, or an exact version such as 1.12.0 or 1.12.0-beta.0'
         type: string
         required: true
         default: patch
@@ -15,8 +15,8 @@ jobs:
   version:
     name: Bump version and changelog
     runs-on: ubuntu-latest
-    # Run from a branch (main, or 2.x for its prereleases), never from a tag.
-    if: github.ref_type == 'branch'
+    # 1.x releases from main only. The 2.x branch has its own release workflow.
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
       pull-requests: read
@@ -58,14 +58,13 @@ jobs:
       - name: Commit, tag and push
         env:
           VERSION: ${{ steps.version.outputs.version }}
-          BRANCH: ${{ github.ref_name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md .changelog composer.json package.json package-lock.json packages/*/package.json
           git commit -m "Prepare $VERSION"
           git tag -a "$VERSION" -m "v$VERSION"
-          git push origin "HEAD:$BRANCH" "$VERSION"
+          git push origin HEAD:main "$VERSION"
 
   # A tag pushed with GITHUB_TOKEN does not start other workflows, so the
   # publish job runs in this same workflow. It must stay in this file: npm
@@ -117,14 +116,16 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
+      # The 1.x line owns the `latest` dist-tag. Its prereleases use `next-1.x`,
+      # because the 2.x branch owns `next`.
       - env:
           TAG: ${{ needs.version.outputs.tag }}
         run: |
           NPM_TAG='latest'
           IS_PRERELEASE=false
 
-          if [[ $TAG =~ 'alpha' || $TAG =~ 'beta' || $TAG =~ 'rc' ]]; then
-            NPM_TAG='next'
+          if [[ $TAG == *-* ]]; then
+            NPM_TAG='next-1.x'
             IS_PRERELEASE=true
           fi
 
