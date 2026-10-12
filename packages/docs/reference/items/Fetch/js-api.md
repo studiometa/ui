@@ -82,11 +82,12 @@ Back from entry 2 to entry 1 sends no request, because the page already shows `/
 
 - **The first entry.** Before its first push, `Fetch` stamps the current entry with the same recipe through `replaceState()`. Back to the page as it was first loaded then finds a recipe too.
 - **Entries of other scripts.** An entry without a `fetch` key is ignored on back and forward navigation.
-- **Regions.** A restore swaps the regions of every entry that the page has written, restored or loaded on, not only those of the restored entry. When two elements with `history` and different `selector` options share a page, back to the entry of the first one also brings back the region that the second one changed.
+- **Regions.** A restore swaps the regions of every entry that the page has written, restored or loaded on, not only those of the restored entry. When two elements with `history` and different `selector` options share a page, back to the entry of the first one also brings back the region that the second one changed. This holds only when the response contains these regions. A restore sends the [`params`](#params) of the restored entry, so when `params` selects fragments of the page, request every region that an entry of the page changes.
 - **Anchors of the page.** Back or forward to an entry whose URL differs from the content on the page only by its hash sends no request: the browser scrolls to the fragment, and the swapped regions keep their state.
 - **A traversal stops the navigation in flight.** Back and forward abort the navigation in flight, also when they reach an entry of another script, as they stop a native navigation. A jump to an anchor of the page also fires `popstate`, but leaves the navigation in flight alone, as natively. Without the [Navigation API](https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API), the two cannot be told apart when only the hash changes: back or forward to an entry of the same page then leaves the navigation in flight alone too.
 - **Plain data only.** The recipe holds no element and no function, so it survives the element that wrote it and a reload. The [`requestInit` option](#requestinit) is not stored, because a value the browser cannot clone would make `pushState()` throw. Header values are not stored either, because they can hold credentials that session history would keep. A restore sends the headers of the instance that runs it, and none when no instance is left on the page.
 - **The owner.** A restore runs on the mounted instance on the `owner` element, so its events reach that element. Give the element an `id`: without one, the restore runs on a detached instance, and its events reach the first element that the `selector` of the entry matches, then bubble from there. When no element matches, they reach `document`.
+- **A failed restore.** When the restore fails, the address bar shows the restored URL and the page keeps its content. `fetch-error` and `fetch-after` with `error` are emitted as for any request. Listen to `fetch-error` to reload the page.
 - **An unknown class.** When no class on the page can restore the entry, the page reloads, so the address bar and the content stay in agreement. A class can restore entries once one of its instances with `history` has mounted, or has written an entry.
 
 ### `params`
@@ -94,7 +95,7 @@ Back from entry 2 to entry 1 sends no request, because the page already shows `/
 - Type: `Record<string, string | number | boolean>`
 - Default: `{}`
 
-Query parameters set on every request URL, after the query of the destination and of `src`, so they win. They never reach the address bar, and a restore adds them again, because the recipe of the entry keeps them. Use `params` to request a lighter copy of the same page:
+Query parameters set on every request URL, after the query of the destination and of `src`, so they win. They never reach the address bar, and a restore adds them again, because the recipe of the entry keeps them. Values are serialized as a query string, so reserved characters are encoded: `a,b` is sent as `a%2Cb`. Use `params` to request a lighter copy of the same page:
 
 ```html
 <a
@@ -266,7 +267,7 @@ document.addEventListener('fetch-before', (event) => {
 
 - Type: `typeof fetch`
 
-The function that sends the request. It is the global `fetch` bound to `window` by default, and it can be assigned, for example in a test.
+The function that sends the request. It is the global `fetch` bound to `window` by default, and it can be assigned, for example in a test. It is called as `client(request.url, init)`: the URL is an absolute string, and `init.method` is upper case.
 
 ### `isLink`
 
@@ -549,6 +550,23 @@ The subclasses of this package are built this way:
 | [`FetchShopifyPartial`](../FetchShopifyPartial/js-api.md) | `partials.fetch(...names, { url, signal })`, with no `fetch-response`. Falls back to the inherited steps when the request is not a plain GET or the package does not load. | `partials.apply(update)`, or the inherited swap after a fallback |
 
 Every rule of this page, from the checks to the final event, then applies to each class from one place.
+
+To run code after the DOM change or after a failure, a subclass does not need these steps. Await `fetch()`: it resolves after the DOM change with `ok`, `error` or `aborted`, and it never rejects. In v1, a subclass overrode `update()` and `error()`, which v2 never calls:
+
+```ts
+import { Fetch } from '@studiometa/ui';
+
+class Tooltip extends Fetch {
+  static config = { name: 'Tooltip' };
+
+  async load() {
+    const outcome = await this.fetch();
+
+    this.$el.classList.toggle('is-open', outcome === 'ok');
+    this.$el.classList.toggle('has-error', outcome === 'error');
+  }
+}
+```
 
 ```ts
 import { Fetch } from '@studiometa/ui';
