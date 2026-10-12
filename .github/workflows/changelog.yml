@@ -1,0 +1,29 @@
+name: changelog
+
+on:
+  pull_request:
+    branches: [2.x]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Every change to a published package needs a fragment in .changelog/,
+      # unless the pull request has the `no-changelog` label (tests, docs,
+      # refactors, tooling).
+      - uses: weareikko/changelog@600f4225cfd2778967eaffa693e86666c5a2d4bd # 1.0.2
+        with:
+          command: check
+          require-paths: |
+            packages/ui/**
+            packages/ui-mapbox/**
+            packages/ui-motion/**
+            packages/eslint-plugin-ui/**
+            packages/twig-extension/**

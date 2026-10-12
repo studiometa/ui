@@ -1,18 +1,84 @@
 name: release
 
 on:
-  push:
-    tags:
-      - '*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New 2.x version: prerelease or an exact version such as 2.0.0-alpha.1'
+        type: string
+        required: true
+        default: prerelease
+
+concurrency: release
 
 jobs:
+  version:
+    name: Bump version and changelog
+    runs-on: ubuntu-latest
+    # 2.x releases from the 2.x branch only. main has its own release workflow.
+    if: github.ref == 'refs/heads/2.x'
+    permissions:
+      contents: write
+      pull-requests: read
+    outputs:
+      tag: ${{ steps.version.outputs.version }}
+      body: ${{ steps.changelog.outputs.body }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The changelog action reads the commit that added each fragment.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # The root `postversion` script bumps every workspace and composer.json.
+      - name: Bump version
+        id: version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          npm version "$VERSION" --no-git-tag-version
+          echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+
+      - name: Fold changelog fragments
+        id: changelog
+        uses: weareikko/changelog@600f4225cfd2778967eaffa693e86666c5a2d4bd # 1.0.2
+        with:
+          command: release
+          version: v${{ steps.version.outputs.version }}
+
+      - name: Fail when there is nothing to release
+        if: steps.changelog.outputs.changed != 'true'
+        run: |
+          echo "::error::No fragment in .changelog/: nothing to release."
+          exit 1
+
+      - name: Commit, tag and push
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md .changelog composer.json package.json package-lock.json packages/*/package.json
+          git commit -m "Prepare $VERSION"
+          git tag -a "$VERSION" -m "v$VERSION"
+          git push origin HEAD:2.x "$VERSION"
+
+  # A tag pushed with GITHUB_TOKEN does not start other workflows, so the
+  # publish job runs in this same workflow. It must stay in this file: npm
+  # trusted publishing is configured for `publish.yml`.
   release:
+    needs: version
     runs-on: macos-latest
     permissions:
       contents: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
 
       - uses: actions/setup-node@v4
         with:
@@ -22,7 +88,7 @@ jobs:
       - name: Get npm cache directory
         id: npm-cache-dir
         shell: bash
-        run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+        run: echo "dir=$(npm config get cache)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache@v4
         id: npm-cache
@@ -56,48 +122,49 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
-      - run: |
-          NPM_TAG='latest'
+      # The 1.x line on main owns the `latest` dist-tag, so every 2.x version
+      # publishes to `next`. Move 2.x to `latest` when 2.0.0 becomes the stable line.
+      - env:
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
           IS_PRERELEASE=false
 
-          if [[ $GITHUB_REF_NAME =~ 'alpha' || $GITHUB_REF_NAME =~ 'beta' || $GITHUB_REF_NAME =~ 'rc' ]]; then
-            NPM_TAG='next'
+          if [[ $TAG == *-* ]]; then
             IS_PRERELEASE=true
           fi
 
-          echo "NPM_TAG=$NPM_TAG" >> $GITHUB_ENV
-          echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
+          echo "IS_PRERELEASE=$IS_PRERELEASE" >> "$GITHUB_ENV"
 
       # Tokenless trusted publishing (npm OIDC): each package is configured as a trusted publisher
       # on npm, so `npm publish` authenticates through the `id-token: write` permission declared
       # above — no NPM_TOKEN — and provenance is attested from the same OIDC flow. Mirrors the
       # working setup in @weareikko/code-review; Node 24's bundled npm (>= 11.5.1) supports it.
       - name: Publish @studiometa/ui
-        run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
+        run: npm publish --provenance --access public --tag next
         working-directory: packages/ui
 
       - name: Build @studiometa/eslint-plugin-ui
         run: npm run build -w @studiometa/eslint-plugin-ui
       - name: Publish @studiometa/eslint-plugin-ui
-        run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
+        run: npm publish --provenance --access public --tag next
         working-directory: packages/eslint-plugin-ui
 
       - name: Build @studiometa/ui-mapbox
         run: npm run build -w @studiometa/ui-mapbox
       - name: Publish @studiometa/ui-mapbox
-        run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
+        run: npm publish --provenance --access public --tag next
         working-directory: packages/ui-mapbox
 
       - name: Build @studiometa/ui-motion
         run: npm run build -w @studiometa/ui-motion
       - name: Publish @studiometa/ui-motion
-        run: npm publish --provenance --access public --tag ${{ env.NPM_TAG }}
+        run: npm publish --provenance --access public --tag next
         working-directory: packages/ui-motion
 
       - uses: ncipollo/release-action@v1
         with:
-          tag: ${{ github.ref }}
-          name: v${{ github.ref_name }}
-          body: Please refer to [CHANGELOG.md](https://github.com/studiometa/ui/blob/${{ github.ref_name }}/CHANGELOG.md) for details.
+          tag: ${{ needs.version.outputs.tag }}
+          name: v${{ needs.version.outputs.tag }}
+          body: ${{ needs.version.outputs.body }}
           draft: false
           prerelease: ${{ env.IS_PRERELEASE }}
