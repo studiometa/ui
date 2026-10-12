@@ -1,4 +1,5 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>studiometa/renovate", "helpers:pinGitHubActionDigests"]
+  "extends": ["github>studiometa/renovate"],
+  "baseBranchPatterns": ["main", "2.x"]
 }
