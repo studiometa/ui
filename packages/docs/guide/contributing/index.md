@@ -102,39 +102,30 @@ All Twig templates should at least expose an `attr` variable that can be used to
 </div>
 ```
 
+## Changelog
+
+Do not edit the `CHANGELOG.md` file. Each pull-request adds a fragment in `.changelog/<slug>.md`, where the slug is the branch name without its prefix (`feature/my-component` → `my-component.md`). A fragment only contains [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) `###` sections followed by their entries:
+
+```md
+### Added
+
+- **MyComponent:** add the `MyComponent` component
+
+### Fixed
+
+- **Fetch:** fix the history update after a form submit
+```
+
+Do not write the pull-request number: the release adds it. A pull-request that changes a published package needs a fragment, unless it has the `no-changelog` label (tests, docs, refactors, tooling). See [weareikko/changelog](https://github.com/weareikko/changelog) for the format.
+
 ## Publishing a new version
 
-To publish a new version, create a release branch from `main`:
+Run the `release` workflow from the branch to release, in the [Actions tab](https://github.com/studiometa/ui/actions/workflows/publish.yml) or with the GitHub CLI:
 
 ```sh
-git checkout main
-git pull origin main
-git checkout -b release/0.2.41
+gh workflow run publish.yml --ref main -f version=patch
 ```
 
-In this release branch, update the version number of all packages with the following command:
+The `version` input accepts `patch`, `minor`, `major` or an exact version such as `1.12.0-beta.0`. The workflow updates the version number of all packages and of `composer.json`, folds the `.changelog/` fragments into `CHANGELOG.md`, commits and tags the release, publishes the `@studiometa/ui` packages to NPM (with the `latest` tag, or `next-1.x` for a prerelease) and creates a release on GitHub. The [Packagist package](https://packagist.org/packages/studiometa/ui) will be updated with the latest tag as well.
 
-```sh
-npm version 0.2.41 -ws --include-workspace-root
-```
-
-Edit the `CHANGELOG.md` file to add the version number and the date of the release:
-
-```diff
- ## [Unreleased]
-
-+## [v0.2.41](https://github.com/studiometa/ui/compare/0.2.40..0.2.41) (2024-02-13)
-+
-```
-
-Open a pull-request against `main` to validate the changes and make sure all tests are passing. Once the PR is approved, merge it and tag the release:
-
-```sh
-git checkout main
-git pull origin main
-git tag 0.2.41 --message 'v0.2.41'
-git push origin main
-git push origin --tags
-```
-
-GitHub actions will create a release on GitHub and publish the `@studiometa/ui` packages to NPM. The [Packagist package](https://packagist.org/packages/studiometa/ui) will be updated with the latest tag as well.
+The `2.x` branch releases the next major version with its own `release` workflow (`--ref 2.x`), on the NPM `next` tag. Release `main` before you merge `main` into `2.x`: the fragments of `main` that are not released yet would otherwise also go into the next 2.x release.
