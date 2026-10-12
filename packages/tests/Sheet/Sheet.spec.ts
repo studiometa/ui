@@ -522,6 +522,47 @@ describe('Sheet — the timeline', () => {
   });
 });
 
+describe('Sheet — the focus', () => {
+  it('takes the focus when the dialog opens, rather than a control in the panel', async () => {
+    const { root, dialog } = await render({ content: '<button type="button">Close</button>' });
+
+    expect(root.getAttribute('tabindex')).toBe('-1');
+    expect(root.hasAttribute('autofocus')).toBe(true);
+
+    await dialog.open();
+    expect(document.activeElement).toBe(root);
+  });
+
+  it('leaves the focus to an element the author marked with `autofocus`', async () => {
+    const { root, dialog } = await render({
+      content: '<button type="button" autofocus>Close</button>',
+    });
+
+    expect(root.hasAttribute('autofocus')).toBe(false);
+
+    await dialog.open();
+    expect(document.activeElement?.textContent).toBe('Close');
+  });
+
+  it('keeps a `tabindex` the author set', async () => {
+    const { root } = await render({ attributes: 'tabindex="0"' });
+
+    expect(root.getAttribute('tabindex')).toBe('0');
+  });
+
+  it('removes the attributes it added on unmount, and only those', async () => {
+    const { root, sheet } = await render();
+    const { root: authored, sheet: authoredSheet } = await render({ attributes: 'tabindex="0"' });
+
+    sheet.$unmount();
+    authoredSheet.$unmount();
+
+    expect(root.hasAttribute('tabindex')).toBe(false);
+    expect(root.hasAttribute('autofocus')).toBe(false);
+    expect(authored.getAttribute('tabindex')).toBe('0');
+  });
+});
+
 describe('Sheet — options', () => {
   it('warns about a position it does not implement', async () => {
     const log = captureDiagnostics();

@@ -233,6 +233,20 @@ export class Sheet<T extends BaseProps = BaseProps>
       $el.style.setProperty('overscroll-behavior-y', 'contain');
     }
 
+    // On open, the `<dialog>` focuses its first control, which is in the
+    // panel, still out of view: Firefox scrolls every ancestor, the embedding
+    // page included, to reveal it. The root is on screen, so it takes the
+    // focus instead, unless the author chose another element.
+    const ownsTabindex = !$el.hasAttribute('tabindex');
+    if (ownsTabindex) {
+      $el.setAttribute('tabindex', '-1');
+    }
+
+    const ownsAutofocus = !($el.closest('dialog') ?? $el).querySelector('[autofocus]');
+    if (ownsAutofocus) {
+      $el.setAttribute('autofocus', '');
+    }
+
     this.__publishesProgress = !CSS.supports('animation-timeline: view()');
     if (this.__publishesProgress) {
       this.$services.ticked.start();
@@ -253,6 +267,14 @@ export class Sheet<T extends BaseProps = BaseProps>
 
         if (ownsOverscroll) {
           $el.style.removeProperty('overscroll-behavior-y');
+        }
+
+        if (ownsTabindex) {
+          $el.removeAttribute('tabindex');
+        }
+
+        if (ownsAutofocus) {
+          $el.removeAttribute('autofocus');
         }
       },
     ];
@@ -360,7 +382,7 @@ export class Sheet<T extends BaseProps = BaseProps>
   /**
    * Keep the keyboard from scrolling the sheet closed.
    *
-   * The focus can start on the root when the dialog opens, so a single
+   * The focus starts on the root when the dialog opens, so a single
    * <kbd>↑</kbd> to read the content would otherwise dismiss it. Closing from
    * the keyboard stays with <kbd>Esc</kbd>.
    */
