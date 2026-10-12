@@ -1490,6 +1490,37 @@ describe('Fetch — options', () => {
     diagnostics.stop();
   });
 
+  it('warns about a `src` that points to the page of the destination when it writes history', async () => {
+    const diagnostics = captureDiagnostics();
+    stubClient();
+    const { instance } = await mountFetch(
+      `<a data-component="Fetch" href="/projects/page/2/" data-option-history
+        data-option-src="/projects/page/2/?view=fragment"></a>`,
+    );
+
+    await instance.fetch();
+
+    expect(diagnostics.codes).toContain('fetch.src-copy-of-page');
+    diagnostics.stop();
+  });
+
+  it('does not warn about a `src` on another endpoint, or without history', async () => {
+    const diagnostics = captureDiagnostics();
+    stubClient();
+    const { instance: search } = await mountFetch(
+      `<a data-component="Fetch" href="/search?q=a" data-option-history data-option-src="/api/search"></a>`,
+    );
+    const { instance: fragment } = await mountFetch(
+      `<a data-component="Fetch" href="/projects/page/2/" data-option-src="/projects/page/2/?view=fragment"></a>`,
+    );
+
+    await search.fetch();
+    await fragment.fetch();
+
+    expect(diagnostics.codes).not.toContain('fetch.src-copy-of-page');
+    diagnostics.stop();
+  });
+
   it('keeps the recipe of the entry to plain data', async () => {
     stubClient();
     const { instance } = await mountFetch(

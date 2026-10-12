@@ -120,7 +120,7 @@ A fixed endpoint. When it is set, the request URL takes its origin, its path and
 - A submitter with a `formaction` names another endpoint for its submission, so neither `src` nor `params` applies to it.
 - On any other element, the request URL is `src` with `params`. The query of the page is not folded on.
 
-The address bar shows the destination, never `src`. On back and forward navigation, the request is rebuilt from the restored URL and the `src` of the entry.
+The address bar shows the destination, never `src`. On back and forward navigation, the request is rebuilt from the restored URL and the `src` of the entry. Do not set `src` to a copy of the destination page, such as `/projects/page/2/?view=fragment` on a link to `/projects/page/2/`: back to page 1 would request page 2. Use `params` for a lighter copy of the page. An element with `history` reports the `fetch.src-copy-of-page` diagnostic in this case.
 
 ```html
 <form
@@ -573,3 +573,4 @@ class FetchJson extends Fetch {
 
 - `fetch.file-not-uploaded`: a file control is sent as the name of its file, because the body is not `multipart/form-data`. Set `enctype="multipart/form-data"` on a POST form to upload the file.
 - `fetch.invalid-history-mode`: the [`historyMode` option](#historymode) is neither `push` nor `replace`. `push` is used.
+- `fetch.src-copy-of-page`: an element with `history` has a [`src`](#src) with the origin and the path of its destination. On back and forward, the request uses the `src` of the entry, so it loads that page instead of the restored one. Use the [`params` option](#params) to request a lighter copy of the page.

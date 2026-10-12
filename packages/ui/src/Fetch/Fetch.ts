@@ -401,6 +401,20 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   }
 
   /**
+   * Report a `src` that points to the page of the destination. A restore
+   * rebuilds the request of every entry with the `src` of the entry, so back
+   * to another page would request this one.
+   *
+   * @private
+   */
+  __warnSrcCopyOfPage(): void {
+    this.$warn(
+      'fetch.src-copy-of-page',
+      'The `src` option points to the page of the destination. On back and forward, the request uses this `src`, so it loads this page instead of the restored one. Use the `params` option to request a lighter copy of the page.',
+    );
+  }
+
+  /**
    * Build the request of one run, and the recipe it runs with.
    *
    * @private
@@ -486,6 +500,17 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       fold = true;
     }
 
+    // Only a link, a form or a named destination is a place the address bar
+    // can show.
+    const history = $options.history && fold ? this.__historyMode : false;
+
+    if (history && recipe.src) {
+      const src = new URL(recipe.src);
+      if (src.origin === target.origin && src.pathname === target.pathname) {
+        this.__warnSrcCopyOfPage();
+      }
+    }
+
     return {
       recipe,
       request: {
@@ -494,9 +519,7 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
         method,
         headers: { [HEADER_NAMES.USER_AGENT]: userAgent(), ...this.__headers },
         body,
-        // Only a link, a form or a named destination is a place the address
-        // bar can show.
-        history: $options.history && fold ? this.__historyMode : false,
+        history,
       },
     };
   }
