@@ -90,7 +90,7 @@ Any trigger you omit falls back to the platform behavior.
 
 ## Transitions are fanned out
 
-The `Dialog` awaits `Promise.all` over the `enter()`/`leave()` of every [`Transition`](/reference/items/Transition/) and [`ViewTransition`](/reference/items/ViewTransition/) child:
+The `Dialog` awaits `Promise.all` over the `enter()`/`leave()` of every [`Transition`](/reference/items/Transition/), [`ViewTransition`](/reference/items/ViewTransition/) and [`Sheet`](/reference/items/Sheet/) child:
 
 - `enter()` runs **after** `showModal()`/`show()`, so the dialog is already in the top layer when its children animate in.
 - `leave()` runs **before** `dialog.close()`, so the dialog is still painted while its children animate out.
@@ -127,6 +127,8 @@ Because the modal `<dialog>` promotes its children to the top layer, two browser
 :::
 
 See the [drawer example](./examples.md#drawer) for a complete right-side drawer sliding in via `ViewTransition`.
+
+For a bottom sheet the user can swipe away, use a [`Sheet`](/reference/items/Sheet/) child instead: the gesture is native scrolling, and the animation follows it through a CSS view timeline.
 
 ## The `<dialog>` gotcha
 

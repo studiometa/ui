@@ -68,6 +68,7 @@ test("components exports", () => {
       "ScrollReveal",
       "ScrollTo",
       "Sentinel",
+      "Sheet",
       "Sticky",
       "TABS_ACTIVATIONS",
       "TRACK_PSEUDO_EVENTS",
