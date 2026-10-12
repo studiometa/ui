@@ -22,7 +22,9 @@ jobs:
       pull-requests: read
     outputs:
       tag: ${{ steps.version.outputs.version }}
-      body: ${{ steps.changelog.outputs.body }}
+      # A stable release of a prerelease without new fragments has no
+      # changelog section: its release body names the prerelease.
+      body: ${{ steps.changelog.outputs.changed == 'true' && steps.changelog.outputs.body || format('Stable release of {0}.', steps.version.outputs.previous) }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -39,6 +41,7 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: |
+          echo "previous=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
           npm version "$VERSION" --no-git-tag-version
           echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
 
@@ -49,9 +52,18 @@ jobs:
           command: release
           version: v${{ steps.version.outputs.version }}
 
+      # Promoting a prerelease (1.12.0-rc.1 to 1.12.0) can have no new
+      # fragment: the prerelease already folded them.
       - name: Fail when there is nothing to release
         if: steps.changelog.outputs.changed != 'true'
+        env:
+          PREVIOUS: ${{ steps.version.outputs.previous }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
+          if [[ $PREVIOUS == *-* && $VERSION != *-* ]]; then
+            echo "::notice::No fragment in .changelog/: stable release of $PREVIOUS."
+            exit 0
+          fi
           echo "::error::No fragment in .changelog/: nothing to release."
           exit 1
 
@@ -69,6 +81,9 @@ jobs:
   # A tag pushed with GITHUB_TOKEN does not start other workflows, so the
   # publish job runs in this same workflow. It must stay in this file: npm
   # trusted publishing is configured for `publish.yml`.
+  # Every step can run again: a package version that npm already has is
+  # skipped, and the GitHub release is updated when it exists. "Re-run failed
+  # jobs" on this job publishes what a failed run left.
   release:
     needs: version
     runs-on: macos-latest
@@ -83,7 +98,6 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org/
 
       - name: Get npm cache directory
         id: npm-cache-dir
@@ -116,47 +130,68 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
-      # The 1.x line owns the `latest` dist-tag. Its prereleases use `next-1.x`,
-      # because the 2.x branch owns `next`.
-      - env:
+      # The 1.x line owns the `latest` dist-tag. A prerelease version (with a
+      # `-`, e.g. 1.12.0-beta.0) uses `next-1.x`, because the 2.x branch owns `next`.
+      - name: Resolve npm dist-tag
+        id: dist-tag
+        env:
           TAG: ${{ needs.version.outputs.tag }}
         run: |
-          NPM_TAG='latest'
-          IS_PRERELEASE=false
-
           if [[ $TAG == *-* ]]; then
-            NPM_TAG='next-1.x'
-            IS_PRERELEASE=true
+            PRERELEASE=true
+            DIST_TAG=next-1.x
+          else
+            PRERELEASE=false
+            DIST_TAG=latest
           fi
-
-          echo "NPM_TAG=$NPM_TAG" >> "$GITHUB_ENV"
-          echo "IS_PRERELEASE=$IS_PRERELEASE" >> "$GITHUB_ENV"
+          {
+            echo "prerelease=$PRERELEASE"
+            echo "dist-tag=$DIST_TAG"
+          } >> "$GITHUB_OUTPUT"
 
       # Tokenless trusted publishing (npm OIDC): each package is configured as a trusted publisher
-      # on npm, so `npm publish` authenticates through the `id-token: write` permission declared
-      # above — no NPM_TOKEN — and provenance is attested from the same OIDC flow. Mirrors the
-      # working setup in @weareikko/code-review; Node 24's bundled npm (>= 11.5.1) supports it.
+      # on npm for this workflow file, so the action authenticates through the `id-token: write`
+      # permission declared above — no npm token — and provenance is attested from the same OIDC
+      # flow. The action skips a version that npm already has, and publishes with
+      # `--ignore-scripts`: no published package has a publish lifecycle script, and the steps
+      # above build what is published. Dependencies first.
       - name: Publish @studiometa/ui
-        run: npm publish --provenance --access public --tag "$NPM_TAG"
-        working-directory: packages/ui
+        uses: JS-DevTools/npm-publish@0fd2f4369c5d6bcfcde6091a7c527d810b9b5c3f # v4.1.5
+        with:
+          package: packages/ui
+          access: public
+          provenance: true
+          tag: ${{ steps.dist-tag.outputs.dist-tag }}
 
       - name: Build @studiometa/eslint-plugin-ui
         run: npm run build -w @studiometa/eslint-plugin-ui
       - name: Publish @studiometa/eslint-plugin-ui
-        run: npm publish --provenance --access public --tag "$NPM_TAG"
-        working-directory: packages/eslint-plugin-ui
+        uses: JS-DevTools/npm-publish@0fd2f4369c5d6bcfcde6091a7c527d810b9b5c3f # v4.1.5
+        with:
+          package: packages/eslint-plugin-ui
+          access: public
+          provenance: true
+          tag: ${{ steps.dist-tag.outputs.dist-tag }}
 
       - name: Build @studiometa/ui-mapbox
         run: npm run build -w @studiometa/ui-mapbox
       - name: Publish @studiometa/ui-mapbox
-        run: npm publish --provenance --access public --tag "$NPM_TAG"
-        working-directory: packages/ui-mapbox
+        uses: JS-DevTools/npm-publish@0fd2f4369c5d6bcfcde6091a7c527d810b9b5c3f # v4.1.5
+        with:
+          package: packages/ui-mapbox
+          access: public
+          provenance: true
+          tag: ${{ steps.dist-tag.outputs.dist-tag }}
 
       - name: Build @studiometa/ui-motion
         run: npm run build -w @studiometa/ui-motion
       - name: Publish @studiometa/ui-motion
-        run: npm publish --provenance --access public --tag "$NPM_TAG"
-        working-directory: packages/ui-motion
+        uses: JS-DevTools/npm-publish@0fd2f4369c5d6bcfcde6091a7c527d810b9b5c3f # v4.1.5
+        with:
+          package: packages/ui-motion
+          access: public
+          provenance: true
+          tag: ${{ steps.dist-tag.outputs.dist-tag }}
 
       - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
         with:
@@ -164,4 +199,8 @@ jobs:
           name: v${{ needs.version.outputs.tag }}
           body: ${{ needs.version.outputs.body }}
           draft: false
-          prerelease: ${{ env.IS_PRERELEASE }}
+          prerelease: ${{ steps.dist-tag.outputs.prerelease }}
+          # GitHub's latest release follows the `latest` dist-tag on npm.
+          makeLatest: ${{ steps.dist-tag.outputs.dist-tag == 'latest' }}
+          # A replay updates the release when a previous run created it.
+          allowUpdates: true

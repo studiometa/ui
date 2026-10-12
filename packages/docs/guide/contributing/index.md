@@ -126,6 +126,16 @@ Run the `release` workflow from the branch to release, in the [Actions tab](http
 gh workflow run publish.yml --ref main -f version=patch
 ```
 
-The `version` input accepts `patch`, `minor`, `major` or an exact version such as `1.12.0-beta.0`. The workflow updates the version number of all packages and of `composer.json`, folds the `.changelog/` fragments into `CHANGELOG.md`, commits and tags the release, publishes the `@studiometa/ui` packages to NPM (with the `latest` tag, or `next-1.x` for a prerelease) and creates a release on GitHub. The [Packagist package](https://packagist.org/packages/studiometa/ui) will be updated with the latest tag as well.
+The `version` input accepts `patch`, `minor`, `major`, `prerelease` or an exact version such as `1.12.0-beta.0`. The workflow updates the version number of all packages and of `composer.json`, folds the `.changelog/` fragments into `CHANGELOG.md`, commits and tags the release, publishes the `@studiometa/ui` packages to NPM (with the `latest` tag, or `next-1.x` for a prerelease) and creates a release on GitHub. The [Packagist package](https://packagist.org/packages/studiometa/ui) will be updated with the latest tag as well.
+
+To release a prerelease, give its exact version, then use `prerelease` for the next ones (`1.12.0-beta.0` → `1.12.0-beta.1`). A prerelease is a GitHub prerelease and does not change the `latest` tag on NPM or the latest release on GitHub:
+
+```sh
+gh workflow run publish.yml --ref main -f version=1.12.0-beta.0
+```
+
+A prerelease folds the `.changelog/` fragments like any release. The stable release that follows it (`-f version=1.12.0`, or `patch` from `1.12.0-rc.1`) can have no new fragment: `CHANGELOG.md` then gets no new section and the GitHub release says `Stable release of 1.12.0-rc.1.`. Without a fragment, any other release fails.
+
+NPM publishes the packages with [trusted publishing](https://docs.npmjs.com/trusted-publishers), so the workflow uses no NPM token. When the publication fails, use "Re-run failed jobs" on the workflow run: the packages that NPM already has are skipped and the others are published.
 
 The `2.x` branch releases the next major version with its own `release` workflow (`--ref 2.x`), on the NPM `next` tag. Release `main` before you merge `main` into `2.x`: the fragments of `main` that are not released yet would otherwise also go into the next 2.x release.

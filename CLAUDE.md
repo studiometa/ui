@@ -43,7 +43,9 @@
 ## Releases
 
 - Do not bump versions, tag or create GitHub releases by hand: run the `release` workflow (`.github/workflows/publish.yml`) from the branch to release, e.g. `gh workflow run publish.yml --ref main -f version=patch` (or `minor`, `major`, or an exact version such as `1.12.0-beta.0`)
-- The workflow bumps every package and `composer.json`, folds `.changelog/` into `CHANGELOG.md`, commits `Prepare <version>`, tags `<version>` (no `v` prefix), publishes the npm packages (`latest` dist-tag, `next-1.x` for prereleases) and creates the GitHub release
+- The workflow bumps every package and `composer.json`, folds `.changelog/` into `CHANGELOG.md`, commits `Prepare <version>`, tags `<version>` (no `v` prefix), publishes the npm packages (`latest` dist-tag, `next-1.x` for prereleases) and creates the GitHub release (a GitHub prerelease, not the latest release, for a prerelease)
+- Prereleases fold the fragments like any release. The stable release after a prerelease (e.g. `1.12.0` after `1.12.0-rc.1`) can have no fragment: its GitHub release body is `Stable release of <prerelease>.`. Any other release without a fragment fails
+- npm trusted publishing (OIDC, no npm token) is configured for `publish.yml`: keep the publish job in that file. Each package has its own `JS-DevTools/npm-publish` step, which skips a version that npm already has: when the publication fails, use "Re-run failed jobs" on the run
 - Two release lines: `main` releases 1.x and `2.x` releases 2.x (npm `next` dist-tag), each from its own workflow file. Release `main` before you merge `main` into `2.x`: unreleased fragments from `main` would otherwise go into the next 2.x release too
 
 ## Code conventions
