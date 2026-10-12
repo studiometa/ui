@@ -521,6 +521,43 @@ describe('Fetch history — back and forward', () => {
     });
   });
 
+  it('emits the events of a detached restore on the region of the entry, so they bubble through its wrapper', async () => {
+    window.history.pushState(null, '', '/projects?page=1');
+    servePages();
+    const root = await mount(`
+      <section id="wrapper">
+        <div id="list">
+          page 1
+          <a data-component="Fetch" href="/projects?page=2" data-option-history
+            data-option-selector="#list" data-option-no-view-transition>2</a>
+        </div>
+      </section>
+    `);
+    root.querySelector('a')!.click();
+    await waitFor(() => list() === 'page 2');
+    const wrapper = document.getElementById('wrapper')!;
+    const { events, stop } = recordFetchEvents(wrapper);
+    const updates: EventTarget[] = [];
+    const onUpdate = (event: Event) => updates.push(event.target!);
+    wrapper.addEventListener('js-toolkit:dom:update', onUpdate);
+    onTestFinished(() => wrapper.removeEventListener('js-toolkit:dom:update', onUpdate));
+
+    await back();
+    await waitFor(() => list() === 'page 1');
+    await waitFor(() => types(events).includes(FETCH_EVENTS.AFTER_FETCH));
+    stop();
+
+    expect(types(events)).toEqual([
+      FETCH_EVENTS.BEFORE_FETCH,
+      FETCH_EVENTS.RESPONSE,
+      FETCH_EVENTS.BEFORE_UPDATE,
+      FETCH_EVENTS.AFTER_UPDATE,
+      FETCH_EVENTS.AFTER_FETCH,
+    ]);
+    expect(detailOf(events, FETCH_EVENTS.AFTER_FETCH)).toMatchObject({ outcome: 'ok' });
+    expect(updates).toHaveLength(1);
+  });
+
   it('restores through the mounted instance that replaced the owner, with the recipe of the entry', async () => {
     window.history.pushState(null, '', '/projects?page=1');
     const { calls } = stubClient((url) => {

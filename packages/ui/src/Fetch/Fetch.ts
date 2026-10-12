@@ -186,8 +186,11 @@ interface FetchRun {
   /** The control that submitted the form. */
   submitter?: HTMLElement | null;
 
-  /** The entry the history coordinator restores. */
-  restore?: { url: URL; recipe: RestoreRecipe };
+  /**
+   * The entry the history coordinator restores, and the element a detached
+   * instance emits its events on.
+   */
+  restore?: { url: URL; recipe: RestoreRecipe; host?: Element | null };
 }
 
 /**
@@ -501,10 +504,11 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   /**
    * Dispatch a lifecycle event and return whether it was cancelled.
    *
-   * The event is dispatched on the element. When a swap has removed the
-   * element from the document, a copy is also dispatched on its nearest
-   * ancestor still in the document, or on `document`, so the listeners of
-   * the page still see how the request ended.
+   * The event is dispatched on the element. When the element is not in the
+   * document, because a swap has removed it or because a detached instance
+   * restores an entry, a copy is also dispatched on its nearest ancestor
+   * still in the document, or on `document`, so the listeners of the page
+   * still see how the request ended.
    *
    * @private
    */
@@ -587,12 +591,13 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
   /**
    * Restore a history entry, from the URL the browser moved to and the recipe
    * the entry keeps. The recipe wins over the options of the instance, which
-   * gives only its events, its headers and its transport.
+   * gives only its events, its headers and its transport. An instance whose
+   * element is not in the document emits its events on `host` instead.
    *
    * @protected
    */
-  __restore(url: URL, recipe: RestoreRecipe): Promise<FetchOutcome> {
-    return this.__run({ restore: { url, recipe } });
+  __restore(url: URL, recipe: RestoreRecipe, host?: Element | null): Promise<FetchOutcome> {
+    return this.__run({ restore: { url, recipe, host } });
   }
 
   /**
@@ -628,8 +633,11 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       previous = this.__endPrevious(isNavigation);
     }
 
+    // A detached instance that restores an entry announces on the region of
+    // the entry, so the listeners around that region see the restore.
     const ancestors: Element[] = [];
-    for (let node = this.$el.parentElement; node; node = node.parentElement) {
+    const start = this.$el.isConnected ? this.$el.parentElement : (run.restore?.host ?? null);
+    for (let node = start; node; node = node.parentElement) {
       ancestors.push(node);
     }
     this.__ancestors = ancestors;
@@ -821,9 +829,12 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
     recipe: RestoreRecipe,
     request: FetchRequest,
   ): Promise<Document | undefined> {
-    // A detached instance restoring an entry announces on the document, so
-    // the runners of the page still negotiate the change.
-    const target = this.$el.isConnected ? this.$el : document.documentElement;
+    // A detached instance restoring an entry announces on the region of the
+    // entry, or on the document, so the runners of the page still negotiate
+    // the change.
+    const target = this.$el.isConnected
+      ? this.$el
+      : (this.__ancestors.find((ancestor) => ancestor.isConnected) ?? document.documentElement);
     const claim =
       recipe.viewTransition && loaded.viewTransition !== false
         ? (event: Event) => {

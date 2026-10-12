@@ -86,7 +86,7 @@ Back from entry 2 to entry 1 sends no request, because the page already shows `/
 - **Anchors of the page.** Back or forward to an entry whose URL differs from the content on the page only by its hash sends no request: the browser scrolls to the fragment, and the swapped regions keep their state.
 - **A traversal stops the navigation in flight.** Back and forward abort the navigation in flight, also when they reach an entry of another script, as they stop a native navigation. A jump to an anchor of the page also fires `popstate`, but leaves the navigation in flight alone, as natively. Without the [Navigation API](https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API), the two cannot be told apart when only the hash changes: back or forward to an entry of the same page then leaves the navigation in flight alone too.
 - **Plain data only.** The recipe holds no element and no function, so it survives the element that wrote it and a reload. The [`requestInit` option](#requestinit) is not stored, because a value the browser cannot clone would make `pushState()` throw. Header values are not stored either, because they can hold credentials that session history would keep. A restore sends the headers of the instance that runs it, and none when no instance is left on the page.
-- **The owner.** A restore runs on the mounted instance on the `owner` element, so its events reach that element. Give the element an `id`: without one, the restore runs on a detached instance and its events reach `document`.
+- **The owner.** A restore runs on the mounted instance on the `owner` element, so its events reach that element. Give the element an `id`: without one, the restore runs on a detached instance, and its events reach the first element that the `selector` of the entry matches, then bubble from there. When no element matches, they reach `document`.
 - **An unknown class.** When no class on the page can restore the entry, the page reloads, so the address bar and the content stay in agreement. A class can restore entries once one of its instances with `history` has mounted, or has written an entry.
 
 ### `params`
@@ -404,7 +404,7 @@ interface FetchResponseDetail {
 - A cancelled `fetch-before` has already ended the previous request, so a `fetch-before` listener cannot keep the request in flight and drop the new one. A native submission behaves the same way: a second submission stops the first one. To ignore a second submission while a request runs, disable the submit button in `fetch-before` and enable it again in `fetch-after`.
 - Requests of different instances that write no history run in parallel. A loader shared by several instances must count the requests in flight, or the first `fetch-after` hides it.
 - When the DOM change removes the element, the events that follow it are also dispatched on the nearest ancestor that is still in the document, or on `document`.
-- A restore emits its events on the owner element when a mounted instance is there, and on `document` otherwise. See [history entries](#history-entries).
+- A restore emits its events on the owner element when a mounted instance is there. Otherwise, it emits them on the first element that the `selector` of the entry matches, or on `document`. See [history entries](#history-entries).
 
 ### `fetch-before`
 
@@ -480,7 +480,7 @@ Emitted last, exactly once per request.
 
 ## The `js-toolkit:dom:update` protocol event
 
-Before it applies the content, `Fetch` dispatches the bubbling `js-toolkit:dom:update` event of [`@studiometa/js-toolkit`](https://js-toolkit-v4.studiometa.dev/api/dom/domUpdate.html). It is a shared protocol event that announces an imminent DOM change, not a `fetch-*` event. A restore with no instance left on the page dispatches it on `document.documentElement`.
+Before it applies the content, `Fetch` dispatches the bubbling `js-toolkit:dom:update` event of [`@studiometa/js-toolkit`](https://js-toolkit-v4.studiometa.dev/api/dom/domUpdate.html). It is a shared protocol event that announces an imminent DOM change, not a `fetch-*` event. A restore with no instance left on the page dispatches it on the first element that the `selector` of the entry matches, or on `document.documentElement`.
 
 **Detail**
 

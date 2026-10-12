@@ -659,7 +659,7 @@ flowchart TB
     p2 -. no fetch key .-> i[ignored]
     c -. no class to restore it .-> r[reload the page]
     c -- owner mounted --> live["live instance on #owner<br>events on its element"]
-    c -- owner gone --> detached["detached instance<br>events on document"]
+    c -- owner gone --> detached["detached instance<br>events on the region"]
     live --> g4["GET /projects?page=1<br>rebuilt from the URL and the recipe"]
     detached --> g4
     g4 -- swaps the selectors of the entries --> d2["#results"]
@@ -674,7 +674,7 @@ flowchart TB
 - The entry is the full destination with its own hash. In v1, the current hash was kept, so `/a#x` led to `/b#x`.
 - The page takes the `<title>` of the response only when an entry is written or restored.
 - A restore of `append` or `prepend` content uses `replace`, so the content is not added twice.
-- Give the element an `id`, so a restore emits its events on it. Without one, they reach `document`.
+- Give the element an `id`, so a restore emits its events on it. Without one, they reach the first element that the `selector` of the entry matches, and bubble from there. Listeners on a wrapper of the region, such as a loader, see the restore.
 
 #### `src` is a fixed endpoint
 

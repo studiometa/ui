@@ -101,7 +101,7 @@ flowchart TB
   p --> c["history coordinator<br>reads history.state.fetch"]
   c -. no class to restore it .-> r[reload the page]
   c -- owner mounted --> live["live instance on #owner<br>events on its element"]
-  c -- owner gone --> detached["detached instance<br>events on document"]
+  c -- owner gone --> detached["detached instance<br>events on the region"]
   live --> g["GET /projects?page=1<br>rebuilt from the URL and the recipe"]
   detached --> g
   g -- swaps the selectors of the entries --> d["#results"]
@@ -115,7 +115,7 @@ flowchart TB
 - **Entries of other scripts are kept.** An entry without a `fetch` key is ignored, and the keys that other scripts put in `history.state` are kept.
 - **Anchors cost nothing.** Back to an entry that differs from the content on the page only by its hash sends no request, as natively.
 - **A POST writes history only after a redirect.** The entry is then the page the server redirected to, which back restores with a GET. A POST without a redirect writes nothing.
-- **Give the element an `id`.** The events of a restore reach the element that wrote the entry only when it has an `id`. Without one, they reach `document`.
+- **Give the element an `id`.** The events of a restore reach the element that wrote the entry only when it has an `id`. Without one, they reach the first element that the `selector` of the entry matches, and bubble from there. A listener on a wrapper of that region still sees the restore.
 
 ### A lighter page: `params` or `src`
 
@@ -231,7 +231,7 @@ The [events](./js-api.md#events) sent by the `Fetch` component bubble up the DOM
 </div>
 ```
 
-A new request on the same element ends the previous one first, so the loader stays on. Requests that write history run one at a time on the page, and a new one ends the previous one first too. Other requests run one at a time per element only: two elements without `history` can run in parallel, and the first `fetch-after` would hide a shared loader. Count the requests in flight when several such elements share one loader.
+Back and forward also reach the loader: a restore emits its events on the element that wrote the entry, or on the region of the entry when that element has no `id`. A new request on the same element ends the previous one first, so the loader stays on. Requests that write history run one at a time on the page, and a new one ends the previous one first too. Other requests run one at a time per element only: two elements without `history` can run in parallel, and the first `fetch-after` would hide a shared loader. Count the requests in flight when several such elements share one loader.
 
 ### Transitions
 

@@ -61,7 +61,7 @@ export interface NavigationToken {
 /** What the coordinator needs from an instance to restore an entry. */
 interface HistoryOwner {
   readonly $isMounted: boolean;
-  __restore(url: URL, recipe: RestoreRecipe): Promise<unknown>;
+  __restore(url: URL, recipe: RestoreRecipe, host?: Element | null): Promise<unknown>;
 }
 
 /** A `Fetch` class or subclass. */
@@ -147,7 +147,8 @@ function onNavigate(event: NavigateEvent): void {
  * fragment. A restore swaps the regions of every entry of the page, not
  * only those of the entry it restores. A live owner runs the restore, so its
  * events and loading states apply. With no live owner, a detached instance
- * of the registered class runs it, and its events reach `document`.
+ * of the registered class runs it, and its events reach the first element
+ * that the selector of the entry matches, then bubble from there.
  */
 function onPopstate(): void {
   const page = withoutHash(window.location.href);
@@ -179,15 +180,17 @@ function onPopstate(): void {
   const live: unknown = element ? getInstance(element, recipe.component) : null;
   const instance =
     live instanceof Owner && live.$isMounted ? live : new Owner(document.createElement('div'));
+  const host = typeof recipe.selector === 'string' ? document.querySelector(recipe.selector) : null;
 
   shownPage = page;
   addRegion(recipe);
 
   void instance
-    .__restore(new URL(window.location.href), {
-      ...recipe,
-      selector: [...regions].join(', '),
-    } as RestoreRecipe)
+    .__restore(
+      new URL(window.location.href),
+      { ...recipe, selector: [...regions].join(', ') } as RestoreRecipe,
+      host,
+    )
     .then((outcome) => {
       if (outcome !== 'ok' && shownPage === page) {
         shownPage = undefined;
