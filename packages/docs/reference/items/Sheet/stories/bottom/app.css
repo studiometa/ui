@@ -1,3 +1,12 @@
+html.dark {
+  background-color: #222;
+  color: #eee;
+}
+
+body {
+  padding: 1rem;
+}
+
 /* The host: a transparent, full-viewport box. The user-agent styles of a
    modal <dialog> (max-width, max-height, margin, padding, border, background)
    are neutralised, and it clips the bottom half of the scroller. No `display`
@@ -35,6 +44,12 @@
 
 .sheet__scroller::-webkit-scrollbar {
   display: none;
+}
+
+/* `Sheet` gives the scroller the focus on open. It fills the screen and has
+   no action of its own, so a focus ring around it shows nothing useful. */
+.sheet__scroller:focus-visible {
+  outline: none;
 }
 
 .sheet__snap {
@@ -90,7 +105,8 @@
   width: 3rem;
   height: 0.25rem;
   border-radius: 9999px;
-  background: rgb(0 0 0 / 0.2);
+  background: currentColor;
+  opacity: 0.2;
   transform: translateX(-50%);
 }
 

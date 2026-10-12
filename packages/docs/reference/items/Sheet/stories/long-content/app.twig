@@ -37,15 +37,15 @@
         data-on:click="Dialog(#sheet)->target.close()"
         class="sheet__backdrop"></div>
 
-      <div data-ref="panel" class="sheet__panel bg-white text-black">
+      <div data-ref="panel" class="sheet__panel bg-white text-black dark:bg-zinc-800 dark:text-white">
         <div class="sheet__handle"></div>
         <h2 id="sheet-title" class="text-xl font-bold mb-3">Long content</h2>
-        <p class="mb-4 text-black/60">
+        <p class="mb-4 text-black/60 dark:text-white/60">
           The panel is never taller than the screen, so its content scrolls
           inside it. Scroll it down, then drag it back up: once its top is
           reached, the drag chains to the sheet and dismisses it.
         </p>
-        <ol class="mb-6 list-decimal pl-5 space-y-3 text-black/60">
+        <ol class="mb-6 list-decimal pl-5 space-y-3 text-black/60 dark:text-white/60">
           {% for i in 1..30 %}
             <li>Item {{ i }}: enough lines of text to make the panel scroll on any screen.</li>
           {% endfor %}
@@ -54,7 +54,7 @@
           type="button"
           data-component="Action"
           data-on:click="Dialog(#sheet)->target.close()"
-          class="px-4 py-2 rounded bg-gray-900 text-white">
+          class="px-4 py-2 rounded bg-gray-900 text-white dark:bg-white dark:text-black">
           Close
         </button>
       </div>

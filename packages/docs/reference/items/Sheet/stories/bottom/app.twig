@@ -39,15 +39,15 @@
         data-on:click="Dialog(#sheet)->target.close()"
         class="sheet__backdrop"></div>
 
-      <div data-ref="panel" class="sheet__panel bg-white text-black">
+      <div data-ref="panel" class="sheet__panel bg-white text-black dark:bg-zinc-800 dark:text-white">
         <div class="sheet__handle"></div>
         <h2 id="sheet-title" class="text-xl font-bold mb-3">Bottom sheet</h2>
-        <p class="mb-4 text-black/60">
+        <p class="mb-4 text-black/60 dark:text-white/60">
           Opening scrolls the sheet into view, closing scrolls it back out.
           There is no touch handling in JavaScript: the swipe, its momentum and
           its bounce are the browser's own scrolling.
         </p>
-        <p class="mb-6 text-black/60">
+        <p class="mb-6 text-black/60 dark:text-white/60">
           Focus, <kbd>Esc</kbd> and the top layer stay with the native
           <code>&lt;dialog&gt;</code>.
         </p>
@@ -55,7 +55,7 @@
           type="button"
           data-component="Action"
           data-on:click="Dialog(#sheet)->target.close()"
-          class="px-4 py-2 rounded bg-gray-900 text-white">
+          class="px-4 py-2 rounded bg-gray-900 text-white dark:bg-white dark:text-black">
           Close
         </button>
       </div>
