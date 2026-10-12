@@ -115,15 +115,34 @@ The trigger and panel both need an `id`: `Disclosure` wires `aria-controls` and 
 </div>
 
 <!-- v2 -->
-<a data-component="Fetch" data-option-history href="/page-2">Page 2</a>
+<a data-component="Fetch" data-option-history data-option-selector="#content" href="/page-2">
+  Page 2
+</a>
 <div id="content">…</div>
 ```
 
-- `FrameTarget` becomes a plain `id`. `Fetch` replaces every `[id]` element the response also contains. The elements do not have to be siblings.
-- `FrameLoader` has no equivalent. Listen for the `fetch-*` events.
+- `FrameTarget` becomes a plain `id`, and the [`selector` option](/reference/items/Fetch/js-api#selector) lists these ids: `data-option-selector="#content"`. A `Frame` swapped only its own `FrameTarget` elements. With the default `[id]` selector, `Fetch` swaps every element of the response that has an `id` and is also on the page. A full-page response holds `<main>`, the header, the Shopify section wrappers and some scripts, and they are all swapped. Set `selector` on every `Fetch` element, or once as the default option of a subclass.
+- Ids are matched in the whole page, not inside a region. An id that was unique only inside one `Frame` must become unique in the page.
+- A `Frame` stopped its previous request when one of its links started a new one. `Fetch` on each link is an independent element. Without `history`, a slow response of an earlier link can replace the response of a later link. When several links fill one region without `history`, put one `Fetch` on the region and call `fetch(href)` from the links, or turn on `history`: requests that write history run one at a time on the page.
+- `FrameAnchor` and `FrameForm` ran only inside a `Frame`. `Fetch` runs wherever it is declared. Check the snippets that are also rendered on pages without a `Frame`, for example a pagination snippet shared with a search page.
+- `FrameLoader` becomes a `Transition`, entered on `fetch-before` and left on `fetch-after`. See [global loader](/reference/items/Fetch/#global-loader).
 - The `frame-*` events become the `fetch-*` set. See [the API page](/reference/items/Fetch/js-api).
 - To keep one declaration for a region, mount `Fetch` on any element, set the endpoint with the [`src` option](/reference/items/Fetch/js-api#src) and call `fetch()` yourself. Such an element writes no history. To write history, call `fetch(destination)` or use a link or a form.
 - `Fetch` itself changed from v1 too. See [`Fetch`](#fetch).
+
+#### Extending `Frame`
+
+| v1.x `Frame`                                                 | v2.x                                                                                                               |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `content()`, code after the DOM change                       | `fetch-update-after`, with the parsed response in `detail.fragment`, or override `__apply()`                       |
+| a `fetch()` override, work before the DOM change             | a `fetch-before` listener, or a `js-toolkit:dom:update` runner that awaits your work and calls `detail.wrap`       |
+| `error()`                                                    | `fetch-error`, or the `error` outcome of `await fetch()`                                                           |
+| `requestInit.trigger`                                        | `event.detail.instance`                                                                                            |
+| `getDirectChildren()`, `domParser`                           | `$query()`, refs, and `detail.fragment`                                                                            |
+| `history`, `requestInit` or `headers` on the `Frame` wrapper | the same attributes on each `Fetch` element, or a `Fetch` subclass that sets them as option defaults               |
+| `mode` on a `FrameTarget`                                    | `mode` on the `Fetch` element                                                                                      |
+| `enter-*` and `leave-*` options on a `FrameTarget`           | removed: style the view transition with `::view-transition-*`, or run your own in a `js-toolkit:dom:update` runner |
+| an `onWindowPopstate()` override                             | not needed: one history coordinator restores the entries                                                           |
 
 ### `Modal` and `Panel` → `Dialog`
 
@@ -705,6 +724,14 @@ In v1, `src` replaced the destination for the request, and back requested the re
   </a>
 ```
 
+A `src` that is a copy of the page breaks with no error: clicks work, but back shows the wrong page, because the restore uses the `src` of the entry. An element with `history` reports the `fetch.src-copy-of-page` diagnostic in this case.
+
+A restore requests the URL of the restored entry with the `params` of that entry, and swaps the regions of every entry that the response contains. When `params` selects fragments of the page, the response holds only the regions that the restored entry asked for. So every element that writes history on a page must request every region that an entry of that page changes. In v1, back requested the full page, so this did not show.
+
+A lighter copy should include a `<title>`. Without one, `document.title` does not change on navigation and on back.
+
+A lighter-copy parameter written in the `href` or the `action`, such as `section_id`, `sections` or `view=fragment`, also moves to `params`. History, reload and back then use the real page URL. On Shopify, see [`FetchShopifySection`](/reference/items/FetchShopifySection/).
+
 On an element that is neither a link nor a form, `src` stays the URL to request, and such an element writes no history.
 
 #### `Fetch` events
@@ -712,7 +739,7 @@ On an element that is neither a link nor a form, `src` stays the URL to request,
 | v1.x                                                        | v2.x                                                                                               |
 | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `fetch-fetch`                                               | removed — `fetch-before`, where the request can still change                                       |
-| `fetch-update`                                              | removed — `fetch-update-before`, or a runner on `js-toolkit:dom:update`                            |
+| `fetch-update`                                              | removed — `fetch-update-before`, `fetch-update-after`, or a runner on `js-toolkit:dom:update`      |
 | `dom-update`                                                | `js-toolkit:dom:update`, with `{ instance, request, response, content, wrap }`                     |
 | `fetch-after` after the response, with `content` or `error` | `fetch-after` last, after the DOM change, exactly once, with `outcome`: `ok`, `error` or `aborted` |
 | `{ instance, url, requestInit, … }`                         | `{ instance, request, … }` — `url` is `request.url`, the method, headers and body are on `request` |
@@ -722,6 +749,8 @@ On an element that is neither a link nor a form, `src` stays the URL to request,
 | `fetch-error` for an `abort(new Error())`                   | never for an aborted request; a failed DOM change is a `fetch-error`                               |
 
 A loader bound to `fetch-before` and `fetch-after` now covers the DOM change and aborts.
+
+An `Action` bound to a removed event, such as `data-on:fetch-update`, is never called and reports nothing. Search your templates for `fetch-update"` and `fetch-fetch`.
 
 #### `Fetch` forms
 
@@ -743,7 +772,11 @@ A file control in a URL-encoded body sends the name of its file, and the `fetch.
 | a per-call `requestInit`                                                                   | change the request in `fetch-before`                                                                                          |
 | `response` expression with `response, url, requestInit, self`                              | `response, request, self`                                                                                                     |
 | `__parseResponse(response, url, requestInit)`                                              | `parseResponse(response, request, recipe)`                                                                                    |
-| `update()`, `error()`, `__updateDOM()`, `onWindowPopstate()`                               | `__load()` and `__apply()`, see [extending Fetch](/reference/items/Fetch/js-api#extending-fetch)                              |
+| `update()`, code that runs after the DOM change                                            | `const outcome = await this.fetch()` and check `outcome === 'ok'`, or `fetch-update-after`                                    |
+| `error()`                                                                                  | `fetch-error`, or the `error` outcome of `await this.fetch()`. `fetch()` never rejects                                        |
+| `__updateDOM()`                                                                            | `__apply()`, see [extending Fetch](/reference/items/Fetch/js-api#extending-fetch)                                             |
+| `onWindowPopstate()`                                                                       | removed: the history coordinator restores the entries                                                                         |
+| `client(url, init)`, with a `URL` and a lower-case method for a form                       | `client(url, init)`, with an absolute URL string and an upper-case `init.method`                                              |
 | `Fetch.FETCH_EVENTS`                                                                       | `FETCH_EVENTS`, exported from `@studiometa/ui`                                                                                |
 | `Fetch.FETCH_MODES`                                                                        | `SWAP_MODES` from `@studiometa/js-toolkit`                                                                                    |
 | `HEADER_NAMES.ACCEPT` and `HEADER_NAMES.X_REQUESTED_BY`                                    | removed: the component does not send these headers                                                                            |
@@ -752,6 +785,8 @@ A file control in a URL-encoded body sends the name of its file, and the `fetch.
 | `FetchShopifySection` `__sectionIds`                                                       | `sectionIds`                                                                                                                  |
 | `FetchShopifyPartial` `fetch()`, `__canUsePartials()`, `__applyPartials()`                 | `__load()` and `__apply()`                                                                                                    |
 | `FetchShopifyPartial` `__PARTIALS_MODULE`, `__loadPartialsModule()`, `__resolvePartials()` | `PARTIALS_MODULE`, `loadPartialsModule()`, `resolvePartials()`                                                                |
+
+An override of a removed method is never called, and only the type checker reports it. Run `tsc --noEmit` after the upgrade.
 
 ## Event payloads
 
