@@ -32,4 +32,4 @@
 - [ ] I have linked an issue or discussion.
 - [ ] I have added tests (if possible).
 - [ ] I have updated the documentation accordingly.
-- [ ] I have updated the changelog.
+- [ ] I have added a changelog fragment in `.changelog/` (or set the `no-changelog` label).
