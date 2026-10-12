@@ -227,7 +227,8 @@ export class Sheet<T extends BaseProps = BaseProps>
     $el.style.setProperty('timeline-scope', TIMELINE);
 
     // The `Dialog` scroll lock is `overflow: hidden` on the page, which iOS
-    // does not honour for a scroll chained from an inner scroller.
+    // does not honour for a scroll chained from an inner scroller. `auto` is
+    // the initial value, so it reads as "not set", even when declared.
     const ownsOverscroll = window.getComputedStyle($el).overscrollBehaviorY === 'auto';
     if (ownsOverscroll) {
       $el.style.setProperty('overscroll-behavior-y', 'contain');

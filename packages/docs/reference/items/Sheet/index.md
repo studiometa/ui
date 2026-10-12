@@ -84,7 +84,7 @@ A scroll that does not move fires no `scrollend`, so a scroll that lands at once
 The `Sheet` writes only what its behaviour depends on:
 
 - the `--sheet` view timeline on the `panel` (`view-timeline-name`, `view-timeline-axis: block`, `view-timeline-inset: 0 100dvh`), and `timeline-scope: --sheet` on the root, so the backdrop can use it;
-- `overscroll-behavior-y: contain` on the root, unless your CSS already sets a value. The `Dialog` scroll lock is `overflow: hidden` on the page, which iOS does not apply to a scroll chained from an inner scroller.
+- `overscroll-behavior-y: contain` on the root, unless your CSS already sets a value other than `auto`. `auto` is the initial value, so the `Sheet` cannot tell it from no value, and replaces it. The `Dialog` scroll lock is `overflow: hidden` on the page, which iOS does not apply to a scroll chained from an inner scroller.
 
 Everything else is yours to write:
 
