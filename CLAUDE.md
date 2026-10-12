@@ -31,6 +31,20 @@
 - Use `composer lint` to check for PHP Code Quality
 - Use `composer fix` to fix fixable code quality errors reported by the `composer lint` command
 
+## Changelog
+
+- **Never edit `CHANGELOG.md` directly.** Each pull request adds a fragment `.changelog/<slug>.md` (slug = branch name without its prefix, e.g. `feat/v2-sheet` → `v2-sheet.md`)
+- A fragment only contains `### Added|Changed|Deprecated|Removed|Fixed|Security|Dependencies` headings, each followed by its entries — no `#`/`##` heading
+- **Do not write the pull request number**: the release appends `[[#N]]` and its link definition from the merged pull request that added the fragment
+- Prefix entries with the component or package, e.g. `- **Fetch:** …` or `- **@studiometa/ui-mapbox:** …`, and mark breaking changes with `⚠️`
+- The `changelog` check fails when a pull request changes a published package (`packages/ui`, `packages/ui-mapbox`, `packages/ui-motion`, `packages/eslint-plugin-ui`, `packages/twig-extension`) without a fragment; set the `no-changelog` label for changes users do not see (tests, docs, refactors, tooling)
+- Format and tooling: [`weareikko/changelog`](https://github.com/weareikko/changelog)
+
+## Releases
+
+- Do not bump versions, tag or create GitHub releases by hand: run the `release` workflow (`.github/workflows/publish.yml`) from the branch to release, e.g. `gh workflow run publish.yml --ref main -f version=patch` (or `minor`, `major`, or an exact version such as `1.12.0-beta.0`)
+- The workflow bumps every package and `composer.json`, folds `.changelog/` into `CHANGELOG.md`, commits `Prepare <version>`, tags `<version>` (no `v` prefix), publishes the npm packages (`next` dist-tag for alpha, beta and rc versions) and creates the GitHub release
+
 ## Code conventions
 
 - Private and protected class members use the `__` prefix (double underscore), documented with an `@private`/`@protected` docblock — never the TypeScript `private`/`protected` keywords, and never the JavaScript `#` prefix (which is unsupported on old browsers). The `__` prefix keeps members runtime-discoverable while debugging. Prefer bare `__field` declarations for simple fields (matching the existing style, e.g. `__index`) and add the docblock on methods and getters.
