@@ -4,6 +4,72 @@ All notable changes to this project will be documented in this file. Each pull r
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.0-alpha.1 - 2026-10-12
+
+### Added
+
+- **@studiometa/ui-mapbox:** let `MapboxGeocoder` work without a parent `MapboxMap`, with its own `accessToken` option ([#665](https://github.com/studiometa/ui/pull/665))
+- **Action:** add the reserved `mounted` pseudo-event ([#658](https://github.com/studiometa/ui/pull/658))
+- **Sheet:** add a swipeable `Dialog` child driven by native scroll snapping and a CSS view timeline, in preview ([#670](https://github.com/studiometa/ui/pull/670))
+- **Track:** add `$event.<path>` placeholders in every payload source, with `$detail.<path>` as a shortcut ([#658](https://github.com/studiometa/ui/pull/658))
+- **Fetch:** add the `params` option, which adds query parameters to every request built from the destination [[#669]]
+- **Fetch:** add the `historyMode` option, `push` by default or `replace` [[#669]]
+- **Fetch:** add the `FetchRequest`, `FetchResponseDetail`, `FetchLoadResult`, `FetchOutcome` and `RestoreRecipe` types [[#669]]
+- **Fetch:** add the `fetch.file-not-uploaded`, `fetch.invalid-history-mode` and `fetch.src-copy-of-page` diagnostics [[#669]]
+
+### Changed
+
+- ⚠️ **Track:** rename `resolveDetailPlaceholders` to `resolveEventPlaceholders`, which takes the event instead of its detail ([#658](https://github.com/studiometa/ui/pull/658))
+- **@studiometa/ui-mapbox:** mount `MapboxMap`, `StoreLocator` and `MapboxGeocoder` when they near the viewport, also when registered directly ([#655](https://github.com/studiometa/ui/pull/655))
+- **Track:** read the inherited context and both payload sources at dispatch time instead of caching them per mount cycle ([#658](https://github.com/studiometa/ui/pull/658))
+- **Track:** resolve placeholders with the `.detail` modifier, and merge the detail last ([#658](https://github.com/studiometa/ui/pull/658))
+- **Action:** resolve targets when a debounced effect runs, not when the event fires ([#658](https://github.com/studiometa/ui/pull/658))
+- ⚠️ **Fetch:** restore back and forward navigation through one history coordinator per page, with a recipe under the `fetch` key of `history.state` [[#669]]
+- ⚠️ **Fetch:** make `src` a fixed endpoint that gives the origin and the path, with the query of the destination folded on [[#669]]
+- ⚠️ **Fetch:** emit `fetch-after` last, after the DOM change, exactly once, with an `outcome` [[#669]]
+- ⚠️ **Fetch:** remove the `fetch-fetch` and `fetch-update` events, and `FETCH_EVENTS.FETCH` and `FETCH_EVENTS.UPDATE` [[#669]]
+- ⚠️ **Fetch:** replace `url` and `requestInit` in the event details with `request`, and give `response` as plain data [[#669]]
+- ⚠️ **Fetch:** resolve `fetch(destination?)` with the outcome, without a `requestInit` argument [[#669]]
+- ⚠️ **Fetch:** call the `client` with the request URL as a string and an upper-case method [[#669]]
+- ⚠️ **Fetch:** remove the `url`, `historyUrl` and `requestInit` getters, replaced by the request in `fetch-before` [[#669]]
+- ⚠️ **Fetch:** replace `update()`, `updateDOM()`, `error()`, `mergeRequestInit()` and `onWindowPopstate()` with the `__load()` and `__apply()` steps [[#669]]
+- ⚠️ **Fetch:** give `request` to the `response` expression and to `parseResponse()`, instead of `url` and `requestInit` [[#669]]
+- ⚠️ **Fetch:** write history for a POST only after a redirect [[#669]]
+- ⚠️ **Fetch:** send a URL-encoded POST body by default, and the file itself only with `enctype="multipart/form-data"` [[#669]]
+- ⚠️ **Fetch:** replace the query of the `action` of a GET form with its fields, as a native submission does [[#669]]
+- ⚠️ **Fetch:** leave a link or a form with a `target` other than `_self` to the browser [[#669]]
+- ⚠️ **Fetch:** remove the `FetchEventBase` type and the `headerEntries`, `headerNames` and `headerValue` helpers [[#669]]
+- ⚠️ **Fetch:** give `request`, `response` and `content` in the `js-toolkit:dom:update` detail, instead of `url`, `requestInit` and `fragment` [[#669]]
+- ⚠️ **Fetch:** let `abort()` leave a request that has started its DOM change or has failed [[#669]]
+- ⚠️ **Fetch:** set `document.title` only when an entry is written or restored [[#669]]
+- ⚠️ **Fetch:** write no history entry for an element that is neither a link nor a form, unless `fetch()` gets a destination [[#669]]
+- ⚠️ **Fetch:** restore `append` and `prepend` content with `replace` [[#669]]
+- ⚠️ **Fetch:** remove `HEADER_NAMES.ACCEPT` and `HEADER_NAMES.X_REQUESTED_BY`, which the component does not send [[#669]]
+- ⚠️ **FetchShopifySection:** remove the `url` getter and the `fetch()`, `update()` and `__appendSections()` overrides, as `sections` now sets `params` [[#669]]
+- ⚠️ **FetchShopifyPartial:** remove the `fetch()` override, `canUsePartials()` and `applyPartials()`, and give the partials update as the `content` of `fetch-update-before` [[#669]]
+
+### Fixed
+
+- **@studiometa/ui-mapbox:** autoload map children declared on a `hidden` element ([#655](https://github.com/studiometa/ui/pull/655))
+- **@studiometa/ui-motion:** mount every motion component as soon as its element is on the page ([#667](https://github.com/studiometa/ui/pull/667))
+- **Track:** wait for the DOM to settle before a `data-track:mounted` dispatch, so a `TrackContext` loaded lazily is included ([#658](https://github.com/studiometa/ui/pull/658))
+- **Fetch:** restore the right content on back and forward with `src`, with pagination and with Shopify sections [[#669]]
+- **Fetch:** send one request for one `popstate`, however many elements write history [[#669]]
+- **Fetch:** keep the `history.state` keys of other scripts, and ignore their entries [[#669]]
+- **Fetch:** write the hash of the destination instead of keeping the current one [[#669]]
+- **Fetch:** send the name and value of the submitter, and follow `formaction`, `formmethod`, `formenctype` and `dialog` [[#669]]
+- **Fetch:** report a failed DOM change as `fetch-error`, also inside a view transition [[#669]]
+- **Fetch:** never apply a superseded response [[#669]]
+- **Fetch:** emit no `fetch-abort` for a request that has ended [[#669]]
+- **Fetch:** read the `action`, `method` and `enctype` of a form that has controls with those names [[#669]]
+- **Fetch:** leave links and forms to the browser under `<base target>` [[#669]]
+- **Fetch:** send the line breaks of form fields as CRLF, as natively [[#669]]
+- **Fetch:** replace the entry, instead of pushing one, for a navigation to the URL of the page [[#669]]
+- **Fetch:** send no request on back to an anchor of the same page [[#669]]
+- **FetchShopifyPartial:** stop the webpack warning on the import of `@shopify/partial-rendering` [[#669]]
+
+[#669]: https://github.com/studiometa/ui/pull/669
+
 ## [v2.0.0-alpha.0](https://github.com/studiometa/ui/compare/1.11.1..2.0.0-alpha.0) (2026-09-03)
 
 This is the first release of the v2 line. It moves every package onto [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/), removes six component families that a newer component already covers, renames three components, merges `LargeText` and `CircularMarquee` into `Marquee`, rewrites `Tabs` on the WAI-ARIA Tabs pattern, redesigns `Cursor` around published CSS hooks, completes the `Carousel` family and gives it an accessibility contract, and changes the shape of every event payload. There is no compatibility layer.
