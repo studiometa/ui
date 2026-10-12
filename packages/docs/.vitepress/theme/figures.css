@@ -1,0 +1,337 @@
+/**
+ * Figures drawn as inline SVG or HTML in the reference pages.
+ *
+ * Plain CSS, because Tailwind does not scan the reference pages. Every color
+ * comes from a VitePress variable, so the figures follow the light and dark
+ * themes through `html.dark` with no script.
+ */
+.doc-figure {
+  --fig-fg: var(--vp-c-text-1);
+  --fig-muted: var(--vp-c-text-2);
+  --fig-rule: var(--vp-c-divider);
+  --fig-line: var(--vp-c-border);
+  --fig-surface: var(--vp-c-bg);
+  --fig-code-bg: var(--vp-c-bg-soft);
+  --fig-accent: var(--vp-c-brand-1);
+  --fig-accent-soft: var(--vp-c-brand-soft);
+  --fig-bad: var(--vp-c-danger-1);
+  --fig-bad-soft: var(--vp-c-danger-soft);
+
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid var(--fig-rule);
+  border-radius: 8px;
+  background: var(--fig-surface);
+  color: var(--fig-fg);
+  font-family: var(--vp-font-family-base);
+}
+
+.doc-figure figcaption {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fig-muted);
+}
+
+.vp-doc .doc-figure :not(pre) > code {
+  font-size: 0.85em;
+}
+
+/* A wide drawing scrolls inside its own frame instead of the page. */
+.doc-figure .scroll {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.doc-figure .scroll svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Two drawings side by side, stacked on a narrow screen. */
+.doc-figure .pair {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.doc-figure .panel {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+
+.doc-figure .tag {
+  font: 600 12px/1 var(--vp-font-family-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fig-muted);
+}
+
+.doc-figure .tag.bad {
+  color: var(--fig-bad);
+}
+
+.doc-figure .tag.acc {
+  color: var(--fig-accent);
+}
+
+/* SVG drawing tokens. */
+.dg {
+  font-family: var(--vp-font-family-base);
+  font-size: 12px;
+}
+
+.dg text {
+  fill: var(--fig-fg);
+}
+
+.dg .mono {
+  font-family: var(--vp-font-family-mono);
+  font-size: 11.5px;
+}
+
+.dg .sub,
+.dg .lbl {
+  fill: var(--fig-muted);
+  font-size: 11px;
+}
+
+.dg .lbl.bad,
+.dg .sub.bad {
+  fill: var(--fig-bad);
+}
+
+.dg .lbl.acc,
+.dg .sub.acc {
+  fill: var(--fig-accent);
+}
+
+.dg .strong {
+  font-weight: 600;
+}
+
+.dg .box {
+  fill: var(--fig-surface);
+  stroke: var(--fig-line);
+  stroke-width: 1.25;
+}
+
+.dg .box.mute {
+  fill: var(--fig-code-bg);
+  stroke: var(--fig-rule);
+}
+
+.dg .box.acc {
+  fill: var(--fig-accent-soft);
+  stroke: var(--fig-accent);
+}
+
+.dg .box.bad {
+  fill: var(--fig-bad-soft);
+  stroke: var(--fig-bad);
+}
+
+.dg .ln {
+  fill: none;
+  stroke: var(--fig-fg);
+  stroke-width: 1.25;
+}
+
+.dg .ln.acc {
+  stroke: var(--fig-accent);
+}
+
+.dg .ln.bad {
+  stroke: var(--fig-bad);
+}
+
+.dg .ln.dash {
+  stroke-dasharray: 4 4;
+}
+
+.dg .mk {
+  fill: var(--fig-fg);
+}
+
+.dg .mk.acc {
+  fill: var(--fig-accent);
+}
+
+.dg .mk.bad {
+  fill: var(--fig-bad);
+}
+
+/* Cases of a URL rule, each with rows of URLs. */
+.doc-figure .cases {
+  display: grid;
+  gap: 12px;
+}
+
+.doc-figure .case {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--fig-rule);
+  border-radius: 8px;
+  background: var(--fig-code-bg);
+}
+
+.doc-figure .case.bad {
+  border-color: var(--fig-bad);
+}
+
+.doc-figure .case-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font-weight: 600;
+}
+
+.doc-figure .case-head .use {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--fig-muted);
+}
+
+.doc-figure .markup {
+  font: 12.5px/1.5 var(--vp-font-family-mono);
+  color: var(--fig-muted);
+  overflow-wrap: anywhere;
+}
+
+.doc-figure .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.doc-figure .row .k {
+  flex: none;
+  width: 76px;
+  font: 500 11px/1 var(--vp-font-family-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fig-muted);
+}
+
+.doc-figure .url {
+  min-width: 0;
+  padding: 3px 8px;
+  border: 1px solid var(--fig-rule);
+  border-radius: 6px;
+  background: var(--fig-surface);
+  font: 12.5px/1.45 var(--vp-font-family-mono);
+  overflow-wrap: anywhere;
+}
+
+.doc-figure .url.ok {
+  border-color: var(--fig-accent);
+  background: var(--fig-accent-soft);
+}
+
+.doc-figure .url.no {
+  border-color: var(--fig-bad);
+  background: var(--fig-bad-soft);
+}
+
+.doc-figure .op {
+  font-size: 12.5px;
+  color: var(--fig-muted);
+}
+
+.doc-figure .verdict {
+  font: 600 11.5px/1 var(--vp-font-family-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.doc-figure .verdict.ok {
+  color: var(--fig-accent);
+}
+
+.doc-figure .verdict.no {
+  color: var(--fig-bad);
+}
+
+.doc-figure ol.steps {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+}
+
+.vp-doc .doc-figure ol.steps li + li {
+  margin-top: 0;
+}
+
+/* History entries, one card each. */
+.doc-figure .entries {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.doc-figure .entry {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--fig-rule);
+  border-radius: 8px;
+  background: var(--fig-code-bg);
+}
+
+.doc-figure .entry.other {
+  border-style: dashed;
+}
+
+.doc-figure .entry .idx {
+  font: 500 11px/1 var(--vp-font-family-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fig-muted);
+}
+
+.doc-figure .entry .u {
+  font: 500 13px/1.4 var(--vp-font-family-mono);
+  overflow-wrap: anywhere;
+}
+
+.vp-doc .doc-figure .entry pre {
+  margin: 0;
+  padding: 8px 10px;
+  overflow-x: auto;
+  border: 1px solid var(--fig-rule);
+  border-radius: 6px;
+  background: var(--fig-surface);
+  font: 11.5px/1.55 var(--vp-font-family-mono);
+}
+
+.vp-doc .doc-figure .entry pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+  color: var(--fig-fg);
+}
+
+.doc-figure .entry .how {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fig-muted);
+}
+
+.doc-figure .entry .how b {
+  font-weight: 600;
+  color: var(--fig-fg);
+}

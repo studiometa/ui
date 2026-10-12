@@ -1,6 +1,6 @@
 # v1.x → v2.x
 
-v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/). It removes seven component families, renames three components, rewrites `Tabs`, redesigns `Cursor` around published CSS hooks, gives `Carousel` an accessibility contract, and changes every event payload. There is no compatibility layer.
+v2 runs on [`@studiometa/js-toolkit` v4](https://js-toolkit-v4.studiometa.dev/). It removes seven component families, renames three components, rewrites `Tabs`, redesigns `Cursor` around published CSS hooks, gives `Carousel` an accessibility contract, gives `Fetch` one model for requests, history and the lifecycle, and changes every event payload. There is no compatibility layer.
 
 [[toc]]
 
@@ -115,14 +115,34 @@ The trigger and panel both need an `id`: `Disclosure` wires `aria-controls` and 
 </div>
 
 <!-- v2 -->
-<a data-component="Fetch" data-option-history href="/page-2">Page 2</a>
+<a data-component="Fetch" data-option-history data-option-selector="#content" href="/page-2">
+  Page 2
+</a>
 <div id="content">…</div>
 ```
 
-- `FrameTarget` becomes a plain `id`. `Fetch` replaces every `[id]` element the response also contains. The elements do not have to be siblings.
-- `FrameLoader` has no equivalent. Listen for the `fetch-*` events.
+- `FrameTarget` becomes a plain `id`, and the [`selector` option](/reference/items/Fetch/js-api#selector) lists these ids: `data-option-selector="#content"`. A `Frame` swapped only its own `FrameTarget` elements. With the default `[id]` selector, `Fetch` swaps every element of the response that has an `id` and is also on the page. A full-page response holds `<main>`, the header, the Shopify section wrappers and some scripts, and they are all swapped. Set `selector` on every `Fetch` element, or once as the default option of a subclass.
+- Ids are matched in the whole page, not inside a region. An id that was unique only inside one `Frame` must become unique in the page.
+- A `Frame` stopped its previous request when one of its links started a new one. `Fetch` on each link is an independent element. Without `history`, a slow response of an earlier link can replace the response of a later link. When several links fill one region without `history`, put one `Fetch` on the region and call `fetch(href)` from the links, or turn on `history`: requests that write history run one at a time on the page.
+- `FrameAnchor` and `FrameForm` ran only inside a `Frame`. `Fetch` runs wherever it is declared. Check the snippets that are also rendered on pages without a `Frame`, for example a pagination snippet shared with a search page.
+- `FrameLoader` becomes a `Transition`, entered on `fetch-before` and left on `fetch-after`. See [global loader](/reference/items/Fetch/#global-loader).
 - The `frame-*` events become the `fetch-*` set. See [the API page](/reference/items/Fetch/js-api).
-- To keep one declaration for a region, mount `Fetch` on any element with the [`src` option](/reference/items/Fetch/js-api#src) and call `fetch()` yourself.
+- To keep one declaration for a region, mount `Fetch` on any element, set the endpoint with the [`src` option](/reference/items/Fetch/js-api#src) and call `fetch()` yourself. Such an element writes no history. To write history, call `fetch(destination)` or use a link or a form.
+- `Fetch` itself changed from v1 too. See [`Fetch`](#fetch).
+
+#### Extending `Frame`
+
+| v1.x `Frame`                                                 | v2.x                                                                                                               |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `content()`, code after the DOM change                       | `fetch-update-after`, with the parsed response in `detail.fragment`, or override `__apply()`                       |
+| a `fetch()` override, work before the DOM change             | a `fetch-before` listener, or a `js-toolkit:dom:update` runner that awaits your work and calls `detail.wrap`       |
+| `error()`                                                    | `fetch-error`, or the `error` outcome of `await fetch()`                                                           |
+| `requestInit.trigger`                                        | `event.detail.instance`                                                                                            |
+| `getDirectChildren()`, `domParser`                           | `$query()`, refs, and `detail.fragment`                                                                            |
+| `history`, `requestInit` or `headers` on the `Frame` wrapper | the same attributes on each `Fetch` element, or a `Fetch` subclass that sets them as option defaults               |
+| `mode` on a `FrameTarget`                                    | `mode` on the `Fetch` element                                                                                      |
+| `enter-*` and `leave-*` options on a `FrameTarget`           | removed: style the view transition with `::view-transition-*`, or run your own in a `js-toolkit:dom:update` runner |
+| an `onWindowPopstate()` override                             | not needed: one history coordinator restores the entries                                                           |
 
 ### `Modal` and `Panel` → `Dialog`
 
@@ -631,6 +651,143 @@ The throw settles the same way as v1: the slide nearest the projected resting po
 
 What changed is how the projection is measured. v1 multiplied the last event's delta by `-2.5`, a per-device quantity, so the same flick threw differently on a 1000 Hz mouse and a 125 Hz trackpad. The drag service reports its own settle position now, so the throw is the same gesture on every device.
 
+### `Fetch`
+
+`Fetch` keeps its markup, and one model now covers requests, history and the lifecycle. Every request runs through one lifecycle with one final event, back and forward navigation have one owner per page, and a form submits what a native submission would send.
+
+#### `Fetch` history
+
+In v1, every `Fetch` with `history` listened to `popstate` and requested the restored URL with its own options, so several instances raced on one region. In v2, one coordinator holds the only `popstate` listener of the page. Each entry keeps a restore recipe under the `fetch` key of `history.state`, and back sends one request rebuilt from the restored URL and that recipe. See [back and forward navigation](/reference/items/Fetch/#back-and-forward-navigation).
+
+<llm-exclude>
+<FetchHistoryRace />
+</llm-exclude>
+<llm-only>
+
+```mermaid
+flowchart TB
+  subgraph v1
+    direction TB
+    p1([popstate]) --> f1["Fetch #page"] --> g1["own request<br>location.href"] --> d1["#results"]
+    p1 --> f2["Fetch #filters"] --> g2["own request<br>location.href"] --> d1
+    p1 --> f3["Fetch #search"] --> g3["own request<br>location.href"] --> d1
+  end
+  subgraph v2
+    direction TB
+    p2([popstate]) --> c["history coordinator<br>reads history.state.fetch"]
+    p2 -. no fetch key .-> i[ignored]
+    c -. no class to restore it .-> r[reload the page]
+    c -- owner mounted --> live["live instance on #owner<br>events on its element"]
+    c -- owner gone --> detached["detached instance<br>events on the region"]
+    live --> g4["GET /projects?page=1<br>rebuilt from the URL and the recipe"]
+    detached --> g4
+    g4 -- swaps the selectors of the entries --> d2["#results"]
+  end
+```
+
+</llm-only>
+
+- `push` stays the default. The new [`historyMode` option](/reference/items/Fetch/js-api#historymode) set to `replace` replaces the current entry, for a live search.
+- The keys that other scripts put in `history.state` are kept, and their entries are ignored.
+- A POST writes history only after a redirect. In v1, it wrote the URL of the form.
+- The entry is the full destination with its own hash. In v1, the current hash was kept, so `/a#x` led to `/b#x`.
+- The page takes the `<title>` of the response only when an entry is written or restored.
+- A restore of `append` or `prepend` content uses `replace`, so the content is not added twice.
+- Give the element an `id`, so a restore emits its events on it. Without one, they reach the first element that the `selector` of the entry matches, and bubble from there. Listeners on a wrapper of the region, such as a loader, see the restore.
+
+#### `src` is a fixed endpoint
+
+In v1, `src` replaced the destination for the request, and back requested the restored URL without it. In v2, `src` gives the origin and the path of the request, the query of the destination is folded on, and back rebuilds the request from the restored URL. A lighter copy of the same page moves to the new [`params` option](/reference/items/Fetch/js-api#params), which adds query parameters to the page itself.
+
+<llm-exclude>
+<FetchUrlDerivation legacy />
+</llm-exclude>
+<llm-only>
+
+| Option              | Navigate                                               | Back                                                   |
+| ------------------- | ------------------------------------------------------ | ------------------------------------------------------ |
+| `params`            | `/projects?page=2` → `/projects?page=2&view=fragment`  | `/projects?page=1` → `/projects?page=1&view=fragment`  |
+| `src`               | `/help?q=shoes` → `/apps/search?view=fragment&q=shoes` | `/help?q=boots` → `/apps/search?view=fragment&q=boots` |
+| v1 `src` as a copy  | `/projects/page/2?sections=listing`                    | `/projects/page/1`, the full page                      |
+| v2 `params` instead | `/projects/page/2?sections=listing`                    | `/projects/page/1?sections=listing`                    |
+
+</llm-only>
+
+```diff
+  <a
+    href="/projects/page/2"
+    data-component="Fetch"
+    data-option-history
+-   data-option-src="/projects/page/2?sections=listing">
++   data-option-params='{"sections": "listing"}'>
+    2
+  </a>
+```
+
+A `src` that is a copy of the page breaks with no error: clicks work, but back shows the wrong page, because the restore uses the `src` of the entry. An element with `history` reports the `fetch.src-copy-of-page` diagnostic in this case.
+
+A restore requests the URL of the restored entry with the `params` of that entry, and swaps the regions of every entry that the response contains. When `params` selects fragments of the page, the response holds only the regions that the restored entry asked for. So every element that writes history on a page must request every region that an entry of that page changes. In v1, back requested the full page, so this did not show.
+
+A lighter copy should include a `<title>`. Without one, `document.title` does not change on navigation and on back.
+
+A lighter-copy parameter written in the `href` or the `action`, such as `section_id`, `sections` or `view=fragment`, also moves to `params`. History, reload and back then use the real page URL. On Shopify, see [`FetchShopifySection`](/reference/items/FetchShopifySection/).
+
+On an element that is neither a link nor a form, `src` stays the URL to request, and such an element writes no history.
+
+#### `Fetch` events
+
+| v1.x                                                        | v2.x                                                                                               |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `fetch-fetch`                                               | removed — `fetch-before`, where the request can still change                                       |
+| `fetch-update`                                              | removed — `fetch-update-before`, `fetch-update-after`, or a runner on `js-toolkit:dom:update`      |
+| `dom-update`                                                | `js-toolkit:dom:update`, with `{ instance, request, response, content, wrap }`                     |
+| `fetch-after` after the response, with `content` or `error` | `fetch-after` last, after the DOM change, exactly once, with `outcome`: `ok`, `error` or `aborted` |
+| `{ instance, url, requestInit, … }`                         | `{ instance, request, … }` — `url` is `request.url`, the method, headers and body are on `request` |
+| `response`, a `Response`                                    | `response`, plain data with lower-case header names: `response.headers['x-total']`                 |
+| `document` in the docs of `fetch-update-after`              | `fragment`                                                                                         |
+| `fetch-abort` for every abort                               | `fetch-abort` only for a request in flight, before its DOM change                                  |
+| `fetch-error` for an `abort(new Error())`                   | never for an aborted request; a failed DOM change is a `fetch-error`                               |
+
+A loader bound to `fetch-before` and `fetch-after` now covers the DOM change and aborts.
+
+An `Action` bound to a removed event, such as `data-on:fetch-update`, is never called and reports nothing. Search your templates for `fetch-update"` and `fetch-fetch`.
+
+#### `Fetch` forms
+
+| v1.x                                              | v2.x                                                                                                                  |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| the submitter is not sent                         | its name and value are sent, and `formaction`, `formmethod` and `formenctype` apply                                   |
+| a POST sends `multipart/form-data`                | a POST is URL-encoded, as natively. Add `enctype="multipart/form-data"` to upload files                               |
+| a GET folds its fields onto the query of `action` | the fields replace the query of `action`, as natively. Move fixed values to `params`                                  |
+| only `target="_blank"` is left to the browser     | every `target` and `formtarget` other than `_self`, `<base target>` included, and the `dialog` method, are left to it |
+
+A file control in a URL-encoded body sends the name of its file, and the `fetch.file-not-uploaded` diagnostic is reported.
+
+#### `Fetch` API
+
+| v1.x                                                                                       | v2.x                                                                                                                          |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `fetch(url?, requestInit?)`                                                                | `fetch(destination?)`, which resolves with the outcome and never rejects                                                      |
+| `url`, `historyUrl` and `requestInit` getters                                              | the [request](/reference/items/Fetch/js-api#the-request) in `fetch-before`: `url`, `destination`, `method`, `headers`, `body` |
+| a per-call `requestInit`                                                                   | change the request in `fetch-before`                                                                                          |
+| `response` expression with `response, url, requestInit, self`                              | `response, request, self`                                                                                                     |
+| `__parseResponse(response, url, requestInit)`                                              | `parseResponse(response, request, recipe)`                                                                                    |
+| `update()`, code that runs after the DOM change                                            | `const outcome = await this.fetch()` and check `outcome === 'ok'`, or `fetch-update-after`                                    |
+| `error()`                                                                                  | `fetch-error`, or the `error` outcome of `await this.fetch()`. `fetch()` never rejects                                        |
+| `__updateDOM()`                                                                            | `__apply()`, see [extending Fetch](/reference/items/Fetch/js-api#extending-fetch)                                             |
+| `onWindowPopstate()`                                                                       | removed: the history coordinator restores the entries                                                                         |
+| `client(url, init)`, with a `URL` and a lower-case method for a form                       | `client(url, init)`, with an absolute URL string and an upper-case `init.method`                                              |
+| `Fetch.FETCH_EVENTS`                                                                       | `FETCH_EVENTS`, exported from `@studiometa/ui`                                                                                |
+| `Fetch.FETCH_MODES`                                                                        | `SWAP_MODES` from `@studiometa/js-toolkit`                                                                                    |
+| `HEADER_NAMES.ACCEPT` and `HEADER_NAMES.X_REQUESTED_BY`                                    | removed: the component does not send these headers                                                                            |
+| `FetchShopifySection.SECTIONS_PARAMETER`                                                   | `SECTIONS_PARAMETER`, exported from `@studiometa/ui`                                                                          |
+| `FetchShopifySection` `url`, `fetch()` and `update()`                                      | `sections` sets `params.sections`, so no override is needed                                                                   |
+| `FetchShopifySection` `__sectionIds`                                                       | `sectionIds`                                                                                                                  |
+| `FetchShopifyPartial` `fetch()`, `__canUsePartials()`, `__applyPartials()`                 | `__load()` and `__apply()`                                                                                                    |
+| `FetchShopifyPartial` `__PARTIALS_MODULE`, `__loadPartialsModule()`, `__resolvePartials()` | `PARTIALS_MODULE`, `loadPartialsModule()`, `resolvePartials()`                                                                |
+
+An override of a removed method is never called, and only the type checker reports it. Run `tsc --noEmit` after the upgrade.
+
 ## Event payloads
 
 In v1 every `detail` was an array of the positional arguments. In v2 it is the payload object, or `null` when there is none.
@@ -642,7 +799,7 @@ In v1 every `detail` was an array of the positional arguments. In v2 it is the p
   });
 ```
 
-This includes components whose payload was already an object: `Fetch` and `Draggable` were `[{ … }]` in v1 and are `{ … }` in v2.
+This includes components whose payload was already an object: `Fetch` and `Draggable` were `[{ … }]` in v1 and are `{ … }` in v2. The keys of the `Fetch` payload changed too: see [`Fetch` events](#fetch-events).
 
 | Component         | Event                              | v1.x `detail`            | v2.x `detail`              |
 | ----------------- | ---------------------------------- | ------------------------ | -------------------------- |
@@ -654,7 +811,7 @@ This includes components whose payload was already an object: `Fetch` and `Dragg
 | `DisclosureGroup` | `disclosure-group-open` / `-close` | `[item, index]`          | `{ item, index }`          |
 | `DisclosureGroup` | `disclosure-group-change`          | `[openItems]`            | `{ items }`                |
 | `Draggable`       | `drag-*`                           | `[props]`                | `props`                    |
-| `Fetch`           | `fetch-*`                          | `[{ instance, url, … }]` | `{ instance, url, … }`     |
+| `Fetch`           | `fetch-*`                          | `[{ instance, url, … }]` | `{ instance, request, … }` |
 | `Indexable`       | `index`                            | `[index]`                | `{ index }`                |
 | `Prefetch`        | `prefetched`                       | `[url]`                  | `{ url }`                  |
 | `Sentinel`        | `intersected`                      | `[entries]`              | `{ isInView, entry }`      |

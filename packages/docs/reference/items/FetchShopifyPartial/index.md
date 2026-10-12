@@ -23,10 +23,10 @@ npm install @shopify/partial-rendering
 Register the component in your JavaScript app:
 
 ```js
-import { registerComponent } from '@studiometa/js-toolkit';
+import { registerComponents } from '@studiometa/js-toolkit';
 import { FetchShopifyPartial } from '@studiometa/ui';
 
-registerComponent(FetchShopifyPartial);
+registerComponents(FetchShopifyPartial);
 ```
 
 Wrap the server-rendered region to refresh with the `{% partial %}` tag in your Liquid template:
@@ -50,7 +50,7 @@ Then trigger a refresh from a link or a form, listing the partials to update wit
 </a>
 ```
 
-Clicking the link fetches fresh HTML for the `product-grid` and `product-count` partials and swaps them in place. Because `FetchShopifyPartial` extends `Fetch`, it inherits every [option](./js-api.md), getter, method and event of the base component, including the loader, [`history`](../Fetch/js-api.md#history) and [`viewTransition`](../Fetch/js-api.md#viewtransition) features.
+Clicking the link fetches fresh HTML for the `product-grid` and `product-count` partials and swaps them in place. Because `FetchShopifyPartial` extends `Fetch`, it inherits every [option](./js-api.md), getter, method and event of the base component, including the loader, [`history`](../Fetch/js-api.md#history) and [`viewTransition`](../Fetch/js-api.md#viewtransition) features. It changes only how content is loaded and applied: see [extending Fetch](../Fetch/js-api.md#extending-fetch).
 
 ## Choosing between the partials and Section Rendering APIs
 

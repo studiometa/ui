@@ -140,6 +140,29 @@ class SearchResults extends Base {
   data-track:search-results='{"event": "search_results", "count": "$event.detail.count", "tag": "$event.detail.tags.0"}'></div>
 ```
 
+#### Tracking the result of a request
+
+The [`fetch-update-after` event](/reference/items/Fetch/js-api#fetch-update-after) of [`Fetch`](/reference/items/Fetch/) carries the response as plain data, with lower-case header names. A `Track` around the form reads a header of the response that updated the page:
+
+```html
+<div
+  data-component="Track"
+  data-track:fetch-update-after='{"event": "search", "results": "$detail.response.headers.x-search-result-count"}'>
+  <form
+    action="/search"
+    data-component="Fetch"
+    data-option-history
+    data-option-history-mode="replace">
+    <input type="search" name="q" />
+  </form>
+  <div id="results">…</div>
+</div>
+```
+
+- Keep the `Track` element outside the regions that `Fetch` swaps. A swapped element is a new element, and its `Track` would not see the event.
+- A browser hides the headers of a cross-origin response. When the [`src` option](/reference/items/Fetch/js-api#src) points to another origin, the endpoint must list the header in `Access-Control-Expose-Headers`.
+- `$detail.request.destination` gives the URL the address bar shows.
+
 A placeholder is replaced by the value at its path as it is. A path can therefore reach an object that does not serialise to JSON, such as a DOM element (`$event.target`) or a component instance. `Track` pushes it to `window.dataLayer` unchanged. `TrackShopify` hands the payload to `Shopify.analytics.publish()`, which passes it as `customData` to pixels that run in a sandbox. Keep a `TrackShopify` payload JSON-serialisable: point its placeholders to plain values, such as `$event.target.dataset.plan`.
 
 A debounced or throttled event is read when the dispatch runs, after the event has finished. At that time `event.currentTarget` is `null`. Read `$event.target` instead.

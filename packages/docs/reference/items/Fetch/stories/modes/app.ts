@@ -1,4 +1,4 @@
-import { registerComponent } from '@studiometa/js-toolkit';
+import { registerComponents } from '@studiometa/js-toolkit';
 import { Fetch } from '@studiometa/ui';
 
-registerComponent(Fetch);
+registerComponents(Fetch);
