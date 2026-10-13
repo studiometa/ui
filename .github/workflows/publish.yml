@@ -1,99 +1,36 @@
 name: release
 
+# Each merge into main releases the 1.x line from what its fragments describe.
+# A manual run (`gh workflow run publish.yml --ref main -f version=major`)
+# forces a bump. The 2.x branch has its own release workflow.
+# npm trusted publishing is bound to this file name: keep the publish job here.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       version:
-        description: 'New 1.x version: patch, minor, major, or an exact version such as 1.12.0 or 1.12.0-beta.0'
-        type: string
-        required: true
-        default: patch
+        description: 'Version: `auto` follows the fragments; `patch`, `minor` or `major` forces that bump'
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
 
-concurrency: release
+# One release at a time per line, so that main and 2.x do not wait for each
+# other. GitHub keeps only the newest pending run: it releases everything that
+# main has at that point.
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
-  version:
-    name: Bump version and changelog
-    runs-on: ubuntu-latest
-    # 1.x releases from main only. The 2.x branch has its own release workflow.
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
-      pull-requests: read
-    outputs:
-      tag: ${{ steps.version.outputs.version }}
-      # A stable release of a prerelease without new fragments has no
-      # changelog section: its release body names the prerelease.
-      body: ${{ steps.changelog.outputs.changed == 'true' && steps.changelog.outputs.body || format('Stable release of {0}.', steps.version.outputs.previous) }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
-          # The changelog action reads the commit that added each fragment.
-          fetch-depth: 0
-
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: 24
-
-      # The root `postversion` script bumps every workspace and composer.json.
-      - name: Bump version
-        id: version
-        env:
-          VERSION: ${{ inputs.version }}
-        run: |
-          echo "previous=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
-          npm version "$VERSION" --no-git-tag-version
-          echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
-
-      - name: Fold changelog fragments
-        id: changelog
-        uses: weareikko/changelog@c25888e03ad7c8bbaee897b84e778ebce9e9301c # 1.0.3
-        with:
-          command: release
-          version: v${{ steps.version.outputs.version }}
-
-      # Promoting a prerelease (1.12.0-rc.1 to 1.12.0) can have no new
-      # fragment: the prerelease already folded them.
-      - name: Fail when there is nothing to release
-        if: steps.changelog.outputs.changed != 'true'
-        env:
-          PREVIOUS: ${{ steps.version.outputs.previous }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          if [[ $PREVIOUS == *-* && $VERSION != *-* ]]; then
-            echo "::notice::No fragment in .changelog/: stable release of $PREVIOUS."
-            exit 0
-          fi
-          echo "::error::No fragment in .changelog/: nothing to release."
-          exit 1
-
-      - name: Commit, tag and push
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md .changelog composer.json package.json package-lock.json packages/*/package.json
-          git commit -m "Prepare $VERSION"
-          git tag -a "$VERSION" -m "v$VERSION"
-          git push origin HEAD:main "$VERSION"
-
-  # A tag pushed with GITHUB_TOKEN does not start other workflows, so the
-  # publish job runs in this same workflow. It must stay in this file: npm
-  # trusted publishing is configured for `publish.yml`.
-  # Every step can run again: a package version that npm already has is
-  # skipped, and the GitHub release is updated when it exists. "Re-run failed
-  # jobs" on this job publishes what a failed run left.
-  release:
-    needs: version
+  test:
+    name: Test
     runs-on: macos-latest
-    permissions:
-      contents: write
-      id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
-          ref: ${{ needs.version.outputs.tag }}
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -130,77 +67,93 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
-      # The 1.x line owns the `latest` dist-tag. A prerelease version (with a
-      # `-`, e.g. 1.12.0-beta.0) uses `next-1.x`, because the 2.x branch owns `next`.
-      - name: Resolve npm dist-tag
-        id: dist-tag
-        env:
-          TAG: ${{ needs.version.outputs.tag }}
-        run: |
-          if [[ $TAG == *-* ]]; then
-            PRERELEASE=true
-            DIST_TAG=next-1.x
-          else
-            PRERELEASE=false
-            DIST_TAG=latest
-          fi
-          {
-            echo "prerelease=$PRERELEASE"
-            echo "dist-tag=$DIST_TAG"
-          } >> "$GITHUB_OUTPUT"
+  # Folds the fragments, bumps every package and composer.json (root
+  # `postversion` script), commits `Prepare <version>`, tags, pushes and
+  # creates the GitHub release. Packagist reads the tag.
+  release:
+    name: Release
+    needs: test
+    runs-on: ubuntu-latest
+    # 1.x releases from main only.
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      pull-requests: read
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      prerelease: ${{ steps.release.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      # Tokenless trusted publishing (npm OIDC): each package is configured as a trusted publisher
-      # on npm for this workflow file, so the action authenticates through the `id-token: write`
-      # permission declared above — no npm token — and provenance is attested from the same OIDC
-      # flow. The action skips a version that npm already has, and publishes with
-      # `--ignore-scripts`: no published package has a publish lifecycle script, and the steps
-      # above build what is published. Dependencies first.
+      - name: Release
+        id: release
+        uses: weareikko/changelog@9d93346df9858eaa29007bd8530aad8f4c5b539a # 0.1.0
+        with:
+          command: release
+          version: ${{ inputs.version || 'auto' }}
+          commit-message: 'Prepare {version}'
+
+  # "Re-run failed jobs" on this job publishes what a failed run left: npm
+  # skips a version that it already has.
+  publish:
+    name: Publish to npm
+    needs: release
+    if: needs.release.outputs.version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # The 1.x line owns `latest`. Its prereleases go to `next-1.x`, because
+      # the 2.x branch owns `next`.
+      DIST_TAG: ${{ needs.release.outputs.prerelease == 'true' && 'next-1.x' || 'latest' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: refs/tags/${{ needs.release.outputs.version }}
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      # The action publishes with --ignore-scripts: this step builds the
+      # `dist/` of every published package, and the test job ran the checks.
+      - name: Install and build
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          npm run build -w @studiometa/eslint-plugin-ui -w @studiometa/ui-mapbox -w @studiometa/ui-motion
+
+      # Trusted publishing (OIDC): no npm token.
       - name: Publish @studiometa/ui
         uses: JS-DevTools/npm-publish@0fd2f4369c5d6bcfcde6091a7c527d810b9b5c3f # v4.1.5
         with:
           package: packages/ui
           access: public
           provenance: true
-          tag: ${{ steps.dist-tag.outputs.dist-tag }}
+          tag: ${{ env.DIST_TAG }}
 
-      - name: Build @studiometa/eslint-plugin-ui
-        run: npm run build -w @studiometa/eslint-plugin-ui
       - name: Publish @studiometa/eslint-plugin-ui
         uses: JS-DevTools/npm-publish@0fd2f4369c5d6bcfcde6091a7c527d810b9b5c3f # v4.1.5
         with:
           package: packages/eslint-plugin-ui
           access: public
           provenance: true
-          tag: ${{ steps.dist-tag.outputs.dist-tag }}
+          tag: ${{ env.DIST_TAG }}
 
-      - name: Build @studiometa/ui-mapbox
-        run: npm run build -w @studiometa/ui-mapbox
       - name: Publish @studiometa/ui-mapbox
         uses: JS-DevTools/npm-publish@0fd2f4369c5d6bcfcde6091a7c527d810b9b5c3f # v4.1.5
         with:
           package: packages/ui-mapbox
           access: public
           provenance: true
-          tag: ${{ steps.dist-tag.outputs.dist-tag }}
+          tag: ${{ env.DIST_TAG }}
 
-      - name: Build @studiometa/ui-motion
-        run: npm run build -w @studiometa/ui-motion
       - name: Publish @studiometa/ui-motion
         uses: JS-DevTools/npm-publish@0fd2f4369c5d6bcfcde6091a7c527d810b9b5c3f # v4.1.5
         with:
           package: packages/ui-motion
           access: public
           provenance: true
-          tag: ${{ steps.dist-tag.outputs.dist-tag }}
-
-      - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
-        with:
-          tag: ${{ needs.version.outputs.tag }}
-          name: v${{ needs.version.outputs.tag }}
-          body: ${{ needs.version.outputs.body }}
-          draft: false
-          prerelease: ${{ steps.dist-tag.outputs.prerelease }}
-          # GitHub's latest release follows the `latest` dist-tag on npm.
-          makeLatest: ${{ steps.dist-tag.outputs.dist-tag == 'latest' }}
-          # A replay updates the release when a previous run created it.
-          allowUpdates: true
+          tag: ${{ env.DIST_TAG }}
