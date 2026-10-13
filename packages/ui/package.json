@@ -418,7 +418,7 @@
   },
   "homepage": "https://github.com/studiometa/ui#readme",
   "devDependencies": {
-    "@studiometa/js-toolkit": "^4.0.0-alpha.1"
+    "@studiometa/js-toolkit": "4.0.0-alpha.1"
   },
   "peerDependencies": {
     "@shopify/partial-rendering": "*",
