@@ -37,7 +37,7 @@
     "tsdown": "0.21.5"
   },
   "overrides": {
-    "@typescript/vfs": "1.6.4",
+    "@typescript/vfs": "1.6.5",
     "@studiometa/js-toolkit": "3.9.0"
   },
   "dependencies": {
