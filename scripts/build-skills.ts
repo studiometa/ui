@@ -7,7 +7,14 @@
  * the skill from `node_modules` with `npx skills experimental_sync`.
  *
  * Run it from a package directory: `node ../../scripts/build-skills.ts`.
+ *
+ * With `--well-known <directory>`, it builds every skill and publishes them in
+ * `<directory>/.well-known/agent-skills/`: one archive per skill and the
+ * `index.json` of the Agent Skills Discovery RFC, so
+ * `npx skills add https://ui.studiometa.dev` installs them.
  */
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, extname, join, posix, relative, resolve } from 'node:path';
@@ -17,8 +24,11 @@ import { referenceCatalog } from '../packages/docs/.vitepress/reference/catalog.
 const repositoryDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const docsDirectory = resolve(repositoryDirectory, 'packages/docs');
 const docsUrl = 'https://ui.studiometa.dev';
+const discoverySchema = 'https://schemas.agentskills.io/discovery/0.2.0/schema.json';
 
 interface SkillTarget {
+  // Package directory, relative to the repository root.
+  directory: string;
   // Skill name, also the name of its folder in `skills/`.
   name: string;
   // Docs catalog packages whose reference items go into the skill.
@@ -29,6 +39,7 @@ interface SkillTarget {
 
 const targets: Record<string, SkillTarget> = {
   '@studiometa/ui': {
+    directory: 'packages/ui',
     name: 'studiometa-ui',
     catalogPackages: ['npm:@studiometa/ui', 'composer:studiometa/ui'],
     guides: [
@@ -43,16 +54,19 @@ const targets: Record<string, SkillTarget> = {
     ],
   },
   '@studiometa/ui-mapbox': {
+    directory: 'packages/ui-mapbox',
     name: 'studiometa-ui-mapbox',
     catalogPackages: ['npm:@studiometa/ui-mapbox'],
     guides: [],
   },
   '@studiometa/ui-motion': {
+    directory: 'packages/ui-motion',
     name: 'studiometa-ui-motion',
     catalogPackages: ['npm:@studiometa/ui-motion'],
     guides: [],
   },
   '@studiometa/eslint-plugin-ui': {
+    directory: 'packages/eslint-plugin-ui',
     name: 'studiometa-eslint-plugin-ui',
     catalogPackages: [],
     guides: ['guide/eslint-plugin/index.md'],
@@ -112,7 +126,11 @@ function rewriteLink(target: string, page: Page, pages: Map<string, string>): st
   return `${docsUrl}${sitePath}${isFolder ? '/' : ''}${suffix}`;
 }
 
-function validateSkill(skillFile: string, name: string, content: string) {
+/**
+ * Check the `name` and `description` fields of a `SKILL.md` file and return the
+ * description.
+ */
+function validateSkill(skillFile: string, name: string, content: string): string {
   const frontmatter = content.match(/^---\n([\s\S]*?)\n---\n/)?.[1];
   if (!frontmatter) {
     throw new Error(`${skillFile}: missing frontmatter.`);
@@ -126,6 +144,8 @@ function validateSkill(skillFile: string, name: string, content: string) {
   if (description.length === 0 || description.length > 1024) {
     throw new Error(`${skillFile}: the "description" field must have 1 to 1024 characters.`);
   }
+
+  return description;
 }
 
 /**
@@ -221,7 +241,13 @@ async function toReference(page: Page, pages: Map<string, string>): Promise<stri
   return markdown;
 }
 
-async function buildSkill(packageDirectory: string) {
+interface BuiltSkill {
+  name: string;
+  description: string;
+  directory: string;
+}
+
+async function buildSkill(packageDirectory: string): Promise<BuiltSkill> {
   const pkg = JSON.parse(await readFile(join(packageDirectory, 'package.json'), 'utf8'));
   const target = targets[pkg.name];
 
@@ -235,7 +261,7 @@ async function buildSkill(packageDirectory: string) {
 
   const skillDirectory = join(packageDirectory, 'skills', target.name);
   const skillFile = join(skillDirectory, 'SKILL.md');
-  validateSkill(
+  const description = validateSkill(
     relative(repositoryDirectory, skillFile),
     target.name,
     await readFile(skillFile, 'utf8'),
@@ -295,6 +321,63 @@ async function buildSkill(packageDirectory: string) {
   console.log(
     `Built the ${target.name} skill: ${pages.length} reference pages in ${relative(packageDirectory, referencesDirectory)}.`,
   );
+
+  return { name: target.name, description, directory: skillDirectory };
 }
 
-await buildSkill(process.cwd());
+/**
+ * Build every skill and publish it as a `.tar.gz` archive with `SKILL.md` at
+ * its root, listed in the `index.json` of the Agent Skills Discovery RFC.
+ */
+async function publishSkills(outputDirectory: string) {
+  const wellKnownDirectory = join(outputDirectory, '.well-known/agent-skills');
+  await rm(wellKnownDirectory, { recursive: true, force: true });
+  await mkdir(wellKnownDirectory, { recursive: true });
+
+  const skills = [];
+  for (const target of Object.values(targets)) {
+    const skill = await buildSkill(join(repositoryDirectory, target.directory));
+    const archive = join(wellKnownDirectory, `${skill.name}.tar.gz`);
+    // The ustar format and the bare paths are what the `skills` CLI reads: it
+    // refuses `./` path segments and skips the GNU long name entries.
+    execFileSync('tar', [
+      '--format=ustar',
+      '-czf',
+      archive,
+      '-C',
+      skill.directory,
+      'SKILL.md',
+      'references',
+    ]);
+    const digest = createHash('sha256')
+      .update(await readFile(archive))
+      .digest('hex');
+    skills.push({
+      name: skill.name,
+      type: 'archive',
+      description: skill.description,
+      url: `${skill.name}.tar.gz`,
+      digest: `sha256:${digest}`,
+    });
+  }
+
+  await writeFile(
+    join(wellKnownDirectory, 'index.json'),
+    `${JSON.stringify({ $schema: discoverySchema, skills }, null, 2)}\n`,
+  );
+  console.log(
+    `Published ${skills.length} skills in ${relative(process.cwd(), wellKnownDirectory)}.`,
+  );
+}
+
+const wellKnownFlag = process.argv.indexOf('--well-known');
+
+if (wellKnownFlag === -1) {
+  await buildSkill(process.cwd());
+} else {
+  const outputDirectory = process.argv[wellKnownFlag + 1];
+  if (!outputDirectory) {
+    throw new Error('The --well-known flag needs an output directory.');
+  }
+  await publishSkills(resolve(outputDirectory));
+}

@@ -10,7 +10,7 @@
     "validate:reference": "node --experimental-strip-types scripts/validate-reference.ts",
     "prebuild": "npm run validate:reference && npm run build --workspace=@studiometa/ui-playground",
     "build": "vitepress build .",
-    "postbuild": "ln -sf ../../../api/public .vitepress/dist/api"
+    "postbuild": "ln -sf ../../../api/public .vitepress/dist/api && node ../../scripts/build-skills.ts --well-known .vitepress/dist"
   },
   "dependencies": {
     "@studiometa/js-toolkit": "4.0.0-alpha.1"
