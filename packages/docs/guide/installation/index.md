@@ -177,7 +177,7 @@ The command links each skill from `node_modules` into the agent folders (`.agent
 Without npm, install the skills from this website. It publishes them at `/.well-known/agent-skills/index.json`, as the [Agent Skills Discovery](https://specification.website/spec/agent-readiness/agent-skills-discovery/) convention defines:
 
 ```bash
-npx skills add https://ui.studiometa.dev
+npx skills add https://ui-v2.studiometa.dev
 ```
 
 These skills match the version that this website documents, which can differ from the version that your project installs. Prefer `npx skills experimental_sync` in a project that installs the packages.
