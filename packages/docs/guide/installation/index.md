@@ -161,3 +161,15 @@ Configure the Twig extension from the `studiometa/ui` package in your project:
 The Twig extension installs the [`studiometa/twig-toolkit` extension](https://github.com/studiometa/twig-toolkit) and registers the `@ui`, `@ui-pkg`, `@svg` and `@svg-pkg` namespaces. The project-aware namespaces resolve your templates or SVGs before falling back to the package; the `-pkg` namespaces resolve package files directly.
 
 See [Templates and customization](/guide/concepts/templates-and-customization) for namespace lookup, project overrides and safe template extension.
+
+## Agent skills
+
+Each npm package ships an [agent skill](https://agentskills.io) that teaches coding agents how to use it: `studiometa-ui`, `studiometa-ui-mapbox`, `studiometa-ui-motion` and `studiometa-eslint-plugin-ui`. A skill holds the reference of its package version, so the agent does not read the documentation of another version.
+
+Link the skills of your dependencies into your project with the [`skills` CLI](https://github.com/vercel-labs/skills):
+
+```bash
+npx skills experimental_sync
+```
+
+The command links each skill from `node_modules` into the agent folders (`.agents/skills/`, `.claude/skills/`…). When you update a package, its linked skill updates too. The packages also ask the CLI to link the `studiometa-js-toolkit` skill when your version of `@studiometa/js-toolkit` ships it.

@@ -123,3 +123,6 @@ storybook-static/
 
 # Local Netlify folder
 .netlify
+
+# Generated agent skill references
+/packages/*/skills/*/references/
