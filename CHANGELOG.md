@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. Each pull r
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.0.0-alpha.2 - 2026-10-15
+
+### Added
+
+- **@studiometa/ui:** ship the `studiometa-ui` agent skill, linked with `npx skills experimental_sync` ([#708])
+- **@studiometa/ui-mapbox:** ship the `studiometa-ui-mapbox` agent skill ([#708])
+- **@studiometa/ui-motion:** ship the `studiometa-ui-motion` agent skill ([#708])
+- **@studiometa/eslint-plugin-ui:** ship the `studiometa-eslint-plugin-ui` agent skill ([#708])
+
+[#708]: https://github.com/studiometa/ui/pull/708
+
 ## v2.0.0-alpha.1 - 2026-10-12
 
 ### Added
