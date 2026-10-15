@@ -16,6 +16,7 @@
   "sideEffects": false,
   "files": [
     "dist",
+    "skills",
     "README.md"
   ],
   "main": "./dist/index.js",
@@ -29,7 +30,8 @@
     }
   },
   "scripts": {
-    "build": "node scripts/build.js",
+    "build": "node scripts/build.js && npm run build:skills",
+    "build:skills": "node ../../scripts/build-skills.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint:types": "tsgo --build tsconfig.json"

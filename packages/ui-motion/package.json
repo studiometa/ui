@@ -59,7 +59,8 @@
     }
   },
   "scripts": {
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js && npm run build:skills",
+    "build:skills": "node ../../scripts/build-skills.ts"
   },
   "repository": {
     "type": "git",
@@ -89,7 +90,11 @@
   },
   "files": [
     "dist",
+    "skills",
     "README.md",
     "LICENSE.md"
+  ],
+  "skills": [
+    "npm:@studiometa/js-toolkit"
   ]
 }

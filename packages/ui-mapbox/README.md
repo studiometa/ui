@@ -76,6 +76,16 @@ Once provided, `@studiometa/ui-mapbox` never imports `mapbox-gl` by specifier â€
 
 Heads up to [ui.studiometa.dev](https://ui.studiometa.dev/reference/items/MapboxMap/) for the full documentation.
 
+## Agent skills
+
+The package ships the `studiometa-ui-mapbox` [agent skill](https://agentskills.io). The skill teaches coding agents how to use the package, and it matches the installed version. Link the skills of your dependencies into your project with the [`skills` CLI](https://github.com/vercel-labs/skills):
+
+```bash
+npx skills experimental_sync
+```
+
+The command links each skill from `node_modules` into the agent folders (`.agents/skills/`, `.claude/skills/`â€¦). When you update the package, the linked skill updates too. The command also links the `studiometa-js-toolkit` skill when your version of `@studiometa/js-toolkit` ships it.
+
 ## Contributing
 
 Please read the [contribution docs](https://ui.studiometa.dev/guide/contributing/).
