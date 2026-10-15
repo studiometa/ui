@@ -12,13 +12,13 @@
     "@studiometa/playground": "^0.3.13"
   },
   "devDependencies": {
-    "@mapbox/mapbox-gl-geocoder": "^5.1.0",
-    "@motionone/easing": "^10.18.0",
+    "@mapbox/mapbox-gl-geocoder": "5.1.2",
+    "@motionone/easing": "10.18.0",
     "@studiometa/js-toolkit": "3.9.0",
-    "deepmerge": "^4.3.1",
-    "mapbox-gl": "^3.13.0",
-    "morphdom": "^2.7.8",
-    "motion": "^13.0.0",
-    "tsdown": "^0.21.5"
+    "deepmerge": "4.3.1",
+    "mapbox-gl": "3.33.0",
+    "morphdom": "2.7.8",
+    "motion": "13.5.1",
+    "tsdown": "0.21.10"
   }
 }
