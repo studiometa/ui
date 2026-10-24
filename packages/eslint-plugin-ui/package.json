@@ -35,10 +35,10 @@
     "lint:types": "tsgo --build tsconfig.json"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "4.1.2",
+    "@vitest/coverage-v8": "4.1.12",
     "esbuild": "0.27.4",
-    "eslint": "9.34.0",
-    "typescript": "6.0.2",
+    "eslint": "9.39.5",
+    "typescript": "6.0.3",
     "vitest": "4.1.2"
   },
   "dependencies": {
