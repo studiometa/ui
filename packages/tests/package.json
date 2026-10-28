@@ -11,6 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "@studiometa/ui": "file:../ui",
+    "@studiometa/ui-gsap": "file:../ui-gsap",
     "@studiometa/ui-mapbox": "file:../ui-mapbox",
     "@studiometa/ui-motion": "file:../ui-motion",
     "@vitest/coverage-v8": "4.1.1",
