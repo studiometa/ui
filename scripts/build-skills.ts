@@ -65,6 +65,12 @@ const targets: Record<string, SkillTarget> = {
     catalogPackages: ['npm:@studiometa/ui-motion'],
     guides: [],
   },
+  '@studiometa/ui-gsap': {
+    directory: 'packages/ui-gsap',
+    name: 'studiometa-ui-gsap',
+    catalogPackages: ['npm:@studiometa/ui-gsap'],
+    guides: [],
+  },
   '@studiometa/eslint-plugin-ui': {
     directory: 'packages/eslint-plugin-ui',
     name: 'studiometa-eslint-plugin-ui',

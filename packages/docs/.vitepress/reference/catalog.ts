@@ -13,6 +13,7 @@ const uiPackage = 'npm:@studiometa/ui' as const;
 const twigPackage = 'composer:studiometa/ui' as const;
 const mapboxPackage = 'npm:@studiometa/ui-mapbox' as const;
 const motionPackage = 'npm:@studiometa/ui-motion' as const;
+const gsapPackage = 'npm:@studiometa/ui-gsap' as const;
 
 export const kindLabels: Record<ReferenceKind, string> = {
   component: 'Components',
@@ -94,6 +95,20 @@ function motionSymbol(
     kind,
     package: motionPackage,
     importPath: '@studiometa/ui-motion',
+    href,
+  };
+}
+
+function gsapSymbol(
+  name: string,
+  href: string,
+  kind: ReferenceSymbolKind = 'component',
+): ReferenceSymbol {
+  return {
+    name,
+    kind,
+    package: gsapPackage,
+    importPath: '@studiometa/ui-gsap',
     href,
   };
 }
@@ -557,6 +572,48 @@ export const referenceCatalog = [
       ),
     ],
     related: ['figure-video', 'figure-twicpics'],
+  },
+  {
+    id: 'gsap',
+    title: 'Gsap',
+    summary: 'Animate elements declaratively with one GSAP tween and drive the playback.',
+    kind: 'component',
+    path: '/reference/items/Gsap/',
+    family: 'animation',
+    primaryTask: 'animation',
+    tags: ['gsap', 'animation', 'tween', 'scrolltrigger', 'playback'],
+    surfaces: ['js'],
+    packages: [gsapPackage],
+    status: 'preview',
+    symbols: [
+      gsapSymbol('Gsap', '/reference/items/Gsap/js-api'),
+      gsapSymbol('provideGsap', '/reference/items/Gsap/js-api#providing-gsap', 'helper'),
+      gsapSymbol('resolveGsap', '/reference/items/Gsap/js-api#providing-gsap', 'helper'),
+      gsapSymbol('GsapDependencies', '/reference/items/Gsap/js-api#providing-gsap', 'type'),
+      gsapSymbol('ResolveGsapOptions', '/reference/items/Gsap/js-api#providing-gsap', 'type'),
+      gsapSymbol('GsapEventDetail', '/reference/items/Gsap/js-api#events', 'type'),
+    ],
+    capabilities: ['tweens', 'scroll-triggered animations', 'imperative playback'],
+    related: ['gsap-timeline', 'motion', 'action'],
+  },
+  {
+    id: 'gsap-timeline',
+    title: 'GsapTimeline',
+    summary: 'Compose GsapStep descendants into one GSAP timeline in DOM order.',
+    kind: 'component',
+    path: '/reference/items/GsapTimeline/',
+    family: 'animation',
+    primaryTask: 'animation',
+    tags: ['gsap', 'animation', 'timeline', 'scrolltrigger', 'sequence'],
+    surfaces: ['js'],
+    packages: [gsapPackage],
+    status: 'preview',
+    symbols: [
+      gsapSymbol('GsapTimeline', '/reference/items/GsapTimeline/js-api'),
+      gsapSymbol('GsapStep', '/reference/items/GsapTimeline/js-api#gsapstep'),
+    ],
+    capabilities: ['timelines', 'labels and positions', 'scroll-scrubbed timelines'],
+    related: ['gsap', 'motion-sequence', 'action'],
   },
   {
     id: 'hero',

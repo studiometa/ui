@@ -958,4 +958,28 @@ export const publicContractSymbols = [
     href: '/reference/items/MotionView/js-api',
     status: 'stable',
   },
+  {
+    name: 'GsapProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui-gsap',
+    importPath: '@studiometa/ui-gsap',
+    href: '/reference/items/Gsap/js-api',
+    status: 'preview',
+  },
+  {
+    name: 'GsapStepProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui-gsap',
+    importPath: '@studiometa/ui-gsap',
+    href: '/reference/items/GsapTimeline/js-api#gsapstep',
+    status: 'preview',
+  },
+  {
+    name: 'GsapTimelineProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui-gsap',
+    importPath: '@studiometa/ui-gsap',
+    href: '/reference/items/GsapTimeline/js-api',
+    status: 'preview',
+  },
 ] satisfies ReferenceSymbol[];

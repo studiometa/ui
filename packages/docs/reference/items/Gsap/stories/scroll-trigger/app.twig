@@ -1,0 +1,16 @@
+{# A bare `scrollTrigger` option would use the root as trigger. Here the
+   object sets `scrub`, so the scroll position drives the progress of the
+   tween. #}
+<div class="grid gap-4">
+  <p>
+    Scroll down.
+  </p>
+  <div class="h-[60vh]"></div>
+  <div
+    data-component="Gsap"
+    data-option-from='{ "x": -200, "rotate": -90, "opacity": 0 }'
+    data-option-to='{ "x": 0, "rotate": 0, "opacity": 1, "ease": "none" }'
+    data-option-scroll-trigger='{ "start": "top bottom", "end": "top center", "scrub": true }'
+    class="size-24 rounded-lg bg-blue-400 dark:bg-blue-600"></div>
+  <div class="h-[60vh]"></div>
+</div>

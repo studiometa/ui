@@ -1,0 +1,29 @@
+{# The ScrollTrigger pins the section and scrubs the timeline while the page
+   scrolls 150% of the viewport height. The `pin` selector resolves inside the
+   component. #}
+<div class="grid gap-4">
+  <p>
+    Scroll down.
+  </p>
+  <div class="h-[40vh]"></div>
+  <section
+    data-component="GsapTimeline"
+    data-option-scroll-trigger='{ "pin": ".stage", "start": "top top", "end": "+=150%", "scrub": 1 }'>
+    <div class="stage flex h-screen items-center justify-center gap-4">
+      <div
+        data-component="GsapStep"
+        data-option-to='{ "y": -80, "rotate": 180 }'
+        class="size-16 rounded-lg bg-blue-400 dark:bg-blue-600"></div>
+      <div
+        data-component="GsapStep"
+        data-option-to='{ "y": 80, "rotate": -180 }'
+        class="size-16 rounded-lg bg-pink-400 dark:bg-pink-600"></div>
+      <div
+        data-component="GsapStep"
+        data-option-to='{ "scale": 1.5 }'
+        data-option-at="0"
+        class="size-16 rounded-lg bg-amber-400 dark:bg-amber-600"></div>
+    </div>
+  </section>
+  <div class="h-[60vh]"></div>
+</div>

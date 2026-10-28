@@ -14,6 +14,7 @@ export const referencePackages = [
   'composer:studiometa/ui',
   'npm:@studiometa/ui-mapbox',
   'npm:@studiometa/ui-motion',
+  'npm:@studiometa/ui-gsap',
 ] as const;
 export const referenceStatuses = ['stable', 'preview', 'deprecated'] as const;
 
