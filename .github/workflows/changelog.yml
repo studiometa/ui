@@ -25,5 +25,6 @@ jobs:
             packages/ui/**
             packages/ui-mapbox/**
             packages/ui-motion/**
+            packages/ui-gsap/**
             packages/eslint-plugin-ui/**
             packages/twig-extension/**

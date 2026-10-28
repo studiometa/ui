@@ -129,7 +129,7 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run build
-          npm run build -w @studiometa/eslint-plugin-ui -w @studiometa/ui-mapbox -w @studiometa/ui-motion
+          npm run build -w @studiometa/eslint-plugin-ui -w @studiometa/ui-mapbox -w @studiometa/ui-motion -w @studiometa/ui-gsap
 
       # Trusted publishing (OIDC): no npm token.
       - name: Publish @studiometa/ui
@@ -160,6 +160,14 @@ jobs:
         uses: JS-DevTools/npm-publish@0fd2f4369c5d6bcfcde6091a7c527d810b9b5c3f # v4.1.5
         with:
           package: packages/ui-motion
+          access: public
+          provenance: true
+          tag: ${{ env.DIST_TAG }}
+
+      - name: Publish @studiometa/ui-gsap
+        uses: JS-DevTools/npm-publish@0fd2f4369c5d6bcfcde6091a7c527d810b9b5c3f # v4.1.5
+        with:
+          package: packages/ui-gsap
           access: public
           provenance: true
           tag: ${{ env.DIST_TAG }}

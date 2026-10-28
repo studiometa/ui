@@ -37,7 +37,7 @@
 - A fragment only contains `### Added|Changed|Deprecated|Removed|Fixed|Security|Dependencies` headings, each followed by its entries — no `#`/`##` heading
 - **Do not write the pull request number**: the release appends `([#N])` and its link definition from the merged pull request that added the fragment
 - Prefix entries with the component or package, e.g. `- **Fetch:** …` or `- **@studiometa/ui-mapbox:** …`, and mark breaking changes with `⚠️`
-- The `changelog` check fails when a pull request changes a published package (`packages/ui`, `packages/ui-mapbox`, `packages/ui-motion`, `packages/eslint-plugin-ui`, `packages/twig-extension`) without a fragment; set the `no-changelog` label for changes users do not see (tests, docs, refactors, tooling)
+- The `changelog` check fails when a pull request changes a published package (`packages/ui`, `packages/ui-mapbox`, `packages/ui-motion`, `packages/ui-gsap`, `packages/eslint-plugin-ui`, `packages/twig-extension`) without a fragment; set the `no-changelog` label for changes users do not see (tests, docs, refactors, tooling)
 - Format and tooling: [`weareikko/changelog`](https://github.com/weareikko/changelog)
 
 ## Releases
