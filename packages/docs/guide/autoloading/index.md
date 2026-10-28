@@ -36,6 +36,7 @@ Import one side-effect entry for each component package you use. Each import reg
   import 'https://esm.sh/@studiometa/ui@latest/autoload'; // @studiometa/ui components
   import 'https://esm.sh/@studiometa/ui-mapbox@latest/autoload'; // @studiometa/ui-mapbox components
   import 'https://esm.sh/@studiometa/ui-motion@latest/autoload'; // @studiometa/ui-motion components
+  import 'https://esm.sh/@studiometa/ui-gsap@latest/autoload'; // @studiometa/ui-gsap components
 </script>
 ```
 
@@ -45,11 +46,12 @@ The same entries resolve from `node_modules` when you install the packages and l
 import '@studiometa/ui/autoload';
 import '@studiometa/ui-mapbox/autoload';
 import '@studiometa/ui-motion/autoload';
+import '@studiometa/ui-gsap/autoload';
 ```
 
-Import the entries at the top of one module. The manifests register before the runtime starts, so they join into one loader over the composed set. Import `@studiometa/ui-mapbox/autoload` only when you use the Mapbox family — see [Mapbox integration](#mapbox-integration) — and `@studiometa/ui-motion/autoload` only when you use [Motion](#motion-integration).
+Import the entries at the top of one module. The manifests register before the runtime starts, so they join into one loader over the composed set. Import `@studiometa/ui-mapbox/autoload` only when you use the Mapbox family — see [Mapbox integration](#mapbox-integration) — `@studiometa/ui-motion/autoload` only when you use [Motion](#motion-integration), and `@studiometa/ui-gsap/autoload` only when you use [GSAP](#gsap-integration).
 
-Every component on the page must resolve to one `@studiometa/js-toolkit` runtime. `@studiometa/ui`, `@studiometa/ui-mapbox` and `@studiometa/ui-motion` share the same `@studiometa/js-toolkit` peer, so one pin on that peer resolves the whole set.
+Every component on the page must resolve to one `@studiometa/js-toolkit` runtime. `@studiometa/ui`, `@studiometa/ui-mapbox`, `@studiometa/ui-motion` and `@studiometa/ui-gsap` share the same `@studiometa/js-toolkit` peer, so one pin on that peer resolves the whole set.
 
 ### Version pinning
 
@@ -106,6 +108,13 @@ The `@studiometa/ui` manifest ships every component as `eager`.
 - `MotionView` mounts even when its element starts out not rendered, so it can enter, and it already listens when a containing `Dialog` opens or a descendant announces a DOM update. It loads the Motion library only on its first transition.
 
 `Motion`, `MotionScrollTimeline` and `MotionSequence` load the Motion library when they mount. Nothing changes for code that registers these classes directly with `registerComponents`: they declare no strategy, so they were already `eager`.
+
+`@studiometa/ui-gsap` ships every component as `eager` too:
+
+- `Gsap` and `GsapTimeline` apply their starting state when they build, so the final state does not flash when the element is first seen. Use the `scrollTrigger` option to play when the element enters the viewport.
+- `GsapStep` is mounted when its timeline builds, including a step far below the viewport.
+
+`Gsap` and `GsapTimeline` load GSAP when they mount, and `ScrollTrigger` only when their `scrollTrigger` option is set.
 
 `@studiometa/ui-mapbox` splits:
 
@@ -211,6 +220,27 @@ The `Motion` component loads like any other component, but the autoloader does n
 
 The component resolves `motion` lazily the first time an animation is built. In a bundled build you can inject a specific entry — such as the smaller `motion/mini` — with `provideMotion()`; see the [Motion JS API](/reference/items/Motion/js-api#providing-the-motion-dependency).
 
+## GSAP integration
+
+The `Gsap` and `GsapTimeline` components load like any other component, but the autoloader does not bundle [GSAP](https://gsap.com). You provide it through an import map, which keeps you in control of the GSAP version:
+
+```html
+<script type="importmap">
+  {
+    "imports": {
+      "gsap": "https://esm.sh/gsap@3",
+      "gsap/ScrollTrigger": "https://esm.sh/gsap@3/ScrollTrigger"
+    }
+  }
+</script>
+<script type="module">
+  import 'https://esm.sh/@studiometa/ui@latest/autoload';
+  import 'https://esm.sh/@studiometa/ui-gsap@latest/autoload';
+</script>
+```
+
+The components import `gsap` lazily when they build, and `gsap/ScrollTrigger` only for a `scrollTrigger` option. In a bundled build you can inject the modules with `provideGsap()`; see the [Gsap JS API](/reference/items/Gsap/js-api#providing-gsap).
+
 ## Shopify integration
 
 Most Shopify components autoload as they do in a bundled build. `FetchShopifyPartial` is the exception. The `@shopify/partial-rendering` adapter is not resolved in a no-build setup, so the component logs a diagnostic and falls back to the base [`Fetch`](/reference/items/Fetch/) behavior. Use a bundled build when you need partial rendering.
@@ -246,6 +276,7 @@ A no-build install trades flexibility for a zero-build setup. Its constraints ar
 - **ES2020 module browsers only.**
 - **Mapbox is not provided.** You supply `mapbox-gl` and its CSS through an import map.
 - **Motion is not provided.** You supply `motion` through an import map.
+- **GSAP is not provided.** You supply `gsap` and `gsap/ScrollTrigger` through an import map.
 - **Shopify partial rendering is excluded.** `FetchShopifyPartial` falls back to base `Fetch`.
 
 ## Next steps

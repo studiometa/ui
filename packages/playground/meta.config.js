@@ -11,7 +11,9 @@ function sourceEntries(root) {
   const { exports } = JSON.parse(readFileSync(resolve(`${root}/package.json`), 'utf8'));
   return Object.fromEntries(
     Object.entries(exports)
-      .filter(([key, value]) => key.startsWith('.') && !key.includes('*') && typeof value === 'object')
+      .filter(
+        ([key, value]) => key.startsWith('.') && !key.includes('*') && typeof value === 'object',
+      )
       .map(([key, value]) => [key, `${root}/${value.typescript.replace(/^\.\//, '')}`]),
   );
 }
@@ -19,6 +21,7 @@ function sourceEntries(root) {
 const uiEntries = sourceEntries('../ui');
 const mapboxEntries = sourceEntries('../ui-mapbox');
 const motionEntries = sourceEntries('../ui-motion');
+const gsapEntries = sourceEntries('../ui-gsap');
 
 export default defineWebpackConfig({
   presets: [
@@ -53,12 +56,14 @@ export default defineWebpackConfig({
       // registry `registerComponent()` writes to) lives in its main entry (one resolved URL), and
       // `/utils` is stateless. Its own `morphdom` dependency needs no entry here: esm.sh rewrites it
       // to an absolute esm.sh URL, so the import map is never consulted for it. The remaining
-      // entries are the declared runtime peers of ui-mapbox and ui-motion the script editor needs —
+      // entries are the declared runtime peers of ui-mapbox, ui-motion and ui-gsap the script editor needs —
       // `@studiometa/ui` declares none beyond js-toolkit.
       dependencies: [
         { specifier: 'mapbox-gl', esmSh: { bundle: true } },
         { specifier: '@mapbox/mapbox-gl-geocoder', esmSh: { bundle: true } },
         { specifier: 'motion', esmSh: { bundle: true } },
+        // Not bundled: `gsap/ScrollTrigger` must share the `gsap` core module the components resolve.
+        { specifier: 'gsap', subpaths: ['./ScrollTrigger'] },
         { specifier: '@studiometa/js-toolkit', subpaths: true },
         // Workspace packages bundled from local source so the playground reflects the working tree.
         // `subpaths: true` reads each package's `package.json` `exports` map and builds every subpath
@@ -69,8 +74,21 @@ export default defineWebpackConfig({
         // identity hazard). ui exposes its barrel + `./manifest` + `./autoload` + every component
         // subpath; ui-mapbox likewise exposes its barrel + `./manifest` + `./autoload`.
         { specifier: '@studiometa/ui', source: '../ui/src/**/*.ts', entries: uiEntries },
-        { specifier: '@studiometa/ui-mapbox', source: '../ui-mapbox/src/**/*.ts', entries: mapboxEntries },
-        { specifier: '@studiometa/ui-motion', source: '../ui-motion/src/**/*.ts', entries: motionEntries },
+        {
+          specifier: '@studiometa/ui-mapbox',
+          source: '../ui-mapbox/src/**/*.ts',
+          entries: mapboxEntries,
+        },
+        {
+          specifier: '@studiometa/ui-motion',
+          source: '../ui-motion/src/**/*.ts',
+          entries: motionEntries,
+        },
+        {
+          specifier: '@studiometa/ui-gsap',
+          source: '../ui-gsap/src/**/*.ts',
+          entries: gsapEntries,
+        },
       ],
       defaults: {
         // The element declares the component the script registers: in v4 an instance exists because

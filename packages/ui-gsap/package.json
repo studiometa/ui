@@ -1,0 +1,91 @@
+{
+  "name": "@studiometa/ui-gsap",
+  "version": "2.0.0-alpha.2",
+  "description": "Vanilla js-toolkit components to animate elements declaratively with GSAP",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "sideEffects": [
+    "./dist/autoload.js"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "typescript": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./autoload": {
+      "typescript": "./src/autoload.ts",
+      "types": "./dist/autoload.d.ts",
+      "import": "./dist/autoload.js"
+    },
+    "./manifest": {
+      "typescript": "./src/manifest.ts",
+      "types": "./dist/manifest.d.ts",
+      "import": "./dist/manifest.js"
+    },
+    "./Gsap": {
+      "typescript": "./src/Gsap.ts",
+      "types": "./dist/Gsap.d.ts",
+      "import": "./dist/Gsap.js"
+    },
+    "./GsapStep": {
+      "typescript": "./src/GsapStep.ts",
+      "types": "./dist/GsapStep.d.ts",
+      "import": "./dist/GsapStep.js"
+    },
+    "./GsapTimeline": {
+      "typescript": "./src/GsapTimeline.ts",
+      "types": "./dist/GsapTimeline.d.ts",
+      "import": "./dist/GsapTimeline.js"
+    },
+    "./dependencies": {
+      "typescript": "./src/dependencies.ts",
+      "types": "./dist/dependencies.d.ts",
+      "import": "./dist/dependencies.js"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.js && npm run build:skills",
+    "build:skills": "node ../../scripts/build-skills.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/studiometa/ui.git"
+  },
+  "keywords": [
+    "ui",
+    "components",
+    "gsap",
+    "animation",
+    "scrolltrigger",
+    "js-toolkit"
+  ],
+  "author": "Studio Meta <agence@studiometa.fr> (https://www.studiometa.fr/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/studiometa/ui/issues"
+  },
+  "homepage": "https://github.com/studiometa/ui#readme",
+  "peerDependencies": {
+    "@studiometa/js-toolkit": "^4.0.0-alpha.1",
+    "gsap": "^3.13.0"
+  },
+  "devDependencies": {
+    "@studiometa/js-toolkit": "^4.0.0-alpha.1",
+    "gsap": "^3.13.0",
+    "tsdown": "0.21.5"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "skills": [
+    "npm:@studiometa/js-toolkit"
+  ]
+}

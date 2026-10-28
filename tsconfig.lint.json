@@ -7,6 +7,7 @@
     "packages/ui/src/**/*.ts",
     "packages/ui-mapbox/src/**/*.ts",
     "packages/ui-motion/src/**/*.ts",
+    "packages/ui-gsap/src/**/*.ts",
     "scripts/**/*.ts"
   ]
 }

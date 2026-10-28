@@ -155,7 +155,10 @@ for (const subpath of explicitUiSubpaths) {
   report(documented, `Undocumented @studiometa/ui subpath: ${subpath}`);
 }
 
-const mapboxIndex = readFileSync(resolve(repositoryRoot, 'packages/ui-mapbox/src/index.ts'), 'utf8');
+const mapboxIndex = readFileSync(
+  resolve(repositoryRoot, 'packages/ui-mapbox/src/index.ts'),
+  'utf8',
+);
 // Only whole-module (`export * from './X.js'`) re-exports map to a documented item; named
 // re-exports (e.g. the dependency-injection helpers from `./dependencies.js`) are covered by the
 // per-symbol export validation below.
@@ -183,6 +186,10 @@ const publicEntryPoints = [
   {
     path: resolve(repositoryRoot, 'packages/ui-motion/src/index.ts'),
     package: 'npm:@studiometa/ui-motion',
+  },
+  {
+    path: resolve(repositoryRoot, 'packages/ui-gsap/src/index.ts'),
+    package: 'npm:@studiometa/ui-gsap',
   },
 ] as const;
 const program = ts.createProgram(

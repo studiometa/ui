@@ -8,9 +8,11 @@ import {
 import { manifest as uiManifest } from '@studiometa/ui/manifest';
 import { manifest as mapboxManifest } from '@studiometa/ui-mapbox/manifest';
 import { manifest as motionManifest } from '@studiometa/ui-motion/manifest';
+import { manifest as gsapManifest } from '@studiometa/ui-gsap/manifest';
 import * as uiExports from '@studiometa/ui';
 import * as mapboxExports from '@studiometa/ui-mapbox';
 import * as motionExports from '@studiometa/ui-motion';
+import * as gsapExports from '@studiometa/ui-gsap';
 import { describe, expect, it } from 'vitest';
 
 function isBaseConstructor(value: unknown): value is BaseConstructor {
@@ -63,6 +65,7 @@ const cases: readonly ManifestCase[] = [
     motionExports as Record<string, unknown>,
     () => 'eager',
   ],
+  ['@studiometa/ui-gsap', gsapManifest, gsapExports as Record<string, unknown>, () => 'eager'],
 ];
 
 // A generated manifest entry holds only what the registry reads before the
@@ -165,6 +168,10 @@ describe('mount strategies after a lazy entry loads', () => {
 
   it('gives every @studiometa/ui-motion class the strategy of its manifest entry', async () => {
     expect(await strategyMismatches(motionManifest)).toEqual([]);
+  });
+
+  it('gives every @studiometa/ui-gsap class the strategy of its manifest entry', async () => {
+    expect(await strategyMismatches(gsapManifest)).toEqual([]);
   });
 
   it('keeps every lazy @studiometa/ui entry lazy once its class is registered', async () => {

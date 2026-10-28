@@ -76,4 +76,4 @@ To change the markup of a template, create the same relative path in the project
 ## Related skills
 
 - `studiometa-js-toolkit`: the `Base` class, lifecycle, services and decorators that all components use.
-- `studiometa-ui-mapbox` and `studiometa-ui-motion`: the Mapbox and Motion component packages.
+- `studiometa-ui-mapbox`, `studiometa-ui-motion` and `studiometa-ui-gsap`: the Mapbox, Motion and GSAP component packages.

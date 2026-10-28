@@ -1,0 +1,46 @@
+{# The `targets` selector resolves inside the component: the tween animates
+   the three bars with a stagger. Each button calls one playback method, and
+   the events go up to an `Action` that shows the last one. #}
+<div
+  data-component="Action"
+  data-on:gsap-play="this.querySelector('output').textContent = 'gsap-play'"
+  data-on:gsap-pause="this.querySelector('output').textContent = 'gsap-pause'"
+  data-on:gsap-complete="this.querySelector('output').textContent = 'gsap-complete'"
+  data-on:gsap-reverse-complete="this.querySelector('output').textContent = 'gsap-reverse-complete'"
+  class="grid gap-4">
+  <div
+    id="playback"
+    data-component="Gsap"
+    data-option-targets=".bar"
+    data-option-to='{ "x": 200, "duration": 1.5, "ease": "power2.inOut", "stagger": 0.15 }'
+    class="grid gap-2">
+    <div class="bar h-4 w-12 rounded bg-blue-400 dark:bg-blue-600"></div>
+    <div class="bar h-4 w-12 rounded bg-blue-400 dark:bg-blue-600"></div>
+    <div class="bar h-4 w-12 rounded bg-blue-400 dark:bg-blue-600"></div>
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    {% for method in [
+      'play()',
+      'pause()',
+      'reverse()',
+      'restart()',
+      'seek(0.5)',
+      'complete()'
+    ] %}
+      <button
+        type="button"
+        data-component="Action"
+        data-on:click="Gsap(#playback)->target.{{ method }}"
+        class="rounded bg-zinc-200 px-3 py-1 font-mono text-sm dark:bg-zinc-800">
+        {{ method }}
+      </button>
+    {% endfor %}
+  </div>
+
+  <p>
+    Last event:<output class="font-mono">
+      none
+    </output>
+  </p>
+</div>

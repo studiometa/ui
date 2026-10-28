@@ -22,6 +22,7 @@ const ENTRIES = {
   '@studiometa/ui': 'packages/ui/src/index.ts',
   '@studiometa/ui-mapbox': 'packages/ui-mapbox/src/index.ts',
   '@studiometa/ui-motion': 'packages/ui-motion/src/index.ts',
+  '@studiometa/ui-gsap': 'packages/ui-gsap/src/index.ts',
 };
 
 const program = ts.createProgram(
@@ -288,6 +289,24 @@ test('@studiometa/ui-motion barrel export surface', () => {
       "MotionViewProps [type]",
       "provideMotion [value]",
       "resolveMotion [value]",
+    ]
+  `);
+});
+
+test('@studiometa/ui-gsap barrel export surface', () => {
+  expect(surface(ENTRIES['@studiometa/ui-gsap'])).toMatchInlineSnapshot(`
+    [
+      "Gsap [value]",
+      "GsapDependencies [type]",
+      "GsapEventDetail [type]",
+      "GsapProps [type]",
+      "GsapStep [value]",
+      "GsapStepProps [type]",
+      "GsapTimeline [value]",
+      "GsapTimelineProps [type]",
+      "ResolveGsapOptions [type]",
+      "provideGsap [value]",
+      "resolveGsap [value]",
     ]
   `);
 });

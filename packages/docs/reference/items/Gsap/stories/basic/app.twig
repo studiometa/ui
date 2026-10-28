@@ -1,0 +1,21 @@
+{# The tween is paused until `autoplay` plays it on mount. A preview boots
+   before you look at it, so the story pairs it with a replay button that
+   calls `restart()`. #}
+<div class="grid justify-items-start gap-4">
+  <div
+    id="basic-box"
+    data-component="Gsap"
+    data-option-from='{ "opacity": 0, "y": 24, "scale": 0.9, "duration": 0.8, "ease": "back.out(1.7)" }'
+    data-option-autoplay
+    class="rounded-lg bg-blue-400 px-6 py-4 font-bold text-white dark:bg-blue-600">
+    Hello, I animate on mount!
+  </div>
+
+  <button
+    type="button"
+    data-component="Action"
+    data-on:click="Gsap(#basic-box)->target.restart()"
+    class="rounded bg-zinc-200 px-4 py-2 dark:bg-zinc-800">
+    Replay
+  </button>
+</div>

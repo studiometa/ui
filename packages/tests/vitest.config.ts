@@ -6,7 +6,7 @@ import 'vitest/config';
 const packagesRoot = resolve(import.meta.dirname, '..');
 
 /**
- * These four specs read the repository rather than the DOM — the TypeScript
+ * These specs read the repository rather than the DOM — the TypeScript
  * compiler API, `node:fs`, `node:child_process`, `import.meta.resolve` — so
  * they are the one part of the suite that cannot run in a browser and get a
  * Node project of their own.
@@ -16,12 +16,16 @@ const packagesRoot = resolve(import.meta.dirname, '..');
  * `MutationObserver`, so a spec that loads the barrel cannot run under Node at
  * all. Three files that asserted both halves are split along that line, with
  * the repository half named `*-resolution` / `*-freshness`.
+ *
+ * `Gsap/node-imports.spec.ts` runs here for another reason: it asserts that
+ * the `@studiometa/ui-gsap` entries import under Node.
  */
 const staticAnalysisSpecs = [
   'barrel-exports/barrel-exports.spec.ts',
   'autoload/manifest-freshness.spec.ts',
   'subpath-exports/resolution.spec.ts',
   'subpath-exports/backward-compat-resolution.spec.ts',
+  'Gsap/node-imports.spec.ts',
 ];
 
 // `@studiometa/ui` and `@studiometa/ui-mapbox` publish their built `dist/`, but their `exports`
@@ -92,18 +96,26 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      include: ['../ui/src/**/*.ts', '../ui-mapbox/src/**/*.ts', '../ui-motion/src/**/*.ts'],
+      include: [
+        '../ui/src/**/*.ts',
+        '../ui-mapbox/src/**/*.ts',
+        '../ui-motion/src/**/*.ts',
+        '../ui-gsap/src/**/*.ts',
+      ],
       exclude: [
         '**/tests/**/*.ts',
         '**/ui/src/**/index.ts',
         '**/ui-mapbox/src/**/index.ts',
         '**/ui-motion/src/**/index.ts',
+        '**/ui-gsap/src/**/index.ts',
         '**/ui/src/catalog.ts',
         '**/ui/src/manifest.ts',
         '**/ui-mapbox/src/catalog.ts',
         '**/ui-mapbox/src/manifest.ts',
         '**/ui-motion/src/catalog.ts',
         '**/ui-motion/src/manifest.ts',
+        '**/ui-gsap/src/catalog.ts',
+        '**/ui-gsap/src/manifest.ts',
       ],
     },
   },

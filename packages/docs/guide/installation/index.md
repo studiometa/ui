@@ -164,7 +164,7 @@ See [Templates and customization](/guide/concepts/templates-and-customization) f
 
 ## Agent skills
 
-Each npm package ships an [agent skill](https://agentskills.io) that teaches coding agents how to use it: `studiometa-ui`, `studiometa-ui-mapbox`, `studiometa-ui-motion` and `studiometa-eslint-plugin-ui`. A skill holds the reference of its package version, so the agent does not read the documentation of another version.
+Each npm package ships an [agent skill](https://agentskills.io) that teaches coding agents how to use it: `studiometa-ui`, `studiometa-ui-mapbox`, `studiometa-ui-motion`, `studiometa-ui-gsap` and `studiometa-eslint-plugin-ui`. A skill holds the reference of its package version, so the agent does not read the documentation of another version.
 
 Link the skills of your dependencies into your project with the [`skills` CLI](https://github.com/vercel-labs/skills):
 
