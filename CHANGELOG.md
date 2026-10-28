@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. Each pull r
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.0.0-alpha.3 - 2026-10-28
+
+### Added
+
+- **@studiometa/ui-gsap:** add the package, with the `Gsap`, `GsapTimeline` and `GsapStep` components to declare GSAP tweens, timelines and ScrollTrigger animations in HTML ([#718])
+
+[#718]: https://github.com/studiometa/ui/pull/718
+
 ## 2.0.0-alpha.2 - 2026-10-15
 
 ### Added
