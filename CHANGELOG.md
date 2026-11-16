@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file. Each pull r
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.0.0-alpha.4 - 2026-11-16
+
+### Dependencies
+
+- Pin dependency deepmerge to 4.3.1 [SECURITY] (2.x) ([#721])
+- Update dependency esbuild to v0.28.1 [SECURITY] (2.x) ([#704])
+- Update dependency symfony/yaml to 7.4.* [SECURITY] (2.x) ([#707])
+- Update dependency twig/twig to v3.27.0 [security] (2.x) ([#705])
+- Update dependency composer/composer to v2.10.3 [security] (2.x) ([#703])
+
+[#703]: https://github.com/studiometa/ui/pull/703
+[#704]: https://github.com/studiometa/ui/pull/704
+[#705]: https://github.com/studiometa/ui/pull/705
+[#707]: https://github.com/studiometa/ui/pull/707
+[#721]: https://github.com/studiometa/ui/pull/721
+
 ## 2.0.0-alpha.3 - 2026-10-28
 
 ### Added
