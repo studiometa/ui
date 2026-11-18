@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. Each pull r
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.0.0-rc.1 - 2026-11-18
+
+### Changed
+
+- **@studiometa/ui:** list the `@studiometa/ui-mapbox`, `@studiometa/ui-motion` and `@studiometa/ui-gsap` companion packages in the `studiometa-ui` agent skill, with the need each one covers, its peer dependencies and how to install it and link its skill ([#747])
+
+[#747]: https://github.com/studiometa/ui/pull/747
+
 ## 2.0.0-rc.0 - 2026-11-18
 
 ### Fixed
