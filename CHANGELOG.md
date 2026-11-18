@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file. Each pull r
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.11.2 - 2026-11-18
+
+### Dependencies
+
+- Update dependency squizlabs/php_codesniffer to v3.13.6 [security] (main) ([#694])
+- Pin dependency deepmerge to 4.3.1 [security] (main) ([#719])
+- Update dependency @oxlint/plugins to v1.93.0 (main) ([#725])
+- Update dependency esbuild to v0.28.1 [SECURITY] (main) ([#697])
+- Update docs devDependencies (main) ([#713])
+- Update dependency composer/composer to v2.10.3 [security] (main) ([#696])
+- Update dependency twig/twig to v3.27.0 [security] (main) ([#698])
+- Update dependency symfony/runtime to 7.4.* [security] (main) ([#699])
+
+[#694]: https://github.com/studiometa/ui/pull/694
+[#696]: https://github.com/studiometa/ui/pull/696
+[#697]: https://github.com/studiometa/ui/pull/697
+[#698]: https://github.com/studiometa/ui/pull/698
+[#699]: https://github.com/studiometa/ui/pull/699
+[#713]: https://github.com/studiometa/ui/pull/713
+[#719]: https://github.com/studiometa/ui/pull/719
+[#725]: https://github.com/studiometa/ui/pull/725
+
 ## [v1.11.1](https://github.com/studiometa/ui/compare/1.11.0..1.11.1) (2026-09-01)
 
 This patch extends the `historyUrl` separation introduced in `1.11.0` to the declarative link and form handlers, which still bypassed it.
