@@ -71,11 +71,11 @@
   },
   "homepage": "https://github.com/studiometa/ui#readme",
   "peerDependencies": {
-    "@studiometa/js-toolkit": "^4.0.0-alpha.1",
+    "@studiometa/js-toolkit": "^4.0.0-rc.0",
     "gsap": "^3.13.0"
   },
   "devDependencies": {
-    "@studiometa/js-toolkit": "^4.0.0-alpha.1",
+    "@studiometa/js-toolkit": "^4.0.0-rc.0",
     "gsap": "^3.13.0",
     "tsdown": "0.21.5"
   },
