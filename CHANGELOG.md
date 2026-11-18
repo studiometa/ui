@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. Each pull r
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.11.3 - 2026-11-18
+
+### Dependencies
+
+- Update dependency vitest to v4.1.11 [security] (1.x) ([#738])
+
+[#738]: https://github.com/studiometa/ui/pull/738
+
 ## 1.11.2 - 2026-11-18
 
 ### Dependencies
