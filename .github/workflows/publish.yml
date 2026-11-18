@@ -1,13 +1,13 @@
 name: release
 
-# Each merge into 2.x releases the 2.x line from what its fragments describe:
+# Each merge into main releases the 2.x line from what its fragments describe:
 # prereleases while `.changelog/prerelease` exists, 2.0.0 once a pull request
-# deletes it. A manual run (`gh workflow run publish.yml --ref 2.x -f version=major`)
-# forces a bump. main has its own release workflow.
+# deletes it. A manual run (`gh workflow run publish.yml --ref main -f version=major`)
+# forces a bump. The 1.x branch has its own release workflow.
 # npm trusted publishing is bound to this file name: keep the publish job here.
 on:
   push:
-    branches: [2.x]
+    branches: [main]
   workflow_dispatch:
     inputs:
       version:
@@ -16,11 +16,11 @@ on:
         options: [auto, patch, minor, major]
         default: auto
 
-# One release at a time per line, so that main and 2.x do not wait for each
+# One release at a time per line, so that main and 1.x do not wait for each
 # other. GitHub keeps only the newest pending run: it releases everything that
-# 2.x has at that point.
+# main has at that point.
 concurrency:
-  group: release-2.x
+  group: release-main
   cancel-in-progress: false
 
 permissions:
@@ -81,8 +81,8 @@ jobs:
     name: Release
     needs: test
     runs-on: ubuntu-latest
-    # 2.x releases from the 2.x branch only.
-    if: github.ref == 'refs/heads/2.x'
+    # 2.x releases from the main branch only.
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
       pull-requests: read
@@ -110,7 +110,7 @@ jobs:
       contents: read
       id-token: write
     env:
-      # The 1.x line on main owns `latest`, so every 2.x version goes to `next`.
+      # The 1.x line owns `latest`, so every 2.x version goes to `next`.
       # Move 2.x to `latest` when it becomes the stable line.
       DIST_TAG: next
     steps:
