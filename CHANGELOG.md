@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file. Each pull r
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.0.0-rc.0 - 2026-11-18
+
+### Fixed
+
+- **Menu:** set `aria-expanded` on the `MenuBtn` and keep it in sync when the `MenuList` opens or closes ([#729])
+- **MenuList:** set `aria-hidden="true"` on mount, so the initial closed state is exposed to assistive technologies ([#729])
+
+### Dependencies
+
+- Require `@studiometa/js-toolkit` `^4.0.0-rc.0` ([#739])
+
+[#729]: https://github.com/studiometa/ui/pull/729
+[#739]: https://github.com/studiometa/ui/pull/739
+
 ## 2.0.0-alpha.4 - 2026-11-16
 
 ### Dependencies

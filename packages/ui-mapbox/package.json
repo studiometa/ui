@@ -1,6 +1,6 @@
 {
   "name": "@studiometa/ui-mapbox",
-  "version": "2.0.0-alpha.4",
+  "version": "2.0.0-rc.0",
   "description": "Vanilla js-toolkit components to build Mapbox GL maps declaratively",
   "publishConfig": {
     "access": "public"

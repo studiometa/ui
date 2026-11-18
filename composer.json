@@ -1,7 +1,7 @@
 {
   "name": "studiometa/ui",
   "type": "composer-plugin",
-  "version": "2.0.0-alpha.4",
+  "version": "2.0.0-rc.0",
   "description": "Accessible and composable JavaScript behaviors and Twig templates.",
   "license": "MIT",
   "require": {
