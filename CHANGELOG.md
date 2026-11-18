@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. Each pull r
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.11.4 - 2026-11-18
+
+### Dependencies
+
+- Update dependency symfony/yaml to 7.4.* [security] (1.x) ([#735])
+
+[#735]: https://github.com/studiometa/ui/pull/735
+
 ## 1.11.3 - 2026-11-18
 
 ### Dependencies
