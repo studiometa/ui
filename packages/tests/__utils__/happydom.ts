@@ -2,7 +2,12 @@ import { GlobalRegistrator } from '@happy-dom/global-registrator';
 import { afterEach } from 'vitest';
 import { getInstances } from '@studiometa/js-toolkit';
 
-GlobalRegistrator.register();
+// Give the document a real URL, like a page in a browser. Without one, the
+// document is `about:blank`, which cannot resolve a relative URL such as `/#`:
+// `anchor.href` then returns the raw attribute and `new URL(anchor.href)` throws.
+// Node.js before 24.20 (Ada 3) resolved `/#` against `about:blank` to
+// `about:/#`, which hid the problem.
+GlobalRegistrator.register({ url: 'http://localhost:3000/' });
 
 let y = 0;
 let x = 0;
