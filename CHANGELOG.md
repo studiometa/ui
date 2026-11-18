@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file. Each pull r
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.0.0-rc.2 - 2026-11-18
+
+### Dependencies
+
+- Update dependency symfony/runtime to 7.4.* [security] (main) ([#737])
+- Update dependency squizlabs/php_codesniffer to v3.13.6 [security] (main) ([#736])
+- Update dependency @oxlint/plugins to v1.93.0 (main) ([#746])
+
+[#736]: https://github.com/studiometa/ui/pull/736
+[#737]: https://github.com/studiometa/ui/pull/737
+[#746]: https://github.com/studiometa/ui/pull/746
+
 ## 2.0.0-rc.1 - 2026-11-18
 
 ### Changed
