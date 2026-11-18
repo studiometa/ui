@@ -134,6 +134,7 @@ export {
   type MenuListProps,
   type MenuProps,
 } from './Menu/index.js';
+export { Popover, type PopoverProps } from './Popover/index.js';
 export {
   AbstractPrefetch,
   PrefetchOnInteraction,

@@ -62,6 +62,7 @@ test("components exports", () => {
       "Menu",
       "MenuBtn",
       "MenuList",
+      "Popover",
       "PrefetchOnInteraction",
       "PrefetchWhenVisible",
       "SECTIONS_PARAMETER",

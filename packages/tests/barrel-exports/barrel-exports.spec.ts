@@ -177,6 +177,8 @@ test('@studiometa/ui barrel export surface', () => {
       "MenuListProps [type]",
       "MenuProps [type]",
       "Modifier [type]",
+      "Popover [value]",
+      "PopoverProps [type]",
       "PrefetchOnInteraction [value]",
       "PrefetchWhenVisible [value]",
       "RestoreRecipe [type]",
