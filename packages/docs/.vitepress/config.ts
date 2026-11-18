@@ -109,6 +109,7 @@ export default defineConfig({
         items: [
           { text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' },
           { text: 'Migration guides', link: '/migration-guides/' },
+          { text: 'v1 documentation', link: 'https://v1-ui.studiometa.dev/' },
         ],
       },
     ],
