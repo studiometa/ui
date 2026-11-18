@@ -45,6 +45,7 @@ export class Menu<T extends BaseProps = BaseProps> extends withKey(Base)<MenuPro
     added: (btn) => {
       if (btn.$closest('Menu') === this) {
         btn.$el.setAttribute('aria-controls', this.$id);
+        btn.$el.setAttribute('aria-expanded', String(Boolean(this.menuList?.isOpen)));
       }
     },
   });
@@ -120,11 +121,17 @@ export class Menu<T extends BaseProps = BaseProps> extends withKey(Base)<MenuPro
   }
 
   onMenuListItemsOpen({ target }: DelegatedEvent<MenuList>): void {
+    this.__updateExpanded(target);
+
     for (const list of this.menuLists) {
       if (!list.$el.contains(target.$el)) {
         list.close();
       }
     }
+  }
+
+  onMenuListItemsClose({ target }: DelegatedEvent<MenuList>): void {
+    this.__updateExpanded(target);
   }
 
   close(): void {
@@ -137,6 +144,18 @@ export class Menu<T extends BaseProps = BaseProps> extends withKey(Base)<MenuPro
 
   toggle(): void {
     void this.menuList?.toggle();
+  }
+
+  /**
+   * Sync `aria-expanded` on the button when `list` is this `Menu`'s own list.
+   * The list emits on every open and close, whatever closed it: Escape, an
+   * outside click, a sibling or a parent list.
+   * @private
+   */
+  __updateExpanded(list: MenuList): void {
+    if (list.$closest('Menu') === this) {
+      this.menuBtn?.$el.setAttribute('aria-expanded', String(list.isOpen));
+    }
   }
 
   /** @private */

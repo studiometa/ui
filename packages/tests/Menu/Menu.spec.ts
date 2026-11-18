@@ -41,6 +41,40 @@ describe('Menu', () => {
     expect(menu.menuList?.$el.getAttribute('id')).toBe(menu.$id);
   });
 
+  it('sets aria-expanded="false" on the button on mount', async () => {
+    const { root } = await render();
+    expect(root.querySelector('#btn')?.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('syncs aria-expanded on the button on open and close', async () => {
+    const { root, menu } = await render();
+    const btn = root.querySelector('#btn') as HTMLElement;
+
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+
+    menu.open();
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    menu.close();
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('sets aria-expanded="false" when closed by an outside click or Escape', async () => {
+    const { root, menu } = await render();
+    const btn = root.querySelector('#btn') as HTMLElement;
+
+    menu.open();
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+
+    menu.open();
+    menu.keyed({ ESC: true, ENTER: false, isUp: true } as never);
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+  });
+
   it('closes its list on mount', async () => {
     const { menu } = await render();
     expect(menu.menuList?.isOpen).toBe(false);
@@ -142,5 +176,59 @@ describe('Menu', () => {
     subB.open();
     expect(subB.menuList?.isOpen).toBe(true);
     expect(subA.menuList?.isOpen).toBe(false);
+  });
+
+  it('keeps each button aria-expanded in sync with its own list only, in nested menus', async () => {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <div data-component="Menu" id="top">
+        <button data-component="MenuBtn" id="top-btn"></button>
+        <ul data-component="MenuList">
+          <li>
+            <div data-component="Menu" id="sub-a">
+              <button data-component="MenuBtn" id="btn-a"></button>
+              <ul data-component="MenuList"><li><a href="#">a</a></li></ul>
+            </div>
+          </li>
+          <li>
+            <div data-component="Menu" id="sub-b">
+              <button data-component="MenuBtn" id="btn-b"></button>
+              <ul data-component="MenuList"><li><a href="#">b</a></li></ul>
+            </div>
+          </li>
+        </ul>
+      </div>`;
+    document.body.append(root);
+    await settle();
+    const top = getInstance<Menu>(root.querySelector('#top'), 'Menu')!;
+    const subA = getInstance<Menu>(root.querySelector('#sub-a'), 'Menu')!;
+    const subB = getInstance<Menu>(root.querySelector('#sub-b'), 'Menu')!;
+    function expanded(id: string): string | null | undefined {
+      return root.querySelector(`#${id}`)?.getAttribute('aria-expanded');
+    }
+
+    top.open();
+    subA.open();
+    expect([expanded('top-btn'), expanded('btn-a'), expanded('btn-b')]).toEqual([
+      'true',
+      'true',
+      'false',
+    ]);
+
+    // Opening a sibling closes the other one.
+    subB.open();
+    expect([expanded('top-btn'), expanded('btn-a'), expanded('btn-b')]).toEqual([
+      'true',
+      'false',
+      'true',
+    ]);
+
+    // Closing the parent list closes the nested lists too.
+    top.close();
+    expect([expanded('top-btn'), expanded('btn-a'), expanded('btn-b')]).toEqual([
+      'false',
+      'false',
+      'false',
+    ]);
   });
 });

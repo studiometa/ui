@@ -39,6 +39,12 @@ describe('MenuList', () => {
     expect(nestedLink.getAttribute('tabindex')).toBe('-1');
   });
 
+  it('sets aria-hidden="true" on mount', async () => {
+    const { outer, nested } = await render();
+    expect(outer.$el.getAttribute('aria-hidden')).toBe('true');
+    expect(nested.$el.getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('opens: restores tabindex on its own items only, sets aria-hidden, keeps the enter-to class, emits items-open', async () => {
     const { outer, outerLink, nestedLink } = await render();
     const events: string[] = [];
