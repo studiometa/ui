@@ -583,6 +583,14 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'PopoverProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Popover/js-api',
+    status: 'preview',
+  },
+  {
     name: 'RestoreRecipe',
     kind: 'type',
     package: 'npm:@studiometa/ui',

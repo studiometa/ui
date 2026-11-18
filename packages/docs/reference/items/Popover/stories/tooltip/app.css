@@ -1,0 +1,16 @@
+#tip-trigger {
+  anchor-name: --tip;
+}
+
+/* The padding, not a margin, makes the gap: it is part of the host, so the
+   pointer stays over the tooltip while it moves from the button. */
+#tip {
+  position: fixed;
+  inset: auto;
+  padding: 0 0 0.5rem;
+  border: 0;
+  background: transparent;
+  position-anchor: --tip;
+  position-area: top;
+  margin: 0;
+}
