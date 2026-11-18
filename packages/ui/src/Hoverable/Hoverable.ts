@@ -12,7 +12,7 @@ import { transform } from '@studiometa/js-toolkit/utils/transform';
  * The shape the target position is constrained to, inscribed in the
  * rectangle given by the `bounds` getter.
  */
-export const HOVERABLE_SHAPES = Object.freeze({
+export const HOVERABLE_SHAPES = /* @__PURE__ */ Object.freeze({
   RECT: 'rect',
   CIRCLE: 'circle',
   ELLIPSE: 'ellipse',
@@ -49,6 +49,14 @@ export type HoverableProps = BaseProps & {
 };
 
 /**
+ * The mixed-in base class, built in a declaration of its own: the TypeScript
+ * transform drops a `@__PURE__` annotation placed after `extends`, and an
+ * unannotated call keeps the whole module in a bundle that only imports
+ * `HOVERABLE_SHAPES`.
+ */
+const HoverableBase = /* @__PURE__ */ withRaf(/* @__PURE__ */ withPointer(Base));
+
+/**
  * Moves a `target` ref in response to the pointer's position over the root
  * element. The target is mapped across its available bounds and damped each
  * frame by the `sensitivity` option; `reversed` inverts the movement and
@@ -57,9 +65,7 @@ export type HoverableProps = BaseProps & {
  *
  * @link https://ui.studiometa.dev/reference/items/Hoverable/
  */
-export class Hoverable<T extends BaseProps = BaseProps> extends withRaf(withPointer(Base))<
-  HoverableProps & T
-> {
+export class Hoverable<T extends BaseProps = BaseProps> extends HoverableBase<HoverableProps & T> {
   static config: BaseConfig = {
     name: 'Hoverable',
     refs: ['target'],
@@ -67,7 +73,9 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRaf(withPoin
       sensitivity: { type: Number, default: 0.1 },
       reversed: Boolean,
       contained: Boolean,
-      shape: { type: String, default: HOVERABLE_SHAPES.RECT },
+      // A literal rather than `HOVERABLE_SHAPES.RECT`: a property read at the top level keeps
+      // the whole module in a bundle that only imports the constant.
+      shape: { type: String, default: 'rect' satisfies HoverableShape },
     },
   };
 
