@@ -42,12 +42,13 @@
 
 ## Releases
 
-- Each merge into `2.x` releases 2.x: the `release` workflow (`.github/workflows/publish.yml`) runs the checks, then the `weareikko/changelog` action computes the version from the fragments, folds `.changelog/` into `CHANGELOG.md`, bumps every package and `composer.json`, commits `Prepare <version>`, tags `<version>` (no `v` prefix), pushes and creates the GitHub release; the publish job then publishes the npm packages (`next` dist-tag). Packagist reads the tag. A merge without a fragment releases nothing
-- Do not bump versions, tag or create GitHub releases by hand. To force a bump, run the workflow: `gh workflow run publish.yml --ref 2.x -f version=major` (or `patch`, `minor`)
-- `.changelog/prerelease` holds the prerelease identifier (`alpha`): while it exists, each merge releases the next prerelease (`2.0.0-alpha.2`, `2.0.0-alpha.3`…). Change it to `beta` or `rc` to start that identifier at 0. **Deleting it releases `2.0.0`** on the next merge, also without a new fragment. See [Prereleases](https://github.com/weareikko/changelog#prereleases)
+- Each merge into `main` releases 2.x: the `release` workflow (`.github/workflows/publish.yml`) runs the checks, then the `weareikko/changelog` action computes the version from the fragments, folds `.changelog/` into `CHANGELOG.md`, bumps every package and `composer.json`, commits `Prepare <version>`, tags `<version>` (no `v` prefix), pushes and creates the GitHub release; the publish job then publishes the npm packages (`next` dist-tag). Packagist reads the tag. A merge without a fragment releases nothing
+- Do not bump versions, tag or create GitHub releases by hand. To force a bump, run the workflow: `gh workflow run publish.yml --ref main -f version=major` (or `patch`, `minor`)
+- `.changelog/prerelease` holds the prerelease identifier (`rc`): while it exists, each merge releases the next prerelease (`2.0.0-rc.1`, `2.0.0-rc.2`…). **Deleting it releases `2.0.0`** on the next merge, also without a new fragment. See [Prereleases](https://github.com/weareikko/changelog#prereleases)
 - npm trusted publishing (OIDC, no npm token) is configured for `publish.yml`: keep the publish job in that file. Each package has its own `JS-DevTools/npm-publish` step, which skips a version that npm already has: when the publication fails, use "Re-run failed jobs" on the run
 - The root `postversion` script only updates `composer.json`: the action runs `npm version <version> --workspaces --include-workspace-root`, which bumps every package
-- Two release lines: `main` releases 1.x (npm `latest` dist-tag) and `2.x` releases 2.x (npm `next` dist-tag), each on merge into its branch. Merge `main` into `2.x` after the `release` run of `main` has finished: unreleased fragments from `main` would otherwise go into the next 2.x release too
+- Two release lines: `main` (default branch) releases 2.x (npm `next` dist-tag) and `1.x` releases 1.x (npm `latest` dist-tag), each on merge into its branch. Fixes for 1.x target `1.x`. Merge `1.x` into `main` after the `release` run of `1.x` has finished: unreleased fragments from `1.x` would otherwise go into the next 2.x release too
+- The `deploy` workflow (`.github/workflows/deploy.yml`, on `main` only) deploys the documentation on Forge once the `release` run of a branch has finished: `main` to ui.studiometa.dev, `1.x` to v1-ui.studiometa.dev
 
 ## Code conventions
 

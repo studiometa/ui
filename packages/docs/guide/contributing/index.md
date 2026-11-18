@@ -11,7 +11,7 @@ The [repository](https://github.com/studiometa/ui) for `@studiometa/ui` follows 
 - `feature/...` for new features
 - `fix/...` for bug fixes
 
-Every merge should be first approved by opening a pull-request against the `main` branch.
+Every merge should be first approved by opening a pull-request against the `main` branch. Fixes for the 1.x line target the `1.x` branch.
 
 ## Local development
 
@@ -120,16 +120,16 @@ Do not write the pull-request number: the release adds it. A pull-request that c
 
 ## Publishing a new version
 
-Each merge into `2.x` releases a new 2.x version with the `release` workflow (`.github/workflows/publish.yml`). The workflow runs the tests, then computes the version from the `.changelog/` fragments. It folds the fragments into `CHANGELOG.md`, updates the version number of all packages and of `composer.json`, commits and tags the release, creates a release on GitHub and publishes the `@studiometa/ui` packages to NPM with the `next` tag. The [Packagist package](https://packagist.org/packages/studiometa/ui) will be updated with the latest tag as well. A merge without a fragment releases nothing.
+Each merge into `main` releases a new 2.x version with the `release` workflow (`.github/workflows/publish.yml`). The workflow runs the tests, then computes the version from the `.changelog/` fragments. It folds the fragments into `CHANGELOG.md`, updates the version number of all packages and of `composer.json`, commits and tags the release, creates a release on GitHub and publishes the `@studiometa/ui` packages to NPM with the `next` tag. The [Packagist package](https://packagist.org/packages/studiometa/ui) will be updated with the latest tag as well. A merge without a fragment releases nothing.
 
-The `.changelog/prerelease` file holds the prerelease identifier (`alpha`). While it exists, each merge releases the next prerelease (`2.0.0-alpha.2`, then `2.0.0-alpha.3`), which is a GitHub prerelease. Change the identifier to `beta` or `rc` to start it at 0 (`2.0.0-beta.0`). The merge of the pull-request that deletes the file releases `2.0.0`, also without a new fragment. See [Prereleases](https://github.com/weareikko/changelog#prereleases).
+The `.changelog/prerelease` file holds the prerelease identifier (`rc`). While it exists, each merge releases the next prerelease (`2.0.0-rc.1`, then `2.0.0-rc.2`), which is a GitHub prerelease. The merge of the pull-request that deletes the file releases `2.0.0`, also without a new fragment. See [Prereleases](https://github.com/weareikko/changelog#prereleases).
 
 To force a bump, run the workflow in the [Actions tab](https://github.com/studiometa/ui/actions/workflows/publish.yml) or with the GitHub CLI:
 
 ```sh
-gh workflow run publish.yml --ref 2.x -f version=major
+gh workflow run publish.yml --ref main -f version=major
 ```
 
 NPM publishes the packages with [trusted publishing](https://docs.npmjs.com/trusted-publishers), so the workflow uses no NPM token. When the publication fails, use "Re-run failed jobs" on the workflow run: the packages that NPM already has are skipped and the others are published.
 
-The `main` branch releases the 1.x line on each merge into `main`, on the NPM `latest` tag. Merge `main` into `2.x` after the `release` workflow of `main` has finished: the fragments of `main` that are not released yet would otherwise also go into the next 2.x release.
+The `1.x` branch releases the 1.x line on each merge into `1.x`, on the NPM `latest` tag. Merge `1.x` into `main` after the `release` workflow of `1.x` has finished: the fragments of `1.x` that are not released yet would otherwise also go into the next 2.x release.
