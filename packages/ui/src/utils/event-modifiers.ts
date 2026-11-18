@@ -18,7 +18,7 @@
 import { warn } from '@studiometa/js-toolkit/warn';
 
 /** Every modifier a declaration may carry. */
-export const MODIFIERS = Object.freeze({
+export const MODIFIERS = /* @__PURE__ */ Object.freeze({
   /** `event.preventDefault()` before the effect runs. */
   PREVENT: 'prevent',
   /** `event.stopPropagation()` before the effect runs. */
@@ -39,13 +39,16 @@ export const MODIFIERS = Object.freeze({
 
 export type Modifier = (typeof MODIFIERS)[keyof typeof MODIFIERS];
 
-/** The modifiers which carry a number: `debounce500`, `throttle200`. */
-const TIMED_MODIFIERS = [MODIFIERS.DEBOUNCE, MODIFIERS.THROTTLE] as const;
+/**
+ * A timed modifier's name, then only digits or nothing — never `debounceoops`.
+ * The modifiers which carry a number are `debounce` and `throttle`
+ * (`debounce500`, `throttle200`). A literal rather than a pattern built from
+ * `MODIFIERS`: a call at the top level keeps this module in a bundle that only
+ * imports the constant.
+ */
+const TIMED_MODIFIER_PATTERN = /^(debounce|throttle)(\d*)$/;
 
-/** A timed modifier's name, then only digits or nothing — never `debounceoops`. */
-const TIMED_MODIFIER_PATTERN = new RegExp(`^(${TIMED_MODIFIERS.join('|')})(\\d*)$`);
-
-const MODIFIER_NAMES: readonly string[] = Object.values(MODIFIERS);
+const MODIFIER_NAMES: readonly string[] = /* @__PURE__ */ Object.values(MODIFIERS);
 
 export interface ParsedEventDefinition {
   /** The event name, which is everything before the first dot. */

@@ -36,7 +36,7 @@ export type { RestoreRecipe } from './history.js';
  * A module constant rather than a static, because a static only pays for
  * itself if a subclass replaces the map, and nothing here does.
  */
-export const FETCH_EVENTS = Object.freeze({
+export const FETCH_EVENTS = /* @__PURE__ */ Object.freeze({
   BEFORE_FETCH: 'fetch-before',
   RESPONSE: 'fetch-response',
   BEFORE_UPDATE: 'fetch-update-before',
@@ -49,7 +49,7 @@ export const FETCH_EVENTS = Object.freeze({
 /**
  * The header names the request carries on the component's own behalf.
  */
-export const HEADER_NAMES = Object.freeze({
+export const HEADER_NAMES = /* @__PURE__ */ Object.freeze({
   X_TRIGGERED_BY: 'x-triggered-by',
   USER_AGENT: 'user-agent',
 } as const);
@@ -90,7 +90,7 @@ function userAgent(): string {
  * The response a failed load had received, kept beside the error rather than
  * written on it, so an error the caller threw is never changed.
  */
-const errorResponses = new WeakMap<object, FetchResponseDetail>();
+const errorResponses = /* @__PURE__ */ new WeakMap<object, FetchResponseDetail>();
 
 /**
  * The submission overrides a submitter carries, when it can carry any.
@@ -223,7 +223,9 @@ export class Fetch<T extends BaseProps = BaseProps> extends Base<FetchProps & T>
       },
       mode: {
         type: String,
-        default: SWAP_MODES.REPLACE,
+        // A literal rather than `SWAP_MODES.REPLACE`: a property read at the top level keeps
+        // the whole module in a bundle that only imports `FETCH_EVENTS` or `HEADER_NAMES`.
+        default: 'replace' satisfies SwapMode,
       },
       requestInit: {
         type: Object,

@@ -11,7 +11,7 @@ import { randomInt } from '@studiometa/js-toolkit/utils/randomInt';
 import { wrap } from '@studiometa/js-toolkit/utils/wrap';
 
 /** How the index behaves when a move would leave the `0…length - 1` range. */
-export const INDEXABLE_BOUNDARIES = Object.freeze({
+export const INDEXABLE_BOUNDARIES = /* @__PURE__ */ Object.freeze({
   CLAMP: 'clamp',
   LOOP: 'loop',
   BOUNCE: 'bounce',
@@ -20,7 +20,7 @@ export const INDEXABLE_BOUNDARIES = Object.freeze({
 export type IndexableBoundary = (typeof INDEXABLE_BOUNDARIES)[keyof typeof INDEXABLE_BOUNDARIES];
 
 /** The named moves `goTo()` accepts besides a number. */
-export const INDEXABLE_INSTRUCTIONS = Object.freeze({
+export const INDEXABLE_INSTRUCTIONS = /* @__PURE__ */ Object.freeze({
   NEXT: 'next',
   PREVIOUS: 'previous',
   FIRST: 'first',
@@ -31,7 +31,7 @@ export const INDEXABLE_INSTRUCTIONS = Object.freeze({
 export type IndexableInstruction =
   (typeof INDEXABLE_INSTRUCTIONS)[keyof typeof INDEXABLE_INSTRUCTIONS];
 
-const BOUNDARY_VALUES: readonly string[] = Object.values(INDEXABLE_BOUNDARIES);
+const BOUNDARY_VALUES: readonly string[] = /* @__PURE__ */ Object.values(INDEXABLE_BOUNDARIES);
 
 /**
  * The options the mixin contributes to its host's config, typed rather than
@@ -41,7 +41,9 @@ const BOUNDARY_VALUES: readonly string[] = Object.values(INDEXABLE_BOUNDARIES);
 const INDEXABLE_OPTIONS: Record<string, OptionDefinition> = {
   boundary: {
     type: String,
-    default: INDEXABLE_BOUNDARIES.CLAMP,
+    // A literal rather than `INDEXABLE_BOUNDARIES.CLAMP`: a property read at the top level
+    // keeps this module in a bundle that only imports the constants.
+    default: 'clamp' satisfies IndexableBoundary,
   },
   reverse: Boolean,
   total: {
