@@ -42,12 +42,13 @@
 
 ## Releases
 
-- Each merge into `main` releases 1.x: the `release` workflow (`.github/workflows/publish.yml`) runs the checks, then the `weareikko/changelog` action computes the version from the fragments, folds `.changelog/` into `CHANGELOG.md`, bumps every package and `composer.json`, commits `Prepare <version>`, tags `<version>` (no `v` prefix), pushes and creates the GitHub release; the publish job then publishes the npm packages (`latest` dist-tag, `next-1.x` for a prerelease). Packagist reads the tag. A merge without a fragment releases nothing
-- Do not bump versions, tag or create GitHub releases by hand. To force a bump, run the workflow: `gh workflow run publish.yml --ref main -f version=major` (or `patch`, `minor`)
+- Each merge into `1.x` releases 1.x: the `release` workflow (`.github/workflows/publish.yml`) runs the checks, then the `weareikko/changelog` action computes the version from the fragments, folds `.changelog/` into `CHANGELOG.md`, bumps every package and `composer.json`, commits `Prepare <version>`, tags `<version>` (no `v` prefix), pushes and creates the GitHub release; the publish job then publishes the npm packages (`latest` dist-tag, `next-1.x` for a prerelease). Packagist reads the tag. A merge without a fragment releases nothing
+- Do not bump versions, tag or create GitHub releases by hand. To force a bump, run the workflow: `gh workflow run publish.yml --ref 1.x -f version=major` (or `patch`, `minor`)
 - Prereleases come only from `.changelog/prerelease`, which holds one identifier such as `beta`: while it exists, each merge releases the next prerelease (`1.12.0-beta.0`, `1.12.0-beta.1`…). The merge of the pull request that deletes it releases the stable version, also without a new fragment. See [Prereleases](https://github.com/weareikko/changelog#prereleases)
 - npm trusted publishing (OIDC, no npm token) is configured for `publish.yml`: keep the publish job in that file. Each package has its own `JS-DevTools/npm-publish` step, which skips a version that npm already has: when the publication fails, use "Re-run failed jobs" on the run
 - The root `postversion` script only updates `composer.json`: the action runs `npm version <version> --workspaces --include-workspace-root`, which bumps every package
-- Two release lines: `main` releases 1.x and `2.x` releases 2.x (npm `next` dist-tag), each on merge into its branch. Merge `main` into `2.x` after the `release` run of `main` has finished: unreleased fragments from `main` would otherwise go into the next 2.x release too
+- Two release lines: `1.x` releases 1.x and `main` (default branch) releases 2.x (npm `next` dist-tag), each on merge into its branch. Merge `1.x` into `main` after the `release` run of `1.x` has finished: unreleased fragments from `1.x` would otherwise go into the next 2.x release too
+- The `deploy` workflow on `main` deploys this branch's documentation to v1-ui.studiometa.dev once the `release` run of `1.x` has finished
 
 ## Code conventions
 
