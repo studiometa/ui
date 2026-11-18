@@ -17,7 +17,7 @@ export interface DisclosureGroupProps extends BaseProps {
  * accessibility state and transitions, and advertises itself to its closest
  * group instead of being instantiated by the parent.
  *
- * @link https://ui.studiometa.dev/reference/items/Disclosure/
+ * @link https://v1-ui.studiometa.dev/reference/items/Disclosure/
  */
 export class DisclosureGroup<T extends BaseProps = BaseProps> extends Base<
   T & DisclosureGroupProps

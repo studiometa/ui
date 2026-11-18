@@ -35,7 +35,7 @@ registerComponent(Motion);
 </div>
 ```
 
-The `initial` styles are applied on mount, then the `animate` keyframes play when playback on mount is enabled with `data-option-autoplay`. Without it, drive the animation from an [`Action`](https://ui.studiometa.dev/reference/items/Action/) instead:
+The `initial` styles are applied on mount, then the `animate` keyframes play when playback on mount is enabled with `data-option-autoplay`. Without it, drive the animation from an [`Action`](https://v1-ui.studiometa.dev/reference/items/Action/) instead:
 
 ```html
 <div data-component="Motion" data-option-animate='{ "x": 100 }'>...</div>
@@ -78,8 +78,8 @@ provideMotion({ animate });
 
 Once provided, `@studiometa/ui-motion` never imports `motion` by specifier — it uses the instance you handed it. `resolveMotion()` is also exported if you want to trigger (and await) resolution yourself, for example to preload the module.
 
-Heads up to [ui.studiometa.dev](https://ui.studiometa.dev/reference/items/Motion/) for the full documentation.
+Heads up to [v1-ui.studiometa.dev](https://v1-ui.studiometa.dev/reference/items/Motion/) for the full documentation.
 
 ## Contributing
 
-Please read the [contribution docs](https://ui.studiometa.dev/guide/contributing/).
+Please read the [contribution docs](https://v1-ui.studiometa.dev/guide/contributing/).

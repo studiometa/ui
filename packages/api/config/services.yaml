@@ -11,7 +11,7 @@ parameters:
   app.docs_dist_dir.default: '%kernel.project_dir%/../docs/.vitepress/dist'
   # Base URL of the playground the generated links point to.
   app.playground_base_url: '%env(default:app.playground_base_url.default:PLAYGROUND_BASE_URL)%'
-  app.playground_base_url.default: 'https://ui.studiometa.dev/play'
+  app.playground_base_url.default: 'https://v1-ui.studiometa.dev/play'
 
 services:
   # default configuration for services in *this* file

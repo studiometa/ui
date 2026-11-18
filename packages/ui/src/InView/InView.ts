@@ -10,7 +10,7 @@ import type { BaseConfig } from '@studiometa/js-toolkit';
  * `withMountWhenInView` decorator, whose mount/destroy lifecycle maps directly
  * to the enter/leave transitions, re-firing on each re-entry.
  *
- * @link https://ui.studiometa.dev/reference/items/InView/
+ * @link https://v1-ui.studiometa.dev/reference/items/InView/
  */
 export class InView extends withMountWhenInView(Base) {
   /**

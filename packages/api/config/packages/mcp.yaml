@@ -13,6 +13,6 @@ mcp:
     # reach it. Adjust when the deployment host changes.
     allowed_hosts:
       - 'api.ui.studiometa.dev'
-      - 'ui.studiometa.dev'
+      - 'v1-ui.studiometa.dev'
       - 'ui.ddev.site'
       - 'localhost'

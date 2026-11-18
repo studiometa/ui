@@ -5,7 +5,7 @@
 [![Size](https://img.shields.io/bundlephobia/minzip/@studiometa/eslint-plugin-ui?style=flat&colorB=3e63dd&colorA=414853&label=size)](https://bundlephobia.com/package/@studiometa/eslint-plugin-ui)
 ![Codecov](https://img.shields.io/codecov/c/github/studiometa/ui?style=flat&colorB=3e63dd&colorA=414853)
 
-ESLint plugin to help developers discover and use components from [@studiometa/ui](https://ui.studiometa.dev).
+ESLint plugin to help developers discover and use components from [@studiometa/ui](https://v1-ui.studiometa.dev).
 
 ## Installation
 

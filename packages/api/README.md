@@ -1,6 +1,6 @@
 # @studiometa/ui — API
 
-Small Symfony application powering [ui.studiometa.dev](https://ui.studiometa.dev):
+Small Symfony application powering [v1-ui.studiometa.dev](https://v1-ui.studiometa.dev):
 
 - renders `@ui/` Twig templates for the playground iframe (`/`, `/source`);
 - exposes an **MCP server** so agents can discover Reference items and generate playgrounds.
@@ -10,7 +10,7 @@ Small Symfony application powering [ui.studiometa.dev](https://ui.studiometa.dev
 The server is built with [`symfony/mcp-bundle`](https://github.com/symfony/mcp-bundle) and served over the Streamable HTTP transport. The app is mounted under `/api` on the documentation host, so the endpoint is:
 
 ```
-POST https://ui.studiometa.dev/api/mcp
+POST https://v1-ui.studiometa.dev/api/mcp
 ```
 
 ### Tools
@@ -42,5 +42,5 @@ See `config/packages/mcp.yaml`. Two paths can be overridden with environment var
 Point any MCP client at the HTTP endpoint, e.g. with Claude Code:
 
 ```sh
-claude mcp add --transport http studiometa-ui https://ui.studiometa.dev/api/mcp
+claude mcp add --transport http studiometa-ui https://v1-ui.studiometa.dev/api/mcp
 ```

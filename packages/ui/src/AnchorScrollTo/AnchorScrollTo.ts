@@ -15,7 +15,7 @@ export interface AnchorScrollToProps extends BaseProps {
  * prevents the default jump; if the target cannot be resolved the click is left
  * untouched.
  *
- * @link https://ui.studiometa.dev/reference/items/AnchorScrollTo/
+ * @link https://v1-ui.studiometa.dev/reference/items/AnchorScrollTo/
  */
 export class AnchorScrollTo<T extends BaseProps = BaseProps> extends Base<AnchorScrollToProps & T> {
   static config: BaseConfig = {

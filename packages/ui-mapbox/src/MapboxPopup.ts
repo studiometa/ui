@@ -20,7 +20,7 @@ export interface MapboxPopupProps extends AbstractMapboxMapChildProps {
 
 /**
  * Display a popup on a MapboxMap map.
- * @see https://ui.studiometa.dev/reference/items/MapboxMap
+ * @see https://v1-ui.studiometa.dev/reference/items/MapboxMap
  */
 export class MapboxPopup<T extends BaseProps = BaseProps> extends AbstractMapboxMapChild<
   T & MapboxPopupProps

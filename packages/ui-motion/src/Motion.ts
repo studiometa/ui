@@ -42,7 +42,7 @@ export interface MotionProps extends BaseProps {
  * Events bubble, so an ancestor `Action` can catch and route them; use the
  * `.stop` event modifier to contain them in nested setups.
  *
- * @link https://ui.studiometa.dev/reference/items/Motion/
+ * @link https://v1-ui.studiometa.dev/reference/items/Motion/
  */
 export class Motion<T extends BaseProps = BaseProps> extends Base<MotionProps & T> {
   /**

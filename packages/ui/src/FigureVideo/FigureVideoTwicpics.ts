@@ -24,7 +24,7 @@ export interface FigureVideoTwicpicsProps extends BaseProps {
  * FigureVideoTwicpics class.
  *
  * Manager lazyloading image sources.
- * @link https://ui.studiometa.dev/reference/items/FigureVideoTwicpics/
+ * @link https://v1-ui.studiometa.dev/reference/items/FigureVideoTwicpics/
  */
 export class FigureVideoTwicpics<T extends BaseProps = BaseProps> extends FigureVideo<
   T & FigureVideoTwicpicsProps

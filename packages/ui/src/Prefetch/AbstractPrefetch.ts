@@ -17,7 +17,7 @@ export interface AbstractPrefetchProps extends BaseProps {
  * `prefetch` option — deduplicates across instances and emits a `prefetched`
  * event. Subclasses decide when `prefetch()` is called.
  *
- * @link https://ui.studiometa.dev/reference/items/Prefetch/
+ * @link https://v1-ui.studiometa.dev/reference/items/Prefetch/
  */
 export class AbstractPrefetch<T extends BaseProps = BaseProps> extends Base<
   T & AbstractPrefetchProps

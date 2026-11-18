@@ -26,7 +26,7 @@ export interface DisclosureProps extends BaseProps {
  * `DisclosureGroup` when one exists. The group is therefore optional and does
  * not own the child's registration or lifecycle.
  *
- * @link https://ui.studiometa.dev/reference/items/Disclosure/
+ * @link https://v1-ui.studiometa.dev/reference/items/Disclosure/
  */
 export class Disclosure<T extends BaseProps = BaseProps> extends Base<T & DisclosureProps> {
   static config: BaseConfig = {

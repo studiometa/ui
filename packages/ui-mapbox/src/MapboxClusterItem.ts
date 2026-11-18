@@ -40,7 +40,7 @@ export interface MapboxClusterItemProps extends BaseProps {
  * its own — a click is reported by the cluster's `map-item-click` event for a
  * caller to act on.
  *
- * @see https://ui.studiometa.dev/reference/items/MapboxMap/
+ * @see https://v1-ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class MapboxClusterItem<T extends BaseProps = BaseProps> extends Base<
   T & MapboxClusterItemProps
