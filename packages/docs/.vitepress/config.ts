@@ -53,7 +53,7 @@ export default defineConfig({
     languages: ['js', 'jsx', 'ts', 'tsx'],
   },
   sitemap: {
-    hostname: 'https://ui.studiometa.dev/',
+    hostname: 'https://v1-ui.studiometa.dev/',
     transformItems(items) {
       // Add the playground
       items.push({
@@ -102,6 +102,7 @@ export default defineConfig({
       {
         text: `<span class="VPBadge font-bold bg-[var(--vp-button-brand-bg)] text-[var(--vp-button-brand-text)]">v${pkg.version}</span>`,
         items: [
+          { text: 'v2 documentation', link: 'https://ui.studiometa.dev/' },
           { text: 'Release Notes', link: 'https://github.com/studiometa/ui/releases' },
           { text: 'Migration guides', link: '/migration-guides/' },
         ],

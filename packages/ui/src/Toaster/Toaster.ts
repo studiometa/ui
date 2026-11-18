@@ -53,7 +53,7 @@ let count = 0;
  * the js-toolkit registry mounts and destroys automatically. Bursts fired in the
  * same tick coalesce into a single coordinated transition.
  *
- * @link https://ui.studiometa.dev/reference/items/Toaster/
+ * @link https://v1-ui.studiometa.dev/reference/items/Toaster/
  */
 export class Toaster<T extends BaseProps = BaseProps> extends Base<T & ToasterProps> {
   /**

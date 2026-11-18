@@ -54,7 +54,7 @@ interface DialogTransitioner {
  * class needs no refs and no manual `addEventListener`; the optional focus-trap
  * uses the `keyed()` KeyService hook.
  *
- * @link https://ui.studiometa.dev/reference/items/Dialog/
+ * @link https://v1-ui.studiometa.dev/reference/items/Dialog/
  */
 export class Dialog<T extends BaseProps = BaseProps> extends Base<T & DialogProps> {
   /**

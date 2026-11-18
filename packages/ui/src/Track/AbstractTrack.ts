@@ -55,7 +55,7 @@ function parseEventValue(value: string): Record<string, unknown> {
  * own `static config` with a unique `name`, otherwise they inherit the
  * `AbstractTrack` name and cannot be resolved.
  *
- * @link https://ui.studiometa.dev/reference/items/Track/
+ * @link https://v1-ui.studiometa.dev/reference/items/Track/
  */
 export class AbstractTrack<T extends BaseProps = BaseProps> extends Base<AbstractTrackProps & T> {
   /**

@@ -64,7 +64,7 @@ export interface StoreLocatorProps extends BaseProps {
  * the connected-event retry, and the orchestrator declares no child components
  * so nothing is ever double-mounted.
  *
- * @see https://ui.studiometa.dev/reference/items/MapboxMap/
+ * @see https://v1-ui.studiometa.dev/reference/items/MapboxMap/
  */
 export class StoreLocator<T extends BaseProps = BaseProps> extends Base<T & StoreLocatorProps> {
   /**

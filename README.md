@@ -33,10 +33,10 @@ import { Action, Dialog, Frame, ScrollAnimation, ScrollReveal, Slider } from '@s
 registerComponents(Action, Dialog, Frame, ScrollAnimation, ScrollReveal, Slider);
 ```
 
-Heads up to [ui.studiometa.dev](https://ui.studiometa.dev) for more informations.
+Heads up to [v1-ui.studiometa.dev](https://v1-ui.studiometa.dev) for more informations.
 
 ## Contributing
 
-Please read the [contribution docs](https://ui.studiometa.dev/guide/contributing/).
+Please read the [contribution docs](https://v1-ui.studiometa.dev/guide/contributing/).
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/studiometa/ui)

@@ -42,7 +42,7 @@ describe('The Modal component', () => {
       expect.stringContaining('The Modal component is deprecated'),
     );
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('https://ui.studiometa.dev/reference/items/Dialog/'),
+      expect.stringContaining('https://v1-ui.studiometa.dev/reference/items/Dialog/'),
     );
     consoleSpyRestor();
   });

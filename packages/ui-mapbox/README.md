@@ -78,8 +78,8 @@ provideMapboxGeocoder(MapboxGeocoder);
 
 Once provided, `@studiometa/ui-mapbox` never imports `mapbox-gl` by specifier — it uses the instance you handed it. `resolveMapboxGl()` / `resolveMapboxGeocoder()` are also exported if you want to trigger (and await) resolution yourself, for example to preload the module.
 
-Heads up to [ui.studiometa.dev](https://ui.studiometa.dev/reference/items/MapboxMap/) for the full documentation.
+Heads up to [v1-ui.studiometa.dev](https://v1-ui.studiometa.dev/reference/items/MapboxMap/) for the full documentation.
 
 ## Contributing
 
-Please read the [contribution docs](https://ui.studiometa.dev/guide/contributing/).
+Please read the [contribution docs](https://v1-ui.studiometa.dev/guide/contributing/).

@@ -24,7 +24,7 @@ export interface ToastProps extends TimerProps {
  * inserts it, and destroyed automatically when it removes itself — so a
  * `Toaster` never has to track or tear down individual toasts.
  *
- * @link https://ui.studiometa.dev/reference/items/Toaster/
+ * @link https://v1-ui.studiometa.dev/reference/items/Toaster/
  */
 export class Toast<T extends TimerProps = TimerProps> extends Timer<T & ToastProps> {
   /**
