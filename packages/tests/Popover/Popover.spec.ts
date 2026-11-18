@@ -297,4 +297,27 @@ describe('Popover — platform toggles', () => {
     await popover.close();
     expect(isShown(el)).toBe(false);
   });
+
+  it('stays shown when the platform hides and shows it again during `close()`', async () => {
+    const { el, popover } = await mountPopover({ mode: 'auto' });
+    await popover.open();
+
+    const [transition] = popover.transitions;
+    const gate = deferred();
+    vi.spyOn(transition, 'leave').mockReturnValueOnce(gate.promise);
+    const closing = popover.close();
+
+    // A light-dismiss, then a `popovertarget` button, during the leave.
+    const hidden = nextToggle(el);
+    el.hidePopover();
+    await hidden;
+    const shown = nextToggle(el);
+    el.showPopover();
+    await shown;
+
+    gate.resolve();
+    await closing;
+    expect(popover.isOpen).toBe(true);
+    expect(isShown(el)).toBe(true);
+  });
 });

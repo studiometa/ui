@@ -90,6 +90,8 @@ export class Popover extends Base<PopoverProps> {
       void emitExtendable(this.$el, 'close');
     } else if (event.newState === 'open' && !this.__isOpen) {
       this.__isOpen = true;
+      // A close run still in its leave transitions must not hide it again.
+      this.__generation += 1;
       void this.__enter();
     }
   }
