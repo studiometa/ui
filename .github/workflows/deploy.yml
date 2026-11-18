@@ -1,0 +1,45 @@
+name: deploy
+
+# Deploys the documentation on Forge once the release workflow of a branch has
+# finished, so the deploy includes the release commit it pushes: `main` (2.x)
+# to ui.studiometa.dev, `1.x` to v1-ui.studiometa.dev. It runs whatever the
+# release concluded: the docs follow the branch even when no release was due.
+#
+# A `workflow_run` workflow is read from the default branch only, so this file
+# serves both branches. The deploy URLs hold the Forge token: they are secrets.
+on:
+  workflow_run:
+    workflows: [release]
+    types: [completed]
+    branches: [main, 1.x]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch whose documentation to deploy'
+        type: choice
+        options: [main, 1.x]
+        default: main
+
+permissions: {}
+
+concurrency:
+  group: deploy-${{ github.event.workflow_run.head_branch || inputs.branch }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ github.event.workflow_run.head_branch || inputs.branch }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the Forge deployment
+        env:
+          BRANCH: ${{ github.event.workflow_run.head_branch || inputs.branch }}
+          DEPLOY_URL_MAIN: ${{ secrets.FORGE_DEPLOY_URL_UI }}
+          DEPLOY_URL_1X: ${{ secrets.FORGE_DEPLOY_URL_V1_UI }}
+        run: |
+          case "$BRANCH" in
+            main) url="$DEPLOY_URL_MAIN" ;;
+            1.x) url="$DEPLOY_URL_1X" ;;
+            *) echo "No site for branch $BRANCH"; exit 1 ;;
+          esac
+          curl --fail-with-body --silent --show-error --request POST "$url"
