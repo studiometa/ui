@@ -17,7 +17,7 @@ This skill matches the installed package version. Read the references in this fo
 
 ## Rules
 
-1. Before you write a custom widget, look for an item in `references/index.md`. Use it as is, then configure it with options, then extend it. Write custom code last.
+1. Before you write a custom widget, look for an item in `references/index.md`. Use it as is, then configure it with options, then extend it. Write custom code last. `references/index.md` covers `@studiometa/ui` only: for a map or an animation, read [Companion packages](#companion-packages).
 2. Read the item `js-api.md` before you write options, refs or event names. Do not guess them.
 3. Start from native elements (`<button>`, `<a>`, `<dialog>`, `<details>`, `<form>`). The components add behavior on top of the platform semantics. Keep an accessible name on icon-only buttons and links.
 4. Keep the markup meaningful before the JavaScript mounts.
@@ -73,7 +73,21 @@ The Composer package registers the `@ui` and `@ui-pkg` namespaces (and `@svg`, `
 
 To change the markup of a template, create the same relative path in the project templates and extend `@ui-pkg/...`. Templates render markup only: register the matching JavaScript class too.
 
+## Companion packages
+
+Other npm packages add components for needs that `@studiometa/ui` does not cover:
+
+| Need                                                                         | Package                 | Peer dependencies                               |
+| ---------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------- |
+| Interactive map, markers, popups, store locator                              | `@studiometa/ui-mapbox` | `mapbox-gl` ^3, `@mapbox/mapbox-gl-geocoder` ^5 |
+| Keyframe, spring, gesture, sequence or scroll-driven animations (motion.dev) | `@studiometa/ui-motion` | `motion` ^13                                    |
+| GSAP tweens, timelines, ScrollTrigger                                        | `@studiometa/ui-gsap`   | `gsap` ^3.13                                    |
+
+1. Look for the package in the project `package.json` first.
+2. When the package is installed, use its skill: `studiometa-ui-mapbox`, `studiometa-ui-motion` or `studiometa-ui-gsap`.
+3. When the package is not installed, propose to install it with its peer dependencies. Then run `npx skills experimental_sync` to link its skill.
+4. Do not write a custom map or animation component before you do these checks.
+
 ## Related skills
 
 - `studiometa-js-toolkit`: the `Base` class, lifecycle, services and decorators that all components use.
-- `studiometa-ui-mapbox`, `studiometa-ui-motion` and `studiometa-ui-gsap`: the Mapbox, Motion and GSAP component packages.
