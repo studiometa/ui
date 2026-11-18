@@ -11,7 +11,7 @@
  * With `--well-known <directory>`, it builds every skill and publishes them in
  * `<directory>/.well-known/agent-skills/`: one archive per skill and the
  * `index.json` of the Agent Skills Discovery RFC, so
- * `npx skills add https://ui-v2.studiometa.dev` installs them.
+ * `npx skills add https://ui.studiometa.dev` installs them.
  */
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -23,7 +23,7 @@ import { referenceCatalog } from '../packages/docs/.vitepress/reference/catalog.
 
 const repositoryDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const docsDirectory = resolve(repositoryDirectory, 'packages/docs');
-const docsUrl = 'https://ui-v2.studiometa.dev';
+const docsUrl = 'https://ui.studiometa.dev';
 const discoverySchema = 'https://schemas.agentskills.io/discovery/0.2.0/schema.json';
 
 interface SkillTarget {
