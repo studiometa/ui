@@ -115,7 +115,14 @@ export {
   type FigureVideoProps,
   type FigureVideoTwicpicsProps,
 } from './FigureVideo/index.js';
-export { Hoverable, type HoverableBounds, type HoverableProps } from './Hoverable/index.js';
+export {
+  Hoverable,
+  HOVERABLE_SHAPES,
+  type HoverableBounds,
+  type HoverablePosition,
+  type HoverableProps,
+  type HoverableShape,
+} from './Hoverable/index.js';
 export {
   Indexable,
   INDEXABLE_BOUNDARIES,

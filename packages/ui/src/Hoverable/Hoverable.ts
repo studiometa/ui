@@ -8,6 +8,25 @@ import { damp } from '@studiometa/js-toolkit/utils/damp';
 import { map } from '@studiometa/js-toolkit/utils/map';
 import { transform } from '@studiometa/js-toolkit/utils/transform';
 
+/**
+ * The shape the target position is constrained to, inscribed in the
+ * rectangle given by the `bounds` getter.
+ */
+export const HOVERABLE_SHAPES = Object.freeze({
+  RECT: 'rect',
+  CIRCLE: 'circle',
+  ELLIPSE: 'ellipse',
+} as const);
+
+/** One of {@link HOVERABLE_SHAPES}. */
+export type HoverableShape = (typeof HOVERABLE_SHAPES)[keyof typeof HOVERABLE_SHAPES];
+
+/** A position of the target, in pixels. */
+export interface HoverablePosition {
+  x: number;
+  y: number;
+}
+
 export interface HoverableBounds {
   xMin: number;
   xMax: number;
@@ -24,6 +43,8 @@ export type HoverableProps = BaseProps & {
     reversed: boolean;
     /** Stop moving the target once the pointer leaves the root element. */
     contained: boolean;
+    /** The shape the target position is constrained to. */
+    shape: HoverableShape;
   };
 };
 
@@ -31,7 +52,8 @@ export type HoverableProps = BaseProps & {
  * Moves a `target` ref in response to the pointer's position over the root
  * element. The target is mapped across its available bounds and damped each
  * frame by the `sensitivity` option; `reversed` inverts the movement and
- * `contained` stops it once the pointer leaves the element.
+ * `contained` stops it once the pointer leaves the element. The `shape` option
+ * constrains the position to a circle or an ellipse inscribed in the bounds.
  *
  * @link https://ui.studiometa.dev/reference/items/Hoverable/
  */
@@ -45,6 +67,7 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRaf(withPoin
       sensitivity: { type: Number, default: 0.1 },
       reversed: Boolean,
       contained: Boolean,
+      shape: { type: String, default: HOVERABLE_SHAPES.RECT },
     },
   };
 
@@ -82,6 +105,45 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRaf(withPoin
     };
   }
 
+  /**
+   * Constrain a position to the shape given by the `shape` option. Override
+   * this method to constrain the target to another shape.
+   */
+  constrainPosition(x: number, y: number, bounds = this.bounds): HoverablePosition {
+    const { shape } = this.$options;
+
+    if (shape !== HOVERABLE_SHAPES.CIRCLE && shape !== HOVERABLE_SHAPES.ELLIPSE) {
+      return { x, y };
+    }
+
+    // The bounds are inverted when the target is smaller than its parent.
+    const centerX = (bounds.xMin + bounds.xMax) / 2;
+    const centerY = (bounds.yMin + bounds.yMax) / 2;
+    let radiusX = Math.abs(bounds.xMax - bounds.xMin) / 2;
+    let radiusY = Math.abs(bounds.yMax - bounds.yMin) / 2;
+
+    if (shape === HOVERABLE_SHAPES.CIRCLE) {
+      radiusX = radiusY = Math.min(radiusX, radiusY);
+    }
+
+    if (radiusX === 0 || radiusY === 0) {
+      return { x: centerX, y: centerY };
+    }
+
+    const deltaX = x - centerX;
+    const deltaY = y - centerY;
+    const ratio = (deltaX / radiusX) ** 2 + (deltaY / radiusY) ** 2;
+
+    if (ratio <= 1) {
+      return { x, y };
+    }
+
+    // Bring the position back onto the edge, along the line to the center.
+    const scale = 1 / Math.sqrt(ratio);
+
+    return { x: centerX + deltaX * scale, y: centerY + deltaY * scale };
+  }
+
   moved({ relativeProgressX, relativeProgressY }: ElementPointerProps): void {
     const { bounds, props } = this;
     const { reversed, contained } = this.$options;
@@ -100,8 +162,14 @@ export class Hoverable<T extends BaseProps = BaseProps> extends withRaf(withPoin
     const from = reversed ? 1 : 0;
     const to = reversed ? 0 : 1;
 
-    props.y = map(clamp01(relativeProgressY), from, to, bounds.yMin, bounds.yMax);
-    props.x = map(clamp01(relativeProgressX), from, to, bounds.xMin, bounds.xMax);
+    const { x, y } = this.constrainPosition(
+      map(clamp01(relativeProgressX), from, to, bounds.xMin, bounds.xMax),
+      map(clamp01(relativeProgressY), from, to, bounds.yMin, bounds.yMax),
+      bounds,
+    );
+
+    props.x = x;
+    props.y = y;
   }
 
   ticked({ delta }: RafProps): void {
