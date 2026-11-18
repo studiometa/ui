@@ -471,6 +471,14 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'HOVERABLE_SHAPES',
+    kind: 'constant',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Hoverable/js-api',
+    status: 'stable',
+  },
+  {
     name: 'HoverableBounds',
     kind: 'type',
     package: 'npm:@studiometa/ui',
@@ -479,7 +487,23 @@ export const publicContractSymbols = [
     status: 'stable',
   },
   {
+    name: 'HoverablePosition',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Hoverable/js-api',
+    status: 'stable',
+  },
+  {
     name: 'HoverableProps',
+    kind: 'type',
+    package: 'npm:@studiometa/ui',
+    importPath: '@studiometa/ui',
+    href: '/reference/items/Hoverable/js-api',
+    status: 'stable',
+  },
+  {
+    name: 'HoverableShape',
     kind: 'type',
     package: 'npm:@studiometa/ui',
     importPath: '@studiometa/ui',
