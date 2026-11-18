@@ -107,8 +107,11 @@ export class Popover extends Base<PopoverProps> {
 
     this.__isOpen = true;
     this.__generation += 1;
-    // A no-op when a leave transition still holds the popover painted.
-    this.$el.showPopover();
+    // A leave transition can still hold the popover painted. The spec makes
+    // `showPopover()` a no-op then, but older engines throw.
+    if (!this.$el.matches(':popover-open')) {
+      this.$el.showPopover();
+    }
     await this.__enter();
   }
 
