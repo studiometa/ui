@@ -75,13 +75,13 @@ To change the markup of a template, create the same relative path in the project
 
 ## Companion packages
 
-Other npm packages add components for needs that `@studiometa/ui` does not cover:
+Other npm packages add components for needs that `@studiometa/ui` does not cover. They also need `@studiometa/js-toolkit` v4, like `@studiometa/ui`:
 
-| Need                                                                         | Package                 | Peer dependencies                               |
-| ---------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------- |
-| Interactive map, markers, popups, store locator                              | `@studiometa/ui-mapbox` | `mapbox-gl` ^3, `@mapbox/mapbox-gl-geocoder` ^5 |
-| Keyframe, spring, gesture, sequence or scroll-driven animations (motion.dev) | `@studiometa/ui-motion` | `motion` ^13                                    |
-| GSAP tweens, timelines, ScrollTrigger                                        | `@studiometa/ui-gsap`   | `gsap` ^3.13                                    |
+| Need                                                                         | Package                 | Peer dependencies                                                                |
+| ---------------------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------- |
+| Interactive map, markers, popups, store locator                              | `@studiometa/ui-mapbox` | `mapbox-gl` ^3, `@mapbox/mapbox-gl-geocoder` ^5 (optional, for `MapboxGeocoder`) |
+| Keyframe, spring, gesture, sequence or scroll-driven animations (motion.dev) | `@studiometa/ui-motion` | `motion` ^13                                                                     |
+| GSAP tweens, timelines, ScrollTrigger                                        | `@studiometa/ui-gsap`   | `gsap` ^3.13                                                                     |
 
 1. Look for the package in the project `package.json` first.
 2. When the package is installed, use its skill: `studiometa-ui-mapbox`, `studiometa-ui-motion` or `studiometa-ui-gsap`.
