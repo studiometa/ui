@@ -73,6 +73,7 @@ export class MenuList<T extends BaseProps = BaseProps> extends withTransition(Ba
   }
 
   mounted(): void {
+    this.$el.setAttribute('aria-hidden', 'true');
     this.__updateTabIndexes('close');
   }
 
