@@ -4,9 +4,14 @@ import { Fetch, type FetchProps, type FetchRequest, type RestoreRecipe } from '.
 /** The Section Rendering API query parameter name. */
 export const SECTIONS_PARAMETER = 'sections';
 
-/** The `response` option value the base class ships, and the one this replaces. */
-const DEFAULT_RESPONSE = (Fetch.config.options as Record<string, { default: string }>).response
-  .default;
+/**
+ * The `response` option value the base class ships, and the one this replaces.
+ * Read on use rather than at the top level, where the property read would keep
+ * this module and `Fetch` in a bundle that only imports `SECTIONS_PARAMETER`.
+ */
+function defaultResponse(): string {
+  return (Fetch.config.options as Record<string, { default: string }>).response.default;
+}
 
 export type FetchShopifySectionProps = FetchProps & {
   $options: FetchProps['$options'] & {
@@ -78,7 +83,7 @@ export class FetchShopifySection<T extends BaseProps = BaseProps> extends Fetch<
     request: FetchRequest,
     recipe: RestoreRecipe,
   ): Promise<unknown> {
-    if (!recipe.params[SECTIONS_PARAMETER] || recipe.response !== DEFAULT_RESPONSE) {
+    if (!recipe.params[SECTIONS_PARAMETER] || recipe.response !== defaultResponse()) {
       return super.parseResponse(response, request, recipe);
     }
 

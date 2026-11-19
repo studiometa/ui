@@ -14,7 +14,7 @@ import type { Transitionable } from '../decorators/withTransition.js';
  * a panel that loads its content on demand — one holding a `Defer` or a
  * `Fetch` — is the case manual activation exists for.
  */
-export const TABS_ACTIVATIONS = Object.freeze({
+export const TABS_ACTIVATIONS = /* @__PURE__ */ Object.freeze({
   AUTOMATIC: 'automatic',
   MANUAL: 'manual',
 } as const);
@@ -85,7 +85,9 @@ export class Tabs<T extends BaseProps = BaseProps> extends Base<T & TabsProps> {
     options: {
       activation: {
         type: String,
-        default: TABS_ACTIVATIONS.AUTOMATIC,
+        // A literal rather than `TABS_ACTIVATIONS.AUTOMATIC`: a property read at the top
+        // level keeps the whole module in a bundle that only imports the constant.
+        default: 'automatic' satisfies TabsActivation,
       },
     },
   };
