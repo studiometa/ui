@@ -634,7 +634,7 @@ export const referenceCatalog = [
   {
     id: 'hoverable',
     title: 'Hoverable',
-    summary: 'Reflect pointer hover state for declarative styling and interactions.',
+    summary: 'Move a target with the pointer inside rectangular, circular or elliptical bounds.',
     kind: 'component',
     path: '/reference/items/Hoverable/',
     family: 'interaction',

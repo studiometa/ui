@@ -51,6 +51,7 @@ test("components exports", () => {
       "FigureVideo",
       "FigureVideoTwicpics",
       "HEADER_NAMES",
+      "HOVERABLE_SHAPES",
       "Hoverable",
       "INDEXABLE_BOUNDARIES",
       "INDEXABLE_INSTRUCTIONS",
