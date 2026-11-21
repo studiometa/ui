@@ -52,6 +52,7 @@ export const UI_COMPONENT_NAMES: ReadonlySet<string> = new Set([
   'Menu',
   'MenuBtn',
   'MenuList',
+  'Popover',
   'PrefetchOnInteraction',
   'PrefetchWhenVisible',
   'ScrollReveal',

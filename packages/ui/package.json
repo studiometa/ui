@@ -272,6 +272,11 @@
       "types": "./dist/Menu/MenuList.d.ts",
       "import": "./dist/Menu/MenuList.js"
     },
+    "./Popover": {
+      "typescript": "./src/Popover/Popover.ts",
+      "types": "./dist/Popover/Popover.d.ts",
+      "import": "./dist/Popover/Popover.js"
+    },
     "./PrefetchOnInteraction": {
       "typescript": "./src/Prefetch/PrefetchOnInteraction.ts",
       "types": "./dist/Prefetch/PrefetchOnInteraction.d.ts",

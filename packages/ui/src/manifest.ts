@@ -186,6 +186,10 @@ export const manifest: ComponentManifest = {
     mountStrategy: 'eager',
     load: () => import('./Menu/MenuList.js').then(({ MenuList }) => MenuList),
   },
+  Popover: {
+    mountStrategy: 'eager',
+    load: () => import('./Popover/Popover.js').then(({ Popover }) => Popover),
+  },
   PrefetchOnInteraction: {
     mountStrategy: 'eager',
     load: () =>

@@ -1,0 +1,34 @@
+<button
+  type="button"
+  id="tip-trigger"
+  aria-describedby="tip"
+  data-component="Action"
+  data-on:mouseenter="Popover(#tip)->target.open()"
+  data-on:mouseleave="Popover(#tip)->target.close()"
+  data-on:focus="Popover(#tip)->target.open()"
+  data-on:blur="Popover(#tip)->target.close()"
+  data-on:keydown="Popover(#tip)->event.key === 'Escape' && target.close()"
+  class="px-4 py-2 rounded border border-current">
+  Hover or focus me
+</button>
+
+{# The pointer can move onto the tooltip: an `open()` during the leave
+   transition keeps it shown. #}
+<div
+  popover="manual"
+  id="tip"
+  role="tooltip"
+  data-component="Action Popover"
+  data-on:mouseenter="Popover.open()"
+  data-on:mouseleave="Popover.close()">
+  <div
+    data-component="Transition"
+    data-option-enter-active="transition duration-150 ease-out"
+    data-option-enter-from="opacity-0"
+    data-option-leave-active="transition duration-150 ease-in"
+    data-option-leave-to="opacity-0"
+    data-option-leave-keep
+    class="px-2.5 py-1.5 rounded-md bg-gray-900 text-white text-sm shadow-lg opacity-0">
+    A headless tooltip, placed with your own CSS.
+  </div>
+</div>

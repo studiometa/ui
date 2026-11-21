@@ -65,6 +65,7 @@ const components: readonly CuratedComponentMetadata[] = [
   { token: 'Menu', group: 'menu', children: ['MenuBtn', 'MenuList'] },
   { token: 'MenuBtn', group: 'menu' },
   { token: 'MenuList', group: 'menu', children: ['MenuList'] },
+  { token: 'Popover', group: 'popover', children: ['Transition', 'ViewTransition'] },
   { token: 'PrefetchOnInteraction', group: 'prefetch' },
   { token: 'PrefetchWhenVisible', group: 'prefetch' },
   { token: 'ScrollReveal', group: 'scroll-reveal' },

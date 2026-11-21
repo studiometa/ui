@@ -1,6 +1,6 @@
 ---
 name: studiometa-ui
-description: Build interfaces with @studiometa/ui v2 — headless, accessible components and Twig templates on @studiometa/js-toolkit v4 (Action, Dialog, Disclosure, Tabs, Carousel, Fetch, Data*, Transition, Figure…). Use when code imports @studiometa/ui, when markup uses data-component, data-option-* or data-on:* attributes for these components, when templates include @ui/ or @ui-pkg/ Twig templates, or before writing a custom modal, accordion, tabs, slider, menu or similar widget.
+description: Build interfaces with @studiometa/ui v2 — headless, accessible components and Twig templates on @studiometa/js-toolkit v4 (Action, Dialog, Disclosure, Tabs, Carousel, Fetch, Data*, Transition, Figure…). Use when code imports @studiometa/ui, when markup uses data-component, data-option-* or data-on:* attributes for these components, when templates include @ui/ or @ui-pkg/ Twig templates, or before writing a custom modal, popover, dropdown, tooltip, accordion, tabs, slider, menu or similar widget.
 ---
 
 # @studiometa/ui

@@ -999,6 +999,25 @@ export const referenceCatalog = [
     related: ['motion', 'view-transition', 'dialog', 'data-bind'],
   },
   {
+    id: 'popover',
+    title: 'Popover',
+    summary:
+      'Coordinate native popovers, delegated triggers, and optional transitions for dropdowns and tooltips.',
+    kind: 'component',
+    path: '/reference/items/Popover/',
+    family: 'overlay',
+    primaryTask: 'overlay',
+    tags: ['popover', 'dropdown', 'tooltip', 'hover card', 'top layer', 'overlay'],
+    surfaces: ['js'],
+    packages: [uiPackage],
+    status: 'preview',
+    symbols: [
+      uiSymbol('Popover', '/reference/items/Popover/js-api', 'Popover', 'component', 'preview'),
+    ],
+    capabilities: ['native popover', 'delegated triggers', 'transitions'],
+    related: ['action', 'dialog', 'click-outside', 'transition'],
+  },
+  {
     id: 'prefetch',
     title: 'Prefetch',
     summary: 'Prefetch links through reusable interaction and visibility strategies.',

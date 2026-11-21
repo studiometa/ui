@@ -1,0 +1,54 @@
+{# ClickOutside and the keydown Action close the menu on an outside click and
+   on Escape, wherever the focus is: on the button or in the menu. #}
+<div
+  data-component="Action ClickOutside"
+  data-on:click-outside="Popover(#menu)->target.close()"
+  data-on:keydown="Popover(#menu)->event.key === 'Escape' && target.isOpen && (target.close(), document.getElementById('menu-trigger').focus())"
+  class="inline-block">
+  <button
+    type="button"
+    id="menu-trigger"
+    aria-expanded="false"
+    aria-controls="menu"
+    data-component="Action"
+    data-on:click="Popover(#menu)->target.toggle()"
+    class="px-4 py-2 rounded bg-emerald-600 text-white font-semibold">
+    Account
+  </button>
+
+  {# `popover="manual"`: the component owns show and hide, so the leave
+     transition always plays. The `open` and `close` events keep
+     `aria-expanded` in sync on the button. #}
+  <div
+    popover="manual"
+    id="menu"
+    data-component="Action Popover"
+    data-on:open="document.getElementById('menu-trigger').setAttribute('aria-expanded', 'true')"
+    data-on:close="document.getElementById('menu-trigger').setAttribute('aria-expanded', 'false')">
+    <nav
+      aria-label="Account"
+      data-component="Transition"
+      data-option-enter-active="transition duration-200 ease-out"
+      data-option-enter-from="opacity-0"
+      data-option-leave-active="transition duration-150 ease-in"
+      data-option-leave-to="opacity-0"
+      data-option-leave-keep
+      class="min-w-48 p-2 rounded-lg bg-white text-black shadow-xl ring-1 ring-black/10 opacity-0">
+      <a
+        href="#"
+        class="block px-3 py-2 rounded hover:bg-black/5 focus:bg-black/5">
+        Profile
+      </a>
+      <a
+        href="#"
+        class="block px-3 py-2 rounded hover:bg-black/5 focus:bg-black/5">
+        Settings
+      </a>
+      <a
+        href="#"
+        class="block px-3 py-2 rounded hover:bg-black/5 focus:bg-black/5">
+        Sign out
+      </a>
+    </nav>
+  </div>
+</div>
